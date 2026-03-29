@@ -1,0 +1,1 @@
+    path = re.sub(r"(?:/(?:n|r|rn))+$", "", path, flags=re.I)

@@ -1,0 +1,5 @@
+                    url="https://diariodorio.com/primeira-materia-sobre-flavio-valle/?utm_source=x",
+                url="https://diariodorio.com/primeira-materia-sobre-flavio-valle/?ref=dup",
+                url="https://diariodorio.com/segunda-materia-sobre-flavio-valle/",
+        "https://diariodorio.com/primeira-materia-sobre-flavio-valle",
+        "https://diariodorio.com/segunda-materia-sobre-flavio-valle",
