@@ -1,6 +1,7 @@
 """URL and text normalization utilities."""
 import html as html_mod
 import re
+from typing import Any
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 
 _TRACKING_PARAMS = {
@@ -43,6 +44,27 @@ def canonicalize_url(url):
         return urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", sorted_qs, ""))
     except Exception:
         return url
+
+
+def normalize_text(value: Any) -> str:
+    """Normalize text: collapse whitespace, strip blank lines, clean non-breaking spaces.
+
+    Recovered from export_mobile_snapshot.py (same function used across pipeline).
+    """
+    text = str(value or "").replace("\r\n", "\n").replace("\r", "\n")
+    text = re.sub(r"\u00a0", " ", text)
+    lines = [re.sub(r"[ \t]+", " ", line).strip() for line in text.split("\n")]
+    cleaned: list[str] = []
+    blank = False
+    for line in lines:
+        if not line:
+            if cleaned and not blank:
+                cleaned.append("")
+            blank = True
+            continue
+        cleaned.append(line)
+        blank = False
+    return "\n".join(cleaned).strip()
 
 
 def clean_title(title):
