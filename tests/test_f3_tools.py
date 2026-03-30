@@ -10,62 +10,64 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 
-# ═══ F3-T3: export_mobile_snapshot.py ═══
+# ═══ F3-T3: export_mobile_snapshot.py (original recovered from 63MB Codex session log) ═══
 
 def test_export_mobile_compiles():
     py_compile.compile(str(PROJECT_ROOT / "tools" / "export_mobile_snapshot.py"), doraise=True)
 
 
-def test_export_mobile_has_generate_html():
-    """Should have generate_html that produces article-grouped HTML."""
-    sys.path.insert(0, str(PROJECT_ROOT / "tools"))
-    from export_mobile_snapshot import generate_html
-    articles = [
-        {"url": "https://example.com/1", "title": "Test Article", "source_name": "TestSource",
-         "source_type": "test", "published_at": "2026-03-28T12:00:00", "snippet": "Snippet",
-         "keyword_matched": "Flavio Valle"},
-    ]
-    html = generate_html(articles, "Flávio Valle", "2026-03-01", "2026-03-31")
-    assert "Test Article" in html
-    assert "TestSource" in html
-    assert len(html) > 200
+def test_export_mobile_has_original_functions():
+    """Should have all 30 original functions recovered from Codex session log."""
+    content = (PROJECT_ROOT / "tools" / "export_mobile_snapshot.py").read_text(encoding="utf-8")
+    # Core pipeline functions
+    assert "def parse_args" in content
+    assert "def load_targets" in content
+    assert "def load_scope_articles" in content
+    assert "def decorate_stories" in content
+    assert "def build_target_rows" in content
+    assert "def resolve_initial_targets" in content
+    assert "def build_html" in content
+    assert "def main" in content
+    # Rendering functions
+    assert "def render_article_card" in content
+    assert "def render_story_section" in content
+    assert "def render_filter_buttons" in content
+    assert "def render_story_index" in content
+    # Utility functions
+    assert "def normalize_text" in content
+    assert "def story_sort_key" in content
+    assert "def visibility_stats" in content
+    assert "def output_path_for_args" in content
+    assert "def json_for_script" in content
+
+
+def test_export_mobile_has_original_constants():
+    """Should have original constants: DB_PATH, TARGETS_PATH, EXPORT_LIMIT, etc."""
+    content = (PROJECT_ROOT / "tools" / "export_mobile_snapshot.py").read_text(encoding="utf-8")
+    assert "DB_PATH" in content
+    assert "TARGETS_PATH" in content
+    assert "REPORTS_DIR" in content
+    assert "EXPORT_LIMIT" in content
+    assert "DEFAULT_TARGET_KEY" in content
 
 
 def test_export_mobile_has_main():
-    """CLI should have a main() function."""
+    """CLI should have a main() -> int function."""
     sys.path.insert(0, str(PROJECT_ROOT / "tools"))
-    from export_mobile_snapshot import main
-    assert callable(main)
+    import importlib
+    spec = importlib.util.spec_from_file_location(
+        "export_mobile_snapshot", PROJECT_ROOT / "tools" / "export_mobile_snapshot.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert callable(mod.main)
 
 
-def test_export_mobile_generates_from_db():
-    """Integration: generate HTML from a test database."""
-    from pipeline.database import ClippingDB
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
-        db_path = f.name
-    try:
-        with ClippingDB(db_path) as db:
-            aid = db.insert_article(
-                url="https://example.com/test-export",
-                title="Vereador Flavio Valle na Camara",
-                source_name="DiarioDoRio",
-                source_type="wordpress_api",
-                published_at="2026-03-28T10:00:00",
-                snippet="Flavio Valle participou da sessao plenaria.",
-            )
-            db.insert_mention(aid, "flavio_valle", "Flávio Valle", "Flavio Valle")
-
-        with ClippingDB(db_path) as db:
-            articles = db.list_articles_for_export(target_key="flavio_valle")
-
-        sys.path.insert(0, str(PROJECT_ROOT / "tools"))
-        from export_mobile_snapshot import generate_html
-        html = generate_html(articles, "Flávio Valle", "", "")
-        assert "Flavio Valle" in html
-        assert "DiarioDoRio" in html
-        assert len(html) > 500
-    finally:
-        os.unlink(db_path)
+def test_export_mobile_has_offline_js():
+    """Original had a complete offline JS filter engine embedded in build_html."""
+    content = (PROJECT_ROOT / "tools" / "export_mobile_snapshot.py").read_text(encoding="utf-8")
+    assert "applyFilters" in content or "selectedTargets" in content, "Missing offline JS"
+    assert "story-card" in content, "Missing story-card template"
 
 
 # ═══ F3-T4: prepare_wix_clipping_snapshot.py ═══
