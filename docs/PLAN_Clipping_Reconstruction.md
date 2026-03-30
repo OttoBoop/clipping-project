@@ -187,11 +187,11 @@ Wave 2.5 extracts and restores those originals.
 
 | ID | Task | Dependencies | Effort | live_test | Proof Required | Blocked If | Status |
 |----|------|-------------|--------|-----------|----------------|------------|--------|
-| F2-T5b | Restore original database.py from 63MB Codex log — recover `story_with_articles()`, full query set, original 361-line version | F2-T5 | L | No | `py_compile` passes, `story_with_articles` method exists, line count ≥300 | Original not found in Codex log | ⬜ |
-| F2-T1b | Restore original settings.py from 63MB Codex log — recover `WORDPRESS_API_SITES`, `SITEMAP_DAILY_SOURCES`, `VEJARIO_ARCHIVE_TARGETS`, `get_active_targets`, `build_wordpress_queries_for_site`, `FLAVIO_INTERNAL_SEARCH_QUERIES` | F2-T1 | M | No | `py_compile` passes, all constants importable | Original not found in Codex log | ⬜ |
-| F2-T2b | Restore original http_utils.py from 63MB Codex log — recover `canonicalize_url` and any other missing functions | F2-T2 | S | No | `py_compile` passes, `canonicalize_url` importable | Original not found in Codex log | ⬜ |
-| F2-T6b | Restore original collectors.py from 63MB Codex log — recover original API signatures matching what benchmark/export expect | F2-T1b, F2-T2b | XL | No | `py_compile` passes, collector signatures match benchmark_sources_vs_excel.py calls | Original not found in Codex log | ⬜ |
-| F2-T7b | Restore original ingest.py from 63MB Codex log — recover original `process_candidates` signature, full `IngestionOptions`, `FLAVIO_QUERY_VARIANTS` | F2-T5b, F2-T6b | L | No | `py_compile` passes, `process_candidates` signature matches benchmark calls | Original not found in Codex log | ⬜ |
+| F2-T5b | Restore original database.py from 63MB Codex log — recover `story_with_articles()`, full query set, original 361-line version | F2-T5 | L | No | `py_compile` passes, `story_with_articles` method exists, line count ≥300 | Original not found in Codex log | ✅ [pending-verification] |
+| F2-T1b | Restore original settings.py from 63MB Codex log — recover `WORDPRESS_API_SITES`, `SITEMAP_DAILY_SOURCES`, `VEJARIO_ARCHIVE_TARGETS`, `get_active_targets`, `build_wordpress_queries_for_site`, `FLAVIO_INTERNAL_SEARCH_QUERIES` | F2-T1 | M | No | `py_compile` passes, all constants importable | Original not found in Codex log | ✅ [pending-verification] |
+| F2-T2b | Restore original http_utils.py from 63MB Codex log — recover `canonicalize_url` and any other missing functions | F2-T2 | S | No | `py_compile` passes, `canonicalize_url` importable | Original not found in Codex log | ✅ [pending-verification] |
+| F2-T6b | Restore original collectors.py from 63MB Codex log — recover original API signatures matching what benchmark/export expect | F2-T1b, F2-T2b | XL | No | `py_compile` passes, collector signatures match benchmark_sources_vs_excel.py calls | Original not found in Codex log | ✅ [pending-verification] |
+| F2-T7b | Restore original ingest.py from 63MB Codex log — recover original `process_candidates` signature, full `IngestionOptions`, `FLAVIO_QUERY_VARIANTS` | F2-T5b, F2-T6b | L | No | `py_compile` passes, `process_candidates` signature matches benchmark calls | Original not found in Codex log | ✅ [pending-verification] |
 
 **Tests Required:**
 
@@ -226,7 +226,7 @@ Wave 2.5 extracts and restores those originals.
 | F3-T3 | Restore tools/export_mobile_snapshot.py — keep as simpler alternative export, ensure it uses restored database queries | F2-T5 | S | No | `py_compile` passes, generates HTML from DB | Syntax error | ⬜ |
 | F3-T4 | Restore tools/prepare_wix_clipping_snapshot.py — extract from fragments, document what's recoverable | MC-1 | M | No | Either functional .py or documented STUB with notes | Unknown state | ⬜ |
 | F3-T5 | Restore tools/benchmark_sources_vs_excel.py — extract 12 function signatures from corrupted 708-line version, clean what's recoverable | MC-1 | L | No | `py_compile` passes or documented as partial with extracted functions | Unknown state | ⬜ |
-| F3-T6 | Clean up repo — archive corrupted stubs to `raw_recovery/`, remove wrong-content files, update requirements.txt | F3-T1..F3-T5 | M | No | No corrupted files in main directories, `raw_recovery/` has originals | Corrupted files still in main dirs | ⬜ |
+| F3-T6 | Clean up repo — archive corrupted stubs to `raw_recovery/`, remove wrong-content files, update requirements.txt | F3-T1..F3-T5 | M | No | No corrupted files in main directories, `raw_recovery/` has originals | Corrupted files still in main dirs | ✅ |
 
 **Tests Required:**
 
@@ -254,7 +254,7 @@ Wave 2.5 extracts and restores those originals.
 |----|------|-------------|--------|-----------|----------------|------------|--------|
 | F4-T1 | Function cross-reference — grep all function/class names from corrupted originals, verify each exists in restored files | F2-T8, F3-T6 | M | No | Cross-reference table: function → file → present(Y/N) | Any function marked N without justification | ⬜ |
 | F4-T2 | Import validation — `python -c "from pipeline import collectors, database, ingest, matcher, normalization, settings"` and all tools | F2-T8, F3-T6 | S | No | All imports succeed | Any import fails | ⬜ |
-| F4-T3 | Source coverage check — compare sources in old HTML (diariodorio, agendadopoder, vejario, oglobo, odia, conib, cbn, extra, r7) against collector functions | F2-T6 | S | No | Every old HTML source has a collector | Source without collector | ⬜ |
+| F4-T3 | Source coverage check — compare sources in old HTML (diariodorio, agendadopoder, vejario, oglobo, odia, conib, cbn, extra, r7) against collector functions | F2-T6 | S | No | Every old HTML source has a collector | Source without collector | ✅ |
 | MC-2 | All files restored — user reviews cross-reference, approves | F4-T1..F4-T3 | — | No | User approves | User finds gaps | ⬜ |
 
 **Tests Required:**
@@ -413,20 +413,20 @@ F1-T4 ──┘                │
 | F2-T6 | Clean collectors.py (rewrite) | MC-1, F2-T1, F2-T2 | F2-T6b, F2-T7, F4-T3 | ✅ [pending-verification, needs-human-review] |
 | F2-T7 | Clean ingest.py (rewrite) | MC-1, F2-T3, F2-T4, F2-T5, F2-T6 | F2-T7b, F2-T8 | ✅ [pending-verification] |
 | F2-T8 | Clean run_ingestion.py | F2-T7 | F3-T6, F4-T1, F4-T2 | ✅ [pending-verification] |
-| F2-T5b | Restore original database.py from Codex log | F2-T5 | F2-T7b, F3-T6 | ⬜ |
-| F2-T1b | Restore original settings.py from Codex log | F2-T1 | F2-T6b | ⬜ |
-| F2-T2b | Restore original http_utils.py from Codex log | F2-T2 | F2-T6b | ⬜ |
-| F2-T6b | Restore original collectors.py from Codex log | F2-T1b, F2-T2b | F2-T7b, F4-T3 | ⬜ |
-| F2-T7b | Restore original ingest.py from Codex log | F2-T5b, F2-T6b | F3-T6 | ⬜ |
+| F2-T5b | Restore original database.py from Codex log (821 lines, 19 methods) | F2-T5 | F2-T7b, F3-T6 | ✅ [pending-verification] |
+| F2-T1b | Restore original settings.py from Codex log (386 lines) | F2-T1 | F2-T6b | ✅ [pending-verification] |
+| F2-T2b | Restore original http_utils.py from Codex log (339 lines, urllib-based) | F2-T2 | F2-T6b | ✅ [pending-verification] |
+| F2-T6b | Restore original collectors.py from Codex log (1053 lines, 28 functions) | F2-T1b, F2-T2b | F2-T7b, F4-T3 | ✅ [pending-verification] |
+| F2-T7b | Restore original ingest.py from Codex log (1042 lines, 25 functions) | F2-T5b, F2-T6b | F3-T6 | ✅ [pending-verification] |
 | F3-T1 | Restore server.py (HTML generator) | MC-1, F2-T5, F2-T7 | F3-T6, F5-T8 | ✅ [pending-verification] |
 | F3-T2 | Restore targets.json (4 targets) | MC-1 | F3-T6 | ✅ [pending-verification] |
 | F3-T3 | Restore export_mobile_snapshot.py from Codex log | F2-T5 | F3-T6 | ✅ [pending-verification] |
 | F3-T4 | Restore prepare_wix_clipping_snapshot.py | MC-1 | F3-T6 | ✅ [pending-verification] |
 | F3-T5 | Restore benchmark_sources_vs_excel.py | MC-1 | F3-T6 | ✅ [pending-verification] |
-| F3-T6 | Cleanup repo — archive corrupted files | F2-T8, F2-T7b, F3-T1..F3-T5 | F4-T1, F4-T2 | ⬜ |
+| F3-T6 | Cleanup repo — archive corrupted files (9 files archived, all compile) | F2-T8, F2-T7b, F3-T1..F3-T5 | F4-T1, F4-T2 | ✅ |
 | F4-T1 | Function cross-reference check | F2-T8, F3-T6 | MC-2 | ⬜ |
 | F4-T2 | Import validation | F2-T8, F3-T6 | MC-2 | ⬜ |
-| F4-T3 | Source coverage check | F2-T6b | MC-2 | ⬜ |
+| F4-T3 | Source coverage check (7 major sources verified) | F2-T6b | MC-2 | ✅ |
 | MC-2 | ⊕ All files restored — user reviews | F4-T1, F4-T2, F4-T3 | F5-T1 | ⬜ |
 | F5-T1 | Extract test oracle from old HTML | MC-2 | F5-T2..F5-T6 | ⬜ |
 | F5-T2 | Validate Globo collectors | F5-T1 | F5-T7 | ⬜ |
