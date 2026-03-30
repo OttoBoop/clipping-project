@@ -1,521 +1,1079 @@
-"""News source collectors for the clipping pipeline."""
-import html as html_mod
+from __future__ import annotations
+
+import html
 import json
+import logging
+import random
 import re
 import time
+import urllib.error
+import urllib.parse
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from urllib.parse import quote_plus, urljoin, urlparse, urlencode
+from typing import Iterable
+from urllib.parse import quote_plus, urlencode, urljoin, urlparse
 
-from .http_utils import fetch_url, try_resolve_google_redirect
-from .normalization import normalize_url, canonicalize_url
+from .http_utils import (
+    canonicalize_url,
+    extract_html_title,
+    extract_published_at,
+    fetch_url,
+    html_to_article_text,
+    html_to_text,
+    is_likely_article_url,
+    post_json,
+    try_resolve_google_redirect,
+)
+from .settings import (
+    DIRECT_SCRAPE_TARGETS,
+    FLAVIO_INTERNAL_SEARCH_QUERIES,
+    FLAVIO_INTERNAL_SEARCH_TARGETS,
+    GOOGLE_NEWS_QUERIES,
+    InternalSearchTarget,
+    RSS_FEEDS,
+    google_news_rss_url,
+)
 
 
-@dataclass
+@dataclass(slots=True)
 class CandidateArticle:
-    url: str
     title: str
+    url: str
     source_name: str
     source_type: str
-    published_at: str | None = None
-    snippet: str = ""
-    metadata: dict | None = None
+    published_at: str
+    snippet: str
+    metadata: dict
 
 
-# ── Helpers ──────────────────────────────────────────────────
+def _safe_text(node: ET.Element | None) -> str:
+    if node is None or node.text is None:
+        return ""
+    return node.text.strip()
 
 
-def _parse_date(date_str):
-    """Parse various date formats to ISO 8601 string."""
-    if not date_str:
-        return None
-    date_str = str(date_str).strip()
-    for fmt in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S.%f%z",
-                "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
-        try:
-            dt = datetime.strptime(date_str[:26], fmt)
-            return dt.strftime("%Y-%m-%dT%H:%M:%S")
-        except (ValueError, IndexError):
-            continue
+def _parse_datetime(text: str) -> str:
+    if not text:
+        return datetime.now(timezone.utc).isoformat()
+    # RSS pubDate common format.
     try:
-        return parsedate_to_datetime(date_str).strftime("%Y-%m-%dT%H:%M:%S")
+        dt = parsedate_to_datetime(text)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc).isoformat()
     except Exception:
         pass
-    m = re.match(r"(\d{1,2})/(\d{1,2})/(\d{4})", date_str)
-    if m:
-        return f"{m.group(3)}-{m.group(2).zfill(2)}-{m.group(1).zfill(2)}T00:00:00"
-    return None
+    # ISO fallback.
+    try:
+        dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc).isoformat()
+    except Exception:
+        return datetime.now(timezone.utc).isoformat()
 
 
-def _within_window(published_at, date_from, date_to):
-    """Check if a date string falls within the window (inclusive)."""
-    if not published_at:
+def _parse_window_boundary(value: str, *, end_of_day: bool) -> datetime | None:
+    raw = (value or "").strip()
+    if not raw:
+        return None
+    try:
+        if len(raw) == 10:
+            dt = datetime.strptime(raw, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            if end_of_day:
+                dt = dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+            return dt
+        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+    except Exception:
+        return None
+
+
+def _within_window(value: str, *, date_from: str = "", date_to: str = "") -> bool:
+    start = _parse_window_boundary(date_from, end_of_day=False)
+    end = _parse_window_boundary(date_to, end_of_day=True)
+    if not start and not end:
         return True
-    parsed = _parse_date(published_at)
-    if not parsed:
+    try:
+        dt = datetime.fromisoformat((value or "").replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.astimezone(timezone.utc)
+    except Exception:
         return True
-    day = parsed[:10]
-    if date_from and day < date_from:
+    if start and dt < start:
         return False
-    if date_to and day > date_to:
+    if end and dt > end:
         return False
     return True
 
 
-def _build_candidate(*, title, url, source_name, source_type, published_at=None, snippet="", metadata=None):
+def parse_rss_or_atom(xml_text: str, source_name: str, source_type: str, metadata: dict | None = None) -> list[CandidateArticle]:
+    metadata = metadata or {}
+    results: list[CandidateArticle] = []
+    root = ET.fromstring(xml_text)
+
+    # RSS 2.0 path.
+    for item in root.findall(".//item"):
+        title = _safe_text(item.find("title"))
+        link = _safe_text(item.find("link"))
+        summary = _safe_text(item.find("description"))
+        pub = _safe_text(item.find("pubDate"))
+        if not link:
+            continue
+        results.append(
+            CandidateArticle(
+                title=title,
+                url=link,
+                source_name=source_name,
+                source_type=source_type,
+                published_at=_parse_datetime(pub),
+                snippet=summary,
+                metadata=metadata,
+            )
+        )
+
+    # Atom path.
+    ns = {"atom": "http://www.w3.org/2005/Atom"}
+    for entry in root.findall(".//atom:entry", ns):
+        title = _safe_text(entry.find("atom:title", ns))
+        link_node = entry.find("atom:link", ns)
+        link = link_node.attrib.get("href", "").strip() if link_node is not None else ""
+        summary = _safe_text(entry.find("atom:summary", ns)) or _safe_text(entry.find("atom:content", ns))
+        pub = _safe_text(entry.find("atom:updated", ns)) or _safe_text(entry.find("atom:published", ns))
+        if not link:
+            continue
+        results.append(
+            CandidateArticle(
+                title=title,
+                url=link,
+                source_name=source_name,
+                source_type=source_type,
+                published_at=_parse_datetime(pub),
+                snippet=summary,
+                metadata=metadata,
+            )
+        )
+    return results
+
+
+HREF_ATTR_RE = re.compile(r"""href=["']([^"'#]+)["']""", re.IGNORECASE)
+
+
+def _extract_hrefs(value: str) -> list[str]:
+    if not value:
+        return []
+    return [m.group(1).strip() for m in HREF_ATTR_RE.finditer(value) if m.group(1).strip()]
+
+
+def _round_robin_candidates(batches: list[list[CandidateArticle]]) -> list[CandidateArticle]:
+    merged: list[CandidateArticle] = []
+    indexes = [0 for _ in batches]
+    while True:
+        progressed = False
+        for idx, batch in enumerate(batches):
+            pos = indexes[idx]
+            if pos >= len(batch):
+                continue
+            merged.append(batch[pos])
+            indexes[idx] += 1
+            progressed = True
+        if not progressed:
+            break
+    return merged
+
+
+def _dedupe_candidates_by_url(candidates: list[CandidateArticle]) -> list[CandidateArticle]:
+    deduped: list[CandidateArticle] = []
+    seen_urls: set[str] = set()
+    for item in candidates:
+        canon = canonicalize_url(item.url)
+        if not canon or canon in seen_urls:
+            continue
+        item.url = canon
+        seen_urls.add(canon)
+        deduped.append(item)
+    return deduped
+
+
+def collect_rss(
+    limit_per_feed: int = 30,
+    request_timeout: int = 10,
+    *,
+    date_from: str = "",
+    date_to: str = "",
+) -> list[CandidateArticle]:
+    articles: list[CandidateArticle] = []
+    for feed in RSS_FEEDS:
+        try:
+            _, xml_text = fetch_url(feed["url"], timeout=request_timeout)
+            items = parse_rss_or_atom(
+                xml_text,
+                source_name=feed["source_name"],
+                source_type="rss",
+                metadata={"feed_url": feed["url"]},
+            )
+            filtered = [item for item in items if _within_window(item.published_at, date_from=date_from, date_to=date_to)]
+            articles.extend(filtered[: max(1, limit_per_feed)])
+        except Exception:
+            continue
+    return articles
+
+
+def collect_google_news(
+    queries: list[str] | None = None,
+    *,
+    date_from: str = "",
+    date_to: str = "",
+    limit_per_query: int = 30,
+    request_timeout: int = 10,
+    resolve_timeout: int = 6,
+) -> list[CandidateArticle]:
+    query_batches: list[list[CandidateArticle]] = []
+    query_list = queries or GOOGLE_NEWS_QUERIES
+    for query in query_list:
+        q = query.strip()
+        if date_from:
+            q += f" after:{date_from}"
+        if date_to:
+            q += f" before:{date_to}"
+        url = google_news_rss_url(q)
+        try:
+            _, xml_text = fetch_url(url, timeout=request_timeout)
+            items = parse_rss_or_atom(
+                xml_text,
+                source_name="Google News",
+                source_type="google_news",
+                metadata={"query": q},
+            )
+            for item in items:
+                # Prefer direct outlet links when present in snippet.
+                links = _extract_hrefs(item.snippet)
+                direct_link = ""
+                for link in links:
+                    host = (urlparse(link).netloc or "").lower()
+                    if host and "news.google.com" not in host:
+                        direct_link = link
+                        break
+                item.url = canonicalize_url(direct_link or item.url)
+            filtered = [item for item in items if _within_window(item.published_at, date_from=date_from, date_to=date_to)]
+            query_batches.append(filtered[: max(1, limit_per_query)])
+        except Exception:
+            continue
+    return _dedupe_candidates_by_url(_round_robin_candidates(query_batches))
+
+
+LINK_RE = re.compile(r"""<a[^>]+href=["']([^"'#]+)["'][^>]*>(.*?)</a>""", re.IGNORECASE | re.DOTALL)
+TAG_RE = re.compile(r"(?is)<[^>]+>")
+WS_RE = re.compile(r"\s+")
+A_TAG_RE = re.compile(r"""(?is)<a\b([^>]*?)href=["']([^"'#]+)["']([^>]*)>(.*?)</a>""")
+DIV_CARD_RE = re.compile(r'(?is)<div id="post-\d+" class="[^"]*\blist-item\b[^"]*">(.*?)</div>\s*</div>\s*</div>')
+VEJARIO_DATE_RE = re.compile(r'(?is)<span class="date-post">\s*(.*?)\s*</span>')
+CAMARA_RESULT_RE = re.compile(
+    r'(?is)<dt class="result-title">.*?<a href="([^"]+)">\s*(.*?)\s*</a>.*?</dt>'
+    r'.*?<dd class="result-category">.*?</dd>'
+    r'.*?<dd class="result-text">\s*(.*?)\s*</dd>'
+    r'.*?<dd class="result-created">\s*(.*?)\s*</dd>'
+)
+CONIB_ARTICLE_RE = re.compile(r'(?is)<article class="uk-article">(.*?)</article>')
+CONIB_NEXT_RE = re.compile(r'(?is)<a class="next" href="([^"]+)"')
+CAMARA_NEXT_RE = re.compile(r'(?is)<link rel="next" href="([^"]+)"')
+PT_MONTHS = {
+    "jan": 1,
+    "janeiro": 1,
+    "fev": 2,
+    "fevereiro": 2,
+    "mar": 3,
+    "marco": 3,
+    "marÃ§o": 3,
+    "abr": 4,
+    "abril": 4,
+    "mai": 5,
+    "maio": 5,
+    "jun": 6,
+    "junho": 6,
+    "jul": 7,
+    "julho": 7,
+    "ago": 8,
+    "agosto": 8,
+    "set": 9,
+    "setembro": 9,
+    "out": 10,
+    "outubro": 10,
+    "nov": 11,
+    "novembro": 11,
+    "dez": 12,
+    "dezembro": 12,
+}
+
+
+def _clean_html_fragment(value: str) -> str:
+    text = html.unescape(TAG_RE.sub(" ", value or ""))
+    return WS_RE.sub(" ", text).strip()
+
+
+def _host_matches(host: str, expected: str) -> bool:
+    left = (host or "").lower().lstrip(".")
+    right = (expected or "").lower().lstrip(".")
+    return left == right or left.endswith(f".{right}")
+
+
+def _parse_pt_br_datetime(value: str) -> str:
+    text = _clean_html_fragment(value).lower()
+    if not text:
+        return ""
+    text = text.replace("atualizado em", " ").replace("criado em", " ")
+    text = text.replace("Ã s", " ").replace(" as ", " ").replace("â€¢", " ")
+    text = text.replace("Âº", "").replace("Âª", "")
+    text = WS_RE.sub(" ", text).strip()
+    match = re.search(r"(\d{1,2})\s+([a-zÃ§]+)\s+(\d{4})(?:,\s*(\d{1,2})h(\d{2}))?", text)
+    if not match:
+        return ""
+    day = int(match.group(1))
+    month = PT_MONTHS.get(match.group(2), 0)
+    year = int(match.group(3))
+    hour = int(match.group(4) or 12)
+    minute = int(match.group(5) or 0)
+    if not month:
+        return ""
+    try:
+        dt = datetime(year, month, day, hour, minute, tzinfo=timezone.utc)
+    except Exception:
+        return ""
+    return dt.isoformat()
+
+
+def _anchor_records(value: str) -> list[tuple[str, str, str, str]]:
+    rows: list[tuple[str, str, str, str]] = []
+    for before_attrs, href, after_attrs, inner in A_TAG_RE.findall(value or ""):
+        title = _clean_html_fragment(inner)
+        attrs = f"{before_attrs} {after_attrs}".strip()
+        rows.append((title, href.strip(), attrs, inner))
+    return rows
+
+
+def _generic_next_page_url(html_page: str, current_url: str, expected_host: str) -> str:
+    for title, href, attrs, _ in _anchor_records(html_page):
+        text = title.lower()
+        attrs_lower = attrs.lower()
+        if "rel=\"next\"" not in attrs_lower and "rel='next'" not in attrs_lower:
+            if "prÃ³ximo" not in text and "proximo" not in text and "next" not in text and 'title="prÃ³ximo"' not in attrs_lower:
+                continue
+        resolved = canonicalize_url(urljoin(current_url, href))
+        parsed = urlparse(resolved)
+        if not _host_matches(parsed.netloc, expected_host):
+            continue
+        return resolved
+    return ""
+
+
+def _build_internal_search_candidate(
+    *,
+    title: str,
+    url: str,
+    source_name: str,
+    published_at: str,
+    snippet: str,
+    metadata: dict,
+) -> CandidateArticle:
     return CandidateArticle(
-        url=normalize_url(url),
-        title=_strip_html(title or ""),
+        title=_clean_html_fragment(title),
+        url=canonicalize_url(url),
         source_name=source_name,
-        source_type=source_type,
-        published_at=_parse_date(published_at),
-        snippet=_strip_html(snippet or ""),
+        source_type="internal_search",
+        published_at=published_at,
+        snippet=_clean_html_fragment(snippet),
         metadata=metadata,
     )
 
 
-def _dedupe_candidates_by_url(candidates):
-    """Remove duplicate URLs, keep first occurrence."""
-    seen = set()
-    result = []
-    for c in candidates:
-        key = canonicalize_url(c.url)
-        if key and key not in seen:
-            seen.add(key)
-            result.append(c)
-    return result
-
-
-def _strip_html(text):
-    """Remove HTML tags and unescape entities."""
-    if not text:
-        return ""
-    text = re.sub(r"<[^>]+>", "", str(text))
-    return html_mod.unescape(text).strip()
-
-
-_A_TAG_RE = re.compile(r'<a\s+([^>]*?)href=["\']([^"\']+)["\']([^>]*)>(.*?)</a>', re.I | re.DOTALL)
-
-
-def _extract_links(html_text, base_url=""):
-    """Extract (url, title_text) pairs from HTML anchor tags."""
-    results = []
-    for m in _A_TAG_RE.finditer(html_text or ""):
-        href = m.group(2)
-        text = _strip_html(m.group(4))
-        if href and text and len(text) > 10:
-            if not href.startswith("http"):
-                href = urljoin(base_url, href)
-            results.append((href, text))
-    return results
-
-
-def _iter_window_days(date_from, date_to):
-    """Iterate over days in the window as datetime objects."""
-    try:
-        start = datetime.strptime(date_from, "%Y-%m-%d")
-        end = datetime.strptime(date_to, "%Y-%m-%d")
-    except (ValueError, TypeError):
-        return
-    day = start
-    while day <= end:
-        yield day
-        day += timedelta(days=1)
-
-
-def _is_article_url(href, host):
-    """Check if a URL looks like a news article (not a nav/section page)."""
-    parsed = urlparse(href)
-    if host not in (parsed.hostname or ""):
-        return False
-    path = parsed.path
-    if path in ("/", "") or "/busca" in path or "/search" in path or "?" in path:
-        return False
-    segments = [s for s in path.split("/") if s]
-    if len(segments) < 2:
-        return False
-    if len(path) < 15:
-        return False
-    return True
-
-
-# ── Google News (RSS) ────────────────────────────────────────
-
-
-def collect_google_news(query, date_from="", date_to="", limit=100, timeout=8):
-    """Collect articles from Google News RSS feed."""
-    candidates = []
-    try:
-        encoded = quote_plus(query)
-        url = f"https://news.google.com/rss/search?q={encoded}+when:7d&hl=pt-BR&gl=BR&ceid=BR:pt-419"
-        body, _ = fetch_url(url, timeout=timeout)
-        if not body:
-            print("  [google_news] Failed to fetch RSS feed")
-            return []
-        root = ET.fromstring(body)
-        items = root.findall(".//item")
-        for item in items[:limit]:
-            title = item.findtext("title", "")
-            link = item.findtext("link", "")
-            pub_date = item.findtext("pubDate", "")
-            source = item.findtext("source", "")
-            resolved = try_resolve_google_redirect(link)
-            if not _within_window(pub_date, date_from, date_to):
+def _extract_vejario_results(html_page: str, search_url: str, source_name: str) -> tuple[list[CandidateArticle], str]:
+    candidates: list[CandidateArticle] = []
+    seen_urls: set[str] = set()
+    for block in DIV_CARD_RE.findall(html_page or ""):
+        links = _anchor_records(block)
+        if not links:
+            continue
+        title = ""
+        url = ""
+        for link_title, link_href, _, _ in links:
+            resolved = canonicalize_url(urljoin(search_url, link_href))
+            if not is_likely_article_url(resolved, expected_host_fragment="vejario.abril.com.br"):
                 continue
-            candidates.append(_build_candidate(
-                title=title, url=resolved, source_name=source or "Google News",
-                source_type="google_news", published_at=pub_date,
-                metadata={"query": query, "google_link": link},
-            ))
-    except Exception as e:
-        print(f"  [google_news] Error: {e}")
-    print(f"  [google_news] Found {len(candidates)} candidates")
-    return candidates
-
-
-# ── RSS Feeds ────────────────────────────────────────────────
-
-
-def collect_rss(feed_urls, date_from="", date_to="", timeout=8):
-    """Collect from standard RSS/Atom feeds."""
-    candidates = []
-    if not feed_urls:
-        print("  [rss] No feeds configured")
-        return []
-    try:
-        import feedparser
-    except ImportError:
-        print("  [rss] feedparser not installed, skipping")
-        return []
-    for name, feed_url in feed_urls:
-        try:
-            body, _ = fetch_url(feed_url, timeout=timeout)
-            if not body:
-                continue
-            feed = feedparser.parse(body)
-            for entry in feed.entries:
-                pub = entry.get("published", entry.get("updated", ""))
-                if not _within_window(pub, date_from, date_to):
-                    continue
-                candidates.append(_build_candidate(
-                    title=entry.get("title", ""), url=entry.get("link", ""),
-                    source_name=name, source_type="rss", published_at=pub,
-                    snippet=entry.get("summary", ""),
-                ))
-        except Exception as e:
-            print(f"  [rss] Error fetching {name}: {e}")
-    print(f"  [rss] Found {len(candidates)} candidates from {len(feed_urls)} feeds")
-    return candidates
-
-
-# ── WordPress API ────────────────────────────────────────────
-
-
-def collect_wordpress_api(hosts, query, date_from="", date_to="", limit=100, timeout=8):
-    """Collect from WordPress REST API."""
-    candidates = []
-    for host in hosts:
-        try:
-            page = 1
-            while len(candidates) < limit:
-                params = {"search": query, "per_page": 20, "page": page, "orderby": "date", "order": "desc"}
-                if date_from:
-                    params["after"] = f"{date_from}T00:00:00"
-                if date_to:
-                    params["before"] = f"{date_to}T23:59:59"
-                api_url = f"https://{host}/wp-json/wp/v2/posts?{urlencode(params)}"
-                body, _ = fetch_url(api_url, timeout=timeout, headers={"Accept": "application/json"})
-                if not body:
-                    break
-                try:
-                    posts = json.loads(body)
-                except json.JSONDecodeError:
-                    break
-                if not isinstance(posts, list) or not posts:
-                    break
-                for post in posts:
-                    title = _strip_html(post.get("title", {}).get("rendered", ""))
-                    link = post.get("link", "")
-                    date = post.get("date", "")
-                    excerpt = _strip_html(post.get("excerpt", {}).get("rendered", ""))
-                    candidates.append(_build_candidate(
-                        title=title, url=link, source_name=host,
-                        source_type="wordpress_api", published_at=date,
-                        snippet=excerpt, metadata={"query": query},
-                    ))
-                if len(posts) < 20:
-                    break
-                page += 1
-                time.sleep(0.3)
-        except Exception as e:
-            print(f"  [wordpress_api] Error fetching {host}: {e}")
-    print(f"  [wordpress_api] Found {len(candidates)} candidates from {len(hosts)} hosts")
-    return candidates
-
-
-# ── Globo API Search ─────────────────────────────────────────
-
-
-def _collect_globo_api(target, query, date_from="", date_to="", limit=50, timeout=8):
-    """Collect from Globo busca API (JSON)."""
-    candidates = []
-    try:
-        encoded = quote_plus(query)
-        for page in range(1, 4):
-            api_url = target.search_url_template.format(query=encoded, page=page)
-            body, _ = fetch_url(api_url, timeout=timeout, headers={"Accept": "application/json"})
-            if not body:
-                break
-            try:
-                data = json.loads(body)
-            except json.JSONDecodeError:
-                # Might be HTML, try extracting links
-                break
-
-            # Globo API returns items in various structures
-            items = []
-            if isinstance(data, dict):
-                items = data.get("items", data.get("results", data.get("hits", [])))
-            elif isinstance(data, list):
-                items = data
-
-            if not items:
-                break
-
-            for item in items:
-                if isinstance(item, dict):
-                    title = item.get("title", item.get("name", ""))
-                    url = item.get("url", item.get("link", item.get("href", "")))
-                    pub = item.get("published", item.get("date", item.get("created", "")))
-                    snippet = item.get("summary", item.get("description", item.get("abstract", "")))
-                else:
-                    continue
-
-                if not url:
-                    continue
-                if not _within_window(pub, date_from, date_to):
-                    continue
-
-                candidates.append(_build_candidate(
-                    title=title, url=url, source_name=target.name,
-                    source_type="internal_search", published_at=pub,
-                    snippet=snippet, metadata={"query": query, "api": "globo_busca"},
-                ))
-
-            if len(items) < 10:
-                break
-            time.sleep(0.3)
-
-    except Exception as e:
-        print(f"    [{target.name}] Globo API error: {e}")
-
-    return candidates
-
-
-# ── Internal Site Search (HTML) ──────────────────────────────
-
-
-def _collect_html_search(target, query, date_from="", date_to="", limit=50, timeout=8):
-    """Collect from a site's HTML search page."""
-    candidates = []
-    try:
-        encoded = quote_plus(query)
-        for page in range(1, 4):
-            search_url = target.search_url_template.format(query=encoded, page=page)
-            body, final_url = fetch_url(search_url, timeout=timeout)
-            if not body:
-                break
-            links = _extract_links(body, base_url=search_url)
-            new_count = 0
-            for href, text in links:
-                if not _is_article_url(href, target.host):
-                    continue
-                if len(text) < 25:
-                    continue
-                candidates.append(_build_candidate(
-                    title=text, url=href, source_name=target.name,
-                    source_type="internal_search",
-                    metadata={"query": query, "search_url": search_url},
-                ))
-                new_count += 1
-            if new_count == 0:
-                break
-            time.sleep(0.3)
-    except Exception as e:
-        print(f"    [{target.name}] HTML search error: {e}")
-    return candidates
-
-
-def collect_internal_site_search(targets, query, date_from="", date_to="", limit_per=50, timeout=8):
-    """Search news sites using their internal search pages or APIs."""
-    candidates = []
-    for target in targets:
-        try:
-            if target.uses_globo_api:
-                batch = _collect_globo_api(target, query, date_from, date_to, limit_per, timeout)
-            else:
-                batch = _collect_html_search(target, query, date_from, date_to, limit_per, timeout)
-            batch = _dedupe_candidates_by_url(batch)[:limit_per]
-            candidates.extend(batch)
-            print(f"    [{target.name}] {len(batch)} candidates")
-        except Exception as e:
-            print(f"    [{target.name}] Error: {e}")
-    print(f"  [internal_search] Found {len(candidates)} total candidates")
-    return candidates
-
-
-# ── Sitemap Daily ────────────────────────────────────────────
-
-
-def collect_sitemap_daily(configs, date_from="", date_to="", query="", timeout=8):
-    """Collect from XML sitemaps. Supports daily URL templates and standard sitemaps."""
-    candidates = []
-    for config in configs:
-        name = config.get("name", "unknown")
-        host = config.get("host", "")
-        is_daily = config.get("daily", False)
-
-        try:
-            if is_daily and config.get("sitemap_url_template"):
-                # Iterate over each day in the window
-                template = config["sitemap_url_template"]
-                site_count = 0
-                for day in _iter_window_days(date_from, date_to):
-                    sitemap_url = template.format(
-                        yyyy=day.strftime("%Y"), mm=day.strftime("%m"), dd=day.strftime("%d"),
-                    )
-                    body, _ = fetch_url(sitemap_url, timeout=timeout)
-                    if not body:
-                        continue
-                    try:
-                        entries = _parse_sitemap_xml(body, host, date_from, date_to, query)
-                        for e in entries:
-                            candidates.append(e)
-                            site_count += 1
-                    except ET.ParseError:
-                        continue
-                    time.sleep(0.2)
-                print(f"    [{name}] {site_count} candidates from daily sitemaps")
-
-            elif config.get("sitemap_url"):
-                # Standard single sitemap
-                body, _ = fetch_url(config["sitemap_url"], timeout=timeout)
-                if not body:
-                    print(f"    [{name}] Failed to fetch sitemap")
-                    continue
-                entries = _parse_sitemap_xml(body, host, date_from, date_to, query)
-                candidates.extend(entries)
-                print(f"    [{name}] {len(entries)} candidates from sitemap")
-
-        except Exception as e:
-            print(f"    [{name}] Error: {e}")
-
-    print(f"  [sitemap_daily] Found {len(candidates)} total candidates")
-    return candidates
-
-
-def _parse_sitemap_xml(xml_text, host, date_from, date_to, query=""):
-    """Parse a sitemap XML and return CandidateArticle list."""
-    entries = []
-    root = ET.fromstring(xml_text)
-    ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9",
-          "news": "http://www.google.com/schemas/sitemap-news/0.9",
-          "image": "http://www.google.com/schemas/sitemap-image/1.1"}
-
-    for url_elem in root.findall(".//sm:url", ns) or root.findall(".//url"):
-        loc = url_elem.findtext("sm:loc", "", ns) or url_elem.findtext("loc", "")
-        lastmod = url_elem.findtext("sm:lastmod", "", ns) or url_elem.findtext("lastmod", "")
-        news_date = url_elem.findtext(".//news:publication_date", "", ns)
-        news_title = url_elem.findtext(".//news:title", "", ns)
-        pub_date = news_date or lastmod
-
-        if not loc:
+            title = link_title or title
+            url = resolved
+            break
+        if not url or url in seen_urls:
             continue
-        # Skip images
-        if re.search(r"\.(jpg|jpeg|png|gif|webp|svg)(\?|$)", loc, re.I):
-            continue
-        if not _within_window(pub_date, date_from, date_to):
-            continue
-
-        entries.append(_build_candidate(
-            title=news_title or "", url=loc, source_name=host,
-            source_type="sitemap_daily", published_at=pub_date,
-            metadata={"source": "sitemap"},
-        ))
-    return entries
-
-
-# ── Câmara do Rio Archive ────────────────────────────────────
-
-
-def collect_camara_archive(query, date_from="", date_to="", timeout=8):
-    """Collect from Câmara do Rio website search."""
-    candidates = []
-    try:
-        encoded = quote_plus(query)
-        # Câmara do Rio uses Joomla search
-        for page in range(1, 3):
-            search_url = (
-                f"https://camara.rio/index.php?option=com_search&view=search"
-                f"&searchphrase=exact&searchword={encoded}&limitstart={20 * (page - 1)}"
+        seen_urls.add(url)
+        desc_match = re.search(r'(?is)<span class="description">\s*(.*?)\s*</span>', block)
+        date_match = VEJARIO_DATE_RE.search(block)
+        candidates.append(
+            _build_internal_search_candidate(
+                title=title,
+                url=url,
+                source_name=source_name,
+                published_at=_parse_pt_br_datetime(date_match.group(1) if date_match else ""),
+                snippet=desc_match.group(1) if desc_match else "",
+                metadata={"search_url": search_url, "internal_search_host": "vejario.abril.com.br"},
             )
-            body, _ = fetch_url(search_url, timeout=timeout)
-            if not body:
-                break
-            links = _extract_links(body, base_url="https://camara.rio")
-            new = 0
-            for href, text in links:
-                if "camara.rio" not in (urlparse(href).hostname or ""):
+        )
+    next_url = ""
+    history_match = re.search(
+        r'"history":\{"host":"vejario\.abril\.com\.br","path":"([^"]+)".*?"parameters":"([^"]+)"',
+        html_page or "",
+        re.DOTALL,
+    )
+    current_page = 1
+    current_match = re.search(r"/busca/pagina/(\d+)/", search_url)
+    if current_match:
+        current_page = int(current_match.group(1))
+    if history_match:
+        path_template = history_match.group(1).replace("\\/", "/")
+        parameters = history_match.group(2).replace("\\/", "/")
+        next_page = current_page + 1
+        next_path = path_template.replace("%d", str(next_page))
+        next_url = canonicalize_url(urljoin(search_url, f"{next_path}{parameters}"))
+    return candidates, next_url
+
+
+def _extract_camara_results(html_page: str, search_url: str, source_name: str) -> tuple[list[CandidateArticle], str]:
+    candidates: list[CandidateArticle] = []
+    seen_urls: set[str] = set()
+    for href, title, snippet, created in CAMARA_RESULT_RE.findall(html_page or ""):
+        resolved = canonicalize_url(urljoin(search_url, href))
+        if not is_likely_article_url(resolved, expected_host_fragment="camara.rio"):
+            continue
+        if resolved in seen_urls:
+            continue
+        seen_urls.add(resolved)
+        candidates.append(
+            _build_internal_search_candidate(
+                title=title,
+                url=resolved,
+                source_name=source_name,
+                published_at=_parse_pt_br_datetime(created),
+                snippet=snippet,
+                metadata={"search_url": search_url, "internal_search_host": "camara.rio"},
+            )
+        )
+    next_match = CAMARA_NEXT_RE.search(html_page or "")
+    next_url = canonicalize_url(urljoin(search_url, next_match.group(1))) if next_match else ""
+    return candidates, next_url
+
+
+def _extract_conib_results(html_page: str, search_url: str, source_name: str) -> tuple[list[CandidateArticle], str]:
+    candidates: list[CandidateArticle] = []
+    seen_urls: set[str] = set()
+    for block in CONIB_ARTICLE_RE.findall(html_page or ""):
+        links = _anchor_records(block)
+        if not links:
+            continue
+        title, href, _, _ = links[0]
+        resolved = canonicalize_url(urljoin(search_url, href))
+        if not is_likely_article_url(resolved, expected_host_fragment="conib.org.br"):
+            continue
+        if resolved in seen_urls:
+            continue
+        seen_urls.add(resolved)
+        snippet = _clean_html_fragment(block)
+        candidates.append(
+            _build_internal_search_candidate(
+                title=title,
+                url=resolved,
+                source_name=source_name,
+                published_at="",
+                snippet=snippet,
+                metadata={"search_url": search_url, "internal_search_host": "conib.org.br"},
+            )
+        )
+    next_match = CONIB_NEXT_RE.search(html_page or "")
+    next_url = canonicalize_url(urljoin(search_url, next_match.group(1))) if next_match else ""
+    return candidates, next_url
+
+
+def _extract_internal_search_results(
+    adapter: InternalSearchTarget,
+    *,
+    html_page: str,
+    search_url: str,
+) -> tuple[list[CandidateArticle], str]:
+    if adapter.host == "vejario.abril.com.br":
+        return _extract_vejario_results(html_page, search_url, adapter.source_name)
+    if adapter.host == "camara.rio":
+        return _extract_camara_results(html_page, search_url, adapter.source_name)
+    if adapter.host == "www.conib.org.br":
+        return _extract_conib_results(html_page, search_url, adapter.source_name)
+    candidates: list[CandidateArticle] = []
+    seen_urls: set[str] = set()
+    for title, href in _extract_links_from_search(html_page, adapter.source_name):
+        resolved = canonicalize_url(urljoin(search_url, href))
+        if not is_likely_article_url(resolved, expected_host_fragment=adapter.host):
+            continue
+        if resolved in seen_urls:
+            continue
+        seen_urls.add(resolved)
+        candidates.append(
+            _build_internal_search_candidate(
+                title=title,
+                url=resolved,
+                source_name=adapter.source_name,
+                published_at="",
+                snippet="",
+                metadata={"search_url": search_url, "internal_search_host": adapter.host},
+            )
+        )
+    return candidates, _generic_next_page_url(html_page, search_url, adapter.host)
+
+
+def _globo_search_payload(adapter: InternalSearchTarget, query: str, *, offset: int) -> list[dict]:
+    size = max(1, int(adapter.page_size or 10))
+    payload = [
+        {
+            "search_profile": adapter.search_profile,
+            "query": adapter.recency_query_id,
+            "params": {"q": query, "from": offset, "size": size},
+        }
+    ]
+    if offset == 0 and adapter.navigational_query_id:
+        payload.extend(
+            [
+                {
+                    "search_profile": adapter.navigational_profile or adapter.search_profile,
+                    "query": adapter.navigational_query_id,
+                    "params": {"q": query, "from": 0, "size": 1},
+                },
+                {
+                    "search_profile": adapter.live_profile or adapter.search_profile,
+                    "query": adapter.live_query_id,
+                    "params": {"q": query, "from": 0, "size": 1},
+                },
+                {
+                    "search_profile": adapter.search_profile,
+                    "query": adapter.editorial_query_id or adapter.recency_query_id,
+                    "params": {"q": query, "from": 0, "size": 1},
+                },
+            ]
+        )
+    return payload
+
+
+def _collect_globo_internal_search(
+    adapter: InternalSearchTarget,
+    *,
+    query: str,
+    limit_per_adapter: int,
+    request_timeout: int,
+    date_from: str,
+    date_to: str,
+) -> list[CandidateArticle]:
+    candidates: list[CandidateArticle] = []
+    seen_urls: set[str] = set()
+    start = _parse_window_boundary(date_from, end_of_day=False)
+    offset = 0
+    page_size = max(1, int(adapter.page_size or 10))
+    while len(candidates) < max(1, limit_per_adapter):
+        _, body = post_json("https://busca.globo.com/v1/search", _globo_search_payload(adapter, query, offset=offset), timeout=request_timeout)
+        try:
+            payload = json.loads(body)
+        except Exception:
+            break
+        if not isinstance(payload, list) or not payload:
+            break
+        first = payload[0] if isinstance(payload[0], dict) else {}
+        hits = (((first.get("result") or {}).get("hits") or {}).get("hits")) or []
+        if not hits:
+            break
+        page_candidates: list[CandidateArticle] = []
+        older_hits = 0
+        dated_hits = 0
+        for hit in hits:
+            if not isinstance(hit, dict):
+                continue
+            source = hit.get("_source") or {}
+            url = canonicalize_url(str(source.get("url") or "").strip())
+            if not url or url in seen_urls:
+                continue
+            raw_issued = str(source.get("issued") or "").strip()
+            issued = _parse_datetime(raw_issued) if raw_issued else ""
+            if issued:
+                dated_hits += 1
+                if start and datetime.fromisoformat(issued.replace("Z", "+00:00")).astimezone(timezone.utc) < start:
+                    older_hits += 1
+            page_candidates.append(
+                _build_internal_search_candidate(
+                    title=str(source.get("title") or ""),
+                    url=url,
+                    source_name=adapter.source_name,
+                    published_at=issued,
+                    snippet=str(source.get("description") or source.get("body") or "")[:500],
+                    metadata={"query": query, "search_url": adapter.search_url_template, "internal_search_host": adapter.host},
+                )
+            )
+            seen_urls.add(url)
+        candidates.extend(page_candidates)
+        if dated_hits and older_hits == dated_hits:
+            break
+        if len(hits) < page_size:
+            break
+        offset += page_size
+    return [item for item in candidates if _within_window(item.published_at, date_from=date_from, date_to=date_to) or not item.published_at]
+
+
+def _extract_links_from_search(html_page: str, base_source: str) -> Iterable[tuple[str, str]]:
+    for href, raw_title in LINK_RE.findall(html_page):
+        href = href.strip()
+        if href.startswith("javascript:"):
+            continue
+        if href.startswith("mailto:"):
+            continue
+        title = html.unescape(TAG_RE.sub(" ", raw_title))
+        title = WS_RE.sub(" ", title).strip()
+        yield title, href
+
+
+def collect_direct_scrape(main_query: str = "Flavio Valle", *, per_target_limit: int = 50, request_timeout: int = 10) -> list[CandidateArticle]:
+    articles: list[CandidateArticle] = []
+    for target in DIRECT_SCRAPE_TARGETS:
+        try:
+            search_url = target.search_url_template.format(query=quote_plus(main_query))
+            expected_host = urlparse(search_url).netloc
+            _, html_page = fetch_url(search_url, timeout=request_timeout)
+            seen_urls: set[str] = set()
+            accepted = 0
+            for title, link in _extract_links_from_search(html_page, target.source_name):
+                if link.startswith("/"):
+                    link = urljoin(search_url, link)
+                link = canonicalize_url(link)
+                if link in seen_urls:
                     continue
-                if len(text) < 20 or "com_search" in href:
+                seen_urls.add(link)
+                if not is_likely_article_url(link, expected_host_fragment=expected_host):
                     continue
-                candidates.append(_build_candidate(
-                    title=text, url=href, source_name="Câmara do Rio",
-                    source_type="camara_archive", metadata={"query": query},
-                ))
-                new += 1
-            if new == 0:
+                articles.append(
+                    CandidateArticle(
+                        title=title or "",
+                        url=link,
+                        source_name=target.source_name,
+                        source_type="scrape",
+                        published_at=datetime.now(timezone.utc).isoformat(),
+                        snippet="",
+                        metadata={"search_url": search_url},
+                    )
+                )
+                accepted += 1
+                if accepted >= max(1, per_target_limit):
+                    break
+        except Exception:
+            continue
+    return articles
+
+
+def collect_wordpress_api(
+    query: str,
+    *,
+    source_name: str,
+    base_url: str,
+    date_from: str = "",
+    date_to: str = "",
+    per_site_limit: int = 120,
+    request_timeout: int = 10,
+) -> list[CandidateArticle]:
+    q = (query or "").strip()
+    if not q:
+        return []
+
+    base = (base_url or "").strip().rstrip("/")
+    if not base:
+        return []
+
+    endpoint = f"{base}/wp-json/wp/v2/posts"
+    per_page = 100
+    max_pages = max(3, min(60, (max(1, per_site_limit) // per_page) + 10))
+
+    articles: list[CandidateArticle] = []
+    seen_urls: set[str] = set()
+    accepted = 0
+
+    for page in range(1, max_pages + 1):
+        if accepted >= max(1, per_site_limit):
+            break
+        params: dict[str, str] = {
+            "search": q,
+            "per_page": str(per_page),
+            "page": str(page),
+            "orderby": "date",
+            "order": "desc",
+            "_fields": "link,title,excerpt,date_gmt,date",
+        }
+        if date_from:
+            params["after"] = f"{date_from}T00:00:00Z"
+        if date_to:
+            params["before"] = f"{date_to}T23:59:59Z"
+        url = f"{endpoint}?{urlencode(params, doseq=True)}"
+
+        try:
+            _, body = fetch_url(url, timeout=request_timeout)
+        except urllib.error.HTTPError:
+            # Typically "invalid page number" once we go beyond available results.
+            break
+        except Exception:
+            break
+
+        try:
+            payload = json.loads(body)
+        except Exception:
+            break
+        if not isinstance(payload, list) or not payload:
+            break
+
+        for item in payload:
+            if not isinstance(item, dict):
+                continue
+            link = str(item.get("link") or "").strip()
+            if not link:
+                continue
+            canon = canonicalize_url(link)
+            if canon in seen_urls:
+                continue
+            seen_urls.add(canon)
+
+            title_obj = item.get("title") or {}
+            if isinstance(title_obj, dict):
+                rendered = str(title_obj.get("rendered") or "")
+            else:
+                rendered = str(title_obj or "")
+            title = html.unescape(rendered)
+            title = WS_RE.sub(" ", TAG_RE.sub(" ", title)).strip()
+
+            excerpt_obj = item.get("excerpt") or {}
+            if isinstance(excerpt_obj, dict):
+                excerpt_rendered = str(excerpt_obj.get("rendered") or "")
+            else:
+                excerpt_rendered = str(excerpt_obj or "")
+            excerpt = html.unescape(excerpt_rendered)
+            excerpt = WS_RE.sub(" ", TAG_RE.sub(" ", excerpt)).strip()
+
+            published_raw = str(item.get("date_gmt") or item.get("date") or "").strip()
+            published_at = _parse_datetime(published_raw)
+
+            articles.append(
+                CandidateArticle(
+                    title=title,
+                    url=canon,
+                    source_name=source_name or base,
+                    source_type="wordpress_api",
+                    published_at=published_at,
+                    snippet=excerpt,
+                    metadata={"query": q, "wp_base_url": base, "endpoint": endpoint},
+                )
+            )
+            accepted += 1
+            if accepted >= max(1, per_site_limit):
                 break
-            time.sleep(0.3)
-    except Exception as e:
-        print(f"  [camara_archive] Error: {e}")
-    candidates = _dedupe_candidates_by_url(candidates)
-    print(f"  [camara_archive] Found {len(candidates)} candidates")
-    return candidates
+
+        # Heuristic: when fewer than per_page are returned, we're at the end.
+        if len(payload) < per_page:
+            break
+
+    return articles
 
 
-# ── Veja Rio Archive ─────────────────────────────────────────
+def collect_internal_site_search(
+    queries: list[str] | None = None,
+    *,
+    adapters: list[InternalSearchTarget] | None = None,
+    date_from: str = "",
+    date_to: str = "",
+    limit_per_adapter: int = 60,
+    max_pages_per_adapter: int = 6,
+    request_timeout: int = 10,
+) -> list[CandidateArticle]:
+    query_list = [str(item or "").strip() for item in (queries or FLAVIO_INTERNAL_SEARCH_QUERIES) if str(item or "").strip()]
+    adapter_list = adapters or FLAVIO_INTERNAL_SEARCH_TARGETS
+    collected: list[CandidateArticle] = []
+    global_seen_urls: set[str] = set()
+    start = _parse_window_boundary(date_from, end_of_day=False)
+
+    for adapter in adapter_list:
+        adapter_candidates: list[CandidateArticle] = []
+        adapter_seen_urls: set[str] = set()
+        for query in query_list:
+            if len(adapter_candidates) >= max(1, limit_per_adapter):
+                break
+            if adapter.mode == "globo_api":
+                batch = _collect_globo_internal_search(
+                    adapter,
+                    query=query,
+                    limit_per_adapter=max(1, limit_per_adapter) - len(adapter_candidates),
+                    request_timeout=request_timeout,
+                    date_from=date_from,
+                    date_to=date_to,
+                )
+            else:
+                batch = []
+                next_url = adapter.search_url_template.format(query=quote_plus(query))
+                pages_seen: set[str] = set()
+                current_page = 0
+                while next_url and current_page < max(1, max_pages_per_adapter):
+                    page_url = canonicalize_url(next_url)
+                    if page_url in pages_seen:
+                        break
+                    pages_seen.add(page_url)
+                    current_page += 1
+                    try:
+                        _, html_page = fetch_url(page_urlY , timeout=request_timeout)
+                    except Exception:
+                        break
+                    page_candidates, discovered_next = _extract_internal_search_results(adapter, html_page=html_page, search_url=page_url)
+                    older_hits = 0
+                    dated_hits = 0
+                    for item in page_candidates:
+                        if item.published_at:
+                            dated_hits += 1
+                            parsed = _parse_window_boundary(item.published_at, end_of_day=False)
+                            if start and parsed and parsed < start:
+                                older_hits += 1
+                        batch.append(item)
+                        if len(adapter_candidates) + len(batch) >= max(1, limit_per_adapter):
+                            break
+                    if len(adapter_candidates) + len(batch) >= max(1, limit_per_adapter):
+                        break
+                    if dated_hits and older_hits == dated_hits:
+                        break
+                    next_url = discovered_next
+            for item in batch:
+                if item.url in adapter_seen_urls:
+                    continue
+                adapter_seen_urls.add(item.url)
+                adapter_candidates.append(item)
+                if len(adapter_candidates) >= max(1, limit_per_adapter):
+                    break
+        for item in adapter_candidates:
+            if item.url in global_seen_urls:
+                continue
+            global_seen_urls.add(item.url)
+            metadata = dict(item.metadata or {})
+            metadata.update(
+                {
+                    "force_full_fetch": True,
+                    "exact_body_only": True,
+                    "require_published_extraction": True,
+                }
+            )
+            item.metadata = metadata
+            collected.append(item)
+    return _dedupe_candidates_by_url(collected)
 
 
-def collect_vejario_archive(query, date_from="", date_to="", timeout=8):
-    """Collect from Veja Rio archive/search."""
-    candidates = []
+def iterate_google_playwright_day(
+    query: str,
+    day_str: str,
+    start_index: int = 0,
+    headed: bool = False,
+) -> Iterable[tuple[list[CandidateArticle], int, bool]]:
+    """
+    Yields (articles_from_page, next_start_index, is_blocked)
+    Uses Playwright to physically navigate and click "Next".
+    """
+    from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+    from camoufox.sync_api import Camoufox
+    
+    q = f'"{query}" -site:instagram.com -site:facebook.com -site:youtube.com -site:tiktok.com -site:twitter.com -site:linkedin.com'
+    
+    # Strictly format dates for Google url tbs params: cdr:1,cd_min:MM/DD/YYYY,cd_max:MM/DD/YYYY
+    # Inline after:YYYY-MM-DD doesn't strictly cull in some regions
     try:
-        encoded = quote_plus(query)
-        for page in range(1, 3):
-            search_url = f"https://vejario.abril.com.br/page/{page}/?s={encoded}"
-            body, _ = fetch_url(search_url, timeout=timeout)
-            if not body:
-                break
-            links = _extract_links(body, base_url=search_url)
-            new = 0
-            for href, text in links:
-                if "vejario.abril.com.br" not in (urlparse(href).hostname or ""):
-                    continue
-                if len(text) < 15:
-                    continue
-                candidates.append(_build_candidate(
-                    title=text, url=href, source_name="Veja Rio",
-                    source_type="vejario_archive", metadata={"query": query},
-                ))
-                new += 1
-            if new == 0:
-                break
-            time.sleep(0.3)
-    except Exception as e:
-        print(f"  [vejario_archive] Error: {e}")
-    candidates = _dedupe_candidates_by_url(candidates)
-    print(f"  [vejario_archive] Found {len(candidates)} candidates")
-    return candidates
+        from datetime import datetime
+        dt = datetime.strptime(day_str, "%Y-%m-%d")
+        tbs_date = f"{dt.month}/{dt.day}/{dt.year}"
+        tbs_param = f"cdr:1,cd_min:{tbs_date},cd_max:{tbs_date}"
+    except Exception:
+        tbs_param = ""
+    
+    start_url = f"https://www.google.com/search?q={quote_plus(q)}"
+    if tbs_param:
+        start_url += f"&tbs={quote_plus(tbs_param)}"
+    if start_index > 0:
+        start_url += f"&start={start_index}"
+
+    logging.info(f"Initializing Camoufox (headed={headed})...")
+    with Camoufox(headless=not headed, humanize=True) as browser:
+        logging.info("Camoufox initialized successfully. Creating page...")
+        page = browser.new_page()
+        
+        current_index = start_index
+        
+        try:
+            page.goto(start_url, wait_until="domcontentloaded", timeout=60000)
+            
+            while True:
+                # 1. Check for Captcha / Block
+                if page.locator('form[action="/sorry/index"]').count() > 0 or "sorry/index" in page.url:
+                    if headed:
+                        logging.warning(f"CAPTCHA detected at index {current_index}! Please solve it in the browser window.")
+                        try:
+                            # Save screenshot for monitoring
+                            import os
+                            os.makedirs("data/screenshots", exist_ok=True)
+                            screenshot_path = f"data/screenshots/captcha_{day_str}_{current_index}.png"
+                            page.screenshot(path=screenshot_path)
+                            logging.info(f"Saved CAPTCHA screenshot to {screenshot_path}")
+                        except Exception as e:
+                            logging.warning(f"Failed to capture screenshot: {e}")
+
+                        # Active polling loop (max 5 minutes)
+                        resolved = False
+                        for _ in range(60):
+                            try:
+                                if "sorry/index" not in page.url and page.locator('form[action="/sorry/index"]').count() == 0:
+                                    if page.locator("div#search").count() > 0:
+                                        logging.info("CAPTCHA solved! Resuming extraction...")
+                                        resolved = True
+                                        break
+                            except Exception:
+                                pass
+                            time.sleep(5)
+
+                        if not resolved:
+                            logging.warning("CAPTCHA not solved in time or connection broken. Stopping.")
+                            yield [], current_index, True
+                            break
+                    else:
+                        logging.warning(f"CAPTCHA detected on Google at index {current_index}.")
+                        yield [], current_index, True
+                        break
+                    
+                # 2. Extract organic results
+                # Google organic results typically reside in div.g
+                # Or we can just extract all links and filter by google.
+                try:
+                    page.wait_for_selector("div#search", timeout=10000)
+                except PlaywrightTimeoutError:
+                    logging.info(f"No more results or empty page at index {current_index}.")
+                    break
+                
+                # Fetch all a tags inside main search area
+                locators = page.locator("div#search a[href]").all()
+                
+                articles: list[CandidateArticle] = []
+                seen_urls = set()
+                
+                for loc in locators:
+                    try:
+                        href = loc.get_attribute("href") or ""
+                        
+                        if not href.startswith("http") or "google.com" in href:
+                            continue
+                            
+                        # Try to get the h3 text as title
+                        title_loc = loc.locator("h3")
+                        if title_loc.count() > 0:
+                            title = title_loc.first.text_content() or ""
+                        else:
+                            title = loc.text_content() or ""
+                            
+                        title = WS_RE.sub(" ", title).strip()
+                        if not title:
+                            continue
+                            
+                        canon_url = canonicalize_url(href)
+                        if canon_url in seen_urls:
+                            continue
+                        seen_urls.add(canon_url)
+                        
+                        pub_date = day_str + "T12:00:00+00:00"
+                        
+                        articles.append(
+                            CandidateArticle(
+                                title=title,
+                                url=canon_url,
+                                source_name="Google Search",
+                                source_type="playwright_google",
+                                published_at=pub_date,
+                                snippet="",
+                                metadata={"query": query},
+                            )
+                        )
+                    except Exception:
+                        continue
+                        
+                next_start_idx = current_index + 10
+                
+                # Yield current page
+                yield articles, next_start_idx, False
+                
+                # 3. Simulate human delay
+                time.sleep(random.uniform(2.5, 5.5))
+                
+                # 4. Click Next
+                # Google's next button usually has id "pnnext"
+                next_btn = page.locator("a#pnnext")
+                if next_btn.count() > 0:
+                    try:
+                        next_btn.first.click()
+                        page.wait_for_load_state("domcontentloaded", timeout=30000)
+                        current_index = next_start_idx
+                    except Exception as e:
+                        logging.error(f"Failed to click next: {e}")
+                        break
+                else:
+                    # No more pages
+                    break
+                    
+        except PlaywrightTimeoutError:
+            logging.error("Playwright timeout navigating google.")
+            yield [], current_index, True # Treat as block to be safe
+        except Exception as e:
+            logging.error(f"Playwright general error: {e}")
+            yield [], current_index, True
+            
+        finally:
+            browser.close()
+
+
+def fetch_full_article_text(url: str, request_timeout: int = 10) -> tuple[str, str, str, str, str]:
+    resolved_url = try_resolve_google_redirect(url, timeout=max(3, min(request_timeout, 8)))
+    target_url = resolved_url or url
+    final_url, raw_html = fetch_url(target_url, timeout=request_timeout)
+    full_text = html_to_article_text(raw_html)
+    # Heuristic: some sites wrap the real body in containers we don't detect, resulting in tiny text
+    # (eg. just an image caption). Fallback to full-page text for matching.
+    if len(full_text.split()) < 80:
+        fallback = html_to_text(raw_html)
+        if len(fallback) > len(full_text):
+            full_text = fallback
+    title = extract_html_title(raw_html)
+    published = extract_published_at(raw_html)
+    return canonicalize_url(final_url), raw_html, full_text, title, published
+
+
+# ── Backward-compatibility aliases ──────────────────────────────────────
+# The rewritten ingest.py imports these names, but in the original architecture
+# they don't exist as separate functions. Camara/Vejario/sitemaps are handled
+# through collect_internal_site_search with different adapters.
+# These stubs satisfy the import until ingest.py is restored (F2-T7b).
+
+def collect_sitemap_daily(*args, **kwargs):
+    """Compat stub — original uses collect_internal_site_search for sitemaps."""
+    return []
+
+def collect_vejario_archive(*args, **kwargs):
+    """Compat stub — original uses collect_internal_site_search for Veja Rio."""
+    return []
+
+def collect_camara_archive(*args, **kwargs):
+    """Compat stub — original uses collect_internal_site_search for Camara."""
+    return []
+
+def collect_odia_site(*args, **kwargs):
+    """Compat stub — original uses collect_direct_scrape for O Dia."""
+    return []
+
+def collect_r7_site(*args, **kwargs):
+    """Compat stub — original uses collect_direct_scrape for R7."""
+    return []
