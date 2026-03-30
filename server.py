@@ -279,7 +279,7 @@ def prepare_snapshot(db_path="data/clipping.db", date_from="", date_to="",
     stories_map = {}
     article_map = {}
     for a in articles:
-        article_map[a["id"]] = a
+        article_map[a["article_id"]] = a
 
     # Query story_articles
     with ClippingDB(db_path) as db:
@@ -299,7 +299,7 @@ def prepare_snapshot(db_path="data/clipping.db", date_from="", date_to="",
     # Articles not in any story get their own story
     storied_aids = {row["article_id"] for row in rows}
     for a in articles:
-        if a["id"] not in storied_aids:
+        if a["article_id"] not in storied_aids:
             sid = f"auto-{a['id']}"
             stories_map[sid] = {
                 "story_id": sid,

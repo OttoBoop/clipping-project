@@ -43,16 +43,13 @@ def test_database_has_original_methods():
 def test_database_story_with_articles_returns_list():
     """story_with_articles() should return a list of story dicts with articles."""
     import tempfile, os
+    from pathlib import Path
     from pipeline.database import ClippingDB
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
-        db_path = f.name
-    try:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
         db = ClippingDB(db_path)
         result = db.story_with_articles()
         assert isinstance(result, list), "story_with_articles should return a list"
-        db.close()
-    finally:
-        os.unlink(db_path)
 
 
 # ═══ F2-T1b: settings.py original restoration ═══
