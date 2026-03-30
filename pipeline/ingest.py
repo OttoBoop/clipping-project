@@ -122,7 +122,7 @@ def run_ingestion(options):
             elif cname == "internal_search":
                 batch = collect_internal_site_search(FLAVIO_INTERNAL_SEARCH_TARGETS, query, options.date_from, options.date_to, timeout=options.request_timeout)
             elif cname == "sitemap_daily":
-                batch = collect_sitemap_daily(SITEMAP_CONFIGS, options.date_from, options.date_to, timeout=options.request_timeout)
+                batch = collect_sitemap_daily(SITEMAP_CONFIGS, options.date_from, options.date_to, query=query, timeout=options.request_timeout)
             elif cname == "vejario_archive":
                 batch = collect_vejario_archive(query, options.date_from, options.date_to, timeout=options.request_timeout)
             elif cname == "camara_archive":
