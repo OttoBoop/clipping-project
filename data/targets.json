@@ -1,4 +1,21 @@
+[
+  {
+    "key": "flavio_valle",
+    "label": "Flávio Valle",
+    "display_name": "Flávio Valle",
+    "className": "primary",
     "primary": true,
+    "keywords": [
+      "Flavio Valle",
+      "Flávio Valle",
+      "vereador Flavio Valle",
+      "vereador Flávio Valle",
+      "Flavio Valle vereador",
+      "Flávio Valle vereador"
+    ],
     "exact_aliases": [
-      "Flavio Vale"
+      "Flavio Vale",
+      "Flávio Vale"
     ]
+  }
+]
