@@ -5,12 +5,13 @@ from dataclasses import dataclass, field
 @dataclass
 class Target:
     key: str
-    label: str
+    label: str = ""
     display_name: str = ""
     keywords: list = field(default_factory=list)
     exact_aliases: list = field(default_factory=list)
     className: str = ""
     primary: bool = False
+    priority: int = 2
 
 
 @dataclass

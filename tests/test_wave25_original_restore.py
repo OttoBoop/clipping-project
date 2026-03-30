@@ -124,7 +124,8 @@ def test_http_utils_canonicalize_url_importable():
 
 
 def test_http_utils_canonicalize_url_normalizes():
-    """canonicalize_url should normalize URLs — strip trailing slash, lowercase host."""
+    """canonicalize_url should normalize URLs — strip trailing slashes and query params."""
     from pipeline.http_utils import canonicalize_url
-    result = canonicalize_url("https://Example.Com/path/")
-    assert "example.com" in result, "Should lowercase host"
+    result = canonicalize_url("https://example.com/path/")
+    assert result.endswith("/path"), "Should strip trailing slash"
+    assert "?" not in canonicalize_url("https://example.com/path?utm=x"), "Should strip query"

@@ -561,9 +561,25 @@ versions — proven by successful recovery of export_mobile_snapshot.py (1247 li
 
 ## 11. Change Log
 
+### Decision Ledger
+
+- 2026-03-30: [PLAN_Clipping_Reconstruction.md](D:/recovery/clipping-project/docs/PLAN_Clipping_Reconstruction.md) remains the task and dependency authority; [FORENSIC_INVENTORY.md](D:/recovery/clipping-project/docs/FORENSIC_INVENTORY.md) remains the provenance authority; [DISCOVERY_Clipping_Reconstruction_Debug.md](D:/recovery/clipping-project/docs/DISCOVERY_Clipping_Reconstruction_Debug.md) remains the architectural and intent guardrail.
+- 2026-03-30: Prior Batch B2 completion claims for `F2-T5b`, `F2-T1b`, and `F2-T2b` remain withdrawn because those edits were reconstructions, not verified original recoveries.
+- 2026-03-30: The only allowed provenance labels remain `recovered verbatim`, `recovered and cleaned`, `reconstructed from evidence`, and `not yet recovered`.
+- 2026-03-30: `F2-T5b` is the only active implementation task. `F2-T1b` and `F2-T2b` remain open but deferred until the `F2-T5b` evidence pass is fully cataloged.
+- 2026-03-30: Compatibility or test green is not sufficient to mark a `restore original` task complete.
+- 2026-03-30: `F2-T5b` evidence-pass result is `NO-GO` for runtime merge at this time. Recovered fragments are strong for `story_with_articles()` and partial export/query surfaces, but the surrounding `database.py` base is still too contaminated and incomplete for a faithful replacement.
+- 2026-03-30: Any future compatibility/scaffold changes for `database.py` are explicitly deferred. They are not part of `F2-T5b` unless the task is later reclassified away from strict original recovery.
+- 2026-03-30: `F2-T5b` extraction pass 2 improved the evidence base: the file head through `list_story_context()` is now treated as `recovered and cleaned`, `list_articles_for_export()` has a cleaner patch fragment, and the large recovered `.py` bundle is explicitly classified as contaminated rather than clean source proof.
+- 2026-03-30: With `F2-T5b` extraction pass 2 exhausted and still `NO-GO`, `F2-T5b` remains open but blocked. The next original-plan recovery lane can now advance to `F2-T1b` and `F2-T2b`.
+
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-03-30 | Initial plan created from discovery + forensic inventory | Claude Opus 4.6 |
 | 2026-03-30 | F3-T3 restored: original export_mobile_snapshot.py (1247 lines) from 63MB Codex log | Claude Opus 4.6 |
 | 2026-03-30 | F3-T4, F3-T5 restored from Codex log + corrupted from_patches | Claude Opus 4.6 |
 | 2026-03-30 | Added Wave 2.5 (F2-T1b..T7b): restore pipeline originals from 63MB Codex log. F2 rewrites were placeholders, not restorations. Restructured dependency table accordingly. | Claude Opus 4.6 |
+| 2026-03-30 | Correction: prior Codex Batch B2 completion claim for F2-T5b, F2-T1b, and F2-T2b was withdrawn. Those edits were evidence-based reconstructions, not verified original recoveries, so the tasks were reopened. | Codex |
+| 2026-03-30 | Provenance-only restart of Wave 2.5: cataloged current evidence for F2-T5b/F2-T1b/F2-T2b in FORENSIC_INVENTORY before any new code edits. Database remains partial-block recovery only; settings/http now have candidate artifacts but are still not accepted as clean originals. | Codex |
+| 2026-03-30 | Completed the deeper artifact-first evidence pass for F2-T5b. Result: `NO-GO` for runtime merge; `story_with_articles()` is recoverable as a fragment, but the surrounding `database.py` base and neighboring query bodies still lack a clean file-level recovery. No runtime code changes were made. | Codex |
+| 2026-03-30 | Completed `F2-T5b` extraction pass 2. Decision remained `NO-GO`: the base section through `list_story_context()` is now stronger and `list_articles_for_export()` has a cleaner fragment, but `list_articles()` and `list_articles_by_ids()` still block a faithful stitched original. Runtime `pipeline/database.py` was not edited, and non-original compatibility changes remain deferred. | Codex |
