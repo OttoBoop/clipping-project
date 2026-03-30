@@ -87,14 +87,14 @@ def test_wix_snapshot_has_docstring_or_main():
     )
 
 
-def test_wix_snapshot_documents_original_functions():
-    """Stub should document the original functions found in from_patches."""
+def test_wix_snapshot_has_original_functions():
+    """Should have the original functions recovered from from_patches + 63MB file."""
     content = (PROJECT_ROOT / "tools" / "prepare_wix_clipping_snapshot.py").read_text(encoding="utf-8")
     # Original had: prepare_snapshot, validate_snapshot_html, render_review_screenshots, scope_token
-    assert "prepare_snapshot" in content, "Should reference original prepare_snapshot function"
-    assert "validate_snapshot_html" in content or "validate" in content, (
-        "Should reference original validation function"
-    )
+    assert "def prepare_snapshot" in content, "Missing original prepare_snapshot function"
+    assert "def validate_snapshot_html" in content, "Missing original validate_snapshot_html function"
+    assert "def render_review_screenshots" in content, "Missing original render_review_screenshots function"
+    assert "def scope_token" in content, "Missing original scope_token function"
 
 
 # ═══ F3-T5: benchmark_sources_vs_excel.py ═══
