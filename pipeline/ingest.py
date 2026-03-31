@@ -443,7 +443,7 @@ def process_candidates(
                 "reason": reason,
                 "stage": stage or "processing",
                 "matched_targets": sorted({h.target_key for h in hit_list}),
-                "matched_keywords": sorted({h.keyword for h in hit_list}),
+                "matched_keywords": sorted({h.keyword_matched for h in hit_list}),
                 "summary_excerpt": (summary_value or "").strip()[:320],
             },
         )
@@ -704,10 +704,10 @@ def process_candidates(
                 {
                     "target_key": h.target_key,
                     "target_name": h.target_name,
-                    "keyword_matched": h.keyword,
+                    "keyword_matched": h.keyword_matched,
                     "sentiment": sentiment,
                     "sentiment_reason": "lexical_heuristic",
-                    "context": h.context,
+                    "context": "",
                 }
             )
         if not mention_payload:

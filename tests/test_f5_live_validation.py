@@ -275,3 +275,45 @@ def test_google_news_rss_returns_articles():
     assert len(results) >= 1, "Google News RSS returned 0 articles"
     for r in results[:3]:
         assert r.url.startswith("http"), f"Result URL invalid: {r.url}"
+
+
+# ═══ F5-T7: Full E2E pipeline run ═══
+
+@pytest.mark.live
+def test_e2e_pipeline_produces_articles_in_db():
+    """Full pipeline run should produce ≥50 articles from ≥5 sources in the DB."""
+    from pipeline.ingest import IngestionOptions, run_ingestion
+    from pipeline.database import ClippingDB
+    from pipeline.settings import DB_PATH
+
+    options = IngestionOptions(
+        max_candidates_per_source=50,
+        request_timeout_seconds=15,
+        date_from="2026-03-01",
+        date_to="2026-03-31",
+    )
+
+    results = run_ingestion(collector="all", options=options, progress_callback=None)
+
+    # Check IngestionResult list
+    assert len(results) >= 1, "run_ingestion returned no IngestionResult entries"
+    total_articles = sum(r.articles_inserted for r in results)
+    total_mentions = sum(r.mentions_inserted for r in results)
+    print(f"\nE2E Results: {total_articles} articles, {total_mentions} mentions")
+    for r in results:
+        print(f"  {r.source_name} ({r.source_type}): {r.candidates_seen} candidates, "
+              f"{r.articles_inserted} articles, {r.mentions_inserted} mentions")
+
+    # Check DB has articles from multiple sources
+    db = ClippingDB(DB_PATH)
+    with db.connect() as conn:
+        article_count = conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
+        source_count = conn.execute("SELECT COUNT(DISTINCT source_name) FROM articles").fetchone()[0]
+        mention_count = conn.execute("SELECT COUNT(*) FROM mentions").fetchone()[0]
+
+    print(f"\nDB: {article_count} articles, {source_count} sources, {mention_count} mentions")
+
+    # Plan criteria: ≥50 articles from ≥5 sources
+    assert article_count >= 50, f"Expected ≥50 articles, got {article_count}"
+    assert source_count >= 5, f"Expected ≥5 sources, got {source_count}"
+    assert mention_count >= 1, f"Expected ≥1 mentions, got {mention_count}"
