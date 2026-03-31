@@ -252,10 +252,10 @@ Wave 2.5 extracts and restores those originals.
 
 | ID | Task | Dependencies | Effort | live_test | Proof Required | Blocked If | Status |
 |----|------|-------------|--------|-----------|----------------|------------|--------|
-| F4-T1 | Function cross-reference — grep all function/class names from corrupted originals, verify each exists in restored files | F2-T8, F3-T6 | M | No | Cross-reference table: function → file → present(Y/N) | Any function marked N without justification | ⬜ |
-| F4-T2 | Import validation — `python -c "from pipeline import collectors, database, ingest, matcher, normalization, settings"` and all tools | F2-T8, F3-T6 | S | No | All imports succeed | Any import fails | ⬜ |
+| F4-T1 | Function cross-reference — grep all function/class names from corrupted originals, verify each exists in restored files | F2-T8, F3-T6 | M | No | Cross-reference table: function → file → present(Y/N) | Any function marked N without justification | ✅ |
+| F4-T2 | Import validation — `python -c "from pipeline import collectors, database, ingest, matcher, normalization, settings"` and all tools | F2-T8, F3-T6 | S | No | All imports succeed | Any import fails | ✅ |
 | F4-T3 | Source coverage check — compare sources in old HTML (diariodorio, agendadopoder, vejario, oglobo, odia, conib, cbn, extra, r7) against collector functions | F2-T6 | S | No | Every old HTML source has a collector | Source without collector | ✅ |
-| MC-2 | All files restored — user reviews cross-reference, approves | F4-T1..F4-T3 | — | No | User approves | User finds gaps | ⬜ |
+| MC-2 | All files restored — user reviews cross-reference, approves | F4-T1..F4-T3 | — | No | User approves | User finds gaps | ✅ |
 
 **Tests Required:**
 
@@ -424,10 +424,10 @@ F1-T4 ──┘                │
 | F3-T4 | Restore prepare_wix_clipping_snapshot.py | MC-1 | F3-T6 | ✅ [pending-verification] |
 | F3-T5 | Restore benchmark_sources_vs_excel.py | MC-1 | F3-T6 | ✅ [pending-verification] |
 | F3-T6 | Cleanup repo — archive corrupted files (9 files archived, all compile) | F2-T8, F2-T7b, F3-T1..F3-T5 | F4-T1, F4-T2 | ✅ |
-| F4-T1 | Function cross-reference check | F2-T8, F3-T6 | MC-2 | ⬜ |
-| F4-T2 | Import validation | F2-T8, F3-T6 | MC-2 | ⬜ |
+| F4-T1 | Function cross-reference check (33 functions + fidelity gaps fixed) | F2-T8, F3-T6 | MC-2 | ✅ |
+| F4-T2 | Import validation (all modules + key exports) | F2-T8, F3-T6 | MC-2 | ✅ |
 | F4-T3 | Source coverage check (7 major sources verified) | F2-T6b | MC-2 | ✅ |
-| MC-2 | ⊕ All files restored — user reviews | F4-T1, F4-T2, F4-T3 | F5-T1 | ⬜ |
+| MC-2 | ⊕ All files restored — user reviews | F4-T1, F4-T2, F4-T3 | F5-T1 | ✅ |
 | F5-T1 | Extract test oracle from old HTML | MC-2 | F5-T2..F5-T6 | ⬜ |
 | F5-T2 | Validate Globo collectors | F5-T1 | F5-T7 | ⬜ |
 | F5-T3 | Validate WordPress collectors | F5-T1 | F5-T7 | ⬜ |
