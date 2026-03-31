@@ -831,13 +831,13 @@ def collect_internal_site_search(
                 pages_seen: set[str] = set()
                 current_page = 0
                 while next_url and current_page < max(1, max_pages_per_adapter):
-                    page_url = canonicalize_url(next_url)
+                    page_url = _canonicalize_search_page_url(next_url)
                     if page_url in pages_seen:
                         break
                     pages_seen.add(page_url)
                     current_page += 1
                     try:
-                        _, html_page = fetch_url(page_urlY , timeout=request_timeout)
+                        _, html_page = fetch_url(page_url, timeout=request_timeout)
                     except Exception:
                         break
                     page_candidates, discovered_next = _extract_internal_search_results(adapter, html_page=html_page, search_url=page_url)
