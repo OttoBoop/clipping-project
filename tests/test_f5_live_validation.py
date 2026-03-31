@@ -47,12 +47,27 @@ def test_oracle_has_key_sources():
         assert len(oracle[source]) >= 1, f"Source {source} has no URLs"
 
 
-def test_oracle_urls_are_strings():
+def test_oracle_entries_have_url_title_date():
+    """Each oracle entry should be a dict with url, title, date keys."""
     oracle_path = PROJECT_ROOT / "data" / "test_oracle.json"
     with open(oracle_path, "r", encoding="utf-8") as f:
         oracle = json.load(f)
-    for source, urls in oracle.items():
-        assert isinstance(urls, list), f"Source {source} value should be a list"
-        for url in urls[:3]:  # spot check first 3
-            assert isinstance(url, str), f"URL in {source} should be string, got {type(url)}"
-            assert url.startswith("http"), f"URL in {source} doesn't start with http: {url[:50]}"
+    for source, entries in oracle.items():
+        assert isinstance(entries, list), f"Source {source} value should be a list"
+        for entry in entries[:3]:  # spot check first 3
+            assert isinstance(entry, dict), f"Entry in {source} should be dict, got {type(entry)}"
+            assert "url" in entry, f"Entry in {source} missing 'url' key"
+            assert "title" in entry, f"Entry in {source} missing 'title' key"
+            assert "date" in entry, f"Entry in {source} missing 'date' key"
+            assert entry["url"].startswith("http"), f"URL doesn't start with http: {entry['url'][:50]}"
+
+
+def test_oracle_most_entries_have_dates():
+    """Most oracle entries should have dates for targeted date-range validation."""
+    oracle_path = PROJECT_ROOT / "data" / "test_oracle.json"
+    with open(oracle_path, "r", encoding="utf-8") as f:
+        oracle = json.load(f)
+    total = sum(len(v) for v in oracle.values())
+    with_dates = sum(1 for entries in oracle.values() for e in entries if e.get("date"))
+    ratio = with_dates / total if total else 0
+    assert ratio >= 0.8, f"Only {with_dates}/{total} ({ratio:.0%}) entries have dates, need ≥80%"
