@@ -24,10 +24,13 @@ from urllib.parse import urlparse
 
 from .collectors import (
     CandidateArticle,
+    collect_camara_archive,
     collect_direct_scrape,
     collect_google_news,
     collect_internal_site_search,
     collect_rss,
+    collect_sitemap_daily,
+    collect_vejario_archive,
     collect_wordpress_api,
     fetch_full_article_text,
 )
@@ -36,9 +39,12 @@ from .matcher import CitationMatcher
 from .normalization import normalize_text
 from .settings import (
     BACKFILL_START_DATE,
+    CAMARA_ARCHIVE_TARGET,
     DB_PATH,
     FLAVIO_INTERNAL_SEARCH_QUERIES,
     FLAVIO_INTERNAL_SEARCH_TARGETS,
+    SITEMAP_DAILY_SOURCES,
+    VEJARIO_ARCHIVE_TARGETS,
     WORDPRESS_API_SITES,
     build_direct_scrape_queries_for_target,
     build_google_queries_for_target,
@@ -1003,6 +1009,56 @@ def run_ingestion(
                     },
                 )
     # [END RECONSTRUCTED]
+
+    # Sitemap daily collectors (Globo family, CBN, Veja Rio)
+    if collector in {"all", "sitemap_daily"}:
+        sitemap_queries = [options.custom_query.strip()] if options.custom_query.strip() else list(FLAVIO_INTERNAL_SEARCH_QUERIES)
+        planned_urls = {candidate.url for _, _, batch in plans for candidate in batch if candidate.url}
+        sitemap_candidates = collect_sitemap_daily(
+            queries=sitemap_queries,
+            date_from=options.date_from,
+            date_to=options.date_to,
+            limit_per_source=max_candidates,
+            request_timeout=request_timeout,
+        )
+        filtered_sitemap = [c for c in dedupe_candidates(sitemap_candidates) if c.url not in planned_urls]
+        for c in filtered_sitemap:
+            planned_urls.add(c.url)
+        plans.append(("Sitemap Daily", "sitemap_daily", filtered_sitemap))
+        if progress_callback:
+            progress_callback("source_collected", {"source_name": "Sitemap Daily", "source_type": "sitemap_daily", "candidates_total": len(filtered_sitemap)})
+
+    # Veja Rio archive collector
+    if collector in {"all", "vejario_archive"}:
+        planned_urls = {candidate.url for _, _, batch in plans for candidate in batch if candidate.url}
+        vejario_candidates = collect_vejario_archive(
+            date_from=options.date_from,
+            date_to=options.date_to,
+            limit_per_target=max(10, max_candidates // 2),
+            request_timeout=request_timeout,
+        )
+        filtered_vejario = [c for c in dedupe_candidates(vejario_candidates) if c.url not in planned_urls]
+        for c in filtered_vejario:
+            planned_urls.add(c.url)
+        plans.append(("Veja Rio Archive", "vejario_archive", filtered_vejario))
+        if progress_callback:
+            progress_callback("source_collected", {"source_name": "Veja Rio Archive", "source_type": "vejario_archive", "candidates_total": len(filtered_vejario)})
+
+    # Camara Rio archive collector
+    if collector in {"all", "camara_archive"}:
+        planned_urls = {candidate.url for _, _, batch in plans for candidate in batch if candidate.url}
+        camara_candidates = collect_camara_archive(
+            date_from=options.date_from,
+            date_to=options.date_to,
+            limit_total=max(10, max_candidates // 2),
+            request_timeout=request_timeout,
+        )
+        filtered_camara = [c for c in dedupe_candidates(camara_candidates) if c.url not in planned_urls]
+        for c in filtered_camara:
+            planned_urls.add(c.url)
+        plans.append(("Camara Rio Archive", "camara_archive", filtered_camara))
+        if progress_callback:
+            progress_callback("source_collected", {"source_name": "Camara Rio Archive", "source_type": "camara_archive", "candidates_total": len(filtered_camara)})
 
     results: list[IngestionResult] = []
     if progress_callback:
