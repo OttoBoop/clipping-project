@@ -415,9 +415,12 @@ def _extract_vejario_results(html_page: str, search_url: str, source_name: str) 
             resolved = canonicalize_url(urljoin(search_url, link_href))
             if not is_likely_article_url(resolved, expected_host_fragment="vejario.abril.com.br"):
                 continue
-            title = link_title or title
-            url = resolved
-            break
+            if not url:
+                url = resolved
+            if link_title:
+                title = link_title
+                url = resolved
+                break
         if not url or url in seen_urls:
             continue
         seen_urls.add(url)
