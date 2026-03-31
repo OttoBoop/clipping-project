@@ -378,7 +378,7 @@ class ClippingDB:
     # ------------------------------------------------------------------
     # VERBATIM from session log (Skip 300 output, lines 301-311)
     # ------------------------------------------------------------------
-    def story_article_counts(self, story_id: int) -> tuple[int, int]:
+    def story_article_stats(self, story_id: int) -> tuple[int, int]:
         with self.connect() as conn:
             row = conn.execute(
                 """
@@ -394,6 +394,83 @@ class ClippingDB:
             if not row:
                 return 0, 0
             return int(row["article_count"] or 0), int(row["unique_sources"] or 0)
+
+    # ------------------------------------------------------------------
+    # [RECONSTRUCTED] from schema + ingest.py call signatures + class patterns
+    # story_article_stats is RECOVERED (SQL body from session log)
+    # ------------------------------------------------------------------
+    def create_story(
+        self,
+        title: str,
+        summary: str,
+        temperature: float,
+        target_keys: list[str],
+    ) -> int:
+        now = utc_now_iso()
+        with self.connect() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO stories (title, summary, temperature, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (title, summary, float(temperature), now, now),
+            )
+            story_id = int(cur.lastrowid)
+            if target_keys:
+                conn.executemany(
+                    """
+                    INSERT OR IGNORE INTO story_targets (story_id, target_key)
+                    VALUES (?, ?)
+                    """,
+                    [(story_id, tkey) for tkey in target_keys],
+                )
+            return story_id
+
+    def attach_article_to_story(self, story_id: int, article_id: int) -> None:
+        with self.connect() as conn:
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO story_articles (story_id, article_id)
+                VALUES (?, ?)
+                """,
+                (int(story_id), int(article_id)),
+            )
+
+    def ensure_story_target(self, story_id: int, tkey: str) -> None:
+        with self.connect() as conn:
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO story_targets (story_id, target_key)
+                VALUES (?, ?)
+                """,
+                (int(story_id), str(tkey)),
+            )
+
+    def update_story(
+        self,
+        story_id: int,
+        temperature: float | None = None,
+    ) -> None:
+        now = utc_now_iso()
+        with self.connect() as conn:
+            if temperature is not None:
+                conn.execute(
+                    """
+                    UPDATE stories
+                    SET temperature = ?, updated_at = ?
+                    WHERE id = ?
+                    """,
+                    (float(temperature), now, int(story_id)),
+                )
+            else:
+                conn.execute(
+                    """
+                    UPDATE stories
+                    SET updated_at = ?
+                    WHERE id = ?
+                    """,
+                    (now, int(story_id)),
+                )
 
     # ------------------------------------------------------------------
     # VERBATIM from session log (block 10 extraction, lines 312-411)

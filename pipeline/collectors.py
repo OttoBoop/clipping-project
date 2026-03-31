@@ -10,10 +10,10 @@ import urllib.error
 import urllib.parse
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from typing import Iterable
-from urllib.parse import quote_plus, urlencode, urljoin, urlparse
+from urllib.parse import parse_qsl, quote_plus, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 
 from .http_utils import (
     canonicalize_url,
@@ -26,13 +26,17 @@ from .http_utils import (
     post_json,
     try_resolve_google_redirect,
 )
+from .normalization import normalize_text
 from .settings import (
+    CAMARA_ARCHIVE_TARGET,
     DIRECT_SCRAPE_TARGETS,
     FLAVIO_INTERNAL_SEARCH_QUERIES,
     FLAVIO_INTERNAL_SEARCH_TARGETS,
     GOOGLE_NEWS_QUERIES,
     InternalSearchTarget,
     RSS_FEEDS,
+    SITEMAP_DAILY_SOURCES,
+    VEJARIO_ARCHIVE_TARGETS,
     google_news_rss_url,
 )
 
@@ -282,6 +286,13 @@ CAMARA_RESULT_RE = re.compile(
 CONIB_ARTICLE_RE = re.compile(r'(?is)<article class="uk-article">(.*?)</article>')
 CONIB_NEXT_RE = re.compile(r'(?is)<a class="next" href="([^"]+)"')
 CAMARA_NEXT_RE = re.compile(r'(?is)<link rel="next" href="([^"]+)"')
+CAMARA_ARCHIVE_ITEM_RE = re.compile(
+    r'(?is)catItemDateCreated[^>]*>\s*(.*?)\s*</span>.*?'
+    r'<h3 class="catItemTitle">.*?<a href="([^"]+)">\s*(.*?)\s*</a>'
+)
+VEJARIO_INFINITY_RE = re.compile(
+    r'(?is)infiniteScroll\s*=\s*\{"settings":\{.*?"path":"([^"]+)".*?(?:"parameters":"([^"]*)")?'
+)
 PT_MONTHS = {
     "jan": 1,
     "janeiro": 1,
@@ -1052,28 +1063,387 @@ def fetch_full_article_text(url: str, request_timeout: int = 10) -> tuple[str, s
     return canonicalize_url(final_url), raw_html, full_text, title, published
 
 
-# ── Backward-compatibility aliases ──────────────────────────────────────
-# The rewritten ingest.py imports these names, but in the original architecture
-# they don't exist as separate functions. Camara/Vejario/sitemaps are handled
-# through collect_internal_site_search with different adapters.
-# These stubs satisfy the import until ingest.py is restored (F2-T7b).
+# ── Recovered helper functions ──────────────────────────────────────────
+# VERBATIM from 63MB Codex session log (see collectors_recovered.py for provenance)
 
-def collect_sitemap_daily(*args, **kwargs):
-    """Compat stub — original uses collect_internal_site_search for sitemaps."""
-    return []
 
-def collect_vejario_archive(*args, **kwargs):
-    """Compat stub — original uses collect_internal_site_search for Veja Rio."""
-    return []
+def _xml_local_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1] if "}" in tag else tag
 
-def collect_camara_archive(*args, **kwargs):
-    """Compat stub — original uses collect_internal_site_search for Camara."""
-    return []
 
-def collect_odia_site(*args, **kwargs):
-    """Compat stub — original uses collect_direct_scrape for O Dia."""
-    return []
+def _slug_title_from_url(url: str) -> str:
+    path = urlparse(url).path.rstrip("/")
+    slug = path.rsplit("/", 1)[-1] if "/" in path else path
+    return re.sub(r"[-_]+", " ", slug).strip().title() or ""
 
-def collect_r7_site(*args, **kwargs):
-    """Compat stub — original uses collect_direct_scrape for R7."""
-    return []
+
+def _normalize_query_values(queries: list[str] | None) -> list[str]:
+    return [normalize_text(q) for q in (queries or []) if normalize_text(q)]
+
+
+def _canonicalize_search_page_url(url: str) -> str:
+    raw = str(url or "").strip()
+    if not raw:
+        return ""
+    try:
+        parts = urlsplit(raw)
+    except Exception:
+        return raw
+    scheme = (parts.scheme or "https").lower()
+    netloc = (parts.netloc or "").lower()
+    path = re.sub(r"/+", "/", parts.path or "")
+    if path != "/":
+        path = path.rstrip("/")
+    query = urlencode(parse_qsl(parts.query, keep_blank_values=True), doseq=True)
+    return urlunsplit((scheme, netloc, path, query, ""))
+
+
+def _iter_window_days(date_from: str, date_to: str, *, default_days: int = 7) -> list[datetime]:
+    start_dt = _parse_window_boundary(date_from, end_of_day=False)
+    end_dt = _parse_window_boundary(date_to, end_of_day=True)
+    now = datetime.now(timezone.utc)
+    if start_dt is None and end_dt is None:
+        end_dt = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+        start_dt = (end_dt - timedelta(days=max(0, default_days - 1))).replace(
+            hour=0, minute=0, second=0, microsecond=0,
+        )
+    elif start_dt is None and end_dt is not None:
+        start_dt = end_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif start_dt is not None and end_dt is None:
+        end_dt = start_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+    assert start_dt is not None and end_dt is not None
+    if end_dt < start_dt:
+        start_dt, end_dt = end_dt, start_dt
+    current = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    final = end_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    days: list[datetime] = []
+    while current <= final:
+        days.append(current)
+        current += timedelta(days=1)
+    return days
+
+
+def _matches_queries(text: str, queries: list[str] | None) -> bool:
+    normalized_queries = _normalize_query_values(queries)
+    if not normalized_queries:
+        return True
+    searchable = normalize_text(text)
+    if not searchable:
+        return False
+    return any(query in searchable for query in normalized_queries)
+
+
+def _parse_sitemap_entries(xml_text: str) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    try:
+        root = ET.fromstring(xml_text)
+    except Exception:
+        return rows
+    for url_node in root.iter():
+        if _xml_local_name(url_node.tag) != "url":
+            continue
+        loc = ""
+        title = ""
+        published_at = ""
+        for child in url_node.iter():
+            name = _xml_local_name(child.tag)
+            value = _safe_text(child)
+            if not value:
+                continue
+            if name == "loc" and child is not url_node:
+                if not loc:
+                    loc = value
+            elif name in {"title", "news_title"} and not title:
+                title = value
+            elif name in {"publication_date", "lastmod"} and not published_at:
+                published_at = _parse_datetime(value)
+        if loc:
+            rows.append({"loc": loc, "title": title, "published_at": published_at})
+    return rows
+
+
+def _build_specialized_candidate(
+    *,
+    title: str,
+    url: str,
+    source_name: str,
+    source_type: str,
+    published_at: str,
+    snippet: str = "",
+    metadata: dict | None = None,
+) -> CandidateArticle:
+    item_metadata = dict(metadata or {})
+    item_metadata.setdefault("force_full_fetch", True)
+    item_metadata.setdefault("exact_body_only", True)
+    item_metadata.setdefault("require_published_extraction", not bool(published_at))
+    return CandidateArticle(
+        title=_clean_html_fragment(title) or _slug_title_from_url(url),
+        url=canonicalize_url(url),
+        source_name=source_name,
+        source_type=source_type,
+        published_at=published_at,
+        snippet=_clean_html_fragment(snippet),
+        metadata=item_metadata,
+    )
+
+
+def _extract_vejario_archive_page(
+    html_page: str,
+    current_url: str,
+    target: dict[str, str],
+) -> tuple[list[CandidateArticle], str]:
+    candidates: list[CandidateArticle] = []
+    seen_urls: set[str] = set()
+    expected_host = str(target.get("host") or "vejario.abril.com.br").strip() or "vejario.abril.com.br"
+    path_prefix = str(target.get("article_path_prefix") or "").strip()
+    source_name = str(target.get("source_name") or "Veja Rio Archive").strip() or "Veja Rio Archive"
+
+    for block in DIV_CARD_RE.findall(html_page or ""):
+        links = _anchor_records(block)
+        chosen_url = ""
+        chosen_title = ""
+        for link_title, link_href, _, _ in links:
+            resolved = canonicalize_url(urljoin(current_url, link_href))
+            parsed = urlparse(resolved)
+            if not _host_matches(parsed.netloc, expected_host):
+                continue
+            if path_prefix and not (parsed.path or "").startswith(path_prefix):
+                continue
+            if not is_likely_article_url(resolved, expected_host_fragment=expected_host):
+                continue
+            chosen_url = resolved
+            chosen_title = link_title or chosen_title
+            break
+        if not chosen_url or chosen_url in seen_urls:
+            continue
+        seen_urls.add(chosen_url)
+        time_match = re.search(r"(?is)<time[^>]*>(.*?)</time>", block)
+        desc_match = re.search(r'(?is)<p[^>]+class=["\'][^"\']*description[^"\']*["\'][^>]*>(.*?)</p>', block)
+        candidates.append(
+            _build_specialized_candidate(
+                title=chosen_title,
+                url=chosen_url,
+                source_name=source_name,
+                source_type="vejario_archive",
+                published_at=_parse_pt_br_datetime(time_match.group(1) if time_match else ""),
+                snippet=desc_match.group(1) if desc_match else "",
+                metadata={"archive_url": current_url, "archive_host": expected_host},
+            )
+        )
+
+    next_url = ""
+    path_match = VEJARIO_INFINITY_RE.search(html_page or "")
+    if path_match:
+        path_template = path_match.group(1).replace("\\/", "/")
+        parameters = (path_match.group(2) or "").replace("\\/", "/")
+        current_page = 1
+        current_match = re.search(r"/pagina/(\d+)/", current_url)
+        if current_match:
+            current_page = int(current_match.group(1))
+        next_path = path_template.replace("%d", str(current_page + 1))
+        next_url = _canonicalize_search_page_url(urljoin(current_url, f"{next_path}{parameters}"))
+    return candidates, next_url
+
+
+# ── Recovered collector functions ──────────────────────────────────────
+# VERBATIM from 63MB Codex session log (see collectors_recovered.py for provenance)
+
+
+def collect_camara_archive(
+    *,
+    target: dict[str, str | int] | None = None,
+    date_from: str = "",
+    date_to: str = "",
+    limit_total: int = 120,
+    max_pages: int = 24,
+    request_timeout: int = 10,
+) -> list[CandidateArticle]:
+    config = target or CAMARA_ARCHIVE_TARGET
+    base_url = str(config.get("start_url") or "").strip()
+    host = str(config.get("host") or "camara.rio").strip() or "camara.rio"
+    source_name = str(config.get("source_name") or "Camara Rio Archive").strip() or "Camara Rio Archive"
+    page_size = max(1, int(config.get("page_size") or 10))
+    if not base_url:
+        return []
+    start = _parse_window_boundary(date_from, end_of_day=False)
+    end = _parse_window_boundary(date_to, end_of_day=True)
+    next_url = f"{base_url}?limit={page_size}&start=0"
+    pages_seen: set[str] = set()
+    collected: list[CandidateArticle] = []
+    seen_urls: set[str] = set()
+    current_page = 0
+    while next_url and current_page < max(1, max_pages) and len(collected) < max(1, limit_total):
+        page_url = _canonicalize_search_page_url(next_url)
+        if page_url in pages_seen:
+            break
+        pages_seen.add(page_url)
+        current_page += 1
+        try:
+            _, html_page = fetch_url(page_url, timeout=request_timeout)
+        except Exception:
+            break
+        page_candidates: list[CandidateArticle] = []
+        dated_hits = 0
+        older_hits = 0
+        for created, href, title in CAMARA_ARCHIVE_ITEM_RE.findall(html_page or ""):
+            resolved = canonicalize_url(urljoin(page_url, html.unescape(href)))
+            if not is_likely_article_url(resolved, expected_host_fragment=host):
+                continue
+            if resolved in seen_urls:
+                continue
+            published_at = _parse_pt_br_datetime(created)
+            if published_at:
+                parsed = _parse_window_boundary(published_at, end_of_day=False)
+                if parsed:
+                    dated_hits += 1
+                    if start and parsed < start:
+                        older_hits += 1
+                    if end and parsed > end:
+                        continue
+                    if start and parsed < start:
+                        continue
+            seen_urls.add(resolved)
+            page_candidates.append(
+                _build_specialized_candidate(
+                    title=title,
+                    url=resolved,
+                    source_name=source_name,
+                    source_type="camara_archive",
+                    published_at=published_at,
+                    metadata={"archive_url": page_url, "archive_host": host},
+                )
+            )
+            if len(collected) + len(page_candidates) >= max(1, limit_total):
+                break
+        collected.extend(page_candidates)
+        if len(collected) >= max(1, limit_total):
+            break
+        if dated_hits and older_hits == dated_hits:
+            break
+        next_match = CAMARA_NEXT_RE.search(html_page or "")
+        next_url = urljoin(page_url, html.unescape(next_match.group(1))) if next_match else ""
+    return collected
+
+
+def collect_vejario_archive(
+    *,
+    targets: list[dict[str, str]] | None = None,
+    date_from: str = "",
+    date_to: str = "",
+    limit_per_target: int = 120,
+    max_pages_per_target: int = 12,
+    request_timeout: int = 10,
+) -> list[CandidateArticle]:
+    target_list = targets or VEJARIO_ARCHIVE_TARGETS
+    collected: list[CandidateArticle] = []
+    global_seen_urls: set[str] = set()
+    start = _parse_window_boundary(date_from, end_of_day=False)
+    end = _parse_window_boundary(date_to, end_of_day=True)
+    for target in target_list:
+        next_url = str(target.get("start_url") or "").strip()
+        if not next_url:
+            continue
+        pages_seen: set[str] = set()
+        current_page = 0
+        accepted = 0
+        while next_url and current_page < max(1, max_pages_per_target) and accepted < max(1, limit_per_target):
+            page_url = _canonicalize_search_page_url(next_url)
+            if page_url in pages_seen:
+                break
+            pages_seen.add(page_url)
+            current_page += 1
+            try:
+                _, html_page = fetch_url(page_url, timeout=request_timeout)
+            except Exception:
+                break
+            page_candidates, discovered_next = _extract_vejario_archive_page(html_page, page_url, target)
+            dated_hits = 0
+            older_hits = 0
+            for item in page_candidates:
+                if item.published_at:
+                    parsed = _parse_window_boundary(item.published_at, end_of_day=False)
+                    if parsed:
+                        dated_hits += 1
+                        if start and parsed < start:
+                            older_hits += 1
+                        if end and parsed > end:
+                            continue
+                        if start and parsed < start:
+                            continue
+                if item.url in global_seen_urls:
+                    continue
+                global_seen_urls.add(item.url)
+                collected.append(item)
+                accepted += 1
+                if accepted >= max(1, limit_per_target):
+                    break
+            if accepted >= max(1, limit_per_target):
+                break
+            if dated_hits and older_hits == dated_hits:
+                break
+            next_url = discovered_next
+    return collected
+
+
+def collect_sitemap_daily(
+    queries: list[str] | None = None,
+    *,
+    sources: list[dict[str, str]] | None = None,
+    date_from: str = "",
+    date_to: str = "",
+    limit_per_source: int = 240,
+    request_timeout: int = 10,
+) -> list[CandidateArticle]:
+    query_list = [str(item or "").strip() for item in (queries or []) if str(item or "").strip()]
+    source_list = sources or SITEMAP_DAILY_SOURCES
+    days = _iter_window_days(date_from, date_to, default_days=7)
+    collected: list[CandidateArticle] = []
+    seen_urls: set[str] = set()
+    for source in source_list:
+        source_name = str(source.get("source_name") or "Sitemap Daily").strip() or "Sitemap Daily"
+        host = str(source.get("host") or "").strip()
+        template = str(source.get("sitemap_url_template") or "").strip()
+        if not host or not template:
+            continue
+        accepted = 0
+        for day in days:
+            if accepted >= max(1, limit_per_source):
+                break
+            sitemap_url = template.format(
+                yyyy=day.strftime("%Y"),
+                mm=day.strftime("%m"),
+                dd=day.strftime("%d"),
+            )
+            try:
+                _, xml_text = fetch_url(sitemap_url, timeout=request_timeout)
+            except Exception:
+                continue
+            for row in _parse_sitemap_entries(xml_text):
+                canon_url = canonicalize_url(str(row.get("loc") or "").strip())
+                if not canon_url or canon_url in seen_urls:
+                    continue
+                if not is_likely_article_url(canon_url, expected_host_fragment=host):
+                    continue
+                title = str(row.get("title") or "").strip()
+                if query_list and not _matches_queries(" ".join([canon_url, title]), query_list):
+                    continue
+                published_at = str(row.get("published_at") or "").strip() or day.replace(
+                    hour=12, minute=0, second=0, microsecond=0,
+                ).isoformat()
+                if not _within_window(published_at, date_from=date_from, date_to=date_to):
+                    continue
+                seen_urls.add(canon_url)
+                collected.append(
+                    _build_specialized_candidate(
+                        title=title,
+                        url=canon_url,
+                        source_name=source_name,
+                        source_type="sitemap_daily",
+                        published_at=published_at,
+                        metadata={"sitemap_url": sitemap_url, "sitemap_host": host},
+                    )
+                )
+                accepted += 1
+                if accepted >= max(1, limit_per_source):
+                    break
+    return collected

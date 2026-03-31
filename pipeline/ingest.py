@@ -553,7 +553,7 @@ def process_candidates(
                 )
                 continue
 
-        if needs_published_extraction and not extracted_published:
+        if needs_published_extraction and not published_at:
             emit_candidate(
                 candidate=candidate,
                 status="skipped",
@@ -582,12 +582,12 @@ def process_candidates(
             emit_candidate(
                 candidate=candidate,
                 status="skipped",
-                reason="empty_full_text_after_fetch",
+                reason="missing_body",
                 final_url=final_url,
                 hits_for_candidate=hits,
                 title_value=clean_title(candidate.title or extracted_title or ""),
                 published_value=published_at,
-                stage="full_text_check",
+                stage="body_fetch",
             )
             continue
         # [END RECONSTRUCTED]
