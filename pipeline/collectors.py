@@ -884,7 +884,7 @@ def collect_internal_site_search(
                 {
                     "force_full_fetch": True,
                     "exact_body_only": True,
-                    "require_published_extraction": True,
+                    "require_published_extraction": not bool(item.published_at),
                 }
             )
             item.metadata = metadata
