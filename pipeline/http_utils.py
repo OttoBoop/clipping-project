@@ -59,14 +59,17 @@ def fetch_url(url: str, timeout: int = 10) -> tuple[str, str]:
     return final_url, body
 
 
-def post_json(url: str, payload, timeout: int = 10) -> tuple[str, str]:
+def post_json(url: str, payload, timeout: int = 10, extra_headers: dict | None = None) -> tuple[str, str]:
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Content-Type": "application/json",
+    }
+    if extra_headers:
+        headers.update(extra_headers)
     req = urllib.request.Request(
         url,
         data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-        headers={
-            "User-Agent": USER_AGENT,
-            "Content-Type": "application/json",
-        },
+        headers=headers,
     )
     data = b""
     final_url = url

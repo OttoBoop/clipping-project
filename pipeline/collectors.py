@@ -588,7 +588,18 @@ def _collect_globo_internal_search(
     offset = 0
     page_size = max(1, int(adapter.page_size or 10))
     while len(candidates) < max(1, limit_per_adapter):
-        _, body = post_json("https://busca.globo.com/v1/search", _globo_search_payload(adapter, query, offset=offset), timeout=request_timeout)
+        tenant_id = adapter.host.split(".")[0]  # oglobo.globo.com → oglobo, g1.globo.com → g1
+        origin = f"https://{adapter.host}"
+        _, body = post_json(
+            "https://busca.globo.com/v1/search",
+            _globo_search_payload(adapter, query, offset=offset),
+            timeout=request_timeout,
+            extra_headers={
+                "X-Tenant-id": tenant_id,
+                "Origin": origin,
+                "Referer": f"{origin}/busca/?q={quote_plus(query)}",
+            },
+        )
         try:
             payload = json.loads(body)
         except Exception:
