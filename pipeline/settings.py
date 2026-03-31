@@ -259,7 +259,22 @@ FLAVIO_INTERNAL_SEARCH_TARGETS: list[InternalSearchTarget] = [
         mode="html",
         search_url_template="https://www.conib.org.br/pesquisar.html?searchword={query}&searchphrase=exact&ordering=newest",
     ),
+    InternalSearchTarget(
+        source_name="Extra Globo Internal Search",
+        host="extra.globo.com",
+        mode="globo_api",
+        search_url_template="https://extra.globo.com/busca/?q={query}",
+        search_profile="sp_extra_globo_com",
+        recency_query_id="extra.info_query_recency",
+        navigational_profile="navegacional_extra",
+        navigational_query_id="extra.navigational_query",
+        live_profile="conteudo_editorial_extra",
+        live_query_id="extra.live_query",
+        editorial_query_id="extra.pub_editorial_query",
+        page_size=10,
+    ),
 ]
+# Note: O Dia is covered by DIRECT_SCRAPE_TARGETS, R7 by RSS_FEEDS
 
 def google_news_rss_url(query: str) -> str:
     q = quote_plus(query)
