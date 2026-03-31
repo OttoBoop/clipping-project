@@ -280,7 +280,7 @@ Wave 2.5 extracts and restores those originals.
 | ID | Task | Dependencies | Effort | live_test | Proof Required | Blocked If | Status |
 |----|------|-------------|--------|-----------|----------------|------------|--------|
 | F5-T1 | Extract test oracle — parse old HTML snapshot, extract article URLs grouped by source with dates | MC-2 | M | No | JSON/dict of {source: [{url, title, date}]} for ≥5 sources | Old HTML unparseable | ✅ |
-| F5-T2 | Validate Globo family (O Globo, Extra) — run collector for known articles | F5-T1 | M | Yes | Collector returns ≥1 known article | 0 results | ⬜ BLOCKED: busca.globo.com/v1/search returns HTTP 404 |
+| F5-T2 | Validate Globo family (O Globo, Extra) — run collector for known articles | F5-T1 | M | Yes | Collector returns ≥1 known article | 0 results | ✅ (fixed: missing X-Tenant-id+Origin+Referer headers) |
 | F5-T3 | Validate WordPress (diariodorio, agendadopoder, temporealrj) — run collector for known articles | F5-T1 | M | Yes | Collector returns ≥1 known article | 0 results | ✅ (3/3 sites pass) |
 | F5-T4 | Validate HTML scrapers (Camara, CONIB, Veja Rio) — run collector for known articles | F5-T1 | M | Yes | Each collector returns ≥1 known article with proper filtering | Junk results or 0 results | ✅ (3/3 pass after fixing 2 corruption bugs) |
 | F5-T5 | Validate CBN sitemap — run collector for known articles | F5-T1 | S | Yes | Collector returns ≥1 known article | 0 results | ✅ (runs OK, 0 "Flavio Valle" matches expected for CBN) |
@@ -429,7 +429,7 @@ F1-T4 ──┘                │
 | F4-T3 | Source coverage check (7 major sources verified) | F2-T6b | MC-2 | ✅ |
 | MC-2 | ⊕ All files restored — user reviews | F4-T1, F4-T2, F4-T3 | F5-T1 | ✅ |
 | F5-T1 | Extract test oracle from old HTML (829 entries, 14 sources, all with dates) | MC-2 | F5-T2..F5-T6 | ✅ |
-| F5-T2 | Validate Globo collectors | F5-T1 | F5-T7 | ⬜ BLOCKED: busca.globo.com 404 |
+| F5-T2 | Validate Globo collectors (fixed: headers) | F5-T1 | F5-T7 | ✅ |
 | F5-T3 | Validate WordPress collectors (3/3 pass) | F5-T1 | F5-T7 | ✅ |
 | F5-T4 | Validate HTML scrapers (3/3 pass after fixes) | F5-T1 | F5-T7 | ✅ |
 | F5-T5 | Validate CBN sitemap (runs OK) | F5-T1 | F5-T7 | ✅ |
