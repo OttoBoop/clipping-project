@@ -300,7 +300,7 @@ PT_MONTHS = {
     "fevereiro": 2,
     "mar": 3,
     "marco": 3,
-    "marÃ§o": 3,
+    "março": 3,
     "abr": 4,
     "abril": 4,
     "mai": 5,
@@ -338,10 +338,10 @@ def _parse_pt_br_datetime(value: str) -> str:
     if not text:
         return ""
     text = text.replace("atualizado em", " ").replace("criado em", " ")
-    text = text.replace("Ã s", " ").replace(" as ", " ").replace("â€¢", " ")
-    text = text.replace("Âº", "").replace("Âª", "")
+    text = text.replace("às", " ").replace(" as ", " ").replace("•", " ")
+    text = text.replace("º", "").replace("ª", "")
     text = WS_RE.sub(" ", text).strip()
-    match = re.search(r"(\d{1,2})\s+([a-zÃ§]+)\s+(\d{4})(?:,\s*(\d{1,2})h(\d{2}))?", text)
+    match = re.search(r"(\d{1,2})\s+([a-zç]+)\s+(\d{4})(?:,\s*(\d{1,2})h(\d{2}))?", text)
     if not match:
         return ""
     day = int(match.group(1))
@@ -883,7 +883,7 @@ def collect_internal_site_search(
             metadata.update(
                 {
                     "force_full_fetch": True,
-                    "exact_body_only": True,
+                    "exact_body_only": False,
                     "require_published_extraction": not bool(item.published_at),
                 }
             )
