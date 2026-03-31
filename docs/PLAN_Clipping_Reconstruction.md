@@ -279,7 +279,7 @@ Wave 2.5 extracts and restores those originals.
 
 | ID | Task | Dependencies | Effort | live_test | Proof Required | Blocked If | Status |
 |----|------|-------------|--------|-----------|----------------|------------|--------|
-| F5-T1 | Extract test oracle — parse old HTML snapshot, extract article URLs grouped by source with dates | MC-2 | M | No | JSON/dict of {source: [{url, title, date}]} for ≥5 sources | Old HTML unparseable | ⬜ |
+| F5-T1 | Extract test oracle — parse old HTML snapshot, extract article URLs grouped by source with dates | MC-2 | M | No | JSON/dict of {source: [{url, title, date}]} for ≥5 sources | Old HTML unparseable | ✅ |
 | F5-T2 | Validate Globo family (O Globo, Extra) — run collector for known articles | F5-T1 | M | Yes | Collector returns ≥1 known article | 0 results | ⬜ |
 | F5-T3 | Validate WordPress (diariodorio, agendadopoder) — run collector for known articles | F5-T1 | M | Yes | Collector returns ≥1 known article | 0 results | ⬜ |
 | F5-T4 | Validate HTML scrapers (O Dia, CONIB, Veja Rio, Camara) — run collector for known articles | F5-T1 | M | Yes | Each collector returns ≥1 known article with proper filtering | Junk results or 0 results | ⬜ |
@@ -428,7 +428,7 @@ F1-T4 ──┘                │
 | F4-T2 | Import validation (all modules + key exports) | F2-T8, F3-T6 | MC-2 | ✅ |
 | F4-T3 | Source coverage check (7 major sources verified) | F2-T6b | MC-2 | ✅ |
 | MC-2 | ⊕ All files restored — user reviews | F4-T1, F4-T2, F4-T3 | F5-T1 | ✅ |
-| F5-T1 | Extract test oracle from old HTML | MC-2 | F5-T2..F5-T6 | ⬜ |
+| F5-T1 | Extract test oracle from old HTML (829 entries, 14 sources, all with dates) | MC-2 | F5-T2..F5-T6 | ✅ |
 | F5-T2 | Validate Globo collectors | F5-T1 | F5-T7 | ⬜ |
 | F5-T3 | Validate WordPress collectors | F5-T1 | F5-T7 | ⬜ |
 | F5-T4 | Validate HTML scrapers | F5-T1 | F5-T7 | ⬜ |
