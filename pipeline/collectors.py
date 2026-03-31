@@ -264,6 +264,12 @@ def collect_google_news(
                         direct_link = link
                         break
                 item.url = canonicalize_url(direct_link or item.url)
+                # If URL is still a google redirect, don't require body fetch
+                if "news.google.com" in item.url:
+                    meta = dict(item.metadata or {})
+                    meta["force_full_fetch"] = False
+                    meta["exact_body_only"] = False
+                    item.metadata = meta
             filtered = [item for item in items if _within_window(item.published_at, date_from=date_from, date_to=date_to)]
             query_batches.append(filtered[: max(1, limit_per_query)])
         except Exception:
