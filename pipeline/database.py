@@ -472,6 +472,14 @@ class ClippingDB:
                     (now, int(story_id)),
                 )
 
+    def get_story_targets(self, story_id: int) -> list[str]:
+        with self.connect() as conn:
+            rows = conn.execute(
+                "SELECT target_key FROM story_targets WHERE story_id = ?",
+                (int(story_id),),
+            ).fetchall()
+            return [row["target_key"] for row in rows]
+
     # ------------------------------------------------------------------
     # VERBATIM from session log (block 10 extraction, lines 312-411)
     # [RECONSTRUCTED] lines 412-430: closing of article dict and output.append
