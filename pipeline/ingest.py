@@ -96,9 +96,10 @@ class IngestionResult:
 
 @dataclass(slots=True)
 class IngestionOptions:
-    max_candidates_per_source: int = 90
-    max_process_seconds: int = 90
+    max_candidates_per_source: int = 90000
+    max_process_seconds: int = 90000
     request_timeout_seconds: int = 8
+    skip_direct_scrape: bool = True
     custom_query: str = ""
     date_from: str = ""
     date_to: str = ""
@@ -846,10 +847,10 @@ def run_ingestion(
         per_target_limit = max_candidates
         per_wp_limit = max_candidates
     else:
-        per_feed_limit = max(10, min(120, max_candidates // 2))
-        per_query_limit = max(10, min(120, max_candidates // 2))
-        per_target_limit = max(10, min(80, max_candidates // 3))
-        per_wp_limit = max(10, min(120, max_candidates // 2))
+        per_feed_limit = max(10, min(500, max_candidates // 2))
+        per_query_limit = max(10, min(500, max_candidates // 2))
+        per_target_limit = max(10, min(300, max_candidates // 3))
+        per_wp_limit = max(10, min(500, max_candidates // 2))
     request_timeout = max(3, int(options.request_timeout_seconds))
 
     if collector in {"all", "rss"}:
@@ -890,7 +891,7 @@ def run_ingestion(
                 "source_collected",
                 {"source_name": "Google News", "source_type": "google_news", "candidates_total": len(google_candidates)},
             )
-    if collector in {"all", "direct_scrape"}:
+    if collector in {"all", "direct_scrape"} and not options.skip_direct_scrape:
         direct_candidates: list[CandidateArticle] = []
         if options.custom_query.strip():
             direct_candidates.extend(
@@ -976,20 +977,20 @@ def run_ingestion(
                 )
 
     # [RECONSTRUCTED] Internal site search section from patch at offset 5311452
-    if collector in {"all", "internal_site_search"} and not options.custom_query.strip():
+    if collector in {"all", "internal_site_search", "internal_search"} and not options.custom_query.strip():
         target_keys = {str(target.key) for target in targets}
         if "flavio_valle" in target_keys:
             planned_urls = {candidate.url for _, _, batch in plans for candidate in batch if candidate.url}
             per_internal_adapter_limit = max(
                 6,
-                min(20, max_candidates // max(1, len(FLAVIO_INTERNAL_SEARCH_TARGETS))),
+                min(200, max_candidates // max(1, len(FLAVIO_INTERNAL_SEARCH_TARGETS))),
             )
             internal_candidates = collect_internal_site_search(
                 queries=FLAVIO_INTERNAL_SEARCH_QUERIES,
                 date_from=options.date_from,
                 date_to=options.date_to,
                 limit_per_adapter=per_internal_adapter_limit,
-                max_pages_per_adapter=6,
+                max_pages_per_adapter=20,
                 request_timeout=request_timeout,
             )
             filtered_internal: list[CandidateArticle] = []
@@ -1035,6 +1036,7 @@ def run_ingestion(
             date_from=options.date_from,
             date_to=options.date_to,
             limit_per_target=max(10, max_candidates // 2),
+            max_pages_per_target=50,
             request_timeout=request_timeout,
         )
         filtered_vejario = [c for c in dedupe_candidates(vejario_candidates) if c.url not in planned_urls]
@@ -1051,6 +1053,7 @@ def run_ingestion(
             date_from=options.date_from,
             date_to=options.date_to,
             limit_total=max(10, max_candidates // 2),
+            max_pages=100,
             request_timeout=request_timeout,
         )
         filtered_camara = [c for c in dedupe_candidates(camara_candidates) if c.url not in planned_urls]

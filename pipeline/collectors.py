@@ -210,11 +210,17 @@ def collect_rss(
     *,
     date_from: str = "",
     date_to: str = "",
+    collection_timeout: int = 1200,
 ) -> list[CandidateArticle]:
     articles: list[CandidateArticle] = []
-    for feed in RSS_FEEDS:
+    t0 = time.monotonic()
+    feed_timeout = min(request_timeout, 8)
+    for i, feed in enumerate(RSS_FEEDS):
+        if time.monotonic() - t0 > collection_timeout:
+            logging.warning(f"RSS collection time budget exhausted after {i}/{len(RSS_FEEDS)} feeds")
+            break
         try:
-            _, xml_text = fetch_url(feed["url"], timeout=request_timeout)
+            _, xml_text = fetch_url(feed["url"], timeout=feed_timeout)
             items = parse_rss_or_atom(
                 xml_text,
                 source_name=feed["source_name"],
@@ -223,7 +229,9 @@ def collect_rss(
             )
             filtered = [item for item in items if _within_window(item.published_at, date_from=date_from, date_to=date_to)]
             articles.extend(filtered[: max(1, limit_per_feed)])
-        except Exception:
+            logging.info(f"RSS [{i+1}/{len(RSS_FEEDS)}] {feed['source_name']}: {len(filtered)} items")
+        except Exception as e:
+            logging.info(f"RSS [{i+1}/{len(RSS_FEEDS)}] {feed['source_name']}: FAILED ({type(e).__name__})")
             continue
     return articles
 
@@ -236,10 +244,16 @@ def collect_google_news(
     limit_per_query: int = 30,
     request_timeout: int = 10,
     resolve_timeout: int = 6,
+    collection_timeout: int = 6000,
 ) -> list[CandidateArticle]:
     query_batches: list[list[CandidateArticle]] = []
     query_list = queries or GOOGLE_NEWS_QUERIES
-    for query in query_list:
+    t0 = time.monotonic()
+    rss_timeout = min(request_timeout, 12)
+    for qi, query in enumerate(query_list):
+        if time.monotonic() - t0 > collection_timeout:
+            logging.warning(f"Google News collection time budget exhausted after {qi}/{len(query_list)} queries")
+            break
         q = query.strip()
         if date_from:
             q += f" after:{date_from}"
@@ -247,7 +261,7 @@ def collect_google_news(
             q += f" before:{date_to}"
         url = google_news_rss_url(q)
         try:
-            _, xml_text = fetch_url(url, timeout=request_timeout)
+            _, xml_text = fetch_url(url, timeout=rss_timeout)
             items = parse_rss_or_atom(
                 xml_text,
                 source_name="Google News",
@@ -264,15 +278,22 @@ def collect_google_news(
                         direct_link = link
                         break
                 item.url = canonicalize_url(direct_link or item.url)
-                # If URL is still a google redirect, don't require body fetch
+                # If URL is still a google redirect, try to resolve it now.
                 if "news.google.com" in item.url:
-                    meta = dict(item.metadata or {})
-                    meta["force_full_fetch"] = False
-                    meta["exact_body_only"] = False
-                    item.metadata = meta
+                    resolved = try_resolve_google_redirect(item.url, timeout=resolve_timeout)
+                    if resolved and "news.google.com" not in resolved:
+                        item.url = canonicalize_url(resolved)
+                    else:
+                        # Resolution failed; still allow processing but force a fetch
+                        # so the URL can be resolved during article retrieval.
+                        meta = dict(item.metadata or {})
+                        meta["force_full_fetch"] = True
+                        item.metadata = meta
             filtered = [item for item in items if _within_window(item.published_at, date_from=date_from, date_to=date_to)]
             query_batches.append(filtered[: max(1, limit_per_query)])
-        except Exception:
+            logging.info(f"Google News [{qi+1}/{len(query_list)}] '{query[:40]}': {len(filtered)} items")
+        except Exception as e:
+            logging.info(f"Google News [{qi+1}/{len(query_list)}] '{query[:40]}': FAILED ({type(e).__name__})")
             continue
     return _dedupe_candidates_by_url(_round_robin_candidates(query_batches))
 
@@ -378,7 +399,7 @@ def _generic_next_page_url(html_page: str, current_url: str, expected_host: str)
         text = title.lower()
         attrs_lower = attrs.lower()
         if "rel=\"next\"" not in attrs_lower and "rel='next'" not in attrs_lower:
-            if "prÃ³ximo" not in text and "proximo" not in text and "next" not in text and 'title="prÃ³ximo"' not in attrs_lower:
+            if "próximo" not in text and "proximo" not in text and "next" not in text and 'title="próximo"' not in attrs_lower:
                 continue
         resolved = canonicalize_url(urljoin(current_url, href))
         parsed = urlparse(resolved)
@@ -599,16 +620,20 @@ def _collect_globo_internal_search(
     while len(candidates) < max(1, limit_per_adapter):
         tenant_id = adapter.host.split(".")[0]  # oglobo.globo.com → oglobo, g1.globo.com → g1
         origin = f"https://{adapter.host}"
-        _, body = post_json(
-            "https://busca.globo.com/v1/search",
-            _globo_search_payload(adapter, query, offset=offset),
-            timeout=request_timeout,
-            extra_headers={
-                "X-Tenant-id": tenant_id,
-                "Origin": origin,
-                "Referer": f"{origin}/busca/?q={quote_plus(query)}",
-            },
-        )
+        try:
+            _, body = post_json(
+                "https://busca.globo.com/v1/search",
+                _globo_search_payload(adapter, query, offset=offset),
+                timeout=request_timeout,
+                extra_headers={
+                    "X-Tenant-id": tenant_id,
+                    "Origin": origin,
+                    "Referer": f"{origin}/busca/?q={quote_plus(query)}",
+                },
+            )
+        except Exception as exc:
+            logging.warning("Globo search failed for %s: %s", adapter.source_name, exc)
+            break
         try:
             payload = json.loads(body)
         except Exception:
@@ -1413,57 +1438,82 @@ def collect_sitemap_daily(
     date_to: str = "",
     limit_per_source: int = 240,
     request_timeout: int = 10,
+    collection_timeout: int = 9000,
 ) -> list[CandidateArticle]:
     query_list = [str(item or "").strip() for item in (queries or []) if str(item or "").strip()]
     source_list = sources or SITEMAP_DAILY_SOURCES
     days = _iter_window_days(date_from, date_to, default_days=7)
+    logging.info(f"Sitemap daily: {len(source_list)} sources × {len(days)} days = {len(source_list)*len(days)} sitemaps to fetch")
     collected: list[CandidateArticle] = []
     seen_urls: set[str] = set()
-    for source in source_list:
+    t0 = time.monotonic()
+    sitemap_timeout = min(request_timeout, 8)
+    for si, source in enumerate(source_list):
         source_name = str(source.get("source_name") or "Sitemap Daily").strip() or "Sitemap Daily"
         host = str(source.get("host") or "").strip()
         template = str(source.get("sitemap_url_template") or "").strip()
         if not host or not template:
             continue
+        paginated = "{page}" in template
         accepted = 0
-        for day in days:
+        for di, day in enumerate(days):
+            if time.monotonic() - t0 > collection_timeout:
+                logging.warning(f"Sitemap collection time budget exhausted at source {si}/{len(source_list)}, day {di}/{len(days)}")
+                break
             if accepted >= max(1, limit_per_source):
                 break
-            sitemap_url = template.format(
-                yyyy=day.strftime("%Y"),
-                mm=day.strftime("%m"),
-                dd=day.strftime("%d"),
-            )
-            try:
-                _, xml_text = fetch_url(sitemap_url, timeout=request_timeout)
-            except Exception:
-                continue
-            for row in _parse_sitemap_entries(xml_text):
-                canon_url = canonicalize_url(str(row.get("loc") or "").strip())
-                if not canon_url or canon_url in seen_urls:
-                    continue
-                if not is_likely_article_url(canon_url, expected_host_fragment=host):
-                    continue
-                title = str(row.get("title") or "").strip()
-                if query_list and not _matches_queries(" ".join([canon_url, title]), query_list):
-                    continue
-                published_at = str(row.get("published_at") or "").strip() or day.replace(
-                    hour=12, minute=0, second=0, microsecond=0,
-                ).isoformat()
-                if not _within_window(published_at, date_from=date_from, date_to=date_to):
-                    continue
-                seen_urls.add(canon_url)
-                collected.append(
-                    _build_specialized_candidate(
-                        title=title,
-                        url=canon_url,
-                        source_name=source_name,
-                        source_type="sitemap_daily",
-                        published_at=published_at,
-                        metadata={"sitemap_url": sitemap_url, "sitemap_host": host},
-                    )
-                )
-                accepted += 1
+            max_pages = 10 if paginated else 1
+            for page_num in range(1, max_pages + 1):
                 if accepted >= max(1, limit_per_source):
                     break
+                if time.monotonic() - t0 > collection_timeout:
+                    break
+                sitemap_url = template.format(
+                    yyyy=day.strftime("%Y"),
+                    mm=day.strftime("%m"),
+                    dd=day.strftime("%d"),
+                    page=page_num,
+                )
+                try:
+                    _, xml_text = fetch_url(sitemap_url, timeout=sitemap_timeout)
+                except Exception:
+                    break  # no more pages for this day
+                page_entries = list(_parse_sitemap_entries(xml_text))
+                if not page_entries:
+                    break  # empty page means no more pages
+                for row in page_entries:
+                    canon_url = canonicalize_url(str(row.get("loc") or "").strip())
+                    if not canon_url or canon_url in seen_urls:
+                        continue
+                    if not is_likely_article_url(canon_url, expected_host_fragment=host):
+                        continue
+                    title = str(row.get("title") or "").strip()
+                    if query_list and not _matches_queries(" ".join([canon_url, title]), query_list):
+                        continue
+                    published_at = str(row.get("published_at") or "").strip() or day.replace(
+                        hour=12, minute=0, second=0, microsecond=0,
+                    ).isoformat()
+                    # Skip _within_window for sitemap_daily: the date-specific
+                    # sitemap URL already filters by date, and published_at may
+                    # use UTC while the sitemap organises by local time (e.g.
+                    # Brazil UTC-3), causing valid late-night articles to be
+                    # incorrectly rejected.
+                    seen_urls.add(canon_url)
+                    collected.append(
+                        _build_specialized_candidate(
+                            title=title,
+                            url=canon_url,
+                            source_name=source_name,
+                            source_type="sitemap_daily",
+                            published_at=published_at,
+                            metadata={"sitemap_url": sitemap_url, "sitemap_host": host},
+                        )
+                    )
+                    accepted += 1
+                    if accepted >= max(1, limit_per_source):
+                        break
+        if time.monotonic() - t0 > collection_timeout:
+            logging.warning(f"Sitemap collection time budget exhausted after source {si+1}/{len(source_list)}")
+            break
+        logging.info(f"Sitemap [{si+1}/{len(source_list)}] {source_name}: {accepted} entries from {len(days)} days")
     return collected

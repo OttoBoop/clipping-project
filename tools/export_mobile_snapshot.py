@@ -46,6 +46,11 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="Arquivo HTML de saida. Default: data/reports/clipping_mobile_snapshot_<escopo>.html",
     )
+    parser.add_argument(
+        "--merge-from",
+        default="",
+        help="Caminho de um HTML snapshot existente cujas historias serao mescladas com as novas do banco.",
+    )
     args = parser.parse_args()
     if not args.all_stories and (not args.date_from or not args.date_to):
         parser.error("use --all-stories ou informe --date-from e --date-to")
@@ -153,6 +158,67 @@ def target_badges(target_keys: list[str], label_by_key: dict[str, str]) -> str:
         f'<span class="chip">{html.escape(label_by_key.get(key, key))}</span>'
         for key in target_keys
     )
+
+
+def parse_source_html(path: str) -> tuple[dict[str, Any], dict[int, str]]:
+    """Parse an existing HTML snapshot and return (payload, {story_id: card_html})."""
+    raw = Path(path).read_text(encoding="utf-8")
+    payload: dict[str, Any] = {}
+    m = re.search(r'<script[^>]*id="snapshot-payload"[^>]*>(.*?)</script>', raw, re.DOTALL)
+    if m:
+        payload = json.loads(m.group(1))
+    cards: dict[int, str] = {}
+    for card_m in re.finditer(
+        r'(<details\b[^>]*\bdata-story-id="(\d+)"[^>]*>.*?</details>)',
+        raw,
+        re.DOTALL,
+    ):
+        sid = int(card_m.group(2))
+        cards[sid] = card_m.group(1)
+    return payload, cards
+
+
+def _parse_old_date(text: str) -> str:
+    """Convert 'DD/MM/YYYY HH:MM UTC' to ISO-8601."""
+    m = re.search(r"(\d{2})/(\d{2})/(\d{4})\s+(\d{2}):(\d{2})\s*UTC", text)
+    if not m:
+        return ""
+    day, month, year, hour, minute = m.groups()
+    return f"{year}-{month}-{day}T{hour}:{minute}:00+00:00"
+
+
+def patch_old_card(card_html: str, story_targets: dict[str, list[str]]) -> str:
+    """Add data-temperature, data-last-published, data-targets to an old card."""
+    sid_m = re.search(r'data-story-id="(\d+)"', card_html)
+    if not sid_m:
+        return card_html
+    sid = sid_m.group(1)
+
+    # Extract temperature from <strong>NN</strong><span>temperatura</span> or similar
+    temp = "0"
+    temp_m = re.search(r"<strong>(\d+)</strong>\s*<span[^>]*>\s*temperatura\s*</span>", card_html, re.IGNORECASE)
+    if temp_m:
+        temp = temp_m.group(1)
+
+    # Extract last published date from "Ultima publicacao: DD/MM/YYYY HH:MM UTC"
+    last_pub = ""
+    pub_m = re.search(r"[Uu]ltima publica[cç][aã]o:\s*([^<]+)", card_html)
+    if pub_m:
+        last_pub = _parse_old_date(pub_m.group(1))
+
+    # Extract targets from payload
+    targets_str = ",".join(story_targets.get(sid, []))
+
+    # Inject attributes into the opening <details> tag
+    inject = f' data-temperature="{html.escape(temp)}" data-last-published="{html.escape(last_pub)}" data-targets="{html.escape(targets_str)}"'
+    # Insert before the closing > of the opening <details ...>
+    card_html = re.sub(
+        r'(<details\b[^>]*\bdata-story-id="' + re.escape(sid) + r'"[^>]*?)(>)',
+        r"\1" + inject + r"\2",
+        card_html,
+        count=1,
+    )
+    return card_html
 
 
 def render_text_block(article: dict[str, Any]) -> tuple[str, str, str]:
@@ -413,7 +479,7 @@ def render_article_card(article: dict[str, Any], label_by_key: dict[str, str]) -
 
     return (
         """
-        <article class="article-card" id="article-__AID__">
+        <article class="article-card" id="article-__AID__" data-published-iso="__PUB_ISO__" data-title="__TITLE_PLAIN__">
           <div class="article-top">
             <div>
               <h3>__TITLE_HTML__</h3>
@@ -434,6 +500,8 @@ def render_article_card(article: dict[str, Any], label_by_key: dict[str, str]) -
         </article>
         """
         .replace("__AID__", str(aid))
+        .replace("__PUB_ISO__", html.escape(str(article.get("published_at") or "")))
+        .replace("__TITLE_PLAIN__", html.escape(str(article.get("title") or "")))
         .replace("__TITLE_HTML__", title_html)
         .replace("__SOURCE__", html.escape(source))
         .replace("__PUBLISHED__", html.escape(fmt_dt(str(article.get("published_at") or ""))))
@@ -466,7 +534,7 @@ def render_story_section(
     hidden_attr = "" if sid in visible_story_ids else " hidden"
     return (
         """
-        <details class="panel story-card" id="story-__SID__" data-story-id="__SID__" data-article-count="__ARTICLE_COUNT__" data-ai-count="__AI_COUNT__" data-raw-count="__RAW_COUNT__" data-targets="__TARGETS__"__HIDDEN__>
+        <details class="panel story-card" id="story-__SID__" data-story-id="__SID__" data-article-count="__ARTICLE_COUNT__" data-ai-count="__AI_COUNT__" data-raw-count="__RAW_COUNT__" data-targets="__TARGETS__" data-temperature="__TEMP_RAW__" data-last-published="__LAST_PUBLISHED_ISO__"__HIDDEN__>
           <summary class="story-summary-row">
             <div class="story-heading">
               <span class="story-toggle" aria-hidden="true"></span>
@@ -501,6 +569,8 @@ def render_story_section(
         .replace("__TITLE__", html.escape(str(story.get("title") or "Sem titulo")))
         .replace("__TARGET_BADGES__", target_badges(list(story.get("targetKeys") or []), label_by_key))
         .replace("__TEMP__", str(int(round(float(story.get("temperature") or 0.0)))))
+        .replace("__TEMP_RAW__", str(int(round(float(story.get("temperature") or 0.0)))))
+        .replace("__LAST_PUBLISHED_ISO__", html.escape(str(story.get("lastPublishedAt") or "")))
         .replace("__FIRST_PUBLISHED__", html.escape(fmt_dt(str(story.get("firstPublishedAt") or ""))))
         .replace("__LAST_PUBLISHED__", html.escape(fmt_dt(str(story.get("lastPublishedAt") or ""))))
         .replace("__SUMMARY_LABEL__", html.escape(summary_label))
@@ -538,16 +608,63 @@ def build_html(
     target_rows: list[dict[str, Any]],
     initial_targets: list[str],
     article_map: dict[int, dict[str, Any]],
+    merged_card_html: dict[int, str] | None = None,
+    merged_payload_extra: dict[str, Any] | None = None,
 ) -> str:
     label_by_key = target_label_map(target_rows)
     generated_at = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
     scope_kicker, scope_title, scope_text = scope_labels(args)
-    total_story_count = len(stories)
-    total_article_count = sum(int(story.get("articleCount") or 0) for story in stories)
-    total_ai_count = sum(int(story.get("aiCount") or 0) for story in stories)
-    total_raw_count = sum(int(story.get("rawCount") or 0) for story in stories)
+
+    # --- Merge handling ---
+    merged_cards = merged_card_html or {}
+    merged_extra = merged_payload_extra or {}
+    old_story_targets: dict[str, list[str]] = merged_extra.get("storyTargets", {})
+
+    # Count old card stats (parse data attributes from the HTML)
+    old_article_count = 0
+    old_ai_count = 0
+    old_raw_count = 0
+    for _sid, card_str in merged_cards.items():
+        ac_m = re.search(r'data-article-count="(\d+)"', card_str)
+        ai_m = re.search(r'data-ai-count="(\d+)"', card_str)
+        rw_m = re.search(r'data-raw-count="(\d+)"', card_str)
+        old_article_count += int(ac_m.group(1)) if ac_m else 0
+        old_ai_count += int(ai_m.group(1)) if ai_m else 0
+        old_raw_count += int(rw_m.group(1)) if rw_m else 0
+
+    total_story_count = len(stories) + len(merged_cards)
+    total_article_count = sum(int(story.get("articleCount") or 0) for story in stories) + old_article_count
+    total_ai_count = sum(int(story.get("aiCount") or 0) for story in stories) + old_ai_count
+    total_raw_count = sum(int(story.get("rawCount") or 0) for story in stories) + old_raw_count
+
+    # Build combined storyTargets for the payload
+    combined_story_targets: dict[str, list[str]] = dict(old_story_targets)
+    for story in stories:
+        combined_story_targets[str(int(story.get("storyIdInt") or 0))] = [
+            str(key) for key in story.get("targetKeys", [])
+        ]
+
+    # Determine initial visibility: new stories + old stories whose targets match
     initial_stats = visibility_stats(stories, initial_targets)
     initial_visible_story_ids = set(initial_stats["visibleStoryIds"])
+    selected_set = set(initial_targets)
+    for sid_str, tkeys in old_story_targets.items():
+        if not selected_set or any(k in selected_set for k in tkeys):
+            initial_visible_story_ids.add(int(sid_str))
+
+    visible_story_count = len(initial_visible_story_ids)
+    visible_article_count = int(initial_stats["articleCount"])
+    visible_ai_count = int(initial_stats["aiCount"])
+    visible_raw_count = int(initial_stats["rawCount"])
+    for sid, card_str in merged_cards.items():
+        if sid in initial_visible_story_ids:
+            ac_m = re.search(r'data-article-count="(\d+)"', card_str)
+            ai_m = re.search(r'data-ai-count="(\d+)"', card_str)
+            rw_m = re.search(r'data-raw-count="(\d+)"', card_str)
+            visible_article_count += int(ac_m.group(1)) if ac_m else 0
+            visible_ai_count += int(ai_m.group(1)) if ai_m else 0
+            visible_raw_count += int(rw_m.group(1)) if rw_m else 0
+
     active_filter_text = active_filter_label(initial_targets, target_rows)
 
     payload = {
@@ -561,14 +678,26 @@ def build_html(
             for row in target_rows
         ],
         "defaultTargets": list(initial_targets),
-        "storyTargets": {
-            str(int(story.get("storyIdInt") or 0)): [str(key) for key in story.get("targetKeys", [])]
-            for story in stories
-        },
+        "storyTargets": combined_story_targets,
     }
 
     filter_buttons = render_filter_buttons(target_rows, initial_targets)
+
+    # Build story index: new stories + old merged stories
     story_index = render_story_index(stories, initial_visible_story_ids)
+    for sid, card_str in merged_cards.items():
+        title_m = re.search(r"<h2>(.*?)</h2>", card_str, re.DOTALL)
+        title = re.sub(r"<[^>]+>", "", title_m.group(1)).strip() if title_m else "Sem titulo"
+        ac_m = re.search(r'data-article-count="(\d+)"', card_str)
+        count = ac_m.group(1) if ac_m else "0"
+        hidden_attr = "" if sid in initial_visible_story_ids else " hidden"
+        story_index += (
+            f'<a class="story-index-link" href="#story-{sid}" data-nav-story-id="{sid}"{hidden_attr}>'
+            f"<strong>{html.escape(title)}</strong>"
+            f"<span>{count} noticia(s)</span></a>\n"
+        )
+
+    # Render new story cards + append old merged cards
     story_sections = "".join(
         render_story_section(
             story,
@@ -578,7 +707,10 @@ def build_html(
         )
         for story in stories
     )
-    empty_hidden = " hidden" if int(initial_stats["storyCount"]) > 0 else ""
+    for sid, card_str in merged_cards.items():
+        story_sections += card_str + "\n"
+
+    empty_hidden = " hidden" if visible_story_count > 0 else ""
 
     scope_value = "Banco inteiro" if args.all_stories else f"{args.date_from} a {args.date_to}"
     default_target_label = label_by_key.get(args.default_target, args.default_target)
@@ -982,6 +1114,60 @@ def build_html(
       font-size: 13px;
       text-align: center;
     }
+    /* Flat article view for "Mais recente" mode */
+    .flat-articles {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .flat-articles .article-card {
+      background: var(--panel);
+      border: 1px solid rgba(223, 212, 195, 0.9);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    /* Compat: old card classes from previous HTML snapshots */
+    .story-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      list-style: none;
+      cursor: pointer;
+      padding: 18px;
+    }
+    .story-head::-webkit-details-marker { display: none; }
+    .story-main {
+      display: flex;
+      gap: 10px;
+      flex: 1 1 560px;
+    }
+    .story-arrow {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-soft);
+      color: var(--accent);
+      margin-top: 4px;
+      transition: transform 120ms ease;
+    }
+    .story-arrow::before { content: "\\25b8"; }
+    details[open] > summary .story-arrow { transform: rotate(90deg); }
+    .story-summary { padding: 0 18px 18px; }
+    .story-summary p { margin-bottom: 0; color: #304052; }
+    .meta-line { display: flex; gap: 8px 14px; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
+    .link-row { display: flex; gap: 8px 14px; flex-wrap: wrap; margin: 12px 0 14px; }
+    .link { color: var(--accent); text-decoration: none; }
+    .link:hover { text-decoration: underline; }
+    .body { color: #304052; font-size: 15px; word-break: break-word; }
+    .body.full { margin-top: 12px; white-space: pre-wrap; }
+
     [hidden] {
       display: none !important;
     }
@@ -1001,8 +1187,10 @@ def build_html(
         padding-right: 0;
       }
       .story-summary-row,
+      .story-head,
       .story-meta,
       .story-blurb,
+      .story-summary,
       .story-articles {
         padding-left: 16px;
         padding-right: 16px;
@@ -1067,6 +1255,10 @@ def build_html(
       <p class="filter-note">Abre filtrado em __DEFAULT_TARGET_LABEL__. Toque para adicionar ou remover pessoas do filtro.</p>
       <div class="filter-row" id="targetFilters">__FILTER_BUTTONS__</div>
       <p class="filter-note">Filtro ativo: <strong id="activeFilterText">__ACTIVE_FILTER_TEXT__</strong></p>
+      <div class="filter-row" style="margin-top:12px">
+        <button type="button" class="filter-chip active" id="sortNewest" data-sort="newest">Mais recente</button>
+        <button type="button" class="filter-chip" id="sortHottest" data-sort="hottest">Noticias agrupadas</button>
+      </div>
     </section>
 
     <details class="panel">
@@ -1075,7 +1267,8 @@ def build_html(
       <p class="empty-state" id="emptyState"__EMPTY_HIDDEN__>Nenhuma historia corresponde aos filtros atuais.</p>
     </details>
 
-    <section id="storyStack">__STORY_SECTIONS__</section>
+    <section id="storyStack" hidden>__STORY_SECTIONS__</section>
+    <section id="flatStack" class="flat-articles"></section>
 
     <p class="footer-note">Este snapshot foi gerado para compartilhamento em celular. As materias originais seguem com links externos; o restante funciona offline em um unico arquivo HTML.</p>
   </main>
@@ -1121,6 +1314,42 @@ def build_html(
           .join(" + ");
       }
 
+      // --- Flat article index (built once) ---
+      const flatStack = document.getElementById("flatStack");
+      const storyStack = document.getElementById("storyStack");
+      const indexPanel = document.getElementById("storyIndex") ? document.getElementById("storyIndex").closest("details") : null;
+
+      // Parse date from "DD/MM/YYYY HH:MM UTC" text
+      function parseDateText(text) {
+        const m = (text || "").match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+        if (!m) return "";
+        return m[3] + "-" + m[2] + "-" + m[1] + "T" + m[4] + ":" + m[5] + ":00Z";
+      }
+
+      // Build flat article data: for each article, record its parent story targets and date
+      const articleIndex = [];
+      storyCards.forEach((card) => {
+        const sid = card.dataset.storyId;
+        const targets = storyTargets(sid);
+        card.querySelectorAll(".article-card").forEach((article) => {
+          // Get ISO date from data attr or parse from visible text
+          let pubIso = article.dataset.publishedIso || "";
+          if (!pubIso) {
+            const metaEl = article.querySelector(".article-meta, .meta-line");
+            if (metaEl) {
+              const spans = metaEl.querySelectorAll("span");
+              for (const sp of spans) {
+                const parsed = parseDateText(sp.textContent);
+                if (parsed) { pubIso = parsed; break; }
+              }
+            }
+          }
+          const titleEl = article.querySelector("h3");
+          const title = (article.dataset.title || (titleEl ? titleEl.textContent : "") || "").trim().toLowerCase();
+          articleIndex.push({ el: article, storyId: sid, targets: targets, pubIso: pubIso, title: title });
+        });
+      });
+
       function applyFilters() {
         let visibleStories = 0;
         let visibleArticles = 0;
@@ -1158,9 +1387,81 @@ def build_html(
         document.getElementById("visibleIndexCount").textContent = String(visibleStories);
         document.getElementById("activeFilterText").textContent = activeLabel();
         document.getElementById("emptyState").hidden = visibleStories > 0;
+
+        // Also update flat view if active
+        if (currentSort === "newest") {
+          buildFlatView();
+        }
+      }
+
+      // --- Sort logic ---
+      let currentSort = "newest";
+
+      function buildFlatView() {
+        flatStack.innerHTML = "";
+        const visible = articleIndex.filter((a) => storyVisible(a.targets));
+        visible.sort((a, b) => {
+          // Primary: date descending
+          const cmp = (b.pubIso || "").localeCompare(a.pubIso || "");
+          if (cmp !== 0) return cmp;
+          // Secondary: title ascending
+          return a.title.localeCompare(b.title);
+        });
+        visible.forEach((entry) => {
+          flatStack.appendChild(entry.el.cloneNode(true));
+        });
+      }
+
+      function applySort() {
+        if (currentSort === "newest") {
+          // Flat article view
+          storyStack.hidden = true;
+          if (indexPanel) indexPanel.hidden = true;
+          flatStack.hidden = false;
+          buildFlatView();
+        } else {
+          // Grouped story view
+          flatStack.hidden = true;
+          flatStack.innerHTML = "";
+          storyStack.hidden = false;
+          if (indexPanel) indexPanel.hidden = false;
+
+          const cards = Array.from(storyStack.querySelectorAll("[data-story-id]"));
+          cards.sort((a, b) => {
+            const ta = parseFloat(a.dataset.temperature || "0");
+            const tb = parseFloat(b.dataset.temperature || "0");
+            return tb - ta;
+          });
+          cards.forEach((card) => storyStack.appendChild(card));
+
+          const index = document.getElementById("storyIndex");
+          if (index) {
+            const links = Array.from(index.querySelectorAll("[data-nav-story-id]"));
+            links.sort((a, b) => {
+              const idA = a.dataset.navStoryId;
+              const idB = b.dataset.navStoryId;
+              const cardA = storyStack.querySelector('[data-story-id="' + idA + '"]');
+              const cardB = storyStack.querySelector('[data-story-id="' + idB + '"]');
+              if (!cardA || !cardB) return 0;
+              return Array.from(storyStack.children).indexOf(cardA) - Array.from(storyStack.children).indexOf(cardB);
+            });
+            links.forEach((link) => index.appendChild(link));
+          }
+        }
+
+        document.querySelectorAll("[data-sort]").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.sort === currentSort);
+        });
       }
 
       document.addEventListener("click", (event) => {
+        const sortBtn = event.target.closest("[data-sort]");
+        if (sortBtn) {
+          currentSort = sortBtn.dataset.sort;
+          applySort();
+          return;
+        }
+
         const button = event.target.closest("[data-filter-target]");
         if (!button) return;
         const key = button.dataset.filterTarget;
@@ -1176,6 +1477,7 @@ def build_html(
         applyFilters();
       });
 
+      applySort();
       applyFilters();
     })();
   </script>
@@ -1189,13 +1491,13 @@ def build_html(
         .replace("__SCOPE_TITLE__", html.escape(scope_title))
         .replace("__SCOPE_TEXT__", html.escape(scope_text))
         .replace("__SCOPE_VALUE__", html.escape(scope_value))
-        .replace("__VISIBLE_STORIES__", str(int(initial_stats["storyCount"])))
+        .replace("__VISIBLE_STORIES__", str(visible_story_count))
         .replace("__TOTAL_STORIES__", str(total_story_count))
-        .replace("__VISIBLE_ARTICLES__", str(int(initial_stats["articleCount"])))
+        .replace("__VISIBLE_ARTICLES__", str(visible_article_count))
         .replace("__TOTAL_ARTICLES__", str(total_article_count))
-        .replace("__VISIBLE_AI__", str(int(initial_stats["aiCount"])))
+        .replace("__VISIBLE_AI__", str(visible_ai_count))
         .replace("__TOTAL_AI__", str(total_ai_count))
-        .replace("__VISIBLE_RAW__", str(int(initial_stats["rawCount"])))
+        .replace("__VISIBLE_RAW__", str(visible_raw_count))
         .replace("__TOTAL_RAW__", str(total_raw_count))
         .replace("__GENERATED_AT__", html.escape(generated_at))
         .replace("__DB_NAME__", html.escape(DB_PATH.name))
@@ -1219,7 +1521,56 @@ def main() -> int:
     detailed_articles = load_scope_articles(db, args)
     article_map = {int(row["article_id"]): row for row in detailed_articles}
     stories = decorate_stories(db.story_with_articles(), article_map)
-    target_rows = build_target_rows(base_targets, stories)
+
+    # --- Merge from existing HTML if requested ---
+    merged_card_html: dict[int, str] | None = None
+    merged_payload_extra: dict[str, Any] | None = None
+
+    if args.merge_from:
+        source_path = Path(args.merge_from).expanduser()
+        if not source_path.is_file():
+            print(f"ERRO: arquivo --merge-from nao encontrado: {source_path}", file=sys.stderr)
+            return 1
+        old_payload, old_cards = parse_source_html(str(source_path))
+        old_story_targets = old_payload.get("storyTargets", {})
+
+        # Deduplicate: remove old cards whose IDs collide with new DB stories
+        new_story_ids = {int(story.get("storyIdInt") or 0) for story in stories}
+        deduped_cards: dict[int, str] = {}
+        for sid, card_str in old_cards.items():
+            if sid not in new_story_ids:
+                deduped_cards[sid] = patch_old_card(card_str, old_story_targets)
+
+        # Merge old targets into base_targets so filter buttons include them
+        old_target_rows = old_payload.get("targets", [])
+        existing_keys = {str(t.get("key", "")) for t in base_targets}
+        for ot in old_target_rows:
+            if str(ot.get("key", "")) not in existing_keys:
+                base_targets.append({"key": ot["key"], "label": ot.get("label", ot["key"]), "primary": False})
+
+        merged_card_html = deduped_cards
+        merged_payload_extra = old_payload
+        print(
+            f"merge: source={source_path.name} old_stories={len(old_cards)} "
+            f"deduped={len(old_cards) - len(deduped_cards)} kept={len(deduped_cards)}"
+        )
+
+    # Rebuild target_rows with combined story data
+    all_stories_for_targets = list(stories)
+    if merged_card_html and merged_payload_extra:
+        old_st = merged_payload_extra.get("storyTargets", {})
+        for sid, card_str in merged_card_html.items():
+            ac_m = re.search(r'data-article-count="(\d+)"', card_str)
+            target_keys = old_st.get(str(sid), [])
+            all_stories_for_targets.append({
+                "storyIdInt": sid,
+                "targetKeys": target_keys,
+                "articleCount": int(ac_m.group(1)) if ac_m else 0,
+                "aiCount": 0,
+                "rawCount": 0,
+            })
+
+    target_rows = build_target_rows(base_targets, all_stories_for_targets)
     initial_targets = resolve_initial_targets(target_rows, args.default_target)
 
     html_doc = build_html(
@@ -1228,15 +1579,23 @@ def main() -> int:
         target_rows=target_rows,
         initial_targets=initial_targets,
         article_map=article_map,
+        merged_card_html=merged_card_html,
+        merged_payload_extra=merged_payload_extra,
     )
     output_path.write_text(html_doc, encoding="utf-8")
 
+    total_stories = len(stories) + (len(merged_card_html) if merged_card_html else 0)
     print(output_path)
     print(
         "stories=%s visible_initial=%s grouped_articles=%s targets=%s"
         % (
-            len(stories),
-            visibility_stats(stories, initial_targets)["storyCount"],
+            total_stories,
+            visibility_stats(stories, initial_targets)["storyCount"] + (
+                sum(1 for sid in (merged_card_html or {}) if sid in set(
+                    int(s) for s in (merged_payload_extra or {}).get("storyTargets", {})
+                    if any(k in set(initial_targets) for k in (merged_payload_extra or {}).get("storyTargets", {}).get(s, []))
+                )) if merged_card_html else 0
+            ),
             sum(int(story.get("articleCount") or 0) for story in stories),
             len(target_rows),
         )

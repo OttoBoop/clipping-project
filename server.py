@@ -231,11 +231,12 @@ def render_article_card(article):
     pub = _format_date(article.get("published_at", ""))
     source = article.get("source_name", "")
     snippet = article.get("snippet", "")
-    targets = article.get("target_names", "")
+    targets = article.get("target_names", [])
 
     chips = ""
     if targets:
-        for name in str(targets).split(","):
+        names = targets if isinstance(targets, list) else str(targets).split(",")
+        for name in names:
             name = name.strip()
             if name:
                 chips += f'<span class="chip">{name}</span>'
@@ -281,30 +282,41 @@ def prepare_snapshot(db_path="data/clipping.db", date_from="", date_to="",
     for a in articles:
         article_map[a["article_id"]] = a
 
-    # Query story_articles
+    # Query story_articles and story titles
     with ClippingDB(db_path) as db:
         rows = db.conn.execute(
             "SELECT article_id, story_id FROM story_articles"
         ).fetchall()
+        story_titles = {}
+        story_ids_needed = {row["story_id"] for row in rows if row["story_id"]}
+        if story_ids_needed:
+            ph = ", ".join("?" for _ in story_ids_needed)
+            for sr in db.conn.execute(
+                f"SELECT id, title FROM stories WHERE id IN ({ph})",
+                tuple(story_ids_needed),
+            ).fetchall():
+                story_titles[int(sr["id"])] = sr["title"] or ""
         for row in rows:
             sid = row["story_id"]
             aid = row["article_id"]
             if sid not in stories_map:
-                stories_map[sid] = {"story_id": sid, "articles": [], "targets": set()}
+                stories_map[sid] = {"story_id": sid, "articles": [], "targets": set(),
+                                    "db_title": story_titles.get(sid, "")}
             if aid in article_map:
                 stories_map[sid]["articles"].append(article_map[aid])
-                if article_map[aid].get("target_name"):
-                    stories_map[sid]["targets"].add(article_map[aid]["target_name"])
+                for tn in (article_map[aid].get("target_names") or []):
+                    if tn:
+                        stories_map[sid]["targets"].add(tn)
 
     # Articles not in any story get their own story
     storied_aids = {row["article_id"] for row in rows}
     for a in articles:
         if a["article_id"] not in storied_aids:
-            sid = f"auto-{a['id']}"
+            sid = f"auto-{a['article_id']}"
             stories_map[sid] = {
                 "story_id": sid,
                 "articles": [a],
-                "targets": {a.get("target_name", "")},
+                "targets": set(a.get("target_names") or []),
             }
 
     stories = sorted(stories_map.values(), key=lambda s: len(s["articles"]), reverse=True)
@@ -312,10 +324,12 @@ def prepare_snapshot(db_path="data/clipping.db", date_from="", date_to="",
     # Build target list from articles
     all_targets = {}
     for a in articles:
-        tk = a.get("target_key", "")
-        tn = a.get("target_name", "")
-        if tk and tk not in all_targets:
-            all_targets[tk] = {"key": tk, "label": tn}
+        tkeys = a.get("target_keys") or []
+        tnames = a.get("target_names") or []
+        for i, tk in enumerate(tkeys):
+            if tk and tk not in all_targets:
+                tn = tnames[i] if i < len(tnames) else tk
+                all_targets[tk] = {"key": tk, "label": tn}
 
     target_rows = list(all_targets.values())
 
@@ -324,14 +338,15 @@ def prepare_snapshot(db_path="data/clipping.db", date_from="", date_to="",
     for s in stories:
         tgt_keys = set()
         for a in s["articles"]:
-            if a.get("target_key"):
-                tgt_keys.add(a["target_key"])
+            for tk in (a.get("target_keys") or []):
+                if tk:
+                    tgt_keys.add(tk)
         story_targets[s["story_id"]] = list(tgt_keys)
 
     # Enrich stories with metadata
     for s in stories:
         arts = s["articles"]
-        s["title"] = arts[0].get("title", "Historia") if arts else "Historia"
+        s["title"] = s.get("db_title") or (arts[0].get("title", "Historia") if arts else "Historia")
         s["article_count"] = len(arts)
 
     # Render sections

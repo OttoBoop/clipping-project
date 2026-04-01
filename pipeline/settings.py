@@ -49,6 +49,15 @@ DEFAULT_TARGETS: list[Target] = [
             "Bernardo Rubiao",
         ],
     ),
+    Target(
+        key="pedro_duarte",
+        display_name="Pedro Duarte",
+        priority=2,
+        keywords=[
+            "Pedro Duarte",
+            "deputado Pedro Duarte",
+        ],
+    ),
 ]
 
 TARGETS = DEFAULT_TARGETS
@@ -103,28 +112,28 @@ GOOGLE_NEWS_QUERIES: list[str] = [
 ]
 
 FLAVIO_QUERY_VARIANTS: list[str] = ["Flavio Valle", "Flávio Valle"]
-FLAVIO_INTERNAL_SEARCH_QUERIES: list[str] = ["Flavio Valle", "Flávio Valle", "Valle"]
+FLAVIO_INTERNAL_SEARCH_QUERIES: list[str] = ["Flavio Valle", "Flávio Valle"]
 
 SITEMAP_DAILY_SOURCES: list[dict[str, str]] = [
     {
         "source_name": "O Globo Sitemap",
         "host": "oglobo.globo.com",
-        "sitemap_url_template": "https://oglobo.globo.com/sitemap/oglobo/{yyyy}/{mm}/{dd}_1.xml",
+        "sitemap_url_template": "https://oglobo.globo.com/sitemap/oglobo/{yyyy}/{mm}/{dd}_{page}.xml",
     },
     {
         "source_name": "G1 Sitemap",
         "host": "g1.globo.com",
-        "sitemap_url_template": "https://g1.globo.com/sitemap/g1/{yyyy}/{mm}/{dd}_1.xml",
+        "sitemap_url_template": "https://g1.globo.com/sitemap/g1/{yyyy}/{mm}/{dd}_{page}.xml",
     },
     {
         "source_name": "CBN Sitemap",
         "host": "cbn.globo.com",
-        "sitemap_url_template": "https://cbn.globo.com/sitemap/cbn/{yyyy}/{mm}/{dd}_1.xml",
+        "sitemap_url_template": "https://cbn.globo.com/sitemap/cbn/{yyyy}/{mm}/{dd}_{page}.xml",
     },
     {
         "source_name": "Extra Sitemap",
         "host": "extra.globo.com",
-        "sitemap_url_template": "https://extra.globo.com/sitemap/extra/{yyyy}/{mm}/{dd}_1.xml",
+        "sitemap_url_template": "https://extra.globo.com/sitemap/extra/{yyyy}/{mm}/{dd}_{page}.xml",
     },
     {
         "source_name": "Veja Rio Sitemap",

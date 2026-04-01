@@ -6,10 +6,15 @@ import re
 import ssl
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from datetime import datetime, timezone
 from urllib.parse import parse_qs, quote, urlparse, urlunparse
 
 from .settings import USER_AGENT
+
+# Shared thread pool for enforcing hard timeouts on network I/O
+# (urllib's socket timeout does NOT cover DNS resolution hangs).
+_IO_POOL = ThreadPoolExecutor(max_workers=4)
 
 
 def _build_ssl_fallback_context():
@@ -44,8 +49,8 @@ def _urlopen_with_ssl_fallback(req, *, timeout: int):
             return urllib.request.urlopen(req, timeout=timeout, context=context)
 
 
-def fetch_url(url: str, timeout: int = 10) -> tuple[str, str]:
-    """Return (response_url, body_text)."""
+def _fetch_url_inner(url: str, timeout: int) -> tuple[str, str]:
+    """Actual fetch — runs inside a thread so we can enforce a hard timeout."""
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     data = b""
     final_url = url
@@ -59,7 +64,18 @@ def fetch_url(url: str, timeout: int = 10) -> tuple[str, str]:
     return final_url, body
 
 
-def post_json(url: str, payload, timeout: int = 10, extra_headers: dict | None = None) -> tuple[str, str]:
+def fetch_url(url: str, timeout: int = 10) -> tuple[str, str]:
+    """Return (response_url, body_text). Hard-kills after timeout+5s."""
+    hard_limit = timeout + 5
+    future = _IO_POOL.submit(_fetch_url_inner, url, timeout)
+    try:
+        return future.result(timeout=hard_limit)
+    except FuturesTimeoutError:
+        future.cancel()
+        raise TimeoutError(f"fetch_url hard timeout ({hard_limit}s): {url[:120]}")
+
+
+def _post_json_inner(url: str, payload, timeout: int, extra_headers: dict | None) -> tuple[str, str]:
     headers = {
         "User-Agent": USER_AGENT,
         "Content-Type": "application/json",
@@ -81,6 +97,17 @@ def post_json(url: str, payload, timeout: int = 10, extra_headers: dict | None =
     except UnicodeDecodeError:
         body = data.decode("latin1", errors="ignore")
     return final_url, body
+
+
+def post_json(url: str, payload, timeout: int = 10, extra_headers: dict | None = None) -> tuple[str, str]:
+    """POST JSON. Hard-kills after timeout+5s."""
+    hard_limit = timeout + 5
+    future = _IO_POOL.submit(_post_json_inner, url, payload, timeout, extra_headers)
+    try:
+        return future.result(timeout=hard_limit)
+    except FuturesTimeoutError:
+        future.cancel()
+        raise TimeoutError(f"post_json hard timeout ({hard_limit}s): {url[:120]}")
 
 
 GOOGLE_ARTICLE_PATH_RE = re.compile(r"/(?:rss/)?(?:articles|read)/([^/?#]+)")
@@ -123,26 +150,30 @@ def _decode_google_article_token(token: str, timeout: int = 6) -> str:
     signature = sig_match.group(1)
     timestamp = ts_match.group(1)
 
-    payload = [
-        "Fbv4je",
-        (
-            '["garturlreq",[["X","X",["X","X"],null,null,1,1,"US:en",null,1,null,null,null,null,null,0,1],'
-            '"X","X",1,[1,1,1],1,1,null,0,0,null,0],"'
-            f"{token}"
-            '",'
-            f"{timestamp}"
-            ',"'
-            f"{signature}"
-            '"]'
-        ),
+    # Build the inner payload as a proper Python structure and let json.dumps
+    # serialize it.  The old code hand-built the JSON string with f-string
+    # interpolation, producing subtly wrong quoting that Google's backend
+    # rejects (returns null instead of the decoded URL).
+    inner = [
+        "garturlreq",
+        [
+            ["en-US", "US", ["FINANCE_TOP_INDICES", "WEB_TEST_1_0_0"],
+             None, None, 1, 1, "US:en", None, 1, None, None, None, None, None, 0, 1],
+            "en-US", "US", 1, [1, 1, 1], 1, 1, None, 0, 0, None, 0,
+        ],
+        token,
+        int(timestamp),
+        signature,
     ]
-    request_body = f"f.req={quote(json.dumps([[payload]]))}".encode("utf-8")
+    outer = [[["Fbv4je", json.dumps(inner)]]]
+    request_body = f"f.req={quote(json.dumps(outer))}".encode("utf-8")
     request = urllib.request.Request(
         "https://news.google.com/_/DotsSplashUi/data/batchexecute",
         data=request_body,
         headers={
             "User-Agent": USER_AGENT,
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+            "Referer": "https://news.google.com/",
         },
     )
     try:
@@ -159,9 +190,11 @@ def _decode_google_article_token(token: str, timeout: int = 6) -> str:
                 continue
             if row[0] != "wrb.fr":
                 continue
-            inner = json.loads(row[2])
-            if isinstance(inner, list) and len(inner) >= 2 and inner[0] == "garturlres":
-                decoded = str(inner[1] or "").strip()
+            if row[2] is None:
+                continue
+            inner_resp = json.loads(row[2])
+            if isinstance(inner_resp, list) and len(inner_resp) >= 2 and inner_resp[0] == "garturlres":
+                decoded = str(inner_resp[1] or "").strip()
                 if decoded.startswith("http"):
                     GOOGLE_DECODE_CACHE[token] = decoded
                     return decoded
@@ -201,18 +234,27 @@ def try_resolve_google_redirect(url: str, timeout: int = 6) -> str:
 
 
 def canonicalize_url(url: str) -> str:
+    if not url:
+        return ""
     try:
         parsed = urlparse(url)
+        host = (parsed.hostname or "").lower()
+        port = f":{parsed.port}" if parsed.port and parsed.port not in (80, 443) else ""
         path = parsed.path or "/"
         # Remove trailing slash noise except root.
         if len(path) > 1 and path.endswith("/"):
             path = path.rstrip("/")
-        clean = parsed._replace(
-            query="",
-            fragment="",
-            path=path,
-        )
-        return urlunparse(clean)
+        # Strip only tracking params, keep meaningful query params.
+        tracking = {
+            "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+            "fbclid", "gclid", "gclsrc", "dclid", "msclkid",
+            "ref", "ref_src", "ref_url", "_ga", "mc_cid", "mc_eid",
+        }
+        qs = parse_qs(parsed.query, keep_blank_values=False)
+        filtered = {k: v for k, v in qs.items() if k.lower() not in tracking}
+        from urllib.parse import urlencode
+        query = urlencode(sorted(filtered.items()), doseq=True) if filtered else ""
+        return urlunparse((parsed.scheme.lower(), f"{host}{port}", path, "", query, ""))
     except Exception:
         return url
 
@@ -310,9 +352,13 @@ BAD_PATH_TOKENS = {
     "/category/",
     "/comentarios",
     "/search/",
+    "/vereadores/",
+    "/atividade-parlamentar/",
+    "/comissoes/",
+    "/frentes/",
 }
 
-BAD_EXTENSIONS = (".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".js", ".css", ".pdf", ".xml")
+BAD_EXTENSIONS = (".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".js", ".css", ".pdf", ".xml", ".php")
 
 
 def is_likely_article_url(url: str, expected_host_fragment: str = "") -> bool:
