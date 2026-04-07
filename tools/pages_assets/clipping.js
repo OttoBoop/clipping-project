@@ -451,6 +451,36 @@
       "<strong>Falha ao carregar o clipping.</strong><p>" + escapeHtml(message) + "</p>";
   }
 
+  function hydrateRawDetails(el) {
+    if (!el || !el.classList.contains("raw-details") || !el.open || el.dataset.loaded === "1") {
+      return;
+    }
+    if (el.dataset.loading === "1") return;
+    const rawKey = el.dataset.rawKey;
+    if (!rawKey) return;
+
+    const fullTextDiv = el.querySelector(".body-text.full");
+    if (fullTextDiv && !fullTextDiv.textContent.trim()) {
+      fullTextDiv.textContent = "Carregando texto bruto...";
+    }
+    el.dataset.loading = "1";
+
+    ensureRawTexts()
+      .then(function (rawTexts) {
+        if (fullTextDiv) {
+          fullTextDiv.innerHTML = renderText(rawTexts[rawKey] || "");
+        }
+        el.dataset.loaded = "1";
+        delete el.dataset.loading;
+      })
+      .catch(function () {
+        if (fullTextDiv) {
+          fullTextDiv.textContent = "Nao foi possivel carregar o texto bruto.";
+        }
+        delete el.dataset.loading;
+      });
+  }
+
   app.addEventListener("click", function (event) {
     const sortButton = event.target.closest("[data-sort]");
     if (sortButton) {
@@ -476,26 +506,13 @@
     applyState();
   });
 
-  app.addEventListener("toggle", function (event) {
-    const el = event.target;
-    if (!el.classList.contains("raw-details") || !el.open || el.dataset.loaded === "1") return;
-    const rawKey = el.dataset.rawKey;
-    if (!rawKey) return;
-    ensureRawTexts()
-      .then(function (rawTexts) {
-        const fullTextDiv = el.querySelector(".body-text.full");
-        if (fullTextDiv) {
-          fullTextDiv.innerHTML = renderText(rawTexts[rawKey] || "");
-        }
-        el.dataset.loaded = "1";
-      })
-      .catch(function () {
-        const fullTextDiv = el.querySelector(".body-text.full");
-        if (fullTextDiv) {
-          fullTextDiv.textContent = "Nao foi possivel carregar o texto bruto.";
-        }
-      });
-  });
+  app.addEventListener(
+    "toggle",
+    function (event) {
+      hydrateRawDetails(event.target);
+    },
+    true
+  );
 
   fetch(dataUrl, { cache: "no-store" })
     .then(function (response) {

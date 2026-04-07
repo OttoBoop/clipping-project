@@ -80,6 +80,7 @@ def test_pages_artifact_uses_external_bundle(tmp_path):
     assert "Carregando dados do clipping" in html_doc
     assert "Carregar mais noticias" in artifact["js_text"]
     assert "Carregando noticias" in artifact["js_text"]
+    assert "hydrateRawDetails" in artifact["js_text"]
     assert "IntersectionObserver" not in artifact["js_text"]
 
 
