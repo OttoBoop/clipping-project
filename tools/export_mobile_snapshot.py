@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import os
 import re
 import sys
 from datetime import datetime, timezone
@@ -23,11 +24,22 @@ TARGETS_PATH = ROOT / "data" / "targets.json"
 REPORTS_DIR = ROOT / "data" / "reports"
 DEFAULT_TARGET_KEY = "flavio_valle"
 EXPORT_LIMIT = 20000
+WIX_SNAPSHOT_SENTINEL = "WIX_CLIPPING_SNAPSHOT_ROOT"
+PAGES_INDEX_PATH = ROOT / "index.html"
+PAGES_ASSETS_DIR = ROOT / "assets"
+PAGES_ASSET_TEMPLATES_DIR = ROOT / "tools" / "pages_assets"
+LEGACY_FULL_REPORT_PATH = REPORTS_DIR / "clipping_historias_completo.html"
+INSTITUTIONAL_FULL_REPORT_PATH = REPORTS_DIR / "clipping_completo_novo_estilo.html"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Exporta um snapshot HTML estatico do clipping para compartilhamento mobile."
+    )
+    parser.add_argument(
+        "--db",
+        default="",
+        help="Caminho do banco SQLite a exportar. Default: data/clipping.db",
     )
     parser.add_argument("--date-from", default="", help="Data inicial em YYYY-MM-DD.")
     parser.add_argument("--date-to", default="", help="Data final em YYYY-MM-DD.")
@@ -50,6 +62,11 @@ def parse_args() -> argparse.Namespace:
         "--merge-from",
         default="",
         help="Caminho de um HTML snapshot existente cujas historias serao mescladas com as novas do banco.",
+    )
+    parser.add_argument(
+        "--remap-incoming-ids-on-merge",
+        action="store_true",
+        help="Desloca IDs de historias/artigos vindos do banco atual para evitar colisao com o HTML mesclado.",
     )
     args = parser.parse_args()
     if not args.all_stories and (not args.date_from or not args.date_to):
@@ -114,6 +131,8 @@ def story_id_int(value: str | int | None) -> int:
 
 def article_id_int(value: str | int | None) -> int:
     raw = str(value or "").strip()
+    if raw.startswith("article-"):
+        raw = raw[8:]
     if raw.startswith("a-"):
         raw = raw[2:]
     try:
@@ -176,6 +195,66 @@ def parse_source_html(path: str) -> tuple[dict[str, Any], dict[int, str]]:
         sid = int(card_m.group(2))
         cards[sid] = card_m.group(1)
     return payload, cards
+
+
+def max_story_id_from_snapshot(payload: dict[str, Any], cards: dict[int, str]) -> int:
+    ids = set(cards)
+    for key in (payload.get("storyTargets") or {}):
+        try:
+            ids.add(int(str(key)))
+        except Exception:
+            continue
+    return max(ids) if ids else 0
+
+
+def max_article_id_from_snapshot_html(path: str) -> int:
+    raw = Path(path).read_text(encoding="utf-8")
+    ids = [int(value) for value in re.findall(r'\barticle-(\d+)\b', raw)]
+    return max(ids) if ids else 0
+
+
+def remap_scope_ids(
+    stories: list[dict[str, Any]],
+    article_map: dict[int, dict[str, Any]],
+    *,
+    story_offset: int = 0,
+    article_offset: int = 0,
+) -> tuple[list[dict[str, Any]], dict[int, dict[str, Any]]]:
+    if story_offset <= 0 and article_offset <= 0:
+        return stories, article_map
+
+    remapped_article_map: dict[int, dict[str, Any]] = {}
+    article_id_map: dict[int, int] = {}
+    for old_aid, article in article_map.items():
+        new_aid = int(old_aid) + article_offset if article_offset > 0 else int(old_aid)
+        article_id_map[int(old_aid)] = new_aid
+        remapped_article_map[new_aid] = {**article, "article_id": new_aid}
+
+    remapped_stories: list[dict[str, Any]] = []
+    for story in stories:
+        new_story = dict(story)
+        old_sid = int(story.get("storyIdInt") or 0)
+        new_sid = old_sid + story_offset if old_sid and story_offset > 0 else old_sid
+        if old_sid:
+            new_story["storyIdInt"] = new_sid
+            raw_story_id = str(story.get("id") or "")
+            if raw_story_id.startswith("st-"):
+                new_story["id"] = f"st-{new_sid}"
+            elif raw_story_id.isdigit():
+                new_story["id"] = str(new_sid)
+
+        remapped_articles: list[dict[str, Any]] = []
+        for article_stub in story.get("articles", []):
+            new_stub = dict(article_stub)
+            old_aid = article_id_int(article_stub.get("id"))
+            new_aid = article_id_map.get(old_aid)
+            if new_aid:
+                new_stub["id"] = f"a-{new_aid}"
+            remapped_articles.append(new_stub)
+        new_story["articles"] = remapped_articles
+        remapped_stories.append(new_story)
+
+    return remapped_stories, remapped_article_map
 
 
 def _parse_old_date(text: str) -> str:
@@ -466,12 +545,12 @@ def render_article_card(article: dict[str, Any], label_by_key: dict[str, str]) -
     )
     full_toggle = ""
     if full_html:
-        full_toggle = """
-        <details class="raw-details">
+        full_toggle = f"""
+        <details class="raw-details" data-article-id="article-{aid}">
           <summary>Ver texto bruto completo</summary>
-          <div class="body-text full">__FULL_TEXT__</div>
+          <div class="body-text full"></div>
         </details>
-        """.replace("__FULL_TEXT__", full_html)
+        """
 
     title_html = title
     if url:
@@ -597,7 +676,7 @@ def output_path_for_args(args: argparse.Namespace) -> Path:
     if args.output:
         return Path(args.output).expanduser()
     if args.all_stories:
-        return REPORTS_DIR / "clipping_mobile_snapshot_all_stories.html"
+        return PAGES_INDEX_PATH
     return REPORTS_DIR / f"clipping_mobile_snapshot_{args.date_from}_{args.date_to}.html"
 
 
@@ -667,6 +746,27 @@ def build_html(
 
     active_filter_text = active_filter_label(initial_targets, target_rows)
 
+    # Collect raw texts for lazy injection
+    raw_texts = {}
+    for article in article_map.values():
+        _, _, full_html = render_text_block(article)
+        if full_html:
+            aid = int(article.get("article_id") or 0)
+            raw_texts[f"article-{aid}"] = full_html
+
+    # Build story card HTML strings (stored in payload, NOT in DOM)
+    story_cards_html: dict[str, str] = {}
+    for story in stories:
+        sid = int(story.get("storyIdInt") or 0)
+        story_cards_html[str(sid)] = render_story_section(
+            story,
+            article_map=article_map,
+            label_by_key=label_by_key,
+            visible_story_ids=initial_visible_story_ids,
+        )
+    for sid, card_str in merged_cards.items():
+        story_cards_html[str(sid)] = card_str
+
     payload = {
         "targets": [
             {
@@ -679,6 +779,8 @@ def build_html(
         ],
         "defaultTargets": list(initial_targets),
         "storyTargets": combined_story_targets,
+        "rawTexts": raw_texts,
+        "storyCards": story_cards_html,
     }
 
     filter_buttons = render_filter_buttons(target_rows, initial_targets)
@@ -697,18 +799,8 @@ def build_html(
             f"<span>{count} noticia(s)</span></a>\n"
         )
 
-    # Render new story cards + append old merged cards
-    story_sections = "".join(
-        render_story_section(
-            story,
-            article_map=article_map,
-            label_by_key=label_by_key,
-            visible_story_ids=initial_visible_story_ids,
-        )
-        for story in stories
-    )
-    for sid, card_str in merged_cards.items():
-        story_sections += card_str + "\n"
+    # storyStack starts empty — cards are rendered on demand from payload
+    story_sections = ""
 
     empty_hidden = " hidden" if visible_story_count > 0 else ""
 
@@ -1168,6 +1260,27 @@ def build_html(
     .body { color: #304052; font-size: 15px; word-break: break-word; }
     .body.full { margin-top: 12px; white-space: pre-wrap; }
 
+    .load-more-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 16px; margin-top: 12px;
+      border: 2px dashed var(--line, #b4c4d1); border-radius: 14px;
+      background: var(--surface-soft, #f8fafc); color: var(--brand, #0b4b7f);
+      font-weight: 700; font-size: 15px; cursor: pointer;
+      transition: background 120ms, border-color 120ms;
+    }
+    .load-more-btn:hover { background: var(--chip-bg, rgba(11,75,127,0.1)); border-color: var(--brand, #0b4b7f); }
+    .load-more-btn:disabled { cursor: wait; opacity: 0.7; }
+    .flat-loading {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 32px 16px; color: var(--muted, #516679); font-size: 15px;
+    }
+    .flat-spinner {
+      width: 20px; height: 20px;
+      border: 3px solid var(--line, #b4c4d1); border-top-color: var(--brand, #0b4b7f);
+      border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     [hidden] {
       display: none !important;
     }
@@ -1321,7 +1434,7 @@ def build_html(
 
       // Parse date from "DD/MM/YYYY HH:MM UTC" text
       function parseDateText(text) {
-        const m = (text || "").match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+        const m = (text || "").match(/([0-9]{2})[/]([0-9]{2})[/]([0-9]{4}) +([0-9]{2}):([0-9]{2})/);
         if (!m) return "";
         return m[3] + "-" + m[2] + "-" + m[1] + "T" + m[4] + ":" + m[5] + ":00Z";
       }
@@ -1350,7 +1463,7 @@ def build_html(
         });
       });
 
-      function applyFilters() {
+      function applyFilters(skipFlatRebuild) {
         let visibleStories = 0;
         let visibleArticles = 0;
         let visibleAi = 0;
@@ -1389,26 +1502,82 @@ def build_html(
         document.getElementById("emptyState").hidden = visibleStories > 0;
 
         // Also update flat view if active
-        if (currentSort === "newest") {
+        if (currentSort === "newest" && !skipFlatRebuild) {
           buildFlatView();
         }
       }
 
       // --- Sort logic ---
       let currentSort = "newest";
+      const LAZY_BATCH = 50;
+      let flatSorted = [];
+      let flatRendered = 0;
+      let loadMoreBtn = null;
+      let loadingEl = null;
+
+      function ensureLoadingEl() {
+        if (!loadingEl) {
+          loadingEl = document.createElement("div");
+          loadingEl.className = "flat-loading";
+          loadingEl.innerHTML = '<div class="flat-spinner"></div> Carregando noticias...';
+        }
+        return loadingEl;
+      }
+
+      function renderFlatBatch() {
+        if (flatRendered >= flatSorted.length) return;
+        var end = Math.min(flatRendered + LAZY_BATCH, flatSorted.length);
+        var frag = document.createDocumentFragment();
+        for (var i = flatRendered; i < end; i++) {
+          frag.appendChild(flatSorted[i].el.cloneNode(true));
+        }
+        if (loadMoreBtn) flatStack.insertBefore(frag, loadMoreBtn);
+        else flatStack.appendChild(frag);
+        flatRendered = end;
+        updateLoadMoreBtn();
+      }
+
+      function updateLoadMoreBtn() {
+        var remaining = flatSorted.length - flatRendered;
+        if (remaining <= 0) {
+          if (loadMoreBtn) { loadMoreBtn.remove(); loadMoreBtn = null; }
+          return;
+        }
+        if (!loadMoreBtn) {
+          loadMoreBtn = document.createElement("button");
+          loadMoreBtn.type = "button";
+          loadMoreBtn.className = "load-more-btn";
+          loadMoreBtn.addEventListener("click", onLoadMore);
+          flatStack.appendChild(loadMoreBtn);
+        }
+        loadMoreBtn.textContent = "Carregar mais noticias (" + remaining + " restantes)";
+        loadMoreBtn.disabled = false;
+      }
+
+      function onLoadMore() {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.innerHTML = '<div class="flat-spinner"></div> Carregando...';
+        requestAnimationFrame(function() {
+          renderFlatBatch();
+        });
+      }
 
       function buildFlatView() {
         flatStack.innerHTML = "";
-        const visible = articleIndex.filter((a) => storyVisible(a.targets));
-        visible.sort((a, b) => {
-          // Primary: date descending
-          const cmp = (b.pubIso || "").localeCompare(a.pubIso || "");
+        flatRendered = 0;
+        loadMoreBtn = null;
+        flatSorted = articleIndex.filter(function(a) { return storyVisible(a.targets); });
+        flatSorted.sort(function(a, b) {
+          var cmp = (b.pubIso || "").localeCompare(a.pubIso || "");
           if (cmp !== 0) return cmp;
-          // Secondary: title ascending
           return a.title.localeCompare(b.title);
         });
-        visible.forEach((entry) => {
-          flatStack.appendChild(entry.el.cloneNode(true));
+        if (flatSorted.length === 0) return;
+        var el = ensureLoadingEl();
+        flatStack.appendChild(el);
+        requestAnimationFrame(function() {
+          if (el.parentNode) el.remove();
+          renderFlatBatch();
         });
       }
 
@@ -1477,8 +1646,24 @@ def build_html(
         applyFilters();
       });
 
+      // Lazy-inject raw text when user opens a raw-details toggle
+      document.addEventListener("toggle", (event) => {
+        const el = event.target;
+        if (el.classList.contains("raw-details") && el.open && !el.dataset.loaded) {
+          const aid = el.dataset.articleId;
+          const text = payload.rawTexts && payload.rawTexts[aid];
+          if (text) {
+            const fullTextDiv = el.querySelector(".body-text.full");
+            if (fullTextDiv) {
+              fullTextDiv.innerHTML = text;
+            }
+          }
+          el.dataset.loaded = "1";
+        }
+      });
+
       applySort();
-      applyFilters();
+      applyFilters(true);
     })();
   </script>
 </body>
@@ -1511,93 +1696,1441 @@ def build_html(
     )
 
 
-def main() -> int:
-    args = parse_args()
-    output_path = output_path_for_args(args)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+def summarize_article_payload(article: dict[str, Any]) -> tuple[str, str, str]:
+    has_ai = bool(article.get("has_ai_summary"))
+    summary = normalize_text(article.get("summary"))
+    full_text = normalize_text(article.get("full_text"))
+    snippet = normalize_text(article.get("snippet"))
 
-    db = ClippingDB(DB_PATH)
+    if has_ai and summary:
+        return "Resumo IA", summary, ""
+
+    if full_text:
+        preview_source = summary or snippet or full_text
+        preview = excerpt(preview_source, 560)
+        if normalize_text(preview_source) == full_text and len(full_text) <= 560:
+            return "Texto bruto", preview, ""
+        return "Texto bruto", preview, full_text
+
+    raw = summary or snippet
+    if raw:
+        return "Trecho bruto", raw, ""
+
+    return "Sem resumo", "Sem conteudo disponivel.", ""
+
+
+def serialize_article_payload(article: dict[str, Any], fallback_targets: list[str]) -> tuple[dict[str, Any], dict[str, str]]:
+    aid = int(article.get("article_id") or 0)
+    label, preview, full_text = summarize_article_payload(article)
+    target_keys = [str(key) for key in article.get("target_keys") or fallback_targets or []]
+    raw_text_key = f"article-{aid}" if aid and full_text else ""
+    raw_texts = {raw_text_key: full_text} if raw_text_key and full_text else {}
+    url = str(article.get("url") or "").strip()
+    published_at = str(article.get("published_at") or "").strip()
+    return (
+        {
+            "articleId": aid,
+            "title": str(article.get("title") or "Sem titulo"),
+            "url": url,
+            "sourceName": str(article.get("source_name") or "Fonte nao identificada").strip(),
+            "sourceHost": host_from_url(url),
+            "publishedAt": published_at,
+            "publishedDisplay": fmt_dt(published_at),
+            "targetKeys": target_keys,
+            "summaryLabel": label,
+            "summaryPreview": preview,
+            "rawTextKey": raw_text_key or None,
+            "summarySource": "ai" if label == "Resumo IA" else "raw",
+        },
+        raw_texts,
+    )
+
+
+def build_story_records(
+    stories: list[dict[str, Any]],
+    article_map: dict[int, dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, str]]:
+    story_records: list[dict[str, Any]] = []
+    raw_texts: dict[str, str] = {}
+
+    for story in stories:
+        summary_label, story_summary = story_display_summary(story, article_map)
+        story_targets = [str(key) for key in story.get("targetKeys") or []]
+        article_records: list[dict[str, Any]] = []
+        for article_stub in story.get("articles", []):
+            aid = article_id_int(article_stub.get("id"))
+            detail = article_map.get(aid)
+            if not detail:
+                continue
+            article_record, article_raw = serialize_article_payload(detail, story_targets)
+            article_records.append(article_record)
+            raw_texts.update(article_raw)
+
+        story_records.append(
+            {
+                "storyIdInt": int(story.get("storyIdInt") or 0),
+                "title": str(story.get("title") or "Sem titulo"),
+                "summaryLabel": summary_label,
+                "summaryText": story_summary,
+                "temperature": float(story.get("temperature") or 0.0),
+                "firstPublishedAt": str(story.get("firstPublishedAt") or ""),
+                "lastPublishedAt": str(story.get("lastPublishedAt") or ""),
+                "articleCount": int(story.get("articleCount") or len(article_records)),
+                "aiCount": int(story.get("aiCount") or 0),
+                "rawCount": int(story.get("rawCount") or max(len(article_records) - int(story.get("aiCount") or 0), 0)),
+                "targetKeys": story_targets,
+                "articles": article_records,
+            }
+        )
+
+    story_records.sort(key=story_sort_key, reverse=True)
+    return story_records, raw_texts
+
+
+def html_fragment_to_text(fragment: str) -> str:
+    text = str(fragment or "")
+    text = re.sub(r"(?i)<br\s*/?>", "\n", text)
+    text = re.sub(r"(?i)</(?:p|div|li|summary|h1|h2|h3)>", "\n", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    return normalize_text(html.unescape(text))
+
+
+def parse_tag_attrs(fragment: str, tag_name: str) -> dict[str, str]:
+    match = re.search(rf"<{tag_name}\b([^>]*)>", fragment, re.IGNORECASE | re.DOTALL)
+    if not match:
+        return {}
+    attrs: dict[str, str] = {}
+    for name, value in re.findall(r'([A-Za-z_:][\w:.-]*)\s*=\s*"([^"]*)"', match.group(1), re.DOTALL):
+        attrs[name] = html.unescape(value)
+    for name, value in re.findall(r"([A-Za-z_:][\w:.-]*)\s*=\s*'([^']*)'", match.group(1), re.DOTALL):
+        attrs.setdefault(name, html.unescape(value))
+    return attrs
+
+
+def extract_nested_tag_block(raw: str, start_index: int, tag_name: str) -> tuple[str, int]:
+    token_re = re.compile(rf"</?{tag_name}\b", re.IGNORECASE)
+    depth = 0
+    for match in token_re.finditer(raw, start_index):
+        is_close = raw[match.start() + 1] == "/"
+        if not is_close:
+            depth += 1
+            continue
+        depth -= 1
+        if depth == 0:
+            close_end = raw.find(">", match.end())
+            if close_end == -1:
+                return raw[start_index:], len(raw)
+            return raw[start_index : close_end + 1], close_end + 1
+    return raw[start_index:], len(raw)
+
+
+def extract_story_card_blocks(raw: str) -> dict[int, str]:
+    blocks: dict[int, str] = {}
+    pattern = re.compile(r'<details\b[^>]*\bdata-story-id="(\d+)"[^>]*>', re.IGNORECASE)
+    for match in pattern.finditer(raw):
+        sid = int(match.group(1))
+        if sid in blocks:
+            continue
+        block, _ = extract_nested_tag_block(raw, match.start(), "details")
+        blocks[sid] = block
+    return blocks
+
+
+def infer_bundle_paths_from_html(html_path: Path, html_doc: str) -> tuple[Path | None, Path | None]:
+    data_match = re.search(r'data-clipping-data-url="([^"]+)"', html_doc)
+    raw_match = re.search(r'data-clipping-raw-url="([^"]+)"', html_doc)
+    if data_match:
+        data_path = (html_path.parent / html.unescape(data_match.group(1))).resolve()
+        raw_path = (html_path.parent / html.unescape(raw_match.group(1))).resolve() if raw_match else None
+        return data_path, raw_path
+
+    candidates = [
+        html_path.parent / "assets" / "clipping-data.json",
+        html_path.parent / f"{html_path.stem}_assets" / "clipping-data.json",
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            raw_candidate = candidate.with_name("clipping-raw-texts.json")
+            return candidate.resolve(), raw_candidate.resolve() if raw_candidate.is_file() else None
+    return None, None
+
+
+def parse_bundle_snapshot(path: Path, html_doc: str) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, str]] | None:
+    data_path, raw_path = infer_bundle_paths_from_html(path, html_doc)
+    if not data_path or not data_path.is_file():
+        return None
+
+    payload = json.loads(data_path.read_text(encoding="utf-8"))
+    raw_texts = {}
+    if raw_path and raw_path.is_file():
+        raw_texts = json.loads(raw_path.read_text(encoding="utf-8"))
+
+    stories: list[dict[str, Any]] = []
+    for story in payload.get("stories", []):
+        stories.append(
+            {
+                "storyIdInt": int(story.get("storyIdInt") or story.get("storyId") or 0),
+                "title": str(story.get("title") or "Sem titulo"),
+                "summaryLabel": str(story.get("summaryLabel") or "Sem resumo"),
+                "summaryText": str(story.get("summaryText") or "Sem resumo."),
+                "temperature": float(story.get("temperature") or 0.0),
+                "firstPublishedAt": str(story.get("firstPublishedAt") or ""),
+                "lastPublishedAt": str(story.get("lastPublishedAt") or ""),
+                "articleCount": int(story.get("articleCount") or 0),
+                "aiCount": int(story.get("aiCount") or 0),
+                "rawCount": int(story.get("rawCount") or 0),
+                "targetKeys": [str(key) for key in story.get("targetKeys") or []],
+                "articles": [
+                    {
+                        "articleId": int(article.get("articleId") or 0),
+                        "title": str(article.get("title") or "Sem titulo"),
+                        "url": str(article.get("url") or ""),
+                        "sourceName": str(article.get("sourceName") or "Fonte nao identificada"),
+                        "sourceHost": str(article.get("sourceHost") or ""),
+                        "publishedAt": str(article.get("publishedAt") or ""),
+                        "publishedDisplay": str(article.get("publishedDisplay") or ""),
+                        "targetKeys": [str(key) for key in article.get("targetKeys") or []],
+                        "summaryLabel": str(article.get("summaryLabel") or "Sem resumo"),
+                        "summaryPreview": str(article.get("summaryPreview") or ""),
+                        "rawTextKey": article.get("rawTextKey") or None,
+                        "summarySource": str(article.get("summarySource") or "raw"),
+                    }
+                    for article in story.get("articles", [])
+                ],
+            }
+        )
+
+    merge_meta = {
+        "targets": payload.get("targets", []),
+        "defaultTargets": payload.get("defaultTargets", []),
+        "storyTargets": {
+            str(story.get("storyIdInt") or story.get("storyId") or 0): [str(key) for key in story.get("targetKeys") or []]
+            for story in stories
+        },
+    }
+    return merge_meta, stories, raw_texts
+
+
+def parse_legacy_article_blocks(story_html: str) -> list[str]:
+    return [
+        match.group(1)
+        for match in re.finditer(
+            r'(<article\b[^>]*class="[^"]*\barticle-card\b[^"]*"[^>]*>.*?</article>)',
+            story_html,
+            re.IGNORECASE | re.DOTALL,
+        )
+    ]
+
+
+def parse_legacy_story_records(
+    html_doc: str,
+    payload: dict[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, str]]:
+    story_targets_map: dict[str, list[str]] = payload.get("storyTargets", {}) or {}
+    raw_texts = {
+        str(key): html_fragment_to_text(value)
+        for key, value in (payload.get("rawTexts", {}) or {}).items()
+    }
+    story_records: list[dict[str, Any]] = []
+    next_article_id = max(
+        [article_id_int(match) for match in re.findall(r"article-(\d+)", html_doc)] or [0]
+    ) + 1
+
+    for sid, card_html in extract_story_card_blocks(html_doc).items():
+        attrs = parse_tag_attrs(card_html, "details")
+        story_targets = [str(key) for key in story_targets_map.get(str(sid), [])]
+        if not story_targets:
+            story_targets = [key for key in str(attrs.get("data-targets") or "").split(",") if key]
+
+        title_match = re.search(r"<h2[^>]*>(.*?)</h2>", card_html, re.IGNORECASE | re.DOTALL)
+        summary_label_match = re.search(
+            r'<div class="summary-label">(.*?)</div>',
+            card_html,
+            re.IGNORECASE | re.DOTALL,
+        )
+        summary_text_match = re.search(
+            r'<div class="(?:story-blurb|story-summary)">.*?<p>(.*?)</p>',
+            card_html,
+            re.IGNORECASE | re.DOTALL,
+        )
+
+        article_records: list[dict[str, Any]] = []
+        for article_html in parse_legacy_article_blocks(card_html):
+            article_attrs = parse_tag_attrs(article_html, "article")
+            article_id = article_id_int(article_attrs.get("id") or article_attrs.get("data-article-id"))
+            if not article_id:
+                article_id = next_article_id
+                next_article_id += 1
+
+            link_match = re.search(
+                r'<h3[^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>\s*</h3>',
+                article_html,
+                re.IGNORECASE | re.DOTALL,
+            )
+            title_only_match = re.search(r"<h3[^>]*>(.*?)</h3>", article_html, re.IGNORECASE | re.DOTALL)
+            meta_match = re.search(
+                r'<p class="(?:article-meta|meta-line)">(.*?)</p>',
+                article_html,
+                re.IGNORECASE | re.DOTALL,
+            )
+            if not meta_match:
+                meta_match = re.search(
+                    r'<div class="(?:article-meta|meta-line)">(.*?)</div>',
+                    article_html,
+                    re.IGNORECASE | re.DOTALL,
+                )
+            spans = re.findall(r"<span[^>]*>(.*?)</span>", meta_match.group(1) if meta_match else "", re.IGNORECASE | re.DOTALL)
+            preview_match = re.search(
+                r'<div class="(?:body-text|body)">(.*?)</div>',
+                article_html,
+                re.IGNORECASE | re.DOTALL,
+            )
+            full_match = re.search(
+                r'<div class="(?:body-text|body) full">(.*?)</div>',
+                article_html,
+                re.IGNORECASE | re.DOTALL,
+            )
+            summary_label = "Resumo IA" if "summary-ai" in article_html else "Texto bruto"
+            summary_label_block = re.search(
+                r'<div class="summary-label">(.*?)</div>',
+                article_html,
+                re.IGNORECASE | re.DOTALL,
+            )
+            if summary_label_block:
+                summary_label = html_fragment_to_text(summary_label_block.group(1))
+
+            raw_text_key = ""
+            if full_match:
+                raw_text_key = f"article-{article_id}"
+                raw_texts[raw_text_key] = html_fragment_to_text(full_match.group(1))
+
+            url = html.unescape(link_match.group(1)) if link_match else ""
+            title_html = link_match.group(2) if link_match else (title_only_match.group(1) if title_only_match else "")
+            published_display = html_fragment_to_text(spans[1]) if len(spans) > 1 else ""
+            published_at = _parse_old_date(published_display)
+            article_records.append(
+                {
+                    "articleId": article_id,
+                    "title": html_fragment_to_text(title_html) or "Sem titulo",
+                    "url": url,
+                    "sourceName": html_fragment_to_text(spans[0]) if spans else "Fonte nao identificada",
+                    "sourceHost": html_fragment_to_text(spans[2]) if len(spans) > 2 else host_from_url(url),
+                    "publishedAt": published_at,
+                    "publishedDisplay": published_display or fmt_dt(published_at),
+                    "targetKeys": story_targets,
+                    "summaryLabel": summary_label or "Sem resumo",
+                    "summaryPreview": html_fragment_to_text(preview_match.group(1) if preview_match else ""),
+                    "rawTextKey": raw_text_key or None,
+                    "summarySource": "ai" if summary_label == "Resumo IA" else "raw",
+                }
+            )
+
+        first_published_match = re.search(r"[Pp]rimeira publica[cç][aã]o:\s*([^<]+)", card_html)
+        last_published_match = re.search(r"[Uu]ltima publica[cç][aã]o:\s*([^<]+)", card_html)
+        temperature = attrs.get("data-temperature") or "0"
+        if not str(temperature).strip():
+            temp_match = re.search(
+                r"<strong>(\d+)</strong>\s*<span[^>]*>\s*temperatura\s*</span>",
+                card_html,
+                re.IGNORECASE,
+            )
+            temperature = temp_match.group(1) if temp_match else "0"
+
+        story_records.append(
+            {
+                "storyIdInt": sid,
+                "title": html_fragment_to_text(title_match.group(1) if title_match else "Sem titulo"),
+                "summaryLabel": html_fragment_to_text(summary_label_match.group(1) if summary_label_match else "Resumo do agrupamento"),
+                "summaryText": html_fragment_to_text(summary_text_match.group(1) if summary_text_match else ""),
+                "temperature": float(temperature or 0.0),
+                "firstPublishedAt": _parse_old_date(first_published_match.group(1)) if first_published_match else "",
+                "lastPublishedAt": attrs.get("data-last-published") or (_parse_old_date(last_published_match.group(1)) if last_published_match else ""),
+                "articleCount": int(attrs.get("data-article-count") or len(article_records)),
+                "aiCount": int(attrs.get("data-ai-count") or 0),
+                "rawCount": int(attrs.get("data-raw-count") or max(len(article_records) - int(attrs.get("data-ai-count") or 0), 0)),
+                "targetKeys": story_targets,
+                "articles": article_records,
+            }
+        )
+
+    story_records.sort(key=story_sort_key, reverse=True)
+    return story_records, raw_texts
+
+
+def parse_source_snapshot(path: str) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, str]]:
+    source_path = Path(path).expanduser().resolve()
+    html_doc = source_path.read_text(encoding="utf-8")
+    bundle_snapshot = parse_bundle_snapshot(source_path, html_doc)
+    if bundle_snapshot is not None:
+        return bundle_snapshot
+
+    payload: dict[str, Any] = {}
+    payload_match = re.search(r'<script[^>]*id="snapshot-payload"[^>]*>(.*?)</script>', html_doc, re.DOTALL)
+    if payload_match:
+        payload = json.loads(payload_match.group(1))
+    story_records, raw_texts = parse_legacy_story_records(html_doc, payload)
+    merge_meta = {
+        "targets": payload.get("targets", []),
+        "defaultTargets": payload.get("defaultTargets", []),
+        "storyTargets": payload.get("storyTargets", {}),
+    }
+    return merge_meta, story_records, raw_texts
+
+
+def max_story_id_from_records(stories: list[dict[str, Any]]) -> int:
+    ids = [int(story.get("storyIdInt") or 0) for story in stories]
+    return max(ids) if ids else 0
+
+
+def max_article_id_from_records(stories: list[dict[str, Any]], raw_texts: dict[str, str] | None = None) -> int:
+    ids = [
+        int(article.get("articleId") or 0)
+        for story in stories
+        for article in story.get("articles", [])
+    ]
+    if raw_texts:
+        ids.extend(article_id_int(key) for key in raw_texts)
+    return max(ids) if ids else 0
+
+
+def build_story_dataset(
+    *,
+    args: argparse.Namespace,
+    stories: list[dict[str, Any]],
+    target_rows: list[dict[str, Any]],
+    initial_targets: list[str],
+    raw_texts: dict[str, str],
+    generated_at: str,
+    db_name: str,
+) -> dict[str, Any]:
+    initial_stats = visibility_stats(stories, initial_targets)
+    scope_kicker, scope_title, scope_text = scope_labels(args)
+    scope_value = "Banco inteiro" if args.all_stories else f"{args.date_from} a {args.date_to}"
+    default_target_label = target_label_map(target_rows).get(args.default_target, args.default_target)
+
+    return {
+        "meta": {
+            "pageTitle": "Clipping Completo | Flavio Valle" if args.all_stories else scope_title,
+            "scopeKicker": scope_kicker,
+            "scopeTitle": scope_title,
+            "scopeText": scope_text,
+            "scopeValue": scope_value,
+            "generatedAt": generated_at,
+            "dbName": db_name,
+            "defaultTargetLabel": default_target_label,
+            "totalStories": len(stories),
+            "totalArticles": sum(int(story.get("articleCount") or 0) for story in stories),
+            "totalAi": sum(int(story.get("aiCount") or 0) for story in stories),
+            "totalRaw": sum(int(story.get("rawCount") or 0) for story in stories),
+            "initialStoryCount": int(initial_stats["storyCount"]),
+            "initialArticleCount": int(initial_stats["articleCount"]),
+            "initialAiCount": int(initial_stats["aiCount"]),
+            "initialRawCount": int(initial_stats["rawCount"]),
+        },
+        "targets": [
+            {
+                "key": str(row["key"]),
+                "label": str(row["label"]),
+                "primary": bool(row.get("primary", False)),
+                "storyCount": int(row.get("storyCount") or 0),
+                "articleCount": int(row.get("articleCount") or 0),
+            }
+            for row in target_rows
+        ],
+        "defaultTargets": list(initial_targets),
+        "stories": stories,
+    }
+
+
+def bundle_asset_dir_for_output(args: argparse.Namespace, output_path: Path) -> Path:
+    if args.all_stories and output_path.resolve() == PAGES_INDEX_PATH.resolve():
+        return PAGES_ASSETS_DIR
+    return output_path.parent / f"{output_path.stem}_assets"
+
+
+def relative_url(from_path: Path, target_path: Path) -> str:
+    return os.path.relpath(target_path, start=from_path.parent).replace(os.sep, "/")
+
+
+def build_pages_stylesheet() -> str:
+    return (PAGES_ASSET_TEMPLATES_DIR / "clipping.css").read_text(encoding="utf-8")
+
+
+def build_pages_javascript() -> str:
+    return (PAGES_ASSET_TEMPLATES_DIR / "clipping.js").read_text(encoding="utf-8")
+
+
+def build_pages_shell_html(
+    dataset: dict[str, Any],
+    *,
+    css_url: str,
+    js_url: str,
+    data_url: str,
+    raw_url: str,
+) -> str:
+    meta = dataset["meta"]
+    return f"""<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="clipping-snapshot-sentinel" content="{html.escape(WIX_SNAPSHOT_SENTINEL)}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{html.escape(str(meta.get("pageTitle") or "Clipping Completo | Flavio Valle"))}</title>
+  <link rel="stylesheet" href="{html.escape(css_url)}">
+</head>
+<body>
+  <main
+    id="app"
+    data-clipping-data-url="{html.escape(data_url)}"
+    data-clipping-raw-url="{html.escape(raw_url)}"
+  >
+    <header class="hero">
+      <div class="hero-lockup">
+        <p class="eyebrow">Mandato Flavio Valle</p>
+        <h1>{html.escape(str(meta.get("scopeTitle") or "Clipping Completo"))}</h1>
+        <p>{html.escape(str(meta.get("scopeText") or ""))}</p>
+        <div class="hero-tags">
+          <span class="hero-tag hero-tag--gold">{html.escape(str(meta.get("scopeValue") or "Banco inteiro"))}</span>
+          <span class="hero-tag">Painel Pages</span>
+          <span class="hero-tag">Renderizacao sob demanda</span>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <span>Escopo</span>
+          <strong>{html.escape(str(meta.get("scopeValue") or ""))}</strong>
+          <small>Bundle estatico leve para GitHub Pages.</small>
+        </div>
+        <div class="stat">
+          <span>Historias visiveis</span>
+          <strong id="visibleStoriesStat">{int(meta.get("initialStoryCount") or 0)} / {int(meta.get("totalStories") or 0)}</strong>
+          <small>Historias do dataset publicado.</small>
+        </div>
+        <div class="stat">
+          <span>Noticias visiveis</span>
+          <strong id="visibleArticlesStat">{int(meta.get("initialArticleCount") or 0)} / {int(meta.get("totalArticles") or 0)}</strong>
+          <small>Modo recente sem agrupamento.</small>
+        </div>
+        <div class="stat">
+          <span>Resumo IA</span>
+          <strong id="visibleAiStat">{int(meta.get("initialAiCount") or 0)} / {int(meta.get("totalAi") or 0)}</strong>
+          <small>Exibe Resumo IA quando existir.</small>
+        </div>
+        <div class="stat">
+          <span>Texto bruto</span>
+          <strong id="visibleRawStat">{int(meta.get("initialRawCount") or 0)} / {int(meta.get("totalRaw") or 0)}</strong>
+          <small>Texto completo carregado sob demanda.</small>
+        </div>
+      </div>
+      <div class="meta-row">
+        <span>Gerado em: {html.escape(str(meta.get("generatedAt") or ""))}</span>
+        <span>Base consultada: {html.escape(str(meta.get("dbName") or ""))}</span>
+        <span>Renderizacao cliente-side para reduzir DOM inicial e uso de RAM.</span>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Monitoramento institucional</p>
+          <h2>Nomes acompanhados</h2>
+        </div>
+      </div>
+      <p class="filter-note">O arquivo abre com foco em {html.escape(str(meta.get("defaultTargetLabel") or "Flavio Valle"))}. Toque para incluir ou remover nomes do acompanhamento.</p>
+      <div class="filter-row" id="targetFilters"></div>
+      <p class="filter-note">Monitoramento ativo: <strong id="activeFilterText">Carregando...</strong></p>
+      <div class="filter-row" style="margin-top:12px">
+        <button type="button" class="filter-chip active" data-sort="newest">Mais recentes</button>
+        <button type="button" class="filter-chip" data-sort="hottest">Historias agrupadas</button>
+      </div>
+    </section>
+
+    <details class="panel" id="indexPanel" hidden>
+      <summary class="nav-summary">Indice de historias visiveis (<span id="visibleIndexCount">{int(meta.get("initialStoryCount") or 0)}</span>)</summary>
+      <div class="story-index" id="storyIndex"></div>
+      <p class="empty-state" id="emptyState" hidden>Nenhuma historia corresponde aos filtros atuais.</p>
+    </details>
+
+    <section class="panel shell-loading" id="loadingState">
+      <div class="flat-spinner"></div>
+      <div>
+        <strong>Carregando dados do clipping...</strong>
+        <p>As historias e noticias serao renderizadas sob demanda para manter o bundle leve.</p>
+      </div>
+    </section>
+
+    <section id="storyStack" hidden></section>
+    <section id="flatStack" class="flat-articles" hidden></section>
+
+    <p class="footer-note">Arquivo institucional estatico para GitHub Pages. Historias e materias sao montadas no cliente a partir de JSON externo para reduzir memoria e acelerar o carregamento inicial.</p>
+  </main>
+  <script src="{html.escape(js_url)}" defer></script>
+</body>
+</html>
+"""
+
+
+def build_snapshot_artifact(args: argparse.Namespace) -> dict[str, Any]:
+    db_path = Path(args.db).expanduser() if args.db else DB_PATH
+    db = ClippingDB(db_path)
     base_targets = load_targets()
     detailed_articles = load_scope_articles(db, args)
     article_map = {int(row["article_id"]): row for row in detailed_articles}
     stories = decorate_stories(db.story_with_articles(), article_map)
 
-    # --- Merge from existing HTML if requested ---
-    merged_card_html: dict[int, str] | None = None
-    merged_payload_extra: dict[str, Any] | None = None
+    merged_story_records: list[dict[str, Any]] = []
+    merged_raw_texts: dict[str, str] = {}
 
     if args.merge_from:
         source_path = Path(args.merge_from).expanduser()
         if not source_path.is_file():
-            print(f"ERRO: arquivo --merge-from nao encontrado: {source_path}", file=sys.stderr)
-            return 1
-        old_payload, old_cards = parse_source_html(str(source_path))
-        old_story_targets = old_payload.get("storyTargets", {})
+            raise FileNotFoundError(f"arquivo --merge-from nao encontrado: {source_path}")
+        merge_meta, parsed_story_records, parsed_raw_texts = parse_source_snapshot(str(source_path))
 
-        # Deduplicate: remove old cards whose IDs collide with new DB stories
+        if args.remap_incoming_ids_on_merge:
+            story_offset = max_story_id_from_records(parsed_story_records)
+            article_offset = max_article_id_from_records(parsed_story_records, parsed_raw_texts)
+            stories, article_map = remap_scope_ids(
+                stories,
+                article_map,
+                story_offset=story_offset,
+                article_offset=article_offset,
+            )
+
         new_story_ids = {int(story.get("storyIdInt") or 0) for story in stories}
-        deduped_cards: dict[int, str] = {}
-        for sid, card_str in old_cards.items():
-            if sid not in new_story_ids:
-                deduped_cards[sid] = patch_old_card(card_str, old_story_targets)
+        merged_story_records = [
+            story
+            for story in parsed_story_records
+            if int(story.get("storyIdInt") or 0) not in new_story_ids
+        ]
 
-        # Merge old targets into base_targets so filter buttons include them
-        old_target_rows = old_payload.get("targets", [])
-        existing_keys = {str(t.get("key", "")) for t in base_targets}
-        for ot in old_target_rows:
-            if str(ot.get("key", "")) not in existing_keys:
-                base_targets.append({"key": ot["key"], "label": ot.get("label", ot["key"]), "primary": False})
+        existing_keys = {str(target.get("key") or "") for target in base_targets}
+        for target in merge_meta.get("targets", []):
+            key = str(target.get("key") or "")
+            if key and key not in existing_keys:
+                base_targets.append(
+                    {
+                        "key": key,
+                        "label": target.get("label", key),
+                        "primary": bool(target.get("primary", False)),
+                    }
+                )
+                existing_keys.add(key)
 
-        merged_card_html = deduped_cards
-        merged_payload_extra = old_payload
-        print(
-            f"merge: source={source_path.name} old_stories={len(old_cards)} "
-            f"deduped={len(old_cards) - len(deduped_cards)} kept={len(deduped_cards)}"
-        )
+        for story in merged_story_records:
+            for article in story.get("articles", []):
+                raw_key = article.get("rawTextKey")
+                if raw_key and raw_key in parsed_raw_texts:
+                    merged_raw_texts[str(raw_key)] = parsed_raw_texts[str(raw_key)]
 
-    # Rebuild target_rows with combined story data
-    all_stories_for_targets = list(stories)
-    if merged_card_html and merged_payload_extra:
-        old_st = merged_payload_extra.get("storyTargets", {})
-        for sid, card_str in merged_card_html.items():
-            ac_m = re.search(r'data-article-count="(\d+)"', card_str)
-            target_keys = old_st.get(str(sid), [])
-            all_stories_for_targets.append({
-                "storyIdInt": sid,
-                "targetKeys": target_keys,
-                "articleCount": int(ac_m.group(1)) if ac_m else 0,
-                "aiCount": 0,
-                "rawCount": 0,
-            })
+    story_records, raw_texts = build_story_records(stories, article_map)
+    story_records.extend(merged_story_records)
+    story_records.sort(key=story_sort_key, reverse=True)
+    raw_texts.update(merged_raw_texts)
 
-    target_rows = build_target_rows(base_targets, all_stories_for_targets)
+    target_rows = build_target_rows(base_targets, story_records)
     initial_targets = resolve_initial_targets(target_rows, args.default_target)
-
-    html_doc = build_html(
+    generated_at = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
+    dataset = build_story_dataset(
         args=args,
-        stories=stories,
+        stories=story_records,
         target_rows=target_rows,
         initial_targets=initial_targets,
-        article_map=article_map,
-        merged_card_html=merged_card_html,
-        merged_payload_extra=merged_payload_extra,
+        raw_texts=raw_texts,
+        generated_at=generated_at,
+        db_name=db_path.name,
     )
-    output_path.write_text(html_doc, encoding="utf-8")
 
-    total_stories = len(stories) + (len(merged_card_html) if merged_card_html else 0)
-    print(output_path)
+    output_path = output_path_for_args(args)
+    asset_dir = bundle_asset_dir_for_output(args, output_path)
+    asset_paths = {
+        "css": asset_dir / "clipping.css",
+        "js": asset_dir / "clipping.js",
+        "data": asset_dir / "clipping-data.json",
+        "raw": asset_dir / "clipping-raw-texts.json",
+    }
+    html_doc = build_pages_shell_html(
+        dataset,
+        css_url=relative_url(output_path, asset_paths["css"]),
+        js_url=relative_url(output_path, asset_paths["js"]),
+        data_url=relative_url(output_path, asset_paths["data"]),
+        raw_url=relative_url(output_path, asset_paths["raw"]),
+    )
+
+    return {
+        "html_doc": html_doc,
+        "data_payload": dataset,
+        "raw_texts": raw_texts,
+        "css_text": build_pages_stylesheet(),
+        "js_text": build_pages_javascript(),
+        "asset_paths": asset_paths,
+        "initial_stats": visibility_stats(story_records, initial_targets),
+        "output_path": output_path,
+        "story_records": story_records,
+        "target_rows": target_rows,
+    }
+
+
+def write_bundle_assets(artifact: dict[str, Any], asset_paths: dict[str, Path]) -> None:
+    asset_paths["css"].parent.mkdir(parents=True, exist_ok=True)
+    asset_paths["css"].write_text(artifact["css_text"], encoding="utf-8")
+    asset_paths["js"].write_text(artifact["js_text"], encoding="utf-8")
+    asset_paths["data"].write_text(
+        json.dumps(artifact["data_payload"], ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    asset_paths["raw"].write_text(
+        json.dumps(artifact["raw_texts"], ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def write_shell_html(output_path: Path, dataset: dict[str, Any], asset_paths: dict[str, Path]) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        build_pages_shell_html(
+            dataset,
+            css_url=relative_url(output_path, asset_paths["css"]),
+            js_url=relative_url(output_path, asset_paths["js"]),
+            data_url=relative_url(output_path, asset_paths["data"]),
+            raw_url=relative_url(output_path, asset_paths["raw"]),
+        ),
+        encoding="utf-8",
+    )
+
+
+def restyle_html_for_flavio_valle(html_doc: str, *, args: argparse.Namespace) -> str:
+    scope_tag = "Banco completo" if args.all_stories else f"Recorte {args.date_from} a {args.date_to}"
+    if args.all_stories:
+        hero_title = "Clipping Completo"
+        hero_text = (
+            "Painel offline de acompanhamento institucional do gabinete, com foco em leitura "
+            "mobile, filtros locais e acesso rapido as historias e materias do monitoramento."
+        )
+    else:
+        hero_title = "Clipping Institucional"
+        hero_text = (
+            f"Painel offline do gabinete para acompanhamento institucional no periodo de "
+            f"{args.date_from} a {args.date_to}, com filtros locais e leitura otimizada para celular."
+        )
+
+    stylesheet = """
+    :root {
+      color-scheme: light;
+      --bg: #eef3f7;
+      --bg-deep: #05253e;
+      --brand: #0b4b7f;
+      --brand-strong: #08365a;
+      --gold: #f6bb1b;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --surface-muted: #ececec;
+      --text: #05253e;
+      --muted: #516679;
+      --line: #b4c4d1;
+      --link: #1d67cd;
+      --chip-bg: rgba(11, 75, 127, 0.1);
+      --chip-ink: #0b4b7f;
+      --shadow: 0 22px 48px rgba(5, 37, 62, 0.12);
+      --shadow-strong: 0 28px 60px rgba(5, 37, 62, 0.24);
+      --ai-bg: #e9f2fb;
+      --ai-ink: #0b4b7f;
+      --raw-bg: #fff6dc;
+      --raw-ink: #6f5610;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(246, 187, 27, 0.12), transparent 26%),
+        radial-gradient(circle at top right, rgba(180, 196, 209, 0.24), transparent 28%),
+        linear-gradient(180deg, var(--bg-deep) 0, var(--brand) 240px, var(--bg) 240px, var(--bg) 100%);
+      color: var(--text);
+      font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.04), transparent 26%),
+        radial-gradient(circle at 12% 12%, rgba(255, 255, 255, 0.08), transparent 16%);
+      opacity: 0.9;
+    }
+    a { color: inherit; }
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 48px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero,
+    .panel {
+      border-radius: 28px;
+      border: 1px solid rgba(180, 196, 209, 0.78);
+      box-shadow: var(--shadow);
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 30px;
+      background:
+        radial-gradient(circle at top right, rgba(246, 187, 27, 0.22), transparent 28%),
+        linear-gradient(135deg, rgba(5, 37, 62, 0.98), rgba(11, 75, 127, 0.97));
+      color: #ececec;
+      box-shadow: var(--shadow-strong);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      bottom: -90px;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(246, 187, 27, 0.24), rgba(246, 187, 27, 0));
+    }
+    .hero-lockup {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+    }
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 18px 0 0;
+    }
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(180, 196, 209, 0.28);
+      background: rgba(255, 255, 255, 0.08);
+      color: #ececec;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .hero-tag--gold {
+      background: var(--gold);
+      border-color: transparent;
+      color: var(--bg-deep);
+    }
+    .panel {
+      background: rgba(255, 255, 255, 0.98);
+      margin-top: 18px;
+      padding: 22px;
+    }
+    .story-card {
+      padding: 0;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff 0, #f9fbfd 100%);
+    }
+    .eyebrow {
+      margin: 0 0 10px;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: var(--muted);
+    }
+    .hero .eyebrow {
+      color: #b4c4d1;
+    }
+    .hero h1,
+    .section-head h2,
+    .story-heading h2,
+    .article-card h3 {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.02;
+      color: #ffffff;
+    }
+    .hero p {
+      margin: 14px 0 0;
+      max-width: 720px;
+      color: rgba(236, 236, 236, 0.88);
+      font-size: 16px;
+    }
+    .stats {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .stat {
+      min-height: 124px;
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(180, 196, 209, 0.18);
+      backdrop-filter: blur(8px);
+    }
+    .stat span {
+      display: block;
+      color: #b4c4d1;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .stat strong {
+      display: block;
+      margin-top: 10px;
+      font-size: clamp(26px, 4vw, 34px);
+      line-height: 1.05;
+      color: #ffffff;
+    }
+    .stat small {
+      display: block;
+      margin-top: 8px;
+      color: rgba(236, 236, 236, 0.8);
+      font-size: 12px;
+    }
+    .meta-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(180, 196, 209, 0.22);
+      font-size: 13px;
+      color: #b4c4d1;
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .section-head h2 {
+      font-size: 24px;
+      color: var(--bg-deep);
+    }
+    .filter-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .filter-chip {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px 14px;
+      background: linear-gradient(180deg, #f9fbfd 0, #f3f7fb 100%);
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      min-width: 132px;
+      text-align: left;
+    }
+    .filter-chip.primary {
+      border-color: rgba(11, 75, 127, 0.36);
+    }
+    .filter-chip.active {
+      background: linear-gradient(135deg, #f6bb1b 0, #ffd76a 100%);
+      color: var(--bg-deep);
+      border-color: transparent;
+      box-shadow: 0 10px 24px rgba(246, 187, 27, 0.28);
+    }
+    .filter-chip:hover {
+      transform: translateY(-1px);
+      border-color: var(--brand);
+    }
+    .filter-chip__label {
+      display: block;
+      font-weight: 800;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+    .filter-chip__meta {
+      display: block;
+      font-size: 12px;
+      color: inherit;
+      opacity: 0.82;
+    }
+    .nav-summary {
+      list-style: none;
+      cursor: pointer;
+      font-weight: 800;
+      color: var(--bg-deep);
+    }
+    .nav-summary::-webkit-details-marker { display: none; }
+    .story-index {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .story-index-link {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: var(--surface-soft);
+      border: 1px solid rgba(180, 196, 209, 0.5);
+      color: var(--text);
+      text-decoration: none;
+      transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+    }
+    .story-index-link strong,
+    .story-index-link span {
+      display: block;
+    }
+    .story-index-link span {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+    }
+    .story-index-link:hover {
+      transform: translateY(-1px);
+      border-color: rgba(11, 75, 127, 0.34);
+      box-shadow: 0 12px 28px rgba(5, 37, 62, 0.08);
+    }
+    .story-summary-row,
+    .story-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      list-style: none;
+      cursor: pointer;
+      padding: 22px;
+      border-bottom: 1px solid rgba(180, 196, 209, 0.55);
+    }
+    .story-summary-row::-webkit-details-marker,
+    .story-head::-webkit-details-marker { display: none; }
+    .story-heading,
+    .story-main {
+      display: flex;
+      gap: 12px;
+      flex: 1 1 560px;
+    }
+    .story-toggle,
+    .story-arrow {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 3px;
+      background: rgba(11, 75, 127, 0.1);
+      color: var(--brand);
+      transition: transform 120ms ease;
+      flex: 0 0 auto;
+    }
+    .story-toggle::before,
+    .story-arrow::before { content: "\\25b8"; }
+    details[open] > summary .story-toggle,
+    details[open] > summary .story-arrow { transform: rotate(90deg); }
+    .story-heading h2 {
+      font-size: 24px;
+      line-height: 1.14;
+      color: var(--bg-deep);
+    }
+    .story-stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .story-stats div {
+      min-width: 100px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: #f1f6fa;
+      border: 1px solid rgba(180, 196, 209, 0.72);
+      text-align: right;
+    }
+    .story-stats strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1;
+      color: var(--brand-strong);
+    }
+    .story-stats span {
+      display: block;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .story-meta,
+    .meta-line {
+      display: flex;
+      gap: 8px 14px;
+      flex-wrap: wrap;
+      padding: 0 22px;
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .story-blurb,
+    .story-summary {
+      padding: 18px 22px 0;
+    }
+    .summary-label {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+      background: rgba(11, 75, 127, 0.1);
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .story-blurb p,
+    .story-summary p {
+      margin: 0;
+      color: var(--text);
+    }
+    .story-articles {
+      display: grid;
+      gap: 14px;
+      padding: 18px 22px 22px;
+    }
+    .article-card {
+      border: 1px solid rgba(180, 196, 209, 0.72);
+      border-radius: 22px;
+      background: var(--surface);
+      padding: 18px;
+      box-shadow: 0 10px 26px rgba(5, 37, 62, 0.05);
+    }
+    .article-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .article-card h3 {
+      font-size: 22px;
+      line-height: 1.12;
+      color: var(--bg-deep);
+    }
+    .article-card h3 a {
+      color: var(--bg-deep);
+      text-decoration: none;
+    }
+    .article-card h3 a:hover {
+      color: var(--link);
+    }
+    .article-meta {
+      display: flex;
+      gap: 8px 12px;
+      flex-wrap: wrap;
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--chip-bg);
+      color: var(--chip-ink);
+      border: 1px solid rgba(11, 75, 127, 0.08);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .article-links,
+    .link-row {
+      display: flex;
+      gap: 8px 14px;
+      flex-wrap: wrap;
+      margin: 14px 0 0;
+    }
+    .text-link,
+    .link {
+      color: var(--link);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .text-link:hover,
+    .link:hover {
+      text-decoration: underline;
+    }
+    .summary-box {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+    }
+    .summary-ai {
+      background: var(--ai-bg);
+      color: var(--ai-ink);
+    }
+    .summary-raw {
+      background: var(--raw-bg);
+      color: var(--raw-ink);
+    }
+    .body-text,
+    .body {
+      color: inherit;
+      font-size: 15px;
+      word-break: break-word;
+    }
+    .body.full { margin-top: 12px; white-space: pre-wrap; }
+    .raw-details {
+      margin-top: 14px;
+      border-top: 1px solid rgba(5, 37, 62, 0.08);
+      padding-top: 14px;
+    }
+    .raw-details summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--link);
+    }
+    .raw-details[open] summary {
+      margin-bottom: 10px;
+    }
+    .empty-state {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .footer-note {
+      margin-top: 18px;
+      color: rgba(5, 37, 62, 0.72);
+      font-size: 13px;
+      text-align: center;
+    }
+    .flat-articles {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .flat-articles .article-card {
+      background: var(--surface);
+    }
+    .load-more-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 16px; margin-top: 12px;
+      border: 2px dashed var(--line); border-radius: 14px;
+      background: var(--surface-soft); color: var(--brand);
+      font-weight: 700; font-size: 15px; cursor: pointer;
+      transition: background 120ms, border-color 120ms;
+    }
+    .load-more-btn:hover { background: var(--chip-bg); border-color: var(--brand); }
+    .load-more-btn:disabled { cursor: wait; opacity: 0.7; }
+    .flat-loading {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 32px 16px; color: var(--muted); font-size: 15px;
+    }
+    .flat-spinner {
+      width: 20px; height: 20px;
+      border: 3px solid var(--line); border-top-color: var(--brand);
+      border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    [hidden] {
+      display: none !important;
+    }
+    @media (max-width: 720px) {
+      main {
+        width: min(100% - 16px, 100%);
+        padding-top: 10px;
+      }
+      .hero,
+      .panel {
+        border-radius: 22px;
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+      .hero h1 {
+        font-size: 34px;
+      }
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .stat {
+        min-height: 112px;
+      }
+      .story-card {
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .story-summary-row,
+      .story-head,
+      .story-meta,
+      .story-blurb,
+      .story-summary,
+      .story-articles {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+      .story-stats div {
+        min-width: 92px;
+      }
+      .article-links,
+      .link-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .story-index-link {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .story-index-link span {
+        text-align: left;
+      }
+    }
+    """
+
+    html_doc = re.sub(
+        r"<title>.*?</title>",
+        "<title>Clipping Completo | Flavio Valle</title>",
+        html_doc,
+        count=1,
+        flags=re.DOTALL,
+    )
+    html_doc = re.sub(
+        r"<style>.*?</style>",
+        lambda _match: f"<style>\n{stylesheet}\n  </style>",
+        html_doc,
+        count=1,
+        flags=re.DOTALL,
+    )
+    html_doc = re.sub(
+        r'<header class="hero">\s*<p class="eyebrow">.*?</p>\s*<h1>.*?</h1>\s*<p>.*?</p>\s*<div class="stats">',
+        lambda _match: (
+            '<header class="hero">\n'
+            '      <div class="hero-lockup">\n'
+            '        <p class="eyebrow">Mandato Flavio Valle</p>\n'
+            f'        <h1>{html.escape(hero_title)}</h1>\n'
+            f'        <p>{html.escape(hero_text)}</p>\n'
+            '        <div class="hero-tags">\n'
+            f'          <span class="hero-tag hero-tag--gold">{html.escape(scope_tag)}</span>\n'
+            '          <span class="hero-tag">Painel offline</span>\n'
+            '          <span class="hero-tag">Uso interno do gabinete</span>\n'
+            '        </div>\n'
+            '      </div>\n'
+            '      <div class="stats">'
+        ),
+        html_doc,
+        count=1,
+        flags=re.DOTALL,
+    )
+    html_doc = html_doc.replace("Escopo do arquivo", "Escopo")
+    html_doc = html_doc.replace("Sem chamadas para /api depois da geracao.", "Arquivo institucional offline, sem dependencia de API.")
+    html_doc = html_doc.replace("Historias visiveis", "Historias visiveis")
+    html_doc = html_doc.replace("Noticias visiveis", "Materias visiveis")
+    html_doc = html_doc.replace("Somente noticias agrupadas em historias.", "Materias agrupadas nas historias visiveis.")
+    html_doc = html_doc.replace("Com resumo IA", "Resumo IA")
+    html_doc = html_doc.replace("Mostra Resumo IA quando existir.", "Exibe o resumo IA quando estiver disponivel.")
+    html_doc = html_doc.replace("Mostra texto bruto quando nao houver IA.", "Exibe o texto bruto quando nao houver resumo IA.")
+    html_doc = html_doc.replace("Banco consultado:", "Base consultada:")
+    html_doc = html_doc.replace(
+        "Controles de coleta removidos: este arquivo nao dispara novas execucoes.",
+        "Uso interno do gabinete: este arquivo nao dispara novas coletas.",
+    )
+    html_doc = html_doc.replace("Filtro offline", "Monitoramento institucional")
+    html_doc = html_doc.replace("Pessoas monitoradas", "Nomes acompanhados")
+    html_doc = html_doc.replace("Abre filtrado em", "O arquivo abre com foco em")
+    html_doc = html_doc.replace(
+        "Toque para adicionar ou remover pessoas do filtro.",
+        "Toque para incluir ou remover nomes do acompanhamento.",
+    )
+    html_doc = html_doc.replace("Filtro ativo:", "Monitoramento ativo:")
+    html_doc = html_doc.replace(">Mais recente<", ">Mais recentes<")
+    html_doc = html_doc.replace(">Noticias agrupadas<", ">Historias agrupadas<")
+    html_doc = html_doc.replace(
+        "Este snapshot foi gerado para compartilhamento em celular. As materias originais seguem com links externos; o restante funciona offline em um unico arquivo HTML.",
+        "Arquivo institucional offline para compartilhamento interno do gabinete. Os links externos das materias originais permanecem disponiveis, e o restante funciona localmente em um unico HTML.",
+    )
+    return html_doc
+
+
+def main() -> int:
+    args = parse_args()
+    try:
+        artifact = build_snapshot_artifact(args)
+    except FileNotFoundError as exc:
+        print(f"ERRO: {exc}", file=sys.stderr)
+        return 1
+
+    output_path = Path(artifact["output_path"])
+    written_outputs: list[Path] = []
+
+    if args.all_stories:
+        root_asset_paths = {
+            "css": PAGES_ASSETS_DIR / "clipping.css",
+            "js": PAGES_ASSETS_DIR / "clipping.js",
+            "data": PAGES_ASSETS_DIR / "clipping-data.json",
+            "raw": PAGES_ASSETS_DIR / "clipping-raw-texts.json",
+        }
+        write_bundle_assets(artifact, root_asset_paths)
+        write_shell_html(PAGES_INDEX_PATH, artifact["data_payload"], root_asset_paths)
+        written_outputs.append(PAGES_INDEX_PATH)
+
+        aux_outputs = [
+            REPORTS_DIR / "clipping_mobile_snapshot_all_stories.html",
+            LEGACY_FULL_REPORT_PATH,
+            INSTITUTIONAL_FULL_REPORT_PATH,
+        ]
+        if output_path != PAGES_INDEX_PATH and output_path not in aux_outputs:
+            aux_outputs.insert(0, output_path)
+        for extra_path in aux_outputs:
+            write_shell_html(extra_path, artifact["data_payload"], root_asset_paths)
+            written_outputs.append(extra_path)
+    else:
+        asset_paths = artifact["asset_paths"]
+        write_bundle_assets(artifact, asset_paths)
+        write_shell_html(output_path, artifact["data_payload"], asset_paths)
+        written_outputs.append(output_path)
+
+    for path in written_outputs:
+        print(path)
+
+    meta = artifact["data_payload"]["meta"]
     print(
         "stories=%s visible_initial=%s grouped_articles=%s targets=%s"
         % (
-            total_stories,
-            visibility_stats(stories, initial_targets)["storyCount"] + (
-                sum(1 for sid in (merged_card_html or {}) if sid in set(
-                    int(s) for s in (merged_payload_extra or {}).get("storyTargets", {})
-                    if any(k in set(initial_targets) for k in (merged_payload_extra or {}).get("storyTargets", {}).get(s, []))
-                )) if merged_card_html else 0
-            ),
-            sum(int(story.get("articleCount") or 0) for story in stories),
-            len(target_rows),
+            int(meta.get("totalStories") or 0),
+            int(meta.get("initialStoryCount") or 0),
+            int(meta.get("totalArticles") or 0),
+            len(artifact["target_rows"]),
         )
     )
     return 0
