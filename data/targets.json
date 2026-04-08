@@ -30,5 +30,26 @@
       "Pedro Duarte deputado",
       "Pedro Duarte vereador"
     ]
+  },
+  {
+    "key": "pedro_angelito",
+    "label": "Pedro Angelito",
+    "display_name": "Pedro Angelito",
+    "className": "",
+    "primary": true,
+    "keywords": [
+      "Pedro Angelito"
+    ]
+  },
+  {
+    "key": "bernardo_rubiao",
+    "label": "Bernardo Rubião",
+    "display_name": "Bernardo Rubião",
+    "className": "",
+    "primary": true,
+    "keywords": [
+      "Bernardo Rubiao",
+      "Bernardo Rubião"
+    ]
   }
 ]
