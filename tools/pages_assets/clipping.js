@@ -120,28 +120,50 @@
     return articles;
   }
 
+  function chipHtml(target) {
+    var active = selectedTargets.has(target.key) ? " active" : "";
+    var primary = target.primary ? " primary" : "";
+    return (
+      '<button type="button" class="filter-chip' +
+      primary +
+      active +
+      '" data-filter-target="' +
+      escapeHtml(target.key) +
+      '">' +
+      '<span class="filter-chip__label">' +
+      escapeHtml(target.label) +
+      "</span>" +
+      '<span class="filter-chip__meta">' +
+      escapeHtml(String(target.storyCount || 0)) +
+      " historias</span>" +
+      "</button>"
+    );
+  }
+
   function renderTargetButtons() {
-    targetFilters.innerHTML = (payload.targets || [])
-      .map(function (target) {
-        const active = selectedTargets.has(target.key) ? " active" : "";
-        const primary = target.primary ? " primary" : "";
-        return (
-          '<button type="button" class="filter-chip' +
-          primary +
-          active +
-          '" data-filter-target="' +
-          escapeHtml(target.key) +
-          '">' +
-          '<span class="filter-chip__label">' +
-          escapeHtml(target.label) +
-          "</span>" +
-          '<span class="filter-chip__meta">' +
-          escapeHtml(String(target.storyCount || 0)) +
-          " historias</span>" +
-          "</button>"
-        );
-      })
-      .join("");
+    var primary = [];
+    var other = [];
+    (payload.targets || []).forEach(function (target) {
+      if (target.primary) primary.push(target);
+      else other.push(target);
+    });
+    targetFilters.innerHTML = primary.map(chipHtml).join("");
+    var outrosEl = document.getElementById("outrosFilters");
+    if (other.length > 0) {
+      if (!outrosEl) {
+        outrosEl = document.createElement("details");
+        outrosEl.className = "outros-candidatos";
+        outrosEl.id = "outrosFilters";
+        targetFilters.parentNode.insertBefore(outrosEl, targetFilters.nextSibling);
+      }
+      outrosEl.innerHTML =
+        "<summary>Outros candidatos (" + other.length + ")</summary>" +
+        '<div class="filter-row">' +
+        other.map(chipHtml).join("") +
+        "</div>";
+    } else if (outrosEl) {
+      outrosEl.remove();
+    }
   }
 
   function renderStats(stories) {
@@ -499,7 +521,8 @@
       selectedTargets.add(key);
     }
     if (!selectedTargets.size) {
-      (payload.targets || []).forEach(function (target) {
+      var primaryTargets = (payload.targets || []).filter(function (t) { return t.primary; });
+      (primaryTargets.length ? primaryTargets : payload.targets || []).forEach(function (target) {
         selectedTargets.add(target.key);
       });
     }

@@ -735,3 +735,13 @@ details[open] > summary .story-toggle {
     text-align: left;
   }
 }
+
+.outros-candidatos { margin-top: 12px; }
+.outros-candidatos summary {
+  cursor: pointer; font-size: 14px; color: var(--muted);
+  font-weight: 600; padding: 8px 0; list-style: none;
+}
+.outros-candidatos summary::-webkit-details-marker { display: none; }
+.outros-candidatos summary::before { content: "\25b8 "; }
+.outros-candidatos[open] summary::before { content: "\25be "; }
+.outros-candidatos .filter-row { margin-top: 8px; }
