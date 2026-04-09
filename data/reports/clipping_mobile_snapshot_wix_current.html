@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="clipping-snapshot-sentinel" content="WIX_CLIPPING_SNAPSHOT_ROOT">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clipping Completo | Flavio Valle</title>
+  <link rel="stylesheet" href="clipping_mobile_snapshot_wix_current_assets/clipping.css">
+</head>
+<body>
+  <main
+    id="app"
+    data-clipping-data-url="clipping_mobile_snapshot_wix_current_assets/clipping-data.json"
+    data-clipping-raw-url="clipping_mobile_snapshot_wix_current_assets/clipping-raw-texts.json"
+  >
+    <header class="hero">
+      <div class="hero-lockup">
+        <p class="eyebrow">Mandato Flavio Valle</p>
+        <h1>Clipping offline com todas as historias</h1>
+        <p>Arquivo HTML autossuficiente com todas as historias principais agrupadas no banco. A pagina abre filtrada em Flavio Valle e permite adicionar ou remover outros nomes sem depender da API local.</p>
+        <div class="hero-tags">
+          <span class="hero-tag hero-tag--gold">Banco inteiro</span>
+          <span class="hero-tag">Painel Pages</span>
+          <span class="hero-tag">Renderizacao sob demanda</span>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <span>Escopo</span>
+          <strong>Banco inteiro</strong>
+          <small>Bundle estatico leve para GitHub Pages.</small>
+        </div>
+        <div class="stat">
+          <span>Historias visiveis</span>
+          <strong id="visibleStoriesStat">340 / 340</strong>
+          <small>Historias do dataset publicado.</small>
+        </div>
+        <div class="stat">
+          <span>Noticias visiveis</span>
+          <strong id="visibleArticlesStat">564 / 564</strong>
+          <small>Modo recente sem agrupamento.</small>
+        </div>
+        <div class="stat">
+          <span>Resumo IA</span>
+          <strong id="visibleAiStat">0 / 0</strong>
+          <small>Exibe Resumo IA quando existir.</small>
+        </div>
+        <div class="stat">
+          <span>Texto bruto</span>
+          <strong id="visibleRawStat">564 / 564</strong>
+          <small>Texto completo carregado sob demanda.</small>
+        </div>
+      </div>
+      <div class="meta-row">
+        <span>Gerado em: 07/04/2026 18:49 UTC</span>
+        <span>Base consultada: clipping.db</span>
+        <span>Renderizacao cliente-side para reduzir DOM inicial e uso de RAM.</span>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Monitoramento institucional</p>
+          <h2>Nomes acompanhados</h2>
+        </div>
+      </div>
+      <p class="filter-note">O arquivo abre com foco em Flávio Valle. Toque para incluir ou remover nomes do acompanhamento.</p>
+      <div class="filter-row" id="targetFilters"></div>
+      <p class="filter-note">Monitoramento ativo: <strong id="activeFilterText">Carregando...</strong></p>
+      <div class="filter-row" style="margin-top:12px">
+        <button type="button" class="filter-chip active" data-sort="newest">Mais recentes</button>
+        <button type="button" class="filter-chip" data-sort="hottest">Historias agrupadas</button>
+      </div>
+    </section>
+
+    <details class="panel" id="indexPanel" hidden>
+      <summary class="nav-summary">Indice de historias visiveis (<span id="visibleIndexCount">340</span>)</summary>
+      <div class="story-index" id="storyIndex"></div>
+      <p class="empty-state" id="emptyState" hidden>Nenhuma historia corresponde aos filtros atuais.</p>
+    </details>
+
+    <section class="panel shell-loading" id="loadingState">
+      <div class="flat-spinner"></div>
+      <div>
+        <strong>Carregando dados do clipping...</strong>
+        <p>As historias e noticias serao renderizadas sob demanda para manter o bundle leve.</p>
+      </div>
+    </section>
+
+    <section id="storyStack" hidden></section>
+    <section id="flatStack" class="flat-articles" hidden></section>
+
+    <p class="footer-note">Arquivo institucional estatico para GitHub Pages. Historias e materias sao montadas no cliente a partir de JSON externo para reduzir memoria e acelerar o carregamento inicial.</p>
+  </main>
+  <script src="clipping_mobile_snapshot_wix_current_assets/clipping.js" defer></script>
+</body>
+</html>

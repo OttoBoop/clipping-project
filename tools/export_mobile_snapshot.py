@@ -1827,11 +1827,19 @@ def extract_nested_tag_block(raw: str, start_index: int, tag_name: str) -> tuple
 def extract_story_card_blocks(raw: str) -> dict[int, str]:
     blocks: dict[int, str] = {}
     pattern = re.compile(r'<details\b[^>]*\bdata-story-id="(\d+)"[^>]*>', re.IGNORECASE)
-    for match in pattern.finditer(raw):
+    matches = list(pattern.finditer(raw))
+    for i, match in enumerate(matches):
         sid = int(match.group(1))
         if sid in blocks:
             continue
-        block, _ = extract_nested_tag_block(raw, match.start(), "details")
+        block, end_pos = extract_nested_tag_block(raw, match.start(), "details")
+        # Sanity check: if the extracted block contains ANOTHER story card
+        # opening tag, the HTML is malformed (unclosed inner <details>).
+        # Truncate to just before the next story card.
+        if i + 1 < len(matches):
+            next_start = matches[i + 1].start()
+            if end_pos > next_start:
+                block = raw[match.start() : next_start]
         blocks[sid] = block
     return blocks
 
@@ -1912,14 +1920,20 @@ def parse_bundle_snapshot(path: Path, html_doc: str) -> tuple[dict[str, Any], li
 
 
 def parse_legacy_article_blocks(story_html: str) -> list[str]:
-    return [
-        match.group(1)
-        for match in re.finditer(
-            r'(<article\b[^>]*class="[^"]*\barticle-card\b[^"]*"[^>]*>.*?</article>)',
-            story_html,
-            re.IGNORECASE | re.DOTALL,
-        )
-    ]
+    # Split on each <article class="article-card"> opening tag.
+    # This handles both well-formed HTML (with </article>) and malformed
+    # legacy HTML where </article> may be missing.
+    opens = list(re.finditer(
+        r'<article\b[^>]*class="[^"]*\barticle-card\b[^"]*"[^>]*>',
+        story_html,
+        re.IGNORECASE,
+    ))
+    results = []
+    for i, m in enumerate(opens):
+        start = m.start()
+        end = opens[i + 1].start() if i + 1 < len(opens) else len(story_html)
+        results.append(story_html[start:end])
+    return results
 
 
 def parse_legacy_story_records(
