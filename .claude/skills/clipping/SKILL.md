@@ -66,6 +66,69 @@ Apos cada `run_ingestion.py`, ler o output e reportar:
 - Quantas historias tocadas
 - Erros (se houver)
 
+### Passo 3.5: Gerar resumos IA para artigos novos
+
+Apos reportar os resultados, gerar resumos para todos os artigos coletados HOJE que ainda nao tem resumo IA.
+
+**3.5.1 — Consultar artigos pendentes**
+
+Rodar via Bash com sqlite3:
+
+```bash
+sqlite3 -header -separator '|' data/clipping.db "
+SELECT a.id, a.title,
+       SUBSTR(COALESCE(NULLIF(a.full_text,''), NULLIF(a.summary,''), a.snippet), 1, 4000) AS texto,
+       GROUP_CONCAT(DISTINCT m.target_name, ', ') AS alvos
+FROM articles a
+JOIN mentions m ON m.article_id = a.id
+WHERE DATE(a.discovered_at) = DATE('now')
+  AND NOT EXISTS (
+      SELECT 1 FROM mentions m2
+      WHERE m2.article_id = a.id
+        AND m2.sentiment_reason = 'agent_summary'
+  )
+GROUP BY a.id;
+"
+```
+
+Se nenhum artigo retornar, pular para o Passo 4.
+
+**3.5.2 — Para cada artigo, gerar resumo**
+
+Ler o texto retornado e escrever 1 a 3 frases em portugues:
+- Neutras e factuais
+- Foco em COMO os alvos (coluna "alvos") sao mencionados no artigo
+- Sem opiniao, sem adjetivos valorativos
+- Se o texto estiver vazio ou ilegivel, pular o artigo
+
+Voce (Claude) ja e a IA — nao precisa chamar nenhuma API externa. Basta ler o texto e produzir o resumo.
+
+**3.5.3 — Salvar no banco**
+
+Para cada artigo resumido, rodar (escapar aspas simples com '' no resumo):
+
+```bash
+sqlite3 data/clipping.db "UPDATE articles SET summary = '<RESUMO_ESCAPADO>' WHERE id = <ID>;"
+sqlite3 data/clipping.db "UPDATE mentions SET sentiment_reason = 'agent_summary' WHERE article_id = <ID>;"
+```
+
+Se o resumo contiver caracteres problematicos para shell, usar um heredoc Python:
+
+```bash
+python3 -c "
+import sqlite3
+conn = sqlite3.connect('data/clipping.db')
+conn.execute('UPDATE articles SET summary = ? WHERE id = ?', ('''<RESUMO>''', <ID>))
+conn.execute('UPDATE mentions SET sentiment_reason = ? WHERE article_id = ?', ('agent_summary', <ID>))
+conn.commit()
+conn.close()
+"
+```
+
+**3.5.4 — Reportar**
+
+Mostrar quantos artigos foram resumidos e exemplo de 1-2 resumos gerados.
+
 ### Passo 4: Exportar e publicar (se selecionado)
 
 Se o usuario escolheu "Atualizar GitHub Pages":

@@ -5,17 +5,17 @@
     "scopeTitle": "Clipping offline com todas as historias",
     "scopeText": "Arquivo HTML autossuficiente com todas as historias principais agrupadas no banco. A pagina abre filtrada em Flavio Valle e permite adicionar ou remover outros nomes sem depender da API local.",
     "scopeValue": "Banco inteiro",
-    "generatedAt": "09/04/2026 16:39 UTC",
+    "generatedAt": "09/04/2026 17:36 UTC",
     "dbName": "clipping.db",
     "defaultTargetLabel": "Flávio Valle",
     "totalStories": 452,
     "totalArticles": 793,
-    "totalAi": 7,
-    "totalRaw": 786,
+    "totalAi": 21,
+    "totalRaw": 772,
     "initialStoryCount": 430,
     "initialArticleCount": 754,
-    "initialAiCount": 6,
-    "initialRawCount": 748
+    "initialAiCount": 20,
+    "initialRawCount": 734
   },
   "targets": [
     {
@@ -54,14 +54,14 @@
     {
       "storyIdInt": 342,
       "title": "Eduardo Paes retorna do Japão no dia em que STF começa a julgar eleição no Rio",
-      "summaryLabel": "Resumo do agrupamento",
-      "summaryText": "Eduardo Paes retorna do Japão no dia em que STF começa a julgar eleição no Rio - Tribuna da Serra Instagram Facebook Whatsapp Youtube quinta-feira, 9 de abril de 2026 - 6:08 Search Search Sobre Notícias blog Bom Jardim Brasília Campos Cantagalo Carmo Ciência e Tec. Colunista Beto Alves By Zica Pablo Sergio Cordeiro Destaque Duas Barras Esporte Estado Educação Fashion Firjan Geral Governo do Estado Lifestyle Macaé Macuco Miquel Pereia Mundo Nova Friburgo Policial Política Rio das Ostras Rio de Janeiro Região Serrana Santa Maria Madalena São Sebastião do Alto Saúde e Bem Estar Trajano de Moraes Travel Turismo Tv Web Visconde de Imbé Alerj Brasil Ciência e Tecnologia Rio de Janeiro Jornal Ed. D",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "Flávio Valle é mencionado brevemente no contexto da crise sucessória fluminense, sem destaque direto na matéria sobre o retorno de Eduardo Paes do Japão.",
       "temperature": 37.0,
       "firstPublishedAt": "2026-04-09T09:08:18+00:00",
       "lastPublishedAt": "2026-04-09T09:08:18+00:00",
       "articleCount": 1,
-      "aiCount": 0,
-      "rawCount": 1,
+      "aiCount": 1,
+      "rawCount": 0,
       "targetKeys": [
         "flavio_valle"
       ],
@@ -77,24 +77,24 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "Eduardo Paes retorna do Japão no dia em que STF começa a julgar eleição no Rio - Tribuna da Serra Instagram Facebook Whatsapp Youtube quinta-feira, 9 de abril de 2026 - 6:08 Search Search Sobre Notícias blog Bom Jardim Brasília Campos Cantagalo Carmo Ciência e Tec. Colunista Beto Alves By Zica Pablo Sergio Cordeiro Destaque Duas Barras Esporte Estado Educação Fashion Firjan Geral Governo do Estado Lifestyle Macaé Macuco Miquel Pereia Mundo Nova Friburgo Policial Política Rio das Ostras Rio de Janeiro Região Serrana Santa Maria Madalena São Sebastião do...",
-          "rawTextKey": "article-608",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é mencionado brevemente no contexto da crise sucessória fluminense, sem destaque direto na matéria sobre o retorno de Eduardo Paes do Japão.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         }
       ]
     },
     {
       "storyIdInt": 343,
       "title": "Sesc RJ abre inscrições para aulas de futebol feminino em três unidades fluminenses",
-      "summaryLabel": "Resumo do agrupamento",
-      "summaryText": "Sesc RJ abre inscrições para aulas de futebol feminino em três unidades fluminenses - Tribuna da Serra Instagram Facebook Whatsapp Youtube quinta-feira, 9 de abril de 2026 - 6:06 Search Search Sobre Notícias blog Bom Jardim Brasília Campos Cantagalo Carmo Ciência e Tec. Colunista Beto Alves By Zica Pablo Sergio Cordeiro Destaque Duas Barras Esporte Estado Educação Fashion Firjan Geral Governo do Estado Lifestyle Macaé Macuco Miquel Pereia Mundo Nova Friburgo Policial Política Rio das Ostras Rio de Janeiro Região Serrana Santa Maria Madalena São Sebastião do Alto Saúde e Bem Estar Trajano de Moraes Travel Turismo Tv Web Visconde de Imbé Alerj Brasil Ciência e Tecnologia Rio de Janeiro Jornal",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "Flávio Valle é citado apenas de forma tangencial, sem relação direta com o tema da matéria sobre inscrições de futebol feminino no Sesc RJ.",
       "temperature": 37.0,
       "firstPublishedAt": "2026-04-09T09:06:01+00:00",
       "lastPublishedAt": "2026-04-09T09:06:01+00:00",
       "articleCount": 1,
-      "aiCount": 0,
-      "rawCount": 1,
+      "aiCount": 1,
+      "rawCount": 0,
       "targetKeys": [
         "flavio_valle"
       ],
@@ -110,24 +110,24 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "Sesc RJ abre inscrições para aulas de futebol feminino em três unidades fluminenses - Tribuna da Serra Instagram Facebook Whatsapp Youtube quinta-feira, 9 de abril de 2026 - 6:06 Search Search Sobre Notícias blog Bom Jardim Brasília Campos Cantagalo Carmo Ciência e Tec. Colunista Beto Alves By Zica Pablo Sergio Cordeiro Destaque Duas Barras Esporte Estado Educação Fashion Firjan Geral Governo do Estado Lifestyle Macaé Macuco Miquel Pereia Mundo Nova Friburgo Policial Política Rio das Ostras Rio de Janeiro Região Serrana Santa Maria Madalena São Sebastiã...",
-          "rawTextKey": "article-609",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é citado apenas de forma tangencial, sem relação direta com o tema da matéria sobre inscrições de futebol feminino no Sesc RJ.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         }
       ]
     },
     {
       "storyIdInt": 344,
       "title": "Flávio Valle abre inscrições para nova turma do Lidera Rio, programa de formação política para jovens - Diário do Rio",
-      "summaryLabel": "Resumo do agrupamento",
-      "summaryText": "Política Flávio Valle abre inscrições para nova turma do Lidera Rio, programa de formação política para jovens O gabinete do vereador Flávio Valle abriu as inscrições para a segunda turma do Lidera Rio, programa de formação política para jovens de 18 a 30 anos. Por Quintino Gomes Freire - 8 de abril de 2026 WhatsApp Facebook Twitter Linkedin Email Telegram Foto: Paulo Barros --> O gabinete do vereador Flávio Valle abriu nesta quarta-feira (8) as inscrições para a segunda turma do Lidera Rio , programa de formação política voltado para jovens de 18 a 30 anos que moram no estado e querem entender melhor como funcionam as instituições públicas e a vida política. No site oficial, o projeto é apr",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "Flávio Valle é protagonista da matéria: seu gabinete abriu inscrições para a segunda turma do Lidera Rio, programa de formação política para jovens de 18 a 30 anos. Republicação na Tribuna da Serra.",
       "temperature": 46.0,
       "firstPublishedAt": "2026-04-08T19:35:13+00:00",
       "lastPublishedAt": "2026-04-09T06:07:41+00:00",
       "articleCount": 2,
-      "aiCount": 0,
-      "rawCount": 2,
+      "aiCount": 2,
+      "rawCount": 0,
       "targetKeys": [
         "flavio_valle"
       ],
@@ -143,10 +143,10 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "Flávio Valle abre inscrições para nova turma do Lidera Rio, programa de formação política para jovens - Tribuna da Serra Instagram Facebook Whatsapp Youtube quinta-feira, 9 de abril de 2026 - 3:08 Search Search Sobre Notícias blog Bom Jardim Brasília Campos Cantagalo Carmo Ciência e Tec. Colunista Beto Alves By Zica Pablo Sergio Cordeiro Destaque Duas Barras Esporte Estado Educação Fashion Firjan Geral Governo do Estado Lifestyle Macaé Macuco Miquel Pereia Mundo Nova Friburgo Policial Política Rio das Ostras Rio de Janeiro Região Serrana Santa Maria Mad...",
-          "rawTextKey": "article-613",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é protagonista da matéria: seu gabinete abriu inscrições para a segunda turma do Lidera Rio, programa de formação política para jovens de 18 a 30 anos. Republicação na Tribuna da Serra.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         },
         {
           "articleId": 610,
@@ -159,24 +159,24 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "Política Flávio Valle abre inscrições para nova turma do Lidera Rio, programa de formação política para jovens O gabinete do vereador Flávio Valle abriu as inscrições para a segunda turma do Lidera Rio, programa de formação política para jovens de 18 a 30 anos. Por Quintino Gomes Freire - 8 de abril de 2026 WhatsApp Facebook Twitter Linkedin Email Telegram Foto: Paulo Barros --> O gabinete do vereador Flávio Valle abriu nesta quarta-feira (8) as inscrições para a segunda turma do Lidera Rio , programa de formação política voltado para jovens de 18 a 30...",
-          "rawTextKey": "article-610",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é o protagonista da matéria: seu gabinete abriu inscrições para a segunda turma do Lidera Rio, programa de formação política para jovens de 18 a 30 anos com 50 vagas, formato híbrido e visitas institucionais.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         }
       ]
     },
     {
       "storyIdInt": 341,
       "title": "Batman para governador? – Bastidores do Rio",
-      "summaryLabel": "Resumo do agrupamento",
-      "summaryText": "– Bastidores do Rio Da comparação do Rio com Gotham City no STF à nova pesquisa Prefab Por Quintino Gomes Freire - 8 de abril de 2026 WhatsApp Facebook Twitter Linkedin Email Telegram Foto: Daniel Martins/Diário do Rio --> Batman para governador? No julgamento sobre o mandato-tampão para o Governo do Rio de Janeiro , o advogado do PSD comparou o estado do Rio à Gotham City . II Na argumentação, ainda, ele disse que se a eleição for indireta quem vai governar o Rio de Janeiro será o Coringa .",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "Flávio Valle é citado como o único vereador judeu do Rio, cujo grupo político inclui gestora que curtiu publicações pró-bar antissemita na Lapa. Republicação do conteúdo Bastidores do Rio na Gazeta Sul Fluminense.",
       "temperature": 76.0,
       "firstPublishedAt": "2026-04-08T23:28:21+00:00",
       "lastPublishedAt": "2026-04-09T03:17:20+00:00",
       "articleCount": 4,
-      "aiCount": 0,
-      "rawCount": 4,
+      "aiCount": 4,
+      "rawCount": 0,
       "targetKeys": [
         "flavio_valle"
       ],
@@ -192,10 +192,10 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "- Bastidores do Rio - Gazeta Sul fluminense Instagram Whatsapp 09/04/2026 13:30 Search Revista Politica Esportes Cultura Regiões Polícia Fale Conosco Sobre Nós Anuncie Aqui Instagram Facebook Whatsapp Search Home Politica Batman para governador? – Bastidores do Rio Batman para governador? – Bastidores do Rio Redação 09/04/2026 00:17 Foto: Daniel Martins/Diário do Rio Batman para governador?",
-          "rawTextKey": "article-612",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é citado como o único vereador judeu do Rio, cujo grupo político inclui gestora que curtiu publicações pró-bar antissemita na Lapa. Republicação do conteúdo Bastidores do Rio na Gazeta Sul Fluminense.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         },
         {
           "articleId": 611,
@@ -208,10 +208,10 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "- Bastidores do Rio - Canal Vox Notícias Instagram Facebook X-twitter Whatsapp 08/04/2026 21:18 Home Notícias Brasil Internacional São Paulo Rio de Janeiro Espírito Santo Política Saúde Polícia Esportes Tá no foco, é destaque Fale Conosco Sobre Nós Anuncie Aqui Search Instagram Facebook Whatsapp Search Home Notícias Rio de Janeiro Batman para governador? – Bastidores do Rio Batman para governador? – Bastidores do Rio 08/04/2026 21:18 Foto: Daniel Martins/Diário do Rio Batman para governador?",
-          "rawTextKey": "article-611",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é citado como o único vereador judeu do Rio, vinculado a uma gestora que curtiu publicações em apoio ao bar acusado de antissemitismo na Lapa. Republicação do mesmo conteúdo dos Bastidores do Rio.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         },
         {
           "articleId": 620,
@@ -224,10 +224,10 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "- Bastidores do Rio - Tribuna da Serra Instagram Facebook Whatsapp Youtube quarta-feira, 8 de abril de 2026 - 9:03 Search Search Sobre Notícias blog Bom Jardim Brasília Campos Cantagalo Carmo Ciência e Tec. Colunista Beto Alves By Zica Pablo Sergio Cordeiro Destaque Duas Barras Esporte Estado Educação Fashion Firjan Geral Governo do Estado Lifestyle Macaé Macuco Miquel Pereia Mundo Nova Friburgo Policial Política Rio das Ostras Rio de Janeiro Região Serrana Santa Maria Madalena São Sebastião do Alto Saúde e Bem Estar Trajano de Moraes Travel Turismo Tv...",
-          "rawTextKey": "article-620",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é citado como o único vereador judeu do Rio, cujo grupo político inclui gestora que curtiu publicações pró-bar antissemita na Lapa. Republicação na Tribuna da Serra.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         },
         {
           "articleId": 607,
@@ -240,24 +240,24 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "– Bastidores do Rio Da comparação do Rio com Gotham City no STF à nova pesquisa Prefab Por Quintino Gomes Freire - 8 de abril de 2026 WhatsApp Facebook Twitter Linkedin Email Telegram Foto: Daniel Martins/Diário do Rio --> Batman para governador? No julgamento sobre o mandato-tampão para o Governo do Rio de Janeiro , o advogado do PSD comparou o estado do Rio à Gotham City . II Na argumentação, ainda, ele disse que se a eleição for indireta quem vai governar o Rio de Janeiro será o Coringa .",
-          "rawTextKey": "article-607",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é citado como o único vereador judeu do Rio, cujo grupo político inclui uma gestora flagrada curtindo publicações de apoio ao bar acusado de antissemitismo na Lapa. Pedro Duarte também é mencionado como ex-oposição que voltou a criticar a Prefeitura.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         }
       ]
     },
     {
       "storyIdInt": 347,
       "title": "Mandato-tampão no Rio gera comparações com Gotham e críticas de deputados - rio press",
-      "summaryLabel": "Resumo do agrupamento",
-      "summaryText": "Durante julgamento sobre o mandato-tampão para o Governo do Rio de Janeiro, o advogado do PSD fez uma comparação entre o estado e o universo de Batman, afirmando que, caso a eleição seja indireta, quem assumiria o cargo seria uma figura semelhante ao Coringa. A declaração gerou reações na Assembleia Legislativa do Estado (Alerj), especialmente entre deputados. Algumas parlamentares consideraram a analogia inadequada, especialmente levando em conta que o ex-presidente mencionado está atualmente preso por suspeitas de participação em organização criminosa.",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "Flávio Valle é citado como o único vereador judeu do Rio, ligado a uma funcionária da Secretaria de Cultura que curtiu publicações em apoio ao bar envolvido em polêmica antissemita na Lapa.",
       "temperature": 37.0,
       "firstPublishedAt": "2026-04-08T23:48:55+00:00",
       "lastPublishedAt": "2026-04-08T23:48:55+00:00",
       "articleCount": 1,
-      "aiCount": 0,
-      "rawCount": 1,
+      "aiCount": 1,
+      "rawCount": 0,
       "targetKeys": [
         "flavio_valle"
       ],
@@ -273,24 +273,24 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "Durante julgamento sobre o mandato-tampão para o Governo do Rio de Janeiro, o advogado do PSD fez uma comparação entre o estado e o universo de Batman, afirmando que, caso a eleição seja indireta, quem assumiria o cargo seria uma figura semelhante ao Coringa. A declaração gerou reações na Assembleia Legislativa do Estado (Alerj), especialmente entre deputados. Algumas parlamentares consideraram a analogia inadequada, especialmente levando em conta que o ex-presidente mencionado está atualmente preso por suspeitas de participação em organização criminosa.",
-          "rawTextKey": "article-618",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é citado como o único vereador judeu do Rio, ligado a uma funcionária da Secretaria de Cultura que curtiu publicações em apoio ao bar envolvido em polêmica antissemita na Lapa.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         }
       ]
     },
     {
       "storyIdInt": 346,
       "title": "Bar na Lapa multado por placa contra americanos e israelenses convoca manifestação - Diário do Rio",
-      "summaryLabel": "Resumo do agrupamento",
-      "summaryText": "Política Bar na Lapa multado por placa contra americanos e israelenses convoca manifestação Caso ganhou repercussão política, mobilizou entidades e fez o perfil do local disparar nas redes sociais Por Quintino Gomes Freire - 8 de abril de 2026 WhatsApp Facebook Twitter Linkedin Email Telegram Reprodução Redes Sociais --> O Partisan , bar situado na Lapa , região central do Rio de Janeiro , que entrou no centro de uma polêmica após exibir uma placa informando, em inglês, que cidadãos dos Estados Unidos e de Israel “não são bem-vindos” , anunciou uma manifestação pública para o próximo sábado (11), na Rua da Lapa . O caso ganhou força nos últimos dias, depois que o estabelecimento foi multado",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "Flávio Valle e Pedro Duarte são citados como vereadores que criticaram a placa antissemita do bar Partisan na Lapa. Republicação na Gazeta Sul Fluminense.",
       "temperature": 64.0,
       "firstPublishedAt": "2026-04-08T12:29:20+00:00",
       "lastPublishedAt": "2026-04-08T15:13:39+00:00",
       "articleCount": 4,
-      "aiCount": 0,
-      "rawCount": 4,
+      "aiCount": 4,
+      "rawCount": 0,
       "targetKeys": [
         "flavio_valle"
       ],
@@ -306,10 +306,10 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "Bar na Lapa multado por placa contra americanos e israelenses convoca manifestação - Gazeta Sul fluminense Instagram Whatsapp 09/04/2026 13:30 Search Revista Politica Esportes Cultura Regiões Polícia Fale Conosco Sobre Nós Anuncie Aqui Instagram Facebook Whatsapp Search Home Politica Bar na Lapa multado por placa contra americanos e israelenses convoca manifestação Bar na Lapa multado por placa contra americanos e israelenses convoca manifestação Redação 08/04/2026 12:13 Reprodução Redes Sociais O Partisan , bar situado na Lapa , região central do Rio d...",
-          "rawTextKey": "article-616",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle e Pedro Duarte são citados como vereadores que criticaram a placa antissemita do bar Partisan na Lapa. Republicação na Gazeta Sul Fluminense.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         },
         {
           "articleId": 617,
@@ -322,10 +322,10 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "Bar na Lapa multado por placa contra americanos e israelenses convoca manifestação - Tribuna da Serra Instagram Facebook Whatsapp Youtube quarta-feira, 8 de abril de 2026 - 11:59 Search Search Sobre Notícias blog Bom Jardim Brasília Campos Cantagalo Carmo Ciência e Tec. Colunista Beto Alves By Zica Pablo Sergio Cordeiro Destaque Duas Barras Esporte Estado Educação Fashion Firjan Geral Governo do Estado Lifestyle Macaé Macuco Miquel Pereia Mundo Nova Friburgo Policial Política Rio das Ostras Rio de Janeiro Região Serrana Santa Maria Madalena São Sebastiã...",
-          "rawTextKey": "article-617",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle e Pedro Duarte são citados como vereadores do PSD que criticaram a placa discriminatória do bar Partisan na Lapa. Republicação na Tribuna da Serra.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         },
         {
           "articleId": 619,
@@ -338,10 +338,10 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "O bar Partisan, localizado na Lapa, anunciou uma manifestação pública para o próximo sábado (11), após a polêmica envolvendo uma placa exibida no estabelecimento. A placa, escrita em inglês, informou que cidadãos dos Estados Unidos e de Israel seriam considerados “indesejados” no local, o que levou a uma multa de R$ 9.520 aplicada pela Prefeitura do Rio, sob alegação de mensagem discriminatória. A situação atraiu críticas de representantes políticos e organizações, que interpretaram a placa como uma manifestação de natureza antissemita.",
-          "rawTextKey": "article-619",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle e Pedro Duarte, ambos do PSD, são mencionados como parlamentares que se manifestaram contra a placa discriminatória do bar Partisan na Lapa, classificando o episódio como antissemita.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         },
         {
           "articleId": 615,
@@ -354,24 +354,24 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "Política Bar na Lapa multado por placa contra americanos e israelenses convoca manifestação Caso ganhou repercussão política, mobilizou entidades e fez o perfil do local disparar nas redes sociais Por Quintino Gomes Freire - 8 de abril de 2026 WhatsApp Facebook Twitter Linkedin Email Telegram Reprodução Redes Sociais --> O Partisan , bar situado na Lapa , região central do Rio de Janeiro , que entrou no centro de uma polêmica após exibir uma placa informando, em inglês, que cidadãos dos Estados Unidos e de Israel “não são bem-vindos” , anunciou uma mani...",
-          "rawTextKey": "article-615",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle e Pedro Duarte, ambos do PSD, são citados como vereadores que criticaram a placa discriminatória do bar Partisan na Lapa e classificaram o episódio como antissemita.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         }
       ]
     },
     {
       "storyIdInt": 345,
       "title": "Praça Sarah Kubitschek, em Copacabana, começa a ser reformada nesta quarta-feira - ABIH RJ",
-      "summaryLabel": "Resumo do agrupamento",
-      "summaryText": "Início / Notícias / Praça Sarah Kubitschek, em Copacabana, começa a ser reformada nesta quarta-feira Notícias Praça Sarah Kubitschek, em Copacabana, começa a ser reformada nesta quarta-feira Marília Silva Mande um e-mail 1 dia atrás 0 36 1 minuto de leitura Facebook X Linkedin Tumblr Pinterest Reddit VK OK Pocket A obra prevê acessibilidade, novos brinquedos, recuperação de áreas de convivência e preservação da arte de Millôr Fernandes Depois de anos de cobranças de moradores e da comunidade de Copacabana, a reforma da Praça Sarah Kubitschek finalmente vai começar. A obra será iniciada nesta quarta-feira (8) e será executada pela Prefeitura do Rio, por meio da Secretaria Municipal de Conserv",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "Flávio Valle é mencionado como articulador da reforma da Praça Sarah Kubitschek em Copacabana, que inclui acessibilidade, novos brinquedos e preservação da arte de Millôr Fernandes.",
       "temperature": 37.0,
       "firstPublishedAt": "2026-04-08T13:03:12+00:00",
       "lastPublishedAt": "2026-04-08T13:03:12+00:00",
       "articleCount": 1,
-      "aiCount": 0,
-      "rawCount": 1,
+      "aiCount": 1,
+      "rawCount": 0,
       "targetKeys": [
         "flavio_valle"
       ],
@@ -387,10 +387,10 @@
           "targetKeys": [
             "flavio_valle"
           ],
-          "summaryLabel": "Texto bruto",
-          "summaryPreview": "Início / Notícias / Praça Sarah Kubitschek, em Copacabana, começa a ser reformada nesta quarta-feira Notícias Praça Sarah Kubitschek, em Copacabana, começa a ser reformada nesta quarta-feira Marília Silva Mande um e-mail 1 dia atrás 0 36 1 minuto de leitura Facebook X Linkedin Tumblr Pinterest Reddit VK OK Pocket A obra prevê acessibilidade, novos brinquedos, recuperação de áreas de convivência e preservação da arte de Millôr Fernandes Depois de anos de cobranças de moradores e da comunidade de Copacabana, a reforma da Praça Sarah Kubitschek finalmente...",
-          "rawTextKey": "article-614",
-          "summarySource": "raw"
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é mencionado como articulador da reforma da Praça Sarah Kubitschek em Copacabana, que inclui acessibilidade, novos brinquedos e preservação da arte de Millôr Fernandes.",
+          "rawTextKey": null,
+          "summarySource": "ai"
         }
       ]
     },

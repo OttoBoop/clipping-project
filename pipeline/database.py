@@ -546,7 +546,7 @@ class ClippingDB:
                     SELECT
                         article_id,
                         MIN(sentiment) AS sentiment_any,
-                        MAX(CASE WHEN COALESCE(sentiment_reason, '') = 'anthropic_batch' THEN 1 ELSE 0 END) AS has_ai_summary
+                        MAX(CASE WHEN COALESCE(sentiment_reason, '') IN ('anthropic_batch', 'agent_summary') THEN 1 ELSE 0 END) AS has_ai_summary
                     FROM mentions
                     WHERE article_id IN ({ph})
                     GROUP BY article_id
@@ -635,7 +635,7 @@ class ClippingDB:
                             SELECT 1
                             FROM mentions m3
                             WHERE m3.article_id = a.id
-                              AND COALESCE(m3.sentiment_reason, '') = 'anthropic_batch'
+                              AND COALESCE(m3.sentiment_reason, '') IN ('anthropic_batch', 'agent_summary')
                         ) THEN 1 ELSE 0
                     END AS has_ai_summary
                 FROM articles a
@@ -716,7 +716,7 @@ class ClippingDB:
                     SELECT 1
                     FROM mentions mp
                     WHERE mp.article_id = a.id
-                      AND COALESCE(mp.sentiment_reason, '') != 'anthropic_batch'
+                      AND COALESCE(mp.sentiment_reason, '') NOT IN ('anthropic_batch', 'agent_summary')
                 )
                 """
             )
@@ -737,7 +737,7 @@ class ClippingDB:
                         SELECT 1
                         FROM mentions m2
                         WHERE m2.article_id = a.id
-                          AND COALESCE(m2.sentiment_reason, '') = 'anthropic_batch'
+                          AND COALESCE(m2.sentiment_reason, '') IN ('anthropic_batch', 'agent_summary')
                     ) THEN 1 ELSE 0
                 END AS has_ai_summary,
                 GROUP_CONCAT(DISTINCT m.target_key) AS target_keys,
@@ -804,7 +804,7 @@ class ClippingDB:
                         SELECT 1
                         FROM mentions m2
                         WHERE m2.article_id = a.id
-                          AND COALESCE(m2.sentiment_reason, '') = 'anthropic_batch'
+                          AND COALESCE(m2.sentiment_reason, '') IN ('anthropic_batch', 'agent_summary')
                     ) THEN 1 ELSE 0
                 END AS has_ai_summary,
                 GROUP_CONCAT(DISTINCT m.target_key) AS target_keys,
@@ -887,7 +887,7 @@ class ClippingDB:
                         SELECT 1
                         FROM mentions m2
                         WHERE m2.article_id = a.id
-                          AND COALESCE(m2.sentiment_reason, '') = 'anthropic_batch'
+                          AND COALESCE(m2.sentiment_reason, '') IN ('anthropic_batch', 'agent_summary')
                     ) THEN 1 ELSE 0
                 END AS has_ai_summary,
                 GROUP_CONCAT(DISTINCT m.target_key) AS target_keys,
