@@ -2328,6 +2328,26 @@ def build_snapshot_artifact(args: argparse.Namespace) -> dict[str, Any]:
     story_records.sort(key=story_sort_key, reverse=True)
     raw_texts.update(merged_raw_texts)
 
+    # Deduplicate articles by URL across all stories (first occurrence wins)
+    seen_urls: set[str] = set()
+    for story in story_records:
+        unique_articles = []
+        for article in story.get("articles", []):
+            url = str(article.get("url") or "").strip()
+            if not url or url not in seen_urls:
+                if url:
+                    seen_urls.add(url)
+                unique_articles.append(article)
+        removed = len(story["articles"]) - len(unique_articles)
+        if removed:
+            story["articles"] = unique_articles
+            story["articleCount"] = len(unique_articles)
+            ai = sum(1 for a in unique_articles if a.get("summarySource") == "ai")
+            story["aiCount"] = ai
+            story["rawCount"] = len(unique_articles) - ai
+    # Remove stories that ended up with zero articles
+    story_records = [s for s in story_records if s.get("articles")]
+
     target_rows = build_target_rows(base_targets, story_records)
     initial_targets = resolve_initial_targets(target_rows, args.default_target)
     generated_at = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
