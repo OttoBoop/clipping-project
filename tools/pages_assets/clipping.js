@@ -356,6 +356,7 @@
 
   function buildFlatView(stories) {
     storyStack.hidden = true;
+    storyStack.innerHTML = "";
     flatStack.hidden = false;
     indexPanel.hidden = true;
     flatStack.innerHTML = "";
@@ -423,12 +424,61 @@
     window.requestAnimationFrame(renderFlatBatch);
   }
 
+  let groupedSorted = [];
+  let groupedRendered = 0;
+  let groupedLoadMoreBtn = null;
+
+  function renderGroupedBatch() {
+    if (groupedRendered >= groupedSorted.length) return;
+    var end = Math.min(groupedRendered + LAZY_BATCH, groupedSorted.length);
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = groupedSorted.slice(groupedRendered, end).map(renderStoryCard).join("");
+    while (wrapper.firstChild) {
+      if (groupedLoadMoreBtn) {
+        storyStack.insertBefore(wrapper.firstChild, groupedLoadMoreBtn);
+      } else {
+        storyStack.appendChild(wrapper.firstChild);
+      }
+    }
+    groupedRendered = end;
+    updateGroupedLoadMoreBtn();
+  }
+
+  function updateGroupedLoadMoreBtn() {
+    var remaining = groupedSorted.length - groupedRendered;
+    if (remaining <= 0) {
+      if (groupedLoadMoreBtn && groupedLoadMoreBtn.parentNode) {
+        groupedLoadMoreBtn.parentNode.removeChild(groupedLoadMoreBtn);
+      }
+      groupedLoadMoreBtn = null;
+      return;
+    }
+    if (!groupedLoadMoreBtn) {
+      groupedLoadMoreBtn = document.createElement("button");
+      groupedLoadMoreBtn.type = "button";
+      groupedLoadMoreBtn.className = "load-more-btn";
+      groupedLoadMoreBtn.addEventListener("click", function () {
+        if (!groupedLoadMoreBtn) return;
+        groupedLoadMoreBtn.disabled = true;
+        groupedLoadMoreBtn.innerHTML = '<div class="flat-spinner"></div> Carregando...';
+        window.requestAnimationFrame(renderGroupedBatch);
+      });
+      storyStack.appendChild(groupedLoadMoreBtn);
+    }
+    groupedLoadMoreBtn.disabled = false;
+    groupedLoadMoreBtn.textContent = "Carregar mais historias (" + remaining + " restantes)";
+  }
+
   function buildGroupedView(stories) {
     flatStack.hidden = true;
+    flatStack.innerHTML = "";
     storyStack.hidden = false;
     indexPanel.hidden = false;
-    flatStack.innerHTML = "";
-    storyStack.innerHTML = stories.map(renderStoryCard).join("");
+    storyStack.innerHTML = "";
+    groupedRendered = 0;
+    groupedLoadMoreBtn = null;
+    groupedSorted = stories;
+    renderGroupedBatch();
   }
 
   function renderCurrentView(stories) {
