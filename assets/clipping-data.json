@@ -5,16 +5,16 @@
     "scopeTitle": "Clipping offline com todas as historias",
     "scopeText": "Arquivo HTML autossuficiente com todas as historias principais agrupadas no banco. A pagina abre filtrada em Flavio Valle e permite adicionar ou remover outros nomes sem depender da API local.",
     "scopeValue": "Banco inteiro",
-    "generatedAt": "09/04/2026 17:36 UTC",
+    "generatedAt": "13/04/2026 17:28 UTC",
     "dbName": "clipping.db",
     "defaultTargetLabel": "Flávio Valle",
-    "totalStories": 452,
-    "totalArticles": 793,
-    "totalAi": 21,
+    "totalStories": 458,
+    "totalArticles": 805,
+    "totalAi": 33,
     "totalRaw": 772,
-    "initialStoryCount": 430,
-    "initialArticleCount": 754,
-    "initialAiCount": 20,
+    "initialStoryCount": 436,
+    "initialArticleCount": 766,
+    "initialAiCount": 32,
     "initialRawCount": 734
   },
   "targets": [
@@ -22,15 +22,15 @@
       "key": "flavio_valle",
       "label": "Flávio Valle",
       "primary": true,
-      "storyCount": 430,
-      "articleCount": 754
+      "storyCount": 436,
+      "articleCount": 766
     },
     {
       "key": "pedro_duarte",
       "label": "Pedro Duarte",
       "primary": false,
-      "storyCount": 19,
-      "articleCount": 92
+      "storyCount": 18,
+      "articleCount": 91
     },
     {
       "key": "pedro_angelito",
@@ -51,6 +51,333 @@
     "flavio_valle"
   ],
   "stories": [
+    {
+      "storyIdInt": 352,
+      "title": "Manoel Carlos terá rua com seu nome no Leblon em nova homenagem no Rio - Super Rádio Tupi",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "Flávio Valle é identificado como o vereador responsável pelo projeto de lei aprovado que nomeia uma rua do Leblon em homenagem ao novelista Manoel Carlos, falecido em janeiro de 2026.",
+      "temperature": 37.0,
+      "firstPublishedAt": "2026-04-12T11:45:23+00:00",
+      "lastPublishedAt": "2026-04-12T11:45:23+00:00",
+      "articleCount": 1,
+      "aiCount": 1,
+      "rawCount": 0,
+      "targetKeys": [
+        "flavio_valle"
+      ],
+      "articles": [
+        {
+          "articleId": 626,
+          "title": "Manoel Carlos terá rua com seu nome no Leblon em nova homenagem no Rio - Super Rádio Tupi",
+          "url": "https://www.tupi.fm/rio/manoel-carlos-tera-rua-com-seu-nome-no-leblon-em-nova-homenagem-no-rio",
+          "sourceName": "Google News",
+          "sourceHost": "tupi.fm",
+          "publishedAt": "2026-04-12T11:45:23+00:00",
+          "publishedDisplay": "12/04/2026 11:45 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é identificado como o vereador responsável pelo projeto de lei aprovado que nomeia uma rua do Leblon em homenagem ao novelista Manoel Carlos, falecido em janeiro de 2026.",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        }
+      ]
+    },
+    {
+      "storyIdInt": 353,
+      "title": "RJ: Bar Partisan sofre censura após ato anti-imperialista; ativista pró-Palestina é perseguido - A Nova Democracia",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "O vereador Flávio Valle (PSD) é mencionado como tendo se dirigido ao bar Partisan e intimidado funcionários, além de solicitar ofício à Secretaria Municipal de Ordem Pública, após o estabelecimento exibir placa vedando entrada de cidadãos americanos e israelenses.",
+      "temperature": 37.0,
+      "firstPublishedAt": "2026-04-11T14:27:49+00:00",
+      "lastPublishedAt": "2026-04-11T14:27:49+00:00",
+      "articleCount": 1,
+      "aiCount": 1,
+      "rawCount": 0,
+      "targetKeys": [
+        "flavio_valle"
+      ],
+      "articles": [
+        {
+          "articleId": 629,
+          "title": "RJ: Bar Partisan sofre censura após ato anti-imperialista; ativista pró-Palestina é perseguido - A Nova Democracia",
+          "url": "https://anovademocracia.com.br/rj-bar-partisan-sofre-censura-apos-ato-anti-imperialista-ativista-pro-palestina-e-perseguido",
+          "sourceName": "Google News",
+          "sourceHost": "anovademocracia.com.br",
+          "publishedAt": "2026-04-11T14:27:49+00:00",
+          "publishedDisplay": "11/04/2026 14:27 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "O vereador Flávio Valle (PSD) é mencionado como tendo se dirigido ao bar Partisan e intimidado funcionários, além de solicitar ofício à Secretaria Municipal de Ordem Pública, após o estabelecimento exibir placa vedando entrada de cidadãos americanos e israelenses.",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        }
+      ]
+    },
+    {
+      "storyIdInt": 350,
+      "title": "Rua do Leblon terá nome trocado para homenagear Manoel Carlos, autor que eternizou o bairro nas novelas - Diário do Rio",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "O vereador Flávio Valle é autor da proposta aprovada que prevê a troca do nome de uma rua do Leblon para homenagear Manoel Carlos, novelista que imortalizou o bairro em suas produções televisivas.",
+      "temperature": 37.0,
+      "firstPublishedAt": "2026-04-11T14:00:21+00:00",
+      "lastPublishedAt": "2026-04-11T14:00:21+00:00",
+      "articleCount": 1,
+      "aiCount": 1,
+      "rawCount": 0,
+      "targetKeys": [
+        "flavio_valle"
+      ],
+      "articles": [
+        {
+          "articleId": 623,
+          "title": "Rua do Leblon terá nome trocado para homenagear Manoel Carlos, autor que eternizou o bairro nas novelas - Diário do Rio",
+          "url": "https://diariodorio.com/rua-do-leblon-tera-nome-trocado-para-homenagear-manoel-carlos-autor-que-eternizou-o-bairro-nas-novelas",
+          "sourceName": "Google News",
+          "sourceHost": "diariodorio.com",
+          "publishedAt": "2026-04-11T14:00:21+00:00",
+          "publishedDisplay": "11/04/2026 14:00 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "O vereador Flávio Valle é autor da proposta aprovada que prevê a troca do nome de uma rua do Leblon para homenagear Manoel Carlos, novelista que imortalizou o bairro em suas produções televisivas.",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        }
+      ]
+    },
+    {
+      "storyIdInt": 349,
+      "title": "Ciclovias em pauta: vereador do Rio lança campanha para que os cariocas possam indicar trechos da cidade que precisem da faixa exclusiva - rlemfoco.com.br",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "O vereador Flávio Valle (PSD) lança a campanha \"Ciclovias para Todos\", convocando cariocas a indicar trechos da cidade que precisam de ciclovia para construir um mapa colaborativo e orientar propostas legislativas.",
+      "temperature": 46.0,
+      "firstPublishedAt": "2026-04-10T16:21:10+00:00",
+      "lastPublishedAt": "2026-04-11T01:25:15+00:00",
+      "articleCount": 2,
+      "aiCount": 2,
+      "rawCount": 0,
+      "targetKeys": [
+        "flavio_valle"
+      ],
+      "articles": [
+        {
+          "articleId": 622,
+          "title": "Ciclovias em pauta: vereador do Rio lança campanha para que os cariocas possam indicar trechos da cidade que precisem da faixa exclusiva - rlemfoco.com.br",
+          "url": "https://rlemfoco.com.br/noticia/10013/ciclovias-em-pauta-vereador-do-rio-lanca-campanha-para-que-os-cariocas-possam-indicar-trechos-da-cid.amp",
+          "sourceName": "Google News",
+          "sourceHost": "rlemfoco.com.br",
+          "publishedAt": "2026-04-11T01:25:15+00:00",
+          "publishedDisplay": "11/04/2026 01:25 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "O vereador Flávio Valle (PSD) lança a campanha \"Ciclovias para Todos\", convocando cariocas a indicar trechos da cidade que precisam de ciclovia para construir um mapa colaborativo e orientar propostas legislativas.",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        },
+        {
+          "articleId": 625,
+          "title": "Ciclovias em pauta: vereador do Rio lança campanha para que os cariocas possam indicar trechos da cidade que precisem da faixa exclusiva - Tempo Real RJ",
+          "url": "https://temporealrj.com/vereador-campanha-trechos-faixa-exclusiva",
+          "sourceName": "Google News",
+          "sourceHost": "temporealrj.com",
+          "publishedAt": "2026-04-10T16:21:10+00:00",
+          "publishedDisplay": "10/04/2026 16:21 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "O vereador Flávio Valle (PSD) anuncia a campanha \"Ciclovias para Todos\", iniciativa para mapear colaborativamente trechos prioritários para implantação de ciclovias no Rio, usando indicações da população para orientar propostas e emendas legislativas.",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        }
+      ]
+    },
+    {
+      "storyIdInt": 348,
+      "title": "Depois de praça, rua do Leblon também ganhará nome de Manoel Carlos - VEJA RIO",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "A matéria noticia a aprovação do PL nº 2041/2026, de autoria do vereador Flávio Valle, que oficializa homenagem a Manoel Carlos no Leblon com praça e rua levando o nome do escritor.",
+      "temperature": 64.0,
+      "firstPublishedAt": "2026-04-10T14:55:42+00:00",
+      "lastPublishedAt": "2026-04-10T18:56:16+00:00",
+      "articleCount": 4,
+      "aiCount": 4,
+      "rawCount": 0,
+      "targetKeys": [
+        "flavio_valle"
+      ],
+      "articles": [
+        {
+          "articleId": 632,
+          "title": "Praça e rua do Leblon passam a se chamar Manoel Carlos em homenagem a autor - Portal do Holanda",
+          "url": "https://www.portaldoholanda.com.br/famosos-tv/praca-e-rua-do-leblon-passam-a-se-chamar-manoel-carlos-em-homenagem-a-autor",
+          "sourceName": "Google News",
+          "sourceHost": "portaldoholanda.com.br",
+          "publishedAt": "2026-04-10T18:56:16+00:00",
+          "publishedDisplay": "10/04/2026 18:56 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "A matéria noticia a aprovação do PL nº 2041/2026, de autoria do vereador Flávio Valle, que oficializa homenagem a Manoel Carlos no Leblon com praça e rua levando o nome do escritor.",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        },
+        {
+          "articleId": 631,
+          "title": "Praça do Leblon passa a se chamar Manoel Carlos - Tribuna do Sertão",
+          "url": "https://www.tribunadosertao.com.br/variedades/2026/04/10/885924-praca-do-leblon-passa-a-se-chamar-manoel-carlos",
+          "sourceName": "Google News",
+          "sourceHost": "tribunadosertao.com.br",
+          "publishedAt": "2026-04-10T18:28:00+00:00",
+          "publishedDisplay": "10/04/2026 18:28 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é mencionado como autor do PL nº 2041/2026 que prevê a denominação de praça e rua do Leblon com o nome de Manoel Carlos Gonçalves de Almeida (1933-2026).",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        },
+        {
+          "articleId": 628,
+          "title": "Praça do Leblon passa a se chamar Manoel Carlos; veja endereço - Estadão",
+          "url": "https://www.estadao.com.br/emais/gente/praca-do-leblon-passa-a-se-chamar-manoel-carlos-veja-endereco-nprec",
+          "sourceName": "Google News",
+          "sourceHost": "estadao.com.br",
+          "publishedAt": "2026-04-10T18:03:08+00:00",
+          "publishedDisplay": "10/04/2026 18:03 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "A matéria noticia que a praça do Leblon passa a se chamar Manoel Carlos, mencionando Flávio Valle como autor do projeto de lei que também denomina uma rua do bairro.",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        },
+        {
+          "articleId": 621,
+          "title": "Depois de praça, rua do Leblon também ganhará nome de Manoel Carlos - VEJA RIO",
+          "url": "https://vejario.abril.com.br/coluna/otavio-furtado/rua-do-leblon-manoel-carlos",
+          "sourceName": "Google News",
+          "sourceHost": "vejario.abril.com.br",
+          "publishedAt": "2026-04-10T14:55:42+00:00",
+          "publishedDisplay": "10/04/2026 14:55 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "O projeto de autoria do vereador Flávio Valle para nomear uma rua do Leblon em homenagem ao novelista Manoel Carlos foi aprovado na Câmara; o logradouro específico ainda será definido.",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        }
+      ]
+    },
+    {
+      "storyIdInt": 351,
+      "title": "Rua em homenagem a Manoel Carlos será inaugurada no Leblon - Portal Tela",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "Flávio Valle é o autor da iniciativa legislativa que eterniza Manoel Carlos no Leblon, com aprovação de projeto que nomeia uma rua do bairro em homenagem ao autor de novelas como \"Por Amor\" e \"Laços de Família\".",
+      "temperature": 55.0,
+      "firstPublishedAt": "2026-04-10T13:25:50+00:00",
+      "lastPublishedAt": "2026-04-10T18:18:00+00:00",
+      "articleCount": 3,
+      "aiCount": 3,
+      "rawCount": 0,
+      "targetKeys": [
+        "flavio_valle"
+      ],
+      "articles": [
+        {
+          "articleId": 630,
+          "title": "Eternizado! Manoel Carlos vira nome de rua no Leblon após morte aos 92 anos - RedeTV!",
+          "url": "https://www.redetv.uol.com.br/tvfama/blog/televisao/eternizado-manoel-carlos-vira-nome-de-rua-no-leblon-apos-morte-aos-92-anos",
+          "sourceName": "Google News",
+          "sourceHost": "redetv.uol.com.br",
+          "publishedAt": "2026-04-10T18:18:00+00:00",
+          "publishedDisplay": "10/04/2026 18:18 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle é o autor da iniciativa legislativa que eterniza Manoel Carlos no Leblon, com aprovação de projeto que nomeia uma rua do bairro em homenagem ao autor de novelas como \"Por Amor\" e \"Laços de Família\".",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        },
+        {
+          "articleId": 627,
+          "title": "Além de praça, Manoel Carlos também dará nome a uma rua no Leblon - Folha de S.Paulo",
+          "url": "https://www1.folha.uol.com.br/ilustrada/2026/04/alem-de-praca-manoel-carlos-tambem-dara-nome-a-uma-rua-no-leblon.shtml",
+          "sourceName": "Google News",
+          "sourceHost": "www1.folha.uol.com.br",
+          "publishedAt": "2026-04-10T14:18:00+00:00",
+          "publishedDisplay": "10/04/2026 14:18 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle aparece como autor do projeto de lei aprovado que nomeia uma rua do Leblon em homenagem a Manoel Carlos, complementando a praça já existente no bairro carioca.",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        },
+        {
+          "articleId": 624,
+          "title": "Rua em homenagem a Manoel Carlos será inaugurada no Leblon - Portal Tela",
+          "url": "https://www.portaltela.com/entretenimento/celebridades/2026/04/10/rua-em-homenagem-a-manoel-carlos-sera-inaugurada-no-leblon",
+          "sourceName": "Google News",
+          "sourceHost": "portaltela.com",
+          "publishedAt": "2026-04-10T13:25:50+00:00",
+          "publishedDisplay": "10/04/2026 13:25 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "O vereador Flávio Valle é autor do Projeto de Lei Nº 2041/2026, aprovado na Câmara do Rio, que cria a Rua Manoel Carlos Gonçalves de Almeida no Leblon em homenagem póstuma ao dramaturgo.",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        }
+      ]
+    },
+    {
+      "storyIdInt": 354,
+      "title": "Base da prefeitura na Câmara visita polícia de NY para conhecer sistema que inspira Força Municipal",
+      "summaryLabel": "Resumo IA",
+      "summaryText": "Flávio Valle (ex-subsecretário da Zona Sul e vereador do PSD) integra a comitiva liderada por Carlo Caiado que visitou a polícia de Nova York para conhecer o sistema CompStat, modelo de monitoramento criminal que inspira a Força Municipal do Rio.",
+      "temperature": 37.0,
+      "firstPublishedAt": "2026-04-10T18:02:22+00:00",
+      "lastPublishedAt": "2026-04-10T18:02:22+00:00",
+      "articleCount": 1,
+      "aiCount": 1,
+      "rawCount": 0,
+      "targetKeys": [
+        "flavio_valle"
+      ],
+      "articles": [
+        {
+          "articleId": 633,
+          "title": "Base da prefeitura na Câmara visita polícia de NY para conhecer sistema que inspira Força Municipal",
+          "url": "https://agendadopoder.com.br/base-da-prefeitura-na-camara-visita-policia-de-ny-para-conhecer-sistema-que-inspira-forca-municipal",
+          "sourceName": "Agenda do Poder",
+          "sourceHost": "agendadopoder.com.br",
+          "publishedAt": "2026-04-10T18:02:22+00:00",
+          "publishedDisplay": "10/04/2026 18:02 UTC",
+          "targetKeys": [
+            "flavio_valle"
+          ],
+          "summaryLabel": "Resumo IA",
+          "summaryPreview": "Flávio Valle (ex-subsecretário da Zona Sul e vereador do PSD) integra a comitiva liderada por Carlo Caiado que visitou a polícia de Nova York para conhecer o sistema CompStat, modelo de monitoramento criminal que inspira a Força Municipal do Rio.",
+          "rawTextKey": null,
+          "summarySource": "ai"
+        }
+      ]
+    },
     {
       "storyIdInt": 342,
       "title": "Eduardo Paes retorna do Japão no dia em que STF começa a julgar eleição no Rio",
@@ -14759,41 +15086,6 @@
           "summaryPreview": "Lu Lacerda Por Lu Lacerda SEGUIR SEGUINDO Jornalista apaixonada pelo Rio Cidade Vereadores querem municipalizar Floresta da Tijuca Cesar Maia e Flávio Valle entraram com projeto na Câmara, reforçando o pedido do deputado federal Pedro Paulo em Brasília Por lu.lacerda 1 abr 2025, 17h00 • Atualizado em 1 abr 2025, 18h51 --> --> Cristo Redentor: monumento é um dos mais visitados pelos turistas na cidade (Divulgação/Riotur) Continua após publicidade Compartilhe essa matéria: Link copiado! Os vereadores Cesar Maia e Flávio Valle entraram com projeto pedindo...",
           "rawTextKey": "article-154",
           "summarySource": "raw"
-        }
-      ]
-    },
-    {
-      "storyIdInt": 353,
-      "title": "Sob pressão: para aprovar projeto, vereadores querem saber como a prefeitura pretende usar empréstimo de R$ 6 bi",
-      "summaryLabel": "Resumo IA",
-      "summaryText": "Vereadores, incluindo governistas, pressionaram a Prefeitura do Rio em reunião sobre autorização de empréstimo de R$ 6 bilhões, exigindo maior transparência sobre o uso dos recursos. Flavio Valle questionou incisivamente a proposta mantendo tom diplomático, enquanto Pedro Duarte criticou o endividamento crescente e ameaçou entrar com mandado de segurança. A oposição, de direita a esquerda, alertou sobre riscos fiscais e falta de prioridades sociais.",
-      "temperature": 37.0,
-      "firstPublishedAt": "2025-04-01T19:01:00+00:00",
-      "lastPublishedAt": "2025-04-01T19:01:00+00:00",
-      "articleCount": 1,
-      "aiCount": 1,
-      "rawCount": 0,
-      "targetKeys": [
-        "flavio_valle",
-        "pedro_duarte"
-      ],
-      "articles": [
-        {
-          "articleId": 819,
-          "title": "Sob pressão: para aprovar projeto, vereadores querem saber como a prefeitura pretende usar empréstimo de R$ 6 bi",
-          "url": "https://temporealrj.com/sob-pressao-para-aprovar-projeto-vereadores-querem-saber-como-a-prefeitura-pretende-usar-emprestimo-de-r-6-bi",
-          "sourceName": "Tempo Real RJ",
-          "sourceHost": "temporealrj.com",
-          "publishedAt": "2025-04-01T19:01:00+00:00",
-          "publishedDisplay": "01/04/2025 19:01 UTC",
-          "targetKeys": [
-            "flavio_valle",
-            "pedro_duarte"
-          ],
-          "summaryLabel": "Resumo IA",
-          "summaryPreview": "Vereadores, incluindo governistas, pressionaram a Prefeitura do Rio em reunião sobre autorização de empréstimo de R$ 6 bilhões, exigindo maior transparência sobre o uso dos recursos. Flavio Valle questionou incisivamente a proposta mantendo tom diplomático, enquanto Pedro Duarte criticou o endividamento crescente e ameaçou entrar com mandado de segurança. A oposição, de direita a esquerda, alertou sobre riscos fiscais e falta de prioridades sociais.",
-          "rawTextKey": null,
-          "summarySource": "ai"
         }
       ]
     },
