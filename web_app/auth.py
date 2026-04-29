@@ -15,12 +15,16 @@ COOKIE_NAME = "clipping_admin"
 SESSION_SECONDS = 8 * 60 * 60
 
 
+def _env_value(name: str) -> str:
+    return os.environ.get(name, "").strip()
+
+
 def auth_configured() -> bool:
-    return bool(os.environ.get("CLIPPING_ADMIN_PASSWORD") and os.environ.get("CLIPPING_SESSION_SECRET"))
+    return bool(_env_value("CLIPPING_ADMIN_PASSWORD") and _env_value("CLIPPING_SESSION_SECRET"))
 
 
 def _secret() -> bytes:
-    value = os.environ.get("CLIPPING_SESSION_SECRET", "")
+    value = _env_value("CLIPPING_SESSION_SECRET")
     if not value:
         raise HTTPException(status_code=503, detail="admin_auth_not_configured")
     return value.encode("utf-8")
@@ -64,7 +68,7 @@ def verify_session(token: str | None) -> dict[str, Any] | None:
 
 
 def check_password(password: str) -> bool:
-    expected = os.environ.get("CLIPPING_ADMIN_PASSWORD", "")
+    expected = _env_value("CLIPPING_ADMIN_PASSWORD")
     return bool(expected) and hmac.compare_digest(password, expected)
 
 
@@ -89,4 +93,3 @@ def require_csrf(request: Request) -> None:
     provided = request.headers.get("x-csrf-token", "")
     if not expected or not hmac.compare_digest(expected, provided):
         raise HTTPException(status_code=403, detail="csrf_check_failed")
-

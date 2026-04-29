@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 import subprocess
 import sys
 import threading
@@ -30,6 +32,14 @@ SAFE_COLLECTORS = {
 ACTIVE_JOB_STATUSES = ("queued", "running", "exporting")
 DEFAULT_COLLECTOR = "all"
 EXPORT_TIMEOUT_SECONDS = 300
+SECRET_ENV_MARKERS = ("PASSWORD", "SECRET", "TOKEN", "API_KEY", "SERVICE_KEY", "DATABASE_URL", "DEPLOY_HOOK")
+SECRET_ASSIGNMENT_RE = re.compile(
+    r"(?i)(\b(?:authorization|api[-_]?key|apikey|service[-_]?key|session[-_]?secret|secret|token|password)\b\s*[:=]\s*)([^,\s;]+)"
+)
+BEARER_TOKEN_RE = re.compile(r"(?i)(Bearer\s+)([A-Za-z0-9._~+/\-]+=*)")
+QUERY_SECRET_RE = re.compile(
+    r"(?i)([?&](?:api[-_]?key|apikey|key|token|secret|password|access_token|refresh_token)=)[^&\s]+"
+)
 
 PRESETS: dict[str, dict[str, Any]] = {
     "rapido": {
@@ -377,7 +387,19 @@ def sanitize_error(exc: Exception) -> str:
         return "Falha ao exportar o painel."
     if "unknown_target_keys" in text:
         return "Nome acompanhado desconhecido."
-    return text[:160]
+    return redact_secret_text(text)[:160]
+
+
+def redact_secret_text(text: str) -> str:
+    redacted = text
+    for name, value in os.environ.items():
+        if any(marker in name.upper() for marker in SECRET_ENV_MARKERS):
+            secret = value.strip()
+            if len(secret) >= 8:
+                redacted = redacted.replace(secret, "[redacted]")
+    redacted = BEARER_TOKEN_RE.sub(r"\1[redacted]", redacted)
+    redacted = SECRET_ASSIGNMENT_RE.sub(r"\1[redacted]", redacted)
+    return QUERY_SECRET_RE.sub(r"\1[redacted]", redacted)
 
 
 job_manager = JobManager(artifact_store)

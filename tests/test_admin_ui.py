@@ -13,12 +13,12 @@ from fastapi.testclient import TestClient
 from pipeline.database import ClippingDB
 
 
-def load_test_app(monkeypatch, tmp_path):
+def load_test_app(monkeypatch, tmp_path, *, admin_password="test-password", session_secret="test-session-secret"):
     db_file = tmp_path / "clipping.db"
     ClippingDB(db_file)
     monkeypatch.setenv("CLIPPING_DB_PATH", str(db_file))
-    monkeypatch.setenv("CLIPPING_ADMIN_PASSWORD", "test-password")
-    monkeypatch.setenv("CLIPPING_SESSION_SECRET", "test-session-secret")
+    monkeypatch.setenv("CLIPPING_ADMIN_PASSWORD", admin_password)
+    monkeypatch.setenv("CLIPPING_SESSION_SECRET", session_secret)
     monkeypatch.setenv("CLIPPING_ALLOW_LOCAL_WRITES", "1")
     monkeypatch.delenv("SUPABASE_URL", raising=False)
     monkeypatch.delenv("SUPABASE_SERVICE_KEY", raising=False)
@@ -94,6 +94,23 @@ def test_admin_auth_requires_login(monkeypatch, tmp_path):
     assert_empty_db(db_file)
 
 
+def test_admin_auth_fails_closed_when_env_values_are_blank(monkeypatch, tmp_path):
+    app, db_file = load_test_app(monkeypatch, tmp_path, admin_password="   ", session_secret="\t ")
+    with TestClient(app) as client:
+        login_page = client.get("/admin")
+        login_attempt = client.post("/api/login", json={"password": "   "})
+        status = client.get("/api/update/status")
+        manual_without_login = client.post("/api/manual-story", json=manual_story_payload())
+
+    assert login_page.status_code == 200
+    assert "Acesso administrativo ainda nao configurado no Render." in login_page.text
+    assert 'name="csrf-token"' not in login_page.text
+    assert login_attempt.status_code == 503
+    assert status.status_code == 503
+    assert manual_without_login.status_code == 503
+    assert_empty_db(db_file)
+
+
 def test_admin_write_apis_reject_missing_or_bad_csrf(monkeypatch, tmp_path):
     app, db_file = load_test_app(monkeypatch, tmp_path)
     with TestClient(app) as client:
@@ -133,6 +150,24 @@ def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
     assert "test-password" not in serialized
     assert "test-session-secret" not in serialized
     assert "SUPABASE_SERVICE_KEY" not in serialized
+
+
+def test_job_error_sanitizer_redacts_secret_material(monkeypatch, tmp_path):
+    load_test_app(monkeypatch, tmp_path)
+    jobs = importlib.import_module("web_app.jobs")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "supabase-secret-token-value")
+
+    message = jobs.sanitize_error(
+        RuntimeError(
+            "request failed Authorization: Bearer supabase-secret-token-value "
+            "apikey=supabase-secret-token-value "
+            "https://example.test/callback?access_token=visible-token"
+        )
+    )
+
+    assert "supabase-secret-token-value" not in message
+    assert "visible-token" not in message
+    assert "[redacted]" in message
 
 
 def test_admin_ui_serves_manual_story_form(monkeypatch, tmp_path):
