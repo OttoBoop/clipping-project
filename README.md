@@ -90,6 +90,11 @@ A third doc, [`md documents/ATLAS_ORCHESTRATOR_HANDOFF.md`](md%20documents/ATLAS
 is Atlas's earlier rough checkpoint — kept as historical context for the
 orchestration setup, superseded by the two above.
 
+Live coordination between Atlas (local) and Claude Code (cloud) happens in
+[`md documents/ATLAS_CLAUDE_COORDINATION.md`](md%20documents/ATLAS_CLAUDE_COORDINATION.md):
+protocol, current status, and append-only log. Both sides should pull, read,
+and update it around any session.
+
 Open product decisions still owned by Otavio: v1 scope (review-only vs
 run-and-review vs full portal), classification taxonomy and granularity,
 coworker roles, production database choice, Render architecture shape, and
