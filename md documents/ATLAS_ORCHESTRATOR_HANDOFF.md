@@ -8,6 +8,7 @@ entrypoints:
 
 - `md documents/ORCHESTRATORS_FRAMEWORK_FOR_THE_CLIPPING_PROJECT.md`
 - `md documents/GENERAL_UNDERSTANDING_OF_OUR_GOALS_IN_THIS_PROJECT.md`
+- `md documents/RENDER_RESTART_NOTES.md`
 
 This document is the shared starting checkpoint for the clipping-online project.
 It is written so Codex, Claude Code, and future subagents can resume from the
@@ -112,6 +113,18 @@ Important existing diff theme:
 - `run_ingestion.py` has a `--db` option in the dirty diff, useful for safer
   isolated runs.
 - Preserve this work unless Otavio explicitly asks to revert it.
+
+Restart correction on 2026-04-29:
+
+- The `md documents/` folder is tracked locally and on `origin/master`.
+- The cloud-side commit `6eb4314` uploaded the same three original Markdown
+  files that local Atlas had created.
+- Atlas created `backup/atlas-full-state-20260429-152318` before cleaning the
+  local sync path, so the previous all-files local commit remains recoverable.
+- A dedicated Render restart note now exists at
+  `md documents/RENDER_RESTART_NOTES.md`.
+- Current Render fact: this repo still has no deploy scaffold or service
+  entrypoint. `server.py` is a static snapshot generator, not a Render web app.
 
 ## Product Constraints Already Known
 

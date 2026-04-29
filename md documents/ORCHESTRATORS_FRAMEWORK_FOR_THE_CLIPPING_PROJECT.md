@@ -197,6 +197,7 @@ Codex side:
 - `Atlas-Archivist`: prior-doc and framework reader.
 - `Atlas-Cartographer`: codebase and architecture mapper.
 - `Atlas-Guard`: secrets, API-budget, and AI-summary policy reviewer.
+- `Atlas-Git-Guard`: git sync reviewer for local/cloud coordination.
 - `Atlas-Classifier`: human-classification workflow planner.
 - `Atlas-Builder`: implementation worker after the plan is stable.
 
@@ -219,10 +220,25 @@ Atlas's immediate responsibilities:
 Claude Code's immediate responsibilities after receiving the prompt:
 
 - read both new docs;
+- read `md documents/RENDER_RESTART_NOTES.md` before proposing Render work;
 - pick and register an orchestrator name;
 - inspect the repo status and current architecture;
 - add a dated note with anything it learns or disagrees with;
 - avoid implementation until Otavio confirms the next step.
+
+## Git Sync Rule While Claude Code Is Active
+
+When Claude Code is working from the cloud copy, Atlas should treat git sync as
+a first-class workstream:
+
+- check `git status --short --branch` before edits;
+- run `git fetch origin` before commits intended for sharing;
+- inspect divergence before pushing;
+- create a backup branch before rewriting any local unpushed commit;
+- commit small meaningful checkpoints;
+- push checkpoints that Claude Code needs to see;
+- avoid pushing virtualenvs, cache directories, temporary probe databases, or
+  generated logs unless Otavio explicitly asks for those artifacts.
 
 ## Required Early Documents
 
@@ -234,6 +250,9 @@ Current early-document set:
 - `md documents/GENERAL_UNDERSTANDING_OF_OUR_GOALS_IN_THIS_PROJECT.md`
   - Shared orientation about the clipping-online project, current architecture,
     constraints, and near-term purpose.
+- `md documents/RENDER_RESTART_NOTES.md`
+  - Render-specific restart note and git sync protocol for Atlas/Claude
+    coordination.
 
 Possible future docs:
 

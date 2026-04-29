@@ -78,6 +78,11 @@ Read these before inventing a process from scratch:
     into clearer documents.
   - Treat it as historical context, not the authority for the current
     orchestration structure.
+- `/home/otavio/Documents/vscode/clipping-project/md documents/RENDER_RESTART_NOTES.md`
+  - Render-specific restart note.
+  - Records that no Render service scaffold exists yet in this repo, explains
+    why Render is still the likely production direction, and defines the safe
+    git sync protocol while Claude Code is active.
 - `/home/otavio/Documents/vscode/relatorio sobre a survey/docs/06_fluxo_orquestracao_input_humano.md`
   - Key lesson: files do not replace live human checkpoints.
   - Workers produce evidence; the orchestrator asks the human when ambiguity
@@ -153,6 +158,12 @@ into clear human checkpoints.
 
 The likely production direction is a Render-backed website rather than only a
 static GitHub Pages bundle.
+
+Current repo fact as of 2026-04-29: there is not yet a Render app in this
+repository. No `render.yaml`, `Procfile`, `Dockerfile`, `package.json`,
+`pyproject.toml`, or service entrypoint was found. `server.py` is a static
+snapshot generator, not a long-running web service. See
+`md documents/RENDER_RESTART_NOTES.md` before planning implementation.
 
 Render is attractive because the future app probably needs server-side state,
 authentication or role boundaries, classification writes, scheduled or
