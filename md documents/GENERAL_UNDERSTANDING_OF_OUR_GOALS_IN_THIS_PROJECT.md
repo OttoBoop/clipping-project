@@ -176,6 +176,39 @@ docs: store secrets server-side, keep them out of chat and docs, avoid public
 forms for real provider keys until there is an admin gate, and verify deploy
 state with safe metadata only.
 
+## Short-Term Direction Checkpoint
+
+The next short-term direction is not just "make the static page visible." The
+goal is a coworker-runnable online workflow: a nontechnical coworker should be
+able to trigger or request the clipping pipeline, review results, and classify
+items without Otavio operating the local CLI.
+
+Current live Render URL:
+
+- `https://clipping-project.onrender.com/`
+
+The current Render deployment is still static hosting. Treat it as proof that
+Render can serve the dashboard, not as the final coworker app.
+
+For persistence, reuse the Prova-AI pattern as the reference model: durable
+server-side state belongs in a cloud database, file/blob artifacts belong in
+cloud storage, and local files/SQLite should be treated as development,
+migration, cache, or export artifacts rather than the production source of
+truth. In Prova-AI this pattern is PostgreSQL/Supabase for relational metadata
+plus Supabase Storage for files, with database records storing paths/metadata
+and server code resolving files through cloud storage first.
+
+For clipping-online, the first durable state to plan is human classification,
+run metadata, user/action audit fields, and publication/review state. Do not
+depend on Render's ephemeral filesystem for this state.
+
+AI-summary policy remains restrictive:
+
+- Existing AI summaries already present in the data may be displayed.
+- Public coworker users must not be able to generate new AI summaries.
+- Any future AI generation needs an admin-only gate, budget rule, provider
+  decision, audit trail, and secret-safe configuration before implementation.
+
 ## Explicitly Out Of Scope For This Checkpoint
 
 This checkpoint does not:

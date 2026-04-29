@@ -179,6 +179,25 @@ orchestrators understand the same facts.
 The two orchestrators should treat each other as peer coordinators, not as
 anonymous file writers.
 
+## Required Roles For The Next Phase
+
+The next phase requires these roles to be explicit before implementation starts:
+
+- `Atlas`: Codex-side orchestrator and documentation/source-of-truth keeper.
+- `Iris` or Claude-side orchestrator: Claude Code's peer orchestrator; must add
+  a dated note identifying itself before broad edits.
+- `Atlas-Guard` / Iris equivalent: owns secrets, AI-summary policy, public
+  access limits, logs, and provider-key safety.
+- `Atlas-Git-Guard` / Iris equivalent: owns git status, fetch/divergence
+  checks, commit scope, push timing, and protection of other-agent work.
+- `Atlas-Classifier` / Iris equivalent: designs human classification scope,
+  labels, audit fields, and review/publish workflow.
+- `Atlas-Builder` / Iris equivalent: implements only after the docs-first
+  checkpoint is updated and accepted.
+
+Subagents may gather evidence or draft patches, but product direction and public
+AI access policy must not be decided silently.
+
 ### Shared Rules
 
 - Work in dated, attributable notes when editing shared planning docs.
@@ -297,3 +316,27 @@ This checkpoint intentionally does not:
 The next step belongs to Otavio: start Claude Code with the prompt Atlas
 provides, then let the two orchestrators begin coordinated planning from the same
 documentation base.
+
+## First Implementation Checkpoint
+
+Before the first implementation task, Atlas and Iris/Claude must update the
+shared docs with the accepted short-term direction, then commit and push that
+documentation checkpoint.
+
+The first implementation checkpoint is complete only when:
+
+- the docs say that a nontechnical coworker must be able to run or request the
+  clipping pipeline online;
+- the docs record the live Render URL:
+  `https://clipping-project.onrender.com/`;
+- the docs record the Prova-AI Supabase persistence pattern as the reference for
+  durable cloud state;
+- the docs explicitly block public coworker AI-summary generation;
+- the required orchestrator, guard, git, classifier, and builder roles are
+  named;
+- `git status`, `git fetch origin`, divergence inspection, commit, and push have
+  been handled deliberately.
+
+Implementation must not begin from an uncommitted documentation-only decision.
+The first code checkpoint should start after docs are updated, committed, and
+pushed.

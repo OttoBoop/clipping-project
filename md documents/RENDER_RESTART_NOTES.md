@@ -33,6 +33,25 @@ hooks, database URLs, token previews, or screenshots that reveal credentials.
 - The live URL now serves the static dashboard:
   `https://clipping-project.onrender.com/`.
 
+## Short-Term Render Direction
+
+Render is live at:
+
+- `https://clipping-project.onrender.com/`
+
+This is currently a static dashboard deployment. The next product direction is a
+coworker-runnable workflow, not merely another static export. A nontechnical
+coworker should eventually be able to run or request the clipping pipeline and
+classify results through the online app.
+
+Do not add public AI-summary generation to the Render app. Existing summaries
+may be displayed, but new generation requires a later admin-gated, budgeted,
+audited, secret-safe design.
+
+Before any Render app implementation begins, update the shared docs with this
+direction, commit the docs checkpoint, fetch/inspect/push with git discipline,
+and only then start code changes.
+
 ## Render Inference
 
 Render is the likely next hosting target because the coworker-facing v1 probably
