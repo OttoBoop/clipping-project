@@ -263,3 +263,48 @@ Atlas workflow integration from this handoff:
   see the current state.
 - Do not test or mutate Prova-AI services while validating clipping-project.
   Prova-AI is reference architecture only.
+
+## 2026-04-29 Env Bridge Final Checkpoint
+
+Facts:
+
+- `origin/master` and local `master` were even at
+  `d008b59 fix: harden clipping admin secret handling` before this docs
+  checkpoint.
+- Render deploy `dep-d7p7f5egvqtc73ah1e0g` is live at `d008b59`.
+- Live `/healthz` reports the app ok, auth configured, database present,
+  Supabase storage enabled, local writes disabled, and no active job.
+- Live QA passed: login works, CSRF token is present, authenticated
+  update/status calls return `200`, and CSRF-negative writes return `403`.
+- Supabase smoke passed for bucket/list/upload/readback/list, all HTTP `200`;
+  smoke artifact path:
+  `clipping-project/smoke/20260429T212612Z-atlas-supabase-smoke.json`.
+- Manual write smoke passed: an authenticated manual story was created, a
+  duplicate with the same URL was refused, and no ingestion run was triggered.
+- Newton's controlled export smoke passed. The direct scrape rejection test
+  posted `collector=direct_scrape` to `/api/update/start` and returned HTTP
+  `400` with `detail=coletor_invalido`; status remained idle and no ingestion
+  job was created.
+- Newton's export test posted to `/api/export` and returned HTTP `200`.
+  Export job `b911d22fc94f` transitioned
+  `queued -> running -> exporting -> succeeded`, started at
+  `2026-04-29T21:36:20.384388+00:00`, finished at
+  `2026-04-29T21:36:35.987474+00:00`, and reported
+  `articles_inserted=0`, `mentions_inserted=0`, `stories_touched=0`.
+
+Inferences:
+
+- The env bridge is production-live enough for the current guarded admin flow:
+  authenticated writes work, unauthenticated or invalid write paths fail closed,
+  and runtime persistence is routed through Supabase instead of local writes.
+
+Pending decisions:
+
+- `/api/status` does not yet surface per-file upload names from the export
+  path. Treat this as an observability gap for a later implementation task, not
+  a blocker for this checkpoint.
+
+Next safe action:
+
+- Commit and push this append-only docs checkpoint so parallel agents can resume
+  from the same green env-bridge state.

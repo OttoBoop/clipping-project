@@ -150,3 +150,28 @@ Because Claude Code may be changing the cloud copy at the same time:
 
 For this restart, Atlas created a safety branch before cleaning the sync path:
 `backup/atlas-full-state-20260429-152318`.
+
+## 2026-04-29 Env Bridge Live Checkpoint
+
+- Current live deploy: `dep-d7p7f5egvqtc73ah1e0g` at commit `d008b59`.
+- `/healthz` is green: app ok, auth configured, database present, Supabase
+  storage enabled, local writes disabled, and the job runner idle.
+- Auth and write-guard QA passed: login works, CSRF is present,
+  authenticated update/status calls return `200`, and CSRF-negative writes
+  return `403`.
+- Supabase bridge smoke passed with HTTP `200` for bucket check, listing,
+  upload, readback, and listing after upload. Smoke artifact path:
+  `clipping-project/smoke/20260429T212612Z-atlas-supabase-smoke.json`.
+- Manual write smoke passed: an authenticated manual story was created,
+  duplicate same-URL creation was refused, and no ingestion run was started.
+- Newton controlled export smoke passed: invalid `collector=direct_scrape` on
+  `/api/update/start` returned HTTP `400` with `detail=coletor_invalido`,
+  status stayed idle, and no ingestion job was created.
+- Newton export smoke passed: `/api/export` returned HTTP `200`; job
+  `b911d22fc94f` moved
+  `queued -> running -> exporting -> succeeded` from
+  `2026-04-29T21:36:20.384388+00:00` to
+  `2026-04-29T21:36:35.987474+00:00` with
+  `articles_inserted=0`, `mentions_inserted=0`, and `stories_touched=0`.
+- Remaining observability gap: `/api/status` does not surface per-file upload
+  names from the export path yet.
