@@ -73,6 +73,23 @@ def article_classifications(article_id: int):
     return jsonify({"article_id": article_id, "classifications": matched})
 
 
+@app.get("/api/classifications")
+def list_classifications():
+    rows = db.get_classifications_with_context(limit=100000)
+    projected = [
+        {
+            "article_id": r.get("article_id"),
+            "target_key": r.get("target_key"),
+            "article_sentiment": r.get("article_sentiment"),
+            "target_sentiment": r.get("target_sentiment"),
+            "centimetragem": r.get("centimetragem"),
+            "categories": r.get("categories") or [],
+        }
+        for r in rows
+    ]
+    return jsonify({"classifications": projected})
+
+
 @app.post("/api/classifications")
 def upsert_classification():
     payload = request.get_json(silent=True) or {}

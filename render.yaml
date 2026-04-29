@@ -1,0 +1,49 @@
+# render.yaml - Infrastructure-as-code for the clipping project on Render.
+#
+# IMPORTANT CAVEATS:
+#   - The Render Disk (`clipping-data`) is attached ONLY to the API service
+#     (`clipping-api`). The static site (`clipping-dashboard`) does NOT have
+#     access to it. The static site bakes a build-time snapshot of the DB
+#     into the published HTML/JSON; the live runtime DB on the API disk will
+#     diverge from that snapshot over time. The dashboard works around this
+#     by also fetching live classifications from the API at runtime (a
+#     sibling agent is wiring this up via `data-clipping-api-url`).
+#
+#   - First-time bootstrap: the API's `preDeployCommand` copies the build-
+#     time DB at `data/clipping.db` into `/data/clipping.db` IF the disk
+#     copy does not already exist. After the first successful deploy, the
+#     disk copy is the source of truth and the build-time copy is ignored.
+#
+#   - When applying this file for the first time, confirm the existing
+#     manually-configured Render dashboard service does not conflict with
+#     these names, or delete the old service first. See docs/DEPLOYMENT.md.
+
+services:
+  - type: web
+    name: clipping-api
+    runtime: python
+    plan: starter
+    branch: master
+    autoDeploy: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 2 -b 0.0.0.0:$PORT api_server:app
+    preDeployCommand: >-
+      python -c "import shutil, os; os.makedirs('/data', exist_ok=True);
+      shutil.copy('data/clipping.db', '/data/clipping.db') if not
+      os.path.exists('/data/clipping.db') else None"
+    envVars:
+      - key: CLIPPING_DB
+        value: /data/clipping.db
+      - key: PYTHON_VERSION
+        value: "3.11"
+    disk:
+      name: clipping-data
+      mountPath: /data
+      sizeGB: 1
+
+  - type: static
+    name: clipping-dashboard
+    branch: master
+    autoDeploy: true
+    buildCommand: pip install -r requirements.txt && python tools/export_mobile_snapshot.py --all-stories --api-url https://clipping-api.onrender.com
+    staticPublishPath: .

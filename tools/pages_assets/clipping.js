@@ -861,6 +861,38 @@
         categoriesCache = (data.categories || []).map(function (c) { return c.name; });
       })
       .catch(function () { /* leave categoriesCache empty */ });
+
+    fetch(apiUrl + "/api/classifications", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : { classifications: [] }; })
+      .then(function (data) {
+        var liveByKey = {};
+        (data.classifications || []).forEach(function (c) {
+          var k = c.article_id + "|" + c.target_key;
+          liveByKey[k] = c;
+        });
+        mergeWhenReady(liveByKey);
+      })
+      .catch(function () { /* network failure: keep static payload as is */ });
+
+    function mergeWhenReady(liveByKey) {
+      var timer = setInterval(function () {
+        if (!payload || !payload.stories) return;
+        clearInterval(timer);
+        (payload.stories || []).forEach(function (story) {
+          (story.articles || []).forEach(function (article) {
+            var fresh = [];
+            Object.keys(liveByKey).forEach(function (k) {
+              var rec = liveByKey[k];
+              if (rec && rec.article_id === article.articleId) {
+                fresh.push(rec);
+              }
+            });
+            article.classifications = fresh;
+          });
+        });
+        applyState();
+      }, 100);
+    }
   }
 
   fetch(dataUrl, { cache: "no-store" })
