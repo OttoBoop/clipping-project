@@ -4,9 +4,26 @@
 
   const dataUrl = app.dataset.clippingDataUrl;
   const rawUrl = app.dataset.clippingRawUrl;
+  // API base URL. Empty string = same-origin (the FastAPI web_app serves both
+  // the dashboard at "/" and the classification endpoints under "/api/").
   const apiUrl = (app.dataset.clippingApiUrl || "").trim().replace(/\/$/, "");
-  const editorEnabled = !!apiUrl;
+  // Editor activates only when the user is admin-authenticated. We probe
+  // /api/csrf to detect that — 200 = enable editor, anything else = stay
+  // read-only. Both states still fetch /api/classifications publicly so
+  // saved data appears live for everyone.
+  let editorEnabled = false;
+  let csrfToken = "";
   let categoriesCache = [];
+
+  function apiFetch(path, init) {
+    return fetch(apiUrl + path, Object.assign({ credentials: "same-origin" }, init || {}));
+  }
+
+  function apiPost(path, body) {
+    var headers = { "Content-Type": "application/json" };
+    if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+    return apiFetch(path, { method: "POST", headers: headers, body: JSON.stringify(body) });
+  }
   const storyStack = document.getElementById("storyStack");
   const flatStack = document.getElementById("flatStack");
   const targetFilters = document.getElementById("targetFilters");
@@ -778,13 +795,10 @@
     status.textContent = "Salvando...";
     status.className = "cls-save-status";
     try {
-      var resp = await fetch(apiUrl + "/api/classifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(gatherFieldset(fs)),
-      });
+      var resp = await apiPost("/api/classifications", gatherFieldset(fs));
       var data = await resp.json().catch(function () { return {}; });
-      if (!resp.ok) throw new Error(data.error || "HTTP " + resp.status);
+      if (resp.status === 401) throw new Error("Sessão expirada — entre em /admin");
+      if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
       status.textContent = "Salvo ✓";
       status.classList.add("cls-save-status--ok");
       applySavedClassification(data);
@@ -807,13 +821,9 @@
     if (!name || !name.trim()) return;
     name = name.trim();
     try {
-      var resp = await fetch(apiUrl + "/api/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name }),
-      });
+      var resp = await apiPost("/api/categories", { name: name });
       var data = await resp.json().catch(function () { return {}; });
-      if (!resp.ok) throw new Error(data.error || "HTTP " + resp.status);
+      if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
       var canonical = data.name || name;
       if (categoriesCache.indexOf(canonical) === -1) categoriesCache.push(canonical);
       document.querySelectorAll(".cls-fieldset").forEach(function (other) {
@@ -831,68 +841,89 @@
     }
   }
 
-  if (editorEnabled) {
-    app.addEventListener("click", function (event) {
-      var saveBtn = event.target.closest(".cls-save-btn");
-      if (saveBtn) {
-        event.preventDefault();
-        var fs = saveBtn.closest(".cls-fieldset");
-        if (fs) onSaveClassification(fs);
-        return;
-      }
-      var addBtn = event.target.closest(".cls-add-cat-btn");
-      if (addBtn) {
-        event.preventDefault();
-        var fs2 = addBtn.closest(".cls-fieldset");
-        if (fs2) onAddCategory(fs2);
-        return;
-      }
-      var chip = event.target.closest(".cls-cat-chip");
-      if (chip) {
-        event.preventDefault();
-        chip.classList.toggle("selected");
-        return;
-      }
-    });
-
-    fetch(apiUrl + "/api/categories", { cache: "no-store" })
-      .then(function (r) { return r.ok ? r.json() : { categories: [] }; })
-      .then(function (data) {
-        categoriesCache = (data.categories || []).map(function (c) { return c.name; });
-      })
-      .catch(function () { /* leave categoriesCache empty */ });
-
-    fetch(apiUrl + "/api/classifications", { cache: "no-store" })
-      .then(function (r) { return r.ok ? r.json() : { classifications: [] }; })
-      .then(function (data) {
-        var liveByKey = {};
-        (data.classifications || []).forEach(function (c) {
-          var k = c.article_id + "|" + c.target_key;
-          liveByKey[k] = c;
-        });
-        mergeWhenReady(liveByKey);
-      })
-      .catch(function () { /* network failure: keep static payload as is */ });
-
-    function mergeWhenReady(liveByKey) {
-      var timer = setInterval(function () {
-        if (!payload || !payload.stories) return;
-        clearInterval(timer);
-        (payload.stories || []).forEach(function (story) {
-          (story.articles || []).forEach(function (article) {
-            var fresh = [];
-            Object.keys(liveByKey).forEach(function (k) {
-              var rec = liveByKey[k];
-              if (rec && rec.article_id === article.articleId) {
-                fresh.push(rec);
-              }
-            });
-            article.classifications = fresh;
-          });
-        });
-        applyState();
-      }, 100);
+  // Click handler is always installed — even read-only users see the editor
+  // disabled, but the chips toggle stays interactive for the admin path.
+  app.addEventListener("click", function (event) {
+    if (!editorEnabled) return;
+    var saveBtn = event.target.closest(".cls-save-btn");
+    if (saveBtn) {
+      event.preventDefault();
+      var fs = saveBtn.closest(".cls-fieldset");
+      if (fs) onSaveClassification(fs);
+      return;
     }
+    var addBtn = event.target.closest(".cls-add-cat-btn");
+    if (addBtn) {
+      event.preventDefault();
+      var fs2 = addBtn.closest(".cls-fieldset");
+      if (fs2) onAddCategory(fs2);
+      return;
+    }
+    var chip = event.target.closest(".cls-cat-chip");
+    if (chip) {
+      event.preventDefault();
+      chip.classList.toggle("selected");
+      return;
+    }
+  });
+
+  // Probe /api/csrf to detect admin auth. 200 = enable editor + capture token.
+  apiFetch("/api/csrf", { cache: "no-store" })
+    .then(function (r) {
+      if (!r.ok) return null;
+      return r.json();
+    })
+    .then(function (data) {
+      if (data && data.csrf) {
+        csrfToken = data.csrf;
+        editorEnabled = true;
+        // Re-render so the editor blocks appear on each card.
+        if (payload) applyState();
+      }
+    })
+    .catch(function () { /* not authed: stay read-only */ });
+
+  // Categories are public. Always cache them so read-only users still see the
+  // taxonomy on hover/inspection (and admins land with the cache populated).
+  apiFetch("/api/categories", { cache: "no-store" })
+    .then(function (r) { return r.ok ? r.json() : { categories: [] }; })
+    .then(function (data) {
+      categoriesCache = (data.categories || []).map(function (c) { return c.name; });
+    })
+    .catch(function () { /* leave categoriesCache empty */ });
+
+  // Live classifications overlay — public read, applies to every visitor so
+  // the static snapshot's classification chips stay current.
+  apiFetch("/api/classifications", { cache: "no-store" })
+    .then(function (r) { return r.ok ? r.json() : { classifications: [] }; })
+    .then(function (data) {
+      var liveByKey = {};
+      (data.classifications || []).forEach(function (c) {
+        var k = c.article_id + "|" + c.target_key;
+        liveByKey[k] = c;
+      });
+      mergeWhenReady(liveByKey);
+    })
+    .catch(function () { /* network failure: keep static payload as is */ });
+
+  function mergeWhenReady(liveByKey) {
+    var timer = setInterval(function () {
+      if (!payload || !payload.stories) return;
+      clearInterval(timer);
+      (payload.stories || []).forEach(function (story) {
+        (story.articles || []).forEach(function (article) {
+          var fresh = [];
+          Object.keys(liveByKey).forEach(function (k) {
+            var rec = liveByKey[k];
+            if (rec && rec.article_id === article.articleId) {
+              fresh.push(rec);
+            }
+          });
+          article.classifications = fresh;
+        });
+      });
+      applyState();
+    }, 100);
   }
 
   fetch(dataUrl, { cache: "no-store" })

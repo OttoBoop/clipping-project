@@ -78,6 +78,11 @@ Read these before inventing a process from scratch:
     into clearer documents.
   - Treat it as historical context, not the authority for the current
     orchestration structure.
+- `/home/otavio/Documents/vscode/clipping-project/md documents/RENDER_RESTART_NOTES.md`
+  - Render-specific restart note.
+  - Records that no Render service scaffold exists yet in this repo, explains
+    why Render is still the likely production direction, and defines the safe
+    git sync protocol while Claude Code is active.
 - `/home/otavio/Documents/vscode/relatorio sobre a survey/docs/06_fluxo_orquestracao_input_humano.md`
   - Key lesson: files do not replace live human checkpoints.
   - Workers produce evidence; the orchestrator asks the human when ambiguity
@@ -154,6 +159,12 @@ into clear human checkpoints.
 The likely production direction is a Render-backed website rather than only a
 static GitHub Pages bundle.
 
+Current repo fact as of 2026-04-29: there is not yet a Render app in this
+repository. No `render.yaml`, `Procfile`, `Dockerfile`, `package.json`,
+`pyproject.toml`, or service entrypoint was found. `server.py` is a static
+snapshot generator, not a long-running web service. See
+`md documents/RENDER_RESTART_NOTES.md` before planning implementation.
+
 Render is attractive because the future app probably needs server-side state,
 authentication or role boundaries, classification writes, scheduled or
 triggered ingestion, and secret-safe provider configuration. GitHub Pages can
@@ -164,6 +175,39 @@ Any Render plan should inherit the secret-safety rules from the Paulo/Rio 3
 docs: store secrets server-side, keep them out of chat and docs, avoid public
 forms for real provider keys until there is an admin gate, and verify deploy
 state with safe metadata only.
+
+## Short-Term Direction Checkpoint
+
+The next short-term direction is not just "make the static page visible." The
+goal is a coworker-runnable online workflow: a nontechnical coworker should be
+able to trigger or request the clipping pipeline, review results, and classify
+items without Otavio operating the local CLI.
+
+Current live Render URL:
+
+- `https://clipping-project.onrender.com/`
+
+The current Render deployment is still static hosting. Treat it as proof that
+Render can serve the dashboard, not as the final coworker app.
+
+For persistence, reuse the Prova-AI pattern as the reference model: durable
+server-side state belongs in a cloud database, file/blob artifacts belong in
+cloud storage, and local files/SQLite should be treated as development,
+migration, cache, or export artifacts rather than the production source of
+truth. In Prova-AI this pattern is PostgreSQL/Supabase for relational metadata
+plus Supabase Storage for files, with database records storing paths/metadata
+and server code resolving files through cloud storage first.
+
+For clipping-online, the first durable state to plan is human classification,
+run metadata, user/action audit fields, and publication/review state. Do not
+depend on Render's ephemeral filesystem for this state.
+
+AI-summary policy remains restrictive:
+
+- Existing AI summaries already present in the data may be displayed.
+- Public coworker users must not be able to generate new AI summaries.
+- Any future AI generation needs an admin-only gate, budget rule, provider
+  decision, audit trail, and secret-safe configuration before implementation.
 
 ## Explicitly Out Of Scope For This Checkpoint
 

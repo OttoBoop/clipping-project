@@ -8,6 +8,7 @@ entrypoints:
 
 - `md documents/ORCHESTRATORS_FRAMEWORK_FOR_THE_CLIPPING_PROJECT.md`
 - `md documents/GENERAL_UNDERSTANDING_OF_OUR_GOALS_IN_THIS_PROJECT.md`
+- `md documents/RENDER_RESTART_NOTES.md`
 
 This document is the shared starting checkpoint for the clipping-online project.
 It is written so Codex, Claude Code, and future subagents can resume from the
@@ -113,6 +114,18 @@ Important existing diff theme:
   isolated runs.
 - Preserve this work unless Otavio explicitly asks to revert it.
 
+Restart correction on 2026-04-29:
+
+- The `md documents/` folder is tracked locally and on `origin/master`.
+- The cloud-side commit `6eb4314` uploaded the same three original Markdown
+  files that local Atlas had created.
+- Atlas created `backup/atlas-full-state-20260429-152318` before cleaning the
+  local sync path, so the previous all-files local commit remains recoverable.
+- A dedicated Render restart note now exists at
+  `md documents/RENDER_RESTART_NOTES.md`.
+- Current Render fact: this repo still has no deploy scaffold or service
+  entrypoint. `server.py` is a static snapshot generator, not a Render web app.
+
 ## Product Constraints Already Known
 
 Facts:
@@ -212,3 +225,41 @@ Atlas should ask once the shared checkpoint is accepted:
 This handoff does not implement the online website, database migration,
 classification UI, API routes, authentication, Render deployment, or AI-summary
 provider integration. It only establishes the shared Atlas starting map.
+
+## 2026-04-29 Atlas Integration Note
+
+This note is append-only so Iris, Claude Code, Codex, and future Atlas sessions
+can reconcile the handoff with the work completed later on 2026-04-29.
+
+Current facts after the Render sprint:
+
+- `origin/master` is at `0c2794f feat: harden clipping admin workflow`.
+- The Render service `clipping-project` is live at
+  `https://clipping-project.onrender.com/`.
+- Render start command is now
+  `uvicorn web_app.app:app --host 0.0.0.0 --port $PORT`.
+- The repo now contains the FastAPI app under `web_app/`, plus admin auth,
+  job controls, manual story insertion, Supabase artifact bridge code, and
+  dashboard copy cleanup.
+- The public dashboard loads and `/healthz` responds live.
+- Admin write workflows are intentionally not enabled until Render secrets are
+  configured: `CLIPPING_ADMIN_PASSWORD`, `CLIPPING_SESSION_SECRET`,
+  `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, and `SUPABASE_BUCKET`.
+- Runtime writes fail closed unless Supabase storage is enabled or an explicit
+  local-write override is set for development.
+
+Atlas workflow integration from this handoff:
+
+- Before each new sprint or shared-doc edit, fetch, check status/divergence,
+  inspect recent shared Markdown changes, and treat stale handoff facts as
+  historical unless current git/Render evidence confirms them.
+- Keep user reports in the handoff shape: Facts, Inferences, Pending decisions,
+  Next safe action.
+- Atlas orchestrates; implementation belongs to named agents with explicit file
+  ownership, expected evidence, and no silent product decisions.
+- Reuse active agents when their lane still matches the work; create new agents
+  only for genuinely new lanes or missing ownership.
+- Commit and push after every meaningful checkpoint so Iris and Claude Code can
+  see the current state.
+- Do not test or mutate Prova-AI services while validating clipping-project.
+  Prova-AI is reference architecture only.

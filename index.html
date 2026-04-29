@@ -17,47 +17,62 @@
     <header class="hero">
       <div class="hero-lockup">
         <p class="eyebrow">Mandato Flavio Valle</p>
-        <h1>Clipping offline com todas as historias</h1>
-        <p>Arquivo HTML autossuficiente com todas as historias principais agrupadas no banco. A pagina abre filtrada em Flavio Valle e permite adicionar ou remover outros nomes sem depender da API local.</p>
+        <h1>Clipping institucional</h1>
+        <p>Toda a base publicada em um painel simples para revisar materias, acompanhar nomes e abrir textos completos quando necessario.</p>
         <div class="hero-tags">
-          <span class="hero-tag hero-tag--gold">Banco inteiro</span>
-          <span class="hero-tag">Painel Pages</span>
-          <span class="hero-tag">Renderizacao sob demanda</span>
+          <span class="hero-tag hero-tag--gold">Toda a base</span>
+          <span class="hero-tag">Pronto para revisao</span>
+          <span class="hero-tag">Textos completos</span>
         </div>
       </div>
       <div class="stats">
         <div class="stat">
           <span>Escopo</span>
-          <strong>Banco inteiro</strong>
-          <small>Bundle estatico leve para GitHub Pages.</small>
+          <strong>Toda a base</strong>
+          <small>Arquivo publicado para consulta da equipe.</small>
         </div>
         <div class="stat">
-          <span>Historias visiveis</span>
+          <span>Historias no filtro</span>
           <strong id="visibleStoriesStat">436 / 458</strong>
-          <small>Historias do dataset publicado.</small>
+          <small>Grupos de materias exibidos agora.</small>
         </div>
         <div class="stat">
-          <span>Noticias visiveis</span>
+          <span>Materias encontradas</span>
           <strong id="visibleArticlesStat">766 / 805</strong>
-          <small>Modo recente sem agrupamento.</small>
+          <small>Materias exibidas no filtro atual.</small>
         </div>
         <div class="stat">
-          <span>Resumo IA</span>
+          <span>Com resumo</span>
           <strong id="visibleAiStat">32 / 33</strong>
-          <small>Exibe Resumo IA quando existir.</small>
+          <small>Resumo editorial quando existir.</small>
         </div>
         <div class="stat">
-          <span>Texto bruto</span>
+          <span>Com texto completo</span>
           <strong id="visibleRawStat">734 / 772</strong>
-          <small>Texto completo carregado sob demanda.</small>
+          <small>Materia completa disponivel para leitura.</small>
         </div>
       </div>
       <div class="meta-row">
-        <span>Gerado em: 13/04/2026 17:28 UTC</span>
-        <span>Base consultada: clipping.db</span>
-        <span>Renderizacao cliente-side para reduzir DOM inicial e uso de RAM.</span>
+        <span>Base atualizada em: 13/04/2026 17:28 UTC</span>
+        <span>Fonte da base: clipping institucional</span>
+        <span>Painel preparado para consulta rapida da equipe.</span>
       </div>
     </header>
+
+    <section class="panel update-panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Atualizacao da base</p>
+          <h2>Ultima publicacao</h2>
+        </div>
+      </div>
+      <div class="update-grid">
+        <div><span>Historias</span><strong>458</strong></div>
+        <div><span>Materias</span><strong>805</strong></div>
+        <div><span>Com texto completo</span><strong>772</strong></div>
+      </div>
+      <p class="filter-note">Este painel mostra a base mais recente publicada para a equipe. Noticias repetidas sao ignoradas durante a atualizacao.</p>
+    </section>
 
     <section class="panel">
       <div class="section-head">
@@ -85,14 +100,14 @@
       <div class="flat-spinner"></div>
       <div>
         <strong>Carregando dados do clipping...</strong>
-        <p>As historias e noticias serao renderizadas sob demanda para manter o bundle leve.</p>
+        <p>As historias e materias serao exibidas em instantes.</p>
       </div>
     </section>
 
     <section id="storyStack" hidden></section>
     <section id="flatStack" class="flat-articles" hidden></section>
 
-    <p class="footer-note">Arquivo institucional estatico para GitHub Pages. Historias e materias sao montadas no cliente a partir de JSON externo para reduzir memoria e acelerar o carregamento inicial.</p>
+    <p class="footer-note">Painel institucional publicado para consulta da equipe.</p>
   </main>
   <script src="assets/clipping.js" defer></script>
 </body>

@@ -66,11 +66,6 @@ Facts / Inferences / Blockers / Next format.
 Operating rules: see `md documents/IRIS_OPERATING_RULES.md`.
 Atlas-Iris async Q&A: see `md documents/ATLAS_IRIS_ASYNC.md`.
 
-### Claude Code's Future Orchestrator
-
-Claude Code has chosen the name **Iris** (registered above). This section is
-kept as a placeholder for the naming decision record.
-
 The Iris orchestrator:
 
 - read this file first;
@@ -200,6 +195,26 @@ orchestrators understand the same facts.
 The two orchestrators should treat each other as peer coordinators, not as
 anonymous file writers.
 
+## Required Roles For The Next Phase
+
+The next phase requires these roles to be explicit before implementation starts:
+
+- `Atlas`: Codex-side orchestrator and documentation/source-of-truth keeper.
+- `Iris` or Claude-side orchestrator: Claude Code's peer orchestrator; must add
+  a dated note identifying itself before broad edits.
+- `Atlas-Guard` / Iris equivalent: owns secrets, AI-summary policy, public
+  access limits, logs, and provider-key safety.
+- `Atlas-Git-Guard` / Iris equivalent: owns git status, fetch/divergence
+  checks, commit scope, push timing, and protection of other-agent work.
+- `Atlas-Classifier` / Iris equivalent: designs human classification scope,
+  labels, audit fields, and review/publish workflow.
+- `Atlas-Builder` / Iris equivalent: implements only after the docs-first
+  checkpoint is updated and accepted.
+
+Subagents may gather evidence or draft patches, but product direction and public
+AI access policy must not be decided silently.
+
+
 ### Shared Rules
 
 - Work in dated, attributable notes when editing shared planning docs.
@@ -218,6 +233,7 @@ Codex side:
 - `Atlas-Archivist`: prior-doc and framework reader.
 - `Atlas-Cartographer`: codebase and architecture mapper.
 - `Atlas-Guard`: secrets, API-budget, and AI-summary policy reviewer.
+- `Atlas-Git-Guard`: git sync reviewer for local/cloud coordination.
 - `Atlas-Classifier`: human-classification workflow planner.
 - `Atlas-Builder`: implementation worker after the plan is stable.
 
@@ -240,10 +256,26 @@ Atlas's immediate responsibilities:
 Claude Code's immediate responsibilities after receiving the prompt:
 
 - read both new docs;
+- read `md documents/RENDER_RESTART_NOTES.md` before proposing Render work;
 - pick and register an orchestrator name;
 - inspect the repo status and current architecture;
 - add a dated note with anything it learns or disagrees with;
 - avoid implementation until Otavio confirms the next step.
+
+## Git Sync Rule While Claude Code Is Active
+
+When Claude Code is working from the cloud copy, Atlas should treat git sync as
+a first-class workstream:
+
+- check `git status --short --branch` before edits;
+- run `git fetch origin` before commits intended for sharing;
+- inspect divergence before pushing;
+- create a backup branch before rewriting any local unpushed commit;
+- commit small meaningful checkpoints;
+- push checkpoints that Claude Code needs to see;
+- avoid pushing virtualenvs, cache directories, temporary probe databases, or
+  generated logs unless Otavio explicitly asks for those artifacts.
+
 
 ## Required Early Documents
 
@@ -255,6 +287,9 @@ Current early-document set:
 - `md documents/GENERAL_UNDERSTANDING_OF_OUR_GOALS_IN_THIS_PROJECT.md`
   - Shared orientation about the clipping-online project, current architecture,
     constraints, and near-term purpose.
+- `md documents/RENDER_RESTART_NOTES.md`
+  - Render-specific restart note and git sync protocol for Atlas/Claude
+    coordination.
 
 Possible future docs:
 
@@ -299,3 +334,27 @@ This checkpoint intentionally does not:
 The next step belongs to Otavio: start Claude Code with the prompt Atlas
 provides, then let the two orchestrators begin coordinated planning from the same
 documentation base.
+
+## First Implementation Checkpoint
+
+Before the first implementation task, Atlas and Iris/Claude must update the
+shared docs with the accepted short-term direction, then commit and push that
+documentation checkpoint.
+
+The first implementation checkpoint is complete only when:
+
+- the docs say that a nontechnical coworker must be able to run or request the
+  clipping pipeline online;
+- the docs record the live Render URL:
+  `https://clipping-project.onrender.com/`;
+- the docs record the Prova-AI Supabase persistence pattern as the reference for
+  durable cloud state;
+- the docs explicitly block public coworker AI-summary generation;
+- the required orchestrator, guard, git, classifier, and builder roles are
+  named;
+- `git status`, `git fetch origin`, divergence inspection, commit, and push have
+  been handled deliberately.
+
+Implementation must not begin from an uncommitted documentation-only decision.
+The first code checkpoint should start after docs are updated, committed, and
+pushed.
