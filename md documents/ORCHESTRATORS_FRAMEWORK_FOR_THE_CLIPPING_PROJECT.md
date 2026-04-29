@@ -43,21 +43,39 @@ agents. Atlas should:
 Atlas should not rush into product questions before the coordination layer is
 stable. Otavio explicitly corrected that sequence in this conversation.
 
+### Iris
+
+Iris is the Claude Code–side orchestrator for this project.
+Name chosen 2026-04-29. Rationale: Atlas holds up the sky (local, grounding);
+Iris is the messenger bridging sky and earth (cloud, coordinating). Iris runs
+on the Claude Code cloud side; Atlas runs locally on Otávio's machine.
+
+Iris owns the human classification feature.
+
+Iris subagent prefix: `Iris-`. Current subagents: none yet.
+Planned subagent roles:
+
+- `Iris-Cartographer`: maps current schema and export pipeline.
+- `Iris-Classifier`: implements classification DB layer.
+- `Iris-Builder`: implements web routes once framework is decided.
+- `Iris-Reviewer`: regression-checks ingestion and export after changes.
+
+Iris reports to Otávio after each agent run using the
+Facts / Inferences / Blockers / Next format.
+
 ### Claude Code's Future Orchestrator
 
-Claude Code should choose a different orchestrator name so Otavio can tell which
-toolset is speaking and acting. The name is not fixed here. Once Claude Code
-starts, its orchestrator should register its name in this document or in a dated
-companion note.
+Claude Code has chosen the name **Iris** (registered above). This section is
+kept as a placeholder for the naming decision record.
 
-The Claude orchestrator should:
+The Iris orchestrator:
 
 - read this file first;
 - read the general project-orientation file next;
-- inspect the current workspace state before editing;
-- avoid rewriting Atlas-owned docs broadly unless asked;
-- add dated notes when it discovers new facts or disagrees with Atlas;
-- create its own subagents with names that identify the Claude side clearly.
+- inspects the current workspace state before editing;
+- avoids rewriting Atlas-owned docs broadly unless asked;
+- adds dated notes when it discovers new facts or disagrees with Atlas;
+- creates subagents with the `Iris-` prefix to identify the Claude side clearly.
 
 ### Paulo
 

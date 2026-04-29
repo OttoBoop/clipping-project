@@ -93,6 +93,33 @@ CREATE TABLE IF NOT EXISTS backfill_state (
     updated_at TEXT NOT NULL,
     UNIQUE(query, start_date, end_date)
 );
+
+CREATE TABLE IF NOT EXISTS categories (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL UNIQUE,
+    created_by TEXT NOT NULL DEFAULT 'coworker',
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS classifications (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    mention_id        INTEGER NOT NULL UNIQUE,
+    article_sentiment TEXT CHECK(article_sentiment IN ('positive', 'negative', 'neutral')),
+    target_sentiment  TEXT CHECK(target_sentiment  IN ('positive', 'negative', 'neutral')),
+    centimetragem     REAL,
+    classified_by     TEXT NOT NULL DEFAULT 'coworker',
+    classified_at     TEXT NOT NULL,
+    ai_generated      INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY(mention_id) REFERENCES mentions(id)
+);
+
+CREATE TABLE IF NOT EXISTS classification_categories (
+    classification_id INTEGER NOT NULL,
+    category_id       INTEGER NOT NULL,
+    UNIQUE(classification_id, category_id),
+    FOREIGN KEY(classification_id) REFERENCES classifications(id),
+    FOREIGN KEY(category_id)       REFERENCES categories(id)
+);
 """
 
 
@@ -946,6 +973,192 @@ class ClippingDB:
                     "current_page": int(r["current_page"]),
                     "status": r["status"],
                     "updated_at": r["updated_at"],
+                }
+                for r in rows
+            ]
+
+    # ------------------------------------------------------------------
+    # Classification helpers (added 2026-04-29 by Iris)
+    # ------------------------------------------------------------------
+
+    def get_unclassified_mentions(
+        self, target_key: str | None = None, limit: int = 50
+    ) -> list[dict]:
+        """Mentions without a classifications row, newest articles first."""
+        where = ["c.id IS NULL"]
+        params: list = []
+        if target_key:
+            where.append("m.target_key = ?")
+            params.append(target_key)
+        params.append(max(1, int(limit)))
+        sql = f"""
+            SELECT
+                m.id AS mention_id,
+                m.article_id,
+                m.target_key,
+                m.target_name,
+                m.keyword_matched,
+                a.title,
+                a.url,
+                a.source_name,
+                COALESCE(a.published_at, a.discovered_at) AS published_at
+            FROM mentions m
+            JOIN articles a ON a.id = m.article_id
+            LEFT JOIN classifications c ON c.mention_id = m.id
+            WHERE {" AND ".join(where)}
+            ORDER BY COALESCE(a.published_at, a.discovered_at) DESC
+            LIMIT ?
+        """
+        with self.connect() as conn:
+            rows = conn.execute(sql, tuple(params)).fetchall()
+            return [
+                {
+                    "mention_id": int(r["mention_id"]),
+                    "article_id": int(r["article_id"]),
+                    "target_key": r["target_key"],
+                    "target_name": r["target_name"],
+                    "keyword_matched": r["keyword_matched"],
+                    "title": r["title"] or "",
+                    "url": r["url"] or "",
+                    "source_name": r["source_name"] or "",
+                    "published_at": r["published_at"] or "",
+                }
+                for r in rows
+            ]
+
+    def upsert_classification(
+        self,
+        mention_id: int,
+        article_sentiment: str | None,
+        target_sentiment: str | None,
+        centimetragem: float | None = None,
+        classified_by: str = "coworker",
+        ai_generated: bool = False,
+    ) -> int:
+        """Insert or replace a classification for one mention. Returns classification id."""
+        now = utc_now_iso()
+        with self.connect() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO classifications
+                    (mention_id, article_sentiment, target_sentiment,
+                     centimetragem, classified_by, classified_at, ai_generated)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(mention_id) DO UPDATE SET
+                    article_sentiment = excluded.article_sentiment,
+                    target_sentiment  = excluded.target_sentiment,
+                    centimetragem     = excluded.centimetragem,
+                    classified_by     = excluded.classified_by,
+                    classified_at     = excluded.classified_at,
+                    ai_generated      = excluded.ai_generated
+                """,
+                (
+                    int(mention_id),
+                    article_sentiment,
+                    target_sentiment,
+                    centimetragem,
+                    classified_by,
+                    now,
+                    1 if ai_generated else 0,
+                ),
+            )
+            if cur.lastrowid:
+                return int(cur.lastrowid)
+            row = conn.execute(
+                "SELECT id FROM classifications WHERE mention_id = ?", (int(mention_id),)
+            ).fetchone()
+            return int(row["id"])
+
+    def set_classification_categories(
+        self, classification_id: int, category_ids: list[int]
+    ) -> None:
+        """Replace the category set for a classification (delete + insert)."""
+        cid = int(classification_id)
+        with self.connect() as conn:
+            conn.execute(
+                "DELETE FROM classification_categories WHERE classification_id = ?", (cid,)
+            )
+            if category_ids:
+                conn.executemany(
+                    "INSERT OR IGNORE INTO classification_categories (classification_id, category_id) VALUES (?, ?)",
+                    [(cid, int(kid)) for kid in category_ids],
+                )
+
+    def get_or_create_category(
+        self, name: str, created_by: str = "coworker"
+    ) -> int:
+        """Return existing category id or insert a new one."""
+        name = name.strip()
+        with self.connect() as conn:
+            row = conn.execute(
+                "SELECT id FROM categories WHERE name = ?", (name,)
+            ).fetchone()
+            if row:
+                return int(row["id"])
+            cur = conn.execute(
+                "INSERT INTO categories (name, created_by, created_at) VALUES (?, ?, ?)",
+                (name, created_by, utc_now_iso()),
+            )
+            return int(cur.lastrowid)
+
+    def get_classifications_with_context(
+        self, target_key: str | None = None, limit: int = 100
+    ) -> list[dict]:
+        """Classifications joined to mentions, articles, and categories."""
+        where = ["1=1"]
+        params: list = []
+        if target_key:
+            where.append("m.target_key = ?")
+            params.append(target_key)
+        params.append(max(1, int(limit)))
+        sql = f"""
+            SELECT
+                c.id              AS classification_id,
+                c.mention_id,
+                c.article_sentiment,
+                c.target_sentiment,
+                c.centimetragem,
+                c.classified_by,
+                c.classified_at,
+                c.ai_generated,
+                m.target_key,
+                m.target_name,
+                m.article_id,
+                a.title,
+                a.url,
+                a.source_name,
+                COALESCE(a.published_at, a.discovered_at) AS published_at,
+                GROUP_CONCAT(cat.name, '|') AS category_names
+            FROM classifications c
+            JOIN mentions m ON m.id = c.mention_id
+            JOIN articles  a ON a.id = m.article_id
+            LEFT JOIN classification_categories cc  ON cc.classification_id = c.id
+            LEFT JOIN categories               cat ON cat.id = cc.category_id
+            WHERE {" AND ".join(where)}
+            GROUP BY c.id
+            ORDER BY COALESCE(a.published_at, a.discovered_at) DESC
+            LIMIT ?
+        """
+        with self.connect() as conn:
+            rows = conn.execute(sql, tuple(params)).fetchall()
+            return [
+                {
+                    "classification_id": int(r["classification_id"]),
+                    "mention_id": int(r["mention_id"]),
+                    "article_id": int(r["article_id"]),
+                    "article_sentiment": r["article_sentiment"],
+                    "target_sentiment": r["target_sentiment"],
+                    "centimetragem": r["centimetragem"],
+                    "classified_by": r["classified_by"],
+                    "classified_at": r["classified_at"],
+                    "ai_generated": bool(int(r["ai_generated"] or 0)),
+                    "target_key": r["target_key"],
+                    "target_name": r["target_name"],
+                    "title": r["title"] or "",
+                    "url": r["url"] or "",
+                    "source_name": r["source_name"] or "",
+                    "published_at": r["published_at"] or "",
+                    "categories": [v for v in str(r["category_names"] or "").split("|") if v],
                 }
                 for r in rows
             ]

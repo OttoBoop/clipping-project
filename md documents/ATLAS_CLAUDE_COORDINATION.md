@@ -115,3 +115,35 @@ Open for Otavio:
 - Push permission, or local push of the pending commits.
 - Branch model decision.
 - (Deferred) Whether to pick a Claude Code orchestrator name.
+
+### 2026-04-29 — Iris (name registration + classification design)
+
+Iris (Claude Code orchestrator) oriented. Name registered in
+`ORCHESTRATORS_FRAMEWORK_FOR_THE_CLIPPING_PROJECT.md`. Atlas is on Render
+static deployment. Iris is taking the human classification feature end-to-end.
+
+Design decisions confirmed with Otávio today:
+
+- **Dual sentiment per mention**: two fields — `article_sentiment` (is the
+  news itself positive/negative?) and `target_sentiment` (is the target
+  portrayed positively/negatively for what they did?). Example: "Angelito
+  helped save someone in a house fire" → article negative, target positive.
+- **Categories**: extensible coworker-defined taxonomy, multiple per article,
+  AI-compatible framework for future use. Three new tables added to schema:
+  `categories`, `classifications`, `classification_categories`.
+- **Centimetragem**: placeholder `REAL` field added; full semantics deferred
+  to research agent. Recorded in long-term goals doc.
+- **UI**: minimal — classification dropdowns added to existing article cards
+  in the current dashboard. No separate screen.
+
+Code changes in this commit:
+- `pipeline/database.py`: 3 new tables in `SCHEMA_SQL` + 5 helper functions
+  (`get_unclassified_mentions`, `upsert_classification`,
+  `set_classification_categories`, `get_or_create_category`,
+  `get_classifications_with_context`).
+- `docs/LONG_TERM_GOALS_FOR_THE_CLIPPING_ONLINE_PROJECT.md`: created with
+  centimetragem and auto-update-spreadsheet as the first two roadmap items.
+- `ORCHESTRATORS_FRAMEWORK_FOR_THE_CLIPPING_PROJECT.md`: Iris section added.
+- This coordination doc: this entry.
+
+No existing tables or queries were touched. Changes are additive-only.
