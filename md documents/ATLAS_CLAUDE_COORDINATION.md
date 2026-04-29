@@ -147,3 +147,40 @@ Code changes in this commit:
 - This coordination doc: this entry.
 
 No existing tables or queries were touched. Changes are additive-only.
+
+### 2026-04-29 — Iris (Reviewer + Cartographer findings)
+
+**Iris-Reviewer (regression checks)** — all green:
+
+- `python run_ingestion.py --help` → no import errors.
+- `python tools/export_mobile_snapshot.py --help` → no import errors.
+- Copied production `data/clipping.db` (41 articles, 41 mentions) to a temp
+  file and ran `ClippingDB._init_schema` against it. The three new tables
+  were created in place; existing articles/mentions counts unchanged;
+  `classifications` count is 0 as expected. Schema upgrade is forward-safe
+  on a real DB, not just `:memory:`.
+
+**Iris-Cartographer (export-pipeline integration map)**:
+
+How classifications need to flow into the live dashboard:
+
+| Layer | Current state | What classification needs |
+|---|---|---|
+| DB read | `db.list_articles_for_export` returns articles+mentions joined; collapses sentiment to `sentiment_any` (MIN). Called from `tools/export_mobile_snapshot.py:353` and `server.py:264`. | Add a parallel `list_articles_for_export_with_classifications` (or extend existing) that LEFT JOINs the new `classifications` and `classification_categories` tables and emits `article_sentiment`, `target_sentiment`, `centimetragem`, and `categories[]` per mention. |
+| Story payload | `db.story_with_articles` is called from `tools/export_mobile_snapshot.py:2293` and emits `articles[]` with a single `sentiment` per article. | Same — emit per-mention dual sentiment + categories. The story-card UI groups by article, so we need to decide whether to display per-article (collapse) or per-mention (one row per target). Recommendation: per-mention, since multi-target articles is exactly the case Otávio called out. |
+| Static export | `assets/clipping-data.json` is generated and embedded in the snapshot HTML. `assets/clipping.js` consumes it. | `clipping.js` does **not** currently read any `sentiment` field (grep confirms zero references). The dropdown UI is greenfield JS work — no backwards-compat risk. |
+| Live editing | The current site is a static Render deployment of pre-rendered HTML. There is no live API for the dashboard to POST a classification. | Iris-Builder needs a small write API — likely a Flask/FastAPI route on a new lightweight server, or a separate Render web service. **This is the framework decision** still pending from Atlas. |
+
+**Implications for the next phase**:
+
+1. Read-side (`list_articles_for_export` + `story_with_articles`) extension is
+   straightforward — additive joins. Iris can do it once Atlas confirms
+   whether to extend in place or add a parallel method.
+2. The dropdown UI in `clipping.js` is a one-pass front-end task with no
+   regression risk on existing fields.
+3. The write API is the real architecture question. Until the Render
+   deployment model is fixed (static-only vs. static+web-service), the
+   classification feature can build its read path and UI but can only
+   persist locally — not to the live site.
+
+Commit hash: `9a279f3` (schema + helpers landed, pushed to origin).
