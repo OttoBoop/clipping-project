@@ -68,6 +68,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Desloca IDs de historias/artigos vindos do banco atual para evitar colisao com o HTML mesclado.",
     )
+    parser.add_argument(
+        "--api-url",
+        default="",
+        help="URL base do api_server.py (ex.: http://localhost:8765). Quando vazio, o editor de classificacao fica oculto.",
+    )
     args = parser.parse_args()
     if not args.all_stories and (not args.date_from or not args.date_to):
         parser.error("use --all-stories ou informe --date-from e --date-to")
@@ -350,8 +355,8 @@ def story_sort_key(story: dict[str, Any]) -> tuple[float, float]:
 
 def load_scope_articles(db: ClippingDB, args: argparse.Namespace) -> list[dict[str, Any]]:
     if args.all_stories:
-        return db.list_articles_for_export(limit=EXPORT_LIMIT)
-    return db.list_articles_for_export(
+        return db.list_articles_for_export_with_classifications(limit=EXPORT_LIMIT)
+    return db.list_articles_for_export_with_classifications(
         limit=EXPORT_LIMIT,
         date_from=args.date_from,
         date_to=f"{args.date_to}T23:59:59",
@@ -1741,6 +1746,7 @@ def serialize_article_payload(article: dict[str, Any], fallback_targets: list[st
             "summaryPreview": preview,
             "rawTextKey": raw_text_key or None,
             "summarySource": "ai" if label == "Resumo IA" else "raw",
+            "classifications": article.get("classifications") or [],
         },
         raw_texts,
     )
@@ -2181,6 +2187,7 @@ def build_pages_shell_html(
     js_url: str,
     data_url: str,
     raw_url: str,
+    api_url: str = "",
 ) -> str:
     meta = dataset["meta"]
     return f"""<!doctype html>
@@ -2197,6 +2204,7 @@ def build_pages_shell_html(
     id="app"
     data-clipping-data-url="{html.escape(data_url)}"
     data-clipping-raw-url="{html.escape(raw_url)}"
+    data-clipping-api-url="{html.escape(api_url)}"
   >
     <header class="hero">
       <div class="hero-lockup">
@@ -2389,6 +2397,7 @@ def build_snapshot_artifact(args: argparse.Namespace) -> dict[str, Any]:
         js_url=relative_url(output_path, asset_paths["js"]),
         data_url=relative_url(output_path, asset_paths["data"]),
         raw_url=relative_url(output_path, asset_paths["raw"]),
+        api_url=str(getattr(args, "api_url", "") or ""),
     )
 
     return {
