@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 from pipeline.database import ClippingDB, utc_now_iso
 from pipeline.normalization import canonicalize_url, normalize_text
 
-from .config import ROOT
+from .config import ROOT, db_path as configured_db_path
 
 
 TARGETS_PATH = ROOT / "data" / "targets.json"
@@ -33,6 +33,14 @@ def connect(db_file: Path) -> sqlite3.Connection:
     conn.execute("PRAGMA busy_timeout = 5000")
     conn.execute("PRAGMA journal_mode = WAL")
     return conn
+
+
+def validate_configured_db_file(db_file: Path) -> Path:
+    resolved = Path(db_file).expanduser().resolve()
+    expected = configured_db_path().expanduser().resolve()
+    if resolved != expected:
+        raise ValidationError("Banco SQLite nao permitido.")
+    return resolved
 
 
 def ensure_app_tables(db_file: Path) -> None:
@@ -76,6 +84,19 @@ def ensure_app_tables(db_file: Path) -> None:
                 FOREIGN KEY(article_id) REFERENCES articles(id),
                 FOREIGN KEY(story_id) REFERENCES stories(id)
             );
+
+            CREATE INDEX IF NOT EXISTS idx_jobs_active
+                ON jobs(status, started_at)
+                WHERE status IN ('queued', 'running', 'exporting');
+
+            CREATE INDEX IF NOT EXISTS idx_job_events_job_id
+                ON job_events(job_id, id);
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_manual_entries_article
+                ON manual_entries(article_id);
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_manual_entries_story
+                ON manual_entries(story_id);
             """
         )
 
@@ -90,6 +111,8 @@ def target_labels() -> dict[str, str]:
 
 
 def validate_target_keys(values: list[str]) -> list[str]:
+    if not isinstance(values, list):
+        raise ValidationError("Escolha pelo menos um nome acompanhado.")
     available = target_labels()
     cleaned: list[str] = []
     for value in values:
@@ -113,6 +136,7 @@ def validate_url(value: str) -> str:
 
 
 def insert_manual_story(db_file: Path, payload: dict[str, Any], *, created_by: str) -> dict[str, Any]:
+    db_file = validate_configured_db_file(db_file)
     ensure_app_tables(db_file)
     url = validate_url(str(payload.get("url") or ""))
     title = normalize_text(payload.get("title") or "")
@@ -231,4 +255,3 @@ def latest_jobs(db_file: Path, limit: int = 8) -> list[dict[str, Any]]:
             (int(limit),),
         ).fetchall()
     return [dict(row) for row in rows]
-

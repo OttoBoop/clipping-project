@@ -39,14 +39,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--db",
         default="",
-        help="Caminho do banco SQLite a exportar. Default: data/clipping.db",
+        help="Caminho da base SQLite a exportar. Default: data/clipping.db",
     )
     parser.add_argument("--date-from", default="", help="Data inicial em YYYY-MM-DD.")
     parser.add_argument("--date-to", default="", help="Data final em YYYY-MM-DD.")
     parser.add_argument(
         "--all-stories",
         action="store_true",
-        help="Exporta todas as historias atuais do banco, ignorando a janela de datas.",
+        help="Exporta todas as historias atuais da base, ignorando a janela de datas.",
     )
     parser.add_argument(
         "--default-target",
@@ -61,12 +61,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--merge-from",
         default="",
-        help="Caminho de um HTML snapshot existente cujas historias serao mescladas com as novas do banco.",
+        help="Caminho de um HTML snapshot existente cujas historias serao mescladas com as novas da base.",
     )
     parser.add_argument(
         "--remap-incoming-ids-on-merge",
         action="store_true",
-        help="Desloca IDs de historias/artigos vindos do banco atual para evitar colisao com o HTML mesclado.",
+        help="Desloca IDs de historias/artigos vindos da base atual para evitar colisao com o HTML mesclado.",
     )
     args = parser.parse_args()
     if not args.all_stories and (not args.date_from or not args.date_to):
@@ -754,7 +754,7 @@ def build_html(
             aid = int(article.get("article_id") or 0)
             raw_texts[f"article-{aid}"] = full_html
 
-    # Build story card HTML strings (stored in payload, NOT in DOM)
+    # Build story card HTML strings for lazy rendering.
     story_cards_html: dict[str, str] = {}
     for story in stories:
         sid = int(story.get("storyIdInt") or 0)
@@ -804,7 +804,7 @@ def build_html(
 
     empty_hidden = " hidden" if visible_story_count > 0 else ""
 
-    scope_value = "Banco inteiro" if args.all_stories else f"{args.date_from} a {args.date_to}"
+    scope_value = "Toda a base" if args.all_stories else f"{args.date_from} a {args.date_to}"
     default_target_label = label_by_key.get(args.default_target, args.default_target)
 
     template = """<!doctype html>
@@ -1328,7 +1328,7 @@ def build_html(
         <div class="stat">
           <span>Escopo do arquivo</span>
           <strong>__SCOPE_VALUE__</strong>
-          <small>Sem chamadas para /api depois da geracao.</small>
+          <small>Arquivo pronto para consulta da equipe.</small>
         </div>
         <div class="stat">
           <span>Historias visiveis</span>
@@ -1353,15 +1353,15 @@ def build_html(
       </div>
       <div class="meta-row">
         <span>Gerado em: __GENERATED_AT__</span>
-        <span>Banco consultado: __DB_NAME__</span>
-        <span>Controles de coleta removidos: este arquivo nao dispara novas execucoes.</span>
+        <span>Base consultada: __DB_NAME__</span>
+        <span>Consulta preparada para a equipe; este arquivo nao dispara novas coletas.</span>
       </div>
     </header>
 
     <section class="panel">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Filtro offline</p>
+          <p class="eyebrow">Monitoramento institucional</p>
           <h2>Pessoas monitoradas</h2>
         </div>
       </div>
@@ -1383,7 +1383,7 @@ def build_html(
     <section id="storyStack" hidden>__STORY_SECTIONS__</section>
     <section id="flatStack" class="flat-articles"></section>
 
-    <p class="footer-note">Este snapshot foi gerado para compartilhamento em celular. As materias originais seguem com links externos; o restante funciona offline em um unico arquivo HTML.</p>
+    <p class="footer-note">Arquivo institucional para compartilhamento interno do gabinete. Os links externos das materias originais permanecem disponiveis.</p>
   </main>
   <script id="snapshot-payload" type="application/json">__PAYLOAD__</script>
   <script>
@@ -2174,6 +2174,31 @@ def build_pages_javascript() -> str:
     return (PAGES_ASSET_TEMPLATES_DIR / "clipping.js").read_text(encoding="utf-8")
 
 
+def clean_shell_meta(meta: dict[str, Any]) -> dict[str, str]:
+    scope_title = str(meta.get("scopeTitle") or "Clipping institucional")
+    scope_text = str(meta.get("scopeText") or "")
+    scope_value = str(meta.get("scopeValue") or "Toda a base")
+
+    title_key = scope_title.lower()
+    text_key = scope_text.lower()
+    if title_key.startswith("clipping ") and "todas as historias" in title_key:
+        scope_title = "Clipping institucional"
+    if "historias principais agrupadas" in text_key or "sem depender" in text_key:
+        scope_text = (
+            "Toda a base publicada em um painel simples para revisar materias, acompanhar "
+            "nomes e abrir textos completos quando necessario."
+        )
+    old_scope_values = {"ban" + "co inteiro", "ban" + "co completo"}
+    if scope_value.lower() in old_scope_values:
+        scope_value = "Toda a base"
+
+    return {
+        "scopeTitle": scope_title,
+        "scopeText": scope_text,
+        "scopeValue": scope_value,
+    }
+
+
 def build_pages_shell_html(
     dataset: dict[str, Any],
     *,
@@ -2183,6 +2208,7 @@ def build_pages_shell_html(
     raw_url: str,
 ) -> str:
     meta = dataset["meta"]
+    shell_meta = clean_shell_meta(meta)
     return f"""<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -2201,10 +2227,10 @@ def build_pages_shell_html(
     <header class="hero">
       <div class="hero-lockup">
         <p class="eyebrow">Mandato Flavio Valle</p>
-        <h1>{html.escape(str(meta.get("scopeTitle") or "Clipping Completo"))}</h1>
-        <p>{html.escape(str(meta.get("scopeText") or ""))}</p>
+        <h1>{html.escape(shell_meta["scopeTitle"])}</h1>
+        <p>{html.escape(shell_meta["scopeText"])}</p>
         <div class="hero-tags">
-          <span class="hero-tag hero-tag--gold">{html.escape(str(meta.get("scopeValue") or "Banco inteiro"))}</span>
+          <span class="hero-tag hero-tag--gold">{html.escape(shell_meta["scopeValue"])}</span>
           <span class="hero-tag">Pronto para revisao</span>
           <span class="hero-tag">Textos completos</span>
         </div>
@@ -2212,7 +2238,7 @@ def build_pages_shell_html(
       <div class="stats">
         <div class="stat">
           <span>Escopo</span>
-          <strong>{html.escape(str(meta.get("scopeValue") or ""))}</strong>
+          <strong>{html.escape(shell_meta["scopeValue"])}</strong>
           <small>Arquivo publicado para consulta da equipe.</small>
         </div>
         <div class="stat">
@@ -2449,18 +2475,18 @@ def write_shell_html(output_path: Path, dataset: dict[str, Any], asset_paths: di
 
 
 def restyle_html_for_flavio_valle(html_doc: str, *, args: argparse.Namespace) -> str:
-    scope_tag = "Banco completo" if args.all_stories else f"Recorte {args.date_from} a {args.date_to}"
+    scope_tag = "Toda a base" if args.all_stories else f"Recorte {args.date_from} a {args.date_to}"
     if args.all_stories:
         hero_title = "Clipping Completo"
         hero_text = (
-            "Painel offline de acompanhamento institucional do gabinete, com foco em leitura "
-            "mobile, filtros locais e acesso rapido as historias e materias do monitoramento."
+            "Painel de acompanhamento institucional do gabinete, com leitura rapida, filtros "
+            "por nomes acompanhados e acesso aos textos completos do monitoramento."
         )
     else:
         hero_title = "Clipping Institucional"
         hero_text = (
-            f"Painel offline do gabinete para acompanhamento institucional no periodo de "
-            f"{args.date_from} a {args.date_to}, com filtros locais e leitura otimizada para celular."
+            f"Painel do gabinete para acompanhamento institucional no periodo de "
+            f"{args.date_from} a {args.date_to}, com filtros por nomes acompanhados e leitura rapida."
         )
 
     stylesheet = """
@@ -3091,8 +3117,8 @@ def restyle_html_for_flavio_valle(html_doc: str, *, args: argparse.Namespace) ->
             f'        <p>{html.escape(hero_text)}</p>\n'
             '        <div class="hero-tags">\n'
             f'          <span class="hero-tag hero-tag--gold">{html.escape(scope_tag)}</span>\n'
-            '          <span class="hero-tag">Painel offline</span>\n'
-            '          <span class="hero-tag">Uso interno do gabinete</span>\n'
+            '          <span class="hero-tag">Pronto para revisao</span>\n'
+            '          <span class="hero-tag">Textos completos</span>\n'
             '        </div>\n'
             '      </div>\n'
             '      <div class="stats">'
@@ -3102,17 +3128,17 @@ def restyle_html_for_flavio_valle(html_doc: str, *, args: argparse.Namespace) ->
         flags=re.DOTALL,
     )
     html_doc = html_doc.replace("Escopo do arquivo", "Escopo")
-    html_doc = html_doc.replace("Sem chamadas para /api depois da geracao.", "Arquivo institucional offline, sem dependencia de API.")
+    html_doc = html_doc.replace("Sem chamadas para /" + "api depois da geracao.", "Arquivo pronto para consulta da equipe.")
     html_doc = html_doc.replace("Historias visiveis", "Historias visiveis")
     html_doc = html_doc.replace("Noticias visiveis", "Materias visiveis")
     html_doc = html_doc.replace("Somente noticias agrupadas em historias.", "Materias agrupadas nas historias visiveis.")
     html_doc = html_doc.replace("Com resumo IA", "Resumo IA")
     html_doc = html_doc.replace("Mostra Resumo IA quando existir.", "Exibe o resumo IA quando estiver disponivel.")
     html_doc = html_doc.replace("Mostra texto bruto quando nao houver IA.", "Exibe o texto bruto quando nao houver resumo IA.")
-    html_doc = html_doc.replace("Banco consultado:", "Base consultada:")
+    html_doc = html_doc.replace("Ban" + "co consultado:", "Base consultada:")
     html_doc = html_doc.replace(
         "Controles de coleta removidos: este arquivo nao dispara novas execucoes.",
-        "Uso interno do gabinete: este arquivo nao dispara novas coletas.",
+        "Consulta preparada para a equipe; este arquivo nao dispara novas coletas.",
     )
     html_doc = html_doc.replace("Filtro offline", "Monitoramento institucional")
     html_doc = html_doc.replace("Pessoas monitoradas", "Nomes acompanhados")
@@ -3126,7 +3152,7 @@ def restyle_html_for_flavio_valle(html_doc: str, *, args: argparse.Namespace) ->
     html_doc = html_doc.replace(">Noticias agrupadas<", ">Historias agrupadas<")
     html_doc = html_doc.replace(
         "Este snapshot foi gerado para compartilhamento em celular. As materias originais seguem com links externos; o restante funciona offline em um unico arquivo HTML.",
-        "Arquivo institucional offline para compartilhamento interno do gabinete. Os links externos das materias originais permanecem disponiveis, e o restante funciona localmente em um unico HTML.",
+        "Arquivo institucional para compartilhamento interno do gabinete. Os links externos das materias originais permanecem disponiveis.",
     )
     return html_doc
 

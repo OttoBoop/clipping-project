@@ -12,7 +12,7 @@ from typing import Any
 from pipeline.ingest import IngestionOptions, run_ingestion
 
 from .config import ROOT, db_path
-from .db_admin import connect, ensure_app_tables, validate_target_keys
+from .db_admin import connect, ensure_app_tables, validate_configured_db_file, validate_target_keys
 from .storage_bridge import ArtifactStore, artifact_store
 
 
@@ -26,6 +26,29 @@ SAFE_COLLECTORS = {
     "vejario_archive",
     "camara_archive",
 }
+
+ACTIVE_JOB_STATUSES = ("queued", "running", "exporting")
+DEFAULT_COLLECTOR = "all"
+EXPORT_TIMEOUT_SECONDS = 300
+
+PRESETS: dict[str, dict[str, Any]] = {
+    "rapido": {
+        "target_keys": ["flavio_valle"],
+        "days": 1,
+        "max_candidates": 250,
+        "max_process_seconds": 300,
+    },
+    "completo": {
+        "target_keys": ["flavio_valle", "pedro_angelito", "bernardo_rubiao"],
+        "days": 7,
+        "max_candidates": 900,
+        "max_process_seconds": 900,
+    },
+}
+
+CUSTOM_MAX_DAYS = 7
+CUSTOM_MAX_CANDIDATES = 600
+CUSTOM_MAX_PROCESS_SECONDS = 600
 
 
 class JobConflict(RuntimeError):
@@ -42,6 +65,10 @@ class JobManager:
         active = self._active_job_id
         if active:
             return get_job(active) or {"id": active, "status": "running"}
+        active_job = get_active_job()
+        if active_job:
+            self._active_job_id = str(active_job["id"])
+            return active_job
         rows = recent_jobs(1)
         return rows[0] if rows else {"status": "idle"}
 
@@ -64,7 +91,7 @@ class JobManager:
         if not self.store.writes_available:
             raise RuntimeError("persistent_storage_not_configured")
         with self._lock:
-            if self._active_job_id:
+            if self._active_job_id or get_active_job():
                 raise JobConflict("job_already_running")
             job_id = uuid.uuid4().hex[:12]
             ensure_app_tables(db_path())
@@ -138,30 +165,31 @@ class JobManager:
 def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
     preset = str(payload.get("preset") or "rapido").strip()
     today = date.today()
-    if preset == "rapido":
-        target_keys = ["flavio_valle"]
-        date_from = (today - timedelta(days=1)).isoformat()
+    max_candidates = CUSTOM_MAX_CANDIDATES
+    max_process_seconds = CUSTOM_MAX_PROCESS_SECONDS
+
+    if preset in PRESETS:
+        preset_spec = PRESETS[preset]
+        target_keys = validate_target_keys(list(preset_spec["target_keys"]))
+        date_from = (today - timedelta(days=int(preset_spec["days"]))).isoformat()
         date_to = today.isoformat()
-    elif preset == "completo":
-        target_keys = ["flavio_valle", "pedro_angelito", "bernardo_rubiao"]
-        date_from = (today - timedelta(days=7)).isoformat()
-        date_to = today.isoformat()
+        max_candidates = int(preset_spec["max_candidates"])
+        max_process_seconds = int(preset_spec["max_process_seconds"])
     elif preset == "custom":
-        target_keys = validate_target_keys(payload.get("target_keys") or payload.get("targetKeys") or [])
+        target_keys = validate_target_keys(payload_list(payload, "target_keys", "targetKeys"))
         date_from = validate_date(str(payload.get("date_from") or payload.get("dateFrom") or ""))
         date_to = validate_date(str(payload.get("date_to") or payload.get("dateTo") or ""))
     else:
         raise ValueError("preset_invalido")
 
-    collector = str(payload.get("collector") or "all").strip()
+    collector = str(payload.get("collector") or DEFAULT_COLLECTOR).strip().lower()
     if collector == "fast":
         collector = "google_news"
     if collector not in SAFE_COLLECTORS:
         raise ValueError("coletor_invalido")
     if date_from > date_to:
         raise ValueError("periodo_invalido")
-    max_days = int(payload.get("max_days") or 30)
-    if (date.fromisoformat(date_to) - date.fromisoformat(date_from)).days > max_days:
+    if (date.fromisoformat(date_to) - date.fromisoformat(date_from)).days > CUSTOM_MAX_DAYS:
         raise ValueError("periodo_muito_longo")
 
     return {
@@ -171,19 +199,31 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
         "date_from": date_from,
         "date_to": date_to,
         "export": bool(payload.get("export", True)),
-        "max_candidates": min(max(int(payload.get("max_candidates") or 600), 25), 3000),
-        "max_process_seconds": min(max(int(payload.get("max_process_seconds") or 600), 60), 1800),
+        "max_candidates": max_candidates,
+        "max_process_seconds": max_process_seconds,
+        "skip_direct_scrape": True,
     }
 
 
 def validate_date(raw: str) -> str:
     try:
-        return date.fromisoformat(raw).isoformat()
+        value = date.fromisoformat(raw)
     except Exception as exc:
         raise ValueError("data_invalida") from exc
+    if value > date.today():
+        raise ValueError("data_futura")
+    return value.isoformat()
+
+
+def payload_list(payload: dict[str, Any], snake_key: str, camel_key: str) -> list[str]:
+    value = payload.get(snake_key)
+    if value is None:
+        value = payload.get(camel_key)
+    return value if isinstance(value, list) else []
 
 
 def run_export_snapshot(job_id: str | None = None) -> None:
+    export_db_path = validate_configured_db_file(db_path())
     cmd = [
         sys.executable,
         "tools/export_mobile_snapshot.py",
@@ -191,9 +231,9 @@ def run_export_snapshot(job_id: str | None = None) -> None:
         "--merge-from",
         "index.html",
         "--db",
-        str(db_path()),
+        str(export_db_path),
     ]
-    completed = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=300, check=False)
+    completed = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=EXPORT_TIMEOUT_SECONDS, check=False)
     if completed.returncode != 0:
         raise RuntimeError("export_failed")
     if job_id:
@@ -202,6 +242,13 @@ def run_export_snapshot(job_id: str | None = None) -> None:
 
 def create_job(job_id: str, kind: str, spec: dict[str, Any], *, started_by: str) -> None:
     with connect(db_path()) as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        active = conn.execute(
+            f"SELECT id FROM jobs WHERE status IN ({','.join('?' for _ in ACTIVE_JOB_STATUSES)}) LIMIT 1",
+            ACTIVE_JOB_STATUSES,
+        ).fetchone()
+        if active:
+            raise JobConflict("job_already_running")
         conn.execute(
             """
             INSERT INTO jobs (
@@ -277,6 +324,21 @@ def get_job(job_id: str) -> dict[str, Any] | None:
     return data
 
 
+def get_active_job() -> dict[str, Any] | None:
+    ensure_app_tables(db_path())
+    with connect(db_path()) as conn:
+        row = conn.execute(
+            f"""
+            SELECT * FROM jobs
+            WHERE status IN ({','.join('?' for _ in ACTIVE_JOB_STATUSES)})
+            ORDER BY started_at ASC
+            LIMIT 1
+            """,
+            ACTIVE_JOB_STATUSES,
+        ).fetchone()
+    return dict(row) if row else None
+
+
 def recent_jobs(limit: int = 8) -> list[dict[str, Any]]:
     ensure_app_tables(db_path())
     with connect(db_path()) as conn:
@@ -319,4 +381,3 @@ def sanitize_error(exc: Exception) -> str:
 
 
 job_manager = JobManager(artifact_store)
-

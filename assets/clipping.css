@@ -243,6 +243,7 @@ main {
   font-size: clamp(26px, 4vw, 34px);
   line-height: 1.05;
   color: #ffffff;
+  overflow-wrap: anywhere;
 }
 
 .stat small {
