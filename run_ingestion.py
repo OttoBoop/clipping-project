@@ -86,6 +86,7 @@ Examples:
     parser.add_argument("--date-from", default="", help="Start date YYYY-MM-DD (default: 7 days ago)")
     parser.add_argument("--date-to", default="", help="End date YYYY-MM-DD (default: today)")
     parser.add_argument("--request-timeout", type=int, default=15, help="HTTP timeout in seconds")
+    parser.add_argument("--db", default="", help="SQLite database path (default: data/clipping.db)")
     parser.add_argument("--skip-direct-scrape", action="store_true", default=True,
                         help="Skip direct_scrape collector (default: True)")
     parser.add_argument("--max-candidates", type=int, default=90000,
@@ -110,6 +111,7 @@ Examples:
         skip_direct_scrape=args.skip_direct_scrape,
         max_candidates_per_source=args.max_candidates,
         max_process_seconds=args.max_process_seconds,
+        db_path=args.db,
     )
 
     run_ingestion(args.collector, options, progress_callback=_progress_callback)

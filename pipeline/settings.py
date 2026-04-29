@@ -307,6 +307,18 @@ def _ordered_unique(values: list[str]) -> list[str]:
         ordered.append(item)
     return ordered
 
+def _target_query_variants(target: Target, *, limit: int = 4) -> list[str]:
+    display_name = str(target.display_name or "").strip()
+    keywords = [
+        str(keyword or "").strip()
+        for keyword in list(target.keywords or [])
+        if str(keyword or "").strip()
+    ]
+    variants = _ordered_unique([display_name, *keywords])
+    if limit > 0:
+        return variants[:limit]
+    return variants
+
 def build_google_queries_for_target(target: Target) -> list[str]:
     display_name = str(target.display_name or "").strip()
     if not display_name:
@@ -327,7 +339,7 @@ def build_google_queries_for_target(target: Target) -> list[str]:
                 ]
             )
         return _ordered_unique([*base_queries, *host_queries])
-    return [f'"{display_name}"']
+    return [f'"{variant}"' for variant in _target_query_variants(target, limit=4)]
 
 def build_direct_scrape_queries_for_target(target: Target) -> list[str]:
     if target.key == "flavio_valle":
@@ -341,7 +353,21 @@ def build_wordpress_queries_for_target(target: Target) -> list[str]:
         return []
     if target.key == "flavio_valle":
         return ["Flavio Valle", "Flávio Valle"]
-    return [display_name]
+    return _target_query_variants(target, limit=4)
+
+def build_internal_search_queries_for_target(target: Target) -> list[str]:
+    display_name = str(target.display_name or "").strip()
+    if not display_name:
+        return []
+    if target.key == "flavio_valle":
+        return list(FLAVIO_INTERNAL_SEARCH_QUERIES)
+    return _target_query_variants(target, limit=4)
+
+def build_internal_search_queries(targets: list[Target]) -> list[str]:
+    queries: list[str] = []
+    for target in targets:
+        queries.extend(build_internal_search_queries_for_target(target))
+    return _ordered_unique(queries)
 
 def build_wordpress_queries_for_site(target: Target, site: dict) -> list[str]:
     """Per-site WordPress query list; falls back to target-level queries."""

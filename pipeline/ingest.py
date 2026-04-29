@@ -41,13 +41,13 @@ from .settings import (
     BACKFILL_START_DATE,
     CAMARA_ARCHIVE_TARGET,
     DB_PATH,
-    FLAVIO_INTERNAL_SEARCH_QUERIES,
     FLAVIO_INTERNAL_SEARCH_TARGETS,
     SITEMAP_DAILY_SOURCES,
     VEJARIO_ARCHIVE_TARGETS,
     WORDPRESS_API_SITES,
     build_direct_scrape_queries_for_target,
     build_google_queries_for_target,
+    build_internal_search_queries,
     build_wordpress_queries_for_target,
     get_active_targets,
 )
@@ -107,6 +107,7 @@ class IngestionOptions:
     forced_terms: list[str] | None = None
     forced_terms_mode: str = "any"
     target_keys: list[str] | None = None
+    db_path: str = ""
 
 
 ProgressCallback = Callable[[str, dict], None]
@@ -378,7 +379,7 @@ def process_candidates(
     progress_callback: ProgressCallback | None = None,
 ) -> IngestionResult:
     options = options or IngestionOptions()
-    db = ClippingDB(DB_PATH)
+    db = ClippingDB(options.db_path or DB_PATH)
     targets = select_targets(get_active_targets(), options.target_keys)
     if not targets:
         return IngestionResult(
@@ -978,15 +979,14 @@ def run_ingestion(
 
     # [RECONSTRUCTED] Internal site search section from patch at offset 5311452
     if collector in {"all", "internal_site_search", "internal_search"} and not options.custom_query.strip():
-        target_keys = {str(target.key) for target in targets}
-        if "flavio_valle" in target_keys:
+        if targets:
             planned_urls = {candidate.url for _, _, batch in plans for candidate in batch if candidate.url}
             per_internal_adapter_limit = max(
                 6,
                 min(200, max_candidates // max(1, len(FLAVIO_INTERNAL_SEARCH_TARGETS))),
             )
             internal_candidates = collect_internal_site_search(
-                queries=FLAVIO_INTERNAL_SEARCH_QUERIES,
+                queries=build_internal_search_queries(targets),
                 date_from=options.date_from,
                 date_to=options.date_to,
                 limit_per_adapter=per_internal_adapter_limit,
@@ -1013,7 +1013,11 @@ def run_ingestion(
 
     # Sitemap daily collectors (Globo family, CBN, Veja Rio)
     if collector in {"all", "sitemap_daily"}:
-        sitemap_queries = [options.custom_query.strip()] if options.custom_query.strip() else list(FLAVIO_INTERNAL_SEARCH_QUERIES)
+        sitemap_queries = (
+            [options.custom_query.strip()]
+            if options.custom_query.strip()
+            else build_internal_search_queries(targets)
+        )
         planned_urls = {candidate.url for _, _, batch in plans for candidate in batch if candidate.url}
         sitemap_candidates = collect_sitemap_daily(
             queries=sitemap_queries,
@@ -1077,7 +1081,7 @@ def run_ingestion(
         # [RECONSTRUCTED] source_options from patch at offset 5312705
         source_options = options
         if source_type == "internal_search":
-            source_options = replace(options, target_keys=["flavio_valle"], archive_full_text=True)
+            source_options = replace(options, archive_full_text=True)
         # [END RECONSTRUCTED]
         results.append(
             process_candidates(
