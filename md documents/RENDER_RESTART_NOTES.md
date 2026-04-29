@@ -27,6 +27,11 @@ hooks, database URLs, token previews, or screenshots that reveal credentials.
   `pip install -r requirements.txt`.
 - The intended short-term Render start command is now:
   `python serve_static.py`.
+- The Render service start command was updated via the Render API on
+  2026-04-29.
+- Deploy `dep-d7p687rbc2fs73c11o00` for commit `9d72874` is live.
+- The live URL now serves the static dashboard:
+  `https://clipping-project.onrender.com/`.
 
 ## Render Inference
 
