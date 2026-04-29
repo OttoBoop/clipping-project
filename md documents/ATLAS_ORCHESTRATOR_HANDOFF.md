@@ -225,3 +225,41 @@ Atlas should ask once the shared checkpoint is accepted:
 This handoff does not implement the online website, database migration,
 classification UI, API routes, authentication, Render deployment, or AI-summary
 provider integration. It only establishes the shared Atlas starting map.
+
+## 2026-04-29 Atlas Integration Note
+
+This note is append-only so Iris, Claude Code, Codex, and future Atlas sessions
+can reconcile the handoff with the work completed later on 2026-04-29.
+
+Current facts after the Render sprint:
+
+- `origin/master` is at `0c2794f feat: harden clipping admin workflow`.
+- The Render service `clipping-project` is live at
+  `https://clipping-project.onrender.com/`.
+- Render start command is now
+  `uvicorn web_app.app:app --host 0.0.0.0 --port $PORT`.
+- The repo now contains the FastAPI app under `web_app/`, plus admin auth,
+  job controls, manual story insertion, Supabase artifact bridge code, and
+  dashboard copy cleanup.
+- The public dashboard loads and `/healthz` responds live.
+- Admin write workflows are intentionally not enabled until Render secrets are
+  configured: `CLIPPING_ADMIN_PASSWORD`, `CLIPPING_SESSION_SECRET`,
+  `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, and `SUPABASE_BUCKET`.
+- Runtime writes fail closed unless Supabase storage is enabled or an explicit
+  local-write override is set for development.
+
+Atlas workflow integration from this handoff:
+
+- Before each new sprint or shared-doc edit, fetch, check status/divergence,
+  inspect recent shared Markdown changes, and treat stale handoff facts as
+  historical unless current git/Render evidence confirms them.
+- Keep user reports in the handoff shape: Facts, Inferences, Pending decisions,
+  Next safe action.
+- Atlas orchestrates; implementation belongs to named agents with explicit file
+  ownership, expected evidence, and no silent product decisions.
+- Reuse active agents when their lane still matches the work; create new agents
+  only for genuinely new lanes or missing ownership.
+- Commit and push after every meaningful checkpoint so Iris and Claude Code can
+  see the current state.
+- Do not test or mutate Prova-AI services while validating clipping-project.
+  Prova-AI is reference architecture only.
