@@ -661,14 +661,14 @@ def render_story_section(
 def scope_labels(args: argparse.Namespace) -> tuple[str, str, str]:
     if args.all_stories:
         return (
-            "Historico completo",
-            "Clipping offline com todas as historias",
-            "Arquivo HTML autossuficiente com todas as historias principais agrupadas no banco. A pagina abre filtrada em Flavio Valle e permite adicionar ou remover outros nomes sem depender da API local.",
+            "Base publicada",
+            "Clipping institucional",
+            "Toda a base publicada em um painel simples para revisar materias, acompanhar nomes e abrir textos completos quando necessario.",
         )
     return (
         f"Janela {args.date_from} a {args.date_to}",
-        "Clipping offline por periodo",
-        f"Arquivo HTML autossuficiente com as historias principais agrupadas entre {args.date_from} e {args.date_to}. A pagina abre filtrada em Flavio Valle e permite combinar outros nomes localmente.",
+        "Clipping institucional por periodo",
+        f"Materias publicadas entre {args.date_from} e {args.date_to}, com filtros por nome acompanhado e visualizacao por historias.",
     )
 
 
@@ -2119,7 +2119,7 @@ def build_story_dataset(
 ) -> dict[str, Any]:
     initial_stats = visibility_stats(stories, initial_targets)
     scope_kicker, scope_title, scope_text = scope_labels(args)
-    scope_value = "Banco inteiro" if args.all_stories else f"{args.date_from} a {args.date_to}"
+    scope_value = "Toda a base" if args.all_stories else f"{args.date_from} a {args.date_to}"
     default_target_label = target_label_map(target_rows).get(args.default_target, args.default_target)
 
     return {
@@ -2205,43 +2205,58 @@ def build_pages_shell_html(
         <p>{html.escape(str(meta.get("scopeText") or ""))}</p>
         <div class="hero-tags">
           <span class="hero-tag hero-tag--gold">{html.escape(str(meta.get("scopeValue") or "Banco inteiro"))}</span>
-          <span class="hero-tag">Painel Pages</span>
-          <span class="hero-tag">Renderizacao sob demanda</span>
+          <span class="hero-tag">Pronto para revisao</span>
+          <span class="hero-tag">Textos completos</span>
         </div>
       </div>
       <div class="stats">
         <div class="stat">
           <span>Escopo</span>
           <strong>{html.escape(str(meta.get("scopeValue") or ""))}</strong>
-          <small>Bundle estatico leve para GitHub Pages.</small>
+          <small>Arquivo publicado para consulta da equipe.</small>
         </div>
         <div class="stat">
-          <span>Historias visiveis</span>
+          <span>Historias no filtro</span>
           <strong id="visibleStoriesStat">{int(meta.get("initialStoryCount") or 0)} / {int(meta.get("totalStories") or 0)}</strong>
-          <small>Historias do dataset publicado.</small>
+          <small>Grupos de materias exibidos agora.</small>
         </div>
         <div class="stat">
-          <span>Noticias visiveis</span>
+          <span>Materias encontradas</span>
           <strong id="visibleArticlesStat">{int(meta.get("initialArticleCount") or 0)} / {int(meta.get("totalArticles") or 0)}</strong>
-          <small>Modo recente sem agrupamento.</small>
+          <small>Materias exibidas no filtro atual.</small>
         </div>
         <div class="stat">
-          <span>Resumo IA</span>
+          <span>Com resumo</span>
           <strong id="visibleAiStat">{int(meta.get("initialAiCount") or 0)} / {int(meta.get("totalAi") or 0)}</strong>
-          <small>Exibe Resumo IA quando existir.</small>
+          <small>Resumo editorial quando existir.</small>
         </div>
         <div class="stat">
-          <span>Texto bruto</span>
+          <span>Com texto completo</span>
           <strong id="visibleRawStat">{int(meta.get("initialRawCount") or 0)} / {int(meta.get("totalRaw") or 0)}</strong>
-          <small>Texto completo carregado sob demanda.</small>
+          <small>Materia completa disponivel para leitura.</small>
         </div>
       </div>
       <div class="meta-row">
-        <span>Gerado em: {html.escape(str(meta.get("generatedAt") or ""))}</span>
-        <span>Base consultada: {html.escape(str(meta.get("dbName") or ""))}</span>
-        <span>Renderizacao cliente-side para reduzir DOM inicial e uso de RAM.</span>
+        <span>Base atualizada em: {html.escape(str(meta.get("generatedAt") or ""))}</span>
+        <span>Fonte da base: clipping institucional</span>
+        <span>Painel preparado para consulta rapida da equipe.</span>
       </div>
     </header>
+
+    <section class="panel update-panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Atualizacao da base</p>
+          <h2>Ultima publicacao</h2>
+        </div>
+      </div>
+      <div class="update-grid">
+        <div><span>Historias</span><strong>{int(meta.get("totalStories") or 0)}</strong></div>
+        <div><span>Materias</span><strong>{int(meta.get("totalArticles") or 0)}</strong></div>
+        <div><span>Com texto completo</span><strong>{int(meta.get("totalRaw") or 0)}</strong></div>
+      </div>
+      <p class="filter-note">Este painel mostra a base mais recente publicada para a equipe. Noticias repetidas sao ignoradas durante a atualizacao.</p>
+    </section>
 
     <section class="panel">
       <div class="section-head">
@@ -2269,14 +2284,14 @@ def build_pages_shell_html(
       <div class="flat-spinner"></div>
       <div>
         <strong>Carregando dados do clipping...</strong>
-        <p>As historias e noticias serao renderizadas sob demanda para manter o bundle leve.</p>
+        <p>As historias e materias serao exibidas em instantes.</p>
       </div>
     </section>
 
     <section id="storyStack" hidden></section>
     <section id="flatStack" class="flat-articles" hidden></section>
 
-    <p class="footer-note">Arquivo institucional estatico para GitHub Pages. Historias e materias sao montadas no cliente a partir de JSON externo para reduzir memoria e acelerar o carregamento inicial.</p>
+    <p class="footer-note">Painel institucional publicado para consulta da equipe.</p>
   </main>
   <script src="{html.escape(js_url)}" defer></script>
 </body>

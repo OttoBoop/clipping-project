@@ -3,6 +3,8 @@ data/*.log
 data/backfill_*.txt
 data/tmp_*.db
 data/parallel_runs/
+data/backups/
 __pycache__/
 *.pyc
+.venv/
 .venv_playwright/

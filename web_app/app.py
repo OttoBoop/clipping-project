@@ -1,0 +1,360 @@
+from __future__ import annotations
+
+import json
+from contextlib import asynccontextmanager
+from html import escape
+from typing import Any
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
+
+from .auth import (
+    COOKIE_NAME,
+    auth_configured,
+    check_password,
+    csrf_token,
+    make_session,
+    require_admin,
+    require_csrf,
+    verify_session,
+)
+from .config import ASSETS_DIR, ROOT, db_path, local_writes_allowed
+from .db_admin import ValidationError, ensure_app_tables, insert_manual_story, latest_jobs, load_targets
+from .jobs import JobConflict, job_manager, run_export_snapshot
+from .storage_bridge import artifact_store
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    artifact_store.download_current_artifacts()
+    ensure_app_tables(db_path())
+    yield
+
+
+app = FastAPI(title="Clipping Project", docs_url=None, redoc_url=None, lifespan=lifespan)
+app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
+
+
+@app.get("/", response_class=HTMLResponse)
+def public_dashboard() -> Response:
+    index_path = ROOT / "index.html"
+    if index_path.is_file():
+        return FileResponse(index_path)
+    return HTMLResponse("<h1>Clipping institucional</h1><p>Painel ainda nao gerado.</p>", status_code=200)
+
+
+@app.get("/admin", response_class=HTMLResponse)
+def admin_page(request: Request) -> HTMLResponse:
+    session = verify_session(request.cookies.get(COOKIE_NAME))
+    if not session:
+        return HTMLResponse(login_html())
+    token = csrf_token(request.cookies.get(COOKIE_NAME))
+    return HTMLResponse(admin_html(token))
+
+
+@app.post("/api/login")
+async def login(request: Request) -> JSONResponse:
+    if not auth_configured():
+        raise HTTPException(status_code=503, detail="admin_auth_not_configured")
+    payload = await read_json(request)
+    if not check_password(str(payload.get("password") or "")):
+        raise HTTPException(status_code=401, detail="invalid_password")
+    session_token = make_session("admin")
+    response = JSONResponse({"ok": True})
+    response.set_cookie(
+        COOKIE_NAME,
+        session_token,
+        httponly=True,
+        samesite="lax",
+        secure=request.url.scheme == "https",
+        max_age=8 * 60 * 60,
+    )
+    return response
+
+
+@app.post("/api/logout")
+def logout(request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    response = JSONResponse({"ok": True})
+    response.delete_cookie(COOKIE_NAME)
+    return response
+
+
+@app.get("/healthz")
+def healthz() -> dict[str, Any]:
+    return {
+        "ok": True,
+        "dbExists": db_path().is_file(),
+        "authConfigured": auth_configured(),
+        "storage": artifact_store.status(),
+        "localWritesAllowed": local_writes_allowed(),
+        "job": job_manager.current_status().get("status", "idle"),
+    }
+
+
+@app.get("/api/update/status")
+def update_status(request: Request) -> dict[str, Any]:
+    require_admin(request)
+    return {"current": job_manager.current_status(), "recent": latest_jobs(db_path())}
+
+
+@app.post("/api/update/start")
+async def start_update(request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    payload = await read_json(request)
+    try:
+        job = job_manager.start_update(payload, started_by="admin")
+    except JobConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return JSONResponse(job)
+
+
+@app.post("/api/export")
+async def start_export(request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    try:
+        job = job_manager.start_export(started_by="admin")
+    except JobConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return JSONResponse(job)
+
+
+@app.post("/api/manual-story")
+async def manual_story(request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    if not artifact_store.writes_available:
+        raise HTTPException(status_code=503, detail="persistent_storage_not_configured")
+    payload = await read_json(request)
+    try:
+        artifact_store.backup_current_artifacts("manual-story")
+        result = insert_manual_story(db_path(), payload, created_by="admin")
+        if bool(payload.get("export", False)):
+            run_export_snapshot()
+        if artifact_store.enabled:
+            artifact_store.upload_current_artifacts(
+                manifest={"kind": "manual-story", "result": result},
+                job_id=f"manual-{result.get('articleId', 'duplicate')}",
+            )
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return JSONResponse(result)
+
+
+async def read_json(request: Request) -> dict[str, Any]:
+    try:
+        data = await request.json()
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        raw = (await request.body()).decode("utf-8")
+        return json.loads(raw) if raw.strip().startswith("{") else {}
+
+
+def login_html() -> str:
+    configured = auth_configured()
+    disabled = "" if configured else "disabled"
+    status = (
+        "Entre para atualizar o clipping."
+        if configured
+        else "Acesso administrativo ainda nao configurado no Render."
+    )
+    return f"""<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atualizar clipping</title>
+  <style>{ADMIN_CSS}</style>
+</head>
+<body class="admin-body">
+  <main class="admin-shell login-shell">
+    <section class="admin-card login-card">
+      <p class="eyebrow">Clipping institucional</p>
+      <h1>Atualizar clipping</h1>
+      <p>{escape(status)}</p>
+      <label>Senha de acesso
+        <input id="password" type="password" autocomplete="current-password" {disabled}>
+      </label>
+      <button id="loginButton" type="button" {disabled}>Entrar</button>
+      <p id="loginMessage" class="muted"></p>
+    </section>
+  </main>
+  <script>
+    const btn = document.getElementById('loginButton');
+    if (btn) btn.addEventListener('click', async () => {{
+      const password = document.getElementById('password').value;
+      const res = await fetch('/api/login', {{
+        method: 'POST',
+        headers: {{'Content-Type': 'application/json'}},
+        body: JSON.stringify({{password}})
+      }});
+      if (res.ok) window.location.reload();
+      else document.getElementById('loginMessage').textContent = 'Senha incorreta ou acesso ainda nao configurado.';
+    }});
+  </script>
+</body>
+</html>"""
+
+
+def admin_html(token: str) -> str:
+    targets = load_targets()
+    target_checks = "\n".join(
+        f'<label class="check"><input type="checkbox" value="{escape(str(row["key"]))}"> {escape(str(row.get("label") or row["key"]))}</label>'
+        for row in targets
+    )
+    return f"""<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{escape(token)}">
+  <title>Atualizacao do clipping</title>
+  <style>{ADMIN_CSS}</style>
+</head>
+<body class="admin-body">
+  <main class="admin-shell">
+    <header class="admin-hero">
+      <p class="eyebrow">Mandato Flavio Valle</p>
+      <h1>Atualizacao do clipping</h1>
+      <p>Escolha um fluxo, acompanhe a coleta e publique a base atualizada sem abrir o terminal.</p>
+      <a href="/" class="plain-link">Ver painel publico</a>
+    </header>
+
+    <section class="admin-card">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">Coleta guiada</p>
+          <h2>Rodar pipeline</h2>
+        </div>
+        <button type="button" id="refreshStatus">Atualizar status</button>
+      </div>
+      <div class="preset-grid">
+        <button class="preset active" data-preset="rapido"><strong>Rapido</strong><span>Flavio Valle, hoje e ontem</span></button>
+        <button class="preset" data-preset="completo"><strong>Completo</strong><span>Circulo principal, ultimos 7 dias</span></button>
+        <button class="preset" data-preset="custom"><strong>Personalizado</strong><span>Escolha nomes e periodo</span></button>
+      </div>
+      <div class="form-grid" id="customFields">
+        <fieldset>
+          <legend>Nomes acompanhados</legend>
+          {target_checks}
+        </fieldset>
+        <label>Data inicial <input id="dateFrom" type="date"></label>
+        <label>Data final <input id="dateTo" type="date"></label>
+        <label>Fontes
+          <select id="collector">
+            <option value="all">Todas as fontes seguras</option>
+            <option value="google_news">Google News</option>
+            <option value="rss">RSS</option>
+            <option value="wordpress_api">Sites WordPress</option>
+            <option value="internal_search">Busca em sites</option>
+          </select>
+        </label>
+      </div>
+      <label class="check"><input id="exportAfter" type="checkbox" checked> Atualizar o painel depois da coleta</label>
+      <button type="button" id="startUpdate">Comecar atualizacao</button>
+      <pre id="jobStatus" class="status-box">Nenhum job carregado.</pre>
+    </section>
+
+    <section class="admin-card">
+      <p class="eyebrow">Historia unica</p>
+      <h2>Adicionar materia manualmente</h2>
+      <div class="form-grid">
+        <label>Titulo <input id="manualTitle" type="text"></label>
+        <label>Link da materia <input id="manualUrl" type="url"></label>
+        <label>Fonte <input id="manualSource" type="text"></label>
+        <label>Data publicada <input id="manualPublished" type="datetime-local"></label>
+        <fieldset>
+          <legend>Nomes citados</legend>
+          <div id="manualTargets">{target_checks}</div>
+        </fieldset>
+        <label class="wide">Resumo <textarea id="manualSummary" rows="4"></textarea></label>
+        <label class="wide">Texto completo <textarea id="manualText" rows="6"></textarea></label>
+        <label class="wide">Nota interna <textarea id="manualNote" rows="2"></textarea></label>
+      </div>
+      <label class="check"><input id="manualExport" type="checkbox" checked> Atualizar painel depois de adicionar</label>
+      <button type="button" id="addManual">Adicionar materia</button>
+      <p id="manualMessage" class="muted"></p>
+    </section>
+  </main>
+  <script>{ADMIN_JS}</script>
+</body>
+</html>"""
+
+
+ADMIN_CSS = """
+:root{--bg:#eef3f7;--ink:#05253e;--muted:#516679;--brand:#0b4b7f;--gold:#f6bb1b;--line:#b4c4d1;--card:#fff}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+.admin-shell{width:min(1120px,calc(100% - 32px));margin:0 auto;padding:24px 0 48px}.login-shell{min-height:100vh;display:grid;place-items:center}
+.admin-hero,.admin-card{border:1px solid var(--line);border-radius:8px;background:var(--card);box-shadow:0 16px 32px rgba(5,37,62,.08)}
+.admin-hero{padding:28px;background:linear-gradient(135deg,#05253e,#0b4b7f);color:#fff}.admin-hero p{max-width:680px}.admin-card{padding:22px;margin-top:18px}
+.login-card{width:min(440px,100%)}.eyebrow{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:800;color:var(--muted)}.admin-hero .eyebrow{color:#b4c4d1}
+h1,h2{margin:0 0 8px;line-height:1.05}h1{font-size:clamp(34px,5vw,52px)}h2{font-size:24px}.section-title{display:flex;justify-content:space-between;gap:12px;align-items:center}
+button{border:0;border-radius:8px;background:var(--gold);color:var(--ink);font-weight:800;padding:11px 14px;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}.plain-link{color:#fff;font-weight:800}
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:16px 0}.preset{background:#f8fafc;border:1px solid var(--line);text-align:left}.preset.active{border-color:transparent;background:var(--gold)}.preset span{display:block;margin-top:4px;font-weight:500}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px}.wide{grid-column:1/-1}
+label,fieldset{display:grid;gap:6px;font-weight:700}fieldset{border:1px solid var(--line);border-radius:8px;padding:12px}.check{display:flex;gap:8px;align-items:flex-start;font-weight:600}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;background:#fff}textarea{resize:vertical}.muted{color:var(--muted)}
+.status-box{min-height:120px;white-space:pre-wrap;background:#05253e;color:#e9f2fb;border-radius:8px;padding:14px;overflow:auto}.admin-card button+pre{margin-top:12px}
+"""
+
+
+ADMIN_JS = """
+const csrf = document.querySelector('meta[name="csrf-token"]').content;
+let preset = 'rapido';
+const statusBox = document.getElementById('jobStatus');
+document.querySelectorAll('.preset').forEach(btn => btn.addEventListener('click', () => {
+  preset = btn.dataset.preset;
+  document.querySelectorAll('.preset').forEach(b => b.classList.toggle('active', b === btn));
+}));
+async function api(path, body) {
+  const res = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json','X-CSRF-Token':csrf}, body:JSON.stringify(body||{})});
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || 'Falha na operacao');
+  return data;
+}
+async function refreshStatus() {
+  const res = await fetch('/api/update/status');
+  const data = await res.json();
+  statusBox.textContent = JSON.stringify(data.current, null, 2);
+}
+document.getElementById('refreshStatus').addEventListener('click', refreshStatus);
+document.getElementById('startUpdate').addEventListener('click', async () => {
+  const targetKeys = [...document.querySelectorAll('#customFields input[type="checkbox"]:checked')].map(x => x.value);
+  const body = {preset, export: document.getElementById('exportAfter').checked};
+  if (preset === 'custom') {
+    body.target_keys = targetKeys;
+    body.date_from = document.getElementById('dateFrom').value;
+    body.date_to = document.getElementById('dateTo').value;
+    body.collector = document.getElementById('collector').value;
+  }
+  try { statusBox.textContent = JSON.stringify(await api('/api/update/start', body), null, 2); }
+  catch (e) { statusBox.textContent = e.message; }
+});
+document.getElementById('addManual').addEventListener('click', async () => {
+  const manualBox = document.getElementById('manualMessage');
+  const body = {
+    title: document.getElementById('manualTitle').value,
+    url: document.getElementById('manualUrl').value,
+    source_name: document.getElementById('manualSource').value,
+    published_at: document.getElementById('manualPublished').value,
+    summary: document.getElementById('manualSummary').value,
+    full_text: document.getElementById('manualText').value,
+    note: document.getElementById('manualNote').value,
+    target_keys: [...document.querySelectorAll('#manualTargets input[type="checkbox"]:checked')].map(x => x.value),
+    export: document.getElementById('manualExport').checked
+  };
+  try { const data = await api('/api/manual-story', body); manualBox.textContent = data.message || 'Materia registrada.'; }
+  catch (e) { manualBox.textContent = e.message; }
+});
+refreshStatus().catch(() => {});
+"""

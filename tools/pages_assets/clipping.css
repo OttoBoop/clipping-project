@@ -132,6 +132,41 @@ main {
   padding: 22px;
 }
 
+.update-panel {
+  border-left: 6px solid var(--gold);
+}
+
+.update-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 14px 0 12px;
+}
+
+.update-grid div {
+  border: 1px solid rgba(180, 196, 209, 0.72);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  padding: 14px;
+}
+
+.update-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.update-grid strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--brand-strong);
+  font-size: 28px;
+  line-height: 1;
+}
+
 .story-card {
   padding: 0;
   overflow: hidden;

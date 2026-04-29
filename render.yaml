@@ -1,0 +1,24 @@
+# Render Blueprint — Clipping Project
+services:
+  - type: web
+    name: clipping-project
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn web_app.app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHON_VERSION
+        value: 3.14.3
+      - key: CLIPPING_ADMIN_PASSWORD
+        sync: false
+      - key: CLIPPING_SESSION_SECRET
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        sync: false
+      - key: CLIPPING_STORAGE_PREFIX
+        value: clipping-project
