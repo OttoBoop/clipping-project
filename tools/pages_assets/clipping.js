@@ -4,6 +4,9 @@
 
   const dataUrl = app.dataset.clippingDataUrl;
   const rawUrl = app.dataset.clippingRawUrl;
+  const apiUrl = (app.dataset.clippingApiUrl || "").trim().replace(/\/$/, "");
+  const editorEnabled = !!apiUrl;
+  let categoriesCache = [];
   const storyStack = document.getElementById("storyStack");
   const flatStack = document.getElementById("flatStack");
   const targetFilters = document.getElementById("targetFilters");
@@ -109,6 +112,7 @@
           summaryPreview: article.summaryPreview,
           rawTextKey: article.rawTextKey,
           summarySource: article.summarySource || "raw",
+          classifications: article.classifications || [],
         });
       });
     });
@@ -207,6 +211,135 @@
       .join("");
   }
 
+  var SENTIMENT_LABEL = { positive: "positivo", negative: "negativo", neutral: "neutro" };
+
+  function classificationHtml(article) {
+    var clsArr = article.classifications || [];
+    if (!clsArr.length) return "";
+    var parts = [];
+    clsArr.forEach(function (cls) {
+      var targetLabel = escapeHtml(labelsByKey[cls.target_key] || cls.target_key || "");
+      if (cls.article_sentiment) {
+        parts.push(
+          '<span class="chip chip--cls chip--cls-' +
+            cls.article_sentiment +
+            '" title="Sentimento da notícia">Notícia: ' +
+            escapeHtml(SENTIMENT_LABEL[cls.article_sentiment] || cls.article_sentiment) +
+            "</span>"
+        );
+      }
+      if (cls.target_sentiment) {
+        parts.push(
+          '<span class="chip chip--cls chip--cls-' +
+            cls.target_sentiment +
+            '" title="Sentimento sobre ' +
+            targetLabel +
+            '">' +
+            targetLabel +
+            ": " +
+            escapeHtml(SENTIMENT_LABEL[cls.target_sentiment] || cls.target_sentiment) +
+            "</span>"
+        );
+      }
+      (cls.categories || []).forEach(function (cat) {
+        parts.push('<span class="chip chip--cls chip--cls-cat">' + escapeHtml(cat) + "</span>");
+      });
+    });
+    return parts.length ? '<div class="chips chips--cls">' + parts.join("") + "</div>" : "";
+  }
+
+  function findArticleById(aid) {
+    if (!payload || !payload.stories) return null;
+    for (var i = 0; i < payload.stories.length; i++) {
+      var arr = payload.stories[i].articles || [];
+      for (var j = 0; j < arr.length; j++) {
+        if (Number(arr[j].articleId) === Number(aid)) return arr[j];
+      }
+    }
+    return null;
+  }
+
+  function sentimentSelectHtml(field, current) {
+    var opts = ["", "positive", "negative", "neutral"];
+    var labels = { "": "—", positive: "Positivo", negative: "Negativo", neutral: "Neutro" };
+    return (
+      '<select data-cls-field="' + field + '">' +
+      opts.map(function (v) {
+        var sel = (current || "") === v ? " selected" : "";
+        return '<option value="' + v + '"' + sel + ">" + labels[v] + "</option>";
+      }).join("") +
+      "</select>"
+    );
+  }
+
+  function categoryChipHtml(name, selected) {
+    return (
+      '<button type="button" class="cls-cat-chip' +
+      (selected ? " selected" : "") +
+      '" data-cat-name="' +
+      escapeHtml(name) +
+      '">' +
+      escapeHtml(name) +
+      "</button>"
+    );
+  }
+
+  function classificationEditorHtml(article) {
+    if (!editorEnabled) return "";
+    var aid = article.articleId;
+    var targetKeys = article.targetKeys || [];
+    if (!targetKeys.length) return "";
+    var clsByTarget = {};
+    (article.classifications || []).forEach(function (c) {
+      clsByTarget[c.target_key] = c;
+    });
+
+    var fieldsets = targetKeys.map(function (tk) {
+      var tLabel = labelsByKey[tk] || tk;
+      var cur = clsByTarget[tk] || {};
+      var selectedCats = (cur.categories || []).slice();
+      var allCats = categoriesCache.slice();
+      selectedCats.forEach(function (c) {
+        if (allCats.indexOf(c) === -1) allCats.push(c);
+      });
+      var chipsHtml = allCats
+        .map(function (n) { return categoryChipHtml(n, selectedCats.indexOf(n) !== -1); })
+        .join("");
+      return (
+        '<fieldset class="cls-fieldset" data-target-key="' +
+        escapeHtml(tk) +
+        '" data-article-id="' +
+        escapeHtml(String(aid)) +
+        '">' +
+        "<legend>" + escapeHtml(tLabel) + "</legend>" +
+        '<div class="cls-row">' +
+        '<label class="cls-field">Sentimento da notícia ' +
+        sentimentSelectHtml("article_sentiment", cur.article_sentiment) +
+        "</label>" +
+        '<label class="cls-field">Sentimento sobre ' + escapeHtml(tLabel) + " " +
+        sentimentSelectHtml("target_sentiment", cur.target_sentiment) +
+        "</label>" +
+        "</div>" +
+        '<div class="cls-row cls-cats-row">' +
+        '<span class="cls-cat-label">Categorias:</span>' +
+        '<div class="cls-cat-chips">' + chipsHtml + "</div>" +
+        '<button type="button" class="cls-add-cat-btn">+ Nova</button>' +
+        "</div>" +
+        '<div class="cls-row cls-actions-row">' +
+        '<button type="button" class="cls-save-btn">Salvar</button>' +
+        '<span class="cls-save-status"></span>' +
+        "</div>" +
+        "</fieldset>"
+      );
+    }).join("");
+
+    return (
+      '<details class="cls-editor"><summary>Classificar este artigo</summary>' +
+      fieldsets +
+      "</details>"
+    );
+  }
+
   function articleSummaryClass(article) {
     return article.summarySource === "ai" || article.summaryLabel === "Resumo IA" ? "summary-ai" : "summary-raw";
   }
@@ -259,7 +392,13 @@
       '<div class="chips">' +
       badgeHtml(article.targetKeys || []) +
       "</div>" +
+      '<div class="cls-display" data-article-cls="' +
+      escapeHtml(String(article.articleId || "")) +
+      '">' +
+      classificationHtml(article) +
       "</div>" +
+      "</div>" +
+      classificationEditorHtml(article) +
       '<div class="article-links">' +
       linkHtml +
       "</div>" +
@@ -586,6 +725,143 @@
     },
     true
   );
+
+  function refreshArticleClsDisplay(article) {
+    var aid = article.articleId;
+    var html = classificationHtml(article);
+    document
+      .querySelectorAll('[data-article-cls="' + String(aid) + '"]')
+      .forEach(function (el) { el.innerHTML = html; });
+  }
+
+  function applySavedClassification(saved) {
+    var article = findArticleById(saved.article_id);
+    if (!article) return;
+    article.classifications = article.classifications || [];
+    var idx = -1;
+    for (var i = 0; i < article.classifications.length; i++) {
+      if (article.classifications[i].target_key === saved.target_key) { idx = i; break; }
+    }
+    var record = {
+      target_key: saved.target_key,
+      article_sentiment: saved.article_sentiment,
+      target_sentiment: saved.target_sentiment,
+      centimetragem: saved.centimetragem,
+      categories: (saved.categories || []).slice(),
+    };
+    if (idx >= 0) article.classifications[idx] = record;
+    else article.classifications.push(record);
+    refreshArticleClsDisplay(article);
+  }
+
+  function gatherFieldset(fs) {
+    var aid = parseInt(fs.dataset.articleId, 10);
+    var tk = fs.dataset.targetKey;
+    var artSent = fs.querySelector('[data-cls-field="article_sentiment"]').value || null;
+    var tgtSent = fs.querySelector('[data-cls-field="target_sentiment"]').value || null;
+    var cats = Array.from(fs.querySelectorAll(".cls-cat-chip.selected")).map(function (c) {
+      return c.dataset.catName;
+    });
+    return {
+      article_id: aid,
+      target_key: tk,
+      article_sentiment: artSent,
+      target_sentiment: tgtSent,
+      categories: cats,
+    };
+  }
+
+  async function onSaveClassification(fs) {
+    var btn = fs.querySelector(".cls-save-btn");
+    var status = fs.querySelector(".cls-save-status");
+    btn.disabled = true;
+    status.textContent = "Salvando...";
+    status.className = "cls-save-status";
+    try {
+      var resp = await fetch(apiUrl + "/api/classifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(gatherFieldset(fs)),
+      });
+      var data = await resp.json().catch(function () { return {}; });
+      if (!resp.ok) throw new Error(data.error || "HTTP " + resp.status);
+      status.textContent = "Salvo ✓";
+      status.classList.add("cls-save-status--ok");
+      applySavedClassification(data);
+      setTimeout(function () {
+        if (status.textContent === "Salvo ✓") {
+          status.textContent = "";
+          status.classList.remove("cls-save-status--ok");
+        }
+      }, 2500);
+    } catch (e) {
+      status.textContent = "Erro: " + (e && e.message ? e.message : e);
+      status.classList.add("cls-save-status--err");
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function onAddCategory(fs) {
+    var name = window.prompt("Nome da nova categoria:");
+    if (!name || !name.trim()) return;
+    name = name.trim();
+    try {
+      var resp = await fetch(apiUrl + "/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name }),
+      });
+      var data = await resp.json().catch(function () { return {}; });
+      if (!resp.ok) throw new Error(data.error || "HTTP " + resp.status);
+      var canonical = data.name || name;
+      if (categoriesCache.indexOf(canonical) === -1) categoriesCache.push(canonical);
+      document.querySelectorAll(".cls-fieldset").forEach(function (other) {
+        var chips = other.querySelector(".cls-cat-chips");
+        if (!chips) return;
+        var existing = chips.querySelector('[data-cat-name="' + canonical.replace(/"/g, '\\"') + '"]');
+        if (existing) {
+          if (other === fs) existing.classList.add("selected");
+          return;
+        }
+        chips.insertAdjacentHTML("beforeend", categoryChipHtml(canonical, other === fs));
+      });
+    } catch (e) {
+      window.alert("Erro ao criar categoria: " + (e && e.message ? e.message : e));
+    }
+  }
+
+  if (editorEnabled) {
+    app.addEventListener("click", function (event) {
+      var saveBtn = event.target.closest(".cls-save-btn");
+      if (saveBtn) {
+        event.preventDefault();
+        var fs = saveBtn.closest(".cls-fieldset");
+        if (fs) onSaveClassification(fs);
+        return;
+      }
+      var addBtn = event.target.closest(".cls-add-cat-btn");
+      if (addBtn) {
+        event.preventDefault();
+        var fs2 = addBtn.closest(".cls-fieldset");
+        if (fs2) onAddCategory(fs2);
+        return;
+      }
+      var chip = event.target.closest(".cls-cat-chip");
+      if (chip) {
+        event.preventDefault();
+        chip.classList.toggle("selected");
+        return;
+      }
+    });
+
+    fetch(apiUrl + "/api/categories", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : { categories: [] }; })
+      .then(function (data) {
+        categoriesCache = (data.categories || []).map(function (c) { return c.name; });
+      })
+      .catch(function () { /* leave categoriesCache empty */ });
+  }
 
   fetch(dataUrl, { cache: "no-store" })
     .then(function (response) {

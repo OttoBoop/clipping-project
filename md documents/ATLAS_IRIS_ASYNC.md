@@ -43,22 +43,20 @@ at any convenient time. Atlas answers in the same file.
 ## Open Questions
 
 ### Q-001 — 2026-04-29 — Iris
-**Topic:** Write-API architecture for live classification saving
-**Context:** The live site is a static Render deployment (no server process
-serving POST requests). To persist classification choices from the dashboard,
-a write endpoint is needed. Iris-Cartographer confirmed there is no existing
-web server in the repo handling write operations.
-**Question:** Should the write API be:
-(a) Upgrade the Render static service to a Python web service (Flask/FastAPI
-on Render's web-service tier, same service),
-(b) Add a second lightweight Render service that only handles write operations
-alongside the existing static site, or
-(c) Some other approach Atlas has already planned or is in progress?
-**Waiting on:** Atlas
-**Unblocked work continuing:** Iris is implementing the read-side
-(`list_articles_for_export_with_classifications`) and the frontend classification
-display chips (read-only — no persistence yet). Write API comes after Q-001 is
-answered.
+**Topic:** Deployment target for the new write API (informational, not blocking)
+**Context:** Iris built `api_server.py` (Flask, ~140 lines) with the four
+endpoints needed for classification persistence. It runs locally with
+`python api_server.py` and the dashboard wires up via the
+`data-clipping-api-url` attribute on `#app`. Implementation is complete and
+end-to-end tested locally; this question is now only about *where* to deploy.
+**Question:** Where should `api_server.py` run in production?
+(a) Upgrade the existing Render static deployment to a Python web service.
+(b) Add a second lightweight service alongside the static site (separate URL).
+(c) Some other Atlas-planned approach.
+**Waiting on:** Atlas (no longer blocking Iris).
+**Iris's recommendation:** (b) is simplest — keep the static site as is, run
+`api_server.py` as a small companion web service. Same SQLite DB, no
+risk to the existing deployment.
 
 ---
 

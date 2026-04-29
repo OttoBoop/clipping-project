@@ -68,6 +68,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Desloca IDs de historias/artigos vindos do banco atual para evitar colisao com o HTML mesclado.",
     )
+    parser.add_argument(
+        "--api-url",
+        default="",
+        help="URL base do api_server.py (ex.: http://localhost:8765). Quando vazio, o editor de classificacao fica oculto.",
+    )
     args = parser.parse_args()
     if not args.all_stories and (not args.date_from or not args.date_to):
         parser.error("use --all-stories ou informe --date-from e --date-to")
@@ -2182,6 +2187,7 @@ def build_pages_shell_html(
     js_url: str,
     data_url: str,
     raw_url: str,
+    api_url: str = "",
 ) -> str:
     meta = dataset["meta"]
     return f"""<!doctype html>
@@ -2198,6 +2204,7 @@ def build_pages_shell_html(
     id="app"
     data-clipping-data-url="{html.escape(data_url)}"
     data-clipping-raw-url="{html.escape(raw_url)}"
+    data-clipping-api-url="{html.escape(api_url)}"
   >
     <header class="hero">
       <div class="hero-lockup">
@@ -2390,6 +2397,7 @@ def build_snapshot_artifact(args: argparse.Namespace) -> dict[str, Any]:
         js_url=relative_url(output_path, asset_paths["js"]),
         data_url=relative_url(output_path, asset_paths["data"]),
         raw_url=relative_url(output_path, asset_paths["raw"]),
+        api_url=str(getattr(args, "api_url", "") or ""),
     )
 
     return {

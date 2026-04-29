@@ -1222,3 +1222,28 @@ class ClippingDB:
                 }
                 for r in rows
             ]
+
+    def find_mention_id(self, article_id: int, target_key: str) -> int | None:
+        """Return mention id for (article_id, target_key) or None."""
+        with self.connect() as conn:
+            row = conn.execute(
+                "SELECT id FROM mentions WHERE article_id = ? AND target_key = ? LIMIT 1",
+                (int(article_id), str(target_key)),
+            ).fetchone()
+            return int(row["id"]) if row else None
+
+    def list_categories(self) -> list[dict]:
+        """Return all categories ordered by name."""
+        with self.connect() as conn:
+            rows = conn.execute(
+                "SELECT id, name, created_by, created_at FROM categories ORDER BY name COLLATE NOCASE"
+            ).fetchall()
+            return [
+                {
+                    "id": int(r["id"]),
+                    "name": r["name"],
+                    "created_by": r["created_by"],
+                    "created_at": r["created_at"],
+                }
+                for r in rows
+            ]
