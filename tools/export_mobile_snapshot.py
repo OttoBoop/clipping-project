@@ -350,8 +350,8 @@ def story_sort_key(story: dict[str, Any]) -> tuple[float, float]:
 
 def load_scope_articles(db: ClippingDB, args: argparse.Namespace) -> list[dict[str, Any]]:
     if args.all_stories:
-        return db.list_articles_for_export(limit=EXPORT_LIMIT)
-    return db.list_articles_for_export(
+        return db.list_articles_for_export_with_classifications(limit=EXPORT_LIMIT)
+    return db.list_articles_for_export_with_classifications(
         limit=EXPORT_LIMIT,
         date_from=args.date_from,
         date_to=f"{args.date_to}T23:59:59",
@@ -1741,6 +1741,7 @@ def serialize_article_payload(article: dict[str, Any], fallback_targets: list[st
             "summaryPreview": preview,
             "rawTextKey": raw_text_key or None,
             "summarySource": "ai" if label == "Resumo IA" else "raw",
+            "classifications": article.get("classifications") or [],
         },
         raw_texts,
     )

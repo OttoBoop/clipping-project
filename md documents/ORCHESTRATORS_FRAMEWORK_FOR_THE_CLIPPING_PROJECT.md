@@ -63,6 +63,9 @@ Planned subagent roles:
 Iris reports to Otávio after each agent run using the
 Facts / Inferences / Blockers / Next format.
 
+Operating rules: see `md documents/IRIS_OPERATING_RULES.md`.
+Atlas-Iris async Q&A: see `md documents/ATLAS_IRIS_ASYNC.md`.
+
 ### Claude Code's Future Orchestrator
 
 Claude Code has chosen the name **Iris** (registered above). This section is

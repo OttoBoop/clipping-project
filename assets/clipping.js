@@ -109,6 +109,7 @@
           summaryPreview: article.summaryPreview,
           rawTextKey: article.rawTextKey,
           summarySource: article.summarySource || "raw",
+          classifications: article.classifications || [],
         });
       });
     });
@@ -207,6 +208,43 @@
       .join("");
   }
 
+  var SENTIMENT_LABEL = { positive: "positivo", negative: "negativo", neutral: "neutro" };
+
+  function classificationHtml(article) {
+    var clsArr = article.classifications || [];
+    if (!clsArr.length) return "";
+    var parts = [];
+    clsArr.forEach(function (cls) {
+      var targetLabel = escapeHtml(labelsByKey[cls.target_key] || cls.target_key || "");
+      if (cls.article_sentiment) {
+        parts.push(
+          '<span class="chip chip--cls chip--cls-' +
+            cls.article_sentiment +
+            '" title="Sentimento da notícia">Notícia: ' +
+            escapeHtml(SENTIMENT_LABEL[cls.article_sentiment] || cls.article_sentiment) +
+            "</span>"
+        );
+      }
+      if (cls.target_sentiment) {
+        parts.push(
+          '<span class="chip chip--cls chip--cls-' +
+            cls.target_sentiment +
+            '" title="Sentimento sobre ' +
+            targetLabel +
+            '">' +
+            targetLabel +
+            ": " +
+            escapeHtml(SENTIMENT_LABEL[cls.target_sentiment] || cls.target_sentiment) +
+            "</span>"
+        );
+      }
+      (cls.categories || []).forEach(function (cat) {
+        parts.push('<span class="chip chip--cls chip--cls-cat">' + escapeHtml(cat) + "</span>");
+      });
+    });
+    return parts.length ? '<div class="chips chips--cls">' + parts.join("") + "</div>" : "";
+  }
+
   function articleSummaryClass(article) {
     return article.summarySource === "ai" || article.summaryLabel === "Resumo IA" ? "summary-ai" : "summary-raw";
   }
@@ -259,6 +297,7 @@
       '<div class="chips">' +
       badgeHtml(article.targetKeys || []) +
       "</div>" +
+      classificationHtml(article) +
       "</div>" +
       '<div class="article-links">' +
       linkHtml +

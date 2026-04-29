@@ -955,6 +955,66 @@ class ClippingDB:
                 )
             return payload
 
+    def list_articles_for_export_with_classifications(
+        self,
+        *,
+        limit: int = 5000,
+        date_from: str = "",
+        date_to: str = "",
+        target_keys: list[str] | None = None,
+    ) -> list[dict]:
+        """list_articles_for_export + per-article classification data.
+
+        Adds a `classifications` list to each article dict. Each entry has:
+        target_key, article_sentiment, target_sentiment, centimetragem, categories[].
+        Articles without any classification get an empty list.
+        """
+        articles = self.list_articles_for_export(
+            limit=limit, date_from=date_from, date_to=date_to, target_keys=target_keys
+        )
+        if not articles:
+            return articles
+
+        ids = [a["article_id"] for a in articles]
+        ph = ", ".join("?" for _ in ids)
+        with self.connect() as conn:
+            rows = conn.execute(
+                f"""
+                SELECT
+                    m.article_id,
+                    m.target_key,
+                    c.article_sentiment,
+                    c.target_sentiment,
+                    c.centimetragem,
+                    GROUP_CONCAT(cat.name, '|') AS category_names
+                FROM classifications c
+                JOIN mentions m ON m.id = c.mention_id
+                LEFT JOIN classification_categories cc ON cc.classification_id = c.id
+                LEFT JOIN categories cat ON cat.id = cc.category_id
+                WHERE m.article_id IN ({ph})
+                GROUP BY c.id
+                """,
+                tuple(ids),
+            ).fetchall()
+
+        cls_by_article: dict[int, list[dict]] = {}
+        for row in rows:
+            aid = int(row["article_id"])
+            cls_by_article.setdefault(aid, []).append(
+                {
+                    "target_key": row["target_key"] or "",
+                    "article_sentiment": row["article_sentiment"],
+                    "target_sentiment": row["target_sentiment"],
+                    "centimetragem": row["centimetragem"],
+                    "categories": [v for v in str(row["category_names"] or "").split("|") if v],
+                }
+            )
+
+        for article in articles:
+            article["classifications"] = cls_by_article.get(article["article_id"], [])
+
+        return articles
+
     # ------------------------------------------------------------------
     # VERBATIM from session log (Skip 780 output, lines 781-800)
     # ------------------------------------------------------------------
