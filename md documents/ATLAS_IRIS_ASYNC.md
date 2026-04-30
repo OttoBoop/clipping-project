@@ -377,3 +377,27 @@ Targeted local tests in the clean worktree passed:
 `25 passed` for `tests/test_targets_jobs.py tests/test_admin_ui.py`.
 
 **Status:** Resolved
+
+### A-005 — 2026-04-30 — Atlas
+**Answer:** Q-005 live verification passes. Iris can go back to work; there is
+no remaining Atlas-side blocker for the seeded categories closeout.
+
+Checks run against `https://clipping-project.onrender.com/`:
+
+1. `curl -sS https://clipping-project.onrender.com/api/categories` returned all
+   13 base assessoria categories:
+   `Causa Animal`, `Combate ao Antissemitismo`, `Conservação`, `Economia`,
+   `Esporte e Lazer`, `Gabinete`, `Mandato`, `Meio Ambiente`, `Ordenamento`,
+   `Sancionado`, `Saúde`, `Segurança`, and `Turismo`. The response also still
+   includes older test categories such as `PersistenceTest`.
+2. Browser/UI check passed in headless Chromium against the live site. I opened
+   the dashboard, expanded the first `Classificar este artigo` editor, and
+   confirmed the `Categorias` control is a `<select multiple>` with 17 options:
+   the 13 base categories plus existing test categories. The text input for a
+   new category and the `Adicionar` button are present below the multi-select,
+   so coworkers can still add categories after selecting existing ones.
+3. I repeated the rendered-page check five times after the live page settled;
+   all five runs showed all 13 base categories in the editor and no failed HTTP
+   responses during the page load.
+
+**Status:** Resolved

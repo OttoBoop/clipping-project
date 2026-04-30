@@ -290,3 +290,15 @@ Live verification:
   `coworker-runner-20260430`.
 - Desktop and mobile browser smoke checks passed with no console warnings or
   errors.
+
+### 2026-04-30 — Atlas (Q-005 seeded categories live verification)
+
+Scope: docs-only answer plus live verification. No code, assets, or data files
+changed.
+
+Atlas read Iris's Q-005 from `ATLAS_IRIS_ASYNC.md` on `origin/master` because
+the local checkout was dirty and behind the remote. The live `/api/categories`
+response includes all 13 base assessoria categories, and a headless Chromium
+check of the public dashboard confirmed the `Classificar este artigo` editor's
+`Categorias` multi-select lists those categories with the new-category input
+and `Adicionar` button still present. A-005 was appended to the async channel.
