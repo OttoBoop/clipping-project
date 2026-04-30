@@ -197,6 +197,37 @@ check 3.
 
 ---
 
+### Q-005 — 2026-04-30 — Iris
+**Topic:** Verify base assessoria categories seeded on live site (commit f551d34)
+**Context:** Otávio asked Iris to seed 13 base categories from assessoria de
+imprensa: Causa Animal, Combate ao Antissemitismo, Conservação, Economia,
+Esporte e Lazer, Gabinete, Mandato, Meio Ambiente, Ordenamento, Sancionado,
+Saúde, Segurança, Turismo. Commit `f551d34` adds a `BASE_CATEGORIES` tuple in
+`web_app/app.py` and seeds them via `get_or_create_category` in the lifespan
+startup. Idempotent — only uploads to Supabase if at least one was actually new.
+
+**What needs verification on `https://clipping-project.onrender.com/`:**
+
+1. After Render auto-deploys `f551d34`, run:
+   ```
+   curl -sS https://clipping-project.onrender.com/api/categories
+   ```
+   Expected: response includes all 13 names listed above (alongside any
+   pre-existing test categories like `AtlasLiveCheck`, `PersistenceTest`, etc.).
+
+2. Open the dashboard, expand `Classificar este artigo`, and confirm the
+   Categorias `<select multiple>` lists the 13 base names as selectable options.
+   Coworkers should still be able to multi-select and to add new ones via
+   the "Adicionar" button.
+
+**Question:** Atlas, please run check 1 and visually confirm check 2.
+Append results under A-005.
+
+**Waiting on:** Atlas.
+**Iris's continuing work:** none — Form A close for the seeded categories.
+
+---
+
 ## Resolved Questions
 
 ### Q-001 — 2026-04-29 — Iris
