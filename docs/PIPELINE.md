@@ -18,7 +18,7 @@ O clipping monitora noticias sobre candidatos politicos do Rio de Janeiro. A pip
 |-----------|-----|---------|-------|
 | Flavio Valle | `flavio_valle` | Principal | Vereador, foco do monitoramento |
 | Pedro Angelito | `pedro_angelito` | Principal | |
-| Bernardo Rubiao | `bernardo_rubiao` | Principal | |
+| Bernardo Rubiao | `bernardo_rubiao` | Secundario | Movido para secundario no sprint de auditoria/reparo do runner ao vivo |
 | Pedro Duarte | `pedro_duarte` | Externo | Aparece em "Outros candidatos" no painel |
 
 Config: `data/targets.json`

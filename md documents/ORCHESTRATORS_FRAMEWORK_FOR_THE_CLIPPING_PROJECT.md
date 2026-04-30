@@ -365,7 +365,10 @@ Plan Mode means short-term plan creation for the next bounded sprint. It should
 produce the immediate constraints and acceptance checks, not a broad rewrite of
 long-term goals.
 
-Accepted current sprint:
+Historical note: this checkpoint described the open-link coworker runner sprint.
+The current sprint is the systemic live runner audit/repair checkpoint below.
+
+Accepted runner sprint:
 
 - Build and verify the open-link coworker clipping runner on
   `https://clipping-project.onrender.com/`.
@@ -387,3 +390,34 @@ Atlas/Iris coordination requirements for this sprint:
   what was verified.
 - Uncommitted local changes, local-only tests, or cloud-only claims are not
   shared progress until visible through the repo or live on Render.
+
+## 2026-04-30 Systemic Live Runner Audit/Repair Sprint
+
+Accepted current sprint:
+
+- Audit and repair the coworker runner as it behaves on
+  `https://clipping-project.onrender.com/`.
+- Treat the live Render site as the acceptance bar. A repair is not complete
+  until the public URL shows the corrected behavior and the agent records the
+  live evidence.
+- Make progress reporting concrete and trustworthy.
+- Add a cancel path for stuck, accidental, or wrong runs.
+- Address stale published dashboard risk so coworkers can tell whether the
+  dashboard reflects the latest completed run.
+- Rewrite bad meta copy for coworkers, including replacing
+  `Com texto para leitura`.
+- Do not force primary target checkboxes in a way that makes the UI feel
+  broken. For this sprint, primary targets are Flavio Valle and Pedro Angelito.
+- Move Bernardo Rubiao to the secondary target set for this sprint.
+- Keep add-name simple by default. Hide advanced tutorial material behind an
+  advanced/details control.
+
+Agent discipline for this sprint:
+
+- Check git state before editing and before handoff.
+- If local `master` is behind `origin/master`, stop and fast-forward before
+  writing.
+- Keep edits scoped to the claimed ownership area and do not overwrite another
+  agent's work.
+- Mark each checkpoint as docs-only, code, live verification, or blocker
+  handling.

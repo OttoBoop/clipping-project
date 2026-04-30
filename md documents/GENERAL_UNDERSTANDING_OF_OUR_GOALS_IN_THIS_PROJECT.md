@@ -216,11 +216,15 @@ work slice, constraints, acceptance checks, and coordination handoff before
 implementation. It does not mean a long roadmap rewrite or speculative product
 design.
 
-The current sprint is the open-link coworker clipping runner on:
+Historical note: the open-link coworker clipping runner sprint below is now a
+completed checkpoint. The current sprint is the systemic live runner
+audit/repair checkpoint in the next section.
+
+The open-link runner sprint targeted:
 
 - `https://clipping-project.onrender.com/`
 
-Accepted sprint facts:
+Accepted runner sprint facts:
 
 - The coworker workflow must not require an admin gate, password gate, or
   secret shared credential.
@@ -239,6 +243,42 @@ Coordination rule for Atlas and Iris: each meaningful checkpoint must be
 committed, pushed, and reported with the agent name and exact facts verified.
 This rule describes the project workflow; it does not override a direct
 instruction for a documentation-only pass that says not to commit or push.
+
+## 2026-04-30 Current Sprint: Systemic Live Runner Audit/Repair
+
+The active short-term sprint is to audit and repair the coworker runner as it
+actually behaves on:
+
+- `https://clipping-project.onrender.com/`
+
+Acceptance rule: live site first. A fix only counts after the public Render URL
+shows the corrected behavior and the responsible agent has verified it there.
+Local runs, pending deploys, pushed commits, and screenshots are supporting
+evidence, not completion.
+
+Known issues to address:
+
+- Progress messaging is too vague.
+- There is no cancel control for a run.
+- The published dashboard may be stale after a run, so the UI needs a reliable
+  freshness signal or publication behavior.
+- Meta copy is bad or confusing for coworkers.
+- `Com texto para leitura` should be replaced with clearer Portuguese.
+- Primary target checkboxes should not be forced in the coworker flow.
+- Bernardo Rubiao moves to secondary for this sprint; the current primary
+  targets are Flavio Valle and Pedro Angelito.
+- Adding a name must be simple by default. Any advanced tutorial belongs behind
+  a hidden advanced/details control.
+
+Agent coordination discipline:
+
+- Check `git status --short --branch` before editing and before handoff.
+- If local `master` is behind `origin/master`, stop and fast-forward before
+  writing.
+- Keep each pass scoped to the claimed ownership area and never revert or
+  overwrite another agent's work.
+- Every checkpoint should say whether it is docs-only, code, live verification,
+  or blocked, and should record the evidence used.
 
 ## Explicitly Out Of Scope For This Checkpoint
 

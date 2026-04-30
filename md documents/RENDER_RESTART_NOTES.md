@@ -178,7 +178,11 @@ For this restart, Atlas created a safety branch before cleaning the sync path:
 
 ## 2026-04-30 Coworker Runner Sprint Contract
 
-Current sprint target:
+Historical note: this contract described the previous open-link runner sprint.
+It is superseded for the next sprint by the systemic live runner audit/repair
+contract below, especially on the primary/secondary target split.
+
+Runner sprint target:
 
 - Live site: `https://clipping-project.onrender.com/`
 - Workflow: open-link coworker clipping runner.
@@ -220,3 +224,47 @@ Completion rule:
   contains build marker `coworker-runner-20260430`.
 - Browser smoke passed on desktop and mobile against the live URL, including
   opening the shared progress panel, with no console warnings or errors.
+
+## 2026-04-30 Systemic Live Runner Audit/Repair Sprint Contract
+
+Current sprint target:
+
+- Live site: `https://clipping-project.onrender.com/`
+- Workflow: repair the coworker live runner until it is simple, truthful, and
+  usable on the public Render site.
+
+Known issues to audit and repair:
+
+- Progress is still too vague. A coworker needs concrete runner state, not only
+  generic "running" or unclear shared progress.
+- There is no cancel control for a run that is stuck, accidental, or obviously
+  wrong.
+- The published dashboard can go stale after a run; the live site must make it
+  clear whether the visible dashboard reflects the latest completed run.
+- Meta copy is bad or confusing in places and should be rewritten for the
+  coworker workflow, not for developers.
+- The phrase `Com texto para leitura` is poor product copy and should be
+  replaced with clearer Portuguese.
+- Primary target checkboxes must not be forced in the coworker UI. The primary
+  set should be explicit without making coworkers fight locked checkbox states.
+- Bernardo Rubiao moves to the secondary target set for this sprint. The
+  current primary targets are Flavio Valle and Pedro Angelito.
+- Adding a name must be simple. Any advanced tutorial or explanation for target
+  creation should be hidden behind an advanced/details affordance, not shown as
+  the main path.
+
+Acceptance rule:
+
+- The live Render site is the bar. A fix only counts when the public URL above
+  shows the corrected behavior and the agent has verified it there. Local-only
+  tests, pushed commits, pending deploys, screenshots, or assumptions do not
+  close the item.
+
+Coordination discipline:
+
+- Each agent must state which live behavior it is changing, keep edits scoped
+  to that ownership area, and avoid overwriting another agent's parallel work.
+- Check git status before edits and before handoff. If the branch is behind
+  origin, stop for a fast-forward instead of writing on a stale baseline.
+- Record whether a checkpoint is docs-only, code, live verification, or a
+  blocker. Do not call a sprint item complete without live Render evidence.

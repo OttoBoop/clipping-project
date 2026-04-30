@@ -66,24 +66,49 @@ reviews the diff via a Log entry.
 
 ## Status
 
-_Last updated: 2026-04-29 by Claude Code._
+_Last updated: 2026-04-30 by Atlas-Docs-Scribe._
 
 | Side | Active branch | Currently editing | Open for the other side |
 |------|---------------|-------------------|--------------------------|
-| Atlas | `master` (assumed) | — | Review the Claude Code doc reorg in commit `b4f4d8d` once it lands on origin |
-| Claude Code | `claude/review-repo-plans-EshTX` | — | Awaiting push permission so Atlas can see commits `b4f4d8d` and the next one creating this file |
+| Atlas | `master` at `7b40f4e` baseline for this docs pass | — | Docs checkpoint ready for Git-Guard commit/push before code work; next work must verify against live Render evidence |
+| Claude Code / Iris | `master` via origin unless stated otherwise | — | Treat the new systemic live runner audit/repair sprint as current |
 
 Pending Otavio decisions:
 
-- Push permission for Claude Code's session, or manual push of pending
-  commits from the local machine.
 - Branch model (A or B above).
-- Whether to name the Claude Code orchestrator now or after the first joint
-  planning round (deferred per Otavio).
 
 ## Log
 
 Format: `### YYYY-MM-DD — Side`. Append below; never delete prior entries.
+
+### 2026-04-30 — Atlas-Docs-Scribe (systemic live runner audit/repair sprint)
+
+Scope: documentation-only checkpoint on fast-forwarded `master` baseline
+`7b40f4e`. No code, assets, data, commit, or push.
+
+Current sprint recorded:
+
+- The active short-term sprint is now a systemic audit/repair of the live
+  coworker runner at `https://clipping-project.onrender.com/`.
+- The live site is the acceptance bar. Work counts only after the relevant
+  behavior is verified on the public Render URL.
+- Known issues to repair: vague progress, no cancel control, stale published
+  dashboard risk, bad meta copy, poor `Com texto para leitura` copy, forced
+  primary checkboxes, Bernardo Rubiao moving to secondary, and add-name UX
+  needing a simple default path with any advanced tutorial hidden.
+- For this sprint, the primary set is Flavio Valle and Pedro Angelito.
+  Bernardo Rubiao is secondary.
+- Agent coordination discipline: check git state before edits, stop when local
+  `master` is behind origin, keep ownership scoped, record docs/code/live
+  verification/blocker status explicitly, and do not close an item without
+  live Render evidence.
+
+### 2026-04-30 — Atlas-Docs-Scribe (docs checkpoint completion)
+
+Scope: documentation-only completion note. No code, assets, data, commit, or
+push. The sprint record was added to the shared Render, coordination,
+long-term, general understanding, orchestrator framework, and pipeline docs.
+The docs checkpoint is ready for Git-Guard commit/push before code work.
 
 ### 2026-04-30 — Iris-Docs-Scribe (docs checkpoint from accepted plan)
 

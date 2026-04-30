@@ -105,10 +105,12 @@ If none of A/B/C applies, the loop is not finished. Continue working.
 
 _2026-04-30 by Iris-Docs-Scribe._
 
-These are current-sprint boundaries, not the final long-term product shape:
+Historical note: these were the boundaries for the open-link coworker runner
+sprint. The next sprint supersedes the primary/secondary target split below.
+These are not the final long-term product shape:
 
 - Plan Mode means creating the short-term plan for the immediate sprint.
-- The current sprint is the open-link coworker clipping runner on
+- That sprint was the open-link coworker clipping runner on
   `https://clipping-project.onrender.com/`.
 - Coworker workflows have no admin/password gate in this sprint.
 - Primary targets are locked to Flavio Valle, Pedro Angelito, and Bernardo
@@ -126,3 +128,45 @@ deploy `dep-d7pnck9j2pic73fq4u8g`. The live homepage now exposes the
 open-link coworker runner, `/api/update/status` is public, `/api/targets`
 returns the locked primary keys plus secondary targets, `/admin` redirects to
 `/`, and browser smoke checks passed on desktop and mobile.
+
+---
+
+## 5. Systemic Live Runner Audit/Repair Sprint
+
+_2026-04-30 by Atlas-Docs-Scribe._
+
+This is the active short-term sprint after the open-link runner went live. The
+goal is not to add a broad new product area. The goal is to make the live
+coworker runner clear, controllable, current, and simple for real use.
+
+Current sprint facts:
+
+- Live site: `https://clipping-project.onrender.com/`.
+- The live Render site is the acceptance bar. A task is complete only after the
+  relevant behavior is verified at the public URL.
+- Primary targets for this sprint: Flavio Valle and Pedro Angelito.
+- Bernardo Rubiao moves to the secondary target set for this sprint.
+
+Known repair items:
+
+- Progress feedback is too vague and needs concrete, trustworthy runner state.
+- The runner needs a cancel path for stuck, accidental, or wrong runs.
+- The published dashboard can become stale after a run; the UI must not imply
+  freshness unless the latest completed run is actually reflected.
+- Meta copy should be rewritten for coworkers instead of exposing internal or
+  confusing phrasing.
+- `Com texto para leitura` is bad copy and should be replaced.
+- Primary target checkboxes should not be forced in a way that makes the UI
+  feel broken or adversarial.
+- Adding a name must be a simple default flow.
+- Any advanced tutorial for adding names must be hidden behind an advanced or
+  details affordance.
+
+Coordination rule:
+
+- Agents must name whether a checkpoint is documentation, code, live
+  verification, or blocker handling.
+- Agents must check git state before writing. If local `master` is behind
+  `origin/master`, stop and fast-forward before editing.
+- Do not overwrite another agent's work. Keep edits scoped to the claimed
+  ownership area and record live evidence before closing a sprint item.
