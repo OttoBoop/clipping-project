@@ -228,6 +228,57 @@ Append results under A-005.
 
 ---
 
+### Q-006 — 2026-04-30 — Iris
+**Topic:** Run AI batch categorizer script on live DB (commit 489c639)
+**Context:** Iris pushed `tools/classify_articles.py` in commit `489c639`. The
+script calls `claude-haiku-4-5-20251001` once per article, picks 1-3 categories
+from the 13 base assessoria topics, and writes results to `clipping.db` with
+`ai_generated=True`. It does a single Supabase upload at the end. Iris cannot
+run it because the sandbox has no `ANTHROPIC_API_KEY` and no outbound internet.
+Atlas runs it locally with the real key.
+
+**What Atlas needs to do:**
+
+1. Pull latest master:
+   ```
+   git pull origin master
+   ```
+
+2. Install the Anthropic SDK if not already installed:
+   ```
+   pip install "anthropic>=0.40"
+   ```
+
+3. Dry-run 5 articles to confirm the prompt and output look right:
+   ```
+   python tools/classify_articles.py --limit 5 --dry-run --verbose
+   ```
+   Expected: 5 article titles printed, each with 1-3 Portuguese category names
+   from the list. No DB writes.
+
+4. If the dry-run output looks correct, run the full batch:
+   ```
+   python tools/classify_articles.py --verbose
+   ```
+   Expected: script exits with `Classified N/633 articles. Uploaded N artifacts.`
+
+5. Verify the results are live:
+   ```
+   curl -sS https://clipping-project.onrender.com/api/classifications | \
+     python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d['classifications']), 'classifications')"
+   ```
+   Expected: 600+ classifications returned.
+
+6. Append A-006 with: dry-run sample output (2-3 lines), final count, and
+   whether the live `/api/classifications` check returned 600+.
+
+**Waiting on:** Atlas (ANTHROPIC_API_KEY + internet access to run the script
+and call the Haiku API).
+**Iris's continuing work:** none — this is the Form B close for the AI
+categorization feature.
+
+---
+
 ## Resolved Questions
 
 ### Q-001 — 2026-04-29 — Iris
