@@ -1164,7 +1164,7 @@ class ClippingDB:
     def get_classifications_with_context(
         self, target_key: str | None = None, limit: int = 100
     ) -> list[dict]:
-        """Classifications joined to mentions, articles, and categories."""
+        """Classifications joined to mentions, with article context when present."""
         where = ["1=1"]
         params: list = []
         if target_key:
@@ -1191,7 +1191,7 @@ class ClippingDB:
                 GROUP_CONCAT(cat.name, '|') AS category_names
             FROM classifications c
             JOIN mentions m ON m.id = c.mention_id
-            JOIN articles  a ON a.id = m.article_id
+            LEFT JOIN articles  a ON a.id = m.article_id
             LEFT JOIN classification_categories cc  ON cc.classification_id = c.id
             LEFT JOIN categories               cat ON cat.id = cc.category_id
             WHERE {" AND ".join(where)}

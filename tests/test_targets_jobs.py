@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import sqlite3
 import sys
 
 from pipeline.database import ClippingDB
@@ -164,3 +165,46 @@ def test_job_progress_contract_includes_target_source_counts_and_recent_events(m
     assert latest["payload"]["target_key"] == "flavio_valle"
     assert latest["payload"]["target_label"] == "Flavio Valle"
     assert latest["payload"]["source"] == "Google News"
+
+
+def test_classification_listing_survives_missing_article_context(tmp_path):
+    db_file = tmp_path / "clipping.db"
+    db = ClippingDB(db_file)
+    mention_id = db.create_mention(
+        article_id=643,
+        target_key="bernardo_rubiao",
+        target_name="Bernardo Rubiao",
+    )
+    db.upsert_classification(
+        mention_id=mention_id,
+        article_sentiment="neutral",
+        target_sentiment="neutral",
+    )
+
+    rows = db.get_classifications_with_context(limit=10)
+
+    assert len(rows) == 1
+    assert rows[0]["article_id"] == 643
+    assert rows[0]["target_key"] == "bernardo_rubiao"
+    assert rows[0]["article_sentiment"] == "neutral"
+
+
+def test_sqlite_wal_is_checkpointed_before_artifact_upload(tmp_path):
+    from web_app.storage_bridge import checkpoint_sqlite_wal
+
+    db_file = tmp_path / "clipping.db"
+    with sqlite3.connect(db_file) as conn:
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("CREATE TABLE rows (id INTEGER PRIMARY KEY, name TEXT)")
+        conn.execute("INSERT INTO rows (name) VALUES ('persisted')")
+
+    wal_file = db_file.with_name(db_file.name + "-wal")
+    assert wal_file.exists()
+
+    checkpoint_sqlite_wal(db_file)
+
+    copied = tmp_path / "copied.db"
+    copied.write_bytes(db_file.read_bytes())
+    with sqlite3.connect(copied) as conn:
+        rows = conn.execute("SELECT name FROM rows").fetchall()
+    assert rows == [("persisted",)]

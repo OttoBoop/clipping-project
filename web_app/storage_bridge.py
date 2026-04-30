@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -119,6 +120,8 @@ class ArtifactStore:
     def upload_file(self, local_path: Path, remote_path: str) -> bool:
         if not self.enabled:
             return False
+        if local_path.suffix.lower() == ".db":
+            checkpoint_sqlite_wal(local_path)
         content_type = _content_type(local_path)
         try:
             response = requests.post(
@@ -159,6 +162,18 @@ def _content_type(path: Path) -> str:
     if suffix == ".db":
         return "application/octet-stream"
     return "application/octet-stream"
+
+
+def checkpoint_sqlite_wal(path: Path) -> None:
+    """Flush WAL pages into the main SQLite file before uploading it."""
+    if not path.is_file():
+        return
+    try:
+        with sqlite3.connect(path) as conn:
+            conn.execute("PRAGMA busy_timeout = 5000")
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    except sqlite3.Error:
+        return
 
 
 artifact_store = ArtifactStore()
