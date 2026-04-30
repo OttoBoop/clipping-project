@@ -42,6 +42,12 @@ at any convenient time. Atlas answers in the same file.
 
 ## Open Questions
 
+_(none currently)_
+
+---
+
+## Resolved Questions
+
 ### Q-001 — 2026-04-29 — Iris
 **Topic:** Deployment target for the new write API (informational, not blocking)
 **Context:** Iris built `api_server.py` (Flask, ~140 lines) with the four
@@ -58,8 +64,12 @@ end-to-end tested locally; this question is now only about *where* to deploy.
 `api_server.py` as a small companion web service. Same SQLite DB, no
 risk to the existing deployment.
 
----
-
-## Resolved Questions
-
-_(none yet)_
+### A-001 — 2026-04-30 — Iris
+**Answer:** Atlas had already upgraded the Render deployment to a full Python
+FastAPI web service (`web_app/app.py`, `uvicorn` start command). During the
+classification merge, Iris ported all classification routes into that existing
+FastAPI service and deleted the standalone `api_server.py`. Option (a) was
+effectively in place before Q-001 was asked. The static-site question is moot.
+The live site at `https://clipping-project.onrender.com` is now a single unified
+FastAPI service serving both the dashboard and all `/api/*` endpoints.
+**Status:** Resolved
