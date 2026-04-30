@@ -13,6 +13,26 @@ from fastapi.testclient import TestClient
 from pipeline.database import ClippingDB
 
 
+OBSERVED_UPLOAD_PATHS = [
+    "data/clipping.db",
+    "index.html",
+    "assets/clipping.css",
+    "assets/clipping.js",
+    "assets/clipping-data.json",
+    "assets/clipping-raw-texts.json",
+    "runs/manual-story.json",
+]
+
+SECRET_SENTINELS = [
+    "test-password",
+    "test-session-secret",
+    "supabase-secret-token-value",
+    "SUPABASE_SERVICE_KEY",
+    "Authorization",
+    "Bearer ",
+]
+
+
 def load_test_app(monkeypatch, tmp_path, *, admin_password="test-password", session_secret="test-session-secret"):
     db_file = tmp_path / "clipping.db"
     ClippingDB(db_file)
@@ -27,6 +47,7 @@ def load_test_app(monkeypatch, tmp_path, *, admin_password="test-password", sess
         if name == "web_app" or name.startswith("web_app."):
             del sys.modules[name]
     module = importlib.import_module("web_app.app")
+    module.ensure_app_tables(db_file)
     return module.app, db_file
 
 
@@ -63,6 +84,84 @@ def manual_story_payload(**overrides):
     }
     payload.update(overrides)
     return payload
+
+
+def mock_artifact_upload(monkeypatch, tmp_path, uploaded_paths=None):
+    app_module = importlib.import_module("web_app.app")
+    uploaded_paths = list(uploaded_paths or OBSERVED_UPLOAD_PATHS)
+    calls = []
+
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "supabase-secret-token-value")
+    monkeypatch.setattr(app_module.artifact_store, "enabled", True)
+    monkeypatch.setattr(
+        app_module.artifact_store,
+        "backup_current_artifacts",
+        lambda label: tmp_path / f"{label}-backup",
+    )
+    monkeypatch.setattr(app_module, "run_export_snapshot", lambda *args, **kwargs: None)
+
+    def fake_upload_current_artifacts(*, manifest=None, job_id=None):
+        calls.append({"manifest": manifest, "job_id": job_id})
+        return list(uploaded_paths)
+
+    monkeypatch.setattr(app_module.artifact_store, "upload_current_artifacts", fake_upload_current_artifacts)
+    return calls, uploaded_paths
+
+
+def status_jobs(payload):
+    current = payload.get("current")
+    if isinstance(current, dict):
+        yield "current", current
+    recent = payload.get("recent")
+    if isinstance(recent, list):
+        for index, job in enumerate(recent):
+            if isinstance(job, dict):
+                yield f"recent[{index}]", job
+
+
+def assert_no_secret_material(value):
+    serialized = json.dumps(value, sort_keys=True)
+    for sentinel in SECRET_SENTINELS:
+        assert sentinel not in serialized
+
+
+def assert_status_exposes_artifact_upload(payload, uploaded_paths, *, job_id=None):
+    matches = []
+    for location, job in status_jobs(payload):
+        if job_id and job.get("id") != job_id:
+            continue
+        if {"artifactUpload", "uploadedArtifacts", "uploadedArtifactCount"} <= set(job):
+            matches.append((location, job))
+
+    assert matches, json.dumps(payload, indent=2, sort_keys=True)
+    location, job = matches[0]
+    assert job["uploadedArtifactCount"] == len(uploaded_paths), location
+    assert job["uploadedArtifacts"] == uploaded_paths, location
+    assert job["artifactUpload"]["count"] == len(uploaded_paths), location
+    assert job["artifactUpload"]["items"] == uploaded_paths, location
+    return location, job
+
+
+def assert_db_artifact_event(db_file, job_id, uploaded_paths):
+    with sqlite3.connect(db_file) as conn:
+        conn.row_factory = sqlite3.Row
+        job = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+        event = conn.execute(
+            """
+            SELECT * FROM job_events
+            WHERE job_id = ? AND event = 'artifacts_uploaded'
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (job_id,),
+        ).fetchone()
+
+    assert job is not None
+    assert event is not None
+    payload = json.loads(event["payload_json"])
+    assert payload["count"] == len(uploaded_paths)
+    assert payload["items"] == uploaded_paths
+    assert_no_secret_material({"job": dict(job), "event": payload})
 
 
 def assert_empty_db(db_file):
@@ -170,6 +269,38 @@ def test_job_error_sanitizer_redacts_secret_material(monkeypatch, tmp_path):
     assert "[redacted]" in message
 
 
+def test_update_status_exposes_artifact_upload_contract_for_completed_jobs(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    jobs = importlib.import_module("web_app.jobs")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "supabase-secret-token-value")
+
+    for kind in ("update", "export"):
+        job_id = f"{kind}-observed"
+        jobs.create_job(
+            job_id,
+            kind,
+            {
+                "preset": kind,
+                "collector": kind,
+                "target_keys": ["flavio_valle"] if kind == "update" else [],
+                "date_from": "2026-04-29" if kind == "update" else "",
+                "date_to": "2026-04-30" if kind == "update" else "",
+            },
+            started_by="admin",
+        )
+        jobs.append_event(job_id, "artifacts_uploaded", {"count": len(OBSERVED_UPLOAD_PATHS), "items": OBSERVED_UPLOAD_PATHS})
+        jobs.update_job(job_id, status="succeeded", articles_inserted=1, stories_touched=1)
+
+        with TestClient(app) as client:
+            login(client)
+            status = client.get("/api/update/status")
+
+        assert status.status_code == 200
+        _, observed = assert_status_exposes_artifact_upload(status.json(), OBSERVED_UPLOAD_PATHS, job_id=job_id)
+        assert observed["kind"] == kind
+        assert_no_secret_material(status.json())
+
+
 def test_admin_ui_serves_manual_story_form(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     with TestClient(app) as client:
@@ -242,6 +373,75 @@ def test_manual_story_insert_is_idempotent_for_duplicate_url(monkeypatch, tmp_pa
         "story_targets": 1,
         "manual_entries": 1,
     }
+
+
+def test_manual_story_records_uploaded_artifact_observability(monkeypatch, tmp_path):
+    app, db_file = load_test_app(monkeypatch, tmp_path)
+    upload_calls, uploaded_paths = mock_artifact_upload(monkeypatch, tmp_path)
+
+    with TestClient(app) as client:
+        csrf = login(client)
+        response = client.post(
+            "/api/manual-story",
+            headers={"X-CSRF-Token": csrf},
+            json=manual_story_payload(export=True, note="Observability contract check."),
+        )
+        status = client.get("/api/update/status")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["status"] == "created"
+    assert len(upload_calls) == 1
+    assert upload_calls[0]["manifest"]["kind"] == "manual-story"
+    assert upload_calls[0]["manifest"]["result"]["articleId"] == result["articleId"]
+
+    assert status.status_code == 200
+    _, observed = assert_status_exposes_artifact_upload(status.json(), uploaded_paths)
+    assert observed["kind"] == "manual"
+    assert observed["status"] == "succeeded"
+    assert_db_artifact_event(db_file, observed["id"], uploaded_paths)
+    assert_no_secret_material({"response": result, "status": status.json(), "upload_calls": upload_calls})
+
+
+def test_manual_story_duplicate_with_artifact_upload_stays_polite(monkeypatch, tmp_path):
+    app, db_file = load_test_app(monkeypatch, tmp_path)
+    upload_calls, uploaded_paths = mock_artifact_upload(monkeypatch, tmp_path)
+
+    with TestClient(app) as client:
+        csrf = login(client)
+        first = client.post("/api/manual-story", headers={"X-CSRF-Token": csrf}, json=manual_story_payload(export=True))
+        second = client.post(
+            "/api/manual-story",
+            headers={"X-CSRF-Token": csrf},
+            json=manual_story_payload(
+                export=True,
+                title="Titulo alterado nao deve criar nova materia",
+                url="HTTPS://EXAMPLE.COM/noticia/?utm_campaign=outra-campanha#fragmento",
+            ),
+        )
+        status = client.get("/api/update/status")
+
+    assert first.status_code == 200
+    assert second.status_code == 200, second.text
+    assert second.json()["status"] == "duplicate"
+    assert second.json()["message"] == "Esta materia ja estava na base."
+    assert second.json()["articleId"] == first.json()["articleId"]
+    assert len(upload_calls) == 2
+    assert db_counts(db_file) == {
+        "articles": 1,
+        "mentions": 1,
+        "stories": 1,
+        "story_articles": 1,
+        "story_targets": 1,
+        "manual_entries": 1,
+    }
+
+    assert status.status_code == 200
+    _, observed = assert_status_exposes_artifact_upload(status.json(), uploaded_paths)
+    assert observed["kind"] == "manual"
+    assert observed["status"] == "succeeded"
+    assert_db_artifact_event(db_file, observed["id"], uploaded_paths)
+    assert_no_secret_material({"response": second.json(), "status": status.json(), "upload_calls": upload_calls})
 
 
 def test_manual_story_validation_rejects_partial_payload_without_db_write(monkeypatch, tmp_path):
