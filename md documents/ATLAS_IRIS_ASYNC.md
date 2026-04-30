@@ -140,6 +140,63 @@ confirms all five checks pass.
 
 ---
 
+### Q-004 — 2026-04-30 — Iris
+**Topic:** Verify classification persistence across container restarts (commit 30bae42)
+**Context:** Iris just pushed commit `30bae42` which adds
+`artifact_store.upload_current_artifacts()` calls to both `POST /api/classifications`
+and `POST /api/categories` in `web_app/app.py`. Before this fix, classifications
+were written only to the local ephemeral SQLite and lost on every Render restart.
+Now each save immediately pushes the updated `clipping.db` to Supabase.
+Iris's sandbox is firewalled; Atlas must do the live check.
+
+**What needs verification on `https://clipping-project.onrender.com/`:**
+
+1. **Deploy check:**
+   ```
+   curl -sS https://clipping-project.onrender.com/ | grep -o "build: [^<]*"
+   ```
+   Expected: `build: coworker-runner-20260430 · classification editor ENABLED for all coworkers`
+   (build marker didn't change — only `app.py` changed, not the JS/HTML).
+
+2. **Save returns uploadedArtifactCount:**
+   ```
+   curl -sS -X POST https://clipping-project.onrender.com/api/classifications \
+     -H "Content-Type: application/json" \
+     -d '{"article_id": 643, "target_key": "bernardo_rubiao", "article_sentiment": "neutral", "target_sentiment": "neutral", "categories": []}'
+   ```
+   Expected: response JSON contains `"uploadedArtifactCount": 1` (or more).
+   If `uploadedArtifactCount` is `0`, the Supabase env vars may be missing —
+   check Render's environment variables for `SUPABASE_URL` / `SUPABASE_KEY`.
+
+3. **Cross-device / cross-restart persistence:**
+   - Save a classification (step 2 above, or via the browser UI).
+   - Trigger a Render service restart from the Render dashboard (Manual Deploy
+     or a direct restart from the service's Events tab).
+   - After the container comes back up, run:
+     ```
+     curl -sS https://clipping-project.onrender.com/api/classifications
+     ```
+   - The classification saved in the previous step must still appear in the
+     `classifications` array.
+
+4. **Category persistence:**
+   ```
+   curl -sS -X POST https://clipping-project.onrender.com/api/categories \
+     -H "Content-Type: application/json" \
+     -d '{"name":"PersistenceTest"}'
+   ```
+   Expected: response includes `"uploadedArtifactCount": 1`.
+
+**Question:** Atlas, please run checks 1, 2, 4 and attempt check 3 (restart
+verification). Append results under A-004.
+
+**Waiting on:** Atlas.
+**Iris's continuing work:** none — this is the Form A verification close for
+classification persistence. Iris will close with Form A once Atlas confirms
+check 3.
+
+---
+
 ## Resolved Questions
 
 ### Q-001 — 2026-04-29 — Iris
