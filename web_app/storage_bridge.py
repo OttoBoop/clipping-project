@@ -10,17 +10,16 @@ from urllib.parse import quote
 
 import requests
 
-from .config import ASSETS_DIR, DATA_DIR, ROOT, db_path, local_writes_allowed
+from .config import ASSETS_DIR, DATA_DIR, db_path, local_writes_allowed
 
 
-CURRENT_FILES = (
+RUNTIME_FILES = (
     ("data/clipping.db", lambda: db_path()),
-    ("index.html", lambda: ROOT / "index.html"),
-    ("assets/clipping.css", lambda: ASSETS_DIR / "clipping.css"),
-    ("assets/clipping.js", lambda: ASSETS_DIR / "clipping.js"),
+    ("data/targets.json", lambda: DATA_DIR / "targets.json"),
     ("assets/clipping-data.json", lambda: ASSETS_DIR / "clipping-data.json"),
     ("assets/clipping-raw-texts.json", lambda: ASSETS_DIR / "clipping-raw-texts.json"),
 )
+CURRENT_FILES = RUNTIME_FILES
 
 
 class ArtifactStore:
@@ -63,7 +62,7 @@ class ArtifactStore:
         if not self.enabled:
             return []
         downloaded: list[str] = []
-        for relative, local_factory in CURRENT_FILES:
+        for relative, local_factory in RUNTIME_FILES:
             local_path = local_factory()
             if self.download_file(self._remote(relative), local_path):
                 downloaded.append(relative)
@@ -86,7 +85,7 @@ class ArtifactStore:
 
     def upload_current_artifacts(self, *, manifest: dict[str, Any] | None = None, job_id: str | None = None) -> list[str]:
         uploaded: list[str] = []
-        for relative, local_factory in CURRENT_FILES:
+        for relative, local_factory in RUNTIME_FILES:
             local_path = local_factory()
             if local_path.is_file() and self.upload_file(local_path, self._remote(relative)):
                 uploaded.append(relative)
@@ -103,7 +102,7 @@ class ArtifactStore:
         backup_dir = DATA_DIR / "backups" / f"{stamp}-{safe_label}"
         backup_dir.mkdir(parents=True, exist_ok=True)
 
-        for relative, local_factory in CURRENT_FILES:
+        for relative, local_factory in RUNTIME_FILES:
             local_path = local_factory()
             if local_path.is_file():
                 target = backup_dir / relative
@@ -163,4 +162,3 @@ def _content_type(path: Path) -> str:
 
 
 artifact_store = ArtifactStore()
-
