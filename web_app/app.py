@@ -20,8 +20,8 @@ from .auth import (
     verify_session,
 )
 from .config import ASSETS_DIR, ROOT, db_path, local_writes_allowed
-from .db_admin import ValidationError, ensure_app_tables, insert_manual_story, latest_jobs, load_targets
-from .jobs import JobConflict, job_manager, run_export_snapshot
+from .db_admin import ValidationError, ensure_app_tables, insert_manual_story, load_targets
+from .jobs import JobConflict, job_manager, recent_jobs, run_export_snapshot
 from .storage_bridge import artifact_store
 from pipeline.database import ClippingDB
 
@@ -106,7 +106,7 @@ def healthz() -> dict[str, Any]:
 @app.get("/api/update/status")
 def update_status(request: Request) -> dict[str, Any]:
     require_admin(request)
-    return {"current": job_manager.current_status(), "recent": latest_jobs(db_path())}
+    return {"current": job_manager.current_status(), "recent": recent_jobs()}
 
 
 @app.post("/api/update/start")
@@ -148,16 +148,25 @@ async def manual_story(request: Request) -> JSONResponse:
     try:
         artifact_store.backup_current_artifacts("manual-story")
         result = insert_manual_story(db_path(), payload, created_by="admin")
-        if bool(payload.get("export", False)):
+        export_requested = bool(payload.get("export", False))
+        if export_requested:
             run_export_snapshot()
+        uploaded: list[str] = []
         if artifact_store.enabled:
-            artifact_store.upload_current_artifacts(
+            uploaded = artifact_store.upload_current_artifacts(
                 manifest={"kind": "manual-story", "result": result},
                 job_id=f"manual-{result.get('articleId', 'duplicate')}",
             )
+        job = job_manager.record_completed_manual(
+            result=result,
+            uploaded=uploaded,
+            started_by="admin",
+            export=export_requested,
+            mentions_inserted=len(payload.get("target_keys") or payload.get("targetKeys") or []),
+        )
     except ValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return JSONResponse(result)
+    return JSONResponse({**result, "job": job})
 
 
 @app.get("/api/csrf")

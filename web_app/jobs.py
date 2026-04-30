@@ -97,6 +97,49 @@ class JobManager:
         }
         return self._start("export", spec, started_by=started_by)
 
+    def record_completed_manual(
+        self,
+        *,
+        result: dict[str, Any],
+        uploaded: list[str],
+        started_by: str,
+        export: bool = True,
+        mentions_inserted: int = 0,
+    ) -> dict[str, Any]:
+        job_id = f"manual-{uuid.uuid4().hex[:12]}"
+        spec = {
+            "preset": "manual",
+            "collector": "manual",
+            "target_keys": [],
+            "date_from": "",
+            "date_to": "",
+            "export": bool(export),
+        }
+        ensure_app_tables(db_path())
+        create_job(job_id, "manual", spec, started_by=started_by, enforce_single_active=False)
+        articles_inserted = 1 if result.get("status") == "created" else 0
+        stories_touched = 1 if result.get("storyId") else 0
+        append_event(
+            job_id,
+            "manual_story_completed",
+            {
+                "status": str(result.get("status") or ""),
+                "articles_inserted": articles_inserted,
+                "mentions_inserted": mentions_inserted if articles_inserted else 0,
+                "stories_touched": stories_touched,
+            },
+        )
+        append_event(job_id, "artifacts_uploaded", artifact_upload_summary(uploaded))
+        update_job(
+            job_id,
+            status="succeeded",
+            finished_at=datetime.now(timezone.utc).isoformat(),
+            articles_inserted=articles_inserted,
+            mentions_inserted=mentions_inserted if articles_inserted else 0,
+            stories_touched=stories_touched,
+        )
+        return get_job(job_id) or {"id": job_id, "status": "succeeded"}
+
     def _start(self, kind: str, spec: dict[str, Any], *, started_by: str) -> dict[str, Any]:
         if not self.store.writes_available:
             raise RuntimeError("persistent_storage_not_configured")
@@ -156,7 +199,7 @@ class JobManager:
                 "finishedAt": datetime.now(timezone.utc).isoformat(),
             }
             uploaded = self.store.upload_current_artifacts(manifest=manifest, job_id=job_id)
-            append_event(job_id, "artifacts_uploaded", {"count": len(uploaded), "items": uploaded})
+            append_event(job_id, "artifacts_uploaded", artifact_upload_summary(uploaded))
             update_job(job_id, status="succeeded", finished_at=datetime.now(timezone.utc).isoformat(), **totals)
         except Exception as exc:
             update_job(
@@ -250,15 +293,23 @@ def run_export_snapshot(job_id: str | None = None) -> None:
         append_event(job_id, "export_complete", {"lines": len(completed.stdout.splitlines())})
 
 
-def create_job(job_id: str, kind: str, spec: dict[str, Any], *, started_by: str) -> None:
+def create_job(
+    job_id: str,
+    kind: str,
+    spec: dict[str, Any],
+    *,
+    started_by: str,
+    enforce_single_active: bool = True,
+) -> None:
     with connect(db_path()) as conn:
         conn.execute("BEGIN IMMEDIATE")
-        active = conn.execute(
-            f"SELECT id FROM jobs WHERE status IN ({','.join('?' for _ in ACTIVE_JOB_STATUSES)}) LIMIT 1",
-            ACTIVE_JOB_STATUSES,
-        ).fetchone()
-        if active:
-            raise JobConflict("job_already_running")
+        if enforce_single_active:
+            active = conn.execute(
+                f"SELECT id FROM jobs WHERE status IN ({','.join('?' for _ in ACTIVE_JOB_STATUSES)}) LIMIT 1",
+                ACTIVE_JOB_STATUSES,
+            ).fetchone()
+            if active:
+                raise JobConflict("job_already_running")
         conn.execute(
             """
             INSERT INTO jobs (
@@ -331,6 +382,7 @@ def get_job(job_id: str) -> dict[str, Any] | None:
         {"created_at": event_row["created_at"], "event": event_row["event"], "payload": json.loads(event_row["payload_json"])}
         for event_row in events
     ]
+    data.update(artifact_upload_from_events(data["events"]))
     return data
 
 
@@ -346,14 +398,80 @@ def get_active_job() -> dict[str, Any] | None:
             """,
             ACTIVE_JOB_STATUSES,
         ).fetchone()
-    return dict(row) if row else None
+    return with_artifact_upload(dict(row)) if row else None
 
 
 def recent_jobs(limit: int = 8) -> list[dict[str, Any]]:
     ensure_app_tables(db_path())
     with connect(db_path()) as conn:
         rows = conn.execute("SELECT * FROM jobs ORDER BY started_at DESC LIMIT ?", (int(limit),)).fetchall()
-    return [dict(row) for row in rows]
+    return [with_artifact_upload(dict(row)) for row in rows]
+
+
+def with_artifact_upload(job: dict[str, Any]) -> dict[str, Any]:
+    job_id = str(job.get("id") or "")
+    if not job_id:
+        return job
+    with connect(db_path()) as conn:
+        rows = conn.execute(
+            """
+            SELECT created_at, event, payload_json
+            FROM job_events
+            WHERE job_id = ? AND event = 'artifacts_uploaded'
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (job_id,),
+        ).fetchall()
+    events = [
+        {"created_at": row["created_at"], "event": row["event"], "payload": json.loads(row["payload_json"])}
+        for row in rows
+    ]
+    job.update(artifact_upload_from_events(events))
+    return job
+
+
+def artifact_upload_summary(uploaded: list[str]) -> dict[str, Any]:
+    safe_items = []
+    for item in uploaded:
+        safe = safe_artifact_name(item)
+        if safe:
+            safe_items.append(safe)
+    return {"count": len(safe_items), "items": safe_items}
+
+
+def safe_artifact_name(value: Any) -> str:
+    raw = str(value or "").strip().replace("\\", "/").lstrip("/")
+    parts = [part for part in raw.split("/") if part and part not in {".", ".."}]
+    if not parts:
+        return ""
+    safe_parts = []
+    for part in parts:
+        cleaned = re.sub(r"[^A-Za-z0-9._-]", "-", part)[:120]
+        if cleaned:
+            safe_parts.append(cleaned)
+    return "/".join(safe_parts)
+
+
+def artifact_upload_from_events(events: list[dict[str, Any]]) -> dict[str, Any]:
+    for event in events:
+        if event.get("event") != "artifacts_uploaded":
+            continue
+        payload = event.get("payload") or {}
+        if not isinstance(payload, dict):
+            continue
+        items = [safe_artifact_name(item) for item in payload.get("items") or []]
+        items = [item for item in items if item]
+        count = int(payload.get("count") or len(items))
+        return {
+            "artifactUpload": {
+                "count": count,
+                "items": items,
+            },
+            "uploadedArtifactCount": count,
+            "uploadedArtifacts": items,
+        }
+    return {}
 
 
 def sanitize_payload(payload: dict[str, Any]) -> dict[str, Any]:
