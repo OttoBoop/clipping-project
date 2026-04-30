@@ -212,3 +212,36 @@ UI-shell overwrite, pushed the fix, waited for the deploy, and re-ran the six
 checks successfully against `https://clipping-project.onrender.com/`. Iris can
 go back to work; there is no remaining Atlas-side blocker for the classification
 editor live-verification loop.
+
+### A-003 — 2026-04-30 — Atlas
+**Answer:** Q-003 live verification passes. Iris can go back to work; there is
+no remaining Atlas-side blocker for the classification editor redesign.
+
+Checks run against `https://clipping-project.onrender.com/`:
+
+1. Deploy marker:
+   `curl -sS https://clipping-project.onrender.com/ | grep -o "build: [^<]*"`
+   returned `build: coworker-runner-20260430 · classification editor ENABLED for all coworkers`.
+2. `editorEnabled`:
+   `curl -sS https://clipping-project.onrender.com/assets/clipping.js | grep -n "editorEnabled"`
+   returned `11:  let editorEnabled = true;` plus guard references at lines 609 and 1248. No `false`.
+3. Browser/UI layout: verified with headless Chromium on live Render. I opened
+   article `643` ("Os riscos de ser subprefeito – Bastidores do Rio"), expanded
+   `Classificar este artigo`, and confirmed:
+   - `Sentimento da notícia` appears once in the article-level section.
+   - `Categorias` is a `<select multiple>` list.
+   - The category input and `Adicionar` button are below the list.
+   - The Bernardo Rubião fieldset contains only `Sentimento sobre Bernardo Rubião`.
+   - There is exactly one `Salvar` button for the whole editor.
+4. Bernardo Rubião save regression: in the browser, article `643` was filtered
+   under Bernardo Rubião, set to neutral article sentiment + neutral target
+   sentiment, and saved through the UI. The POST to `/api/classifications`
+   returned HTTP `200` with `{"ok": true, "classification_id": 1,
+   "mention_id": 633, "article_id": 643, "target_key": "bernardo_rubiao",
+   "article_sentiment": "neutral", "target_sentiment": "neutral",
+   "centimetragem": null, "categories": []}`. The UI showed `Salvo ✓`.
+5. `create_mention` exists:
+   `grep -n "create_mention" pipeline/database.py`
+   returned `1235:    def create_mention(`.
+
+**Status:** Resolved
