@@ -228,6 +228,160 @@ Append results under A-005.
 
 ---
 
+### Q-006 — 2026-04-30 — Iris
+**Topic:** Live verification of Systemic Live Runner Audit/Repair sprint (commit 2f81e9f, branch claude/review-ui-code-lSi7g)
+**Context:** Iris pushed commit `2f81e9f` on branch `claude/review-ui-code-lSi7g`
+implementing every item from the 2026-04-30 Systemic Live Runner Audit/Repair
+Sprint. The branch is not yet merged to master and has not been deployed to
+Render. Iris's sandbox is firewalled (every request to
+`https://clipping-project.onrender.com/` returns `HTTP/2 403 host_not_allowed`),
+so Atlas must do the live check. Otávio explicitly authorized Iris to do this
+work without Atlas first, and asked Iris to write this question for Atlas to
+close the live-verification loop.
+
+**What changed in `2f81e9f`:**
+
+1. Cancel control:
+   - `web_app/jobs.py` adds `JobManager.cancel_active()` that marks the active
+     job `cancelled` in the DB, frees `_active_job_id` immediately so a new run
+     can start, and signals a `threading.Event` so the worker thread exits at
+     the next per-target boundary without overwriting state. Cooperative —
+     no forceful interrupt of in-flight HTTP fetches.
+   - `web_app/app.py` adds `POST /api/update/cancel` (public, no CSRF, returns
+     409 with `detail=no_active_job` when nothing is running).
+2. Bernardo Rubião moved primary → secondary:
+   - `web_app/db_admin.py` `PRIMARY_TARGET_KEYS = ("flavio_valle", "pedro_angelito")`.
+   - `data/targets.json` `bernardo_rubiao.primary = false`.
+3. Primary checkboxes no longer disabled:
+   - `assets/clipping.js` `renderRunTarget` no longer adds the `disabled` attr.
+   - `selectedRunTargetKeys()` reads actual checkbox state for both groups.
+   - Copy in `index.html` switched from "Sempre entram na atualizacao" to
+     "Ja vem marcados — desmarque se quiser deixar de fora desta rodada."
+4. Add-target form simplified:
+   - `index.html` shows only Nome by default.
+   - Keywords + exact_aliases are nested in a `<details class="add-target-advanced">`
+     labeled "Opcoes avancadas (tutorial)" with Portuguese tutorial paragraphs
+     explaining when to use each field.
+5. Bad meta copy replaced:
+   - `Com texto para leitura` → `Materias com texto integral arquivado`.
+6. Concrete progress messaging:
+   - `assets/clipping.js` `renderStatus` calls `placeholderText(status, kind)`
+     instead of bare `"Aguardando"`. Examples:
+     `running` + target → `"Buscando primeiro nome..."`,
+     `running` + source → `"Buscando primeira fonte..."`,
+     `cancelled` → `"Rodada cancelada"`,
+     idle → `"Sem rodada agora"`.
+7. Stale-dashboard freshness banner:
+   - New `<div class="freshness-banner">` at the top of `<main>` shows when
+     the latest succeeded job's `finished_at` is newer than `payload.meta.generatedAt`,
+     with a "Recarregar agora" button.
+8. Cancel button + cancelled status pill:
+   - New red "Cancelar atualizacao" button next to "Rodar atualizacao", visible
+     only while `["queued","running","exporting"]`.
+   - New `is-cancelled` class for the status pill.
+9. Asset cache key bumped: `coworker-runner-20260430` →
+   `live-runner-repair-20260430` so coworkers don't hit stale CSS/JS.
+10. Tests:
+    - `tests/test_admin_ui.py` updated `test_public_dashboard_wording_contract`
+      and `test_targets_api_returns_real_public_targets_contract`.
+    - `tests/test_targets_jobs.py` updated `primaryKeys` assertion.
+    - Two new cancel-route tests added.
+    - `25 passed` on `tests/test_admin_ui.py tests/test_targets_jobs.py`.
+    - `149 passed` on the broader suite (forensic-inventory and
+      page-performance failures are pre-existing and unrelated).
+
+**What needs verification on `https://clipping-project.onrender.com/`:**
+
+This branch is not on master yet. Step 0 is a merge decision (you or Otávio).
+
+1. **Merge or cherry-pick `2f81e9f` into master**, push, wait for Render
+   auto-deploy. Render currently serves master.
+
+2. **Deploy marker:**
+   ```
+   curl -sS https://clipping-project.onrender.com/ | grep -o "build: [^<]*"
+   ```
+   Expected: `build: live-runner-repair-20260430 · classification editor ENABLED for all coworkers`.
+
+3. **Cancel route exists and is public:**
+   ```
+   curl -sS -o /dev/null -w "%{http_code}\n" -X POST https://clipping-project.onrender.com/api/update/cancel
+   ```
+   Expected: `409` (no active job). Definitely not `404`.
+
+4. **Cancel actually frees the slot:**
+   - In a browser, click "Rodar atualizacao" with the default targets and dates.
+   - While status is `queued` or `running`, click the new red "Cancelar
+     atualizacao" button.
+   - Within ~2 seconds, the status pill should switch to `Cancelada` and the
+     "Rodar atualizacao" button should re-enable.
+   - Click "Rodar atualizacao" again immediately. The new run must start
+     (status flips to `Atualizando`) — no `409 job_already_running`.
+   - The background thread of the cancelled run is allowed to keep finishing
+     its current source request, but must NOT overwrite the `cancelled`
+     status. Worth a `curl https://clipping-project.onrender.com/api/update/status`
+     a minute later to confirm the most recent record for the cancelled job
+     stays `cancelled`.
+
+5. **Primary checkboxes are not disabled:**
+   ```
+   curl -sS https://clipping-project.onrender.com/assets/clipping.js | grep -c "disabled"
+   ```
+   Expected: small number, none of which are inside `renderRunTarget`. In
+   the live HTML output, the "Flavio Valle" and "Pedro Angelito" checkboxes
+   should be checked but not disabled (user can uncheck them).
+
+6. **Bernardo is now in the secondary list:**
+   ```
+   curl -sS https://clipping-project.onrender.com/api/targets | jq '.primaryKeys'
+   ```
+   Expected: `["flavio_valle","pedro_angelito"]` — no `bernardo_rubiao`.
+   Also verify in the browser that "Bernardo Rubião" appears under "Nomes
+   extras" rather than "Nomes principais".
+
+7. **"Com texto para leitura" is gone:**
+   ```
+   curl -sS https://clipping-project.onrender.com/ | grep -c "Com texto para leitura"
+   ```
+   Expected: `0`.
+   ```
+   curl -sS https://clipping-project.onrender.com/ | grep -c "Materias com texto integral arquivado"
+   ```
+   Expected: `1`.
+
+8. **Add-target form: only Nome by default, advanced fields hidden:**
+   In the browser, open "Adicionar nome extra". Only the "Nome" input + Salvar
+   button are visible. Below that, an "Opcoes avancadas (tutorial)" details
+   element is closed by default. Opening it shows two textareas and three
+   tutorial paragraphs in Portuguese.
+
+9. **Freshness banner triggers after a successful run:**
+   - Trigger a real update (steps in 4 above, but let it complete).
+   - After the job hits `succeeded`, the freshness banner should appear at the
+     top of the page reading "Uma atualizacao terminou agora. Recarregue para
+     ver os dados novos." with a "Recarregar agora" button.
+   - Clicking "Recarregar agora" reloads and the banner goes away (because
+     `payload.meta.generatedAt` now matches the latest `finished_at`).
+
+10. **Concrete progress messaging:**
+    Open the "Progresso compartilhado" tab while a run is in progress. The
+    "Nome atual", "Fonte atual", etc. fields should show concrete text like
+    "Buscando primeiro nome…" or the actual target/source name — not the bare
+    word "Aguardando".
+
+**Question:** Atlas, please run the curl checks (2, 3, 5, 6, 7) and visually
+verify (4, 8, 9, 10) in a browser. Append results under A-006. If the merge
+is up to you, please cherry-pick or merge `claude/review-ui-code-lSi7g`
+into master before checking. If the merge is up to Otávio, just verify steps
+2-10 once it's deployed.
+
+**Waiting on:** Atlas (merge + live HTTP/browser verification only Atlas can do).
+**Iris's continuing work:** none — this is the verification loop closer for
+the systemic live runner audit/repair sprint. No further code changes from
+Iris are queued until Atlas confirms the live state.
+
+---
+
 ## Resolved Questions
 
 ### Q-001 — 2026-04-29 — Iris
