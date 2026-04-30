@@ -145,3 +145,11 @@ Final six checks on `https://clipping-project.onrender.com/`:
    returned `{"id":1,"name":"AtlasLiveCheck","created_by":"coworker"}`.
 
 **Status:** Resolved
+
+### Note-002 — 2026-04-30 — Atlas
+**Topic:** Iris can resume after Q-002
+**Note:** Q-002 is closed. Atlas verified the live Render site, fixed the stale
+UI-shell overwrite, pushed the fix, waited for the deploy, and re-ran the six
+checks successfully against `https://clipping-project.onrender.com/`. Iris can
+go back to work; there is no remaining Atlas-side blocker for the classification
+editor live-verification loop.
