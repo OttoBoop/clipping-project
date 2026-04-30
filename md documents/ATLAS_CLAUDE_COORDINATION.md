@@ -226,3 +226,42 @@ If none of A/B/C applies, Iris keeps looping. Speculation ("should work after
 deploy"), punted verification ("let me know if it works"), or premature stops
 are not acceptable closing messages. Full text of the rule lives in
 `docs/LONG_TERM_GOALS_FOR_THE_CLIPPING_ONLINE_PROJECT.md` §3.
+
+### 2026-04-30 — Iris (open coworker runner live)
+
+Iris completed the open-link coworker runner sprint and verified it against
+the live Render URL before closing the loop.
+
+Implemented and pushed checkpoints:
+- `14836b8` — `docs: record open coworker runner sprint`
+- `d95b540` — `feat: open coworker clipping runner`
+
+Agent evidence:
+- Iris-Git-Guard verified `master` was clean, `origin/master` matched local
+  `HEAD`, and there was no divergence before the live verification pass.
+- Iris-Docs-Scribe recorded the sprint rules in shared docs before code work:
+  open-link coworker runner, no admin/password gate for coworker workflows,
+  locked primary targets, secondary-only coworker targets, safe collectors,
+  Supabase bridge, and live Render as the acceptance bar.
+- Iris-Backend-Builder, Iris-Pipeline-Builder, Iris-UI-Builder, and
+  Iris-Storage-Builder implemented the open coworker APIs, target persistence,
+  progress mapping, friendly top UI, and runtime-only storage bridge.
+- Iris-Integration-Builder fixed the `/api/targets` response shape so the live
+  API returns top-level `targets` and `primaryKeys`.
+- Iris-QA/Render-Ops verified the live deployment after Render promoted
+  commit `d95b54082ac340b3a30717454825e0cca4d3c174`.
+
+Live verification:
+- Render deploy `dep-d7pnck9j2pic73fq4u8g` is live for commit `d95b540`.
+- `https://clipping-project.onrender.com/healthz` returns HTTP `200`.
+- `https://clipping-project.onrender.com/api/update/status` returns HTTP
+  `200` without login.
+- `https://clipping-project.onrender.com/api/targets` returns a top-level
+  target list with locked primary keys.
+- The homepage shows `Rodar atualizacao`, `Progresso compartilhado`, and
+  `Base atual`, and does not show `Senha de acesso`.
+- `/admin` redirects to `/`.
+- Live `assets/clipping.js` matches the repo asset and contains
+  `coworker-runner-20260430`.
+- Desktop and mobile browser smoke checks passed with no console warnings or
+  errors.

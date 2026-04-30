@@ -199,3 +199,24 @@ Completion rule:
 - Progress counts only after the relevant behavior is live on Render and
   checked against the public URL above. Local-only runs, unpushed branches, or
   pending deploys are not enough to close the sprint.
+
+## 2026-04-30 Open Coworker Runner Live Checkpoint
+
+- Current live deploy: `dep-d7pnck9j2pic73fq4u8g` at commit
+  `d95b54082ac340b3a30717454825e0cca4d3c174`
+  (`feat: open coworker clipping runner`).
+- Render reports that deploy as `live`; the previous deploy is deactivated.
+- `/healthz` returns HTTP `200`, `ok: true`, storage enabled, and job `idle`.
+- `/api/update/status` returns HTTP `200` without login and no
+  `admin_login_required` response.
+- `/api/targets` returns top-level `targets` and `primaryKeys`; the locked
+  primary keys are `flavio_valle`, `pedro_angelito`, and `bernardo_rubiao`.
+- `/admin` redirects to `/`; the coworker path is the public homepage, not a
+  password screen.
+- `/` now shows the open-link coworker runner copy: `Rodar atualizacao`,
+  `Progresso compartilhado`, and `Base atual`; it does not show
+  `Senha de acesso`.
+- Live `assets/clipping.js` matches the deployed repo file by SHA-256 and
+  contains build marker `coworker-runner-20260430`.
+- Browser smoke passed on desktop and mobile against the live URL, including
+  opening the shared progress panel, with no console warnings or errors.

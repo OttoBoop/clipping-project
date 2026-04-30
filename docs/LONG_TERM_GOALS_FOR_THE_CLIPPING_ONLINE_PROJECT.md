@@ -120,3 +120,9 @@ These are current-sprint boundaries, not the final long-term product shape:
 - Progress counts only when live on Render.
 - Atlas/Iris coordination must commit and push checkpoints, then report which
   agents did the work and what facts were verified.
+
+**Live checkpoint**: on 2026-04-30, commit `d95b540` was deployed to Render as
+deploy `dep-d7pnck9j2pic73fq4u8g`. The live homepage now exposes the
+open-link coworker runner, `/api/update/status` is public, `/api/targets`
+returns the locked primary keys plus secondary targets, `/admin` redirects to
+`/`, and browser smoke checks passed on desktop and mobile.
