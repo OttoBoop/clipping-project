@@ -246,7 +246,13 @@ async def create_classification_category(request: Request) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="name is required")
     created_by = str(payload.get("created_by") or "coworker").strip() or "coworker"
     cid = _classification_db().get_or_create_category(name, created_by=created_by)
-    return {"id": cid, "name": name, "created_by": created_by}
+    uploaded: list[str] = []
+    if artifact_store.enabled:
+        uploaded = artifact_store.upload_current_artifacts(
+            manifest={"kind": "category", "category_id": cid, "name": name},
+            job_id=f"category-{cid}",
+        )
+    return {"id": cid, "name": name, "created_by": created_by, "uploadedArtifactCount": len(uploaded)}
 
 
 @app.get("/api/classifications")
@@ -330,6 +336,19 @@ async def upsert_classification(request: Request) -> dict[str, Any]:
         category_ids.append(cdb.get_or_create_category(name, created_by=classified_by))
     cdb.set_classification_categories(classification_id, category_ids)
 
+    uploaded: list[str] = []
+    if artifact_store.enabled:
+        uploaded = artifact_store.upload_current_artifacts(
+            manifest={
+                "kind": "classification",
+                "classification_id": classification_id,
+                "mention_id": mention_id,
+                "article_id": article_id,
+                "target_key": target_key,
+            },
+            job_id=f"classification-{classification_id}",
+        )
+
     return {
         "ok": True,
         "classification_id": classification_id,
@@ -340,6 +359,7 @@ async def upsert_classification(request: Request) -> dict[str, Any]:
         "target_sentiment": tgt_sent,
         "centimetragem": centimetragem,
         "categories": [str(n).strip() for n in raw_categories if str(n).strip()],
+        "uploadedArtifactCount": len(uploaded),
     }
 
 
