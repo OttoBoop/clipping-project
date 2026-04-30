@@ -252,7 +252,13 @@ async def create_classification_category(request: Request) -> dict[str, Any]:
             manifest={"kind": "category", "category_id": cid, "name": name},
             job_id=f"category-{cid}",
         )
-    return {"id": cid, "name": name, "created_by": created_by, "uploadedArtifactCount": len(uploaded)}
+    return {
+        "id": cid,
+        "name": name,
+        "created_by": created_by,
+        "uploadedArtifactCount": len(uploaded),
+        "uploadedArtifacts": uploaded,
+    }
 
 
 @app.get("/api/classifications")
@@ -360,6 +366,7 @@ async def upsert_classification(request: Request) -> dict[str, Any]:
         "centimetragem": centimetragem,
         "categories": [str(n).strip() for n in raw_categories if str(n).strip()],
         "uploadedArtifactCount": len(uploaded),
+        "uploadedArtifacts": uploaded,
     }
 
 

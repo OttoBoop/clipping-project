@@ -189,22 +189,25 @@ def test_classification_listing_survives_missing_article_context(tmp_path):
     assert rows[0]["article_sentiment"] == "neutral"
 
 
-def test_sqlite_wal_is_checkpointed_before_artifact_upload(tmp_path):
-    from web_app.storage_bridge import checkpoint_sqlite_wal
+def test_sqlite_snapshot_includes_uncheckpointed_wal_rows(tmp_path):
+    from web_app.storage_bridge import sqlite_snapshot_bytes
 
     db_file = tmp_path / "clipping.db"
-    with sqlite3.connect(db_file) as conn:
-        conn.execute("PRAGMA journal_mode = WAL")
-        conn.execute("CREATE TABLE rows (id INTEGER PRIMARY KEY, name TEXT)")
-        conn.execute("INSERT INTO rows (name) VALUES ('persisted')")
+    conn = sqlite3.connect(db_file)
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("CREATE TABLE rows (id INTEGER PRIMARY KEY, name TEXT)")
+    conn.commit()
+    conn.execute("INSERT INTO rows (name) VALUES ('persisted')")
+    conn.commit()
 
     wal_file = db_file.with_name(db_file.name + "-wal")
     assert wal_file.exists()
 
-    checkpoint_sqlite_wal(db_file)
+    snapshot = sqlite_snapshot_bytes(db_file)
+    conn.close()
 
     copied = tmp_path / "copied.db"
-    copied.write_bytes(db_file.read_bytes())
+    copied.write_bytes(snapshot)
     with sqlite3.connect(copied) as conn:
         rows = conn.execute("SELECT name FROM rows").fetchall()
     assert rows == [("persisted",)]

@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import sqlite3
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -120,14 +121,17 @@ class ArtifactStore:
     def upload_file(self, local_path: Path, remote_path: str) -> bool:
         if not self.enabled:
             return False
+        payload = local_path.read_bytes()
         if local_path.suffix.lower() == ".db":
-            checkpoint_sqlite_wal(local_path)
+            payload = sqlite_snapshot_bytes(local_path)
+            if not payload:
+                return False
         content_type = _content_type(local_path)
         try:
             response = requests.post(
                 self._object_url(remote_path),
                 headers={**self._headers(content_type), "x-upsert": "true"},
-                data=local_path.read_bytes(),
+                data=payload,
                 timeout=60,
             )
         except requests.RequestException:
@@ -164,16 +168,26 @@ def _content_type(path: Path) -> str:
     return "application/octet-stream"
 
 
-def checkpoint_sqlite_wal(path: Path) -> None:
-    """Flush WAL pages into the main SQLite file before uploading it."""
+def sqlite_snapshot_bytes(path: Path) -> bytes:
+    """Return a consistent SQLite backup image, including uncheckpointed WAL."""
     if not path.is_file():
-        return
+        return b""
+    tmp_name = ""
     try:
-        with sqlite3.connect(path) as conn:
-            conn.execute("PRAGMA busy_timeout = 5000")
-            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            tmp_name = tmp.name
+        with sqlite3.connect(path) as source, sqlite3.connect(tmp_name) as dest:
+            source.execute("PRAGMA busy_timeout = 5000")
+            source.backup(dest)
+        return Path(tmp_name).read_bytes()
     except sqlite3.Error:
-        return
+        return b""
+    finally:
+        if tmp_name:
+            try:
+                Path(tmp_name).unlink()
+            except OSError:
+                pass
 
 
 artifact_store = ArtifactStore()
