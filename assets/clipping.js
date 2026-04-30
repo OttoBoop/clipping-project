@@ -231,33 +231,35 @@
     var clsArr = article.classifications || [];
     if (!clsArr.length) return "";
     var parts = [];
+    // Article sentiment once (all targets share the same value)
+    var artSent = clsArr[0].article_sentiment;
+    if (artSent) {
+      parts.push(
+        '<span class="chip chip--cls chip--cls-' + artSent + '" title="Sentimento da notícia">Notícia: ' +
+        escapeHtml(SENTIMENT_LABEL[artSent] || artSent) + "</span>"
+      );
+    }
+    // Categories deduplicated across all targets
+    var seenCats = {};
     clsArr.forEach(function (cls) {
-      var targetLabel = escapeHtml(labelsByKey[cls.target_key] || cls.target_key || "");
-      if (cls.article_sentiment) {
-        parts.push(
-          '<span class="chip chip--cls chip--cls-' +
-            cls.article_sentiment +
-            '" title="Sentimento da notícia">Notícia: ' +
-            escapeHtml(SENTIMENT_LABEL[cls.article_sentiment] || cls.article_sentiment) +
-            "</span>"
-        );
-      }
-      if (cls.target_sentiment) {
-        parts.push(
-          '<span class="chip chip--cls chip--cls-' +
-            cls.target_sentiment +
-            '" title="Sentimento sobre ' +
-            targetLabel +
-            '">' +
-            targetLabel +
-            ": " +
-            escapeHtml(SENTIMENT_LABEL[cls.target_sentiment] || cls.target_sentiment) +
-            "</span>"
-        );
-      }
       (cls.categories || []).forEach(function (cat) {
-        parts.push('<span class="chip chip--cls chip--cls-cat">' + escapeHtml(cat) + "</span>");
+        if (!seenCats[cat]) {
+          seenCats[cat] = true;
+          parts.push('<span class="chip chip--cls chip--cls-cat">' + escapeHtml(cat) + "</span>");
+        }
       });
+    });
+    // Per-target sentiments
+    clsArr.forEach(function (cls) {
+      if (cls.target_sentiment) {
+        var tLabel = escapeHtml(labelsByKey[cls.target_key] || cls.target_key || "");
+        parts.push(
+          '<span class="chip chip--cls chip--cls-' + cls.target_sentiment +
+          '" title="Sentimento sobre ' + tLabel + '">' +
+          tLabel + ": " + escapeHtml(SENTIMENT_LABEL[cls.target_sentiment] || cls.target_sentiment) +
+          "</span>"
+        );
+      }
     });
     return parts.length ? '<div class="chips chips--cls">' + parts.join("") + "</div>" : "";
   }
@@ -308,40 +310,52 @@
       clsByTarget[c.target_key] = c;
     });
 
+    // Article-level: pick article_sentiment + categories from first saved classification
+    var firstCls = (article.classifications || [])[0] || {};
+    var artSentCurrent = firstCls.article_sentiment || "";
+    var savedCats = [];
+    (article.classifications || []).forEach(function (c) {
+      (c.categories || []).forEach(function (cat) {
+        if (savedCats.indexOf(cat) === -1) savedCats.push(cat);
+      });
+    });
+    var allCatOptions = categoriesCache.slice();
+    savedCats.forEach(function (c) {
+      if (allCatOptions.indexOf(c) === -1) allCatOptions.push(c);
+    });
+    var catOptionsHtml = allCatOptions.map(function (name) {
+      var sel = savedCats.indexOf(name) !== -1 ? " selected" : "";
+      return '<option value="' + escapeHtml(name) + '"' + sel + ">" + escapeHtml(name) + "</option>";
+    }).join("");
+
+    var articleSection =
+      '<div class="cls-article-section" data-article-id="' + escapeHtml(String(aid)) + '">' +
+      '<div class="cls-row">' +
+      '<label class="cls-field">Sentimento da notícia ' +
+      sentimentSelectHtml("article_sentiment", artSentCurrent) +
+      "</label>" +
+      '<div class="cls-field">' +
+      '<span class="cls-field-label">Categorias</span>' +
+      '<select multiple class="cls-cat-select" size="4">' + catOptionsHtml + "</select>" +
+      '<div class="cls-add-cat-row">' +
+      '<input type="text" class="cls-new-cat-input" placeholder="Nova categoria…">' +
+      '<button type="button" class="cls-add-cat-btn">Adicionar</button>' +
+      "</div>" +
+      "</div>" +
+      "</div>" +
+      "</div>";
+
     var fieldsets = targetKeys.map(function (tk) {
       var tLabel = labelsByKey[tk] || tk;
       var cur = clsByTarget[tk] || {};
-      var selectedCats = (cur.categories || []).slice();
-      var allCats = categoriesCache.slice();
-      selectedCats.forEach(function (c) {
-        if (allCats.indexOf(c) === -1) allCats.push(c);
-      });
-      var chipsHtml = allCats
-        .map(function (n) { return categoryChipHtml(n, selectedCats.indexOf(n) !== -1); })
-        .join("");
       return (
-        '<fieldset class="cls-fieldset" data-target-key="' +
-        escapeHtml(tk) +
-        '" data-article-id="' +
-        escapeHtml(String(aid)) +
-        '">' +
+        '<fieldset class="cls-fieldset" data-target-key="' + escapeHtml(tk) +
+        '" data-target-name="' + escapeHtml(tLabel) + '">' +
         "<legend>" + escapeHtml(tLabel) + "</legend>" +
         '<div class="cls-row">' +
-        '<label class="cls-field">Sentimento da notícia ' +
-        sentimentSelectHtml("article_sentiment", cur.article_sentiment) +
-        "</label>" +
         '<label class="cls-field">Sentimento sobre ' + escapeHtml(tLabel) + " " +
         sentimentSelectHtml("target_sentiment", cur.target_sentiment) +
         "</label>" +
-        "</div>" +
-        '<div class="cls-row cls-cats-row">' +
-        '<span class="cls-cat-label">Categorias:</span>' +
-        '<div class="cls-cat-chips">' + chipsHtml + "</div>" +
-        '<button type="button" class="cls-add-cat-btn">+ Nova</button>' +
-        "</div>" +
-        '<div class="cls-row cls-actions-row">' +
-        '<button type="button" class="cls-save-btn">Salvar</button>' +
-        '<span class="cls-save-status"></span>' +
         "</div>" +
         "</fieldset>"
       );
@@ -349,7 +363,12 @@
 
     return (
       '<details class="cls-editor"><summary>Classificar este artigo</summary>' +
+      articleSection +
       fieldsets +
+      '<div class="cls-row cls-actions-row">' +
+      '<button type="button" class="cls-save-btn">Salvar</button>' +
+      '<span class="cls-save-status"></span>' +
+      "</div>" +
       "</details>"
     );
   }
@@ -768,37 +787,48 @@
     refreshArticleClsDisplay(article);
   }
 
-  function gatherFieldset(fs) {
-    var aid = parseInt(fs.dataset.articleId, 10);
-    var tk = fs.dataset.targetKey;
-    var artSent = fs.querySelector('[data-cls-field="article_sentiment"]').value || null;
-    var tgtSent = fs.querySelector('[data-cls-field="target_sentiment"]').value || null;
-    var cats = Array.from(fs.querySelectorAll(".cls-cat-chip.selected")).map(function (c) {
-      return c.dataset.catName;
+  function gatherEditorData(editor) {
+    var section = editor.querySelector(".cls-article-section");
+    var aid = parseInt(section.dataset.articleId, 10);
+    var artSent = section.querySelector('[data-cls-field="article_sentiment"]').value || null;
+    var cats = Array.from(section.querySelectorAll(".cls-cat-select option:checked")).map(function (o) {
+      return o.value;
     });
-    return {
-      article_id: aid,
-      target_key: tk,
-      article_sentiment: artSent,
-      target_sentiment: tgtSent,
-      categories: cats,
-    };
+    var targets = [];
+    editor.querySelectorAll(".cls-fieldset").forEach(function (fs) {
+      targets.push({
+        target_key: fs.dataset.targetKey,
+        target_name: fs.dataset.targetName || fs.dataset.targetKey,
+        target_sentiment: fs.querySelector('[data-cls-field="target_sentiment"]').value || null,
+      });
+    });
+    return { article_id: aid, article_sentiment: artSent, categories: cats, targets: targets };
   }
 
-  async function onSaveClassification(fs) {
-    var btn = fs.querySelector(".cls-save-btn");
-    var status = fs.querySelector(".cls-save-status");
+  async function onSaveArticleClassifications(editor) {
+    var btn = editor.querySelector(".cls-save-btn");
+    var status = editor.querySelector(".cls-save-status");
     btn.disabled = true;
     status.textContent = "Salvando...";
     status.className = "cls-save-status";
     try {
-      var resp = await apiPost("/api/classifications", gatherFieldset(fs));
-      var data = await resp.json().catch(function () { return {}; });
-      if (resp.status === 401) throw new Error("Sessão expirada — entre em /admin");
-      if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+      var data = gatherEditorData(editor);
+      for (var i = 0; i < data.targets.length; i++) {
+        var t = data.targets[i];
+        var resp = await apiPost("/api/classifications", {
+          article_id: data.article_id,
+          target_key: t.target_key,
+          target_name: t.target_name,
+          article_sentiment: data.article_sentiment,
+          target_sentiment: t.target_sentiment,
+          categories: data.categories,
+        });
+        var saved = await resp.json().catch(function () { return {}; });
+        if (!resp.ok) throw new Error(saved.detail || saved.error || "HTTP " + resp.status);
+        applySavedClassification(saved);
+      }
       status.textContent = "Salvo ✓";
       status.classList.add("cls-save-status--ok");
-      applySavedClassification(data);
       setTimeout(function () {
         if (status.textContent === "Salvo ✓") {
           status.textContent = "";
@@ -813,53 +843,48 @@
     }
   }
 
-  async function onAddCategory(fs) {
-    var name = window.prompt("Nome da nova categoria:");
-    if (!name || !name.trim()) return;
-    name = name.trim();
+  async function onAddCategory(editor) {
+    var input = editor.querySelector(".cls-new-cat-input");
+    var name = (input ? input.value : "").trim();
+    if (!name) return;
     try {
       var resp = await apiPost("/api/categories", { name: name });
       var data = await resp.json().catch(function () { return {}; });
       if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
       var canonical = data.name || name;
       if (categoriesCache.indexOf(canonical) === -1) categoriesCache.push(canonical);
-      document.querySelectorAll(".cls-fieldset").forEach(function (other) {
-        var chips = other.querySelector(".cls-cat-chips");
-        if (!chips) return;
-        var existing = chips.querySelector('[data-cat-name="' + canonical.replace(/"/g, '\\"') + '"]');
-        if (existing) {
-          if (other === fs) existing.classList.add("selected");
-          return;
+      // Add option to every category select on the page; select it in this editor
+      document.querySelectorAll(".cls-cat-select").forEach(function (sel) {
+        var existing = sel.querySelector('option[value="' + canonical.replace(/"/g, "&quot;") + '"]');
+        if (!existing) {
+          var opt = document.createElement("option");
+          opt.value = canonical;
+          opt.textContent = canonical;
+          sel.appendChild(opt);
+          existing = opt;
         }
-        chips.insertAdjacentHTML("beforeend", categoryChipHtml(canonical, other === fs));
+        if (sel.closest(".cls-editor") === editor) existing.selected = true;
       });
+      if (input) input.value = "";
     } catch (e) {
       window.alert("Erro ao criar categoria: " + (e && e.message ? e.message : e));
     }
   }
 
-  // Click handler is always installed — even read-only users see the editor
-  // disabled, but the chips toggle stays interactive for the admin path.
   app.addEventListener("click", function (event) {
     if (!editorEnabled) return;
     var saveBtn = event.target.closest(".cls-save-btn");
     if (saveBtn) {
       event.preventDefault();
-      var fs = saveBtn.closest(".cls-fieldset");
-      if (fs) onSaveClassification(fs);
+      var editor = saveBtn.closest(".cls-editor");
+      if (editor) onSaveArticleClassifications(editor);
       return;
     }
     var addBtn = event.target.closest(".cls-add-cat-btn");
     if (addBtn) {
       event.preventDefault();
-      var fs2 = addBtn.closest(".cls-fieldset");
-      if (fs2) onAddCategory(fs2);
-      return;
-    }
-    var chip = event.target.closest(".cls-cat-chip");
-    if (chip) {
-      event.preventDefault();
-      chip.classList.toggle("selected");
+      var editor2 = addBtn.closest(".cls-editor");
+      if (editor2) onAddCategory(editor2);
       return;
     }
   });

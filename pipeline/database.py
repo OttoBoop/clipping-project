@@ -1232,6 +1232,23 @@ class ClippingDB:
             ).fetchone()
             return int(row["id"]) if row else None
 
+    def create_mention(
+        self,
+        article_id: int,
+        target_key: str,
+        target_name: str,
+        keyword_matched: str = "manual-classify",
+    ) -> int:
+        """Insert a minimal mention row (for targets added via manual classification)."""
+        with self.connect() as conn:
+            cur = conn.execute(
+                """INSERT INTO mentions (article_id, target_key, target_name,
+                                        keyword_matched, sentiment)
+                   VALUES (?, ?, ?, ?, 'neutral')""",
+                (int(article_id), str(target_key), str(target_name), keyword_matched),
+            )
+            return int(cur.lastrowid)
+
     def list_categories(self) -> list[dict]:
         """Return all categories ordered by name."""
         with self.connect() as conn:

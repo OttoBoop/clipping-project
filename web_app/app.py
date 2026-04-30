@@ -230,6 +230,7 @@ async def upsert_classification(request: Request) -> dict[str, Any]:
     except (TypeError, ValueError):
         raise HTTPException(status_code=400, detail="article_id must be an integer")
     target_key = str(payload.get("target_key") or "").strip()
+    target_name = str(payload.get("target_name") or target_key).strip() or target_key
     if not article_id or not target_key:
         raise HTTPException(status_code=400, detail="article_id and target_key are required")
 
@@ -257,9 +258,10 @@ async def upsert_classification(request: Request) -> dict[str, Any]:
     cdb = _classification_db()
     mention_id = cdb.find_mention_id(article_id, target_key)
     if mention_id is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"no mention found for article {article_id} + target {target_key}",
+        mention_id = cdb.create_mention(
+            article_id=article_id,
+            target_key=target_key,
+            target_name=target_name,
         )
 
     classification_id = cdb.upsert_classification(
