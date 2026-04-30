@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 import sqlite3
+import tempfile
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +19,8 @@ from .config import ROOT, db_path as configured_db_path
 
 
 TARGETS_PATH = ROOT / "data" / "targets.json"
+PRIMARY_TARGET_KEYS = ("flavio_valle", "pedro_angelito", "bernardo_rubiao")
+SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 
 class ValidationError(ValueError):
@@ -106,8 +112,119 @@ def load_targets() -> list[dict[str, Any]]:
     return [row for row in rows if row.get("key")]
 
 
+def normalize_target_slug(value: str) -> str:
+    ascii_text = unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode("ascii")
+    return SLUG_RE.sub("_", ascii_text.lower()).strip("_") or "target"
+
+
+def ordered_clean_strings(value: Any, *, max_items: int = 24, max_length: int = 120) -> list[str]:
+    if value is None:
+        return []
+    raw_items = value if isinstance(value, list) else [value]
+    seen: set[str] = set()
+    cleaned: list[str] = []
+    for item in raw_items:
+        text = normalize_text(item or "")[:max_length]
+        if len(text) < 2 or text in seen:
+            continue
+        seen.add(text)
+        cleaned.append(text)
+        if len(cleaned) >= max_items:
+            break
+    return cleaned
+
+
+def unique_target_slug(display_name: str, existing_keys: set[str]) -> str:
+    base = normalize_target_slug(display_name)
+    candidate = base
+    index = 2
+    while candidate in existing_keys or candidate in PRIMARY_TARGET_KEYS:
+        candidate = f"{base}_{index}"
+        index += 1
+    return candidate
+
+
+def locked_primary_keys() -> list[str]:
+    return list(PRIMARY_TARGET_KEYS)
+
+
+def primary_target_keys() -> list[str]:
+    return locked_primary_keys()
+
+
+def sanitize_target(row: dict[str, Any]) -> dict[str, Any]:
+    key = str(row.get("key") or "").strip()
+    if not key:
+        return {}
+    display_name = normalize_text(row.get("display_name") or row.get("label") or key)
+    label = normalize_text(row.get("label") or display_name or key)
+    primary = key in PRIMARY_TARGET_KEYS
+    return {
+        "key": key,
+        "label": label or key,
+        "display_name": display_name or label or key,
+        "className": "primary" if primary else "",
+        "primary": primary,
+        "keywords": ordered_clean_strings(row.get("keywords")),
+        "exact_aliases": ordered_clean_strings(row.get("exact_aliases") or row.get("aliases")),
+    }
+
+
+def public_targets() -> dict[str, Any]:
+    targets = [target for target in (sanitize_target(row) for row in load_targets()) if target]
+    return {"targets": targets, "primaryKeys": locked_primary_keys()}
+
+
+def list_public_targets() -> dict[str, Any]:
+    return public_targets()
+
+
+def write_targets_atomic(rows: list[dict[str, Any]]) -> None:
+    TARGETS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{TARGETS_PATH.name}.", suffix=".tmp", dir=str(TARGETS_PATH.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(rows, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp_name, TARGETS_PATH)
+    finally:
+        if os.path.exists(tmp_name):
+            os.unlink(tmp_name)
+
+
+def create_secondary_target(payload: dict[str, Any]) -> dict[str, Any]:
+    display_name = normalize_text(
+        payload.get("display_name") or payload.get("displayName") or payload.get("label") or payload.get("name") or ""
+    )
+    if len(display_name) < 3:
+        raise ValidationError("Informe um nome de exibicao com pelo menos 3 caracteres.")
+    keywords = ordered_clean_strings(payload.get("keywords"))
+    aliases = ordered_clean_strings(payload.get("exact_aliases") or payload.get("exactAliases") or payload.get("aliases"))
+    if display_name not in keywords:
+        keywords = [display_name, *keywords]
+
+    rows = load_targets()
+    existing_keys = {str(row.get("key") or "").strip() for row in rows}
+    key = unique_target_slug(display_name, existing_keys)
+    target = {
+        "key": key,
+        "label": display_name,
+        "display_name": display_name,
+        "className": "",
+        "primary": False,
+        "keywords": keywords,
+    }
+    if aliases:
+        target["exact_aliases"] = aliases
+    rows.append(target)
+    write_targets_atomic(rows)
+    return sanitize_target(target)
+
+
 def target_labels() -> dict[str, str]:
-    return {str(row["key"]): str(row.get("label") or row["key"]) for row in load_targets()}
+    return {str(row["key"]): str(row.get("label") or row.get("display_name") or row["key"]) for row in load_targets()}
 
 
 def validate_target_keys(values: list[str]) -> list[str]:

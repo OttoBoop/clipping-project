@@ -75,6 +75,9 @@ def test_pages_artifact_uses_external_bundle(tmp_path):
     html_doc = artifact["html_doc"]
     assert 'data-clipping-data-url="' in html_doc
     assert 'data-clipping-raw-url="' in html_doc
+    assert "Rodar atualizacao" in html_doc
+    assert "Progresso compartilhado" in html_doc
+    assert "?v=" in html_doc
     assert '<article class="article-card"' not in html_doc
     assert 'data-story-id="' not in html_doc
     assert "Carregando dados do clipping" in html_doc
@@ -105,8 +108,10 @@ def test_pages_bundle_writes_shell_and_assets(tmp_path):
     assert data_payload["stories"][0]["articles"][0]["rawTextKey"] == "article-1"
 
     html_doc = Path(args.output).read_text(encoding="utf-8")
-    assert 'data-clipping-data-url="index_assets/clipping-data.json"' in html_doc
-    assert 'data-clipping-raw-url="index_assets/clipping-raw-texts.json"' in html_doc
+    assert 'data-clipping-data-url="index_assets/clipping-data.json?v=' in html_doc
+    assert 'data-clipping-raw-url="index_assets/clipping-raw-texts.json?v=' in html_doc
+    assert 'href="index_assets/clipping.css?v=' in html_doc
+    assert 'src="index_assets/clipping.js?v=' in html_doc
 
 
 def test_parse_source_snapshot_reads_generated_bundle(tmp_path):

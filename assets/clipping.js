@@ -1,5 +1,5 @@
 (function () {
-  console.log("[clipping] build: ea7bf21-cls-fix · editor enabled for all coworkers");
+  console.log("[clipping] build: coworker-runner-20260430 · editor enabled for all coworkers");
   const app = document.getElementById("app");
   if (!app) return;
 
@@ -35,6 +35,31 @@
   const visibleIndexCount = document.getElementById("visibleIndexCount");
   const loadingState = document.getElementById("loadingState");
   const sortButtons = Array.from(document.querySelectorAll("[data-sort]"));
+  const runTabs = Array.from(document.querySelectorAll("[data-run-tab]"));
+  const runPanels = Array.from(document.querySelectorAll("[data-tab-panel]"));
+  const updateRunForm = document.getElementById("updateRunForm");
+  const addTargetForm = document.getElementById("addTargetForm");
+  const primaryRunTargets = document.getElementById("primaryRunTargets");
+  const secondaryRunTargets = document.getElementById("secondaryRunTargets");
+  const dateFromInput = document.getElementById("dateFromInput");
+  const dateToInput = document.getElementById("dateToInput");
+  const runUpdateButton = document.getElementById("runUpdateButton");
+  const runFormMessage = document.getElementById("runFormMessage");
+  const addTargetMessage = document.getElementById("addTargetMessage");
+  const runnerStatusPill = document.getElementById("runnerStatusPill");
+  const sharedStatusPill = document.getElementById("sharedStatusPill");
+  const progressFill = document.getElementById("updateProgressFill");
+  const progressTarget = document.getElementById("progressTarget");
+  const progressDates = document.getElementById("progressDates");
+  const progressSource = document.getElementById("progressSource");
+  const progressArticles = document.getElementById("progressArticles");
+  const progressMentions = document.getElementById("progressMentions");
+  const progressStories = document.getElementById("progressStories");
+  const progressWarnings = document.getElementById("progressWarnings");
+  const baseStoriesStat = document.getElementById("baseStoriesStat");
+  const baseArticlesStat = document.getElementById("baseArticlesStat");
+  const baseRawStat = document.getElementById("baseRawStat");
+  const baseUpdatedText = document.getElementById("baseUpdatedText");
   const LAZY_BATCH = 50;
 
   let payload = null;
@@ -45,6 +70,8 @@
   let loadMoreBtn = null;
   let rawTextsCache = null;
   let rawTextsPromise = null;
+  let runTargets = [];
+  let latestStatus = null;
   const labelsByKey = {};
 
   function escapeHtml(value) {
@@ -58,6 +85,80 @@
 
   function renderText(value) {
     return escapeHtml(value).replace(/\n/g, "<br>");
+  }
+
+  function friendlySummaryLabel(value) {
+    var raw = String(value || "");
+    var normalized = raw.toLowerCase();
+    if (normalized.indexOf("texto " + "bruto") !== -1) return "Texto completo";
+    if (normalized.indexOf("trecho " + "bruto") !== -1) return "Trecho da materia";
+    if (normalized === "resumo ia") return "Resumo";
+    return raw || "Sem resumo";
+  }
+
+  function splitList(value) {
+    return String(value || "")
+      .split(/[\n,]+/)
+      .map(function (item) { return item.trim(); })
+      .filter(Boolean);
+  }
+
+  function parseMaybeJsonList(value) {
+    if (Array.isArray(value)) return value;
+    if (!value) return [];
+    try {
+      var parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function todayDateString(offsetDays) {
+    var date = new Date();
+    date.setDate(date.getDate() + Number(offsetDays || 0));
+    return date.toISOString().slice(0, 10);
+  }
+
+  function normalizeTargetsResponse(data) {
+    var body = data || {};
+    var nested = body.targets && !Array.isArray(body.targets) ? body.targets : body;
+    var rows = Array.isArray(body.targets) ? body.targets : Array.isArray(nested.targets) ? nested.targets : [];
+    var primaryKeys = Array.isArray(nested.primaryKeys) ? nested.primaryKeys : [];
+    return rows
+      .filter(function (target) { return target && target.key; })
+      .map(function (target) {
+        return {
+          key: String(target.key),
+          label: String(target.label || target.display_name || target.key),
+          primary: Boolean(target.primary) || primaryKeys.indexOf(String(target.key)) !== -1,
+        };
+      });
+  }
+
+  function setMessage(el, text, kind) {
+    if (!el) return;
+    el.textContent = text || "";
+    el.classList.remove("is-error", "is-ok");
+    if (kind) el.classList.add(kind === "error" ? "is-error" : "is-ok");
+  }
+
+  function friendlyError(error, fallback) {
+    var raw = error && error.message ? error.message : String(error || "");
+    console.error("[clipping] detailed error", error);
+    if (raw.indexOf("job_already_running") !== -1) return "Ja existe uma atualizacao em andamento.";
+    if (raw.indexOf("persistent_storage_not_configured") !== -1) return "A gravacao da base ainda nao esta pronta neste ambiente.";
+    if (raw.indexOf("periodo_muito_longo") !== -1) return "Escolha um periodo de ate 7 dias.";
+    if (raw.indexOf("periodo_invalido") !== -1) return "Confira as datas: a inicial precisa vir antes da final.";
+    if (raw.indexOf("data_futura") !== -1) return "As datas precisam ser de hoje ou anteriores.";
+    if (raw.indexOf("data_invalida") !== -1) return "Preencha as duas datas.";
+    if (raw.indexOf("unknown_target_keys") !== -1) return "Um dos nomes selecionados ainda nao esta disponivel. Atualize a pagina e tente de novo.";
+    return fallback || "Nao foi possivel concluir agora. Tente novamente em instantes.";
+  }
+
+  function showFriendlyProblem(message) {
+    setMessage(runFormMessage, message, "error");
+    if (window.alert) window.alert(message);
   }
 
   function badgeHtml(keys) {
@@ -195,13 +296,217 @@
     const rawCount = stories.reduce(function (sum, story) {
       return sum + Number(story.rawCount || 0);
     }, 0);
-    visibleStoriesStat.textContent = storyCount + " / " + payload.meta.totalStories;
-    visibleArticlesStat.textContent = articleCount + " / " + payload.meta.totalArticles;
-    visibleAiStat.textContent = aiCount + " / " + payload.meta.totalAi;
-    visibleRawStat.textContent = rawCount + " / " + payload.meta.totalRaw;
-    visibleIndexCount.textContent = String(storyCount);
-    activeFilterText.textContent = activeLabel();
-    emptyState.hidden = storyCount > 0;
+    if (visibleStoriesStat) visibleStoriesStat.textContent = storyCount + " / " + payload.meta.totalStories;
+    if (visibleArticlesStat) visibleArticlesStat.textContent = articleCount + " / " + payload.meta.totalArticles;
+    if (visibleAiStat) visibleAiStat.textContent = aiCount + " / " + payload.meta.totalAi;
+    if (visibleRawStat) visibleRawStat.textContent = rawCount + " / " + payload.meta.totalRaw;
+    if (visibleIndexCount) visibleIndexCount.textContent = String(storyCount);
+    if (activeFilterText) activeFilterText.textContent = activeLabel();
+    if (emptyState) emptyState.hidden = storyCount > 0;
+    if (baseStoriesStat) baseStoriesStat.textContent = String(payload.meta.totalStories || 0);
+    if (baseArticlesStat) baseArticlesStat.textContent = String(payload.meta.totalArticles || 0);
+    if (baseRawStat) baseRawStat.textContent = String(payload.meta.totalRaw || 0);
+    if (baseUpdatedText) {
+      baseUpdatedText.textContent = "Ultima atualizacao publicada: " + (payload.meta.generatedAt || "data nao informada");
+    }
+  }
+
+  function activateRunTab(tabName) {
+    runTabs.forEach(function (button) {
+      var active = button.dataset.runTab === tabName;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    runPanels.forEach(function (panel) {
+      panel.hidden = panel.dataset.tabPanel !== tabName;
+    });
+  }
+
+  function renderRunTarget(target) {
+    var id = "run-target-" + target.key;
+    var checked = target.primary ? " checked" : "";
+    var disabled = target.primary ? " disabled" : "";
+    var cls = target.primary ? " run-target--primary" : "";
+    var helper = target.primary ? "Principal" : "Opcional";
+    return (
+      '<label class="run-target' + cls + '" for="' + escapeHtml(id) + '">' +
+      '<input type="checkbox" id="' + escapeHtml(id) + '" value="' + escapeHtml(target.key) + '"' + checked + disabled + ">" +
+      '<span>' + escapeHtml(target.label) + '<small>' + helper + "</small></span>" +
+      "</label>"
+    );
+  }
+
+  function renderRunTargets() {
+    if (!primaryRunTargets || !secondaryRunTargets) return;
+    var primary = runTargets.filter(function (target) { return target.primary; });
+    var secondary = runTargets.filter(function (target) { return !target.primary; });
+    primaryRunTargets.innerHTML = primary.length ? primary.map(renderRunTarget).join("") : '<p class="filter-note">Carregando nomes principais...</p>';
+    secondaryRunTargets.innerHTML = secondary.length ? secondary.map(renderRunTarget).join("") : '<p class="filter-note">Nenhum nome extra cadastrado ainda.</p>';
+  }
+
+  function fallbackTargetsFromPayload() {
+    if (!payload || !payload.targets) return [];
+    return (payload.targets || []).map(function (target) {
+      return {
+        key: String(target.key),
+        label: String(target.label || target.key),
+        primary: Boolean(target.primary),
+      };
+    });
+  }
+
+  function refreshTargets() {
+    return apiFetch("/api/targets", { cache: "no-store" })
+      .then(function (resp) {
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        return resp.json();
+      })
+      .then(function (data) {
+        runTargets = normalizeTargetsResponse(data);
+        if (!runTargets.length) runTargets = fallbackTargetsFromPayload();
+        runTargets.forEach(function (target) {
+          labelsByKey[target.key] = target.label || target.key;
+        });
+        renderRunTargets();
+      })
+      .catch(function (error) {
+        console.error("[clipping] target refresh failed", error);
+        runTargets = fallbackTargetsFromPayload();
+        renderRunTargets();
+      });
+  }
+
+  function selectedRunTargetKeys() {
+    var keys = [];
+    runTargets.forEach(function (target) {
+      if (target.primary) keys.push(target.key);
+    });
+    if (secondaryRunTargets) {
+      secondaryRunTargets.querySelectorAll('input[type="checkbox"]:checked').forEach(function (input) {
+        if (keys.indexOf(input.value) === -1) keys.push(input.value);
+      });
+    }
+    return keys;
+  }
+
+  function applySuggestedDates(statusPayload) {
+    if (!dateFromInput || !dateToInput) return;
+    var current = statusPayload && statusPayload.current ? statusPayload.current : {};
+    var recent = statusPayload && statusPayload.recent && statusPayload.recent.length ? statusPayload.recent[0] : {};
+    var suggestedFrom = String(current.date_from || recent.date_from || "");
+    var suggestedTo = String(current.date_to || recent.date_to || "");
+    if (!suggestedFrom) suggestedFrom = todayDateString(-1);
+    if (!suggestedTo) suggestedTo = todayDateString(0);
+    if (!dateFromInput.value) dateFromInput.value = suggestedFrom.slice(0, 10);
+    if (!dateToInput.value) dateToInput.value = suggestedTo.slice(0, 10);
+    dateFromInput.max = todayDateString(0);
+    dateToInput.max = todayDateString(0);
+  }
+
+  function statusLabel(status) {
+    if (status === "running") return "Atualizando";
+    if (status === "queued") return "Na fila";
+    if (status === "exporting") return "Publicando";
+    if (status === "succeeded") return "Concluido";
+    if (status === "failed") return "Precisa de atencao";
+    return "Pronto";
+  }
+
+  function latestProgressEvent(job) {
+    var events = (job && job.events) || [];
+    for (var i = 0; i < events.length; i++) {
+      if (events[i] && events[i].payload) return events[i];
+    }
+    return null;
+  }
+
+  function progressPercent(job, event) {
+    var status = job && job.status;
+    if (status === "succeeded") return 100;
+    if (status === "failed") return 100;
+    if (status === "exporting") return 92;
+    var payload = event && event.payload ? event.payload : {};
+    var total = Number(payload.candidates_total || payload.max_candidates || 0);
+    var seen = Number(payload.candidates_seen || 0);
+    if (total > 0 && seen >= 0) return Math.max(8, Math.min(88, Math.round((seen / total) * 80)));
+    if (status === "running") return 24;
+    if (status === "queued") return 8;
+    return 0;
+  }
+
+  function warningText(job) {
+    if (!job) return "";
+    if (job.status === "failed") return "A atualizacao parou antes de terminar. O detalhe tecnico ficou no console.";
+    var events = job.events || [];
+    for (var i = 0; i < events.length; i++) {
+      var payload = events[i].payload || {};
+      var errors = payload.errors || payload.warnings || [];
+      if (Array.isArray(errors) && errors.length) {
+        console.warn("[clipping] update warning", errors);
+        return "Algumas fontes nao responderam, mas a atualizacao continua com as demais.";
+      }
+    }
+    return "";
+  }
+
+  function renderStatus(statusPayload) {
+    latestStatus = statusPayload || latestStatus || {};
+    var current = latestStatus.current || {};
+    var recent = latestStatus.recent || [];
+    var job = current.status === "idle" && recent.length ? recent[0] : current;
+    var event = latestProgressEvent(job);
+    var eventPayload = event && event.payload ? event.payload : {};
+    var label = statusLabel(job.status);
+    var isRunning = ["queued", "running", "exporting"].indexOf(job.status) !== -1;
+    var isError = job.status === "failed";
+    [runnerStatusPill, sharedStatusPill].forEach(function (pill) {
+      if (!pill) return;
+      pill.textContent = label;
+      pill.classList.toggle("is-running", isRunning);
+      pill.classList.toggle("is-error", isError);
+    });
+    if (progressFill) progressFill.style.width = progressPercent(job, event) + "%";
+    var keys = parseMaybeJsonList(job.target_keys);
+    if (!keys.length && Array.isArray(job.target_keys)) keys = job.target_keys;
+    if (progressTarget) {
+      progressTarget.textContent = keys.map(function (key) { return labelsByKey[key] || key; }).join(" + ") || "Aguardando";
+    }
+    if (progressDates) {
+      var from = job.date_from || (dateFromInput && dateFromInput.value) || "";
+      var to = job.date_to || (dateToInput && dateToInput.value) || "";
+      progressDates.textContent = from && to ? from + " a " + to : "Aguardando";
+    }
+    if (progressSource) progressSource.textContent = eventPayload.source_name || "Aguardando";
+    if (progressArticles) progressArticles.textContent = String(job.articles_inserted || eventPayload.articles_inserted || 0);
+    if (progressMentions) progressMentions.textContent = String(job.mentions_inserted || 0);
+    if (progressStories) progressStories.textContent = String(job.stories_touched || 0);
+    var warning = warningText(job);
+    if (progressWarnings) {
+      progressWarnings.hidden = !warning;
+      progressWarnings.textContent = warning;
+    }
+    if (isError && job.error_message) console.error("[clipping] update failed", job.error_message);
+    if (runUpdateButton) runUpdateButton.disabled = isRunning;
+  }
+
+  function pollStatus() {
+    return apiFetch("/api/update/status", { cache: "no-store" })
+      .then(function (resp) {
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        return resp.json();
+      })
+      .then(function (data) {
+        applySuggestedDates(data);
+        renderStatus(data);
+      })
+      .catch(function (error) {
+        console.error("[clipping] status polling failed", error);
+        [runnerStatusPill, sharedStatusPill].forEach(function (pill) {
+          if (!pill) return;
+          pill.textContent = "Sem conexao";
+          pill.classList.add("is-error");
+        });
+      });
   }
 
   function renderStoryIndex(stories) {
@@ -365,7 +670,7 @@
         '" data-raw-key="' +
         escapeHtml(article.rawTextKey) +
         '">' +
-        "<summary>Ver texto bruto completo</summary>" +
+        "<summary>Ver texto completo</summary>" +
         '<div class="body-text full"></div>' +
         "</details>"
       : "";
@@ -420,7 +725,7 @@
       articleSummaryClass(article) +
       '">' +
       '<div class="summary-label">' +
-      escapeHtml(article.summaryLabel || "Sem resumo") +
+      escapeHtml(friendlySummaryLabel(article.summaryLabel)) +
       "</div>" +
       '<div class="body-text">' +
       renderText(article.summaryPreview || "") +
@@ -658,7 +963,7 @@
     if (rawTextsPromise) return rawTextsPromise;
     rawTextsPromise = fetch(rawUrl, { cache: "no-store" })
       .then(function (response) {
-        if (!response.ok) throw new Error("Falha ao carregar texto bruto");
+        if (!response.ok) throw new Error("Falha ao carregar texto completo");
         return response.json();
       })
       .then(function (json) {
@@ -686,7 +991,7 @@
 
     const fullTextDiv = el.querySelector(".body-text.full");
     if (fullTextDiv && !fullTextDiv.textContent.trim()) {
-      fullTextDiv.textContent = "Carregando texto bruto...";
+      fullTextDiv.textContent = "Carregando texto completo...";
     }
     el.dataset.loading = "1";
 
@@ -700,13 +1005,19 @@
       })
       .catch(function () {
         if (fullTextDiv) {
-          fullTextDiv.textContent = "Nao foi possivel carregar o texto bruto.";
+          fullTextDiv.textContent = "Nao foi possivel carregar o texto completo.";
         }
         delete el.dataset.loading;
       });
   }
 
   app.addEventListener("click", function (event) {
+    const runTab = event.target.closest("[data-run-tab]");
+    if (runTab) {
+      activateRunTab(runTab.dataset.runTab || "run");
+      return;
+    }
+
     const sortButton = event.target.closest("[data-sort]");
     if (sortButton) {
       currentSort = sortButton.dataset.sort || "newest";
@@ -731,6 +1042,68 @@
     }
     applyState();
   });
+
+  if (updateRunForm) {
+    updateRunForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      setMessage(runFormMessage, "Iniciando atualizacao...", "");
+      var keys = selectedRunTargetKeys();
+      if (!keys.length) {
+        showFriendlyProblem("Selecione pelo menos um nome para acompanhar.");
+        return;
+      }
+      var body = {
+        preset: "custom",
+        target_keys: keys,
+        date_from: dateFromInput ? dateFromInput.value : "",
+        date_to: dateToInput ? dateToInput.value : "",
+        export: true,
+      };
+      if (runUpdateButton) runUpdateButton.disabled = true;
+      try {
+        var resp = await apiPost("/api/update/start", body);
+        var data = await resp.json().catch(function () { return {}; });
+        if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+        setMessage(runFormMessage, "Atualizacao iniciada. O progresso aparece na aba compartilhada.", "ok");
+        activateRunTab("progress");
+        await pollStatus();
+      } catch (error) {
+        showFriendlyProblem(friendlyError(error, "Nao foi possivel iniciar a atualizacao."));
+      } finally {
+        if (runUpdateButton) {
+          var status = latestStatus && latestStatus.current ? latestStatus.current.status : "";
+          runUpdateButton.disabled = ["queued", "running", "exporting"].indexOf(status) !== -1;
+        }
+      }
+    });
+  }
+
+  if (addTargetForm) {
+    addTargetForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      setMessage(addTargetMessage, "Salvando...", "");
+      var submit = addTargetForm.querySelector('button[type="submit"]');
+      if (submit) submit.disabled = true;
+      var form = new FormData(addTargetForm);
+      var body = {
+        display_name: form.get("display_name"),
+        keywords: splitList(form.get("keywords")),
+        exact_aliases: splitList(form.get("exact_aliases")),
+      };
+      try {
+        var resp = await apiPost("/api/targets", body);
+        var data = await resp.json().catch(function () { return {}; });
+        if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+        setMessage(addTargetMessage, "Nome extra salvo e disponivel para a proxima rodada.", "ok");
+        addTargetForm.reset();
+        await refreshTargets();
+      } catch (error) {
+        setMessage(addTargetMessage, friendlyError(error, "Nao foi possivel salvar este nome."), "error");
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+    });
+  }
 
   app.addEventListener(
     "toggle",
@@ -929,6 +1302,9 @@
         loadingState.hidden = true;
       }
       applyState();
+      refreshTargets();
+      pollStatus();
+      window.setInterval(pollStatus, 5000);
     })
     .catch(function (error) {
       showError(error && error.message ? error.message : "Erro inesperado.");

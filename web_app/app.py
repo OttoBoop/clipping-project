@@ -6,7 +6,7 @@ from html import escape
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .auth import (
@@ -17,7 +17,6 @@ from .auth import (
     make_session,
     require_admin,
     require_csrf,
-    verify_session,
 )
 from .config import ASSETS_DIR, ROOT, db_path, local_writes_allowed
 from .db_admin import ValidationError, ensure_app_tables, insert_manual_story, load_targets
@@ -26,6 +25,34 @@ from .storage_bridge import artifact_store
 from pipeline.database import ClippingDB
 
 VALID_SENTIMENTS = {"positive", "negative", "neutral"}
+
+
+def public_targets() -> dict[str, Any] | list[dict[str, Any]]:
+    from . import db_admin
+
+    helper = getattr(db_admin, "public_targets", None)
+    if helper:
+        return helper()
+    return load_targets()
+
+
+def public_targets_response() -> dict[str, Any]:
+    targets = public_targets()
+    if isinstance(targets, dict):
+        return {
+            "targets": targets.get("targets", []),
+            "primaryKeys": targets.get("primaryKeys", []),
+        }
+    return {"targets": targets, "primaryKeys": []}
+
+
+def create_secondary_target(payload: dict[str, Any]) -> dict[str, Any]:
+    from . import db_admin
+
+    helper = getattr(db_admin, "create_secondary_target", None)
+    if not helper:
+        raise ValidationError("Cadastro de alvo ainda nao disponivel.")
+    return helper(payload)
 
 
 def _classification_db() -> ClippingDB:
@@ -64,13 +91,9 @@ def public_dashboard() -> Response:
     return HTMLResponse("<h1>Clipping institucional</h1><p>Painel ainda nao gerado.</p>", status_code=200)
 
 
-@app.get("/admin", response_class=HTMLResponse)
-def admin_page(request: Request) -> HTMLResponse:
-    session = verify_session(request.cookies.get(COOKIE_NAME))
-    if not session:
-        return HTMLResponse(login_html())
-    token = csrf_token(request.cookies.get(COOKIE_NAME))
-    return HTMLResponse(admin_html(token))
+@app.get("/admin")
+def admin_page() -> RedirectResponse:
+    return RedirectResponse("/", status_code=307)
 
 
 @app.post("/api/login")
@@ -115,18 +138,15 @@ def healthz() -> dict[str, Any]:
 
 
 @app.get("/api/update/status")
-def update_status(request: Request) -> dict[str, Any]:
-    require_admin(request)
+def update_status() -> dict[str, Any]:
     return {"current": job_manager.current_status(), "recent": recent_jobs()}
 
 
 @app.post("/api/update/start")
 async def start_update(request: Request) -> JSONResponse:
-    require_admin(request)
-    require_csrf(request)
     payload = await read_json(request)
     try:
-        job = job_manager.start_update(payload, started_by="admin")
+        job = job_manager.start_update(payload, started_by="coworker")
     except JobConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
@@ -138,10 +158,8 @@ async def start_update(request: Request) -> JSONResponse:
 
 @app.post("/api/export")
 async def start_export(request: Request) -> JSONResponse:
-    require_admin(request)
-    require_csrf(request)
     try:
-        job = job_manager.start_export(started_by="admin")
+        job = job_manager.start_export(started_by="coworker")
     except JobConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except RuntimeError as exc:
@@ -190,6 +208,34 @@ def get_csrf(request: Request) -> dict[str, Any]:
 @app.get("/api/categories")
 def list_classification_categories() -> dict[str, Any]:
     return {"categories": _classification_db().list_categories()}
+
+
+@app.get("/api/targets")
+def list_targets() -> dict[str, Any]:
+    return public_targets_response()
+
+
+@app.post("/api/targets")
+async def add_target(request: Request) -> JSONResponse:
+    payload = await read_json(request)
+    try:
+        result = create_secondary_target(payload)
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    uploaded: list[str] = []
+    if artifact_store.enabled:
+        uploaded = artifact_store.upload_current_artifacts(
+            manifest={"kind": "targets", "result": result},
+            job_id=f"targets-{str(result.get('key') or 'created')[:80]}",
+        )
+    return JSONResponse(
+        {
+            **result,
+            "uploadedArtifactCount": len(uploaded),
+            "uploadedArtifacts": uploaded,
+        }
+    )
 
 
 @app.post("/api/categories")
