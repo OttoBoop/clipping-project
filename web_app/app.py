@@ -183,8 +183,6 @@ def list_classification_categories() -> dict[str, Any]:
 
 @app.post("/api/categories")
 async def create_classification_category(request: Request) -> dict[str, Any]:
-    require_admin(request)
-    require_csrf(request)
     payload = await read_json(request)
     name = str(payload.get("name") or "").strip()
     if not name:
@@ -214,8 +212,6 @@ def list_classifications_bulk() -> dict[str, Any]:
 
 @app.post("/api/classifications")
 async def upsert_classification(request: Request) -> dict[str, Any]:
-    require_admin(request)
-    require_csrf(request)
     payload = await read_json(request)
 
     try:

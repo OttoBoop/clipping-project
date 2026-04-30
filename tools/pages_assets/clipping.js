@@ -7,11 +7,7 @@
   // API base URL. Empty string = same-origin (the FastAPI web_app serves both
   // the dashboard at "/" and the classification endpoints under "/api/").
   const apiUrl = (app.dataset.clippingApiUrl || "").trim().replace(/\/$/, "");
-  // Editor activates only when the user is admin-authenticated. We probe
-  // /api/csrf to detect that — 200 = enable editor, anything else = stay
-  // read-only. Both states still fetch /api/classifications publicly so
-  // saved data appears live for everyone.
-  let editorEnabled = false;
+  let editorEnabled = true;
   let csrfToken = "";
   let categoriesCache = [];
 
@@ -867,21 +863,6 @@
     }
   });
 
-  // Probe /api/csrf to detect admin auth. 200 = enable editor + capture token.
-  apiFetch("/api/csrf", { cache: "no-store" })
-    .then(function (r) {
-      if (!r.ok) return null;
-      return r.json();
-    })
-    .then(function (data) {
-      if (data && data.csrf) {
-        csrfToken = data.csrf;
-        editorEnabled = true;
-        // Re-render so the editor blocks appear on each card.
-        if (payload) applyState();
-      }
-    })
-    .catch(function () { /* not authed: stay read-only */ });
 
   // Categories are public. Always cache them so read-only users still see the
   // taxonomy on hover/inspection (and admins land with the cache populated).
