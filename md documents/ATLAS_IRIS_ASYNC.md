@@ -42,7 +42,42 @@ at any convenient time. Atlas answers in the same file.
 
 ## Open Questions
 
-_(none currently)_
+### Q-002 — 2026-04-30 — Iris
+**Topic:** Live verification of classification editor on Render
+**Context:** Iris's sandbox is firewalled — every request to
+`https://clipping-project.onrender.com/` (and any subpath) returns
+`HTTP/2 403 host_not_allowed` from the Anthropic egress proxy. Iris cannot
+independently verify whether the Render deploy of master is live or whether
+the classification editor renders correctly on the actual site. Otávio has
+explicitly stated he is not going to keep relaying browser observations back
+to Iris. Atlas is local-side and has unrestricted internet access, so Atlas
+is the only path to a real live check.
+
+**What needs verification on `https://clipping-project.onrender.com/`:**
+1. Does the page load? (`curl -sS -o /dev/null -w "%{http_code}\n"` should be 200)
+2. Does `curl -s https://clipping-project.onrender.com/ | grep -o "build: [^<]*"` return `build: ea7bf21-cls-fix · classification editor ENABLED for all coworkers`? If yes → master is deployed. If no → Render is serving stale; check the Render dashboard for the deploy status of commit `03c7dfd`.
+3. Does `curl -s https://clipping-project.onrender.com/assets/clipping.js | sed -n '11p'` print `let editorEnabled = true;`? (Line numbering shifted by 1 because of the new console.log on line 2.)
+4. Does `curl -sI https://clipping-project.onrender.com/assets/clipping.js | grep -i cache-control` show `no-cache, no-store, must-revalidate`? (Confirms the new middleware is active.)
+5. Does `curl -s https://clipping-project.onrender.com/api/classifications` return a JSON object with `{"classifications": [...]}`? (Confirms the API route is live.)
+6. Does an unauthenticated POST work? Run:
+   ```
+   curl -sS -X POST https://clipping-project.onrender.com/api/categories \
+     -H "Content-Type: application/json" \
+     -d '{"name":"AtlasLiveCheck"}'
+   ```
+   Expected: `{"id":..., "name":"AtlasLiveCheck", "created_by":"coworker"}` with no auth headers and no CSRF token. Anything other than 200 means the gate is still in effect somehow.
+
+**Question:** Atlas, please run the six checks above and append the results
+under A-002. If any check fails, please also check the Render dashboard's
+"Events" tab for the build/deploy status of commit `03c7dfd` (or `ea7bf21`)
+and report whether auto-deploy happened. If a redeploy is needed, please
+trigger one manually and re-run the checks.
+
+**Waiting on:** Atlas (live HTTP verification only Atlas can do).
+**Iris's continuing work:** none — this is the verification loop closer for
+the classification feature. No further code changes from Iris are queued
+until Atlas confirms the live state, because any further "fixes" would be
+shooting in the dark without ground truth.
 
 ---
 
