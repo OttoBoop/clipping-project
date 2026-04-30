@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import json
 import importlib
-import re
 import sqlite3
 import sys
 from pathlib import Path
@@ -15,9 +14,7 @@ from pipeline.database import ClippingDB
 
 OBSERVED_UPLOAD_PATHS = [
     "data/clipping.db",
-    "index.html",
-    "assets/clipping.css",
-    "assets/clipping.js",
+    "data/targets.json",
     "assets/clipping-data.json",
     "assets/clipping-raw-texts.json",
     "runs/manual-story.json",
@@ -54,11 +51,9 @@ def load_test_app(monkeypatch, tmp_path, *, admin_password="test-password", sess
 def login(client: TestClient) -> str:
     response = client.post("/api/login", json={"password": "test-password"})
     assert response.status_code == 200
-    page = client.get("/admin")
-    assert page.status_code == 200
-    match = re.search(r'name="csrf-token" content="([^"]+)"', page.text)
-    assert match
-    return match.group(1)
+    csrf = client.get("/api/csrf")
+    assert csrf.status_code == 200
+    return csrf.json()["csrf"]
 
 
 def db_counts(db_file):
@@ -175,20 +170,19 @@ def assert_empty_db(db_file):
     }
 
 
-def test_admin_auth_requires_login(monkeypatch, tmp_path):
+def test_admin_route_is_retired_and_status_is_public(monkeypatch, tmp_path):
     app, db_file = load_test_app(monkeypatch, tmp_path)
     with TestClient(app) as client:
-        login_page = client.get("/admin")
+        admin_page = client.get("/admin", follow_redirects=False)
         bad_login = client.post("/api/login", json={"password": "wrong-password"})
         status = client.get("/api/update/status")
         manual_without_login = client.post("/api/manual-story", json=manual_story_payload())
 
-    assert login_page.status_code == 200
-    assert "Senha de acesso" in login_page.text
-    assert 'name="csrf-token"' not in login_page.text
+    assert admin_page.status_code == 307
+    assert admin_page.headers["location"] == "/"
     assert bad_login.status_code == 401
     assert "clipping_admin" not in bad_login.cookies
-    assert status.status_code == 401
+    assert status.status_code == 200
     assert manual_without_login.status_code == 401
     assert_empty_db(db_file)
 
@@ -196,16 +190,15 @@ def test_admin_auth_requires_login(monkeypatch, tmp_path):
 def test_admin_auth_fails_closed_when_env_values_are_blank(monkeypatch, tmp_path):
     app, db_file = load_test_app(monkeypatch, tmp_path, admin_password="   ", session_secret="\t ")
     with TestClient(app) as client:
-        login_page = client.get("/admin")
+        admin_page = client.get("/admin", follow_redirects=False)
         login_attempt = client.post("/api/login", json={"password": "   "})
         status = client.get("/api/update/status")
         manual_without_login = client.post("/api/manual-story", json=manual_story_payload())
 
-    assert login_page.status_code == 200
-    assert "Acesso administrativo ainda nao configurado no Render." in login_page.text
-    assert 'name="csrf-token"' not in login_page.text
+    assert admin_page.status_code == 307
+    assert admin_page.headers["location"] == "/"
     assert login_attempt.status_code == 503
-    assert status.status_code == 503
+    assert status.status_code == 200
     assert manual_without_login.status_code == 503
     assert_empty_db(db_file)
 
@@ -216,8 +209,6 @@ def test_admin_write_apis_reject_missing_or_bad_csrf(monkeypatch, tmp_path):
         csrf = login(client)
         responses = [
             client.post("/api/logout"),
-            client.post("/api/update/start", json={"preset": "rapido", "export": False}),
-            client.post("/api/export"),
             client.post("/api/manual-story", json=manual_story_payload()),
             client.post(
                 "/api/manual-story",
@@ -226,9 +217,112 @@ def test_admin_write_apis_reject_missing_or_bad_csrf(monkeypatch, tmp_path):
             ),
         ]
 
-    assert [response.status_code for response in responses] == [403, 403, 403, 403, 403]
-    assert [response.json()["detail"] for response in responses] == ["csrf_check_failed"] * 5
+    assert [response.status_code for response in responses] == [403, 403, 403]
+    assert [response.json()["detail"] for response in responses] == ["csrf_check_failed"] * 3
     assert_empty_db(db_file)
+
+
+def test_update_and_export_workflows_are_public_coworker_endpoints(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+    calls = []
+
+    def fake_start_update(payload, *, started_by):
+        calls.append(("update", payload, started_by))
+        return {"id": "update-public", "kind": "update", "started_by": started_by}
+
+    def fake_start_export(*, started_by):
+        calls.append(("export", {}, started_by))
+        return {"id": "export-public", "kind": "export", "started_by": started_by}
+
+    monkeypatch.setattr(app_module.job_manager, "start_update", fake_start_update)
+    monkeypatch.setattr(app_module.job_manager, "start_export", fake_start_export)
+
+    with TestClient(app) as client:
+        status = client.get("/api/update/status")
+        update = client.post("/api/update/start", json={"preset": "rapido", "export": False})
+        export = client.post("/api/export")
+
+    assert status.status_code == 200
+    assert update.status_code == 200
+    assert export.status_code == 200
+    assert calls == [
+        ("update", {"preset": "rapido", "export": False}, "coworker"),
+        ("export", {}, "coworker"),
+    ]
+
+
+def test_targets_api_is_public_and_uploads_target_manifest(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+    upload_calls = []
+
+    monkeypatch.setattr(app_module, "public_targets", lambda: [{"key": "flavio_valle", "label": "Flavio Valle"}])
+    monkeypatch.setattr(
+        app_module,
+        "create_secondary_target",
+        lambda payload: {"key": "ana_teste", "label": payload["label"], "primary": False},
+    )
+    monkeypatch.setattr(app_module.artifact_store, "enabled", True)
+
+    def fake_upload_current_artifacts(*, manifest=None, job_id=None):
+        upload_calls.append({"manifest": manifest, "job_id": job_id})
+        return ["data/targets.json", "runs/targets-ana_teste.json"]
+
+    monkeypatch.setattr(app_module.artifact_store, "upload_current_artifacts", fake_upload_current_artifacts)
+
+    with TestClient(app) as client:
+        listed = client.get("/api/targets")
+        created = client.post("/api/targets", json={"label": "Ana Teste"})
+
+    assert listed.status_code == 200
+    assert listed.json() == {
+        "targets": [{"key": "flavio_valle", "label": "Flavio Valle"}],
+        "primaryKeys": [],
+    }
+    assert created.status_code == 200
+    assert created.json()["key"] == "ana_teste"
+    assert created.json()["uploadedArtifactCount"] == 2
+    assert upload_calls == [
+        {
+            "manifest": {"kind": "targets", "result": {"key": "ana_teste", "label": "Ana Teste", "primary": False}},
+            "job_id": "targets-ana_teste",
+        }
+    ]
+    assert_no_secret_material({"created": created.json(), "upload_calls": upload_calls})
+
+
+def test_targets_api_returns_real_public_targets_contract(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+
+    with TestClient(app) as client:
+        response = client.get("/api/targets")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert isinstance(payload["targets"], list)
+    assert payload["primaryKeys"] == ["flavio_valle", "pedro_angelito", "bernardo_rubiao"]
+
+    by_key = {target["key"]: target for target in payload["targets"]}
+    for key in payload["primaryKeys"]:
+        assert by_key[key]["primary"] is True
+        assert by_key[key]["className"] == "primary"
+
+
+def test_targets_api_validation_errors_are_public_400s(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+
+    def fail_create(_payload):
+        raise app_module.ValidationError("Nome acompanhado invalido.")
+
+    monkeypatch.setattr(app_module, "create_secondary_target", fail_create)
+
+    with TestClient(app) as client:
+        response = client.post("/api/targets", json={"label": ""})
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Nome acompanhado invalido."
 
 
 def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
@@ -249,6 +343,34 @@ def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
     assert "test-password" not in serialized
     assert "test-session-secret" not in serialized
     assert "SUPABASE_SERVICE_KEY" not in serialized
+
+
+def test_storage_current_files_are_runtime_mutable_only(monkeypatch, tmp_path):
+    load_test_app(monkeypatch, tmp_path)
+    storage_bridge = importlib.import_module("web_app.storage_bridge")
+    requested = []
+
+    paths = [relative for relative, _ in storage_bridge.CURRENT_FILES]
+    assert paths == [
+        "data/clipping.db",
+        "data/targets.json",
+        "assets/clipping-data.json",
+        "assets/clipping-raw-texts.json",
+    ]
+    assert "index.html" not in paths
+    assert "assets/clipping.css" not in paths
+    assert "assets/clipping.js" not in paths
+
+    monkeypatch.setattr(storage_bridge.artifact_store, "enabled", True)
+    monkeypatch.setattr(storage_bridge.artifact_store, "prefix", "clipping-project")
+
+    def fake_download(remote_path, local_path):
+        requested.append(remote_path)
+        return True
+
+    monkeypatch.setattr(storage_bridge.artifact_store, "download_file", fake_download)
+    assert storage_bridge.artifact_store.download_current_artifacts() == paths
+    assert requested == [f"clipping-project/current/{path}" for path in paths]
 
 
 def test_job_error_sanitizer_redacts_secret_material(monkeypatch, tmp_path):
@@ -292,7 +414,6 @@ def test_update_status_exposes_artifact_upload_contract_for_completed_jobs(monke
         jobs.update_job(job_id, status="succeeded", articles_inserted=1, stories_touched=1)
 
         with TestClient(app) as client:
-            login(client)
             status = client.get("/api/update/status")
 
         assert status.status_code == 200
@@ -301,18 +422,14 @@ def test_update_status_exposes_artifact_upload_contract_for_completed_jobs(monke
         assert_no_secret_material(status.json())
 
 
-def test_admin_ui_serves_manual_story_form(monkeypatch, tmp_path):
+def test_admin_route_does_not_serve_password_or_admin_copy(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     with TestClient(app) as client:
-        login(client)
-        response = client.get("/admin")
-    assert response.status_code == 200
-    assert "Adicionar materia manualmente" in response.text
-    assert "manualTitle" in response.text
-    assert "manualUrl" in response.text
-    assert "manualSource" in response.text
-    assert "manualSummary" in response.text
-    assert "Comecar atualizacao" in response.text
+        response = client.get("/admin", follow_redirects=False)
+    assert response.status_code == 307
+    assert response.text == ""
+    assert "password" not in response.text.lower()
+    assert "admin" not in response.text.lower()
 
 
 def test_manual_story_insert_creates_unique_story_graph(monkeypatch, tmp_path):
@@ -511,9 +628,10 @@ def test_manual_story_export_bundle_can_be_parsed_for_merge_compatibility(monkey
 
 def test_public_dashboard_wording_contract():
     html = Path("index.html").read_text(encoding="utf-8")
-    assert "Clipping institucional" in html
-    assert "Materias encontradas" in html
-    assert "Com texto completo" in html
+    assert "Clipping do gabinete" in html
+    assert "Rodar atualizacao" in html
+    assert "Noticias disponiveis para consulta" in html
+    assert "Com texto para leitura" in html
     assert "DOM" not in html
     assert "RAM" not in html
     assert "API local" not in html

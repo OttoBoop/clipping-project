@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="clipping-snapshot-sentinel" content="WIX_CLIPPING_SNAPSHOT_ROOT">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Clipping Completo | Flavio Valle</title>
-  <link rel="stylesheet" href="assets/clipping.css?v=ea7bf21-cls-fix">
+  <title>Clipping do gabinete | Flavio Valle</title>
+  <link rel="stylesheet" href="assets/clipping.css?v=coworker-runner-20260430">
 </head>
 <body>
   <main
@@ -14,64 +14,115 @@
     data-clipping-raw-url="assets/clipping-raw-texts.json"
     data-clipping-api-url=""
   >
-    <header class="hero">
-      <div class="hero-lockup">
-        <p class="eyebrow">Mandato Flavio Valle</p>
-        <h1>Clipping institucional</h1>
-        <p>Toda a base publicada em um painel simples para revisar materias, acompanhar nomes e abrir textos completos quando necessario.</p>
-        <div class="hero-tags">
-          <span class="hero-tag hero-tag--gold">Toda a base</span>
-          <span class="hero-tag">Pronto para revisao</span>
-          <span class="hero-tag">Textos completos</span>
-        </div>
+    <section class="runner-shell" aria-label="Atualizacao do clipping">
+      <div class="runner-tabs" role="tablist" aria-label="Acoes do clipping">
+        <button type="button" class="runner-tab active" data-run-tab="run" role="tab" aria-selected="true">Rodar atualizacao</button>
+        <button type="button" class="runner-tab" data-run-tab="progress" role="tab" aria-selected="false">Progresso compartilhado</button>
+        <button type="button" class="runner-tab" data-run-tab="base" role="tab" aria-selected="false">Base atual</button>
       </div>
-      <div class="stats">
-        <div class="stat">
-          <span>Escopo</span>
-          <strong>Toda a base</strong>
-          <small>Arquivo publicado para consulta da equipe.</small>
-        </div>
-        <div class="stat">
-          <span>Historias no filtro</span>
-          <strong id="visibleStoriesStat">436 / 458</strong>
-          <small>Grupos de materias exibidos agora.</small>
-        </div>
-        <div class="stat">
-          <span>Materias encontradas</span>
-          <strong id="visibleArticlesStat">766 / 805</strong>
-          <small>Materias exibidas no filtro atual.</small>
-        </div>
-        <div class="stat">
-          <span>Com resumo</span>
-          <strong id="visibleAiStat">32 / 33</strong>
-          <small>Resumo editorial quando existir.</small>
-        </div>
-        <div class="stat">
-          <span>Com texto completo</span>
-          <strong id="visibleRawStat">734 / 772</strong>
-          <small>Materia completa disponivel para leitura.</small>
-        </div>
-      </div>
-      <div class="meta-row">
-        <span>Base atualizada em: 13/04/2026 17:28 UTC</span>
-        <span>Fonte da base: clipping institucional</span>
-        <span>Painel preparado para consulta rapida da equipe.</span>
-      </div>
-    </header>
 
-    <section class="panel update-panel">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">Atualizacao da base</p>
-          <h2>Ultima publicacao</h2>
+      <div class="runner-panel" id="runTabPanel" data-tab-panel="run">
+        <div class="runner-head">
+          <div>
+            <p class="eyebrow">Clipping do gabinete</p>
+            <h1>Atualizar noticias acompanhadas</h1>
+            <p>Use as datas sugeridas, confirme os nomes e inicie uma atualizacao para todos acompanharem daqui.</p>
+          </div>
+          <div class="runner-status-pill" id="runnerStatusPill">Consultando...</div>
         </div>
+
+        <form class="run-form" id="updateRunForm">
+          <div class="date-grid">
+            <label>Data inicial
+              <input type="date" id="dateFromInput" name="date_from" required>
+            </label>
+            <label>Data final
+              <input type="date" id="dateToInput" name="date_to" required>
+            </label>
+          </div>
+
+          <div class="target-run-section">
+            <div class="target-run-head">
+              <div>
+                <h2>Nomes principais</h2>
+                <p>Sempre entram na atualizacao.</p>
+              </div>
+            </div>
+            <div class="run-target-grid" id="primaryRunTargets"></div>
+          </div>
+
+          <div class="target-run-section">
+            <div class="target-run-head">
+              <div>
+                <h2>Nomes extras</h2>
+                <p>Marque outros nomes quando fizer sentido para a rodada.</p>
+              </div>
+            </div>
+            <div class="run-target-grid" id="secondaryRunTargets"></div>
+          </div>
+
+          <div class="run-actions">
+            <button type="submit" class="primary-action" id="runUpdateButton">Rodar atualizacao</button>
+            <span id="runFormMessage" class="form-message" role="status"></span>
+          </div>
+        </form>
+
+        <details class="add-target-box">
+          <summary>Adicionar nome extra</summary>
+          <form id="addTargetForm" class="add-target-form">
+            <label>Nome
+              <input type="text" name="display_name" autocomplete="off" required minlength="3" placeholder="Ex.: Maria Silva">
+            </label>
+            <label>Palavras para buscar
+              <textarea name="keywords" rows="2" placeholder="Uma por linha ou separadas por virgula"></textarea>
+            </label>
+            <label>Apelidos ou grafias exatas
+              <textarea name="exact_aliases" rows="2" placeholder="Opcional"></textarea>
+            </label>
+            <button type="submit" class="secondary-action">Salvar nome extra</button>
+            <span id="addTargetMessage" class="form-message" role="status"></span>
+          </form>
+        </details>
       </div>
-      <div class="update-grid">
-        <div><span>Historias</span><strong>458</strong></div>
-        <div><span>Materias</span><strong>805</strong></div>
-        <div><span>Com texto completo</span><strong>772</strong></div>
+
+      <div class="runner-panel" id="progressTabPanel" data-tab-panel="progress" hidden>
+        <div class="runner-head">
+          <div>
+            <p class="eyebrow">Progresso compartilhado</p>
+            <h1>O que esta acontecendo agora</h1>
+            <p>Esta visao atualiza sozinha para todo mundo que estiver com o painel aberto.</p>
+          </div>
+          <div class="runner-status-pill" id="sharedStatusPill">Consultando...</div>
+        </div>
+        <div class="progress-track" aria-label="Progresso da atualizacao">
+          <div class="progress-fill" id="updateProgressFill" style="width:0%"></div>
+        </div>
+        <div class="progress-grid">
+          <div><span>Nome atual</span><strong id="progressTarget">Aguardando</strong></div>
+          <div><span>Periodo</span><strong id="progressDates">Aguardando</strong></div>
+          <div><span>Fonte atual</span><strong id="progressSource">Aguardando</strong></div>
+          <div><span>Noticias novas</span><strong id="progressArticles">0</strong></div>
+          <div><span>Citacoes</span><strong id="progressMentions">0</strong></div>
+          <div><span>Historias mexidas</span><strong id="progressStories">0</strong></div>
+        </div>
+        <p class="warning-line" id="progressWarnings" hidden></p>
       </div>
-      <p class="filter-note">Este painel mostra a base mais recente publicada para a equipe. Noticias repetidas sao ignoradas durante a atualizacao.</p>
+
+      <div class="runner-panel" id="baseTabPanel" data-tab-panel="base" hidden>
+        <div class="runner-head">
+          <div>
+            <p class="eyebrow">Base atual</p>
+            <h1>Noticias disponiveis para consulta</h1>
+            <p>Abaixo continua a navegacao completa por filtros, historias e materias.</p>
+          </div>
+        </div>
+        <div class="update-grid">
+          <div><span>Historias salvas</span><strong id="baseStoriesStat">458</strong></div>
+          <div><span>Materias salvas</span><strong id="baseArticlesStat">805</strong></div>
+          <div><span>Com texto para leitura</span><strong id="baseRawStat">772</strong></div>
+        </div>
+        <p class="filter-note" id="baseUpdatedText">Base atualizada em: 13/04/2026 17:28 UTC</p>
+      </div>
     </section>
 
     <section class="panel">
@@ -81,7 +132,7 @@
           <h2>Nomes acompanhados</h2>
         </div>
       </div>
-      <p class="filter-note">O arquivo abre com foco em Flávio Valle. Toque para incluir ou remover nomes do acompanhamento.</p>
+      <p class="filter-note">O painel abre com foco em Flávio Valle. Toque para incluir ou remover nomes do acompanhamento.</p>
       <div class="filter-row" id="targetFilters"></div>
       <p class="filter-note">Monitoramento ativo: <strong id="activeFilterText">Carregando...</strong></p>
       <div class="filter-row" style="margin-top:12px">
@@ -108,8 +159,8 @@
     <section id="flatStack" class="flat-articles" hidden></section>
 
     <p class="footer-note">Painel institucional publicado para consulta da equipe.</p>
-    <p class="footer-note" id="buildVersion" style="opacity:0.6;font-size:11px">build: ea7bf21-cls-fix · classification editor ENABLED for all coworkers</p>
+    <p class="footer-note" id="buildVersion" style="opacity:0.6;font-size:11px">build: coworker-runner-20260430 · classification editor ENABLED for all coworkers</p>
   </main>
-  <script src="assets/clipping.js?v=ea7bf21-cls-fix" defer></script>
+  <script src="assets/clipping.js?v=coworker-runner-20260430" defer></script>
 </body>
 </html>

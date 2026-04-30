@@ -56,7 +56,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         default="",
-        help="Arquivo HTML de saida. Default: data/reports/clipping_mobile_snapshot_<escopo>.html",
+        help="Arquivo HTML de saida. Default: data/reports/clipping_mobile_snapshot_<periodo>.html",
     )
     parser.add_argument(
         "--merge-from",
@@ -319,13 +319,13 @@ def render_text_block(article: dict[str, Any]) -> tuple[str, str, str]:
         preview_source = summary or snippet or full_text
         preview = html.escape(excerpt(preview_source, 560)).replace("\n", "<br>")
         if normalize_text(preview_source) == full_text and len(full_text) <= 560:
-            return "Texto bruto", preview, ""
+            return "Texto completo", preview, ""
         full_html = html.escape(full_text).replace("\n", "<br>")
-        return "Texto bruto", preview, full_html
+        return "Texto completo", preview, full_html
 
     raw = summary or snippet
     if raw:
-        return "Trecho bruto", html.escape(raw).replace("\n", "<br>"), ""
+        return "Trecho da materia", html.escape(raw).replace("\n", "<br>"), ""
 
     return "Sem resumo", "Sem conteudo disponivel.", ""
 
@@ -552,7 +552,7 @@ def render_article_card(article: dict[str, Any], label_by_key: dict[str, str]) -
     if full_html:
         full_toggle = f"""
         <details class="raw-details" data-article-id="article-{aid}">
-          <summary>Ver texto bruto completo</summary>
+          <summary>Ver texto completo</summary>
           <div class="body-text full"></div>
         </details>
         """
@@ -1331,7 +1331,7 @@ def build_html(
       <p>__SCOPE_TEXT__</p>
       <div class="stats">
         <div class="stat">
-          <span>Escopo do arquivo</span>
+          <span>Conteudo do arquivo</span>
           <strong>__SCOPE_VALUE__</strong>
           <small>Arquivo pronto para consulta da equipe.</small>
         </div>
@@ -1351,9 +1351,9 @@ def build_html(
           <small>Mostra Resumo IA quando existir.</small>
         </div>
         <div class="stat">
-          <span>Texto bruto</span>
+          <span>Texto completo</span>
           <strong id="visibleRawStat">__VISIBLE_RAW__ / __TOTAL_RAW__</strong>
-          <small>Mostra texto bruto quando nao houver IA.</small>
+          <small>Mostra o texto da materia quando nao houver resumo.</small>
         </div>
       </div>
       <div class="meta-row">
@@ -1714,12 +1714,12 @@ def summarize_article_payload(article: dict[str, Any]) -> tuple[str, str, str]:
         preview_source = summary or snippet or full_text
         preview = excerpt(preview_source, 560)
         if normalize_text(preview_source) == full_text and len(full_text) <= 560:
-            return "Texto bruto", preview, ""
-        return "Texto bruto", preview, full_text
+            return "Texto completo", preview, ""
+        return "Texto completo", preview, full_text
 
     raw = summary or snippet
     if raw:
-        return "Trecho bruto", raw, ""
+        return "Trecho da materia", raw, ""
 
     return "Sem resumo", "Sem conteudo disponivel.", ""
 
@@ -1854,8 +1854,10 @@ def infer_bundle_paths_from_html(html_path: Path, html_doc: str) -> tuple[Path |
     data_match = re.search(r'data-clipping-data-url="([^"]+)"', html_doc)
     raw_match = re.search(r'data-clipping-raw-url="([^"]+)"', html_doc)
     if data_match:
-        data_path = (html_path.parent / html.unescape(data_match.group(1))).resolve()
-        raw_path = (html_path.parent / html.unescape(raw_match.group(1))).resolve() if raw_match else None
+        data_rel = html.unescape(data_match.group(1)).split("?", 1)[0]
+        raw_rel = html.unescape(raw_match.group(1)).split("?", 1)[0] if raw_match else ""
+        data_path = (html_path.parent / data_rel).resolve()
+        raw_path = (html_path.parent / raw_rel).resolve() if raw_rel else None
         return data_path, raw_path
 
     candidates = [
@@ -2010,7 +2012,7 @@ def parse_legacy_story_records(
                 article_html,
                 re.IGNORECASE | re.DOTALL,
             )
-            summary_label = "Resumo IA" if "summary-ai" in article_html else "Texto bruto"
+            summary_label = "Resumo IA" if "summary-ai" in article_html else "Texto completo"
             summary_label_block = re.search(
                 r'<div class="summary-label">(.*?)</div>',
                 article_html,
@@ -2205,6 +2207,46 @@ def clean_shell_meta(meta: dict[str, Any]) -> dict[str, str]:
     }
 
 
+def asset_version_for_dataset(dataset: dict[str, Any]) -> str:
+    meta = dataset.get("meta") or {}
+    raw = "|".join(
+        [
+            str(meta.get("generatedAt") or ""),
+            str(meta.get("totalStories") or ""),
+            str(meta.get("totalArticles") or ""),
+            str(meta.get("totalRaw") or ""),
+        ]
+    )
+    slug = re.sub(r"[^A-Za-z0-9]+", "-", raw).strip("-").lower()
+    return slug[:80] or "clipping"
+
+
+def versioned_url(url: str, version: str) -> str:
+    if not version or "?v=" in url or "&v=" in url:
+        return url
+    sep = "&" if "?" in url else "?"
+    return f"{url}{sep}v={version}"
+
+
+def replace_attr(html_doc: str, attr: str, value: str) -> str:
+    return re.sub(
+        rf'({re.escape(attr)}=")[^"]*(")',
+        lambda match: f"{match.group(1)}{html.escape(value)}{match.group(2)}",
+        html_doc,
+        count=1,
+    )
+
+
+def replace_text_by_id(html_doc: str, element_id: str, value: str) -> str:
+    return re.sub(
+        rf'(<[^>]+\bid="{re.escape(element_id)}"[^>]*>)(.*?)(</[^>]+>)',
+        lambda match: f"{match.group(1)}{html.escape(value)}{match.group(3)}",
+        html_doc,
+        count=1,
+        flags=re.DOTALL,
+    )
+
+
 def build_pages_shell_html(
     dataset: dict[str, Any],
     *,
@@ -2215,122 +2257,60 @@ def build_pages_shell_html(
     api_url: str = "",
 ) -> str:
     meta = dataset["meta"]
-    shell_meta = clean_shell_meta(meta)
-    return f"""<!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="clipping-snapshot-sentinel" content="{html.escape(WIX_SNAPSHOT_SENTINEL)}">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{html.escape(str(meta.get("pageTitle") or "Clipping Completo | Flavio Valle"))}</title>
-  <link rel="stylesheet" href="{html.escape(css_url)}">
-</head>
-<body>
-  <main
-    id="app"
-    data-clipping-data-url="{html.escape(data_url)}"
-    data-clipping-raw-url="{html.escape(raw_url)}"
-    data-clipping-api-url="{html.escape(api_url)}"
-  >
-    <header class="hero">
-      <div class="hero-lockup">
-        <p class="eyebrow">Mandato Flavio Valle</p>
-        <h1>{html.escape(shell_meta["scopeTitle"])}</h1>
-        <p>{html.escape(shell_meta["scopeText"])}</p>
-        <div class="hero-tags">
-          <span class="hero-tag hero-tag--gold">{html.escape(shell_meta["scopeValue"])}</span>
-          <span class="hero-tag">Pronto para revisao</span>
-          <span class="hero-tag">Textos completos</span>
-        </div>
-      </div>
-      <div class="stats">
-        <div class="stat">
-          <span>Escopo</span>
-          <strong>{html.escape(shell_meta["scopeValue"])}</strong>
-          <small>Arquivo publicado para consulta da equipe.</small>
-        </div>
-        <div class="stat">
-          <span>Historias no filtro</span>
-          <strong id="visibleStoriesStat">{int(meta.get("initialStoryCount") or 0)} / {int(meta.get("totalStories") or 0)}</strong>
-          <small>Grupos de materias exibidos agora.</small>
-        </div>
-        <div class="stat">
-          <span>Materias encontradas</span>
-          <strong id="visibleArticlesStat">{int(meta.get("initialArticleCount") or 0)} / {int(meta.get("totalArticles") or 0)}</strong>
-          <small>Materias exibidas no filtro atual.</small>
-        </div>
-        <div class="stat">
-          <span>Com resumo</span>
-          <strong id="visibleAiStat">{int(meta.get("initialAiCount") or 0)} / {int(meta.get("totalAi") or 0)}</strong>
-          <small>Resumo editorial quando existir.</small>
-        </div>
-        <div class="stat">
-          <span>Com texto completo</span>
-          <strong id="visibleRawStat">{int(meta.get("initialRawCount") or 0)} / {int(meta.get("totalRaw") or 0)}</strong>
-          <small>Materia completa disponivel para leitura.</small>
-        </div>
-      </div>
-      <div class="meta-row">
-        <span>Base atualizada em: {html.escape(str(meta.get("generatedAt") or ""))}</span>
-        <span>Fonte da base: clipping institucional</span>
-        <span>Painel preparado para consulta rapida da equipe.</span>
-      </div>
-    </header>
-
-    <section class="panel update-panel">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">Atualizacao da base</p>
-          <h2>Ultima publicacao</h2>
-        </div>
-      </div>
-      <div class="update-grid">
-        <div><span>Historias</span><strong>{int(meta.get("totalStories") or 0)}</strong></div>
-        <div><span>Materias</span><strong>{int(meta.get("totalArticles") or 0)}</strong></div>
-        <div><span>Com texto completo</span><strong>{int(meta.get("totalRaw") or 0)}</strong></div>
-      </div>
-      <p class="filter-note">Este painel mostra a base mais recente publicada para a equipe. Noticias repetidas sao ignoradas durante a atualizacao.</p>
-    </section>
-
-    <section class="panel">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">Monitoramento institucional</p>
-          <h2>Nomes acompanhados</h2>
-        </div>
-      </div>
-      <p class="filter-note">O arquivo abre com foco em {html.escape(str(meta.get("defaultTargetLabel") or "Flavio Valle"))}. Toque para incluir ou remover nomes do acompanhamento.</p>
-      <div class="filter-row" id="targetFilters"></div>
-      <p class="filter-note">Monitoramento ativo: <strong id="activeFilterText">Carregando...</strong></p>
-      <div class="filter-row" style="margin-top:12px">
-        <button type="button" class="filter-chip active" data-sort="newest">Mais recentes</button>
-        <button type="button" class="filter-chip" data-sort="hottest">Historias agrupadas</button>
-      </div>
-    </section>
-
-    <details class="panel" id="indexPanel" hidden>
-      <summary class="nav-summary">Indice de historias visiveis (<span id="visibleIndexCount">{int(meta.get("initialStoryCount") or 0)}</span>)</summary>
-      <div class="story-index" id="storyIndex"></div>
-      <p class="empty-state" id="emptyState" hidden>Nenhuma historia corresponde aos filtros atuais.</p>
-    </details>
-
-    <section class="panel shell-loading" id="loadingState">
-      <div class="flat-spinner"></div>
-      <div>
-        <strong>Carregando dados do clipping...</strong>
-        <p>As historias e materias serao exibidas em instantes.</p>
-      </div>
-    </section>
-
-    <section id="storyStack" hidden></section>
-    <section id="flatStack" class="flat-articles" hidden></section>
-
-    <p class="footer-note">Painel institucional publicado para consulta da equipe.</p>
-  </main>
-  <script src="{html.escape(js_url)}" defer></script>
-</body>
-</html>
-"""
+    version = asset_version_for_dataset(dataset)
+    html_doc = PAGES_INDEX_PATH.read_text(encoding="utf-8")
+    html_doc = re.sub(
+        r"<title>.*?</title>",
+        f"<title>{html.escape(str(meta.get('pageTitle') or 'Clipping do gabinete | Flavio Valle'))}</title>",
+        html_doc,
+        count=1,
+        flags=re.DOTALL,
+    )
+    html_doc = re.sub(
+        r'<link rel="stylesheet" href="[^"]+">',
+        f'<link rel="stylesheet" href="{html.escape(versioned_url(css_url, version))}">',
+        html_doc,
+        count=1,
+    )
+    html_doc = re.sub(
+        r'<script src="[^"]+" defer></script>',
+        f'<script src="{html.escape(versioned_url(js_url, version))}" defer></script>',
+        html_doc,
+        count=1,
+    )
+    html_doc = replace_attr(html_doc, "data-clipping-data-url", versioned_url(data_url, version))
+    html_doc = replace_attr(html_doc, "data-clipping-raw-url", versioned_url(raw_url, version))
+    html_doc = replace_attr(html_doc, "data-clipping-api-url", api_url)
+    html_doc = replace_text_by_id(
+        html_doc,
+        "visibleStoriesStat",
+        f"{int(meta.get('initialStoryCount') or 0)} / {int(meta.get('totalStories') or 0)}",
+    )
+    html_doc = replace_text_by_id(
+        html_doc,
+        "visibleArticlesStat",
+        f"{int(meta.get('initialArticleCount') or 0)} / {int(meta.get('totalArticles') or 0)}",
+    )
+    html_doc = replace_text_by_id(
+        html_doc,
+        "visibleAiStat",
+        f"{int(meta.get('initialAiCount') or 0)} / {int(meta.get('totalAi') or 0)}",
+    )
+    html_doc = replace_text_by_id(
+        html_doc,
+        "visibleRawStat",
+        f"{int(meta.get('initialRawCount') or 0)} / {int(meta.get('totalRaw') or 0)}",
+    )
+    html_doc = replace_text_by_id(html_doc, "visibleIndexCount", str(int(meta.get("initialStoryCount") or 0)))
+    html_doc = replace_text_by_id(html_doc, "baseStoriesStat", str(int(meta.get("totalStories") or 0)))
+    html_doc = replace_text_by_id(html_doc, "baseArticlesStat", str(int(meta.get("totalArticles") or 0)))
+    html_doc = replace_text_by_id(html_doc, "baseRawStat", str(int(meta.get("totalRaw") or 0)))
+    html_doc = replace_text_by_id(
+        html_doc,
+        "baseUpdatedText",
+        f"Ultima atualizacao publicada: {str(meta.get('generatedAt') or 'data nao informada')}",
+    )
+    return html_doc
 
 
 def build_snapshot_artifact(args: argparse.Namespace) -> dict[str, Any]:
@@ -3136,14 +3116,14 @@ def restyle_html_for_flavio_valle(html_doc: str, *, args: argparse.Namespace) ->
         count=1,
         flags=re.DOTALL,
     )
-    html_doc = html_doc.replace("Escopo do arquivo", "Escopo")
+    html_doc = html_doc.replace("Conteudo do arquivo", "Conteudo")
     html_doc = html_doc.replace("Sem chamadas para /" + "api depois da geracao.", "Arquivo pronto para consulta da equipe.")
     html_doc = html_doc.replace("Historias visiveis", "Historias visiveis")
     html_doc = html_doc.replace("Noticias visiveis", "Materias visiveis")
     html_doc = html_doc.replace("Somente noticias agrupadas em historias.", "Materias agrupadas nas historias visiveis.")
     html_doc = html_doc.replace("Com resumo IA", "Resumo IA")
     html_doc = html_doc.replace("Mostra Resumo IA quando existir.", "Exibe o resumo IA quando estiver disponivel.")
-    html_doc = html_doc.replace("Mostra texto bruto quando nao houver IA.", "Exibe o texto bruto quando nao houver resumo IA.")
+    html_doc = html_doc.replace("Mostra o texto da materia quando nao houver resumo.", "Mostra o texto da materia quando nao houver resumo.")
     html_doc = html_doc.replace("Ban" + "co consultado:", "Base consultada:")
     html_doc = html_doc.replace(
         "Controles de coleta removidos: este arquivo nao dispara novas execucoes.",
