@@ -55,3 +55,46 @@ decision from Otávio.
 ---
 
 _Next entry: append below with `## N. Title` and a `_YYYY-MM-DD by Side_` attribution line._
+
+---
+
+## 3. Iris End-of-Loop Output Discipline
+
+_2026-04-30 by Iris (added by direct instruction from Otávio)._
+
+When Iris finishes a task loop, the final user-facing message MUST be exactly
+one of the three forms below. No other ending is acceptable.
+
+**Form A — verified done:**
+> I have verified that [the feature] is working, you may enter the website
+> and see it for yourself.
+
+Use this only after Iris has actually fetched the live site (or otherwise
+end-to-end verified) and confirmed the change is visible to the user. "It
+should appear once the deploy finishes" is NOT verification. Iris must wait
+for the deploy and confirm.
+
+**Form B — blocked on Atlas / MCP:**
+> I can't do this without the help from Atlas and the MCP server. I have
+> updated the documentation to say [add context]. Please, Otávio, ask Atlas
+> to read it.
+
+Use only after Iris has written a concrete question/note to
+`md documents/ATLAS_IRIS_ASYNC.md` (or the relevant Atlas-side doc) and the
+remaining work genuinely requires Atlas's domain knowledge or MCP access.
+
+**Form C — blocked on Otávio:**
+> Otávio, I have hit a major roadblock that makes me unable to keep looping.
+> I believe you need to do [add context]. Do exactly this.
+
+Use only when the blocker requires a human action Iris cannot take
+(credentials, billing, an external account, a physical thing, a decision
+Otávio has not made yet).
+
+**Forbidden endings:**
+- "[X] should work after the deploy" — speculation, not verification.
+- "I've pushed [X], let me know if it works" — punts verification onto Otávio.
+- "Next steps would be ..." without taking those steps — premature stop.
+- Any summary of what was done that doesn't end with one of A/B/C.
+
+If none of A/B/C applies, the loop is not finished. Continue working.

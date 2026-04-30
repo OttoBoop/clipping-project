@@ -184,3 +184,24 @@ How classifications need to flow into the live dashboard:
    persist locally — not to the live site.
 
 Commit hash: `9a279f3` (schema + helpers landed, pushed to origin).
+
+### 2026-04-30 — Iris end-of-loop output discipline (rule, not an event)
+
+Per direct instruction from Otávio: when Iris ends a loop, the closing message
+must be exactly one of three forms:
+
+- **A: verified done** — "I have verified that [feature] is working, you may
+  enter the website and see it for yourself." (Requires actual end-to-end
+  verification against the live site, not "should work after deploy".)
+- **B: blocked on Atlas/MCP** — "I can't do this without the help from Atlas
+  and the MCP server. I have updated the documentation to say [context].
+  Please, Otávio, ask Atlas to read it." (Requires the question to actually
+  be written into `ATLAS_IRIS_ASYNC.md` first.)
+- **C: blocked on Otávio** — "Otávio, I have hit a major roadblock that makes
+  me unable to keep looping. I believe you need to do [context]. Do exactly
+  this." (Requires the blocker to be a human-only action.)
+
+If none of A/B/C applies, Iris keeps looping. Speculation ("should work after
+deploy"), punted verification ("let me know if it works"), or premature stops
+are not acceptable closing messages. Full text of the rule lives in
+`docs/LONG_TERM_GOALS_FOR_THE_CLIPPING_ONLINE_PROJECT.md` §3.
