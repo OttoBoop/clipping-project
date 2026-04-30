@@ -1,6 +1,6 @@
 # Orchestrators Framework for the Clipping Project
 
-Last updated: 2026-04-29
+Last updated: 2026-04-30
 
 This document defines how the orchestrator agents should work together on the
 clipping-online project. It is separate from the product-goals document. This is
@@ -358,3 +358,32 @@ The first implementation checkpoint is complete only when:
 Implementation must not begin from an uncommitted documentation-only decision.
 The first code checkpoint should start after docs are updated, committed, and
 pushed.
+
+## 2026-04-30 Docs Checkpoint From Accepted Plan
+
+Plan Mode means short-term plan creation for the next bounded sprint. It should
+produce the immediate constraints and acceptance checks, not a broad rewrite of
+long-term goals.
+
+Accepted current sprint:
+
+- Build and verify the open-link coworker clipping runner on
+  `https://clipping-project.onrender.com/`.
+- Do not put an admin/password gate in front of coworker workflows for this
+  sprint.
+- Lock primary monitored targets to Flavio Valle, Pedro Angelito, and Bernardo
+  Rubiao.
+- Allow coworkers to add only secondary targets.
+- Run all safe collectors by default.
+- Keep `direct_scrape` deprecated and disabled for coworkers.
+- Treat the Supabase Storage bridge as accepted for this sprint.
+- Count progress only when the workflow is live on Render.
+
+Atlas/Iris coordination requirements for this sprint:
+
+- Checkpoints must be committed and pushed before another agent is expected to
+  rely on them.
+- Each checkpoint report must name the responsible agent or subagent and state
+  what was verified.
+- Uncommitted local changes, local-only tests, or cloud-only claims are not
+  shared progress until visible through the repo or live on Render.

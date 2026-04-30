@@ -85,6 +85,27 @@ Pending Otavio decisions:
 
 Format: `### YYYY-MM-DD — Side`. Append below; never delete prior entries.
 
+### 2026-04-30 — Iris-Docs-Scribe (docs checkpoint from accepted plan)
+
+Scope: documentation-only checkpoint. No code, assets, data, commit, or push.
+
+Facts recorded in the shared docs:
+
+- Plan Mode means short-term plan creation.
+- The current sprint is the open-link coworker clipping runner on
+  `https://clipping-project.onrender.com/`.
+- Coworker workflows have no admin/password gate for this sprint.
+- Primary targets are locked to Flavio Valle, Pedro Angelito, and Bernardo
+  Rubiao.
+- Coworkers may add only secondary targets.
+- All safe collectors run by default.
+- `direct_scrape` is deprecated and disabled for coworkers.
+- Supabase Storage bridge is accepted for this sprint.
+- Progress only counts when live on Render.
+- Atlas/Iris checkpoints must be committed, pushed, and reported with agent
+  names and verified facts, except when Otavio explicitly instructs a pass not
+  to commit or push.
+
 ### 2026-04-29 — Claude Code (initial entry)
 
 Work done:

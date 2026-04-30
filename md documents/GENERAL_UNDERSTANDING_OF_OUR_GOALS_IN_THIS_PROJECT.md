@@ -1,6 +1,6 @@
 # General Understanding Of Our Goals In This Project
 
-Last updated: 2026-04-29
+Last updated: 2026-04-30
 
 This document is a compact orientation checkpoint for a future Claude Code
 orchestrator collaborating with Atlas on `clipping-project`. It is not the giant
@@ -208,6 +208,37 @@ AI-summary policy remains restrictive:
 - Public coworker users must not be able to generate new AI summaries.
 - Any future AI generation needs an admin-only gate, budget rule, provider
   decision, audit trail, and secret-safe configuration before implementation.
+
+## 2026-04-30 Accepted Sprint Checkpoint
+
+Plan Mode in this project means short-term plan creation: define the immediate
+work slice, constraints, acceptance checks, and coordination handoff before
+implementation. It does not mean a long roadmap rewrite or speculative product
+design.
+
+The current sprint is the open-link coworker clipping runner on:
+
+- `https://clipping-project.onrender.com/`
+
+Accepted sprint facts:
+
+- The coworker workflow must not require an admin gate, password gate, or
+  secret shared credential.
+- The primary monitored targets are locked for this sprint to Flavio Valle,
+  Pedro Angelito, and Bernardo Rubiao.
+- Coworkers may add only secondary targets. They must not change the locked
+  primary target set.
+- All safe collectors run by default for coworker clipping runs.
+- `direct_scrape` is deprecated for this workflow and disabled for coworkers.
+- The Supabase Storage bridge is accepted for this sprint as the file/blob
+  persistence path alongside server-side metadata.
+- Progress only counts when it is live and working on Render at the URL above.
+  Local success, screenshots, or unpushed code are evidence, not completion.
+
+Coordination rule for Atlas and Iris: each meaningful checkpoint must be
+committed, pushed, and reported with the agent name and exact facts verified.
+This rule describes the project workflow; it does not override a direct
+instruction for a documentation-only pass that says not to commit or push.
 
 ## Explicitly Out Of Scope For This Checkpoint
 

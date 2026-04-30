@@ -98,3 +98,25 @@ Otávio has not made yet).
 - Any summary of what was done that doesn't end with one of A/B/C.
 
 If none of A/B/C applies, the loop is not finished. Continue working.
+
+---
+
+## 4. Coworker Runner Boundaries Accepted For Current Sprint
+
+_2026-04-30 by Iris-Docs-Scribe._
+
+These are current-sprint boundaries, not the final long-term product shape:
+
+- Plan Mode means creating the short-term plan for the immediate sprint.
+- The current sprint is the open-link coworker clipping runner on
+  `https://clipping-project.onrender.com/`.
+- Coworker workflows have no admin/password gate in this sprint.
+- Primary targets are locked to Flavio Valle, Pedro Angelito, and Bernardo
+  Rubiao.
+- Coworkers can add only secondary targets.
+- All safe collectors run by default.
+- `direct_scrape` is deprecated and disabled for coworkers.
+- Supabase Storage bridge is accepted for this sprint.
+- Progress counts only when live on Render.
+- Atlas/Iris coordination must commit and push checkpoints, then report which
+  agents did the work and what facts were verified.

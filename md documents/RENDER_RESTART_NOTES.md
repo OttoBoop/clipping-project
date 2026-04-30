@@ -1,6 +1,6 @@
 # Render Restart Notes For The Clipping Project
 
-Last updated: 2026-04-29
+Last updated: 2026-04-30
 
 This note captures the Render-specific state that was missing from the first
 restart documents. It is intentionally secret-safe. Do not add API keys, deploy
@@ -175,3 +175,27 @@ For this restart, Atlas created a safety branch before cleaning the sync path:
   `articles_inserted=0`, `mentions_inserted=0`, and `stories_touched=0`.
 - Remaining observability gap: `/api/status` does not surface per-file upload
   names from the export path yet.
+
+## 2026-04-30 Coworker Runner Sprint Contract
+
+Current sprint target:
+
+- Live site: `https://clipping-project.onrender.com/`
+- Workflow: open-link coworker clipping runner.
+
+Accepted Render-facing constraints:
+
+- Coworkers must be able to use the clipping runner without an admin/password
+  gate.
+- Primary targets are fixed to Flavio Valle, Pedro Angelito, and Bernardo
+  Rubiao for this sprint.
+- Coworkers may add secondary targets only.
+- All safe collectors should run by default.
+- `direct_scrape` is deprecated and must stay disabled for coworkers.
+- Supabase Storage bridge is accepted for this sprint.
+
+Completion rule:
+
+- Progress counts only after the relevant behavior is live on Render and
+  checked against the public URL above. Local-only runs, unpushed branches, or
+  pending deploys are not enough to close the sprint.
