@@ -181,6 +181,15 @@ async def start_update(request: Request) -> JSONResponse:
     return JSONResponse(job)
 
 
+@app.post("/api/update/cancel")
+async def cancel_update() -> JSONResponse:
+    try:
+        job = job_manager.cancel_active()
+    except JobConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return JSONResponse(job)
+
+
 @app.post("/api/export")
 async def start_export(request: Request) -> JSONResponse:
     try:

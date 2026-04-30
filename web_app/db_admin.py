@@ -19,7 +19,7 @@ from .config import ROOT, db_path as configured_db_path
 
 
 TARGETS_PATH = ROOT / "data" / "targets.json"
-PRIMARY_TARGET_KEYS = ("flavio_valle", "pedro_angelito", "bernardo_rubiao")
+PRIMARY_TARGET_KEYS = ("flavio_valle", "pedro_angelito")
 SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 

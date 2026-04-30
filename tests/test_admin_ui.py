@@ -252,6 +252,38 @@ def test_update_and_export_workflows_are_public_coworker_endpoints(monkeypatch, 
     ]
 
 
+def test_cancel_update_is_public_and_returns_cancelled_job(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+
+    def fake_cancel_active():
+        return {"id": "cancelled-job", "status": "cancelled"}
+
+    monkeypatch.setattr(app_module.job_manager, "cancel_active", fake_cancel_active)
+
+    with TestClient(app) as client:
+        response = client.post("/api/update/cancel")
+
+    assert response.status_code == 200
+    assert response.json() == {"id": "cancelled-job", "status": "cancelled"}
+
+
+def test_cancel_update_returns_409_when_no_active_job(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+
+    def fake_cancel_active():
+        raise app_module.JobConflict("no_active_job")
+
+    monkeypatch.setattr(app_module.job_manager, "cancel_active", fake_cancel_active)
+
+    with TestClient(app) as client:
+        response = client.post("/api/update/cancel")
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "no_active_job"
+
+
 def test_targets_api_is_public_and_uploads_target_manifest(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     app_module = importlib.import_module("web_app.app")
@@ -301,7 +333,7 @@ def test_targets_api_returns_real_public_targets_contract(monkeypatch, tmp_path)
     assert response.status_code == 200
     payload = response.json()
     assert isinstance(payload["targets"], list)
-    assert payload["primaryKeys"] == ["flavio_valle", "pedro_angelito", "bernardo_rubiao"]
+    assert payload["primaryKeys"] == ["flavio_valle", "pedro_angelito"]
 
     by_key = {target["key"]: target for target in payload["targets"]}
     for key in payload["primaryKeys"]:
@@ -638,7 +670,9 @@ def test_public_dashboard_wording_contract():
     assert "Clipping do gabinete" in html
     assert "Rodar atualizacao" in html
     assert "Noticias disponiveis para consulta" in html
-    assert "Com texto para leitura" in html
+    assert "Materias com texto integral arquivado" in html
+    assert "Com texto para leitura" not in html
+    assert "Cancelar atualizacao" in html
     assert "DOM" not in html
     assert "RAM" not in html
     assert "API local" not in html

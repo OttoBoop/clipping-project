@@ -1,5 +1,5 @@
 (function () {
-  console.log("[clipping] build: coworker-runner-20260430 · editor enabled for all coworkers");
+  console.log("[clipping] build: live-runner-repair-20260430 · editor enabled for all coworkers");
   const app = document.getElementById("app");
   if (!app) return;
 
@@ -44,6 +44,9 @@
   const dateFromInput = document.getElementById("dateFromInput");
   const dateToInput = document.getElementById("dateToInput");
   const runUpdateButton = document.getElementById("runUpdateButton");
+  const cancelUpdateButton = document.getElementById("cancelUpdateButton");
+  const freshnessBanner = document.getElementById("freshnessBanner");
+  const freshnessBannerReload = document.getElementById("freshnessBannerReload");
   const runFormMessage = document.getElementById("runFormMessage");
   const addTargetMessage = document.getElementById("addTargetMessage");
   const runnerStatusPill = document.getElementById("runnerStatusPill");
@@ -325,12 +328,11 @@
   function renderRunTarget(target) {
     var id = "run-target-" + target.key;
     var checked = target.primary ? " checked" : "";
-    var disabled = target.primary ? " disabled" : "";
     var cls = target.primary ? " run-target--primary" : "";
     var helper = target.primary ? "Principal" : "Opcional";
     return (
       '<label class="run-target' + cls + '" for="' + escapeHtml(id) + '">' +
-      '<input type="checkbox" id="' + escapeHtml(id) + '" value="' + escapeHtml(target.key) + '"' + checked + disabled + ">" +
+      '<input type="checkbox" id="' + escapeHtml(id) + '" value="' + escapeHtml(target.key) + '"' + checked + ">" +
       '<span>' + escapeHtml(target.label) + '<small>' + helper + "</small></span>" +
       "</label>"
     );
@@ -378,14 +380,12 @@
 
   function selectedRunTargetKeys() {
     var keys = [];
-    runTargets.forEach(function (target) {
-      if (target.primary) keys.push(target.key);
-    });
-    if (secondaryRunTargets) {
-      secondaryRunTargets.querySelectorAll('input[type="checkbox"]:checked').forEach(function (input) {
-        if (keys.indexOf(input.value) === -1) keys.push(input.value);
+    [primaryRunTargets, secondaryRunTargets].forEach(function (container) {
+      if (!container) return;
+      container.querySelectorAll('input[type="checkbox"]:checked').forEach(function (input) {
+        if (input.value && keys.indexOf(input.value) === -1) keys.push(input.value);
       });
-    }
+    });
     return keys;
   }
 
@@ -409,7 +409,24 @@
     if (status === "exporting") return "Publicando";
     if (status === "succeeded") return "Concluido";
     if (status === "failed") return "Precisa de atencao";
+    if (status === "cancelled") return "Cancelada";
     return "Pronto";
+  }
+
+  function placeholderText(status, kind) {
+    if (status === "queued") {
+      if (kind === "target") return "Na fila";
+      if (kind === "source") return "Iniciando coleta...";
+    }
+    if (status === "running") {
+      if (kind === "target") return "Buscando primeiro nome...";
+      if (kind === "source") return "Buscando primeira fonte...";
+    }
+    if (status === "exporting") return "Publicando painel...";
+    if (status === "succeeded") return "Rodada concluida";
+    if (status === "failed") return "Rodada interrompida";
+    if (status === "cancelled") return "Rodada cancelada";
+    return "Sem rodada agora";
   }
 
   function latestProgressEvent(job) {
@@ -456,27 +473,32 @@
     var job = current.status === "idle" && recent.length ? recent[0] : current;
     var event = latestProgressEvent(job);
     var eventPayload = event && event.payload ? event.payload : {};
-    var label = statusLabel(job.status);
-    var isRunning = ["queued", "running", "exporting"].indexOf(job.status) !== -1;
-    var isError = job.status === "failed";
+    var status = job.status || "";
+    var label = statusLabel(status);
+    var isRunning = ["queued", "running", "exporting"].indexOf(status) !== -1;
+    var isError = status === "failed";
+    var isCancelled = status === "cancelled";
     [runnerStatusPill, sharedStatusPill].forEach(function (pill) {
       if (!pill) return;
       pill.textContent = label;
       pill.classList.toggle("is-running", isRunning);
       pill.classList.toggle("is-error", isError);
+      pill.classList.toggle("is-cancelled", isCancelled);
     });
     if (progressFill) progressFill.style.width = progressPercent(job, event) + "%";
     var keys = parseMaybeJsonList(job.target_keys);
     if (!keys.length && Array.isArray(job.target_keys)) keys = job.target_keys;
     if (progressTarget) {
-      progressTarget.textContent = keys.map(function (key) { return labelsByKey[key] || key; }).join(" + ") || "Aguardando";
+      var targetEvent = eventPayload && eventPayload.target_label ? eventPayload.target_label : "";
+      var targetText = keys.map(function (key) { return labelsByKey[key] || key; }).join(" + ");
+      progressTarget.textContent = targetEvent || targetText || placeholderText(status, "target");
     }
     if (progressDates) {
-      var from = job.date_from || (dateFromInput && dateFromInput.value) || "";
-      var to = job.date_to || (dateToInput && dateToInput.value) || "";
-      progressDates.textContent = from && to ? from + " a " + to : "Aguardando";
+      var from = job.date_from || "";
+      var to = job.date_to || "";
+      progressDates.textContent = from && to ? from + " a " + to : placeholderText(status, "dates");
     }
-    if (progressSource) progressSource.textContent = eventPayload.source_name || "Aguardando";
+    if (progressSource) progressSource.textContent = eventPayload.source_name || placeholderText(status, "source");
     if (progressArticles) progressArticles.textContent = String(job.articles_inserted || eventPayload.articles_inserted || 0);
     if (progressMentions) progressMentions.textContent = String(job.mentions_inserted || 0);
     if (progressStories) progressStories.textContent = String(job.stories_touched || 0);
@@ -487,6 +509,36 @@
     }
     if (isError && job.error_message) console.error("[clipping] update failed", job.error_message);
     if (runUpdateButton) runUpdateButton.disabled = isRunning;
+    if (cancelUpdateButton) {
+      cancelUpdateButton.hidden = !isRunning;
+      cancelUpdateButton.disabled = !isRunning;
+    }
+    updateFreshnessBanner(latestStatus);
+  }
+
+  function updateFreshnessBanner(statusPayload) {
+    if (!freshnessBanner) return;
+    if (!payload || !payload.meta) return;
+    var generatedAt = String(payload.meta.generatedAt || "");
+    var recent = (statusPayload && statusPayload.recent) || [];
+    var latestSucceeded = null;
+    for (var i = 0; i < recent.length; i++) {
+      var row = recent[i] || {};
+      if (row.status === "succeeded" && row.finished_at) {
+        latestSucceeded = row;
+        break;
+      }
+    }
+    if (!latestSucceeded) {
+      freshnessBanner.hidden = true;
+      return;
+    }
+    var finished = String(latestSucceeded.finished_at || "");
+    if (!generatedAt || finished > generatedAt) {
+      freshnessBanner.hidden = false;
+    } else {
+      freshnessBanner.hidden = true;
+    }
   }
 
   function pollStatus() {
@@ -1094,6 +1146,33 @@
           runUpdateButton.disabled = ["queued", "running", "exporting"].indexOf(status) !== -1;
         }
       }
+    });
+  }
+
+  if (cancelUpdateButton) {
+    cancelUpdateButton.addEventListener("click", async function () {
+      cancelUpdateButton.disabled = true;
+      setMessage(runFormMessage, "Cancelando atualizacao...", "");
+      try {
+        var resp = await apiPost("/api/update/cancel", {});
+        var data = await resp.json().catch(function () { return {}; });
+        if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+        setMessage(runFormMessage, "Atualizacao cancelada. Voce pode iniciar outra agora.", "ok");
+        await pollStatus();
+      } catch (error) {
+        setMessage(runFormMessage, friendlyError(error, "Nao foi possivel cancelar agora."), "error");
+      } finally {
+        var status = latestStatus && latestStatus.current ? latestStatus.current.status : "";
+        var stillRunning = ["queued", "running", "exporting"].indexOf(status) !== -1;
+        cancelUpdateButton.disabled = !stillRunning;
+        cancelUpdateButton.hidden = !stillRunning;
+      }
+    });
+  }
+
+  if (freshnessBannerReload) {
+    freshnessBannerReload.addEventListener("click", function () {
+      window.location.reload();
     });
   }
 

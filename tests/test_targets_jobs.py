@@ -74,7 +74,7 @@ def test_create_secondary_target_writes_sanitized_non_primary_target_atomically(
     assert stored[-1]["className"] == ""
 
     public = db_admin.public_targets()
-    assert public["primaryKeys"] == ["flavio_valle", "pedro_angelito", "bernardo_rubiao"]
+    assert public["primaryKeys"] == ["flavio_valle", "pedro_angelito"]
     by_key = {row["key"]: row for row in public["targets"]}
     assert by_key["flavio_valle"]["primary"] is True
     assert by_key["ana_maria"]["primary"] is False
