@@ -26,6 +26,22 @@ from pipeline.database import ClippingDB
 
 VALID_SENTIMENTS = {"positive", "negative", "neutral"}
 
+BASE_CATEGORIES = (
+    "Causa Animal",
+    "Combate ao Antissemitismo",
+    "Conservação",
+    "Economia",
+    "Esporte e Lazer",
+    "Gabinete",
+    "Mandato",
+    "Meio Ambiente",
+    "Ordenamento",
+    "Sancionado",
+    "Saúde",
+    "Segurança",
+    "Turismo",
+)
+
 
 def public_targets() -> dict[str, Any] | list[dict[str, Any]]:
     from . import db_admin
@@ -64,7 +80,16 @@ async def lifespan(_: FastAPI):
     artifact_store.download_current_artifacts()
     ensure_app_tables(db_path())
     # Ensure classification + category tables exist (idempotent CREATE IF NOT EXISTS).
-    ClippingDB(db_path())
+    cdb = ClippingDB(db_path())
+    existing_names = {row["name"] for row in cdb.list_categories()}
+    newly_seeded = [n for n in BASE_CATEGORIES if n not in existing_names]
+    for name in newly_seeded:
+        cdb.get_or_create_category(name, created_by="system")
+    if newly_seeded and artifact_store.enabled:
+        artifact_store.upload_current_artifacts(
+            manifest={"kind": "seed-categories", "added": newly_seeded},
+            job_id="seed-base-categories",
+        )
     yield
 
 
