@@ -1,4 +1,5 @@
 (function () {
+  console.log("[clipping] build: ea7bf21-cls-fix · editor enabled for all coworkers");
   const app = document.getElementById("app");
   if (!app) return;
 

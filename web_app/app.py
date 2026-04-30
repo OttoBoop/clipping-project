@@ -45,6 +45,17 @@ app = FastAPI(title="Clipping Project", docs_url=None, redoc_url=None, lifespan=
 app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 
 
+@app.middleware("http")
+async def no_cache_for_dashboard_assets(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.startswith("/assets/clipping"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 @app.get("/", response_class=HTMLResponse)
 def public_dashboard() -> Response:
     index_path = ROOT / "index.html"
