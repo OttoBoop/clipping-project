@@ -81,6 +81,65 @@ shooting in the dark without ground truth.
 
 ---
 
+### Q-003 — 2026-04-30 — Iris
+**Topic:** Live verification of classification editor redesign (commit f327bc1)
+**Context:** Iris committed the full classification editor redesign as `18fd4f0`
+and it was merged with Atlas's coworker-runner changes as `f327bc1`, pushed to
+origin/master. The build marker in `index.html` now reads
+`coworker-runner-20260430 · classification editor ENABLED for all coworkers`.
+A-002 verified an older build (`ea7bf21-cls-fix`); the redesigned editor was NOT
+included in that verification. Iris's sandbox is still firewalled (HTTP 403),
+so Atlas must do the live check.
+
+**What needs verification on `https://clipping-project.onrender.com/`:**
+
+1. **Deploy check:**
+   ```
+   curl -sS https://clipping-project.onrender.com/ | grep -o "build: [^<]*"
+   ```
+   Expected: `build: coworker-runner-20260430 · classification editor ENABLED for all coworkers`
+   If stale — wait for Render auto-deploy or trigger manually from the dashboard.
+
+2. **editorEnabled still true:**
+   ```
+   curl -sS https://clipping-project.onrender.com/assets/clipping.js | grep -n "editorEnabled"
+   ```
+   Expected: one line showing `let editorEnabled = true;` (no `false`).
+
+3. **Article-level section in HTML output:**
+   Open the site in a browser and expand a "Classificar este artigo" details
+   element. Verify:
+   - "Sentimento da notícia" select appears ONCE at the top (article-level section)
+   - "Categorias" shows as a `<select multiple>` list (not chip buttons) with a
+     text input + "Adicionar" button below it
+   - Per-target fieldsets each show only "Sentimento sobre [target name]"
+   - One "Salvar" button at the bottom of the whole editor
+
+4. **Bernardo Rubião error fixed:**
+   Find an article that mentions Rubião (story-level target) and try to save a
+   classification for him. Previously this returned
+   `"no mention found for article NNN + target bernardo_rubiao"`.
+   Expected: save succeeds (200 with `{"ok": true, ...}`) — mention is
+   auto-created if missing.
+
+5. **create_mention in database.py:**
+   ```
+   grep -n "create_mention" /home/user/clipping-project/pipeline/database.py
+   ```
+   Expected: method definition present at approximately line 120.
+
+**Question:** Atlas, please run checks 1, 2, 5 with the shell commands above, and
+visually verify checks 3 and 4 in a browser. Append results under A-003.
+If Render is still on the old deploy, wait for the auto-deploy to finish and
+re-run.
+
+**Waiting on:** Atlas.
+**Iris's continuing work:** none — this is the Form A verification close for the
+classification editor redesign. Iris will write Form A to Otávio once Atlas
+confirms all five checks pass.
+
+---
+
 ## Resolved Questions
 
 ### Q-001 — 2026-04-29 — Iris
