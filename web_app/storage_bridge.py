@@ -5,6 +5,7 @@ import os
 import shutil
 import sqlite3
 import tempfile
+import gzip
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -66,6 +67,10 @@ class ArtifactStore:
         downloaded: list[str] = []
         for relative, local_factory in RUNTIME_FILES:
             local_path = local_factory()
+            if relative == "data/clipping.db":
+                if self.download_gzip_file(self._remote(relative) + ".gz", local_path):
+                    downloaded.append(relative)
+                    continue
             if self.download_file(self._remote(relative), local_path):
                 downloaded.append(relative)
         return downloaded
@@ -89,7 +94,12 @@ class ArtifactStore:
         uploaded: list[str] = []
         for relative, local_factory in RUNTIME_FILES:
             local_path = local_factory()
-            if local_path.is_file() and self.upload_file(local_path, self._remote(relative)):
+            if not local_path.is_file():
+                continue
+            if relative == "data/clipping.db":
+                if self.upload_sqlite_snapshot(local_path, self._remote(relative) + ".gz"):
+                    uploaded.append(relative + ".gz")
+            elif self.upload_file(local_path, self._remote(relative)):
                 uploaded.append(relative)
         if manifest and job_id:
             remote = f"{self.prefix}/runs/{job_id}.json"
@@ -97,6 +107,31 @@ class ArtifactStore:
             if self.upload_bytes(payload, remote, "application/json"):
                 uploaded.append(f"runs/{job_id}.json")
         return uploaded
+
+    def download_gzip_file(self, remote_path: str, local_path: Path) -> bool:
+        if not self.enabled:
+            return False
+        try:
+            response = requests.get(self._object_url(remote_path), headers=self._headers(), timeout=45)
+        except requests.RequestException:
+            return False
+        if response.status_code == 404:
+            return False
+        if not response.ok:
+            return False
+        try:
+            payload = gzip.decompress(response.content)
+        except OSError:
+            return False
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_bytes(payload)
+        return True
+
+    def upload_sqlite_snapshot(self, local_path: Path, remote_path: str) -> bool:
+        payload = sqlite_snapshot_bytes(local_path)
+        if not payload:
+            return False
+        return self.upload_bytes(gzip.compress(payload, compresslevel=6), remote_path, "application/gzip")
 
     def backup_current_artifacts(self, label: str) -> Path:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")

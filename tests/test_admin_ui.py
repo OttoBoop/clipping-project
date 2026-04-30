@@ -349,6 +349,7 @@ def test_storage_current_files_are_runtime_mutable_only(monkeypatch, tmp_path):
     load_test_app(monkeypatch, tmp_path)
     storage_bridge = importlib.import_module("web_app.storage_bridge")
     requested = []
+    gzip_requested = []
 
     paths = [relative for relative, _ in storage_bridge.CURRENT_FILES]
     assert paths == [
@@ -364,13 +365,19 @@ def test_storage_current_files_are_runtime_mutable_only(monkeypatch, tmp_path):
     monkeypatch.setattr(storage_bridge.artifact_store, "enabled", True)
     monkeypatch.setattr(storage_bridge.artifact_store, "prefix", "clipping-project")
 
+    def fake_download_gzip(remote_path, local_path):
+        gzip_requested.append(remote_path)
+        return remote_path.endswith("data/clipping.db.gz")
+
     def fake_download(remote_path, local_path):
         requested.append(remote_path)
         return True
 
+    monkeypatch.setattr(storage_bridge.artifact_store, "download_gzip_file", fake_download_gzip)
     monkeypatch.setattr(storage_bridge.artifact_store, "download_file", fake_download)
     assert storage_bridge.artifact_store.download_current_artifacts() == paths
-    assert requested == [f"clipping-project/current/{path}" for path in paths]
+    assert gzip_requested == ["clipping-project/current/data/clipping.db.gz"]
+    assert requested == [f"clipping-project/current/{path}" for path in paths[1:]]
 
 
 def test_job_error_sanitizer_redacts_secret_material(monkeypatch, tmp_path):
