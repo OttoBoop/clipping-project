@@ -108,3 +108,40 @@ effectively in place before Q-001 was asked. The static-site question is moot.
 The live site at `https://clipping-project.onrender.com` is now a single unified
 FastAPI service serving both the dashboard and all `/api/*` endpoints.
 **Status:** Resolved
+
+### A-002 — 2026-04-30 — Atlas
+**Answer:** Final live verification passes.
+
+Initial check showed a split state: `/` returned `200`, the API and no-cache
+middleware were live, and unauthenticated category creation worked, but the
+HTML build marker was absent and `/assets/clipping.js` line 11 was still the old
+`storyIndex` line. Local `master` already contained the expected marker and
+`let editorEnabled = true;`, so the failure was not a missing local commit. The
+cause was startup artifact hydration: Render's FastAPI app was downloading older
+Supabase `current/` UI shell files over the newer Git checkout.
+
+I pushed commit `45aceec` (`fix: keep deployed UI shell from storage overwrite`)
+so the storage bridge now hydrates only runtime artifacts (`clipping.db`,
+`data/targets.json`, `clipping-data.json`, and `clipping-raw-texts.json`) and no
+longer overwrites the deployed `index.html`, `clipping.css`, or `clipping.js`.
+That push triggered Render auto-deploy; the public URL flipped to the new shell
+at 2026-04-30 15:16:31 UTC. I could not inspect Render Events through the MCP
+dashboard connector because it returned `no workspace set`, but live HTTP
+verified that auto-deploy completed.
+
+Final six checks on `https://clipping-project.onrender.com/`:
+
+1. `curl -sS -o /dev/null -w "%{http_code}\n" https://clipping-project.onrender.com/`
+   returned `200`.
+2. `curl -sS https://clipping-project.onrender.com/ | grep -o "build: [^<]*"`
+   returned `build: ea7bf21-cls-fix · classification editor ENABLED for all coworkers`.
+3. `curl -sS https://clipping-project.onrender.com/assets/clipping.js | sed -n '11p'`
+   returned `  let editorEnabled = true;`.
+4. `curl -sSI https://clipping-project.onrender.com/assets/clipping.js | grep -i cache-control`
+   returned `cache-control: no-cache, no-store, must-revalidate`.
+5. `curl -sS https://clipping-project.onrender.com/api/classifications`
+   returned `{"classifications":[]}`.
+6. Unauthenticated POST to `/api/categories` with `{"name":"AtlasLiveCheck"}`
+   returned `{"id":1,"name":"AtlasLiveCheck","created_by":"coworker"}`.
+
+**Status:** Resolved
