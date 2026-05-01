@@ -94,7 +94,8 @@ class JobManager:
             event = self._cancel_events.get(job_id)
             if event is not None:
                 event.set()
-            self._active_job_id = None
+            else:
+                self._active_job_id = None
         update_job(
             job_id,
             status="cancelled",

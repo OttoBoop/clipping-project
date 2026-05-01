@@ -1174,7 +1174,7 @@
         var resp = await apiPost("/api/update/cancel", {});
         var data = await resp.json().catch(function () { return {}; });
         if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
-        setMessage(runFormMessage, "Atualizacao cancelada. Voce pode iniciar outra agora.", "ok");
+        setMessage(runFormMessage, "Cancelamento solicitado. A rodada vai parar ao fim da etapa atual.", "ok");
         await pollStatus();
       } catch (error) {
         setMessage(runFormMessage, friendlyError(error, "Nao foi possivel cancelar agora."), "error");

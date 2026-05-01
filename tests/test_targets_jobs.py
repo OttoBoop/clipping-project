@@ -268,6 +268,33 @@ def test_cancel_active_marks_job_cancelled_and_clears_active_state(monkeypatch, 
     assert any(event["event"] == "job_cancelled" for event in events)
 
 
+def test_cancel_active_keeps_process_slot_until_worker_boundary(monkeypatch, tmp_path):
+    import threading
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    jobs.create_job(
+        "cancel-running",
+        "update",
+        {
+            "preset": "custom",
+            "collector": "all",
+            "target_keys": ["flavio_valle"],
+            "date_from": "2026-04-01",
+            "date_to": "2026-04-30",
+        },
+        started_by="coworker",
+    )
+    manager = jobs.JobManager(SimpleNamespace(writes_available=True))
+    manager._active_job_id = "cancel-running"
+    manager._cancel_events["cancel-running"] = threading.Event()
+
+    cancelled = manager.cancel_active()
+
+    assert cancelled["status"] == "cancelled"
+    assert manager._cancel_events["cancel-running"].is_set()
+    assert manager._active_job_id == "cancel-running"
+
+
 def test_run_export_snapshot_preserves_historical_merge_contract(monkeypatch, tmp_path):
     _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
     calls = []
