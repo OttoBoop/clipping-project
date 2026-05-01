@@ -332,6 +332,38 @@ def test_cancel_active_keeps_process_slot_until_worker_boundary(monkeypatch, tmp
     assert manager._active_job_id == "cancel-running"
 
 
+def test_cancel_active_ignores_terminal_job_still_uploading(monkeypatch, tmp_path):
+    import threading
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    jobs.create_job(
+        "terminal-uploading",
+        "export",
+        {
+            "preset": "export",
+            "collector": "export",
+            "target_keys": [],
+            "date_from": "",
+            "date_to": "",
+        },
+        started_by="coworker",
+    )
+    jobs.update_job("terminal-uploading", status="succeeded")
+    manager = jobs.JobManager(SimpleNamespace(writes_available=True))
+    manager._active_job_id = "terminal-uploading"
+    manager._cancel_events["terminal-uploading"] = threading.Event()
+
+    try:
+        manager.cancel_active()
+    except jobs.JobConflict as exc:
+        assert str(exc) == "no_active_job"
+    else:
+        raise AssertionError("expected no_active_job")
+
+    assert jobs.get_job("terminal-uploading")["status"] == "succeeded"
+    assert not manager._cancel_events["terminal-uploading"].is_set()
+
+
 def test_cancel_orphaned_active_jobs_marks_persisted_active_rows_terminal(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     jobs.create_job(

@@ -91,6 +91,9 @@ class JobManager:
                     job_id = str(active_job["id"])
             if not job_id:
                 raise JobConflict("no_active_job")
+            job = get_job(job_id)
+            if job and str(job.get("status") or "") not in ACTIVE_JOB_STATUSES:
+                raise JobConflict("no_active_job")
             event = self._cancel_events.get(job_id)
             if event is not None:
                 event.set()
