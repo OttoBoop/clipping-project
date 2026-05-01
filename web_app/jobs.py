@@ -83,6 +83,9 @@ class JobManager:
         return rows[0] if rows else {"status": "idle"}
 
     def cancel_active(self) -> dict[str, Any]:
+        # Hold the lock across the DB write so a coworker who clicks
+        # "Rodar atualizacao" right after Cancel doesn't see the old job
+        # still listed as active in SQLite and get job_already_running.
         with self._lock:
             job_id = self._active_job_id
             if not job_id:
@@ -95,12 +98,12 @@ class JobManager:
             if event is not None:
                 event.set()
             self._active_job_id = None
-        update_job(
-            job_id,
-            status="cancelled",
-            finished_at=datetime.now(timezone.utc).isoformat(),
-        )
-        append_event(job_id, "job_cancelled", {"status": "cancelled"})
+            update_job(
+                job_id,
+                status="cancelled",
+                finished_at=datetime.now(timezone.utc).isoformat(),
+            )
+            append_event(job_id, "job_cancelled", {"status": "cancelled"})
         return get_job(job_id) or {"id": job_id, "status": "cancelled"}
 
     def start_update(self, payload: dict[str, Any], *, started_by: str) -> dict[str, Any]:

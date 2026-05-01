@@ -64,6 +64,11 @@
   const baseRawStat = document.getElementById("baseRawStat");
   const baseUpdatedText = document.getElementById("baseUpdatedText");
   const LAZY_BATCH = 50;
+  const RUNNING_STATUSES = ["queued", "running", "exporting"];
+
+  function isRunningStatus(status) {
+    return RUNNING_STATUSES.indexOf(String(status || "")) !== -1;
+  }
 
   let payload = null;
   let selectedTargets = new Set();
@@ -150,6 +155,7 @@
     var raw = error && error.message ? error.message : String(error || "");
     console.error("[clipping] detailed error", error);
     if (raw.indexOf("job_already_running") !== -1) return "Ja existe uma atualizacao em andamento.";
+    if (raw.indexOf("no_active_job") !== -1) return "Nao ha nenhuma atualizacao em andamento para cancelar.";
     if (raw.indexOf("persistent_storage_not_configured") !== -1) return "A gravacao da base ainda nao esta pronta neste ambiente.";
     if (raw.indexOf("periodo_invalido") !== -1) return "Confira as datas: a inicial precisa vir antes da final.";
     if (raw.indexOf("data_futura") !== -1) return "As datas precisam ser de hoje ou anteriores.";
@@ -474,7 +480,7 @@
     var eventPayload = event && event.payload ? event.payload : {};
     var status = job.status || "";
     var label = statusLabel(status);
-    var isRunning = ["queued", "running", "exporting"].indexOf(status) !== -1;
+    var isRunning = isRunningStatus(status);
     var isError = status === "failed";
     var isCancelled = status === "cancelled";
     [runnerStatusPill, sharedStatusPill].forEach(function (pill) {
@@ -515,10 +521,36 @@
     updateFreshnessBanner(latestStatus);
   }
 
+  function parseBrazilianGeneratedAt(value) {
+    var match = /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})\s+UTC$/.exec(String(value || "").trim());
+    if (!match) return NaN;
+    return Date.UTC(+match[3], +match[2] - 1, +match[1], +match[4], +match[5]);
+  }
+
+  function parseTimestamp(value) {
+    var raw = String(value || "").trim();
+    if (!raw) return NaN;
+    var brazilian = parseBrazilianGeneratedAt(raw);
+    if (!isNaN(brazilian)) return brazilian;
+    var iso = Date.parse(raw);
+    return isNaN(iso) ? NaN : iso;
+  }
+
+  var generatedAtMsCache = { raw: undefined, ms: NaN };
+
+  function generatedAtMs() {
+    if (!payload || !payload.meta) return NaN;
+    var raw = payload.meta.generatedAt;
+    if (raw !== generatedAtMsCache.raw) {
+      generatedAtMsCache = { raw: raw, ms: parseTimestamp(raw) };
+    }
+    return generatedAtMsCache.ms;
+  }
+
   function updateFreshnessBanner(statusPayload) {
     if (!freshnessBanner) return;
     if (!payload || !payload.meta) return;
-    var generatedAt = String(payload.meta.generatedAt || "");
+    var generatedMs = generatedAtMs();
     var recent = (statusPayload && statusPayload.recent) || [];
     var latestSucceeded = null;
     for (var i = 0; i < recent.length; i++) {
@@ -532,12 +564,15 @@
       freshnessBanner.hidden = true;
       return;
     }
-    var finished = String(latestSucceeded.finished_at || "");
-    if (!generatedAt || finished > generatedAt) {
-      freshnessBanner.hidden = false;
-    } else {
+    var finishedMs = parseTimestamp(latestSucceeded.finished_at);
+    if (isNaN(finishedMs)) {
       freshnessBanner.hidden = true;
+      return;
     }
+    // Show the banner when the dashboard payload doesn't carry a parseable
+    // timestamp (we can't tell what it reflects, so warn) or when the latest
+    // successful run finished after the snapshot was generated.
+    freshnessBanner.hidden = !(isNaN(generatedMs) || finishedMs > generatedMs);
   }
 
   function pollStatus() {
@@ -1142,7 +1177,7 @@
       } finally {
         if (runUpdateButton) {
           var status = latestStatus && latestStatus.current ? latestStatus.current.status : "";
-          runUpdateButton.disabled = ["queued", "running", "exporting"].indexOf(status) !== -1;
+          runUpdateButton.disabled = isRunningStatus(status);
         }
       }
     });
@@ -1152,19 +1187,28 @@
     cancelUpdateButton.addEventListener("click", async function () {
       cancelUpdateButton.disabled = true;
       setMessage(runFormMessage, "Cancelando atualizacao...", "");
+      var cancelled = false;
       try {
         var resp = await apiPost("/api/update/cancel", {});
         var data = await resp.json().catch(function () { return {}; });
         if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+        cancelled = true;
         setMessage(runFormMessage, "Atualizacao cancelada. Voce pode iniciar outra agora.", "ok");
         await pollStatus();
       } catch (error) {
         setMessage(runFormMessage, friendlyError(error, "Nao foi possivel cancelar agora."), "error");
       } finally {
-        var status = latestStatus && latestStatus.current ? latestStatus.current.status : "";
-        var stillRunning = ["queued", "running", "exporting"].indexOf(status) !== -1;
-        cancelUpdateButton.disabled = !stillRunning;
-        cancelUpdateButton.hidden = !stillRunning;
+        // On success the server has already flipped the slot to cancelled, so
+        // hide the button immediately even if the follow-up poll is in flight
+        // or failed. On error, leave the button visible/enabled so the user
+        // can retry.
+        if (cancelled) {
+          cancelUpdateButton.hidden = true;
+          cancelUpdateButton.disabled = false;
+        } else {
+          cancelUpdateButton.hidden = false;
+          cancelUpdateButton.disabled = false;
+        }
       }
     });
   }
