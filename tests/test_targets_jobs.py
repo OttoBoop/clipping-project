@@ -81,7 +81,7 @@ def test_create_secondary_target_writes_sanitized_non_primary_target_atomically(
     assert by_key["ana_maria_2"]["primary"] is False
 
 
-def test_build_update_spec_uses_safe_all_collector_and_rejects_future_or_long_dates(monkeypatch, tmp_path):
+def test_build_update_spec_uses_safe_all_collector_and_accepts_long_ranges(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
 
     spec = jobs.build_update_spec(
@@ -99,19 +99,31 @@ def test_build_update_spec_uses_safe_all_collector_and_rejects_future_or_long_da
     assert spec["skip_direct_scrape"] is True
     assert "direct_scrape" not in jobs.SAFE_COLLECTORS
 
+    long_range = jobs.build_update_spec(
+        {
+            "preset": "custom",
+            "target_keys": ["flavio_valle"],
+            "date_from": "2025-04-30",
+            "date_to": "2026-04-30",
+            "export": False,
+        }
+    )
+    assert long_range["date_from"] == "2025-04-30"
+    assert long_range["date_to"] == "2026-04-30"
+
     try:
         jobs.build_update_spec(
             {
                 "preset": "custom",
                 "target_keys": ["flavio_valle"],
-                "date_from": "2026-04-20",
-                "date_to": "2026-04-30",
+                "date_from": "2026-04-30",
+                "date_to": "2026-04-29",
             }
         )
     except ValueError as exc:
-        assert str(exc) == "periodo_muito_longo"
+        assert str(exc) == "periodo_invalido"
     else:
-        raise AssertionError("expected periodo_muito_longo")
+        raise AssertionError("expected periodo_invalido")
 
 
 def test_job_progress_contract_includes_target_source_counts_and_recent_events(monkeypatch, tmp_path):

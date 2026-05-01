@@ -151,7 +151,6 @@
     console.error("[clipping] detailed error", error);
     if (raw.indexOf("job_already_running") !== -1) return "Ja existe uma atualizacao em andamento.";
     if (raw.indexOf("persistent_storage_not_configured") !== -1) return "A gravacao da base ainda nao esta pronta neste ambiente.";
-    if (raw.indexOf("periodo_muito_longo") !== -1) return "Escolha um periodo de ate 7 dias.";
     if (raw.indexOf("periodo_invalido") !== -1) return "Confira as datas: a inicial precisa vir antes da final.";
     if (raw.indexOf("data_futura") !== -1) return "As datas precisam ser de hoje ou anteriores.";
     if (raw.indexOf("data_invalida") !== -1) return "Preencha as duas datas.";

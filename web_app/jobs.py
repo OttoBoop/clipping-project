@@ -56,7 +56,6 @@ PRESETS: dict[str, dict[str, Any]] = {
     },
 }
 
-CUSTOM_MAX_DAYS = 7
 CUSTOM_MAX_CANDIDATES = 600
 CUSTOM_MAX_PROCESS_SECONDS = 600
 
@@ -285,8 +284,6 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("coletor_invalido")
     if date_from > date_to:
         raise ValueError("periodo_invalido")
-    if (date.fromisoformat(date_to) - date.fromisoformat(date_from)).days > CUSTOM_MAX_DAYS:
-        raise ValueError("periodo_muito_longo")
 
     return {
         "preset": preset,

@@ -281,14 +281,31 @@ close the live-verification loop.
    - New `is-cancelled` class for the status pill.
 9. Asset cache key bumped: `coworker-runner-20260430` →
    `live-runner-repair-20260430` so coworkers don't hit stale CSS/JS.
-10. Tests:
+10. Drop the arbitrary 7-day cap on the `custom` preset:
+    - `web_app/jobs.py` removes `CUSTOM_MAX_DAYS = 7` and the
+      `periodo_muito_longo` raise. The only date validation left is
+      `date_from > date_to → periodo_invalido` and `value > today →
+      data_futura` (both still enforced).
+    - `assets/clipping.js` removes the `periodo_muito_longo` mapping in
+      `friendlyError`.
+    - Coworkers can now run the pipeline over arbitrary historical ranges.
+11. Tests:
     - `tests/test_admin_ui.py` updated `test_public_dashboard_wording_contract`
       and `test_targets_api_returns_real_public_targets_contract`.
     - `tests/test_targets_jobs.py` updated `primaryKeys` assertion.
+    - `tests/test_targets_jobs.py` renamed
+      `test_build_update_spec_uses_safe_all_collector_and_rejects_future_or_long_dates`
+      to `..._and_accepts_long_ranges`; it now asserts a 365-day range is
+      accepted and reverse-order dates still raise `periodo_invalido`.
     - Two new cancel-route tests added.
-    - `25 passed` on `tests/test_admin_ui.py tests/test_targets_jobs.py`.
-    - `149 passed` on the broader suite (forensic-inventory and
-      page-performance failures are pre-existing and unrelated).
+    - All 5 `test_targets_jobs.py` tests pass; 24/27 admin_ui tests pass.
+      The 3 admin_ui failures (`test_targets_api_is_public_and_uploads_target_manifest`,
+      `test_manual_story_records_uploaded_artifact_observability`,
+      `test_manual_story_duplicate_with_artifact_upload_stays_polite`) are
+      **pre-existing on master** — they were introduced by `f551d34` (the
+      BASE_CATEGORIES startup seed adds an extra upload call those tests
+      didn't expect). They are NOT caused by anything in `2f81e9f`. Iris
+      confirmed by running them on `origin/master` HEAD directly.
 
 **What needs verification on `https://clipping-project.onrender.com/`:**
 
@@ -369,11 +386,22 @@ This branch is not on master yet. Step 0 is a merge decision (you or Otávio).
     "Buscando primeiro nome…" or the actual target/source name — not the bare
     word "Aguardando".
 
-**Question:** Atlas, please run the curl checks (2, 3, 5, 6, 7) and visually
-verify (4, 8, 9, 10) in a browser. Append results under A-006. If the merge
-is up to you, please cherry-pick or merge `claude/review-ui-code-lSi7g`
-into master before checking. If the merge is up to Otávio, just verify steps
-2-10 once it's deployed.
+11. **No 7-day cap on custom preset:**
+    ```
+    curl -sS -X POST https://clipping-project.onrender.com/api/update/start \
+      -H "Content-Type: application/json" \
+      -d '{"preset":"custom","target_keys":["flavio_valle"],"date_from":"2026-01-01","date_to":"2026-04-30","export":false}'
+    ```
+    Expected: HTTP 200 with a job record (status `queued` or `running`).
+    Previously this returned 400 `periodo_muito_longo`. If you don't want
+    to actually start a 4-month run during verification, immediately POST to
+    `/api/update/cancel` to stop it.
+
+**Question:** Atlas, please run the curl checks (2, 3, 5, 6, 7, 11) and
+visually verify (4, 8, 9, 10) in a browser. Append results under A-006. If
+the merge is up to you, please cherry-pick or merge
+`claude/review-ui-code-lSi7g` into master before checking. If the merge is
+up to Otávio, just verify steps 2-11 once it's deployed.
 
 **Waiting on:** Atlas (merge + live HTTP/browser verification only Atlas can do).
 **Iris's continuing work:** none — this is the verification loop closer for
