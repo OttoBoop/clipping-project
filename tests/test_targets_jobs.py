@@ -332,6 +332,35 @@ def test_cancel_active_keeps_process_slot_until_worker_boundary(monkeypatch, tmp
     assert manager._active_job_id == "cancel-running"
 
 
+def test_cancel_orphaned_active_jobs_marks_persisted_active_rows_terminal(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    jobs.create_job(
+        "orphaned-running",
+        "update",
+        {
+            "preset": "custom",
+            "collector": "all",
+            "target_keys": ["flavio_valle"],
+            "date_from": "2026-04-01",
+            "date_to": "2026-04-30",
+        },
+        started_by="coworker",
+    )
+    jobs.update_job("orphaned-running", status="running")
+
+    cancelled = jobs.cancel_orphaned_active_jobs()
+
+    assert cancelled == 1
+    assert jobs.get_active_job() is None
+    job = jobs.get_job("orphaned-running")
+    assert job["status"] == "cancelled"
+    assert any(
+        event["event"] == "job_cancelled"
+        and event["payload"].get("reason") == "startup_recovered_active_job"
+        for event in job["events"]
+    )
+
+
 def test_job_runner_passes_cancel_check_into_ingestion(monkeypatch, tmp_path):
     import threading
 
@@ -365,10 +394,16 @@ def test_job_runner_passes_cancel_check_into_ingestion(monkeypatch, tmp_path):
         return []
 
     monkeypatch.setattr(jobs, "run_ingestion", fake_run_ingestion)
+    upload_statuses = []
+
+    def fake_upload_current_artifacts(**_kwargs):
+        upload_statuses.append(jobs.get_job("runner-cancel-check")["status"])
+        return []
+
     store = SimpleNamespace(
         writes_available=True,
         backup_current_artifacts=lambda _job_id: None,
-        upload_current_artifacts=lambda **_kwargs: [],
+        upload_current_artifacts=fake_upload_current_artifacts,
     )
     manager = jobs.JobManager(store)
     manager._active_job_id = "runner-cancel-check"
@@ -379,6 +414,7 @@ def test_job_runner_passes_cancel_check_into_ingestion(monkeypatch, tmp_path):
 
     assert seen_cancel_checks
     assert seen_cancel_checks[0]() is False
+    assert upload_statuses == ["succeeded"]
     assert jobs.get_job("runner-cancel-check")["status"] == "succeeded"
 
 

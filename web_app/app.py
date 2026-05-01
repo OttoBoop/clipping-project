@@ -20,7 +20,7 @@ from .auth import (
 )
 from .config import ASSETS_DIR, ROOT, db_path, local_writes_allowed
 from .db_admin import ValidationError, ensure_app_tables, insert_manual_story, load_targets, normalize_targets_file
-from .jobs import JobConflict, job_manager, recent_jobs, run_export_snapshot
+from .jobs import JobConflict, cancel_orphaned_active_jobs, job_manager, recent_jobs, run_export_snapshot
 from .storage_bridge import artifact_store
 from pipeline.database import ClippingDB
 
@@ -80,18 +80,20 @@ async def lifespan(_: FastAPI):
     artifact_store.download_current_artifacts()
     targets_normalized = normalize_targets_file()
     ensure_app_tables(db_path())
+    orphaned_jobs = cancel_orphaned_active_jobs()
     # Ensure classification + category tables exist (idempotent CREATE IF NOT EXISTS).
     cdb = ClippingDB(db_path())
     existing_names = {row["name"] for row in cdb.list_categories()}
     newly_seeded = [n for n in BASE_CATEGORIES if n not in existing_names]
     for name in newly_seeded:
         cdb.get_or_create_category(name, created_by="system")
-    if (newly_seeded or targets_normalized) and artifact_store.enabled:
+    if (newly_seeded or targets_normalized or orphaned_jobs) and artifact_store.enabled:
         artifact_store.upload_current_artifacts(
             manifest={
                 "kind": "startup-normalization",
                 "seededCategories": newly_seeded,
                 "targetsNormalized": targets_normalized,
+                "orphanedJobsCancelled": orphaned_jobs,
             },
             job_id="startup-runtime-normalization",
         )

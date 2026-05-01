@@ -241,9 +241,9 @@ class JobManager:
                 "totals": totals,
                 "finishedAt": datetime.now(timezone.utc).isoformat(),
             }
+            update_job(job_id, status="succeeded", finished_at=manifest["finishedAt"], **totals)
             uploaded = self.store.upload_current_artifacts(manifest=manifest, job_id=job_id)
             append_event(job_id, "artifacts_uploaded", artifact_upload_summary(uploaded))
-            update_job(job_id, status="succeeded", finished_at=datetime.now(timezone.utc).isoformat(), **totals)
         except Exception as exc:
             if cancel_event.is_set():
                 return
@@ -462,6 +462,27 @@ def get_active_job() -> dict[str, Any] | None:
     return with_job_observability(dict(row)) if row else None
 
 
+def cancel_orphaned_active_jobs(reason: str = "startup_recovered_active_job") -> int:
+    ensure_app_tables(db_path())
+    with connect(db_path()) as conn:
+        rows = conn.execute(
+            f"""
+            SELECT id FROM jobs
+            WHERE status IN ({','.join('?' for _ in ACTIVE_JOB_STATUSES)})
+            ORDER BY started_at ASC
+            """,
+            ACTIVE_JOB_STATUSES,
+        ).fetchall()
+    if not rows:
+        return 0
+    now = datetime.now(timezone.utc).isoformat()
+    for row in rows:
+        job_id = str(row["id"])
+        update_job(job_id, status="cancelled", finished_at=now)
+        append_event(job_id, "job_cancelled", {"status": "cancelled", "reason": reason})
+    return len(rows)
+
+
 def recent_jobs(limit: int = 8) -> list[dict[str, Any]]:
     ensure_app_tables(db_path())
     with connect(db_path()) as conn:
@@ -673,6 +694,7 @@ def sanitize_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "target_label",
         "source",
         "status",
+        "reason",
         "count",
         "items",
         "lines",
