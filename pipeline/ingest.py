@@ -445,6 +445,7 @@ def process_candidates(
                 "source_name": source_name,
                 "source_type": source_type,
                 "candidates_seen": seen,
+                "candidates_total": min(len(candidates), max_candidates),
                 "articles_inserted": inserted,
                 "mentions_inserted": mentions_inserted,
                 "stories_touched": stories_touched,
@@ -1118,6 +1119,8 @@ def run_ingestion(
             event,
             {
                 "sources_total": len(plans),
+                "candidates_seen": sum(r.candidates_seen for r in results),
+                "candidates_total": sum(len(p[2]) for p in plans),
                 "articles_inserted": sum(r.articles_inserted for r in results),
                 "mentions_inserted": sum(r.mentions_inserted for r in results),
                 "stories_touched": sum(r.stories_touched for r in results),

@@ -553,7 +553,9 @@ def job_observability_from_events(job: dict[str, Any], events: list[dict[str, An
 
 
 def progress_summary(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:
-    candidates_total = 0
+    collected_candidates_total = 0
+    run_candidates_total = 0
+    run_candidates_seen = 0
     sources_total = 0
     latest_by_source: dict[tuple[str, str, str], dict[str, Any]] = {}
     targets: dict[str, str] = {}
@@ -568,8 +570,12 @@ def progress_summary(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[
             targets[target_key] = target_label
         if event.get("event") == "run_started":
             sources_total += safe_int(payload.get("sources_total"))
+            run_candidates_total += safe_int(payload.get("candidates_total"))
+        if event.get("event") in {"run_complete", "run_cancelled"}:
+            run_candidates_seen = max(run_candidates_seen, safe_int(payload.get("candidates_seen")))
+            run_candidates_total = max(run_candidates_total, safe_int(payload.get("candidates_total")))
         if event.get("event") == "source_collected":
-            candidates_total += safe_int(payload.get("candidates_total"))
+            collected_candidates_total += safe_int(payload.get("candidates_total"))
         if event.get("event") in {"source_progress", "source_complete"}:
             source_key = (
                 target_key,
@@ -578,7 +584,17 @@ def progress_summary(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[
             )
             latest_by_source[source_key] = payload
 
-    candidates_seen = sum(safe_int(payload.get("candidates_seen")) for payload in latest_by_source.values())
+    candidates_seen = max(
+        run_candidates_seen,
+        sum(safe_int(payload.get("candidates_seen")) for payload in latest_by_source.values()),
+    )
+    progress_candidates_total = sum(safe_int(payload.get("candidates_total")) for payload in latest_by_source.values())
+    candidates_total = max(
+        run_candidates_total,
+        collected_candidates_total,
+        progress_candidates_total,
+        candidates_seen,
+    )
     return {
         "status": str(job.get("status") or ""),
         "targetKeys": list(targets),

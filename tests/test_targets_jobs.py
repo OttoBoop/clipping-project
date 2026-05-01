@@ -244,6 +244,43 @@ def test_job_progress_contract_includes_target_source_counts_and_recent_events(m
     assert latest["payload"]["source"] == "Google News"
 
 
+def test_job_progress_totals_stay_coherent_when_collection_events_age_out(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    job_id = "progress-window"
+    jobs.create_job(
+        job_id,
+        "update",
+        {
+            "preset": "custom",
+            "collector": "all",
+            "target_keys": ["bernardo_rubiao"],
+            "date_from": "2026-05-01",
+            "date_to": "2026-05-01",
+        },
+        started_by="coworker",
+    )
+    jobs.record_progress(
+        job_id,
+        "source_progress",
+        {
+            "source_name": "RSS",
+            "source_type": "rss",
+            "candidates_seen": 220,
+            "candidates_total": 226,
+            "articles_inserted": 0,
+            "mentions_inserted": 0,
+            "stories_touched": 0,
+        },
+        target_key="bernardo_rubiao",
+        target_label="Bernardo Rubião",
+    )
+
+    observed = jobs.get_job(job_id)
+
+    assert observed["progress"]["candidatesSeen"] == 220
+    assert observed["progress"]["candidatesTotal"] == 226
+
+
 def test_cancel_active_marks_job_cancelled_and_clears_active_state(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     jobs.create_job(
