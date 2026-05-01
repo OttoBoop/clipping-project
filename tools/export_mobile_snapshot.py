@@ -21,6 +21,7 @@ from pipeline.database import ClippingDB  # noqa: E402
 
 DB_PATH = ROOT / "data" / "clipping.db"
 TARGETS_PATH = ROOT / "data" / "targets.json"
+SYNTHETIC_TARGET_MARKERS = ("atlas_teste", "atlas teste")
 REPORTS_DIR = ROOT / "data" / "reports"
 DEFAULT_TARGET_KEY = "flavio_valle"
 EXPORT_LIMIT = 20000
@@ -84,16 +85,34 @@ def load_targets() -> list[dict[str, Any]]:
     targets: list[dict[str, Any]] = []
     for row in rows:
         key = str(row.get("key") or "").strip()
-        if not key:
+        label = str(row.get("label") or row.get("display_name") or key)
+        if not key or bool(row.get("archived")) or is_synthetic_test_target(key, label):
             continue
         targets.append(
             {
                 "key": key,
-                "label": str(row.get("label") or key),
+                "label": label,
                 "primary": bool(row.get("primary", False)),
             }
         )
     return targets
+
+
+def archived_target_keys() -> set[str]:
+    rows = json.loads(TARGETS_PATH.read_text(encoding="utf-8"))
+    keys: set[str] = set()
+    for row in rows:
+        key = str(row.get("key") or "").strip()
+        label = str(row.get("label") or row.get("display_name") or key)
+        if key and (bool(row.get("archived")) or is_synthetic_test_target(key, label)):
+            keys.add(key)
+    return keys
+
+
+def is_synthetic_test_target(key: str, label: str = "") -> bool:
+    key_l = str(key or "").lower()
+    label_l = str(label or "").lower()
+    return any(marker in key_l or marker in label_l for marker in SYNTHETIC_TARGET_MARKERS)
 
 
 def target_label_map(target_rows: list[dict[str, Any]]) -> dict[str, str]:
@@ -413,10 +432,14 @@ def decorate_stories(
 def build_target_rows(
     base_targets: list[dict[str, Any]],
     stories: list[dict[str, Any]],
+    excluded_target_keys: set[str] | None = None,
 ) -> list[dict[str, Any]]:
+    excluded_target_keys = set(excluded_target_keys or set())
     counts: dict[str, dict[str, int]] = {}
     for story in stories:
         for key in story.get("targetKeys", []):
+            if str(key) in excluded_target_keys:
+                continue
             bucket = counts.setdefault(key, {"storyCount": 0, "articleCount": 0})
             bucket["storyCount"] += 1
             bucket["articleCount"] += int(story.get("articleCount") or 0)
@@ -440,7 +463,7 @@ def build_target_rows(
         seen.add(key)
 
     for key in sorted(counts):
-        if key in seen or int(counts[key]["storyCount"]) <= 0:
+        if key in seen or key in excluded_target_keys or int(counts[key]["storyCount"]) <= 0:
             continue
         target_rows.append(
             {
@@ -452,6 +475,44 @@ def build_target_rows(
             }
         )
     return target_rows
+
+
+def remove_excluded_targets_from_stories(
+    stories: list[dict[str, Any]],
+    excluded_target_keys: set[str],
+) -> list[dict[str, Any]]:
+    if not excluded_target_keys:
+        return stories
+    cleaned: list[dict[str, Any]] = []
+    for story in stories:
+        story_targets = [key for key in story.get("targetKeys", []) if str(key) not in excluded_target_keys]
+        if not story_targets and story.get("targetKeys"):
+            continue
+        story = dict(story)
+        story["targetKeys"] = story_targets
+        articles = []
+        for article in story.get("articles", []):
+            article = dict(article)
+            original_article_keys = [
+                key for key in article.get("targetKeys", []) if str(key).strip()
+            ]
+            if original_article_keys:
+                article_keys = [key for key in original_article_keys if str(key) not in excluded_target_keys]
+                if not article_keys:
+                    continue
+            else:
+                article_keys = story_targets
+            article["targetKeys"] = article_keys
+            articles.append(article)
+        if not articles:
+            continue
+        story["articles"] = articles
+        story["articleCount"] = len(articles)
+        ai_count = sum(1 for article in articles if article.get("summarySource") == "ai")
+        story["aiCount"] = ai_count
+        story["rawCount"] = len(articles) - ai_count
+        cleaned.append(story)
+    return cleaned
 
 
 def resolve_initial_targets(target_rows: list[dict[str, Any]], default_target: str) -> list[str]:
@@ -2317,6 +2378,7 @@ def build_snapshot_artifact(args: argparse.Namespace) -> dict[str, Any]:
     db_path = Path(args.db).expanduser() if args.db else DB_PATH
     db = ClippingDB(db_path)
     base_targets = load_targets()
+    excluded_target_keys = archived_target_keys()
     detailed_articles = load_scope_articles(db, args)
     article_map = {int(row["article_id"]): row for row in detailed_articles}
     stories = decorate_stories(db.story_with_articles(), article_map)
@@ -2369,6 +2431,7 @@ def build_snapshot_artifact(args: argparse.Namespace) -> dict[str, Any]:
     story_records, raw_texts = build_story_records(stories, article_map)
     story_records.extend(merged_story_records)
     story_records.sort(key=story_sort_key, reverse=True)
+    story_records = remove_excluded_targets_from_stories(story_records, excluded_target_keys)
     raw_texts.update(merged_raw_texts)
 
     # Deduplicate articles by URL across all stories (first occurrence wins)
@@ -2391,7 +2454,7 @@ def build_snapshot_artifact(args: argparse.Namespace) -> dict[str, Any]:
     # Remove stories that ended up with zero articles
     story_records = [s for s in story_records if s.get("articles")]
 
-    target_rows = build_target_rows(base_targets, story_records)
+    target_rows = build_target_rows(base_targets, story_records, excluded_target_keys)
     initial_targets = resolve_initial_targets(target_rows, args.default_target)
     generated_at = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
     dataset = build_story_dataset(

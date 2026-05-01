@@ -19,7 +19,17 @@ from .auth import (
     require_csrf,
 )
 from .config import ASSETS_DIR, ROOT, db_path, local_writes_allowed
-from .db_admin import ValidationError, ensure_app_tables, insert_manual_story, load_targets, normalize_targets_file
+from .db_admin import (
+    ValidationError,
+    archive_known_test_targets,
+    archive_secondary_target,
+    ensure_app_tables,
+    insert_manual_story,
+    load_targets,
+    normalize_targets_file,
+    restore_secondary_target,
+    update_secondary_target,
+)
 from .jobs import JobConflict, cancel_orphaned_active_jobs, job_manager, recent_jobs, run_export_snapshot
 from .storage_bridge import artifact_store
 from pipeline.database import ClippingDB
@@ -43,17 +53,26 @@ BASE_CATEGORIES = (
 )
 
 
-def public_targets() -> dict[str, Any] | list[dict[str, Any]]:
+ACTIVE_TARGET_MUTATION_STATUSES = {"queued", "running", "exporting", "cancel_requested"}
+
+
+def public_targets(*, include_archived: bool = False) -> dict[str, Any] | list[dict[str, Any]]:
     from . import db_admin
 
     helper = getattr(db_admin, "public_targets", None)
     if helper:
-        return helper()
+        try:
+            return helper(include_archived=include_archived)
+        except TypeError:
+            return helper()
     return load_targets()
 
 
-def public_targets_response() -> dict[str, Any]:
-    targets = public_targets()
+def public_targets_response(*, include_archived: bool = False) -> dict[str, Any]:
+    try:
+        targets = public_targets(include_archived=include_archived)
+    except TypeError:
+        targets = public_targets()
     if isinstance(targets, dict):
         return {
             "targets": targets.get("targets", []),
@@ -71,6 +90,26 @@ def create_secondary_target(payload: dict[str, Any]) -> dict[str, Any]:
     return helper(payload)
 
 
+def target_mutations_blocked() -> bool:
+    status = str(job_manager.current_status().get("status") or "")
+    return status in ACTIVE_TARGET_MUTATION_STATUSES
+
+
+def ensure_target_mutations_allowed() -> None:
+    if target_mutations_blocked():
+        raise HTTPException(status_code=409, detail="Aguarde a atualização terminar para mudar os nomes acompanhados.")
+
+
+def upload_targets_artifacts(kind: str, result: dict[str, Any], key: str) -> list[str]:
+    if not artifact_store.enabled:
+        return []
+    safe_key = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in key)[:80] or "target"
+    return artifact_store.upload_current_artifacts(
+        manifest={"kind": kind, "result": result},
+        job_id=f"{kind}-{safe_key}",
+    )
+
+
 def _classification_db() -> ClippingDB:
     return ClippingDB(db_path())
 
@@ -78,6 +117,7 @@ def _classification_db() -> ClippingDB:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     artifact_store.download_current_artifacts()
+    target_cleanup = archive_known_test_targets()
     targets_normalized = normalize_targets_file()
     ensure_app_tables(db_path())
     orphaned_jobs = cancel_orphaned_active_jobs()
@@ -96,6 +136,11 @@ async def lifespan(_: FastAPI):
                 "orphanedJobsCancelled": orphaned_jobs,
             },
             job_id="startup-runtime-normalization",
+        )
+    if target_cleanup.get("archivedCount") and artifact_store.enabled:
+        artifact_store.upload_current_artifacts(
+            manifest={"kind": "targets-auto-archived", "result": target_cleanup},
+            job_id="targets-auto-archived",
         )
     yield
 
@@ -191,7 +236,10 @@ async def start_update(request: Request) -> JSONResponse:
 @app.post("/api/update/cancel")
 async def cancel_update() -> JSONResponse:
     try:
-        job = job_manager.cancel_active()
+        cancel_helper = getattr(job_manager, "cancel_active", None) or getattr(job_manager, "cancel_update", None)
+        if not cancel_helper:
+            raise JobConflict("no_active_job")
+        job = cancel_helper()
     except JobConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return JSONResponse(job)
@@ -252,24 +300,20 @@ def list_classification_categories() -> dict[str, Any]:
 
 
 @app.get("/api/targets")
-def list_targets() -> dict[str, Any]:
-    return public_targets_response()
+def list_targets(include_archived: bool = False) -> dict[str, Any]:
+    return public_targets_response(include_archived=include_archived)
 
 
 @app.post("/api/targets")
 async def add_target(request: Request) -> JSONResponse:
+    ensure_target_mutations_allowed()
     payload = await read_json(request)
     try:
         result = create_secondary_target(payload)
     except ValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    uploaded: list[str] = []
-    if artifact_store.enabled:
-        uploaded = artifact_store.upload_current_artifacts(
-            manifest={"kind": "targets", "result": result},
-            job_id=f"targets-{str(result.get('key') or 'created')[:80]}",
-        )
+    uploaded = upload_targets_artifacts("targets-created", result, str(result.get("key") or "created"))
     return JSONResponse(
         {
             **result,
@@ -277,6 +321,41 @@ async def add_target(request: Request) -> JSONResponse:
             "uploadedArtifacts": uploaded,
         }
     )
+
+
+@app.patch("/api/targets/{target_key}")
+async def update_target(target_key: str, request: Request) -> JSONResponse:
+    ensure_target_mutations_allowed()
+    payload = await read_json(request)
+    try:
+        result = update_secondary_target(target_key, payload)
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    uploaded = upload_targets_artifacts("targets-updated", result, target_key)
+    return JSONResponse({**result, "uploadedArtifactCount": len(uploaded), "uploadedArtifacts": uploaded})
+
+
+@app.post("/api/targets/{target_key}/archive")
+async def archive_target(target_key: str, request: Request) -> JSONResponse:
+    ensure_target_mutations_allowed()
+    payload = await read_json(request)
+    try:
+        result = archive_secondary_target(target_key, str(payload.get("reason") or "Arquivado pela equipe."))
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    uploaded = upload_targets_artifacts("targets-archived", result, target_key)
+    return JSONResponse({**result, "uploadedArtifactCount": len(uploaded), "uploadedArtifacts": uploaded})
+
+
+@app.post("/api/targets/{target_key}/restore")
+def restore_target(target_key: str) -> JSONResponse:
+    ensure_target_mutations_allowed()
+    try:
+        result = restore_secondary_target(target_key)
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    uploaded = upload_targets_artifacts("targets-restored", result, target_key)
+    return JSONResponse({**result, "uploadedArtifactCount": len(uploaded), "uploadedArtifacts": uploaded})
 
 
 @app.post("/api/categories")

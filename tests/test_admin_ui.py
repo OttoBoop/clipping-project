@@ -322,11 +322,91 @@ def test_targets_api_is_public_and_uploads_target_manifest(monkeypatch, tmp_path
     target_upload_calls = action_upload_calls(upload_calls)
     assert target_upload_calls == [
         {
-            "manifest": {"kind": "targets", "result": {"key": "ana_teste", "label": "Ana Teste", "primary": False}},
-            "job_id": "targets-ana_teste",
+            "manifest": {"kind": "targets-created", "result": {"key": "ana_teste", "label": "Ana Teste", "primary": False}},
+            "job_id": "targets-created-ana_teste",
         }
     ]
     assert_no_secret_material({"created": created.json(), "upload_calls": target_upload_calls})
+
+
+def test_targets_api_lists_archived_and_uploads_management_manifests(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+    upload_calls = []
+    all_targets = [
+        {"key": "flavio_valle", "label": "Flavio Valle", "primary": True, "archived": False},
+        {"key": "ana_teste", "label": "Ana Teste", "primary": False, "archived": False},
+        {"key": "beta_antigo", "label": "Beta Antigo", "primary": False, "archived": True},
+    ]
+
+    def fake_public_targets(*, include_archived=False):
+        rows = all_targets if include_archived else [row for row in all_targets if not row.get("archived")]
+        return {"targets": rows, "primaryKeys": ["flavio_valle"]}
+
+    monkeypatch.setattr(app_module, "public_targets", fake_public_targets)
+    monkeypatch.setattr(
+        app_module,
+        "update_secondary_target",
+        lambda key, payload: {"key": key, "label": payload["display_name"], "primary": False, "archived": False},
+    )
+    monkeypatch.setattr(
+        app_module,
+        "archive_secondary_target",
+        lambda key, reason="": {"key": key, "label": "Ana Teste", "primary": False, "archived": True, "archive_reason": reason},
+    )
+    monkeypatch.setattr(
+        app_module,
+        "restore_secondary_target",
+        lambda key: {"key": key, "label": "Beta Antigo", "primary": False, "archived": False},
+    )
+    monkeypatch.setattr(app_module.artifact_store, "enabled", True)
+
+    def fake_upload_current_artifacts(*, manifest=None, job_id=None):
+        upload_calls.append({"manifest": manifest, "job_id": job_id})
+        return ["data/targets.json", "assets/clipping-data.json"]
+
+    monkeypatch.setattr(app_module.artifact_store, "upload_current_artifacts", fake_upload_current_artifacts)
+
+    with TestClient(app) as client:
+        active = client.get("/api/targets")
+        with_archived = client.get("/api/targets?include_archived=1")
+        updated = client.patch("/api/targets/ana_teste", json={"display_name": "Ana Nova"})
+        archived = client.post("/api/targets/ana_teste/archive", json={"reason": "Duplicado."})
+        restored = client.post("/api/targets/beta_antigo/restore")
+
+    assert [row["key"] for row in active.json()["targets"]] == ["flavio_valle", "ana_teste"]
+    assert [row["key"] for row in with_archived.json()["targets"]] == ["flavio_valle", "ana_teste", "beta_antigo"]
+    assert updated.status_code == 200
+    assert archived.status_code == 200
+    assert restored.status_code == 200
+    target_upload_calls = [
+        call for call in upload_calls if str((call.get("manifest") or {}).get("kind") or "").startswith("targets-")
+    ]
+    assert [call["manifest"]["kind"] for call in target_upload_calls] == [
+        "targets-updated",
+        "targets-archived",
+        "targets-restored",
+    ]
+
+
+def test_target_mutations_are_blocked_while_update_is_active(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+    monkeypatch.setattr(app_module.job_manager, "current_status", lambda: {"status": "running"})
+
+    with TestClient(app) as client:
+        responses = [
+            client.post("/api/targets", json={"display_name": "Ana Teste"}),
+            client.patch("/api/targets/ana_teste", json={"display_name": "Ana Nova"}),
+            client.post("/api/targets/ana_teste/archive", json={"reason": "Duplicado."}),
+            client.post("/api/targets/ana_teste/restore"),
+        ]
+
+    assert [response.status_code for response in responses] == [409, 409, 409, 409]
+    assert all(
+        response.json()["detail"] == "Aguarde a atualização terminar para mudar os nomes acompanhados."
+        for response in responses
+    )
 
 
 def test_targets_api_returns_real_public_targets_contract(monkeypatch, tmp_path):
@@ -677,15 +757,17 @@ def test_manual_story_export_bundle_can_be_parsed_for_merge_compatibility(monkey
 def test_public_dashboard_wording_contract():
     html = Path("index.html").read_text(encoding="utf-8")
     assert "Clipping do gabinete" in html
-    assert "Rodar atualizacao" in html
-    assert "Noticias disponiveis para consulta" in html
-    assert "Materias com texto integral arquivado" in html
+    assert "Rodar atualização" in html
+    assert "Notícias disponíveis para consulta" in html
+    assert "Textos completos" in html
     assert "Com texto para leitura" not in html
-    assert "Cancelar atualizacao" in html
-    assert '<details class="add-target-advanced">' in html
-    assert "Opcoes avancadas (tutorial)" in html
-    assert "Palavras para buscar" in html
-    assert "Apelidos ou grafias exatas" in html
+    assert "Cancelar atualização" not in html
+    assert '<details class="advanced-search-box">' in html
+    assert "Ajustar busca" in html
+    assert "Termos relacionados" in html
+    assert "Correspondências exatas" in html
+    assert "Gerenciar nomes extras" in html
+    assert "build:" not in html
     assert "DOM" not in html
     assert "RAM" not in html
     assert "API local" not in html
@@ -693,8 +775,9 @@ def test_public_dashboard_wording_contract():
 
 def test_public_runner_javascript_contract():
     script = Path("assets/clipping.js").read_text(encoding="utf-8")
-    assert "periodo_muito_longo" not in script
-    assert "primaryKeys.indexOf(key) !== -1" in script
-    assert "applyRuntimeTargetsToPayload(runTargets)" in script
+    assert "console.log" not in script
+    assert "classification editor ENABLED" not in script
+    assert "normalizeTargetsResponse(data, options)" in script
+    assert "refreshManageTargets" in script
     assert "disabled = target.primary" not in script
     assert "+ checked + disabled" not in script

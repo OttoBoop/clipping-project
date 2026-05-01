@@ -66,6 +66,7 @@ def test_create_secondary_target_writes_sanitized_non_primary_target_atomically(
         "display_name": "Ana Maria",
         "className": "",
         "primary": False,
+        "archived": False,
         "keywords": ["Ana Maria", "Secretaria Ana Maria"],
         "exact_aliases": ["A. Maria"],
     }
@@ -80,6 +81,92 @@ def test_create_secondary_target_writes_sanitized_non_primary_target_atomically(
     assert by_key["flavio_valle"]["primary"] is True
     assert by_key["ana_maria"]["primary"] is False
     assert by_key["ana_maria_2"]["primary"] is False
+
+
+def test_update_archive_and_restore_secondary_target(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "flavio_valle", "label": "Flavio Valle", "keywords": ["Flavio Valle"]},
+                {
+                    "key": "instituto_aurora",
+                    "label": "Instituto Aurora",
+                    "display_name": "Instituto Aurora",
+                    "keywords": ["Instituto Aurora", "Projeto Alfa"],
+                    "exact_aliases": ["Aurora"],
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    updated = db_admin.update_secondary_target(
+        "instituto_aurora",
+        {"display_name": "Instituto Aurora Novo", "keywords": ["Projeto Alfa"], "exact_aliases": ["Aurora", "I. Aurora"]},
+    )
+
+    assert updated["label"] == "Instituto Aurora Novo"
+    assert updated["keywords"] == ["Instituto Aurora Novo", "Projeto Alfa"]
+    assert updated["exact_aliases"] == ["Aurora", "I. Aurora"]
+
+    archived = db_admin.archive_secondary_target("instituto_aurora", "Erro de cadastro.")
+    assert archived["archived"] is True
+    assert archived["archive_reason"] == "Erro de cadastro."
+    assert "instituto_aurora" not in {row["key"] for row in db_admin.public_targets()["targets"]}
+    assert "instituto_aurora" in {row["key"] for row in db_admin.public_targets(include_archived=True)["targets"]}
+
+    restored = db_admin.restore_secondary_target("instituto_aurora")
+    assert restored["archived"] is False
+    assert "instituto_aurora" in {row["key"] for row in db_admin.public_targets()["targets"]}
+
+
+def test_primary_targets_cannot_be_managed_as_secondary(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(json.dumps([{"key": "flavio_valle", "label": "Flavio Valle"}]), encoding="utf-8")
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    for operation in (
+        lambda: db_admin.update_secondary_target("flavio_valle", {"display_name": "Outro Nome"}),
+        lambda: db_admin.archive_secondary_target("flavio_valle"),
+        lambda: db_admin.restore_secondary_target("flavio_valle"),
+    ):
+        try:
+            operation()
+        except db_admin.ValidationError as exc:
+            assert "Nomes principais" in str(exc)
+        else:
+            raise AssertionError("primary target mutation should fail")
+
+
+def test_known_test_targets_are_auto_archived_and_hidden(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "flavio_valle", "label": "Flavio Valle", "keywords": ["Flavio Valle"]},
+                {"key": "atlas_teste_secundario", "label": "Atlas Teste Secundario"},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    active_keys = {row["key"] for row in db_admin.public_targets()["targets"]}
+    all_rows = {row["key"]: row for row in db_admin.public_targets(include_archived=True)["targets"]}
+
+    assert "atlas_teste_secundario" not in active_keys
+    assert all_rows["atlas_teste_secundario"]["archived"] is True
+    try:
+        db_admin.validate_target_keys(["atlas_teste_secundario"])
+    except db_admin.ValidationError as exc:
+        assert str(exc) == "Nome acompanhado desconhecido."
+    else:
+        raise AssertionError("archived test target should not validate for updates")
 
 
 def test_create_secondary_target_simple_path_uses_display_name_keyword(monkeypatch, tmp_path):

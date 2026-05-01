@@ -1,5 +1,4 @@
 (function () {
-  console.log("[clipping] build: live-runner-repair-20260501 · editor enabled for all coworkers");
   const app = document.getElementById("app");
   if (!app) return;
 
@@ -21,6 +20,11 @@
     if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
     return apiFetch(path, { method: "POST", headers: headers, body: JSON.stringify(body) });
   }
+  function apiPatch(path, body) {
+    var headers = { "Content-Type": "application/json" };
+    if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+    return apiFetch(path, { method: "PATCH", headers: headers, body: JSON.stringify(body) });
+  }
   const storyStack = document.getElementById("storyStack");
   const flatStack = document.getElementById("flatStack");
   const targetFilters = document.getElementById("targetFilters");
@@ -39,31 +43,40 @@
   const runPanels = Array.from(document.querySelectorAll("[data-tab-panel]"));
   const updateRunForm = document.getElementById("updateRunForm");
   const addTargetForm = document.getElementById("addTargetForm");
+  const manageTargetsBox = document.getElementById("manageTargetsBox");
+  const manageTargetsList = document.getElementById("manageTargetsList");
+  const archivedTargetsList = document.getElementById("archivedTargetsList");
+  const manageTargetsBlocked = document.getElementById("manageTargetsBlocked");
+  const manageTargetsMessage = document.getElementById("manageTargetsMessage");
   const primaryRunTargets = document.getElementById("primaryRunTargets");
   const secondaryRunTargets = document.getElementById("secondaryRunTargets");
   const dateFromInput = document.getElementById("dateFromInput");
   const dateToInput = document.getElementById("dateToInput");
   const runUpdateButton = document.getElementById("runUpdateButton");
   const cancelUpdateButton = document.getElementById("cancelUpdateButton");
-  const freshnessBanner = document.getElementById("freshnessBanner");
-  const freshnessBannerReload = document.getElementById("freshnessBannerReload");
+  const cancelUpdateButtonProgress = document.getElementById("cancelUpdateButtonProgress");
   const runFormMessage = document.getElementById("runFormMessage");
   const addTargetMessage = document.getElementById("addTargetMessage");
   const runnerStatusPill = document.getElementById("runnerStatusPill");
   const sharedStatusPill = document.getElementById("sharedStatusPill");
   const progressFill = document.getElementById("updateProgressFill");
+  const progressPercentText = document.getElementById("progressPercentText");
+  const progressActionMessage = document.getElementById("progressActionMessage");
+  const progressSteps = Array.from(document.querySelectorAll("[data-progress-step]"));
   const progressTarget = document.getElementById("progressTarget");
   const progressDates = document.getElementById("progressDates");
   const progressSource = document.getElementById("progressSource");
   const progressArticles = document.getElementById("progressArticles");
   const progressMentions = document.getElementById("progressMentions");
   const progressStories = document.getElementById("progressStories");
+  const progressRecentSources = document.getElementById("progressRecentSources");
   const progressWarnings = document.getElementById("progressWarnings");
   const baseStoriesStat = document.getElementById("baseStoriesStat");
   const baseArticlesStat = document.getElementById("baseArticlesStat");
   const baseRawStat = document.getElementById("baseRawStat");
   const baseUpdatedText = document.getElementById("baseUpdatedText");
   const LAZY_BATCH = 50;
+  const ACTIVE_RUN_MESSAGE = "Já existe uma atualização em andamento. Acompanhe em Progresso compartilhado.";
 
   let payload = null;
   let selectedTargets = new Set();
@@ -74,6 +87,10 @@
   let rawTextsCache = null;
   let rawTextsPromise = null;
   let runTargets = [];
+  let managedTargets = [];
+  let activeTargetKeys = new Set();
+  let editingTargetKey = "";
+  let pendingArchiveKey = "";
   let latestStatus = null;
   const labelsByKey = {};
 
@@ -94,7 +111,7 @@
     var raw = String(value || "");
     var normalized = raw.toLowerCase();
     if (normalized.indexOf("texto " + "bruto") !== -1) return "Texto completo";
-    if (normalized.indexOf("trecho " + "bruto") !== -1) return "Trecho da materia";
+    if (normalized.indexOf("trecho " + "bruto") !== -1) return "Trecho da matéria";
     if (normalized === "resumo ia") return "Resumo";
     return raw || "Sem resumo";
   }
@@ -123,36 +140,58 @@
     return date.toISOString().slice(0, 10);
   }
 
-  function normalizeTargetsResponse(data) {
+  function normalizeTargetsResponse(data, options) {
+    options = options || {};
     var body = data || {};
     var nested = body.targets && !Array.isArray(body.targets) ? body.targets : body;
     var rows = Array.isArray(body.targets) ? body.targets : Array.isArray(nested.targets) ? nested.targets : [];
     var primaryKeys = Array.isArray(nested.primaryKeys) ? nested.primaryKeys : [];
-    var hasPrimaryKeys = Array.isArray(nested.primaryKeys);
     return rows
       .filter(function (target) { return target && target.key; })
       .map(function (target) {
-        var key = String(target.key);
+        var hasPrimary = Object.prototype.hasOwnProperty.call(target, "primary");
         return {
-          key: key,
+          key: String(target.key),
           label: String(target.label || target.display_name || target.key),
-          primary: hasPrimaryKeys ? primaryKeys.indexOf(key) !== -1 : Boolean(target.primary),
+          primary: hasPrimary ? Boolean(target.primary) : primaryKeys.indexOf(String(target.key)) !== -1,
+          archived: Boolean(target.archived),
+          keywords: Array.isArray(target.keywords) ? target.keywords.map(String) : [],
+          exact_aliases: Array.isArray(target.exact_aliases) ? target.exact_aliases.map(String) : [],
+          archived_at: String(target.archived_at || ""),
+          archive_reason: String(target.archive_reason || ""),
         };
-      });
+      })
+      .filter(function (target) { return options.includeArchived || !target.archived; });
   }
 
-  function applyRuntimeTargetsToPayload(targets) {
-    if (!payload || !Array.isArray(payload.targets) || !Array.isArray(targets)) return;
-    var byKey = {};
-    targets.forEach(function (target) {
-      byKey[target.key] = target;
+  function isPublicTarget(target) {
+    var key = String(target && target.key || "");
+    if (!key || Boolean(target && target.archived)) return false;
+    return !activeTargetKeys.size || activeTargetKeys.has(key);
+  }
+
+  function activeTargetKeysFrom(keys) {
+    var rows = (keys || [])
+      .map(function (key) { return String(key || "").trim(); })
+      .filter(Boolean);
+    if (!activeTargetKeys.size) return rows;
+    return rows.filter(function (key) { return activeTargetKeys.has(key); });
+  }
+
+  function ensureSelectedTargets() {
+    if (!payload || !payload.targets) return;
+    var visibleTargets = (payload.targets || []).filter(isPublicTarget);
+    var next = new Set();
+    selectedTargets.forEach(function (key) {
+      if (!activeTargetKeys.size || activeTargetKeys.has(key)) next.add(key);
     });
-    payload.targets.forEach(function (target) {
-      var runtime = byKey[String(target.key || "")];
-      if (!runtime) return;
-      target.label = runtime.label || target.label;
-      target.primary = Boolean(runtime.primary);
-    });
+    selectedTargets = next;
+    if (!selectedTargets.size) {
+      var primaryTargets = visibleTargets.filter(function (target) { return target.primary; });
+      (primaryTargets.length ? primaryTargets : visibleTargets).forEach(function (target) {
+        selectedTargets.add(target.key);
+      });
+    }
   }
 
   function setMessage(el, text, kind) {
@@ -165,13 +204,15 @@
   function friendlyError(error, fallback) {
     var raw = error && error.message ? error.message : String(error || "");
     console.error("[clipping] detailed error", error);
-    if (raw.indexOf("job_already_running") !== -1) return "Ja existe uma atualizacao em andamento.";
-    if (raw.indexOf("persistent_storage_not_configured") !== -1) return "A gravacao da base ainda nao esta pronta neste ambiente.";
+    if (raw.indexOf("Aguarde a atualização terminar") !== -1) return "Aguarde a atualização terminar para mudar os nomes acompanhados.";
+    if (raw.indexOf("job_already_running") !== -1) return "Já existe uma atualização em andamento.";
+    if (raw.indexOf("persistent_storage_not_configured") !== -1) return "A gravação da base ainda não está pronta neste ambiente.";
+    if (raw.indexOf("periodo_muito_longo") !== -1) return "Escolha um período de até 7 dias.";
     if (raw.indexOf("periodo_invalido") !== -1) return "Confira as datas: a inicial precisa vir antes da final.";
     if (raw.indexOf("data_futura") !== -1) return "As datas precisam ser de hoje ou anteriores.";
     if (raw.indexOf("data_invalida") !== -1) return "Preencha as duas datas.";
-    if (raw.indexOf("unknown_target_keys") !== -1) return "Um dos nomes selecionados ainda nao esta disponivel. Atualize a pagina e tente de novo.";
-    return fallback || "Nao foi possivel concluir agora. Tente novamente em instantes.";
+    if (raw.indexOf("unknown_target_keys") !== -1) return "Um dos nomes selecionados ainda não está disponível. Atualize a página e tente de novo.";
+    return fallback || "Não foi possível concluir agora. Tente novamente em instantes.";
   }
 
   function showFriendlyProblem(message) {
@@ -180,7 +221,7 @@
   }
 
   function badgeHtml(keys) {
-    return (keys || [])
+    return activeTargetKeysFrom(keys || [])
       .map(function (key) {
         const label = labelsByKey[key] || key;
         return '<span class="chip">' + escapeHtml(label) + "</span>";
@@ -189,7 +230,8 @@
   }
 
   function storyVisible(story) {
-    const keys = story.targetKeys || [];
+    const keys = activeTargetKeysFrom(story.targetKeys || []);
+    if (activeTargetKeys.size && (story.targetKeys || []).length && !keys.length) return false;
     if (!keys.length) return true;
     return keys.some(function (key) {
       return selectedTargets.has(key);
@@ -197,7 +239,7 @@
   }
 
   function activeLabel() {
-    const allKeys = (payload.targets || []).map(function (target) {
+    const allKeys = (payload.targets || []).filter(isPublicTarget).map(function (target) {
       return target.key;
     });
     if (!allKeys.length || selectedTargets.size === allKeys.length) {
@@ -229,10 +271,13 @@
     const articles = [];
     stories.forEach(function (story) {
       (story.articles || []).forEach(function (article) {
+        var originalTargetKeys = article.targetKeys && article.targetKeys.length ? article.targetKeys : story.targetKeys || [];
+        var visibleTargetKeys = activeTargetKeysFrom(originalTargetKeys);
+        if (activeTargetKeys.size && originalTargetKeys.length && !visibleTargetKeys.length) return;
         articles.push({
           storyId: story.storyIdInt,
           storyTitle: story.title,
-          storyTargets: story.targetKeys || [],
+          storyTargets: activeTargetKeysFrom(story.targetKeys || []),
           articleId: article.articleId,
           title: article.title,
           url: article.url,
@@ -240,7 +285,7 @@
           sourceHost: article.sourceHost,
           publishedAt: article.publishedAt,
           publishedDisplay: article.publishedDisplay,
-          targetKeys: article.targetKeys && article.targetKeys.length ? article.targetKeys : story.targetKeys || [],
+          targetKeys: visibleTargetKeys.length ? visibleTargetKeys : originalTargetKeys,
           summaryLabel: article.summaryLabel,
           summaryPreview: article.summaryPreview,
           rawTextKey: article.rawTextKey,
@@ -272,7 +317,7 @@
       "</span>" +
       '<span class="filter-chip__meta">' +
       escapeHtml(String(target.storyCount || 0)) +
-      " historias</span>" +
+      " histórias</span>" +
       "</button>"
     );
   }
@@ -280,7 +325,7 @@
   function renderTargetButtons() {
     var primary = [];
     var other = [];
-    (payload.targets || []).forEach(function (target) {
+    (payload.targets || []).filter(isPublicTarget).forEach(function (target) {
       if (target.primary) primary.push(target);
       else other.push(target);
     });
@@ -325,7 +370,7 @@
     if (baseArticlesStat) baseArticlesStat.textContent = String(payload.meta.totalArticles || 0);
     if (baseRawStat) baseRawStat.textContent = String(payload.meta.totalRaw || 0);
     if (baseUpdatedText) {
-      baseUpdatedText.textContent = "Ultima atualizacao publicada: " + (payload.meta.generatedAt || "data nao informada");
+      baseUpdatedText.textContent = "Última atualização publicada: " + (payload.meta.generatedAt || "data não informada");
     }
   }
 
@@ -368,8 +413,11 @@
         key: String(target.key),
         label: String(target.label || target.key),
         primary: Boolean(target.primary),
+        archived: Boolean(target.archived),
+        keywords: Array.isArray(target.keywords) ? target.keywords.map(String) : [],
+        exact_aliases: Array.isArray(target.exact_aliases) ? target.exact_aliases.map(String) : [],
       };
-    });
+    }).filter(isPublicTarget);
   }
 
   function refreshTargets() {
@@ -381,18 +429,177 @@
       .then(function (data) {
         runTargets = normalizeTargetsResponse(data);
         if (!runTargets.length) runTargets = fallbackTargetsFromPayload();
-        applyRuntimeTargetsToPayload(runTargets);
+        activeTargetKeys = new Set(runTargets.map(function (target) { return target.key; }));
         runTargets.forEach(function (target) {
           labelsByKey[target.key] = target.label || target.key;
         });
+        ensureSelectedTargets();
         renderRunTargets();
+        renderManageTargets();
         if (payload) applyState();
       })
       .catch(function (error) {
         console.error("[clipping] target refresh failed", error);
         runTargets = fallbackTargetsFromPayload();
+        activeTargetKeys = new Set(runTargets.map(function (target) { return target.key; }));
+        ensureSelectedTargets();
         renderRunTargets();
+        renderManageTargets();
+        if (payload) applyState();
       });
+  }
+
+  function targetActionsLocked() {
+    var status = latestStatus && latestStatus.current ? latestStatus.current.status : "";
+    return activeStatus(status);
+  }
+
+  function visibleTargetKeywords(target) {
+    var display = String(target.label || target.key || "");
+    return (target.keywords || []).filter(function (item) {
+      return String(item || "").trim() && String(item || "").trim() !== display;
+    });
+  }
+
+  function listText(items, emptyText) {
+    var cleaned = (items || []).map(function (item) { return String(item || "").trim(); }).filter(Boolean);
+    return cleaned.length ? cleaned.map(escapeHtml).join(", ") : '<span class="muted-inline">' + escapeHtml(emptyText) + "</span>";
+  }
+
+  function managedTargetForm(target, locked) {
+    var disabled = locked ? " disabled" : "";
+    return (
+      '<form class="manage-target-form" data-manage-target-key="' + escapeHtml(target.key) + '">' +
+      '<label>Nome <input name="display_name" value="' + escapeHtml(target.label || target.key) + '" required minlength="3"' + disabled + "></label>" +
+      '<label>Termos relacionados <textarea name="keywords" rows="3"' + disabled + ">" + escapeHtml(visibleTargetKeywords(target).join(", ")) + "</textarea></label>" +
+      '<label>Correspondências exatas <textarea name="exact_aliases" rows="3"' + disabled + ">" + escapeHtml((target.exact_aliases || []).join(", ")) + "</textarea></label>" +
+      '<div class="manage-target-actions">' +
+      '<button type="submit" class="primary-action"' + disabled + ">Salvar</button>" +
+      '<button type="button" class="secondary-action" data-target-edit-cancel="' + escapeHtml(target.key) + '">Cancelar</button>' +
+      "</div>" +
+      "</form>"
+    );
+  }
+
+  function managedTargetCard(target) {
+    var key = escapeHtml(target.key);
+    var locked = targetActionsLocked();
+    var disabled = locked ? " disabled" : "";
+    var disabledAttr = locked ? ' aria-disabled="true"' : "";
+    var archived = Boolean(target.archived);
+    var classes = "manage-target-card" + (archived ? " is-archived" : "");
+    var meta =
+      '<dl class="manage-target-meta">' +
+      "<div><dt>Termos relacionados</dt><dd>" + listText(visibleTargetKeywords(target), "Sem termos extras") + "</dd></div>" +
+      "<div><dt>Correspondências exatas</dt><dd>" + listText(target.exact_aliases || [], "Sem correspondências exatas") + "</dd></div>" +
+      "</dl>";
+    var body = '<div class="manage-target-card-head"><div><strong>' + escapeHtml(target.label || target.key) + "</strong><small>" + escapeHtml(target.key) + "</small></div></div>";
+    if (!archived && editingTargetKey === target.key) {
+      body += managedTargetForm(target, locked);
+    } else {
+      body += meta;
+      if (archived) {
+        body +=
+          '<p class="manage-target-archive-note">' +
+          escapeHtml(target.archive_reason || "Arquivado pela equipe.") +
+          (target.archived_at ? " · " + escapeHtml(target.archived_at) : "") +
+          "</p>" +
+          '<div class="manage-target-actions">' +
+          '<button type="button" class="secondary-action" data-target-restore="' + key + '"' + disabled + disabledAttr + ">Restaurar</button>" +
+          "</div>";
+      } else if (pendingArchiveKey === target.key) {
+        body +=
+          '<div class="manage-target-danger" role="alert">' +
+          "<strong>Arquivar este nome?</strong>" +
+          "<p>Este nome deixará de aparecer nas próximas atualizações e nos filtros do painel. As notícias antigas continuam preservadas internamente.</p>" +
+          '<div class="manage-target-actions">' +
+          '<button type="button" class="danger-action" data-target-archive-confirm="' + key + '"' + disabled + disabledAttr + ">Arquivar nome</button>" +
+          '<button type="button" class="secondary-action" data-target-archive-cancel="' + key + '">Cancelar</button>' +
+          "</div>" +
+          "</div>";
+      } else {
+        body +=
+          '<div class="manage-target-actions">' +
+          '<button type="button" class="secondary-action" data-target-edit="' + key + '"' + disabled + disabledAttr + ">Editar</button>" +
+          '<button type="button" class="danger-action" data-target-archive-start="' + key + '"' + disabled + disabledAttr + ">Arquivar</button>" +
+          "</div>";
+      }
+    }
+    return '<article class="' + classes + '">' + body + "</article>";
+  }
+
+  function renderManageTargets() {
+    if (!manageTargetsList || !archivedTargetsList) return;
+    var locked = targetActionsLocked();
+    if (manageTargetsBlocked) manageTargetsBlocked.hidden = !locked;
+    var active = managedTargets.filter(function (target) { return !target.primary && !target.archived; });
+    var archived = managedTargets.filter(function (target) { return !target.primary && target.archived; });
+    manageTargetsList.innerHTML = active.length
+      ? active.map(managedTargetCard).join("")
+      : '<p class="filter-note">Nenhum nome extra ativo cadastrado.</p>';
+    archivedTargetsList.innerHTML = archived.length
+      ? archived.map(managedTargetCard).join("")
+      : '<p class="filter-note">Nenhum nome arquivado.</p>';
+  }
+
+  function refreshManageTargets() {
+    if (!manageTargetsBox) return Promise.resolve();
+    return apiFetch("/api/targets?include_archived=1", { cache: "no-store" })
+      .then(function (resp) {
+        return resp.json().catch(function () { return {}; }).then(function (data) {
+          if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+          return data;
+        });
+      })
+      .then(function (data) {
+        managedTargets = normalizeTargetsResponse(data, { includeArchived: true });
+        managedTargets.forEach(function (target) {
+          labelsByKey[target.key] = target.label || target.key;
+        });
+        renderManageTargets();
+      })
+      .catch(function (error) {
+        setMessage(manageTargetsMessage, friendlyError(error, "Não foi possível carregar os nomes extras."), "error");
+      });
+  }
+
+  async function reloadTargetsAfterManagement() {
+    await refreshTargets();
+    if (manageTargetsBox && manageTargetsBox.open) await refreshManageTargets();
+  }
+
+  async function archiveManagedTarget(key) {
+    setMessage(manageTargetsMessage, "Arquivando...", "");
+    try {
+      var resp = await apiPost("/api/targets/" + encodeURIComponent(key) + "/archive", {
+        reason: "Arquivado pelo painel de gerenciamento.",
+      });
+      var data = await resp.json().catch(function () { return {}; });
+      if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+      pendingArchiveKey = "";
+      editingTargetKey = "";
+      setMessage(manageTargetsMessage, "Nome arquivado. Ele não aparecerá nas próximas atualizações.", "ok");
+      await reloadTargetsAfterManagement();
+    } catch (error) {
+      setMessage(manageTargetsMessage, friendlyError(error, "Não foi possível arquivar este nome."), "error");
+      renderManageTargets();
+    }
+  }
+
+  async function restoreManagedTarget(key) {
+    setMessage(manageTargetsMessage, "Restaurando...", "");
+    try {
+      var resp = await apiPost("/api/targets/" + encodeURIComponent(key) + "/restore", {});
+      var data = await resp.json().catch(function () { return {}; });
+      if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+      pendingArchiveKey = "";
+      editingTargetKey = "";
+      setMessage(manageTargetsMessage, "Nome restaurado e disponível para próximas rodadas.", "ok");
+      await reloadTargetsAfterManagement();
+    } catch (error) {
+      setMessage(manageTargetsMessage, friendlyError(error, "Não foi possível restaurar este nome."), "error");
+      renderManageTargets();
+    }
   }
 
   function selectedRunTargetKeys() {
@@ -400,7 +607,7 @@
     [primaryRunTargets, secondaryRunTargets].forEach(function (container) {
       if (!container) return;
       container.querySelectorAll('input[type="checkbox"]:checked').forEach(function (input) {
-        if (input.value && keys.indexOf(input.value) === -1) keys.push(input.value);
+        if (keys.indexOf(input.value) === -1) keys.push(input.value);
       });
     });
     return keys;
@@ -424,26 +631,11 @@
     if (status === "running") return "Atualizando";
     if (status === "queued") return "Na fila";
     if (status === "exporting") return "Publicando";
-    if (status === "succeeded") return "Concluido";
-    if (status === "failed") return "Precisa de atencao";
-    if (status === "cancelled") return "Cancelada";
+    if (status === "cancel_requested") return "Cancelando";
+    if (status === "succeeded") return "Concluído";
+    if (status === "failed") return "Precisa de atenção";
+    if (status === "cancelled" || status === "canceled") return "Cancelado";
     return "Pronto";
-  }
-
-  function placeholderText(status, kind) {
-    if (status === "queued") {
-      if (kind === "target") return "Na fila";
-      if (kind === "source") return "Iniciando coleta...";
-    }
-    if (status === "running") {
-      if (kind === "target") return "Buscando primeiro nome...";
-      if (kind === "source") return "Buscando primeira fonte...";
-    }
-    if (status === "exporting") return "Publicando painel...";
-    if (status === "succeeded") return "Rodada concluida";
-    if (status === "failed") return "Rodada interrompida";
-    if (status === "cancelled") return "Rodada cancelada";
-    return "Sem rodada agora";
   }
 
   function latestProgressEvent(job) {
@@ -451,36 +643,167 @@
     for (var i = 0; i < events.length; i++) {
       if (events[i] && events[i].payload) return events[i];
     }
+    events = (job && job.recentEvents) || [];
+    for (var j = 0; j < events.length; j++) {
+      if (events[j] && events[j].payload) return events[j];
+    }
     return null;
   }
 
-  function progressPercent(job, event) {
+  function numberValue(value) {
+    var num = Number(value || 0);
+    return Number.isFinite(num) ? num : 0;
+  }
+
+  function activeStatus(status) {
+    return ["queued", "running", "exporting", "cancel_requested"].indexOf(status) !== -1;
+  }
+
+  function progressValue(progress, camelName, snakeName) {
+    if (!progress) return undefined;
+    if (Object.prototype.hasOwnProperty.call(progress, camelName)) return progress[camelName];
+    return progress[snakeName];
+  }
+
+  function progressState(job, event) {
     var status = job && job.status;
-    if (status === "succeeded") return 100;
-    if (status === "failed") return 100;
-    if (status === "exporting") return 92;
+    if (status === "succeeded") return { known: true, percent: 100, label: "Concluído" };
+    if (status === "failed") return { known: true, percent: 100, label: "Interrompido por erro" };
+    if (status === "cancelled" || status === "canceled") return { known: true, percent: 0, label: "Cancelado" };
+    if (status === "cancel_requested") return { known: false, percent: 0, label: "Cancelamento solicitado" };
+    var aggregate = job && job.progress ? job.progress : {};
+    var total = numberValue(progressValue(aggregate, "candidatesTotal", "candidates_total"));
+    var seen = numberValue(progressValue(aggregate, "candidatesSeen", "candidates_seen"));
+    if (total > 0) {
+      var percent = Math.max(0, Math.min(98, Math.round((seen / total) * 100)));
+      return { known: true, percent: percent, label: seen + " de " + total + " itens verificados" };
+    }
     var payload = event && event.payload ? event.payload : {};
-    var total = Number(payload.candidates_total || payload.max_candidates || 0);
-    var seen = Number(payload.candidates_seen || 0);
-    if (total > 0 && seen >= 0) return Math.max(8, Math.min(88, Math.round((seen / total) * 80)));
-    if (status === "running") return 24;
-    if (status === "queued") return 8;
-    return 0;
+    total = numberValue(payload.candidates_total || payload.max_candidates);
+    seen = numberValue(payload.candidates_seen);
+    if (total > 0) {
+      return { known: true, percent: Math.max(0, Math.min(98, Math.round((seen / total) * 100))), label: seen + " de " + total + " itens nesta fonte" };
+    }
+    if (activeStatus(status)) return { known: false, percent: 0, label: "Atualização em andamento" };
+    return { known: false, percent: 0, label: "Aguardando início" };
+  }
+
+  function progressStepState(status, step) {
+    var order = ["prepare", "search", "save", "publish"];
+    var currentByStatus = {
+      queued: "prepare",
+      running: "search",
+      cancel_requested: "search",
+      exporting: "publish",
+    };
+    if (status === "succeeded") return "done";
+    if (status === "failed") return step === "search" ? "error" : "pending";
+    if (status === "cancelled" || status === "canceled") return step === "search" ? "cancelled" : "pending";
+    var current = currentByStatus[status] || "";
+    if (!current) return "pending";
+    var currentIndex = order.indexOf(current);
+    var stepIndex = order.indexOf(step);
+    if (stepIndex < currentIndex) return "done";
+    if (stepIndex === currentIndex) return "active";
+    return "pending";
+  }
+
+  function renderProgressSteps(status) {
+    progressSteps.forEach(function (stepEl) {
+      var state = progressStepState(status, stepEl.dataset.progressStep || "");
+      stepEl.classList.toggle("is-done", state === "done");
+      stepEl.classList.toggle("is-active", state === "active");
+      stepEl.classList.toggle("is-error", state === "error");
+      stepEl.classList.toggle("is-cancelled", state === "cancelled");
+    });
+  }
+
+  function progressSummary(job, event, state, currentTarget, currentSource) {
+    var status = job && job.status;
+    if (status === "queued") return "Preparando a rodada.";
+    if (status === "running") {
+      var targetPart = currentTarget ? " de " + currentTarget : "";
+      var sourcePart = currentSource ? " em " + currentSource : "";
+      var detail = state && state.known && state.label ? " " + state.label + "." : "";
+      return "Buscando notícias" + targetPart + sourcePart + "." + detail;
+    }
+    if (status === "exporting") return "Publicando o painel atualizado.";
+    if (status === "cancel_requested") return "Cancelamento solicitado. A rodada vai parar ao fim da etapa atual.";
+    if (status === "succeeded") return "Atualização concluída.";
+    if (status === "failed") return "A atualização encontrou um problema e não terminou.";
+    if (status === "cancelled" || status === "canceled") return "Atualização cancelada.";
+    return state && state.label ? state.label : "Aguardando início";
   }
 
   function warningText(job) {
     if (!job) return "";
-    if (job.status === "failed") return "A atualizacao parou antes de terminar. O detalhe tecnico ficou no console.";
-    var events = job.events || [];
+    if (job.status === "failed") return "A atualização parou antes de terminar.";
+    if (job.freshness && job.freshness.stale) return "A publicação pode estar desatualizada em relação à última execução concluída.";
+    var warnings = [];
+    var events = (job.recentEvents || []).concat(job.events || []);
     for (var i = 0; i < events.length; i++) {
       var payload = events[i].payload || {};
       var errors = payload.errors || payload.warnings || [];
-      if (Array.isArray(errors) && errors.length) {
-        console.warn("[clipping] update warning", errors);
-        return "Algumas fontes nao responderam, mas a atualizacao continua com as demais.";
+      if (Array.isArray(errors)) {
+        errors.forEach(function (item) {
+          if (item && warnings.indexOf(String(item)) === -1) warnings.push(String(item));
+        });
+      } else if (errors) {
+        warnings.push(String(errors));
       }
+      if (payload.error) warnings.push(String(payload.error));
+    }
+    if (warnings.length) {
+      console.warn("[clipping] update warning", warnings);
+      return "Algumas fontes não responderam. A atualização continua com as demais.";
     }
     return "";
+  }
+
+  function eventSourceLabel(event) {
+    var payload = event && event.payload ? event.payload : {};
+    return String(payload.source_name || payload.source || payload.source_type || "").trim();
+  }
+
+  function eventTargetLabel(event, progress) {
+    var payload = event && event.payload ? event.payload : {};
+    var key = String(payload.target_key || "").trim();
+    var labels = progressValue(progress, "targetLabels", "target_labels") || {};
+    if (payload.target_label) return String(payload.target_label);
+    if (key && labels[key]) return String(labels[key]);
+    return key ? labelsByKey[key] || key : "";
+  }
+
+  function renderRecentSources(job) {
+    if (!progressRecentSources) return;
+    var events = job ? (job.recentEvents || []).concat(job.events || []) : [];
+    var rows = [];
+    var seenKeys = {};
+    events.forEach(function (event) {
+      if (rows.length >= 5 || !event || !event.payload) return;
+      var name = eventSourceLabel(event);
+      if (!name) return;
+      var payload = event.payload;
+      var target = eventTargetLabel(event, job.progress || {});
+      var key = [target, name, event.event].join("|");
+      if (seenKeys[key]) return;
+      seenKeys[key] = true;
+      var total = numberValue(payload.candidates_total);
+      var seen = numberValue(payload.candidates_seen);
+      var articles = numberValue(payload.articles_inserted);
+      var detail = "";
+      if (total > 0 && seen > 0) detail = seen + "/" + total + " itens";
+      else if (total > 0) detail = total + " itens encontrados";
+      if (articles > 0) detail += (detail ? ", " : "") + articles + " notícia(s) nova(s)";
+      rows.push(
+        "<li><strong>" + escapeHtml(name) + "</strong>" +
+        (target ? " · " + escapeHtml(target) : "") +
+        (detail ? " · " + escapeHtml(detail) : "") +
+        "</li>"
+      );
+    });
+    progressRecentSources.hidden = !rows.length;
+    progressRecentSources.innerHTML = rows.length ? "<h2>Fontes recentes</h2><ul>" + rows.join("") + "</ul>" : "";
   }
 
   function renderStatus(statusPayload) {
@@ -490,35 +813,44 @@
     var job = current.status === "idle" && recent.length ? recent[0] : current;
     var event = latestProgressEvent(job);
     var eventPayload = event && event.payload ? event.payload : {};
-    var status = job.status || "";
-    var label = statusLabel(status);
-    var isRunning = ["queued", "running", "exporting"].indexOf(status) !== -1;
-    var isError = status === "failed";
-    var isCancelled = status === "cancelled";
+    var label = statusLabel(job.status);
+    var isRunning = activeStatus(job.status);
+    var isError = job.status === "failed";
     [runnerStatusPill, sharedStatusPill].forEach(function (pill) {
       if (!pill) return;
       pill.textContent = label;
       pill.classList.toggle("is-running", isRunning);
       pill.classList.toggle("is-error", isError);
-      pill.classList.toggle("is-cancelled", isCancelled);
     });
-    if (progressFill) progressFill.style.width = progressPercent(job, event) + "%";
-    var keys = parseMaybeJsonList(job.target_keys);
+    var progress = job.progress || {};
+    var state = progressState(job, event);
+    renderProgressSteps(job.status);
+    if (progressFill) {
+      progressFill.classList.toggle("is-indeterminate", isRunning && !state.known);
+      progressFill.style.width = state.known ? state.percent + "%" : "0%";
+    }
+    var aggregateKeys = progressValue(progress, "targetKeys", "target_keys");
+    var aggregateLabels = progressValue(progress, "targetLabels", "target_labels") || {};
+    var keys = Array.isArray(aggregateKeys) ? aggregateKeys.slice() : parseMaybeJsonList(job.target_keys);
     if (!keys.length && Array.isArray(job.target_keys)) keys = job.target_keys;
+    var currentTarget = eventTargetLabel(event, progress);
+    var currentSource = eventSourceLabel(event);
     if (progressTarget) {
-      var targetEvent = eventPayload && eventPayload.target_label ? eventPayload.target_label : "";
-      var targetText = keys.map(function (key) { return labelsByKey[key] || key; }).join(" + ");
-      progressTarget.textContent = targetEvent || targetText || placeholderText(status, "target");
+      progressTarget.textContent = currentTarget || keys.map(function (key) {
+        return aggregateLabels[key] ? aggregateLabels[key] : labelsByKey[key] || key;
+      }).join(" + ") || "Aguardando";
     }
     if (progressDates) {
-      var from = job.date_from || "";
-      var to = job.date_to || "";
-      progressDates.textContent = from && to ? from + " a " + to : placeholderText(status, "dates");
+      var from = job.date_from || (dateFromInput && dateFromInput.value) || "";
+      var to = job.date_to || (dateToInput && dateToInput.value) || "";
+      progressDates.textContent = from && to ? from + " a " + to : "Aguardando";
     }
-    if (progressSource) progressSource.textContent = eventPayload.source_name || placeholderText(status, "source");
-    if (progressArticles) progressArticles.textContent = String(job.articles_inserted || eventPayload.articles_inserted || 0);
-    if (progressMentions) progressMentions.textContent = String(job.mentions_inserted || 0);
-    if (progressStories) progressStories.textContent = String(job.stories_touched || 0);
+    if (progressSource) progressSource.textContent = currentSource || "Aguardando";
+    if (progressPercentText) progressPercentText.textContent = progressSummary(job, event, state, currentTarget || progressTarget && progressTarget.textContent, currentSource);
+    if (progressArticles) progressArticles.textContent = String(progressValue(progress, "articlesInserted", "articles_inserted") || job.articles_inserted || eventPayload.articles_inserted || 0);
+    if (progressMentions) progressMentions.textContent = String(progressValue(progress, "mentionsInserted", "mentions_inserted") || job.mentions_inserted || 0);
+    if (progressStories) progressStories.textContent = String(progressValue(progress, "storiesTouched", "stories_touched") || job.stories_touched || 0);
+    renderRecentSources(job);
     var warning = warningText(job);
     if (progressWarnings) {
       progressWarnings.hidden = !warning;
@@ -526,36 +858,16 @@
     }
     if (isError && job.error_message) console.error("[clipping] update failed", job.error_message);
     if (runUpdateButton) runUpdateButton.disabled = isRunning;
-    if (cancelUpdateButton) {
-      cancelUpdateButton.hidden = !isRunning;
-      cancelUpdateButton.disabled = !isRunning;
+    if (runFormMessage) {
+      if (isRunning) setMessage(runFormMessage, ACTIVE_RUN_MESSAGE, "");
+      else if (runFormMessage.textContent === ACTIVE_RUN_MESSAGE) setMessage(runFormMessage, "", "");
     }
-    updateFreshnessBanner(latestStatus);
-  }
-
-  function updateFreshnessBanner(statusPayload) {
-    if (!freshnessBanner) return;
-    if (!payload || !payload.meta) return;
-    var generatedAt = String(payload.meta.generatedAt || "");
-    var recent = (statusPayload && statusPayload.recent) || [];
-    var latestSucceeded = null;
-    for (var i = 0; i < recent.length; i++) {
-      var row = recent[i] || {};
-      if (row.status === "succeeded" && row.finished_at) {
-        latestSucceeded = row;
-        break;
-      }
-    }
-    if (!latestSucceeded) {
-      freshnessBanner.hidden = true;
-      return;
-    }
-    var finished = String(latestSucceeded.finished_at || "");
-    if (!generatedAt || finished > generatedAt) {
-      freshnessBanner.hidden = false;
-    } else {
-      freshnessBanner.hidden = true;
-    }
+    [cancelUpdateButton, cancelUpdateButtonProgress].forEach(function (button) {
+      if (!button) return;
+      button.hidden = !isRunning;
+      button.disabled = false;
+    });
+    renderManageTargets();
   }
 
   function pollStatus() {
@@ -572,7 +884,7 @@
         console.error("[clipping] status polling failed", error);
         [runnerStatusPill, sharedStatusPill].forEach(function (pill) {
           if (!pill) return;
-          pill.textContent = "Sem conexao";
+          pill.textContent = "Sem conexão";
           pill.classList.add("is-error");
         });
       });
@@ -588,7 +900,7 @@
           story.storyIdInt +
           '">' +
           "<strong>" +
-          escapeHtml(story.title || "Sem titulo") +
+          escapeHtml(story.title || "Sem título") +
           "</strong>" +
           "<span>" +
           escapeHtml(String(story.articleCount || 0)) +
@@ -626,6 +938,7 @@
     // Per-target sentiments
     clsArr.forEach(function (cls) {
       if (cls.target_sentiment) {
+        if (activeTargetKeys.size && !activeTargetKeys.has(String(cls.target_key || ""))) return;
         var tLabel = escapeHtml(labelsByKey[cls.target_key] || cls.target_key || "");
         parts.push(
           '<span class="chip chip--cls chip--cls-' + cls.target_sentiment +
@@ -677,7 +990,7 @@
   function classificationEditorHtml(article) {
     if (!editorEnabled) return "";
     var aid = article.articleId;
-    var targetKeys = article.targetKeys || [];
+    var targetKeys = activeTargetKeysFrom(article.targetKeys || []);
     if (!targetKeys.length) return "";
     var clsByTarget = {};
     (article.classifications || []).forEach(function (c) {
@@ -765,15 +1078,15 @@
     const linkHtml = article.url
       ? '<a class="text-link" href="' +
         escapeHtml(article.url) +
-        '" target="_blank" rel="noreferrer">Abrir materia original</a>'
+        '" target="_blank" rel="noreferrer">Abrir matéria original</a>'
       : "";
     const titleHtml = article.url
       ? '<a href="' +
         escapeHtml(article.url) +
         '" target="_blank" rel="noreferrer">' +
-        escapeHtml(article.title || "Sem titulo") +
+        escapeHtml(article.title || "Sem título") +
         "</a>"
-      : escapeHtml(article.title || "Sem titulo");
+      : escapeHtml(article.title || "Sem título");
 
     return (
       '<article class="article-card" id="article-' +
@@ -786,7 +1099,7 @@
       "</h3>" +
       '<p class="article-meta">' +
       "<span>" +
-      escapeHtml(article.sourceName || "Fonte nao identificada") +
+      escapeHtml(article.sourceName || "Fonte não identificada") +
       "</span>" +
       "<span>" +
       escapeHtml(article.publishedDisplay || "") +
@@ -847,6 +1160,10 @@
   }
 
   function renderStoryCard(story) {
+    var storyArticles = (story.articles || []).filter(function (article) {
+      var originalTargetKeys = article.targetKeys && article.targetKeys.length ? article.targetKeys : story.targetKeys || [];
+      return !activeTargetKeys.size || !originalTargetKeys.length || activeTargetKeysFrom(originalTargetKeys).length > 0;
+    });
     return (
       '<details class="panel story-card" id="story-' +
       story.storyIdInt +
@@ -857,11 +1174,11 @@
       '<div class="story-heading">' +
       '<span class="story-toggle" aria-hidden="true"></span>' +
       "<div>" +
-      '<p class="eyebrow">Historia principal ' +
+      '<p class="eyebrow">História principal ' +
       story.storyIdInt +
       "</p>" +
       "<h2>" +
-      escapeHtml(story.title || "Sem titulo") +
+      escapeHtml(story.title || "Sem título") +
       "</h2>" +
       '<div class="chips">' +
       badgeHtml(story.targetKeys || []) +
@@ -871,17 +1188,17 @@
       '<div class="story-stats">' +
       "<div><strong>" +
       escapeHtml(String(story.articleCount || 0)) +
-      "</strong><span>noticias</span></div>" +
+      "</strong><span>notícias</span></div>" +
       "<div><strong>" +
       escapeHtml(String(Math.round(Number(story.temperature || 0)))) +
       "</strong><span>temperatura</span></div>" +
       "</div>" +
       "</summary>" +
       '<div class="story-meta">' +
-      "<span>Primeira publicacao: " +
+      "<span>Primeira publicação: " +
       escapeHtml(story.firstPublishedAt ? formatDate(story.firstPublishedAt) : "") +
       "</span>" +
-      "<span>Ultima publicacao: " +
+      "<span>Última publicação: " +
       escapeHtml(story.lastPublishedAt ? formatDate(story.lastPublishedAt) : "") +
       "</span>" +
       "</div>" +
@@ -894,7 +1211,7 @@
       "</p>" +
       "</div>" +
       '<div class="story-articles">' +
-      (story.articles || []).map(renderArticleCard).join("") +
+      storyArticles.map(renderArticleCard).join("") +
       "</div>" +
       "</details>"
     );
@@ -911,13 +1228,13 @@
     flatSorted = visibleArticles(stories);
 
     if (!flatSorted.length) {
-      flatStack.innerHTML = '<div class="panel empty-state">Nenhuma noticia corresponde aos filtros atuais.</div>';
+      flatStack.innerHTML = '<div class="panel empty-state">Nenhuma notícia corresponde aos filtros atuais.</div>';
       return;
     }
 
     const loading = document.createElement("div");
     loading.className = "flat-loading";
-    loading.innerHTML = '<div class="flat-spinner"></div> Carregando noticias...';
+    loading.innerHTML = '<div class="flat-spinner"></div> Carregando notícias...';
     flatStack.appendChild(loading);
     window.requestAnimationFrame(function () {
       if (loading.parentNode) {
@@ -944,7 +1261,7 @@
       flatStack.appendChild(loadMoreBtn);
     }
     loadMoreBtn.disabled = false;
-    loadMoreBtn.textContent = "Carregar mais noticias (" + remaining + " restantes)";
+    loadMoreBtn.textContent = "Carregar mais notícias (" + remaining + " restantes)";
   }
 
   function renderFlatBatch() {
@@ -1012,7 +1329,7 @@
       storyStack.appendChild(groupedLoadMoreBtn);
     }
     groupedLoadMoreBtn.disabled = false;
-    groupedLoadMoreBtn.textContent = "Carregar mais historias (" + remaining + " restantes)";
+    groupedLoadMoreBtn.textContent = "Carregar mais histórias (" + remaining + " restantes)";
   }
 
   function buildGroupedView(stories) {
@@ -1093,7 +1410,7 @@
       })
       .catch(function () {
         if (fullTextDiv) {
-          fullTextDiv.textContent = "Nao foi possivel carregar o texto completo.";
+          fullTextDiv.textContent = "Não foi possível carregar o texto completo.";
         }
         delete el.dataset.loading;
       });
@@ -1113,6 +1430,68 @@
       return;
     }
 
+    const editTargetButton = event.target.closest("[data-target-edit]");
+    if (editTargetButton) {
+      if (targetActionsLocked()) {
+        setMessage(manageTargetsMessage, "Aguarde a atualização terminar para mudar os nomes acompanhados.", "error");
+        return;
+      }
+      editingTargetKey = editTargetButton.dataset.targetEdit || "";
+      pendingArchiveKey = "";
+      setMessage(manageTargetsMessage, "", "");
+      renderManageTargets();
+      return;
+    }
+
+    const cancelEditButton = event.target.closest("[data-target-edit-cancel]");
+    if (cancelEditButton) {
+      editingTargetKey = "";
+      renderManageTargets();
+      return;
+    }
+
+    const archiveStartButton = event.target.closest("[data-target-archive-start]");
+    if (archiveStartButton) {
+      if (targetActionsLocked()) {
+        setMessage(manageTargetsMessage, "Aguarde a atualização terminar para mudar os nomes acompanhados.", "error");
+        return;
+      }
+      pendingArchiveKey = archiveStartButton.dataset.targetArchiveStart || "";
+      editingTargetKey = "";
+      setMessage(manageTargetsMessage, "", "");
+      renderManageTargets();
+      return;
+    }
+
+    const archiveCancelButton = event.target.closest("[data-target-archive-cancel]");
+    if (archiveCancelButton) {
+      pendingArchiveKey = "";
+      renderManageTargets();
+      return;
+    }
+
+    const archiveConfirmButton = event.target.closest("[data-target-archive-confirm]");
+    if (archiveConfirmButton) {
+      if (targetActionsLocked()) {
+        setMessage(manageTargetsMessage, "Aguarde a atualização terminar para mudar os nomes acompanhados.", "error");
+        return;
+      }
+      archiveConfirmButton.disabled = true;
+      archiveManagedTarget(archiveConfirmButton.dataset.targetArchiveConfirm || "");
+      return;
+    }
+
+    const restoreButton = event.target.closest("[data-target-restore]");
+    if (restoreButton) {
+      if (targetActionsLocked()) {
+        setMessage(manageTargetsMessage, "Aguarde a atualização terminar para mudar os nomes acompanhados.", "error");
+        return;
+      }
+      restoreButton.disabled = true;
+      restoreManagedTarget(restoreButton.dataset.targetRestore || "");
+      return;
+    }
+
     const filterButton = event.target.closest("[data-filter-target]");
     if (!filterButton || !payload) return;
     const key = filterButton.dataset.filterTarget;
@@ -1123,8 +1502,9 @@
       selectedTargets.add(key);
     }
     if (!selectedTargets.size) {
-      var primaryTargets = (payload.targets || []).filter(function (t) { return t.primary; });
-      (primaryTargets.length ? primaryTargets : payload.targets || []).forEach(function (target) {
+      var visibleTargets = (payload.targets || []).filter(isPublicTarget);
+      var primaryTargets = visibleTargets.filter(function (t) { return t.primary; });
+      (primaryTargets.length ? primaryTargets : visibleTargets).forEach(function (target) {
         selectedTargets.add(target.key);
       });
     }
@@ -1134,7 +1514,7 @@
   if (updateRunForm) {
     updateRunForm.addEventListener("submit", async function (event) {
       event.preventDefault();
-      setMessage(runFormMessage, "Iniciando atualizacao...", "");
+      setMessage(runFormMessage, "Iniciando atualização...", "");
       var keys = selectedRunTargetKeys();
       if (!keys.length) {
         showFriendlyProblem("Selecione pelo menos um nome para acompanhar.");
@@ -1152,46 +1532,52 @@
         var resp = await apiPost("/api/update/start", body);
         var data = await resp.json().catch(function () { return {}; });
         if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
-        setMessage(runFormMessage, "Atualizacao iniciada. O progresso aparece na aba compartilhada.", "ok");
+        setMessage(runFormMessage, "Atualização iniciada. O progresso aparece na aba compartilhada.", "ok");
         activateRunTab("progress");
         await pollStatus();
       } catch (error) {
-        showFriendlyProblem(friendlyError(error, "Nao foi possivel iniciar a atualizacao."));
+        showFriendlyProblem(friendlyError(error, "Não foi possível iniciar a atualização."));
       } finally {
         if (runUpdateButton) {
           var status = latestStatus && latestStatus.current ? latestStatus.current.status : "";
-          runUpdateButton.disabled = ["queued", "running", "exporting"].indexOf(status) !== -1;
+          runUpdateButton.disabled = activeStatus(status);
         }
       }
     });
   }
 
-  if (cancelUpdateButton) {
-    cancelUpdateButton.addEventListener("click", async function () {
-      cancelUpdateButton.disabled = true;
-      setMessage(runFormMessage, "Cancelando atualizacao...", "");
-      try {
-        var resp = await apiPost("/api/update/cancel", {});
-        var data = await resp.json().catch(function () { return {}; });
-        if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
-        setMessage(runFormMessage, "Cancelamento solicitado. A rodada vai parar ao fim da etapa atual.", "ok");
-        await pollStatus();
-      } catch (error) {
-        setMessage(runFormMessage, friendlyError(error, "Nao foi possivel cancelar agora."), "error");
-      } finally {
-        var status = latestStatus && latestStatus.current ? latestStatus.current.status : "";
-        var stillRunning = ["queued", "running", "exporting"].indexOf(status) !== -1;
-        cancelUpdateButton.disabled = !stillRunning;
-        cancelUpdateButton.hidden = !stillRunning;
-      }
+  async function cancelActiveUpdate() {
+    setMessage(progressActionMessage || runFormMessage, "Parando atualização...", "");
+    [cancelUpdateButton, cancelUpdateButtonProgress].forEach(function (button) {
+      if (button) button.disabled = true;
     });
+    try {
+      var resp = await apiPost("/api/update/cancel", {});
+      var data = await resp.json().catch(function () { return {}; });
+      if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+      var nextCurrent = Object.assign({}, latestStatus && latestStatus.current ? latestStatus.current : {}, data);
+      var stillActive = activeStatus(nextCurrent.status);
+      setMessage(
+        progressActionMessage || runFormMessage,
+        stillActive ? "Cancelamento solicitado. Aguarde a atualização encerrar com segurança." : "Atualização parada. Você já pode iniciar outra rodada.",
+        "ok"
+      );
+      latestStatus = { current: nextCurrent };
+      renderStatus(latestStatus);
+      if (runUpdateButton) runUpdateButton.disabled = stillActive;
+      await pollStatus();
+    } catch (error) {
+      setMessage(progressActionMessage || runFormMessage, friendlyError(error, "Não foi possível parar a atualização."), "error");
+      [cancelUpdateButton, cancelUpdateButtonProgress].forEach(function (button) {
+        if (button) button.disabled = false;
+      });
+    }
   }
 
-  if (freshnessBannerReload) {
-    freshnessBannerReload.addEventListener("click", function () {
-      window.location.reload();
-    });
-  }
+  [cancelUpdateButton, cancelUpdateButtonProgress].forEach(function (button) {
+    if (!button) return;
+    button.addEventListener("click", cancelActiveUpdate);
+  });
 
   if (addTargetForm) {
     addTargetForm.addEventListener("submit", async function (event) {
@@ -1209,20 +1595,56 @@
         var resp = await apiPost("/api/targets", body);
         var data = await resp.json().catch(function () { return {}; });
         if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
-        setMessage(addTargetMessage, "Nome extra salvo e disponivel para a proxima rodada.", "ok");
+        setMessage(addTargetMessage, "Nome extra salvo e disponível para a próxima rodada.", "ok");
         addTargetForm.reset();
         await refreshTargets();
+        if (manageTargetsBox && manageTargetsBox.open) await refreshManageTargets();
       } catch (error) {
-        setMessage(addTargetMessage, friendlyError(error, "Nao foi possivel salvar este nome."), "error");
+        setMessage(addTargetMessage, friendlyError(error, "Não foi possível salvar este nome."), "error");
       } finally {
         if (submit) submit.disabled = false;
       }
     });
   }
 
+  app.addEventListener("submit", async function (event) {
+    const targetForm = event.target.closest(".manage-target-form");
+    if (!targetForm) return;
+    event.preventDefault();
+    if (targetActionsLocked()) {
+      setMessage(manageTargetsMessage, "Aguarde a atualização terminar para mudar os nomes acompanhados.", "error");
+      return;
+    }
+    var key = targetForm.dataset.manageTargetKey || "";
+    var submit = targetForm.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    setMessage(manageTargetsMessage, "Salvando alterações...", "");
+    var form = new FormData(targetForm);
+    var body = {
+      display_name: form.get("display_name"),
+      keywords: splitList(form.get("keywords")),
+      exact_aliases: splitList(form.get("exact_aliases")),
+    };
+    try {
+      var resp = await apiPatch("/api/targets/" + encodeURIComponent(key), body);
+      var data = await resp.json().catch(function () { return {}; });
+      if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+      editingTargetKey = "";
+      pendingArchiveKey = "";
+      setMessage(manageTargetsMessage, "Nome extra atualizado.", "ok");
+      await reloadTargetsAfterManagement();
+    } catch (error) {
+      setMessage(manageTargetsMessage, friendlyError(error, "Não foi possível atualizar este nome."), "error");
+      if (submit) submit.disabled = false;
+    }
+  });
+
   app.addEventListener(
     "toggle",
     function (event) {
+      if (event.target === manageTargetsBox && manageTargetsBox.open) {
+        refreshManageTargets();
+      }
       hydrateRawDetails(event.target);
     },
     true
@@ -1413,9 +1835,12 @@
       (payload.targets || []).forEach(function (target) {
         labelsByKey[target.key] = target.label || target.key;
       });
-      selectedTargets = new Set((payload.defaultTargets || []).filter(Boolean));
+      var visibleKeys = (payload.targets || []).filter(isPublicTarget).map(function (target) { return target.key; });
+      selectedTargets = new Set((payload.defaultTargets || []).filter(function (key) {
+        return visibleKeys.indexOf(key) !== -1;
+      }));
       if (!selectedTargets.size) {
-        (payload.targets || []).forEach(function (target) {
+        (payload.targets || []).filter(isPublicTarget).forEach(function (target) {
           selectedTargets.add(target.key);
         });
       }

@@ -13,6 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
 DB_PATH = DATA_DIR / "clipping.db"
 TARGETS_JSON_PATH = DATA_DIR / "targets.json"
+SYNTHETIC_TARGET_MARKERS = ("atlas_teste", "atlas teste")
 BACKFILL_START_DATE = datetime(2025, 1, 1, tzinfo=timezone.utc)
 
 USER_AGENT = (
@@ -394,6 +395,9 @@ def get_active_targets() -> list[Target]:
             if not label:
                 continue
             key = str(row.get("key", "")).strip() or slug_key(label)
+            marker_text = f"{key} {label}".lower()
+            if bool(row.get("archived")) or any(marker in marker_text for marker in SYNTHETIC_TARGET_MARKERS):
+                continue
             priority = 1 if bool(row.get("primary", False)) else 2
             raw_keywords = row.get("keywords", [])
             if isinstance(raw_keywords, list):

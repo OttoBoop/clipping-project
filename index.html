@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="clipping-snapshot-sentinel" content="WIX_CLIPPING_SNAPSHOT_ROOT">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Clipping do gabinete | Flavio Valle</title>
-  <link rel="stylesheet" href="assets/clipping.css?v=live-runner-repair-20260501">
+  <title>Clipping do gabinete | Flávio Valle</title>
+  <link rel="stylesheet" href="assets/clipping.css?v=ui-polish-20260501">
 </head>
 <body>
   <main
@@ -14,14 +14,9 @@
     data-clipping-raw-url="assets/clipping-raw-texts.json"
     data-clipping-api-url=""
   >
-    <div class="freshness-banner" id="freshnessBanner" role="status" hidden>
-      <span class="freshness-banner__text" id="freshnessBannerText">Uma atualizacao terminou agora. Recarregue para ver os dados novos.</span>
-      <button type="button" class="freshness-banner__action" id="freshnessBannerReload">Recarregar agora</button>
-    </div>
-
-    <section class="runner-shell" aria-label="Atualizacao do clipping">
-      <div class="runner-tabs" role="tablist" aria-label="Acoes do clipping">
-        <button type="button" class="runner-tab active" data-run-tab="run" role="tab" aria-selected="true">Rodar atualizacao</button>
+    <section class="runner-shell" aria-label="Atualização do clipping">
+      <div class="runner-tabs" role="tablist" aria-label="Ações do clipping">
+        <button type="button" class="runner-tab active" data-run-tab="run" role="tab" aria-selected="true">Rodar atualização</button>
         <button type="button" class="runner-tab" data-run-tab="progress" role="tab" aria-selected="false">Progresso compartilhado</button>
         <button type="button" class="runner-tab" data-run-tab="base" role="tab" aria-selected="false">Base atual</button>
       </div>
@@ -30,8 +25,8 @@
         <div class="runner-head">
           <div>
             <p class="eyebrow">Clipping do gabinete</p>
-            <h1>Atualizar noticias acompanhadas</h1>
-            <p>Use as datas sugeridas, confirme os nomes e inicie uma atualizacao para todos acompanharem daqui.</p>
+            <h1>Atualizar notícias acompanhadas</h1>
+            <p>Use as datas sugeridas, confirme os nomes e inicie uma atualização.</p>
           </div>
           <div class="runner-status-pill" id="runnerStatusPill">Consultando...</div>
         </div>
@@ -50,7 +45,7 @@
             <div class="target-run-head">
               <div>
                 <h2>Nomes principais</h2>
-                <p>Ja vem marcados — desmarque se quiser deixar de fora desta rodada.</p>
+                <p>Já vêm marcados, mas podem ser ajustados para esta rodada.</p>
               </div>
             </div>
             <div class="run-target-grid" id="primaryRunTargets"></div>
@@ -67,45 +62,45 @@
           </div>
 
           <div class="run-actions">
-            <button type="submit" class="primary-action" id="runUpdateButton">Rodar atualizacao</button>
-            <button type="button" class="secondary-action cancel-action" id="cancelUpdateButton" hidden>Cancelar atualizacao</button>
+            <button type="submit" class="primary-action" id="runUpdateButton">Rodar atualização</button>
             <span id="runFormMessage" class="form-message" role="status"></span>
           </div>
         </form>
 
         <details class="add-target-box">
           <summary>Adicionar nome extra</summary>
+          <p class="add-target-note">Inclua uma pessoa, marca ou termo que também deve entrar no clipping.</p>
           <form id="addTargetForm" class="add-target-form">
-            <label>Nome
-              <input type="text" name="display_name" autocomplete="off" required minlength="3" placeholder="Ex.: Maria Silva">
+            <label>Nome para buscar
+              <input type="text" name="display_name" autocomplete="off" required minlength="3" placeholder="Ex.: Maria Silva, Instituto Aurora, Projeto Alfa">
             </label>
-            <button type="submit" class="secondary-action">Salvar nome extra</button>
-            <span id="addTargetMessage" class="form-message" role="status"></span>
-            <details class="add-target-advanced">
-              <summary>Opcoes avancadas (tutorial)</summary>
-              <p class="advanced-help">
-                A maioria dos coworkers nao precisa preencher os campos abaixo. Use somente se a busca padrao
-                pelo nome nao estiver capturando bem o que voce quer monitorar.
-              </p>
-              <label>Palavras para buscar
-                <textarea name="keywords" rows="2" placeholder="Uma por linha ou separadas por virgula"></textarea>
+            <details class="advanced-search-box">
+              <summary>Ajustar busca</summary>
+              <label>Termos relacionados
+                <textarea name="keywords" rows="2" placeholder="Ex.: Maria S. Silva, M. Silva, Instituto Aurora"></textarea>
+                <span class="field-help">Use quando o nome também aparece com variações, abreviações ou nomes anteriores.</span>
               </label>
-              <p class="advanced-help">
-                Quando preencher: cada termo aqui vira uma palavra-chave que o sistema vai procurar nas materias.
-                Use para incluir variacoes que jornalistas costumam usar — por exemplo,
-                slogans de campanha, cargos comuns ("vereador Joao", "secretaria Maria"), ou nomes de coletivos
-                ligados a pessoa. Deixe em branco se ja basta o nome cadastrado acima.
-              </p>
-              <label>Apelidos ou grafias exatas
-                <textarea name="exact_aliases" rows="2" placeholder="Uma por linha ou separadas por virgula"></textarea>
+              <label>Correspondências exatas
+                <textarea name="exact_aliases" rows="2" placeholder='Ex.: "Maria Silva", "Projeto Alfa"'></textarea>
+                <span class="field-help">Use aspas para procurar exatamente esse texto e reduzir resultados fora do assunto.</span>
               </label>
-              <p class="advanced-help">
-                Quando preencher: liste apelidos ou grafias diferentes do nome principal. Por exemplo, se a
-                pessoa eh chamada de "Tio Flavio" em alguns textos ou se aparece como "Flavio Vale" em vez de
-                "Flavio Valle", inclua aqui. O sistema vai tratar essas grafias como menções da mesma pessoa.
-              </p>
+              <p class="advanced-search-note">Se não tiver certeza, preencha só o nome principal. A busca padrão já funciona para a maioria dos casos.</p>
             </details>
+            <button type="submit" class="secondary-action">Adicionar à atualização</button>
+            <span id="addTargetMessage" class="form-message" role="status"></span>
           </form>
+        </details>
+
+        <details class="manage-targets-box" id="manageTargetsBox">
+          <summary>Gerenciar nomes extras</summary>
+          <p class="manage-targets-warning">Use esta área com cuidado. Arquivar um nome remove ele das próximas atualizações e dos filtros do painel. As notícias antigas continuam preservadas internamente.</p>
+          <p class="warning-line" id="manageTargetsBlocked" hidden>Aguarde a atualização terminar para mudar os nomes acompanhados.</p>
+          <div class="manage-targets-list" id="manageTargetsList"></div>
+          <details class="archived-targets-box">
+            <summary>Nomes arquivados</summary>
+            <div class="manage-targets-list" id="archivedTargetsList"></div>
+          </details>
+          <span id="manageTargetsMessage" class="form-message" role="status"></span>
         </details>
       </div>
 
@@ -113,22 +108,33 @@
         <div class="runner-head">
           <div>
             <p class="eyebrow">Progresso compartilhado</p>
-            <h1>O que esta acontecendo agora</h1>
-            <p>Esta visao atualiza sozinha para todo mundo que estiver com o painel aberto.</p>
+            <h1>O que está acontecendo agora</h1>
           </div>
           <div class="runner-status-pill" id="sharedStatusPill">Consultando...</div>
         </div>
-        <div class="progress-track" aria-label="Progresso da atualizacao">
+        <div class="progress-actions">
+          <span id="progressPercentText" class="progress-note">Aguardando início</span>
+          <button type="button" class="secondary-action danger-action" id="cancelUpdateButtonProgress" hidden>Parar atualização</button>
+          <span id="progressActionMessage" class="form-message" role="status"></span>
+        </div>
+        <ol class="progress-steps" id="progressSteps" aria-label="Etapas da atualização">
+          <li class="progress-step" data-progress-step="prepare"><span></span><strong>Preparando</strong></li>
+          <li class="progress-step" data-progress-step="search"><span></span><strong>Buscando notícias</strong></li>
+          <li class="progress-step" data-progress-step="save"><span></span><strong>Salvando resultados</strong></li>
+          <li class="progress-step" data-progress-step="publish"><span></span><strong>Publicando painel</strong></li>
+        </ol>
+        <div class="progress-track" aria-label="Progresso da atualização">
           <div class="progress-fill" id="updateProgressFill" style="width:0%"></div>
         </div>
         <div class="progress-grid">
           <div><span>Nome atual</span><strong id="progressTarget">Aguardando</strong></div>
-          <div><span>Periodo</span><strong id="progressDates">Aguardando</strong></div>
+          <div><span>Período</span><strong id="progressDates">Aguardando</strong></div>
           <div><span>Fonte atual</span><strong id="progressSource">Aguardando</strong></div>
-          <div><span>Noticias novas</span><strong id="progressArticles">0</strong></div>
-          <div><span>Citacoes</span><strong id="progressMentions">0</strong></div>
-          <div><span>Historias mexidas</span><strong id="progressStories">0</strong></div>
+          <div><span>Notícias novas</span><strong id="progressArticles">0</strong></div>
+          <div><span>Citações</span><strong id="progressMentions">0</strong></div>
+          <div><span>Histórias atualizadas</span><strong id="progressStories">0</strong></div>
         </div>
+        <div class="progress-recent" id="progressRecentSources" hidden></div>
         <p class="warning-line" id="progressWarnings" hidden></p>
       </div>
 
@@ -136,14 +142,14 @@
         <div class="runner-head">
           <div>
             <p class="eyebrow">Base atual</p>
-            <h1>Noticias disponiveis para consulta</h1>
-            <p>Abaixo continua a navegacao completa por filtros, historias e materias.</p>
+            <h1>Notícias disponíveis para consulta</h1>
+            <p>Abaixo continua a navegação completa por filtros, histórias e matérias.</p>
           </div>
         </div>
         <div class="update-grid">
-          <div><span>Historias salvas</span><strong id="baseStoriesStat">458</strong></div>
-          <div><span>Materias salvas</span><strong id="baseArticlesStat">805</strong></div>
-          <div><span>Materias com texto integral arquivado</span><strong id="baseRawStat">772</strong></div>
+          <div><span>Histórias salvas</span><strong id="baseStoriesStat">458</strong></div>
+          <div><span>Matérias salvas</span><strong id="baseArticlesStat">805</strong></div>
+          <div><span>Textos completos</span><strong id="baseRawStat">772</strong></div>
         </div>
         <p class="filter-note" id="baseUpdatedText">Base atualizada em: 13/04/2026 17:28 UTC</p>
       </div>
@@ -161,30 +167,28 @@
       <p class="filter-note">Monitoramento ativo: <strong id="activeFilterText">Carregando...</strong></p>
       <div class="filter-row" style="margin-top:12px">
         <button type="button" class="filter-chip active" data-sort="newest">Mais recentes</button>
-        <button type="button" class="filter-chip" data-sort="hottest">Historias agrupadas</button>
+        <button type="button" class="filter-chip" data-sort="hottest">Histórias agrupadas</button>
       </div>
     </section>
 
     <details class="panel" id="indexPanel" hidden>
-      <summary class="nav-summary">Indice de historias visiveis (<span id="visibleIndexCount">436</span>)</summary>
+      <summary class="nav-summary">Índice de histórias visíveis (<span id="visibleIndexCount">436</span>)</summary>
       <div class="story-index" id="storyIndex"></div>
-      <p class="empty-state" id="emptyState" hidden>Nenhuma historia corresponde aos filtros atuais.</p>
+      <p class="empty-state" id="emptyState" hidden>Nenhuma história corresponde aos filtros atuais.</p>
     </details>
 
     <section class="panel shell-loading" id="loadingState">
       <div class="flat-spinner"></div>
       <div>
         <strong>Carregando dados do clipping...</strong>
-        <p>As historias e materias serao exibidas em instantes.</p>
+        <p>As histórias e matérias serão exibidas em instantes.</p>
       </div>
     </section>
 
     <section id="storyStack" hidden></section>
     <section id="flatStack" class="flat-articles" hidden></section>
 
-    <p class="footer-note">Painel institucional publicado para consulta da equipe.</p>
-    <p class="footer-note" id="buildVersion" style="opacity:0.6;font-size:11px">build: live-runner-repair-20260501 · classification editor ENABLED for all coworkers</p>
   </main>
-  <script src="assets/clipping.js?v=live-runner-repair-20260501" defer></script>
+  <script src="assets/clipping.js?v=ui-polish-20260501" defer></script>
 </body>
 </html>

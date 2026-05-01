@@ -75,14 +75,14 @@ def test_pages_artifact_uses_external_bundle(tmp_path):
     html_doc = artifact["html_doc"]
     assert 'data-clipping-data-url="' in html_doc
     assert 'data-clipping-raw-url="' in html_doc
-    assert "Rodar atualizacao" in html_doc
+    assert "Rodar atualização" in html_doc
     assert "Progresso compartilhado" in html_doc
     assert "?v=" in html_doc
     assert '<article class="article-card"' not in html_doc
     assert 'data-story-id="' not in html_doc
     assert "Carregando dados do clipping" in html_doc
-    assert "Carregar mais noticias" in artifact["js_text"]
-    assert "Carregando noticias" in artifact["js_text"]
+    assert "Carregar mais notícias" in artifact["js_text"]
+    assert "Carregando notícias" in artifact["js_text"]
     assert "hydrateRawDetails" in artifact["js_text"]
     assert "IntersectionObserver" not in artifact["js_text"]
 
@@ -112,6 +112,99 @@ def test_pages_bundle_writes_shell_and_assets(tmp_path):
     assert 'data-clipping-raw-url="index_assets/clipping-raw-texts.json?v=' in html_doc
     assert 'href="index_assets/clipping.css?v=' in html_doc
     assert 'src="index_assets/clipping.js?v=' in html_doc
+
+
+def test_archived_targets_do_not_reappear_in_export_filters(monkeypatch, tmp_path):
+    db_path = tmp_path / "clipping.db"
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "flavio_valle",
+                    "label": "Flávio Valle",
+                    "display_name": "Flávio Valle",
+                    "primary": True,
+                    "keywords": ["Flávio Valle"],
+                },
+                {
+                    "key": "ana_arquivada",
+                    "label": "Ana Arquivada",
+                    "display_name": "Ana Arquivada",
+                    "primary": False,
+                    "archived": True,
+                    "keywords": ["Ana Arquivada"],
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(export_mobile_snapshot, "TARGETS_PATH", targets_path)
+    with ClippingDB(db_path) as db:
+        archived_article = db.insert_article(
+            url="https://example.com/arquivada",
+            title="Materia apenas arquivada",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-04-06T12:00:00+00:00",
+            snippet="Snippet arquivado.",
+            full_text="Texto arquivado.",
+        )
+        assert archived_article is not None
+        db.insert_mention(archived_article, "ana_arquivada", "Ana Arquivada", "Ana Arquivada")
+        archived_story = db.create_story(
+            title="Historia apenas arquivada",
+            summary="Resumo arquivado.",
+            temperature=4.0,
+            target_keys=["ana_arquivada"],
+        )
+        db.attach_article_to_story(archived_story, archived_article)
+        db.ensure_story_target(archived_story, "ana_arquivada")
+
+        mixed_article = db.insert_article(
+            url="https://example.com/mista",
+            title="Flavio Valle e Ana Arquivada",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-04-06T13:00:00+00:00",
+            snippet="Snippet misto.",
+            full_text="Texto misto.",
+        )
+        assert mixed_article is not None
+        db.insert_mention(mixed_article, "flavio_valle", "Flávio Valle", "Flávio Valle")
+        db.insert_mention(mixed_article, "ana_arquivada", "Ana Arquivada", "Ana Arquivada")
+        mixed_story = db.create_story(
+            title="Historia mista",
+            summary="Resumo misto.",
+            temperature=8.0,
+            target_keys=["flavio_valle", "ana_arquivada"],
+        )
+        db.attach_article_to_story(mixed_story, mixed_article)
+        db.ensure_story_target(mixed_story, "flavio_valle")
+        db.ensure_story_target(mixed_story, "ana_arquivada")
+        archived_only_in_mixed = db.insert_article(
+            url="https://example.com/mista-arquivada",
+            title="Ana Arquivada sozinha dentro da historia mista",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-04-06T14:00:00+00:00",
+            snippet="Snippet arquivado dentro de historia mista.",
+            full_text="Texto arquivado dentro de historia mista.",
+        )
+        assert archived_only_in_mixed is not None
+        db.insert_mention(archived_only_in_mixed, "ana_arquivada", "Ana Arquivada", "Ana Arquivada")
+        db.attach_article_to_story(mixed_story, archived_only_in_mixed)
+
+    artifact = export_mobile_snapshot.build_snapshot_artifact(make_args(tmp_path, db_path))
+    payload = artifact["data_payload"]
+
+    assert [row["key"] for row in artifact["target_rows"]] == ["flavio_valle"]
+    assert [row["key"] for row in payload["targets"]] == ["flavio_valle"]
+    assert [story["title"] for story in payload["stories"]] == ["Historia mista"]
+    assert payload["stories"][0]["targetKeys"] == ["flavio_valle"]
+    assert payload["stories"][0]["articleCount"] == 1
+    assert len(payload["stories"][0]["articles"]) == 1
+    assert payload["stories"][0]["articles"][0]["targetKeys"] == ["flavio_valle"]
 
 
 def test_parse_source_snapshot_reads_generated_bundle(tmp_path):

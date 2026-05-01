@@ -20,6 +20,13 @@ from .config import ROOT, db_path as configured_db_path
 
 TARGETS_PATH = ROOT / "data" / "targets.json"
 PRIMARY_TARGET_KEYS = ("flavio_valle", "pedro_angelito")
+SYNTHETIC_SMOKE_TITLE = "Atlas smoke test: manual unique story flow for Flavio Valle"
+SYNTHETIC_SMOKE_SOURCES = {
+    "atlas smoke test",
+    "atlas smoke test manual",
+    "manual smoke test",
+}
+SYNTHETIC_TARGET_MARKERS = ("atlas_teste", "atlas teste")
 SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 
@@ -93,7 +100,7 @@ def ensure_app_tables(db_file: Path) -> None:
 
             CREATE INDEX IF NOT EXISTS idx_jobs_active
                 ON jobs(status, started_at)
-                WHERE status IN ('queued', 'running', 'exporting');
+                WHERE status IN ('queued', 'running', 'exporting', 'cancel_requested');
 
             CREATE INDEX IF NOT EXISTS idx_job_events_job_id
                 ON job_events(job_id, id);
@@ -107,9 +114,40 @@ def ensure_app_tables(db_file: Path) -> None:
         )
 
 
+def is_synthetic_test_target(row: dict[str, Any]) -> bool:
+    key = str(row.get("key") or "").strip().lower()
+    label = str(row.get("label") or row.get("display_name") or "").strip().lower()
+    return any(marker in key or marker in label for marker in SYNTHETIC_TARGET_MARKERS)
+
+
+def archive_metadata(reason: str) -> dict[str, Any]:
+    return {
+        "archived": True,
+        "archived_at": utc_now_iso(),
+        "archive_reason": normalize_text(reason or "Arquivado pela equipe."),
+    }
+
+
+def maybe_auto_archive_synthetic_targets(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[str]]:
+    archived_keys: list[str] = []
+    for row in rows:
+        key = str(row.get("key") or "").strip()
+        if not key or key in PRIMARY_TARGET_KEYS or bool(row.get("archived")):
+            continue
+        if not is_synthetic_test_target(row):
+            continue
+        row.update(archive_metadata("Alvo de teste arquivado automaticamente."))
+        archived_keys.append(key)
+    return rows, archived_keys
+
+
 def load_targets() -> list[dict[str, Any]]:
     rows = json.loads(TARGETS_PATH.read_text(encoding="utf-8"))
-    return [row for row in rows if row.get("key")]
+    rows = [row for row in rows if row.get("key")]
+    rows, archived_keys = maybe_auto_archive_synthetic_targets(rows)
+    if archived_keys:
+        write_targets_atomic(rows)
+    return rows
 
 
 def normalize_target_slug(value: str) -> str:
@@ -159,15 +197,20 @@ def sanitize_target(row: dict[str, Any]) -> dict[str, Any]:
     display_name = normalize_text(row.get("display_name") or row.get("label") or key)
     label = normalize_text(row.get("label") or display_name or key)
     primary = key in PRIMARY_TARGET_KEYS
-    return {
+    target = {
         "key": key,
         "label": label or key,
         "display_name": display_name or label or key,
         "className": "primary" if primary else "",
         "primary": primary,
+        "archived": bool(row.get("archived")),
         "keywords": ordered_clean_strings(row.get("keywords")),
         "exact_aliases": ordered_clean_strings(row.get("exact_aliases") or row.get("aliases")),
     }
+    if target["archived"]:
+        target["archived_at"] = str(row.get("archived_at") or "")
+        target["archive_reason"] = normalize_text(row.get("archive_reason") or "Arquivado pela equipe.")
+    return target
 
 
 def normalize_targets(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -192,8 +235,12 @@ def normalize_targets_file() -> bool:
     return True
 
 
-def public_targets() -> dict[str, Any]:
-    targets = normalize_targets(load_targets())
+def public_targets(*, include_archived: bool = False) -> dict[str, Any]:
+    targets = [
+        target
+        for target in normalize_targets(load_targets())
+        if target and (include_archived or not target.get("archived"))
+    ]
     return {"targets": targets, "primaryKeys": locked_primary_keys()}
 
 
@@ -216,37 +263,142 @@ def write_targets_atomic(rows: list[dict[str, Any]]) -> None:
             os.unlink(tmp_name)
 
 
-def create_secondary_target(payload: dict[str, Any]) -> dict[str, Any]:
+def find_target_index(rows: list[dict[str, Any]], key: str) -> int:
+    normalized = str(key or "").strip()
+    for index, row in enumerate(rows):
+        if str(row.get("key") or "").strip() == normalized:
+            return index
+    raise ValidationError("Nome acompanhado desconhecido.")
+
+
+def ensure_secondary_mutable(row: dict[str, Any]) -> None:
+    key = str(row.get("key") or "").strip()
+    if key in PRIMARY_TARGET_KEYS:
+        raise ValidationError("Nomes principais nao podem ser editados por aqui.")
+
+
+def clean_target_payload(payload: dict[str, Any], existing: dict[str, Any] | None = None) -> dict[str, Any]:
+    existing = existing or {}
     display_name = normalize_text(
-        payload.get("display_name") or payload.get("displayName") or payload.get("label") or payload.get("name") or ""
+        payload.get("display_name")
+        or payload.get("displayName")
+        or payload.get("label")
+        or payload.get("name")
+        or existing.get("display_name")
+        or existing.get("label")
+        or ""
     )
     if len(display_name) < 3:
         raise ValidationError("Informe um nome de exibicao com pelo menos 3 caracteres.")
-    keywords = ordered_clean_strings(payload.get("keywords"))
-    aliases = ordered_clean_strings(payload.get("exact_aliases") or payload.get("exactAliases") or payload.get("aliases"))
+    keywords_source = payload.get("keywords")
+    if keywords_source is None:
+        keywords_source = existing.get("keywords")
+    aliases_source = payload.get("exact_aliases")
+    if aliases_source is None:
+        aliases_source = payload.get("exactAliases")
+    if aliases_source is None:
+        aliases_source = payload.get("aliases")
+    if aliases_source is None:
+        aliases_source = existing.get("exact_aliases") or existing.get("aliases")
+    keywords = ordered_clean_strings(keywords_source)
+    aliases = ordered_clean_strings(aliases_source)
     if display_name not in keywords:
         keywords = [display_name, *keywords]
+    return {
+        "display_name": display_name,
+        "label": display_name,
+        "keywords": keywords,
+        "exact_aliases": aliases,
+    }
+
+
+def create_secondary_target(payload: dict[str, Any]) -> dict[str, Any]:
+    cleaned = clean_target_payload(payload)
 
     rows = normalize_targets(load_targets())
     existing_keys = {str(row.get("key") or "").strip() for row in rows}
-    key = unique_target_slug(display_name, existing_keys)
+    key = unique_target_slug(cleaned["display_name"], existing_keys)
     target = {
         "key": key,
-        "label": display_name,
-        "display_name": display_name,
+        "label": cleaned["display_name"],
+        "display_name": cleaned["display_name"],
         "className": "",
         "primary": False,
-        "keywords": keywords,
+        "keywords": cleaned["keywords"],
     }
-    if aliases:
-        target["exact_aliases"] = aliases
+    if cleaned["exact_aliases"]:
+        target["exact_aliases"] = cleaned["exact_aliases"]
+    if is_synthetic_test_target(target):
+        target.update(archive_metadata("Alvo de teste arquivado automaticamente."))
     rows.append(target)
     write_targets_atomic(normalize_targets(rows))
     return sanitize_target(target)
 
 
-def target_labels() -> dict[str, str]:
-    return {str(row["key"]): str(row.get("label") or row.get("display_name") or row["key"]) for row in normalize_targets(load_targets())}
+def update_secondary_target(key: str, payload: dict[str, Any]) -> dict[str, Any]:
+    rows = normalize_targets(load_targets())
+    index = find_target_index(rows, key)
+    row = rows[index]
+    ensure_secondary_mutable(row)
+    if bool(row.get("archived")):
+        raise ValidationError("Restaure o nome antes de editar.")
+    cleaned = clean_target_payload(payload, row)
+    row["label"] = cleaned["display_name"]
+    row["display_name"] = cleaned["display_name"]
+    row["className"] = ""
+    row["primary"] = False
+    row["keywords"] = cleaned["keywords"]
+    if cleaned["exact_aliases"]:
+        row["exact_aliases"] = cleaned["exact_aliases"]
+    else:
+        row.pop("exact_aliases", None)
+        row.pop("aliases", None)
+    if is_synthetic_test_target(row):
+        row.update(archive_metadata("Alvo de teste arquivado automaticamente."))
+    write_targets_atomic(normalize_targets(rows))
+    return sanitize_target(row)
+
+
+def archive_secondary_target(key: str, reason: str = "") -> dict[str, Any]:
+    rows = normalize_targets(load_targets())
+    index = find_target_index(rows, key)
+    row = rows[index]
+    ensure_secondary_mutable(row)
+    if not bool(row.get("archived")):
+        row.update(archive_metadata(reason or "Arquivado pela equipe."))
+        write_targets_atomic(normalize_targets(rows))
+    return sanitize_target(row)
+
+
+def restore_secondary_target(key: str) -> dict[str, Any]:
+    rows = normalize_targets(load_targets())
+    index = find_target_index(rows, key)
+    row = rows[index]
+    ensure_secondary_mutable(row)
+    if is_synthetic_test_target(row):
+        raise ValidationError("Alvos de teste nao podem ser restaurados.")
+    if bool(row.get("archived")):
+        row["archived"] = False
+        row.pop("archived_at", None)
+        row.pop("archive_reason", None)
+        write_targets_atomic(normalize_targets(rows))
+    return sanitize_target(row)
+
+
+def archive_known_test_targets() -> dict[str, Any]:
+    rows = normalize_targets(json.loads(TARGETS_PATH.read_text(encoding="utf-8")))
+    rows, archived_keys = maybe_auto_archive_synthetic_targets(rows)
+    if archived_keys:
+        write_targets_atomic(normalize_targets(rows))
+    return {"archived": archived_keys, "archivedCount": len(archived_keys)}
+
+
+def target_labels(*, include_archived: bool = False) -> dict[str, str]:
+    return {
+        str(row["key"]): str(row.get("label") or row.get("display_name") or row["key"])
+        for row in normalize_targets(load_targets())
+        if include_archived or not bool(row.get("archived"))
+    }
 
 
 def validate_target_keys(values: list[str]) -> list[str]:
@@ -264,6 +416,86 @@ def validate_target_keys(values: list[str]) -> list[str]:
     if missing:
         raise ValidationError("Nome acompanhado desconhecido.")
     return cleaned
+
+
+def cleanup_synthetic_smoke_artifacts(db_file: Path) -> dict[str, Any]:
+    """Remove only the known production manual smoke artifact."""
+    db_file = validate_configured_db_file(db_file)
+    ensure_app_tables(db_file)
+    with connect(db_file) as conn:
+        rows = conn.execute(
+            """
+            SELECT id, title, source_name, url
+            FROM articles
+            WHERE lower(url) IN ('https://example.com', 'http://example.com')
+               OR lower(url) LIKE 'https://example.com/%'
+               OR lower(url) LIKE 'http://example.com/%'
+            """
+        ).fetchall()
+        article_ids: list[int] = []
+        for row in rows:
+            title = str(row["title"] or "").strip()
+            source_name = str(row["source_name"] or "").strip().lower()
+            if title == SYNTHETIC_SMOKE_TITLE or source_name in SYNTHETIC_SMOKE_SOURCES:
+                article_ids.append(int(row["id"]))
+
+        if not article_ids:
+            return {
+                "articlesRemoved": 0,
+                "mentionsRemoved": 0,
+                "storiesRemoved": 0,
+                "storyLinksRemoved": 0,
+            }
+
+        placeholders = ",".join("?" for _ in article_ids)
+        story_rows = conn.execute(
+            f"SELECT DISTINCT story_id FROM story_articles WHERE article_id IN ({placeholders})",
+            article_ids,
+        ).fetchall()
+        story_ids = [int(row["story_id"]) for row in story_rows]
+
+        mention_rows = conn.execute(f"SELECT id FROM mentions WHERE article_id IN ({placeholders})", article_ids).fetchall()
+        mention_ids = [int(row["id"]) for row in mention_rows]
+        mentions_removed = len(mention_ids)
+        if mention_ids:
+            mention_placeholders = ",".join("?" for _ in mention_ids)
+            classification_rows = conn.execute(
+                f"SELECT id FROM classifications WHERE mention_id IN ({mention_placeholders})",
+                mention_ids,
+            ).fetchall()
+            classification_ids = [int(row["id"]) for row in classification_rows]
+            if classification_ids:
+                classification_placeholders = ",".join("?" for _ in classification_ids)
+                conn.execute(
+                    f"DELETE FROM classification_categories WHERE classification_id IN ({classification_placeholders})",
+                    classification_ids,
+                )
+            conn.execute(f"DELETE FROM classifications WHERE mention_id IN ({mention_placeholders})", mention_ids)
+
+        conn.execute(f"DELETE FROM mentions WHERE article_id IN ({placeholders})", article_ids)
+        story_links_removed = conn.execute(
+            f"DELETE FROM story_articles WHERE article_id IN ({placeholders})",
+            article_ids,
+        ).rowcount
+        conn.execute(f"DELETE FROM articles WHERE id IN ({placeholders})", article_ids)
+
+        stories_removed = 0
+        for story_id in story_ids:
+            remaining = conn.execute("SELECT 1 FROM story_articles WHERE story_id = ? LIMIT 1", (story_id,)).fetchone()
+            story = conn.execute("SELECT title FROM stories WHERE id = ?", (story_id,)).fetchone()
+            story_title = str(story["title"] or "").strip() if story else ""
+            if remaining and story_title != SYNTHETIC_SMOKE_TITLE:
+                continue
+            conn.execute("DELETE FROM story_targets WHERE story_id = ?", (story_id,))
+            deleted = conn.execute("DELETE FROM stories WHERE id = ?", (story_id,)).rowcount
+            stories_removed += max(0, int(deleted or 0))
+
+    return {
+        "articlesRemoved": len(article_ids),
+        "mentionsRemoved": mentions_removed,
+        "storiesRemoved": stories_removed,
+        "storyLinksRemoved": max(0, int(story_links_removed or 0)),
+    }
 
 
 def validate_url(value: str) -> str:
