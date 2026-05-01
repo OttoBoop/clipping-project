@@ -838,7 +838,7 @@ def run_ingestion(
     progress_callback: ProgressCallback | None = None,
 ) -> list[IngestionResult]:
     options = options or IngestionOptions()
-    targets = get_active_targets()
+    targets = select_targets(get_active_targets(), options.target_keys)
     plans: list[tuple[str, str, list[CandidateArticle]]] = []
     max_candidates = max(1, int(options.max_candidates_per_source))
     # Backfill mode needs deeper pagination than the old hard cap of 30.

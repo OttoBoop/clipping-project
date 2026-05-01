@@ -42,7 +42,7 @@
     {
       "key": "bernardo_rubiao",
       "label": "Bernardo Rubião",
-      "primary": true,
+      "primary": false,
       "storyCount": 24,
       "articleCount": 91
     }

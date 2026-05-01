@@ -29,27 +29,30 @@
       "deputado Pedro Duarte",
       "Pedro Duarte deputado",
       "Pedro Duarte vereador"
-    ]
+    ],
+    "exact_aliases": []
   },
   {
     "key": "pedro_angelito",
     "label": "Pedro Angelito",
     "display_name": "Pedro Angelito",
-    "className": "",
+    "className": "primary",
     "primary": true,
     "keywords": [
       "Pedro Angelito"
-    ]
+    ],
+    "exact_aliases": []
   },
   {
     "key": "bernardo_rubiao",
     "label": "Bernardo Rubião",
     "display_name": "Bernardo Rubião",
     "className": "",
-    "primary": true,
+    "primary": false,
     "keywords": [
       "Bernardo Rubiao",
       "Bernardo Rubião"
-    ]
+    ],
+    "exact_aliases": []
   }
 ]

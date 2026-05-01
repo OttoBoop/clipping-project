@@ -45,20 +45,19 @@ PRESETS: dict[str, dict[str, Any]] = {
     "rapido": {
         "target_keys": ["flavio_valle"],
         "days": 1,
-        "max_candidates": 250,
-        "max_process_seconds": 300,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
     },
     "completo": {
-        "target_keys": ["flavio_valle", "pedro_angelito", "bernardo_rubiao"],
+        "target_keys": ["flavio_valle", "pedro_angelito"],
         "days": 7,
-        "max_candidates": 900,
-        "max_process_seconds": 900,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
     },
 }
 
-CUSTOM_MAX_DAYS = 7
-CUSTOM_MAX_CANDIDATES = 600
-CUSTOM_MAX_PROCESS_SECONDS = 600
+CUSTOM_MAX_CANDIDATES = 90000
+CUSTOM_MAX_PROCESS_SECONDS = 90000
 
 
 class JobConflict(RuntimeError):
@@ -70,6 +69,7 @@ class JobManager:
         self.store = store
         self._lock = threading.Lock()
         self._active_job_id: str | None = None
+        self._cancel_events: dict[str, threading.Event] = {}
 
     def current_status(self) -> dict[str, Any]:
         active = self._active_job_id
@@ -81,6 +81,27 @@ class JobManager:
             return active_job
         rows = recent_jobs(1)
         return rows[0] if rows else {"status": "idle"}
+
+    def cancel_active(self) -> dict[str, Any]:
+        with self._lock:
+            job_id = self._active_job_id
+            if not job_id:
+                active_job = get_active_job()
+                if active_job:
+                    job_id = str(active_job["id"])
+            if not job_id:
+                raise JobConflict("no_active_job")
+            event = self._cancel_events.get(job_id)
+            if event is not None:
+                event.set()
+            self._active_job_id = None
+        update_job(
+            job_id,
+            status="cancelled",
+            finished_at=datetime.now(timezone.utc).isoformat(),
+        )
+        append_event(job_id, "job_cancelled", {"status": "cancelled"})
+        return get_job(job_id) or {"id": job_id, "status": "cancelled"}
 
     def start_update(self, payload: dict[str, Any], *, started_by: str) -> dict[str, Any]:
         spec = build_update_spec(payload)
@@ -150,17 +171,21 @@ class JobManager:
             ensure_app_tables(db_path())
             create_job(job_id, kind, spec, started_by=started_by)
             self._active_job_id = job_id
+            cancel_event = threading.Event()
+            self._cancel_events[job_id] = cancel_event
             thread = threading.Thread(
                 target=self._run,
-                args=(job_id, kind, spec),
+                args=(job_id, kind, spec, cancel_event),
                 name=f"clipping-job-{job_id}",
                 daemon=True,
             )
             thread.start()
         return get_job(job_id) or {"id": job_id, "status": "queued"}
 
-    def _run(self, job_id: str, kind: str, spec: dict[str, Any]) -> None:
+    def _run(self, job_id: str, kind: str, spec: dict[str, Any], cancel_event: threading.Event) -> None:
         try:
+            if cancel_event.is_set():
+                return
             update_job(job_id, status="running")
             self.store.backup_current_artifacts(job_id)
             totals = {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0}
@@ -168,6 +193,8 @@ class JobManager:
             if kind == "update":
                 labels = target_labels()
                 for target_key in spec["target_keys"]:
+                    if cancel_event.is_set():
+                        return
                     target_label = labels.get(target_key, target_key)
                     options = IngestionOptions(
                         target_keys=[target_key],
@@ -194,11 +221,17 @@ class JobManager:
                     totals["mentions_inserted"] += sum(r.mentions_inserted for r in results)
                     totals["stories_touched"] += sum(r.stories_touched for r in results)
                     update_job(job_id, **totals)
+                    if cancel_event.is_set():
+                        return
 
+            if cancel_event.is_set():
+                return
             if spec.get("export"):
                 update_job(job_id, status="exporting", **totals)
                 run_export_snapshot(job_id)
 
+            if cancel_event.is_set():
+                return
             manifest = {
                 "jobId": job_id,
                 "kind": kind,
@@ -210,6 +243,8 @@ class JobManager:
             append_event(job_id, "artifacts_uploaded", artifact_upload_summary(uploaded))
             update_job(job_id, status="succeeded", finished_at=datetime.now(timezone.utc).isoformat(), **totals)
         except Exception as exc:
+            if cancel_event.is_set():
+                return
             update_job(
                 job_id,
                 status="failed",
@@ -221,6 +256,7 @@ class JobManager:
             with self._lock:
                 if self._active_job_id == job_id:
                     self._active_job_id = None
+                self._cancel_events.pop(job_id, None)
 
 
 def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
@@ -248,8 +284,6 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("coletor_invalido")
     if date_from > date_to:
         raise ValueError("periodo_invalido")
-    if (date.fromisoformat(date_to) - date.fromisoformat(date_from)).days > CUSTOM_MAX_DAYS:
-        raise ValueError("periodo_muito_longo")
 
     return {
         "preset": preset,

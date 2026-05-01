@@ -103,6 +103,10 @@ def mock_artifact_upload(monkeypatch, tmp_path, uploaded_paths=None):
     return calls, uploaded_paths
 
 
+def action_upload_calls(calls):
+    return [call for call in calls if not str(call.get("job_id") or "").startswith(("seed-", "startup-"))]
+
+
 def status_jobs(payload):
     current = payload.get("current")
     if isinstance(current, dict):
@@ -252,6 +256,38 @@ def test_update_and_export_workflows_are_public_coworker_endpoints(monkeypatch, 
     ]
 
 
+def test_cancel_update_is_public_and_returns_cancelled_job(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+
+    def fake_cancel_active():
+        return {"id": "cancelled-job", "status": "cancelled"}
+
+    monkeypatch.setattr(app_module.job_manager, "cancel_active", fake_cancel_active)
+
+    with TestClient(app) as client:
+        response = client.post("/api/update/cancel")
+
+    assert response.status_code == 200
+    assert response.json() == {"id": "cancelled-job", "status": "cancelled"}
+
+
+def test_cancel_update_returns_409_when_no_active_job(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+
+    def fake_cancel_active():
+        raise app_module.JobConflict("no_active_job")
+
+    monkeypatch.setattr(app_module.job_manager, "cancel_active", fake_cancel_active)
+
+    with TestClient(app) as client:
+        response = client.post("/api/update/cancel")
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "no_active_job"
+
+
 def test_targets_api_is_public_and_uploads_target_manifest(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     app_module = importlib.import_module("web_app.app")
@@ -283,13 +319,14 @@ def test_targets_api_is_public_and_uploads_target_manifest(monkeypatch, tmp_path
     assert created.status_code == 200
     assert created.json()["key"] == "ana_teste"
     assert created.json()["uploadedArtifactCount"] == 2
-    assert upload_calls == [
+    target_upload_calls = action_upload_calls(upload_calls)
+    assert target_upload_calls == [
         {
             "manifest": {"kind": "targets", "result": {"key": "ana_teste", "label": "Ana Teste", "primary": False}},
             "job_id": "targets-ana_teste",
         }
     ]
-    assert_no_secret_material({"created": created.json(), "upload_calls": upload_calls})
+    assert_no_secret_material({"created": created.json(), "upload_calls": target_upload_calls})
 
 
 def test_targets_api_returns_real_public_targets_contract(monkeypatch, tmp_path):
@@ -301,12 +338,14 @@ def test_targets_api_returns_real_public_targets_contract(monkeypatch, tmp_path)
     assert response.status_code == 200
     payload = response.json()
     assert isinstance(payload["targets"], list)
-    assert payload["primaryKeys"] == ["flavio_valle", "pedro_angelito", "bernardo_rubiao"]
+    assert payload["primaryKeys"] == ["flavio_valle", "pedro_angelito"]
 
     by_key = {target["key"]: target for target in payload["targets"]}
     for key in payload["primaryKeys"]:
         assert by_key[key]["primary"] is True
         assert by_key[key]["className"] == "primary"
+    assert by_key["bernardo_rubiao"]["primary"] is False
+    assert by_key["bernardo_rubiao"]["className"] == ""
 
 
 def test_targets_api_validation_errors_are_public_400s(monkeypatch, tmp_path):
@@ -515,16 +554,17 @@ def test_manual_story_records_uploaded_artifact_observability(monkeypatch, tmp_p
     assert response.status_code == 200
     result = response.json()
     assert result["status"] == "created"
-    assert len(upload_calls) == 1
-    assert upload_calls[0]["manifest"]["kind"] == "manual-story"
-    assert upload_calls[0]["manifest"]["result"]["articleId"] == result["articleId"]
+    manual_upload_calls = action_upload_calls(upload_calls)
+    assert len(manual_upload_calls) == 1
+    assert manual_upload_calls[0]["manifest"]["kind"] == "manual-story"
+    assert manual_upload_calls[0]["manifest"]["result"]["articleId"] == result["articleId"]
 
     assert status.status_code == 200
     _, observed = assert_status_exposes_artifact_upload(status.json(), uploaded_paths)
     assert observed["kind"] == "manual"
     assert observed["status"] == "succeeded"
     assert_db_artifact_event(db_file, observed["id"], uploaded_paths)
-    assert_no_secret_material({"response": result, "status": status.json(), "upload_calls": upload_calls})
+    assert_no_secret_material({"response": result, "status": status.json(), "upload_calls": manual_upload_calls})
 
 
 def test_manual_story_duplicate_with_artifact_upload_stays_polite(monkeypatch, tmp_path):
@@ -550,7 +590,8 @@ def test_manual_story_duplicate_with_artifact_upload_stays_polite(monkeypatch, t
     assert second.json()["status"] == "duplicate"
     assert second.json()["message"] == "Esta materia ja estava na base."
     assert second.json()["articleId"] == first.json()["articleId"]
-    assert len(upload_calls) == 2
+    manual_upload_calls = action_upload_calls(upload_calls)
+    assert len(manual_upload_calls) == 2
     assert db_counts(db_file) == {
         "articles": 1,
         "mentions": 1,
@@ -565,7 +606,7 @@ def test_manual_story_duplicate_with_artifact_upload_stays_polite(monkeypatch, t
     assert observed["kind"] == "manual"
     assert observed["status"] == "succeeded"
     assert_db_artifact_event(db_file, observed["id"], uploaded_paths)
-    assert_no_secret_material({"response": second.json(), "status": status.json(), "upload_calls": upload_calls})
+    assert_no_secret_material({"response": second.json(), "status": status.json(), "upload_calls": manual_upload_calls})
 
 
 def test_manual_story_validation_rejects_partial_payload_without_db_write(monkeypatch, tmp_path):
@@ -638,7 +679,22 @@ def test_public_dashboard_wording_contract():
     assert "Clipping do gabinete" in html
     assert "Rodar atualizacao" in html
     assert "Noticias disponiveis para consulta" in html
-    assert "Com texto para leitura" in html
+    assert "Materias com texto integral arquivado" in html
+    assert "Com texto para leitura" not in html
+    assert "Cancelar atualizacao" in html
+    assert '<details class="add-target-advanced">' in html
+    assert "Opcoes avancadas (tutorial)" in html
+    assert "Palavras para buscar" in html
+    assert "Apelidos ou grafias exatas" in html
     assert "DOM" not in html
     assert "RAM" not in html
     assert "API local" not in html
+
+
+def test_public_runner_javascript_contract():
+    script = Path("assets/clipping.js").read_text(encoding="utf-8")
+    assert "periodo_muito_longo" not in script
+    assert "primaryKeys.indexOf(key) !== -1" in script
+    assert "applyRuntimeTargetsToPayload(runTargets)" in script
+    assert "disabled = target.primary" not in script
+    assert "+ checked + disabled" not in script

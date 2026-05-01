@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
-INVENTORY_PATH = PROJECT_ROOT / "docs" / "FORENSIC_INVENTORY.md"
+INVENTORY_PATH = PROJECT_ROOT / "historical" / "FORENSIC_INVENTORY.md"
 
 # Every file that MUST appear in the inventory
 FROM_PATCHES_ROOT = Path("D:/recovery/CLIPPING_PROJECT/from_patches")

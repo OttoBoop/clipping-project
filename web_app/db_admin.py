@@ -19,7 +19,7 @@ from .config import ROOT, db_path as configured_db_path
 
 
 TARGETS_PATH = ROOT / "data" / "targets.json"
-PRIMARY_TARGET_KEYS = ("flavio_valle", "pedro_angelito", "bernardo_rubiao")
+PRIMARY_TARGET_KEYS = ("flavio_valle", "pedro_angelito")
 SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 
@@ -170,8 +170,30 @@ def sanitize_target(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def normalize_targets(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    normalized: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in rows:
+        target = sanitize_target(row)
+        key = str(target.get("key") or "")
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        normalized.append(target)
+    return normalized
+
+
+def normalize_targets_file() -> bool:
+    rows = load_targets()
+    normalized = normalize_targets(rows)
+    if normalized == rows:
+        return False
+    write_targets_atomic(normalized)
+    return True
+
+
 def public_targets() -> dict[str, Any]:
-    targets = [target for target in (sanitize_target(row) for row in load_targets()) if target]
+    targets = normalize_targets(load_targets())
     return {"targets": targets, "primaryKeys": locked_primary_keys()}
 
 
@@ -205,7 +227,7 @@ def create_secondary_target(payload: dict[str, Any]) -> dict[str, Any]:
     if display_name not in keywords:
         keywords = [display_name, *keywords]
 
-    rows = load_targets()
+    rows = normalize_targets(load_targets())
     existing_keys = {str(row.get("key") or "").strip() for row in rows}
     key = unique_target_slug(display_name, existing_keys)
     target = {
@@ -219,12 +241,12 @@ def create_secondary_target(payload: dict[str, Any]) -> dict[str, Any]:
     if aliases:
         target["exact_aliases"] = aliases
     rows.append(target)
-    write_targets_atomic(rows)
+    write_targets_atomic(normalize_targets(rows))
     return sanitize_target(target)
 
 
 def target_labels() -> dict[str, str]:
-    return {str(row["key"]): str(row.get("label") or row.get("display_name") or row["key"]) for row in load_targets()}
+    return {str(row["key"]): str(row.get("label") or row.get("display_name") or row["key"]) for row in normalize_targets(load_targets())}
 
 
 def validate_target_keys(values: list[str]) -> list[str]:

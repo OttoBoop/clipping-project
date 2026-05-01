@@ -452,3 +452,14 @@ Checks run against `https://clipping-project.onrender.com/`:
    responses during the page load.
 
 **Status:** Resolved
+
+### A-006 — 2026-05-01 — Atlas
+**Answer:** Q-006 is superseded for the current sprint and must not drive this
+repair. The active task is the live news clipping runner: restore `/clipping`
+workflow parity, remove the web-only date cap, keep `direct_scrape` disabled,
+move Bernardo Rubiao to secondary, preserve the simple add-name flow with
+advanced options hidden behind details, add cancel/freshness, and verify on
+Render. No Anthropic key, AI batch categorizer run, or AI-provider setup is
+required for this runner repair.
+
+**Status:** Resolved

@@ -131,6 +131,12 @@ body::before {
   border-color: rgba(143, 29, 29, 0.28);
 }
 
+.runner-status-pill.is-cancelled {
+  background: #f4ecff;
+  color: #4d2a8a;
+  border-color: rgba(77, 42, 138, 0.24);
+}
+
 .run-form,
 .add-target-form {
   display: grid;
@@ -253,6 +259,14 @@ body::before {
   background: var(--brand-strong);
 }
 
+.cancel-action {
+  background: #8f1d1d;
+}
+
+.cancel-action:hover {
+  background: #6f1414;
+}
+
 .primary-action:disabled,
 .secondary-action:disabled {
   opacity: 0.58;
@@ -290,6 +304,76 @@ body::before {
 
 .add-target-form {
   margin-top: 14px;
+}
+
+.add-target-advanced {
+  margin-top: 12px;
+  border-top: 1px solid rgba(180, 196, 209, 0.62);
+  padding-top: 12px;
+}
+
+.add-target-advanced > summary {
+  cursor: pointer;
+  color: var(--brand);
+  font-weight: 700;
+  font-size: 13px;
+  list-style: none;
+}
+
+.add-target-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+
+.add-target-advanced > summary::before {
+  content: "\25b8 ";
+}
+
+.add-target-advanced[open] > summary::before {
+  content: "\25be ";
+}
+
+.advanced-help {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.freshness-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: #edf4fb;
+  color: var(--brand-strong);
+  border: 1px solid rgba(11, 75, 127, 0.24);
+  box-shadow: 0 12px 28px rgba(5, 37, 62, 0.08);
+}
+
+.freshness-banner__text {
+  font-weight: 700;
+  font-size: 14px;
+  flex: 1 1 220px;
+}
+
+.freshness-banner__action {
+  appearance: none;
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 14px;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  min-height: 38px;
+}
+
+.freshness-banner__action:hover {
+  background: var(--brand-strong);
 }
 
 .progress-track {

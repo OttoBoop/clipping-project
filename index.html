@@ -5,7 +5,7 @@
   <meta name="clipping-snapshot-sentinel" content="WIX_CLIPPING_SNAPSHOT_ROOT">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Clipping do gabinete | Flavio Valle</title>
-  <link rel="stylesheet" href="assets/clipping.css?v=coworker-runner-20260430">
+  <link rel="stylesheet" href="assets/clipping.css?v=live-runner-repair-20260501">
 </head>
 <body>
   <main
@@ -14,6 +14,11 @@
     data-clipping-raw-url="assets/clipping-raw-texts.json"
     data-clipping-api-url=""
   >
+    <div class="freshness-banner" id="freshnessBanner" role="status" hidden>
+      <span class="freshness-banner__text" id="freshnessBannerText">Uma atualizacao terminou agora. Recarregue para ver os dados novos.</span>
+      <button type="button" class="freshness-banner__action" id="freshnessBannerReload">Recarregar agora</button>
+    </div>
+
     <section class="runner-shell" aria-label="Atualizacao do clipping">
       <div class="runner-tabs" role="tablist" aria-label="Acoes do clipping">
         <button type="button" class="runner-tab active" data-run-tab="run" role="tab" aria-selected="true">Rodar atualizacao</button>
@@ -45,7 +50,7 @@
             <div class="target-run-head">
               <div>
                 <h2>Nomes principais</h2>
-                <p>Sempre entram na atualizacao.</p>
+                <p>Ja vem marcados — desmarque se quiser deixar de fora desta rodada.</p>
               </div>
             </div>
             <div class="run-target-grid" id="primaryRunTargets"></div>
@@ -63,6 +68,7 @@
 
           <div class="run-actions">
             <button type="submit" class="primary-action" id="runUpdateButton">Rodar atualizacao</button>
+            <button type="button" class="secondary-action cancel-action" id="cancelUpdateButton" hidden>Cancelar atualizacao</button>
             <span id="runFormMessage" class="form-message" role="status"></span>
           </div>
         </form>
@@ -73,14 +79,32 @@
             <label>Nome
               <input type="text" name="display_name" autocomplete="off" required minlength="3" placeholder="Ex.: Maria Silva">
             </label>
-            <label>Palavras para buscar
-              <textarea name="keywords" rows="2" placeholder="Uma por linha ou separadas por virgula"></textarea>
-            </label>
-            <label>Apelidos ou grafias exatas
-              <textarea name="exact_aliases" rows="2" placeholder="Opcional"></textarea>
-            </label>
             <button type="submit" class="secondary-action">Salvar nome extra</button>
             <span id="addTargetMessage" class="form-message" role="status"></span>
+            <details class="add-target-advanced">
+              <summary>Opcoes avancadas (tutorial)</summary>
+              <p class="advanced-help">
+                A maioria dos coworkers nao precisa preencher os campos abaixo. Use somente se a busca padrao
+                pelo nome nao estiver capturando bem o que voce quer monitorar.
+              </p>
+              <label>Palavras para buscar
+                <textarea name="keywords" rows="2" placeholder="Uma por linha ou separadas por virgula"></textarea>
+              </label>
+              <p class="advanced-help">
+                Quando preencher: cada termo aqui vira uma palavra-chave que o sistema vai procurar nas materias.
+                Use para incluir variacoes que jornalistas costumam usar — por exemplo,
+                slogans de campanha, cargos comuns ("vereador Joao", "secretaria Maria"), ou nomes de coletivos
+                ligados a pessoa. Deixe em branco se ja basta o nome cadastrado acima.
+              </p>
+              <label>Apelidos ou grafias exatas
+                <textarea name="exact_aliases" rows="2" placeholder="Uma por linha ou separadas por virgula"></textarea>
+              </label>
+              <p class="advanced-help">
+                Quando preencher: liste apelidos ou grafias diferentes do nome principal. Por exemplo, se a
+                pessoa eh chamada de "Tio Flavio" em alguns textos ou se aparece como "Flavio Vale" em vez de
+                "Flavio Valle", inclua aqui. O sistema vai tratar essas grafias como menções da mesma pessoa.
+              </p>
+            </details>
           </form>
         </details>
       </div>
@@ -119,7 +143,7 @@
         <div class="update-grid">
           <div><span>Historias salvas</span><strong id="baseStoriesStat">458</strong></div>
           <div><span>Materias salvas</span><strong id="baseArticlesStat">805</strong></div>
-          <div><span>Com texto para leitura</span><strong id="baseRawStat">772</strong></div>
+          <div><span>Materias com texto integral arquivado</span><strong id="baseRawStat">772</strong></div>
         </div>
         <p class="filter-note" id="baseUpdatedText">Base atualizada em: 13/04/2026 17:28 UTC</p>
       </div>
@@ -159,8 +183,8 @@
     <section id="flatStack" class="flat-articles" hidden></section>
 
     <p class="footer-note">Painel institucional publicado para consulta da equipe.</p>
-    <p class="footer-note" id="buildVersion" style="opacity:0.6;font-size:11px">build: coworker-runner-20260430 · classification editor ENABLED for all coworkers</p>
+    <p class="footer-note" id="buildVersion" style="opacity:0.6;font-size:11px">build: live-runner-repair-20260501 · classification editor ENABLED for all coworkers</p>
   </main>
-  <script src="assets/clipping.js?v=coworker-runner-20260430" defer></script>
+  <script src="assets/clipping.js?v=live-runner-repair-20260501" defer></script>
 </body>
 </html>
