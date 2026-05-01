@@ -206,6 +206,7 @@ class JobManager:
                         max_candidates_per_source=int(spec["max_candidates"]),
                         max_process_seconds=int(spec["max_process_seconds"]),
                         db_path=str(db_path()),
+                        cancel_check=cancel_event.is_set,
                     )
                     results = run_ingestion(
                         spec["collector"],

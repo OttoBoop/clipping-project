@@ -108,9 +108,20 @@ class IngestionOptions:
     forced_terms_mode: str = "any"
     target_keys: list[str] | None = None
     db_path: str = ""
+    cancel_check: Callable[[], bool] | None = None
 
 
 ProgressCallback = Callable[[str, dict], None]
+
+
+def cancel_requested(options: IngestionOptions) -> bool:
+    checker = options.cancel_check
+    if checker is None:
+        return False
+    try:
+        return bool(checker())
+    except Exception:
+        return False
 
 
 def summarize_text(text: str, max_sentences: int = 3) -> str:
@@ -408,6 +419,7 @@ def process_candidates(
     forced_terms = normalize_forced_terms(options.forced_terms)
     forced_mode = (options.forced_terms_mode or "any").strip().lower()
     strict_window = bool(date_from or date_to)
+    cancelled = False
 
     if progress_callback:
         progress_callback(
@@ -421,6 +433,22 @@ def process_candidates(
                 "mentions_inserted": 0,
                 "stories_touched": 0,
                 "candidates_seen": 0,
+            },
+        )
+
+    def emit_source_progress(status: str = "processing") -> None:
+        if not progress_callback:
+            return
+        progress_callback(
+            "source_progress",
+            {
+                "source_name": source_name,
+                "source_type": source_type,
+                "candidates_seen": seen,
+                "articles_inserted": inserted,
+                "mentions_inserted": mentions_inserted,
+                "stories_touched": stories_touched,
+                "status": status,
             },
         )
 
@@ -464,23 +492,18 @@ def process_candidates(
             return False
 
     for candidate in candidates[:max_candidates]:
+        if cancel_requested(options):
+            cancelled = True
+            errors.append("cancelled")
+            emit_source_progress("cancelled")
+            break
         if time.monotonic() - started_at > max_process_seconds:
             errors.append("time_budget_exceeded")
-            if progress_callback:
-                progress_callback(
-                    "source_progress",
-                    {
-                        "source_name": source_name,
-                        "source_type": source_type,
-                        "candidates_seen": seen,
-                        "articles_inserted": inserted,
-                        "mentions_inserted": mentions_inserted,
-                        "stories_touched": stories_touched,
-                        "status": "time_budget_exceeded",
-                    },
-                )
+            emit_source_progress("time_budget_exceeded")
             break
         seen += 1
+        if seen == 1 or seen % 5 == 0:
+            emit_source_progress("processing")
         candidate_source_type = (candidate.source_type or source_type or "").strip().lower()
         # [RECONSTRUCTED] candidate_metadata enhancements from patch at offsets 5301590/6453777
         candidate_metadata = dict(candidate.metadata or {})
@@ -559,6 +582,8 @@ def process_candidates(
                     hits_for_candidate=[],
                     stage="fetch",
                 )
+                if seen == 1 or seen % 5 == 0:
+                    emit_source_progress("fetch_failed")
                 continue
 
         if needs_published_extraction and not published_at:
@@ -633,17 +658,7 @@ def process_candidates(
                 stage="forced_terms",
             )
             if progress_callback and (seen == 1 or seen % 5 == 0):
-                progress_callback(
-                    "source_progress",
-                    {
-                        "source_name": source_name,
-                        "source_type": source_type,
-                        "candidates_seen": seen,
-                        "articles_inserted": inserted,
-                        "mentions_inserted": mentions_inserted,
-                        "stories_touched": stories_touched,
-                    },
-                )
+                emit_source_progress()
             continue
         if not is_recent_enough(published_at, date_from=date_from, date_to=date_to):
             emit_candidate(
@@ -658,17 +673,7 @@ def process_candidates(
                 stage="date_filter",
             )
             if progress_callback and (seen == 1 or seen % 5 == 0):
-                progress_callback(
-                    "source_progress",
-                    {
-                        "source_name": source_name,
-                        "source_type": source_type,
-                        "candidates_seen": seen,
-                        "articles_inserted": inserted,
-                        "mentions_inserted": mentions_inserted,
-                        "stories_touched": stories_touched,
-                    },
-                )
+                emit_source_progress()
             continue
         if is_bad_article_quality(
             title_for_article,
@@ -688,17 +693,7 @@ def process_candidates(
                 stage="quality_filter",
             )
             if progress_callback and (seen == 1 or seen % 5 == 0):
-                progress_callback(
-                    "source_progress",
-                    {
-                        "source_name": source_name,
-                        "source_type": source_type,
-                        "candidates_seen": seen,
-                        "articles_inserted": inserted,
-                        "mentions_inserted": mentions_inserted,
-                        "stories_touched": stories_touched,
-                    },
-                )
+                emit_source_progress()
             continue
 
         sentiment = infer_sentiment(" ".join([candidate.title, candidate.snippet, full_text[:2500]]))
@@ -757,17 +752,7 @@ def process_candidates(
                 stage="stored",
             )
             if progress_callback and (seen == 1 or seen % 5 == 0):
-                progress_callback(
-                    "source_progress",
-                    {
-                        "source_name": source_name,
-                        "source_type": source_type,
-                        "candidates_seen": seen,
-                        "articles_inserted": inserted,
-                        "mentions_inserted": mentions_inserted,
-                        "stories_touched": stories_touched,
-                    },
-                )
+                emit_source_progress()
             continue
 
         db.insert_mentions(article_id, mention_payload)
@@ -795,17 +780,7 @@ def process_candidates(
             stage="stored",
         )
         if progress_callback and (seen == 1 or seen % 3 == 0):
-            progress_callback(
-                "source_progress",
-                {
-                    "source_name": source_name,
-                    "source_type": source_type,
-                    "candidates_seen": seen,
-                    "articles_inserted": inserted,
-                    "mentions_inserted": mentions_inserted,
-                    "stories_touched": stories_touched,
-                },
-            )
+            emit_source_progress()
 
     result = IngestionResult(
         source_name=source_name,
@@ -827,6 +802,7 @@ def process_candidates(
                 "mentions_inserted": mentions_inserted,
                 "stories_touched": stories_touched,
                 "errors": errors[:3],
+                "status": "cancelled" if cancelled else "complete",
             },
         )
     return result
@@ -838,6 +814,10 @@ def run_ingestion(
     progress_callback: ProgressCallback | None = None,
 ) -> list[IngestionResult]:
     options = options or IngestionOptions()
+    if cancel_requested(options):
+        if progress_callback:
+            progress_callback("run_cancelled", {"collector": collector, "status": "cancelled"})
+        return []
     targets = select_targets(get_active_targets(), options.target_keys)
     plans: list[tuple[str, str, list[CandidateArticle]]] = []
     max_candidates = max(1, int(options.max_candidates_per_source))
@@ -867,6 +847,10 @@ def run_ingestion(
                 "source_collected",
                 {"source_name": "RSS", "source_type": "rss", "candidates_total": len(rss_candidates)},
             )
+        if cancel_requested(options):
+            if progress_callback:
+                progress_callback("run_cancelled", {"collector": collector, "status": "cancelled"})
+            return []
     if collector in {"all", "google_news"}:
         if options.custom_query.strip():
             queries = [options.custom_query]
@@ -892,6 +876,10 @@ def run_ingestion(
                 "source_collected",
                 {"source_name": "Google News", "source_type": "google_news", "candidates_total": len(google_candidates)},
             )
+        if cancel_requested(options):
+            if progress_callback:
+                progress_callback("run_cancelled", {"collector": collector, "status": "cancelled"})
+            return []
     if collector in {"all", "direct_scrape"} and not options.skip_direct_scrape:
         direct_candidates: list[CandidateArticle] = []
         if options.custom_query.strip():
@@ -925,6 +913,10 @@ def run_ingestion(
                 "source_collected",
                 {"source_name": "Direct Scrape", "source_type": "scrape", "candidates_total": len(direct_candidates)},
             )
+        if cancel_requested(options):
+            if progress_callback:
+                progress_callback("run_cancelled", {"collector": collector, "status": "cancelled"})
+            return []
 
     if collector in {"all", "wordpress_api"}:
         wp_queries: list[str]
@@ -976,6 +968,10 @@ def run_ingestion(
                     "source_collected",
                     {"source_name": site_name, "source_type": "wordpress_api", "candidates_total": len(combined)},
                 )
+            if cancel_requested(options):
+                if progress_callback:
+                    progress_callback("run_cancelled", {"collector": collector, "status": "cancelled"})
+                return []
 
     # [RECONSTRUCTED] Internal site search section from patch at offset 5311452
     if collector in {"all", "internal_site_search", "internal_search"} and not options.custom_query.strip():
@@ -1009,6 +1005,10 @@ def run_ingestion(
                         "candidates_total": len(filtered_internal),
                     },
                 )
+            if cancel_requested(options):
+                if progress_callback:
+                    progress_callback("run_cancelled", {"collector": collector, "status": "cancelled"})
+                return []
     # [END RECONSTRUCTED]
 
     # Sitemap daily collectors (Globo family, CBN, Veja Rio)
@@ -1032,6 +1032,10 @@ def run_ingestion(
         plans.append(("Sitemap Daily", "sitemap_daily", filtered_sitemap))
         if progress_callback:
             progress_callback("source_collected", {"source_name": "Sitemap Daily", "source_type": "sitemap_daily", "candidates_total": len(filtered_sitemap)})
+        if cancel_requested(options):
+            if progress_callback:
+                progress_callback("run_cancelled", {"collector": collector, "status": "cancelled"})
+            return []
 
     # Veja Rio archive collector
     if collector in {"all", "vejario_archive"}:
@@ -1049,6 +1053,10 @@ def run_ingestion(
         plans.append(("Veja Rio Archive", "vejario_archive", filtered_vejario))
         if progress_callback:
             progress_callback("source_collected", {"source_name": "Veja Rio Archive", "source_type": "vejario_archive", "candidates_total": len(filtered_vejario)})
+        if cancel_requested(options):
+            if progress_callback:
+                progress_callback("run_cancelled", {"collector": collector, "status": "cancelled"})
+            return []
 
     # Camara Rio archive collector
     if collector in {"all", "camara_archive"}:
@@ -1066,6 +1074,10 @@ def run_ingestion(
         plans.append(("Camara Rio Archive", "camara_archive", filtered_camara))
         if progress_callback:
             progress_callback("source_collected", {"source_name": "Camara Rio Archive", "source_type": "camara_archive", "candidates_total": len(filtered_camara)})
+        if cancel_requested(options):
+            if progress_callback:
+                progress_callback("run_cancelled", {"collector": collector, "status": "cancelled"})
+            return []
 
     results: list[IngestionResult] = []
     if progress_callback:
@@ -1078,6 +1090,10 @@ def run_ingestion(
             },
         )
     for source_name, source_type, candidates in plans:
+        if cancel_requested(options):
+            if progress_callback:
+                progress_callback("run_cancelled", {"collector": collector, "status": "cancelled"})
+            break
         # [RECONSTRUCTED] source_options from patch at offset 5312705
         source_options = options
         if source_type == "internal_search":
@@ -1092,14 +1108,20 @@ def run_ingestion(
                 progress_callback=progress_callback,
             )
         )
+        if cancel_requested(options):
+            if progress_callback:
+                progress_callback("run_cancelled", {"collector": collector, "status": "cancelled"})
+            break
     if progress_callback:
+        event = "run_cancelled" if cancel_requested(options) else "run_complete"
         progress_callback(
-            "run_complete",
+            event,
             {
                 "sources_total": len(plans),
                 "articles_inserted": sum(r.articles_inserted for r in results),
                 "mentions_inserted": sum(r.mentions_inserted for r in results),
                 "stories_touched": sum(r.stories_touched for r in results),
+                "status": "cancelled" if event == "run_cancelled" else "complete",
             },
         )
     return results

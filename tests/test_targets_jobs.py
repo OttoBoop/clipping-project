@@ -295,6 +295,56 @@ def test_cancel_active_keeps_process_slot_until_worker_boundary(monkeypatch, tmp
     assert manager._active_job_id == "cancel-running"
 
 
+def test_job_runner_passes_cancel_check_into_ingestion(monkeypatch, tmp_path):
+    import threading
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "preset": "custom",
+        "collector": "all",
+        "target_keys": ["flavio_valle"],
+        "date_from": "2026-04-01",
+        "date_to": "2026-04-30",
+        "export": False,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+    }
+    jobs.create_job("runner-cancel-check", "update", spec, started_by="coworker")
+    seen_cancel_checks = []
+
+    def fake_run_ingestion(_collector, *, options, progress_callback):
+        seen_cancel_checks.append(options.cancel_check)
+        progress_callback(
+            "source_progress",
+            {
+                "source_name": "RSS",
+                "source_type": "rss",
+                "candidates_seen": 1,
+                "articles_inserted": 0,
+                "mentions_inserted": 0,
+                "stories_touched": 0,
+            },
+        )
+        return []
+
+    monkeypatch.setattr(jobs, "run_ingestion", fake_run_ingestion)
+    store = SimpleNamespace(
+        writes_available=True,
+        backup_current_artifacts=lambda _job_id: None,
+        upload_current_artifacts=lambda **_kwargs: [],
+    )
+    manager = jobs.JobManager(store)
+    manager._active_job_id = "runner-cancel-check"
+    cancel_event = threading.Event()
+    manager._cancel_events["runner-cancel-check"] = cancel_event
+
+    manager._run("runner-cancel-check", "update", spec, cancel_event)
+
+    assert seen_cancel_checks
+    assert seen_cancel_checks[0]() is False
+    assert jobs.get_job("runner-cancel-check")["status"] == "succeeded"
+
+
 def test_run_export_snapshot_preserves_historical_merge_contract(monkeypatch, tmp_path):
     _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
     calls = []
@@ -355,6 +405,96 @@ def test_run_ingestion_builds_collection_queries_for_selected_target(monkeypatch
     assert captured["queries"]
     assert any("Pedro Angelito" in query for query in captured["queries"])
     assert all("Flavio Valle" not in query and "Flávio Valle" not in query for query in captured["queries"])
+
+
+def test_process_candidates_reports_candidate_progress_before_fetch_fail(monkeypatch, tmp_path):
+    from pipeline import ingest
+
+    events = []
+
+    def fake_fetch_full_article_text(*_args, **_kwargs):
+        raise TimeoutError("slow article")
+
+    monkeypatch.setattr(ingest, "fetch_full_article_text", fake_fetch_full_article_text)
+    candidate = ingest.CandidateArticle(
+        title="Materia sem alvo no resumo",
+        url="https://example.com/sem-alvo",
+        source_name="RSS",
+        source_type="rss",
+        published_at="2026-04-30T12:00:00+00:00",
+        snippet="",
+        metadata={},
+    )
+
+    result = ingest.process_candidates(
+        "RSS",
+        "rss",
+        [candidate],
+        options=ingest.IngestionOptions(
+            target_keys=["flavio_valle"],
+            date_from="2026-04-30",
+            date_to="2026-04-30",
+            db_path=str(tmp_path / "progress-before-fetch.db"),
+        ),
+        progress_callback=lambda event, payload: events.append((event, payload)),
+    )
+
+    progress_events = [payload for event, payload in events if event == "source_progress"]
+    assert result.candidates_seen == 1
+    assert any(error.startswith("fetch_fail:") for error in result.errors)
+    assert progress_events[0]["candidates_seen"] == 1
+    assert progress_events[0]["status"] == "processing"
+    assert progress_events[-1]["status"] == "fetch_failed"
+
+
+def test_process_candidates_stops_at_candidate_boundary_when_cancelled(monkeypatch, tmp_path):
+    from pipeline import ingest
+
+    cancel = {"requested": False}
+    events = []
+
+    def fake_fetch_full_article_text(*_args, **_kwargs):
+        cancel["requested"] = True
+        raise TimeoutError("slow article")
+
+    monkeypatch.setattr(ingest, "fetch_full_article_text", fake_fetch_full_article_text)
+    candidates = [
+        ingest.CandidateArticle(
+            title=f"Materia {idx}",
+            url=f"https://example.com/materia-{idx}",
+            source_name="RSS",
+            source_type="rss",
+            published_at="2026-04-30T12:00:00+00:00",
+            snippet="",
+            metadata={},
+        )
+        for idx in range(2)
+    ]
+
+    result = ingest.process_candidates(
+        "RSS",
+        "rss",
+        candidates,
+        options=ingest.IngestionOptions(
+            target_keys=["flavio_valle"],
+            date_from="2026-04-30",
+            date_to="2026-04-30",
+            db_path=str(tmp_path / "cancel-boundary.db"),
+            cancel_check=lambda: cancel["requested"],
+        ),
+        progress_callback=lambda event, payload: events.append((event, payload)),
+    )
+
+    assert result.candidates_seen == 1
+    assert "cancelled" in result.errors
+    assert any(
+        event == "source_progress" and payload.get("status") == "cancelled"
+        for event, payload in events
+    )
+    assert any(
+        event == "source_complete" and payload.get("status") == "cancelled"
+        for event, payload in events
+    )
 
 
 def test_classification_listing_survives_missing_article_context(tmp_path):
