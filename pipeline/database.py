@@ -473,6 +473,14 @@ class ClippingDB:
                 (int(story_id), str(tkey)),
             )
 
+    def story_id_for_article(self, article_id: int) -> int | None:
+        with self.connect() as conn:
+            row = conn.execute(
+                "SELECT story_id FROM story_articles WHERE article_id = ? LIMIT 1",
+                (int(article_id),),
+            ).fetchone()
+            return int(row["story_id"]) if row else None
+
     def update_story(
         self,
         story_id: int,

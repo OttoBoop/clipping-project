@@ -381,6 +381,50 @@ def create_or_update_story(
     return story_id
 
 
+def sync_existing_article_targets(
+    db: ClippingDB,
+    *,
+    article_id: int,
+    mention_payload: list[dict],
+    article_title: str,
+    article_summary: str,
+    source_name: str,
+) -> tuple[int, bool]:
+    target_keys = sorted({str(m.get("target_key") or "") for m in mention_payload if str(m.get("target_key") or "")})
+    if not target_keys:
+        return 0, False
+
+    missing_mentions = [
+        mention
+        for mention in mention_payload
+        if db.find_mention_id(article_id, str(mention.get("target_key") or "")) is None
+    ]
+    if missing_mentions:
+        db.insert_mentions(article_id, missing_mentions)
+
+    story_touched = bool(missing_mentions)
+    story_id = db.story_id_for_article(article_id)
+    if story_id is not None:
+        existing_targets = set(db.get_story_targets(story_id))
+        for tkey in target_keys:
+            db.ensure_story_target(story_id, tkey)
+        if any(tkey not in existing_targets for tkey in target_keys):
+            story_touched = True
+        if story_touched:
+            db.update_story(story_id)
+        return len(missing_mentions), story_touched
+
+    create_or_update_story(
+        db,
+        article_id=article_id,
+        article_title=article_title,
+        article_summary=article_summary,
+        source_name=source_name,
+        target_keys=target_keys,
+    )
+    return len(missing_mentions), True
+
+
 def process_candidates(
     source_name: str,
     source_type: str,
@@ -741,10 +785,21 @@ def process_candidates(
             metadata_json=json.dumps(candidate.metadata or {}, ensure_ascii=False),
         )
         if not is_new:
+            duplicate_mentions, duplicate_story_touched = sync_existing_article_targets(
+                db,
+                article_id=article_id,
+                mention_payload=mention_payload,
+                article_title=title_for_article or summary or "Historia",
+                article_summary=summary,
+                source_name=source_name,
+            )
+            mentions_inserted += duplicate_mentions
+            if duplicate_story_touched:
+                stories_touched += 1
             emit_candidate(
                 candidate=candidate,
-                status="duplicate",
-                reason="already_in_database",
+                status="selected" if duplicate_mentions or duplicate_story_touched else "duplicate",
+                reason="already_in_database_target_updated" if duplicate_mentions or duplicate_story_touched else "already_in_database",
                 final_url=final_url,
                 hits_for_candidate=hits,
                 title_value=title_for_article,

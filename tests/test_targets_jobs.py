@@ -599,6 +599,80 @@ def test_run_ingestion_builds_collection_queries_for_selected_target(monkeypatch
     assert all("Flavio Valle" not in query and "Flávio Valle" not in query for query in captured["queries"])
 
 
+def test_process_candidates_tags_duplicate_article_for_new_secondary_target(monkeypatch, tmp_path):
+    from pipeline import ingest
+    from pipeline.matcher import Target
+
+    db_file = tmp_path / "duplicate-target.db"
+    with ClippingDB(db_file) as db:
+        article_id = db.insert_article(
+            url="https://example.com/noticia-compartilhada",
+            title="Materia ja salva sobre agenda cultural",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-04-30T12:00:00+00:00",
+            snippet="Materia original.",
+            full_text="Materia original.",
+        )
+        assert article_id is not None
+        db.insert_mention(article_id, "flavio_valle", "Flavio Valle", "Flavio Valle")
+        story_id = db.create_story(
+            title="Materia ja salva sobre agenda cultural",
+            summary="Resumo original.",
+            temperature=34.0,
+            target_keys=["flavio_valle"],
+        )
+        db.attach_article_to_story(story_id, article_id)
+
+    monkeypatch.setattr(
+        ingest,
+        "get_active_targets",
+        lambda: [Target(key="shakira", display_name="shakira", keywords=["shakira"])],
+    )
+    candidate = ingest.CandidateArticle(
+        title="Shakira anuncia agenda cultural no Rio",
+        url="https://example.com/noticia-compartilhada",
+        source_name="Google News",
+        source_type="google_news",
+        published_at="2026-04-30T12:00:00+00:00",
+        snippet="Shakira aparece na programacao cultural.",
+        metadata={},
+    )
+
+    result = ingest.process_candidates(
+        "Google News",
+        "google_news",
+        [candidate],
+        options=ingest.IngestionOptions(
+            target_keys=["shakira"],
+            date_from="2026-04-30",
+            date_to="2026-04-30",
+            db_path=str(db_file),
+        ),
+    )
+
+    assert result.articles_inserted == 0
+    assert result.mentions_inserted == 1
+    assert result.stories_touched == 1
+    with sqlite3.connect(db_file) as conn:
+        mention_targets = {
+            row[0]
+            for row in conn.execute(
+                "SELECT target_key FROM mentions WHERE article_id = ?",
+                (article_id,),
+            ).fetchall()
+        }
+        story_targets = {
+            row[0]
+            for row in conn.execute(
+                "SELECT target_key FROM story_targets WHERE story_id = ?",
+                (story_id,),
+            ).fetchall()
+        }
+    assert mention_targets == {"flavio_valle", "shakira"}
+    assert story_targets == {"flavio_valle", "shakira"}
+
+
 def test_process_candidates_reports_candidate_progress_before_fetch_fail(monkeypatch, tmp_path):
     from pipeline import ingest
 
