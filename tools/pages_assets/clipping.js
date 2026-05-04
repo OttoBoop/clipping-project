@@ -170,6 +170,51 @@
     return !activeTargetKeys.size || activeTargetKeys.has(key);
   }
 
+  function payloadCountsForTarget(key) {
+    var counts = { storyCount: 0, articleCount: 0 };
+    if (!payload || !Array.isArray(payload.stories)) return counts;
+    (payload.stories || []).forEach(function (story) {
+      var keys = Array.isArray(story.targetKeys) ? story.targetKeys.map(String) : [];
+      if (keys.indexOf(key) === -1) return;
+      counts.storyCount += 1;
+      counts.articleCount += Number(
+        story.articleCount || (Array.isArray(story.articles) ? story.articles.length : 0) || 0
+      );
+    });
+    return counts;
+  }
+
+  function mergeRuntimeTargetsIntoPayload(targets) {
+    if (!payload) return;
+    if (!Array.isArray(payload.targets)) payload.targets = [];
+    var byKey = {};
+    payload.targets.forEach(function (target) {
+      if (target && target.key) byKey[String(target.key)] = target;
+    });
+    (targets || []).forEach(function (target) {
+      if (!target || !target.key || target.archived) return;
+      var key = String(target.key);
+      var usage = payloadCountsForTarget(key);
+      var existing = byKey[key];
+      if (existing) {
+        existing.label = target.label || existing.label || key;
+        existing.primary = Boolean(existing.primary || target.primary);
+        existing.archived = false;
+        existing.storyCount = Math.max(Number(existing.storyCount || 0), usage.storyCount);
+        existing.articleCount = Math.max(Number(existing.articleCount || 0), usage.articleCount);
+        return;
+      }
+      payload.targets.push({
+        key: key,
+        label: target.label || key,
+        primary: Boolean(target.primary),
+        archived: false,
+        storyCount: usage.storyCount,
+        articleCount: usage.articleCount,
+      });
+    });
+  }
+
   function activeTargetKeysFrom(keys) {
     var rows = (keys || [])
       .map(function (key) { return String(key || "").trim(); })
@@ -433,6 +478,7 @@
         runTargets.forEach(function (target) {
           labelsByKey[target.key] = target.label || target.key;
         });
+        mergeRuntimeTargetsIntoPayload(runTargets);
         ensureSelectedTargets();
         renderRunTargets();
         renderManageTargets();

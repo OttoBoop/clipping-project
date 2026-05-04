@@ -114,6 +114,43 @@ def test_pages_bundle_writes_shell_and_assets(tmp_path):
     assert 'src="index_assets/clipping.js?v=' in html_doc
 
 
+def test_active_targets_without_stories_stay_available_as_filters(monkeypatch, tmp_path):
+    db_path = tmp_path / "clipping.db"
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "flavio_valle",
+                    "label": "Flávio Valle",
+                    "display_name": "Flávio Valle",
+                    "primary": True,
+                    "keywords": ["Flávio Valle"],
+                },
+                {
+                    "key": "shakira",
+                    "label": "shakira",
+                    "display_name": "shakira",
+                    "primary": False,
+                    "keywords": ["shakira"],
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(export_mobile_snapshot, "TARGETS_PATH", targets_path)
+    seed_story_db(db_path)
+
+    artifact = export_mobile_snapshot.build_snapshot_artifact(make_args(tmp_path, db_path))
+    payload = artifact["data_payload"]
+
+    assert [row["key"] for row in artifact["target_rows"]] == ["flavio_valle", "shakira"]
+    assert [row["key"] for row in payload["targets"]] == ["flavio_valle", "shakira"]
+    shakira_row = next(row for row in artifact["target_rows"] if row["key"] == "shakira")
+    assert shakira_row["storyCount"] == 0
+    assert shakira_row["articleCount"] == 0
+
+
 def test_archived_targets_do_not_reappear_in_export_filters(monkeypatch, tmp_path):
     db_path = tmp_path / "clipping.db"
     targets_path = tmp_path / "targets.json"

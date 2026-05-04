@@ -778,6 +778,8 @@ def test_public_runner_javascript_contract():
     assert "console.log" not in script
     assert "classification editor ENABLED" not in script
     assert "normalizeTargetsResponse(data, options)" in script
+    assert "mergeRuntimeTargetsIntoPayload" in script
+    assert "payloadCountsForTarget" in script
     assert "refreshManageTargets" in script
     assert "disabled = target.primary" not in script
     assert "+ checked + disabled" not in script

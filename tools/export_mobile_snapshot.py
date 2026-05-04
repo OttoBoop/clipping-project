@@ -448,9 +448,9 @@ def build_target_rows(
     seen: set[str] = set()
     for row in base_targets:
         key = str(row["key"])
-        story_count = int(counts.get(key, {}).get("storyCount", 0))
-        if story_count <= 0:
+        if key in excluded_target_keys:
             continue
+        story_count = int(counts.get(key, {}).get("storyCount", 0))
         target_rows.append(
             {
                 "key": key,
