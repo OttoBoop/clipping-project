@@ -151,6 +151,62 @@ def test_active_targets_without_stories_stay_available_as_filters(monkeypatch, t
     assert shakira_row["articleCount"] == 0
 
 
+def test_secondary_target_stories_are_exported_with_filter(monkeypatch, tmp_path):
+    db_path = tmp_path / "clipping.db"
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "flavio_valle",
+                    "label": "Flávio Valle",
+                    "display_name": "Flávio Valle",
+                    "primary": True,
+                    "keywords": ["Flávio Valle"],
+                },
+                {
+                    "key": "shakira",
+                    "label": "shakira",
+                    "display_name": "shakira",
+                    "primary": False,
+                    "keywords": ["shakira"],
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(export_mobile_snapshot, "TARGETS_PATH", targets_path)
+    with ClippingDB(db_path) as db:
+        article_id = db.insert_article(
+            url="https://example.com/shakira-rio",
+            title="Shakira anuncia show no Rio",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-05-01T12:00:00+00:00",
+            snippet="Shakira anuncia show no Rio.",
+            full_text="Shakira anuncia show no Rio. Texto completo da materia.",
+        )
+        assert article_id is not None
+        db.insert_mention(article_id, "shakira", "shakira", "shakira")
+        story_id = db.create_story(
+            title="Shakira anuncia show no Rio",
+            summary="Resumo sobre Shakira no Rio.",
+            temperature=42.0,
+            target_keys=["shakira"],
+        )
+        db.attach_article_to_story(story_id, article_id)
+        db.ensure_story_target(story_id, "shakira")
+
+    artifact = export_mobile_snapshot.build_snapshot_artifact(make_args(tmp_path, db_path))
+    payload = artifact["data_payload"]
+    shakira_stories = [story for story in payload["stories"] if story["targetKeys"] == ["shakira"]]
+
+    assert "shakira" in [row["key"] for row in artifact["target_rows"]]
+    assert "shakira" in [row["key"] for row in payload["targets"]]
+    assert len(shakira_stories) == 1
+    assert shakira_stories[0]["articles"][0]["targetKeys"] == ["shakira"]
+
+
 def test_archived_targets_do_not_reappear_in_export_filters(monkeypatch, tmp_path):
     db_path = tmp_path / "clipping.db"
     targets_path = tmp_path / "targets.json"

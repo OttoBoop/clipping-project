@@ -5,7 +5,7 @@
   <meta name="clipping-snapshot-sentinel" content="WIX_CLIPPING_SNAPSHOT_ROOT">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Clipping do gabinete | Flávio Valle</title>
-  <link rel="stylesheet" href="assets/clipping.css?v=target-filter-20260504">
+  <link rel="stylesheet" href="assets/clipping.css?v=progress-date-br-20260504">
 </head>
 <body>
   <main
@@ -33,11 +33,11 @@
 
         <form class="run-form" id="updateRunForm">
           <div class="date-grid">
-            <label>Data inicial
-              <input type="date" id="dateFromInput" name="date_from" required>
+            <label>Data inicial (DD/MM/AAAA)
+              <input type="text" id="dateFromInput" name="date_from" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AAAA" maxlength="10" required>
             </label>
-            <label>Data final
-              <input type="date" id="dateToInput" name="date_to" required>
+            <label>Data final (DD/MM/AAAA)
+              <input type="text" id="dateToInput" name="date_to" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AAAA" maxlength="10" required>
             </label>
           </div>
 
@@ -189,6 +189,6 @@
     <section id="flatStack" class="flat-articles" hidden></section>
 
   </main>
-  <script src="assets/clipping.js?v=target-filter-20260504" defer></script>
+  <script src="assets/clipping.js?v=progress-date-br-20260504" defer></script>
 </body>
 </html>

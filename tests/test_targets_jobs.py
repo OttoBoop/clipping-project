@@ -331,6 +331,50 @@ def test_job_progress_contract_includes_target_source_counts_and_recent_events(m
     assert latest["payload"]["source"] == "Google News"
 
 
+def test_job_progress_uses_live_source_totals_before_target_finishes(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    job_id = "shakira-live-progress"
+    jobs.create_job(
+        job_id,
+        "update",
+        {
+            "preset": "custom",
+            "collector": "all",
+            "target_keys": ["shakira"],
+            "date_from": "2026-04-01",
+            "date_to": "2026-05-04",
+        },
+        started_by="coworker",
+    )
+    jobs.update_job(job_id, status="running")
+
+    jobs.record_progress(
+        job_id,
+        "source_progress",
+        {
+            "source_name": "Agenda do Poder",
+            "source_type": "wordpress_api",
+            "candidates_seen": 30,
+            "candidates_total": 86,
+            "articles_inserted": 29,
+            "mentions_inserted": 29,
+            "stories_touched": 29,
+        },
+        target_key="shakira",
+        target_label="shakira",
+    )
+
+    observed = jobs.get_job(job_id)
+
+    assert observed["articles_inserted"] == 29
+    assert observed["mentions_inserted"] == 29
+    assert observed["stories_touched"] == 29
+    assert observed["progress"]["articlesInserted"] == 29
+    assert observed["progress"]["mentionsInserted"] == 29
+    assert observed["progress"]["storiesTouched"] == 29
+    assert observed["progress"]["targetKeys"] == ["shakira"]
+
+
 def test_job_progress_totals_stay_coherent_when_collection_events_age_out(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     job_id = "progress-window"

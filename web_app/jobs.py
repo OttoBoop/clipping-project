@@ -417,6 +417,8 @@ def record_progress(
     if event == "candidate_evaluated":
         return
     append_event(job_id, event, enrich_progress_payload(payload, target_key=target_key, target_label=target_label))
+    if event in {"source_progress", "source_complete", "run_complete", "run_cancelled"}:
+        sync_live_progress_totals(job_id)
 
 
 def enrich_progress_payload(payload: dict[str, Any], *, target_key: str = "", target_label: str = "") -> dict[str, Any]:
@@ -608,6 +610,7 @@ def progress_summary(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[
             )
             latest_by_source[source_key] = payload
 
+    source_totals = source_progress_totals(latest_by_source.values())
     candidates_seen = max(
         run_candidates_seen,
         sum(safe_int(payload.get("candidates_seen")) for payload in latest_by_source.values()),
@@ -623,13 +626,67 @@ def progress_summary(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[
         "status": str(job.get("status") or ""),
         "targetKeys": list(targets),
         "targetLabels": targets,
-        "sourcesTotal": sources_total,
+        "sourcesTotal": max(sources_total, len(latest_by_source)),
         "candidatesSeen": candidates_seen,
         "candidatesTotal": candidates_total,
-        "articlesInserted": safe_int(job.get("articles_inserted")),
-        "mentionsInserted": safe_int(job.get("mentions_inserted")),
-        "storiesTouched": safe_int(job.get("stories_touched")),
+        "articlesInserted": max(safe_int(job.get("articles_inserted")), source_totals["articlesInserted"]),
+        "mentionsInserted": max(safe_int(job.get("mentions_inserted")), source_totals["mentionsInserted"]),
+        "storiesTouched": max(safe_int(job.get("stories_touched")), source_totals["storiesTouched"]),
     }
+
+
+def source_progress_totals(payloads: Any) -> dict[str, int]:
+    totals = {"articlesInserted": 0, "mentionsInserted": 0, "storiesTouched": 0}
+    for payload in payloads:
+        if not isinstance(payload, dict):
+            continue
+        totals["articlesInserted"] += safe_int(payload.get("articles_inserted"))
+        totals["mentionsInserted"] += safe_int(payload.get("mentions_inserted"))
+        totals["storiesTouched"] += safe_int(payload.get("stories_touched"))
+    return totals
+
+
+def sync_live_progress_totals(job_id: str) -> None:
+    with connect(db_path()) as conn:
+        job = conn.execute(
+            "SELECT articles_inserted, mentions_inserted, stories_touched FROM jobs WHERE id = ?",
+            (job_id,),
+        ).fetchone()
+        if not job:
+            return
+        rows = conn.execute(
+            "SELECT event, payload_json FROM job_events WHERE job_id = ? ORDER BY id DESC",
+            (job_id,),
+        ).fetchall()
+        latest_by_source: dict[tuple[str, str, str], dict[str, Any]] = {}
+        for row in reversed(rows):
+            event = str(row["event"] or "")
+            if event not in {"source_progress", "source_complete"}:
+                continue
+            try:
+                payload = json.loads(row["payload_json"])
+            except Exception:
+                continue
+            if not isinstance(payload, dict):
+                continue
+            source_key = (
+                str(payload.get("target_key") or ""),
+                str(payload.get("source_type") or ""),
+                str(payload.get("source_name") or payload.get("source") or ""),
+            )
+            latest_by_source[source_key] = payload
+        totals = source_progress_totals(latest_by_source.values())
+        next_articles = max(safe_int(job["articles_inserted"]), totals["articlesInserted"])
+        next_mentions = max(safe_int(job["mentions_inserted"]), totals["mentionsInserted"])
+        next_stories = max(safe_int(job["stories_touched"]), totals["storiesTouched"])
+        conn.execute(
+            """
+            UPDATE jobs
+            SET articles_inserted = ?, mentions_inserted = ?, stories_touched = ?
+            WHERE id = ?
+            """,
+            (next_articles, next_mentions, next_stories, job_id),
+        )
 
 
 def safe_int(value: Any) -> int:

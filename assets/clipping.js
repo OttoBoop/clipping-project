@@ -140,6 +140,42 @@
     return date.toISOString().slice(0, 10);
   }
 
+  function isoToBrDate(value) {
+    var raw = String(value || "").trim();
+    var match = raw.slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) return match[3] + "/" + match[2] + "/" + match[1];
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
+    return raw;
+  }
+
+  function brDateToIso(value) {
+    var raw = String(value || "").trim();
+    var iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (iso) return raw;
+    var match = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match) return "";
+    var day = Number(match[1]);
+    var month = Number(match[2]);
+    var year = Number(match[3]);
+    var date = new Date(Date.UTC(year, month - 1, day));
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return "";
+    return match[3] + "-" + match[2] + "-" + match[1];
+  }
+
+  function dateMaskValue(value) {
+    var digits = String(value || "").replace(/\D/g, "").slice(0, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return digits.slice(0, 2) + "/" + digits.slice(2);
+    return digits.slice(0, 2) + "/" + digits.slice(2, 4) + "/" + digits.slice(4);
+  }
+
+  function attachDateMask(input) {
+    if (!input) return;
+    input.addEventListener("input", function () {
+      input.value = dateMaskValue(input.value);
+    });
+  }
+
   function normalizeTargetsResponse(data, options) {
     options = options || {};
     var body = data || {};
@@ -667,10 +703,8 @@
     var suggestedTo = String(current.date_to || recent.date_to || "");
     if (!suggestedFrom) suggestedFrom = todayDateString(-1);
     if (!suggestedTo) suggestedTo = todayDateString(0);
-    if (!dateFromInput.value) dateFromInput.value = suggestedFrom.slice(0, 10);
-    if (!dateToInput.value) dateToInput.value = suggestedTo.slice(0, 10);
-    dateFromInput.max = todayDateString(0);
-    dateToInput.max = todayDateString(0);
+    if (!dateFromInput.value) dateFromInput.value = isoToBrDate(suggestedFrom);
+    if (!dateToInput.value) dateToInput.value = isoToBrDate(suggestedTo);
   }
 
   function statusLabel(status) {
@@ -734,12 +768,12 @@
     return { known: false, percent: 0, label: "Aguardando início" };
   }
 
-  function progressStepState(status, step) {
+  function progressStepState(status, step, hasSaved) {
     var order = ["prepare", "search", "save", "publish"];
     var currentByStatus = {
       queued: "prepare",
-      running: "search",
-      cancel_requested: "search",
+      running: hasSaved ? "save" : "search",
+      cancel_requested: hasSaved ? "save" : "search",
       exporting: "publish",
     };
     if (status === "succeeded") return "done";
@@ -754,14 +788,24 @@
     return "pending";
   }
 
-  function renderProgressSteps(status) {
+  function renderProgressSteps(status, hasSaved) {
     progressSteps.forEach(function (stepEl) {
-      var state = progressStepState(status, stepEl.dataset.progressStep || "");
+      var state = progressStepState(status, stepEl.dataset.progressStep || "", hasSaved);
       stepEl.classList.toggle("is-done", state === "done");
       stepEl.classList.toggle("is-active", state === "active");
       stepEl.classList.toggle("is-error", state === "error");
       stepEl.classList.toggle("is-cancelled", state === "cancelled");
     });
+  }
+
+  function progressCount(job, event, camelName, snakeName, rowName) {
+    var progress = job && job.progress ? job.progress : {};
+    var payload = event && event.payload ? event.payload : {};
+    return Math.max(
+      numberValue(progressValue(progress, camelName, snakeName)),
+      numberValue(job && job[rowName]),
+      numberValue(payload[snakeName])
+    );
   }
 
   function progressSummary(job, event, state, currentTarget, currentSource) {
@@ -771,7 +815,11 @@
       var targetPart = currentTarget ? " de " + currentTarget : "";
       var sourcePart = currentSource ? " em " + currentSource : "";
       var detail = state && state.known && state.label ? " " + state.label + "." : "";
-      return "Buscando notícias" + targetPart + sourcePart + "." + detail;
+      var savedStories = progressCount(job, event, "storiesTouched", "stories_touched", "stories_touched");
+      var savedPart = savedStories > 0
+        ? " Histórias salvas nesta rodada: " + savedStories + ". O painel será atualizado ao publicar."
+        : "";
+      return "Buscando notícias" + targetPart + sourcePart + "." + detail + savedPart;
     }
     if (status === "exporting") return "Publicando o painel atualizado.";
     if (status === "cancel_requested") return "Cancelamento solicitado. A rodada vai parar ao fim da etapa atual.";
@@ -837,10 +885,12 @@
       var total = numberValue(payload.candidates_total);
       var seen = numberValue(payload.candidates_seen);
       var articles = numberValue(payload.articles_inserted);
+      var stories = numberValue(payload.stories_touched);
       var detail = "";
       if (total > 0 && seen > 0) detail = seen + "/" + total + " itens";
       else if (total > 0) detail = total + " itens encontrados";
       if (articles > 0) detail += (detail ? ", " : "") + articles + " notícia(s) nova(s)";
+      if (stories > 0) detail += (detail ? ", " : "") + stories + " história(s) salva(s)";
       rows.push(
         "<li><strong>" + escapeHtml(name) + "</strong>" +
         (target ? " · " + escapeHtml(target) : "") +
@@ -870,7 +920,8 @@
     });
     var progress = job.progress || {};
     var state = progressState(job, event);
-    renderProgressSteps(job.status);
+    var savedStories = progressCount(job, event, "storiesTouched", "stories_touched", "stories_touched");
+    renderProgressSteps(job.status, savedStories > 0);
     if (progressFill) {
       progressFill.classList.toggle("is-indeterminate", isRunning && !state.known);
       progressFill.style.width = state.known ? state.percent + "%" : "0%";
@@ -889,13 +940,13 @@
     if (progressDates) {
       var from = job.date_from || (dateFromInput && dateFromInput.value) || "";
       var to = job.date_to || (dateToInput && dateToInput.value) || "";
-      progressDates.textContent = from && to ? from + " a " + to : "Aguardando";
+      progressDates.textContent = from && to ? isoToBrDate(from) + " a " + isoToBrDate(to) : "Aguardando";
     }
     if (progressSource) progressSource.textContent = currentSource || "Aguardando";
     if (progressPercentText) progressPercentText.textContent = progressSummary(job, event, state, currentTarget || progressTarget && progressTarget.textContent, currentSource);
-    if (progressArticles) progressArticles.textContent = String(progressValue(progress, "articlesInserted", "articles_inserted") || job.articles_inserted || eventPayload.articles_inserted || 0);
-    if (progressMentions) progressMentions.textContent = String(progressValue(progress, "mentionsInserted", "mentions_inserted") || job.mentions_inserted || 0);
-    if (progressStories) progressStories.textContent = String(progressValue(progress, "storiesTouched", "stories_touched") || job.stories_touched || 0);
+    if (progressArticles) progressArticles.textContent = String(progressCount(job, event, "articlesInserted", "articles_inserted", "articles_inserted"));
+    if (progressMentions) progressMentions.textContent = String(progressCount(job, event, "mentionsInserted", "mentions_inserted", "mentions_inserted"));
+    if (progressStories) progressStories.textContent = String(savedStories);
     renderRecentSources(job);
     var warning = warningText(job);
     if (progressWarnings) {
@@ -1558,6 +1609,8 @@
   });
 
   if (updateRunForm) {
+    attachDateMask(dateFromInput);
+    attachDateMask(dateToInput);
     updateRunForm.addEventListener("submit", async function (event) {
       event.preventDefault();
       setMessage(runFormMessage, "Iniciando atualização...", "");
@@ -1566,11 +1619,21 @@
         showFriendlyProblem("Selecione pelo menos um nome para acompanhar.");
         return;
       }
+      var dateFromIso = brDateToIso(dateFromInput ? dateFromInput.value : "");
+      var dateToIso = brDateToIso(dateToInput ? dateToInput.value : "");
+      if (!dateFromIso || !dateToIso) {
+        showFriendlyProblem("Preencha as datas no formato DD/MM/AAAA.");
+        return;
+      }
+      if (dateFromIso > dateToIso) {
+        showFriendlyProblem("Confira as datas: a inicial precisa vir antes da final.");
+        return;
+      }
       var body = {
         preset: "custom",
         target_keys: keys,
-        date_from: dateFromInput ? dateFromInput.value : "",
-        date_to: dateToInput ? dateToInput.value : "",
+        date_from: dateFromIso,
+        date_to: dateToIso,
         export: true,
       };
       if (runUpdateButton) runUpdateButton.disabled = true;

@@ -767,6 +767,11 @@ def test_public_dashboard_wording_contract():
     assert "Termos relacionados" in html
     assert "Correspondências exatas" in html
     assert "Gerenciar nomes extras" in html
+    assert 'type="date"' not in html
+    assert "Data inicial (DD/MM/AAAA)" in html
+    assert "Data final (DD/MM/AAAA)" in html
+    assert 'placeholder="DD/MM/AAAA"' in html
+    assert 'inputmode="numeric"' in html
     assert "build:" not in html
     assert "DOM" not in html
     assert "RAM" not in html
@@ -780,6 +785,9 @@ def test_public_runner_javascript_contract():
     assert "normalizeTargetsResponse(data, options)" in script
     assert "mergeRuntimeTargetsIntoPayload" in script
     assert "payloadCountsForTarget" in script
+    assert "brDateToIso" in script
+    assert "isoToBrDate" in script
+    assert "Histórias salvas nesta rodada" in script
     assert "refreshManageTargets" in script
     assert "disabled = target.primary" not in script
     assert "+ checked + disabled" not in script
