@@ -751,8 +751,8 @@ def process_candidates(
         if secondary_target_keys:
             safe_surface_text = safe_target_match_surface(
                 title_for_article,
-                candidate.snippet or "",
-                summary or "",
+                (candidate.snippet or "")[:500],
+                (summary or "")[:500],
             )
             safe_hits = matcher.find_hits(safe_surface_text)
             safe_hits_by_target: dict[str, object] = {}

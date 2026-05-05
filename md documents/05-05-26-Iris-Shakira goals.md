@@ -56,19 +56,39 @@ Already done:
   identified and guarded against in code.
 - Manual cancellation semantics were tightened so `cancelled` is reserved for
   an explicit human cancel action.
+- A public export has published `shakira` into `assets/clipping-data.json` and
+  the public UI now shows a `shakira` filter with saved stories for the target
+  period.
+- Live-saved Shakira stories are visible through `Base atual`, not only through
+  a separate temporary progress panel.
 
 Still incomplete:
 
-- The public `assets/clipping-data.json` has not yet published Shakira stories.
-- The public panel has not yet shown the final `shakira` filter with real
-  Shakira stories.
-- The exact public run for `01/04/2026` through `05/05/2026` still needs to be
-  completed and verified.
+- The public Shakira filter still needs quality cleanup for secondary-target
+  false positives where `shakira` appears only as a late incidental mention
+  rather than as the news subject.
+- The exact public run for `01/04/2026` through `05/05/2026` has saved and
+  published items, but long all-source runs have still been interrupted by the
+  fragile Render web-worker model before every source completed cleanly.
 - The difference between a true Render restart/redeploy edge case and an
   accidental local/off-site pipeline run still needs to be tested explicitly.
-- Export/publication failure needs to become observable and recoverable enough
-  that saved Shakira items can be published instead of disappearing behind a
-  stale panel payload.
+- Export/publication must remain observable and recoverable whenever a saved
+  checkpoint needs to be republished after an interrupted run.
+
+## Loop Log
+
+### 2026-05-05 16:36 BRT
+
+- Public Render payload check showed `shakira` published with 90 stories and
+  170 unique articles.
+- Public status showed the latest successful export `fbaee5c79633` after the
+  Shakira update `04512a3f780d` was marked `interrupted`, not `cancelled`.
+- The remaining immediate defect is quality: examples like `Projeto busca
+  orientar mulheres...` are tagged because Shakira appears only late in a broad
+  event-history context, not because the story is about Shakira.
+- Current code pass tightens secondary-target matching to title plus the first
+  500 characters of snippet/summary, and the cleanup/export path uses the same
+  safe surface so stale incidental tags can be removed before publication.
 
 ## Required Product Rules
 

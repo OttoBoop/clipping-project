@@ -439,7 +439,13 @@ def target_matches_safe_article_fields(target: Any, row: sqlite3.Row | dict[str,
 
 
 def safe_article_match_text(row: sqlite3.Row | dict[str, Any]) -> str:
-    raw_text = " ".join([str(row["title"] or ""), str(row["snippet"] or ""), str(row["summary"] or "")])
+    raw_text = " ".join(
+        [
+            str(row["title"] or ""),
+            str(row["snippet"] or "")[:500],
+            str(row["summary"] or "")[:500],
+        ]
+    )
     text = html.unescape(TAG_RE.sub(" ", raw_text))
     text = RELATED_MATCH_NOISE_RE.sub(" ", text)
     return re.sub(r"\s+", " ", text).strip()
