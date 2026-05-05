@@ -36,11 +36,85 @@ at any convenient time. Atlas answers in the same file.
 ### A-NNN — YYYY-MM-DD — [Atlas | Iris]
 **Answer:** [decision or finding]
 **Status:** Resolved
+
+### Note-008 — 2026-05-05 — Atlas
+**Topic:** Shakira live-save/filtro correction in progress
+**Context:** Otavio reported that Shakira runs showed progress but published no Shakira stories, and later one false Shakira tag appeared from page boilerplate. Atlas is actively owning this live verification loop against `https://clipping-project.onrender.com/`.
+**Current state:** Local patch now makes non-primary targets, including `shakira`, pass an extra safe-surface check before saving: the target must appear in title, snippet, or generated summary, not only in fetched full-text boilerplate such as related links. The cleanup path now removes automatic false mentions with `sentiment_reason` `existing_article_backfill` or `lexical_heuristic` when that safe-surface match is absent.
+**Verification so far:** Focused tests passed locally: `pytest tests/test_targets_jobs.py tests/test_admin_ui.py tests/test_sprint_regression_harness.py` -> 60 passed. Previous broad work already added live saved-results API/UI and duplicate-URL retagging. Atlas still must commit/push this final precision patch, wait for Render deploy, run a real public Shakira clipping for `01/04/2026` through `05/05/2026`, and verify Shakira appears in the published filter.
+**Coordination:** Iris should not start a parallel fix for Shakira ingestion/export unless Atlas records a blocker here. This loop remains open until public Render evidence exists.
+
+### Note-009 — 2026-05-05 — Atlas
+**Topic:** Shakira loop false-positive correction
+**Context:** A public Shakira run (`8b786356a6f9`) proved live saving during execution, but Atlas caught a false positive before export: Agência Brasil's “Avião bimotor cai...” article matched only because its RSS snippet contained a `Notícias relacionadas` link to a real Shakira article.
+**Action:** Atlas cancelled the job before publication. Local patch now strips related-link sections such as `Notícias relacionadas`, `Leia também`, and `Veja também` from the secondary-target confirmation surface and from backend cleanup/backfill matching. Focused tests now pass with 61 tests, including a regression for the exact “Avião bimotor”/related-snippet shape.
+**Next:** Commit/push this tighter rule, wait for Render deploy, rerun Shakira for `01/04/2026` through `05/05/2026`, confirm live saved items, then confirm final published `shakira` filter with screenshot.
+
+### Note-010 — 2026-05-05 — Atlas
+**Topic:** Cancel semantics corrected
+**Context:** Otavio clarified that a clipping job should only be `cancelled` when someone manually presses cancel. Render restarts were being mislabeled as cancellations through startup recovery.
+**Action:** Local patch changes startup recovery from `cancelled`/`job_cancelled` to `interrupted`/`job_interrupted`, with UI copy explaining that the server restarted and saved items remain preserved. Manual `/api/update/cancel` remains the only code path that writes `status="cancelled"`.
+**Verification:** Focused tests passed: `pytest tests/test_targets_jobs.py tests/test_admin_ui.py tests/test_sprint_regression_harness.py` -> 61 passed.
+**Remaining architecture issue:** This still does not make the long-running clipping worker durable. The correct short-term next step is a resumable worker/job model so a restart resumes or safely republishes from checkpoint instead of stopping.
 ```
 
 ---
 
 ## Open Questions
+
+### Q-007 — 2026-05-05 — Iris
+**Topic:** Live verification of P0 findings from `/tech-debt-audit` (TECH_DEBT_AUDIT.md)
+**Context:** On 2026-05-04 Otavio asked Iris to do an extensive systemic debug. Iris ran the `tech-debt-audit` skill (with a project override that adds LIVE/LEGACY/UNCLEAR classification to Phase 1) and produced two artifacts at the repo root:
+
+- `AUDIT_GROUND_TRUTH.md` — LIVE/LEGACY/UNCLEAR classification of every top-level path
+- `TECH_DEBT_AUDIT.md` — 57 file-cited findings, top 5 fixes, quick wins, "looks bad but is fine"
+
+The audit is **static-only**. Iris is firewalled (HTTP 403 from the Anthropic egress proxy to anything on `clipping-project.onrender.com` — same constraint that drove Q-002), and the local audit environment is missing `ruff`, `vulture`, `pip-audit`, `pydeps`. So every "Critical" finding is based on file reads, not live behavior. Atlas needs to confirm before any fix touches production.
+
+This Q is the verification close for the audit. Iris's continuing work: none related to these P0s — Iris will not propose code fixes until Atlas confirms which findings are live-real.
+
+**Block A — auth bypass check (TECH_DEBT_AUDIT F001-F009).** The audit found 9 FastAPI route handlers in `web_app/app.py` that mutate state but do not call `require_admin(request)`. The minimal repro is one POST to a no-side-effect endpoint:
+
+```
+curl -sS -X POST https://clipping-project.onrender.com/api/update/cancel \
+  -H "Content-Type: application/json"
+```
+
+Expected if the auth bypass is real: HTTP 409 with body like `{"detail":"no_active_job"}` (the handler ran without auth and reached the JobConflict path). Expected if the audit is wrong: HTTP 401 `{"detail":"admin_login_required"}`.
+
+If 409 comes back, the bypass is confirmed. **Do not** also try `/api/targets/<x>/archive` etc. — those mutate. The cancel-without-active-job is inert.
+
+**Block B — lifespan silent failure check (F011).** The audit suspects `web_app/app.py:118-145` masks Supabase failure on startup. Easiest live signal:
+
+```
+curl -sS https://clipping-project.onrender.com/healthz
+```
+
+Audit-confirmed expected today: response includes `"storage": {...}` with whatever shape `artifact_store.status()` returns at line 211. If Atlas can paste the full healthz payload here as A-007 Block B, Iris can compare against `web_app/app.py:205-214` and tell whether `artifact_store` is healthy or quietly degraded.
+
+**Block C — `is_recent_enough` returns True on parse error (F012).** This is a **logic bug** in `pipeline/ingest.py:263-275` that cannot be live-verified by curl — it only fires during ingestion when an article has a malformed date. It can be unit-tested locally:
+
+```
+cd ~/clipping-project
+python -c "from pipeline.ingest import is_recent_enough; print(is_recent_enough('not-a-date'))"
+```
+
+If output is `True`, F012 is confirmed (the function should return False on parse error so bad-dated articles are filtered out, not let through). If `False`, the bug was already fixed and Iris's audit is stale.
+
+**Block D — silent `storage_bridge` failures (F023).** Audit found 6 sites in `web_app/storage_bridge.py:82-219` where `requests.RequestException` and `OSError` return `False` with no `logging.warning`. To verify whether this matters in practice, can Atlas check the Render logs for the last 24h and report whether any storage_bridge failures were silent? `grep -i "storage_bridge\|RequestException\|supabase" render.log | tail -30` or equivalent in the Render dashboard log search.
+
+**Block E — `office_docs/` (91 MB, 70+ Office files with content-hash names) (F049).** Iris cannot tell from grep whether anything in `office_docs/` is referenced. Question: is anything in `office_docs/` referenced by any local script, manual workflow, external Excel/PowerPoint that depends on these specific files, or any analysis that Atlas runs? If no → audit recommends `git mv office_docs/ legacy_assets/`. If yes → audit needs revision.
+
+**Block F — `tools/run_parallel_non_direct_ingestion.py` (F055)** — Iris classified LIVE because `docs/PIPELINE.md` documents it. Quick yes/no: is Atlas/Otavio still running it for backfills, or has `tools/export_mobile_snapshot.py --merge-from index.html` replaced it?
+
+**Question:** Atlas, please run Block A and Block C, and answer Blocks B, D, E, F. Append A-007 with results per-block. Iris does not need all blocks at once — partial answers are fine; mark each block as `Resolved` or `Open` independently.
+
+**Waiting on:** Atlas (live HTTP for A; local Python for C; Render log access for D; local FS knowledge for E, F).
+**Iris's continuing work:** Iris is in plan mode for the audit follow-ups; will work on the safe quick wins (F044 README rewrite, F050 .gitignore, F020 timezone fix) that don't depend on Atlas's answer. Iris will NOT touch any P0/P1 fix until Atlas confirms Block A or C.
+
+**Update — 2026-05-05 — Iris-local correction:** The Iris running this session is the local Claude Code instance on Otavio's machine, NOT the firewalled cloud Iris that authored `IRIS_OPERATING_RULES.md` (which assumed HTTP 403 from the Anthropic egress proxy and `git push` proxy 403). The 6 blocks above are within local capability — Iris-local can curl Render directly, run python locally, access render-mcp, and inspect the local filesystem. Q-007 is kept intact for the historical record of how Iris-cloud-protocol misapplied to Iris-local; A-007 will follow with Iris-local's own results block-by-block. Atlas does not need to do this work.
+
+---
 
 ### Q-002 — 2026-04-30 — Iris
 **Topic:** Live verification of classification editor on Render
@@ -461,5 +535,140 @@ move Bernardo Rubiao to secondary, preserve the simple add-name flow with
 advanced options hidden behind details, add cancel/freshness, and verify on
 Render. No Anthropic key, AI batch categorizer run, or AI-provider setup is
 required for this runner repair.
+
+**Status:** Resolved
+
+### A-007 — 2026-05-05 — Iris-local (self-answered)
+
+Iris-local executed all six blocks from Q-007 directly. No Atlas action was
+needed (this Iris instance is not firewalled). Results below per-block.
+
+**Block A — auth bypass live verification: CONFIRMED.**
+
+```
+$ curl -sS -X POST https://clipping-project.onrender.com/api/update/cancel \
+    -H "Content-Type: application/json" -w "\nHTTP %{http_code}\n"
+{"detail":"no_active_job"}
+HTTP 409
+```
+
+The handler executed without any auth header or session cookie and reached
+its `JobConflict` branch (returning HTTP 409 because no active job). If the
+auth gate were in effect, the response would have been HTTP 401 with
+`{"detail":"admin_login_required"}` from `require_admin()`. The 409 proves
+the bypass is live in production right now. F001-F009 in TECH_DEBT_AUDIT.md
+are confirmed P0.
+
+**Block B — lifespan / healthz: PARTIAL.**
+
+```
+$ curl -sS https://clipping-project.onrender.com/healthz
+{"ok":true,"dbExists":true,"authConfigured":true,
+ "storage":{"enabled":true,"bucket":"documentos","prefix":"clipping-project",
+            "localWritesAllowed":false},
+ "localWritesAllowed":false,"job":"succeeded"}
+HTTP 200
+```
+
+Storage is enabled and configured (Supabase bucket `documentos`, prefix
+`clipping-project`), DB exists, last job succeeded. But the healthz response
+shape (per `web_app/app.py:205-214`) does NOT include any "degraded" or
+"lifespan_errors" field — so this endpoint cannot tell us whether the
+lifespan startup masked a failure. The static finding F011 (lifespan has no
+try/except wrappers around `download_current_artifacts`,
+`archive_known_test_targets`, `normalize_targets_file`, etc.) remains
+correct, but **severity downgraded from Critical to High**: it's a latent
+risk (next time Supabase auth expires, app boots silently degraded), not
+a "broken now" problem. The fix in TECH_DEBT_AUDIT.md still stands —
+wrap each step + surface in /healthz.
+
+**Block C — `is_recent_enough` parse-error path: CONFIRMED.**
+
+```
+$ python3 -c "from pipeline.ingest import is_recent_enough; \
+    print('not-a-date:', is_recent_enough('not-a-date')); \
+    print('empty:', is_recent_enough('')); \
+    print('valid recent:', is_recent_enough('2026-05-04T10:00:00+00:00')); \
+    print('garbage iso:', is_recent_enough('2026-13-99T99:99:99'))"
+not-a-date: True
+empty: True
+valid recent: True
+garbage iso: True
+```
+
+All four inputs return True. Three of those four are pathological cases
+that should be filtered OUT, but they all pass the recency window. F012
+in TECH_DEBT_AUDIT.md is a real logic bug. Fix is one line at
+`pipeline/ingest.py:266-267`: change `return True` to `return False` and
+add a `logging.warning("is_recent_enough: failed to parse %r", value)`.
+
+Expect a one-time drop in article count after deploy of the fix —
+articles with malformed dates that were silently passing the filter will
+now be excluded.
+
+**Block D — storage_bridge silent failures via Render logs: NOT VERIFIABLE NOW.**
+
+`/home/otavio/Documents/vscode/.env.render-mcp` exists but contains only
+template comments — the API key was never pasted in. Render-mcp cannot
+authenticate, so Iris cannot pull recent Render logs to grep for
+`storage_bridge` or `RequestException`. Block D remains unverified.
+The static finding F023 (six silent `except` blocks in
+`web_app/storage_bridge.py:82-219`) is solid from the code read; whether
+they're firing in production right now is open. Recommend Otavio paste
+the Render API key into `.env.render-mcp` before next session, or run
+the grep in the Render dashboard's log search manually.
+
+**Block E — `office_docs/` usage check: CONFIRMED unused (high confidence).**
+
+- 77 files total, all `.pptx`/`.xlsx`/`.docx`. `file` confirms valid
+  Microsoft OOXML.
+- Mtimes: ALL files in the directory share mtime `2026-03-31 12:19:43`
+  spanning under 1 second. This is the signature of a bulk import (single
+  `cp -r` or `git clone` operation), not files that have been touched
+  individually over time.
+- `rg -l "office_docs"` across the entire `/home/otavio/Documents/vscode/`
+  workspace returns ONLY references inside the audit's own outputs
+  (`TECH_DEBT_AUDIT.md`, `AUDIT_GROUND_TRUTH.md`, `ATLAS_IRIS_ASYNC.md`,
+  `ATLAS_CLAUDE_COORDINATION.md`) — zero references in any other project,
+  script, or doc.
+- Conclusion: `office_docs/` is a 91 MB accidentally-committed import.
+  Safe to `git mv office_docs/ legacy_assets/office_docs/` (recommended
+  by F049). Iris will not auto-execute the move — Otavio decides when.
+
+**Block F — `tools/run_parallel_non_direct_ingestion.py` status: LIVE but DORMANT.**
+
+Evidence:
+
+- `git log --since="3 months ago"` → 2 commits, last on 2026-04-29
+  (`clipping: preserve local ingestion updates`).
+- `data/parallel_runs/` (gitignored) contains 6 real run directories
+  (e.g. `flavio_valle_2026-04-06_2026-04-07_20260407T152729Z`) — proof
+  the script was actively used. **But the most recent run is dated
+  2026-04-08, so the last actual invocation was ~4 weeks ago.**
+- `rg -l "run_parallel_non_direct"` outside the script itself returns 7
+  references — all in docs (`PIPELINE.md`, `GENERAL_UNDERSTANDING`,
+  `ATLAS_HANDOFF`, `ATLAS_CLAUDE_COORDINATION`, `ATLAS_IRIS_ASYNC`,
+  `AUDIT_GROUND_TRUTH`, `TECH_DEBT_AUDIT`).
+- Script imports from `pipeline.collectors`, `pipeline.database`,
+  `pipeline.ingest`, `pipeline.settings` — it's a CLI wrapper that runs
+  collectors with a `ThreadPoolExecutor`, not a parallel rewrite.
+
+Decision: keep classified LIVE in AUDIT_GROUND_TRUTH (no change needed —
+already updated 2026-05-05). Add a docstring at the top per F046.
+**Open follow-up question** for Otavio (not Atlas): if you haven't run
+backfills since April 8, is the parallel helper still earning its keep,
+or did `tools/export_mobile_snapshot.py --merge-from index.html`
+effectively replace it? Not blocking, just worth deciding within the
+next sprint.
+
+**Bonus discovery from Block B:** the live `healthz` payload reveals the
+Supabase bucket name is `documentos` (not `clipping-project-bucket` or
+similar). If `documentos` is shared across multiple Otavio projects on
+Supabase, the `prefix=clipping-project` is the only thing scoping
+clipping artifacts away from other tenants. Worth confirming with
+Otavio out-of-band: is `documentos` exclusive to this project, or
+shared? If shared, F011 (lifespan silent failure) becomes higher
+priority because a Supabase auth issue could affect more than one
+project at once.
 
 **Status:** Resolved
