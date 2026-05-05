@@ -207,6 +207,61 @@ def test_secondary_target_stories_are_exported_with_filter(monkeypatch, tmp_path
     assert shakira_stories[0]["articles"][0]["targetKeys"] == ["shakira"]
 
 
+def test_export_filters_misleading_secondary_snippet_when_saved_text_disagrees(monkeypatch, tmp_path):
+    db_path = tmp_path / "clipping.db"
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "flavio_valle",
+                    "label": "Flávio Valle",
+                    "display_name": "Flávio Valle",
+                    "primary": True,
+                    "keywords": ["Flávio Valle"],
+                },
+                {
+                    "key": "shakira",
+                    "label": "shakira",
+                    "display_name": "shakira",
+                    "primary": False,
+                    "keywords": ["shakira"],
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(export_mobile_snapshot, "TARGETS_PATH", targets_path)
+    with ClippingDB(db_path) as db:
+        article_id = db.insert_article(
+            url="https://example.com/projeto-transicao",
+            title="Projeto busca orientar mulheres a lidarem com processos de transicao na vida",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-05-05T14:56:48+00:00",
+            snippet="Trecho de busca enganoso cita Shakira em uma lista lateral.",
+            full_text="Texto real da materia sobre empreendedorismo, carreira e inteligencia emocional.",
+        )
+        assert article_id is not None
+        db.insert_mention(article_id, "shakira", "shakira", "shakira")
+        story_id = db.create_story(
+            title="Projeto busca orientar mulheres a lidarem com processos de transicao na vida",
+            summary="Resumo real da materia.",
+            temperature=42.0,
+            target_keys=["shakira"],
+        )
+        db.attach_article_to_story(story_id, article_id)
+        db.ensure_story_target(story_id, "shakira")
+
+    artifact = export_mobile_snapshot.build_snapshot_artifact(make_args(tmp_path, db_path))
+    payload = artifact["data_payload"]
+    shakira_row = next(row for row in payload["targets"] if row["key"] == "shakira")
+
+    assert shakira_row["storyCount"] == 0
+    assert payload["stories"][0]["targetKeys"] == []
+    assert payload["stories"][0]["articles"][0]["targetKeys"] == []
+
+
 def test_archived_targets_do_not_reappear_in_export_filters(monkeypatch, tmp_path):
     db_path = tmp_path / "clipping.db"
     targets_path = tmp_path / "targets.json"

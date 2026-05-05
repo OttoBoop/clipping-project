@@ -17,6 +17,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from pipeline.database import ClippingDB  # noqa: E402
+from pipeline.matcher import CitationMatcher, Target  # noqa: E402
 
 
 DB_PATH = ROOT / "data" / "clipping.db"
@@ -31,6 +32,10 @@ PAGES_ASSETS_DIR = ROOT / "assets"
 PAGES_ASSET_TEMPLATES_DIR = ROOT / "tools" / "pages_assets"
 LEGACY_FULL_REPORT_PATH = REPORTS_DIR / "clipping_historias_completo.html"
 INSTITUTIONAL_FULL_REPORT_PATH = REPORTS_DIR / "clipping_completo_novo_estilo.html"
+TAG_RE = re.compile(r"<[^>]+>")
+RELATED_MATCH_NOISE_RE = re.compile(
+    r"(?is)\b(not[ií]cias?\s+relacionadas?|leia\s+tamb[eé]m|veja\s+tamb[eé]m|textos?\s+relacionados?|links?\s+relacionados?)\b.*"
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -98,6 +103,47 @@ def load_targets() -> list[dict[str, Any]]:
     return targets
 
 
+def load_export_target_objects() -> list[Target]:
+    rows = json.loads(TARGETS_PATH.read_text(encoding="utf-8"))
+    targets: list[Target] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        key = str(row.get("key") or "").strip()
+        label = str(row.get("label") or row.get("display_name") or key).strip()
+        if not key or not label or bool(row.get("archived")) or is_synthetic_test_target(key, label):
+            continue
+        raw_keywords = row.get("keywords", [])
+        if isinstance(raw_keywords, list):
+            keywords = [str(item).strip() for item in raw_keywords if str(item).strip()]
+        elif isinstance(raw_keywords, str):
+            keywords = [part.strip() for part in raw_keywords.split(",") if part.strip()]
+        else:
+            keywords = []
+        raw_aliases = row.get("exact_aliases")
+        if raw_aliases is None:
+            raw_aliases = row.get("aliases")
+        if isinstance(raw_aliases, list):
+            aliases = [str(item).strip() for item in raw_aliases if str(item).strip()]
+        elif isinstance(raw_aliases, str):
+            aliases = [part.strip() for part in raw_aliases.split(",") if part.strip()]
+        else:
+            aliases = []
+        if label not in keywords:
+            keywords = [label, *keywords]
+        targets.append(
+            Target(
+                key=key,
+                label=label,
+                display_name=label,
+                keywords=keywords,
+                exact_aliases=aliases,
+                primary=bool(row.get("primary", False)),
+            )
+        )
+    return targets
+
+
 def archived_target_keys() -> set[str]:
     rows = json.loads(TARGETS_PATH.read_text(encoding="utf-8"))
     keys: set[str] = set()
@@ -134,6 +180,43 @@ def normalize_text(value: Any) -> str:
         cleaned.append(line)
         blank = False
     return "\n".join(cleaned).strip()
+
+
+def safe_export_match_text(article: dict[str, Any]) -> str:
+    title = str(article.get("title") or "")
+    url_path = urlparse(str(article.get("url") or "")).path.replace("-", " ").replace("_", " ")
+    summary = str(article.get("summary") or "")
+    full_text = str(article.get("full_text") or "")
+    snippet = str(article.get("snippet") or "")
+    body_parts: list[str] = []
+    if summary:
+        body_parts.append(summary[:500])
+    if full_text:
+        body_parts.append(full_text[:500])
+    if not body_parts:
+        body_parts.append(snippet[:500])
+    text = " ".join([title, url_path, *body_parts])
+    text = html.unescape(TAG_RE.sub(" ", text))
+    text = RELATED_MATCH_NOISE_RE.sub(" ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def filter_export_target_keys(
+    article: dict[str, Any],
+    fallback_targets: list[str],
+    secondary_targets: dict[str, Target],
+) -> list[str]:
+    keys: list[str] = []
+    for key in list(article.get("target_keys") or fallback_targets or []):
+        key = str(key or "").strip()
+        if key and key not in keys:
+            keys.append(key)
+    selected_secondary = [secondary_targets[key] for key in keys if key in secondary_targets]
+    if not selected_secondary:
+        return keys
+    safe_hits = CitationMatcher(selected_secondary, exact_names_only=True).find_hits(safe_export_match_text(article))
+    safe_secondary_keys = {hit.target_key for hit in safe_hits}
+    return [key for key in keys if key not in secondary_targets or key in safe_secondary_keys]
 
 
 def excerpt(value: str, limit: int = 420) -> str:
@@ -1785,10 +1868,14 @@ def summarize_article_payload(article: dict[str, Any]) -> tuple[str, str, str]:
     return "Sem resumo", "Sem conteudo disponivel.", ""
 
 
-def serialize_article_payload(article: dict[str, Any], fallback_targets: list[str]) -> tuple[dict[str, Any], dict[str, str]]:
+def serialize_article_payload(
+    article: dict[str, Any],
+    fallback_targets: list[str],
+    secondary_targets: dict[str, Target],
+) -> tuple[dict[str, Any], dict[str, str]]:
     aid = int(article.get("article_id") or 0)
     label, preview, full_text = summarize_article_payload(article)
-    target_keys = [str(key) for key in article.get("target_keys") or fallback_targets or []]
+    target_keys = filter_export_target_keys(article, fallback_targets, secondary_targets)
     raw_text_key = f"article-{aid}" if aid and full_text else ""
     raw_texts = {raw_text_key: full_text} if raw_text_key and full_text else {}
     url = str(article.get("url") or "").strip()
@@ -1816,22 +1903,31 @@ def serialize_article_payload(article: dict[str, Any], fallback_targets: list[st
 def build_story_records(
     stories: list[dict[str, Any]],
     article_map: dict[int, dict[str, Any]],
+    secondary_targets: dict[str, Target] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, str]]:
     story_records: list[dict[str, Any]] = []
     raw_texts: dict[str, str] = {}
+    secondary_targets = secondary_targets or {}
 
     for story in stories:
         summary_label, story_summary = story_display_summary(story, article_map)
-        story_targets = [str(key) for key in story.get("targetKeys") or []]
+        fallback_story_targets = [str(key) for key in story.get("targetKeys") or []]
         article_records: list[dict[str, Any]] = []
         for article_stub in story.get("articles", []):
             aid = article_id_int(article_stub.get("id"))
             detail = article_map.get(aid)
             if not detail:
                 continue
-            article_record, article_raw = serialize_article_payload(detail, story_targets)
+            article_record, article_raw = serialize_article_payload(detail, fallback_story_targets, secondary_targets)
             article_records.append(article_record)
             raw_texts.update(article_raw)
+
+        story_targets: list[str] = []
+        for article_record in article_records:
+            for key in article_record.get("targetKeys") or []:
+                key = str(key or "").strip()
+                if key and key not in story_targets:
+                    story_targets.append(key)
 
         story_records.append(
             {
@@ -2428,7 +2524,12 @@ def build_snapshot_artifact(args: argparse.Namespace) -> dict[str, Any]:
                 if raw_key and raw_key in parsed_raw_texts:
                     merged_raw_texts[str(raw_key)] = parsed_raw_texts[str(raw_key)]
 
-    story_records, raw_texts = build_story_records(stories, article_map)
+    secondary_targets = {
+        target.key: target
+        for target in load_export_target_objects()
+        if not bool(getattr(target, "primary", False))
+    }
+    story_records, raw_texts = build_story_records(stories, article_map, secondary_targets)
     story_records.extend(merged_story_records)
     story_records.sort(key=story_sort_key, reverse=True)
     story_records = remove_excluded_targets_from_stories(story_records, excluded_target_keys)

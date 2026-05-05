@@ -102,6 +102,17 @@ Still incomplete:
   the secondary target against title plus the early saved text; use snippet only
   when no saved text exists.
 
+### 2026-05-05 16:58 BRT
+
+- Public export `88de02b3b85e` succeeded, but `assets/clipping-data.json`
+  still published 90 Shakira stories and 170 Shakira articles.
+- The remaining publication bug is export-level resurrection: stale secondary
+  `targetKeys` can survive into the static payload even after backend cleanup.
+- Current code pass adds an export-level guard: article target keys for
+  secondary targets are filtered through the saved-text safe surface, and story
+  target keys are rebuilt from the filtered article keys before
+  `clipping-data.json` is written.
+
 ## Required Product Rules
 
 - Confirmed news must be saved immediately when the pipeline accepts it.
