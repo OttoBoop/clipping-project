@@ -135,6 +135,17 @@ Still incomplete:
   not recover as current status. The short-term mitigation is to run public
   custom collector slices instead of one fragile all-in-one worker job.
 
+### 2026-05-05 18:00 BRT
+
+- Public `google_news` slice `83f80eafc052` completed and published
+  successfully, raising Shakira to 88 stories / 172 articles.
+- Public `sitemap_daily` slice `692b221ef72f` saved a large checkpoint before
+  interruption; export `5e8851b21df2` published it, raising Shakira to 119
+  stories / 220 articles.
+- Public `vejario_archive` slice `5f1c4c1aba83` pushed the API into HTTP 500.
+  Current code pass makes job-event payload reads tolerant so one bad/corrupt
+  event cannot break `/healthz` and `/api/update/status`.
+
 ## Required Product Rules
 
 - Confirmed news must be saved immediately when the pipeline accepts it.

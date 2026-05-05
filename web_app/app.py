@@ -211,7 +211,7 @@ def healthz() -> dict[str, Any]:
         "storage": artifact_store.status(),
         "localWritesAllowed": local_writes_allowed(),
         "job": job_manager.current_status().get("status", "idle"),
-        "shakiraLoopVersion": "2026-05-05-custom-collector-slices",
+        "shakiraLoopVersion": "2026-05-05-safe-event-payloads",
     }
 
 

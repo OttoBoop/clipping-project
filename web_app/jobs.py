@@ -563,7 +563,11 @@ def get_job(job_id: str) -> dict[str, Any] | None:
         ).fetchall()
     data = dict(row)
     data["events"] = [
-        {"created_at": event_row["created_at"], "event": event_row["event"], "payload": json.loads(event_row["payload_json"])}
+        {
+            "created_at": event_row["created_at"],
+            "event": event_row["event"],
+            "payload": safe_event_payload(event_row["payload_json"]),
+        }
         for event_row in events
     ]
     data.update(job_observability_from_events(data, data["events"]))
@@ -679,11 +683,19 @@ def with_job_observability(job: dict[str, Any]) -> dict[str, Any]:
             (job_id,),
         ).fetchall()
     events = [
-        {"created_at": row["created_at"], "event": row["event"], "payload": json.loads(row["payload_json"])}
+        {"created_at": row["created_at"], "event": row["event"], "payload": safe_event_payload(row["payload_json"])}
         for row in rows
     ]
     job.update(job_observability_from_events(job, events))
     return job
+
+
+def safe_event_payload(raw: Any) -> dict[str, Any]:
+    try:
+        payload = json.loads(str(raw or "{}"))
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
 
 
 def job_observability_from_events(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:
