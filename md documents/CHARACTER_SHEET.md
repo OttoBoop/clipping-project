@@ -36,10 +36,10 @@ Examples:
 | Full name | Role | Environment | Provider | Notes |
 |---|---|---|---|---|
 | `Atlas-Codex` | generalist | local | Codex | The original Atlas. Plans and fixes. |
-| `Iris-CC` | generalist | cloud | Claude Code | The original Iris. This session. |
-| `Ariadne-Atlas-CC` | debugger | local | Claude Code | Active in parallel; current debug pass on `claude/review-ariadne-debug-EEaPt`. |
-| `Theseus-Iris-CC` | fixer | cloud | Claude Code | Proposed: closes Ariadne's threads from the cloud. |
-| `Theseus-Atlas-Codex` | fixer | local | Codex | Hypothetical: a Theseus could equally run locally on Codex. |
+| `Iris-CC` | generalist | cloud | Claude Code | The original Iris. |
+| `Ariadne-Atlas-CC` | debugger | local | Claude Code | A debugger running locally on Claude Code. |
+| `Theseus-Iris-CC` | fixer | cloud | Claude Code | A fixer running in the cloud on Claude Code. |
+| `Theseus-Atlas-Codex` | fixer | local | Codex | A fixer running locally on Codex. |
 
 **A few rules:**
 
@@ -59,21 +59,22 @@ Examples:
 
 ## Full Grid (role × environment × provider)
 
-Active instances are marked ✅. Tried-but-quiet are ⚠️. Empty cells are
-allowed but unused.
+This grid is timeless: it lists every name the convention permits. Which
+of these are running, proposed, or recently retired lives in the dated
+**Snapshot** section near the bottom of this doc — not here.
 
 ### Generalist (role omitted)
 
 | | Codex | CC | Copilot |
 |---|---|---|---|
-| **Atlas** (local) | `Atlas-Codex` ✅ | `Atlas-CC` | `Atlas-Copilot` |
-| **Iris** (cloud) | `Iris-Codex` | `Iris-CC` ✅ (this session) | `Iris-Copilot` ⚠️ briefly tried |
+| **Atlas** (local) | `Atlas-Codex` | `Atlas-CC` | `Atlas-Copilot` |
+| **Iris** (cloud) | `Iris-Codex` | `Iris-CC` | `Iris-Copilot` |
 
 ### Ariadne (debugger)
 
 | | Codex | CC | Copilot |
 |---|---|---|---|
-| **Atlas** (local) | `Ariadne-Atlas-Codex` | `Ariadne-Atlas-CC` ✅ | `Ariadne-Atlas-Copilot` |
+| **Atlas** (local) | `Ariadne-Atlas-Codex` | `Ariadne-Atlas-CC` | `Ariadne-Atlas-Copilot` |
 | **Iris** (cloud) | `Ariadne-Iris-Codex` | `Ariadne-Iris-CC` | `Ariadne-Iris-Copilot` |
 
 ### Theseus (Ariadne-thread fixer)
@@ -81,7 +82,7 @@ allowed but unused.
 | | Codex | CC | Copilot |
 |---|---|---|---|
 | **Atlas** (local) | `Theseus-Atlas-Codex` | `Theseus-Atlas-CC` | `Theseus-Atlas-Copilot` |
-| **Iris** (cloud) | `Theseus-Iris-Codex` | `Theseus-Iris-CC` ⚠️ proposed | `Theseus-Iris-Copilot` |
+| **Iris** (cloud) | `Theseus-Iris-Codex` | `Theseus-Iris-CC` | `Theseus-Iris-Copilot` |
 
 ---
 
@@ -170,8 +171,6 @@ in active rotation. No discipline notes yet.
 **Scope:** plans, debugs, fixes, verifies, reports. Full project-wide
 authority within environment+provider limits.
 
-**Currently filled by:** `Atlas-Codex` and `Iris-CC`.
-
 **Reporting structure** _(from `ATLAS_ORCHESTRATOR_HANDOFF.md` and
 `IRIS_OPERATING_RULES.md`):_
 
@@ -218,19 +217,6 @@ She maps the maze; she does not slay the Minotaur.
 - Product decisions about what "done" looks like.
 - Atlas-owned framework, coordination, or async docs.
 
-**Currently filled by:** `Ariadne-Atlas-CC` on branch
-`claude/review-ariadne-debug-EEaPt`. The thread so far (Shakira /
-secondary-target loop, see `md documents/05-05-26-Iris-Shakira goals.md`):
-
-- `c139f24 fix: clean stale secondary false positives`
-- `4620d39 fix: publish saved secondary results into current base`
-- `73bcbe1 fix: distinguish interrupted jobs from manual cancel`
-- `bb6218e fix: ignore related-link target matches`
-- `238b97d fix: require safe secondary target matches`
-- `f0bf4ef fix: constrain secondary target backfill`
-- `fd5527c fix: show live saved clipping results`
-- `f9aba84 fix: tag duplicate articles for new targets`
-
 ### Theseus — Ariadne-thread fixer
 
 **Mythology:** Theseus took Ariadne's thread, walked into the Labyrinth,
@@ -259,8 +245,46 @@ thread to follow, the role is wrong. A more generalist fixer archetype
 - Let a new bug report replace the existing thread; new bugs join the
   thread.
 
-**Proposed first instance:** `Theseus-Iris-CC`. First thread to follow
-(from `md documents/05-05-26-Iris-Shakira goals.md` §"Still incomplete"):
+---
+
+## Snapshot — 2026-05-05
+
+This section is a **dated snapshot** of which instances are running, which
+threads they are working on, and which Theseus assignments are open. It is
+meant to be **replaced** when those facts change. Everything above this
+heading should stay timeless; everything below this heading is allowed to
+go stale and be rewritten.
+
+When updating: replace the date in the heading and rewrite the subsections
+below. Do not append a second snapshot — keep one current snapshot.
+
+### Active instances
+
+| Instance | Driving | Scope this loop |
+|---|---|---|
+| `Atlas-Codex` | local Codex window | A specific clipping-tool issue. |
+| `Iris-CC` | cloud Claude Code session | Character sheet maintenance; standing by for a Theseus assignment. |
+| `Ariadne-Atlas-CC` | local Claude Code window | Document fixes in `md documents/`; Shakira-loop debug on `claude/review-ariadne-debug-EEaPt`. |
+
+### Active Ariadne thread — Shakira / secondary-target loop
+
+Mission doc: `md documents/05-05-26-Iris-Shakira goals.md`.
+
+Branch: `claude/review-ariadne-debug-EEaPt`. Commits on the thread so far:
+
+- `c139f24 fix: clean stale secondary false positives`
+- `4620d39 fix: publish saved secondary results into current base`
+- `73bcbe1 fix: distinguish interrupted jobs from manual cancel`
+- `bb6218e fix: ignore related-link target matches`
+- `238b97d fix: require safe secondary target matches`
+- `f0bf4ef fix: constrain secondary target backfill`
+- `fd5527c fix: show live saved clipping results`
+- `f9aba84 fix: tag duplicate articles for new targets`
+
+### Open Theseus assignment
+
+Proposed instance: `Theseus-Iris-CC`. Remaining items in the Shakira mission
+(see mission doc §"Still incomplete"):
 
 1. `assets/clipping-data.json` has not yet published Shakira stories.
 2. The public panel has not yet shown the final `shakira` filter populated.
@@ -270,16 +294,6 @@ thread to follow, the role is wrong. A more generalist fixer archetype
    needs an explicit test.
 5. Export/publication failure needs to become observable and recoverable so
    saved Shakira items are not hidden behind a stale panel payload.
-
----
-
-## Currently Active Instances
-
-| Instance | Driving | Working on |
-|---|---|---|
-| `Atlas-Codex` | Otávio (local Codex window) | A specific clipping-tool issue (per Otávio 2026-05-05). |
-| `Iris-CC` | This session | Character-sheet refinement; standing by for Theseus assignment. |
-| `Ariadne-Atlas-CC` | Otávio (local Claude Code window) | Document fixes in `md documents/`; Shakira-loop debugging on `claude/review-ariadne-debug-EEaPt`. |
 
 ---
 
@@ -309,8 +323,11 @@ When a new archetype is needed:
 1. Pick the axis it belongs to (role, environment, or provider) and the
    name. Mythology helps; it is not required.
 2. Add a row/column to the Full Grid above.
-3. Add a card in the matching axis section: scope, what it does **not**
-   own, mythology, currently filled by.
+3. Add a card in the matching axis section: mythology, scope, what it does
+   **not** own. Keep the card timeless — no first-person, no "this
+   session", no specific commits.
 4. If a role, state whether it depends on another role (Theseus → Ariadne
    is the precedent). Make the dependency explicit.
-5. Commit and push to the branch the active orchestrator is using.
+5. If the new archetype is being instantiated immediately, also update the
+   **Snapshot** section at the bottom.
+6. Commit and push to the branch the active orchestrator is using.
