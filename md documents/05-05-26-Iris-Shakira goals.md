@@ -145,6 +145,9 @@ Still incomplete:
 - Public `vejario_archive` slice `5f1c4c1aba83` pushed the API into HTTP 500.
   Current code pass makes job-event payload reads tolerant so one bad/corrupt
   event cannot break `/healthz` and `/api/update/status`.
+- Public `camara_archive` slice also pushed status endpoints into HTTP 500.
+  Current code pass wraps `/healthz` and `/api/update/status` status reads so a
+  job-status failure returns `status_unavailable` instead of taking down the API.
 
 ## Required Product Rules
 

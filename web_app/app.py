@@ -210,14 +210,28 @@ def healthz() -> dict[str, Any]:
         "authConfigured": auth_configured(),
         "storage": artifact_store.status(),
         "localWritesAllowed": local_writes_allowed(),
-        "job": job_manager.current_status().get("status", "idle"),
-        "shakiraLoopVersion": "2026-05-05-safe-event-payloads",
+        "job": safe_current_status().get("status", "idle"),
+        "shakiraLoopVersion": "2026-05-05-safe-status-endpoints",
     }
 
 
 @app.get("/api/update/status")
 def update_status() -> dict[str, Any]:
-    return {"current": job_manager.current_status(), "recent": recent_jobs()}
+    try:
+        recent = recent_jobs()
+    except Exception:
+        recent = []
+    return {"current": safe_current_status(), "recent": recent}
+
+
+def safe_current_status() -> dict[str, Any]:
+    try:
+        return job_manager.current_status()
+    except Exception:
+        return {
+            "status": "status_unavailable",
+            "error_message": "Não foi possível ler o status da atualização agora. Os artefatos publicados continuam disponíveis.",
+        }
 
 
 @app.get("/api/update/live-results")
