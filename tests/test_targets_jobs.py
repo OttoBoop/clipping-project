@@ -230,7 +230,7 @@ def test_normalize_targets_file_forces_current_primary_contract(monkeypatch, tmp
     assert stored["bernardo_rubiao"]["className"] == ""
 
 
-def test_build_update_spec_uses_safe_all_collector_and_accepts_long_custom_dates(monkeypatch, tmp_path):
+def test_build_update_spec_accepts_safe_custom_collector_and_long_dates(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
 
     spec = jobs.build_update_spec(
@@ -239,18 +239,33 @@ def test_build_update_spec_uses_safe_all_collector_and_accepts_long_custom_dates
             "target_keys": ["flavio_valle"],
             "date_from": "2026-04-01",
             "date_to": "2026-04-30",
-            "collector": "direct_scrape",
+            "collector": "google_news",
             "export": False,
         }
     )
 
-    assert spec["collector"] == "all"
+    assert spec["collector"] == "google_news"
     assert spec["skip_direct_scrape"] is True
     assert "direct_scrape" not in jobs.SAFE_COLLECTORS
     assert spec["date_from"] == "2026-04-01"
     assert spec["date_to"] == "2026-04-30"
     assert spec["max_candidates"] == 90000
     assert spec["max_process_seconds"] == 90000
+
+    try:
+        jobs.build_update_spec(
+            {
+                "preset": "custom",
+                "target_keys": ["flavio_valle"],
+                "date_from": "2026-04-01",
+                "date_to": "2026-04-30",
+                "collector": "direct_scrape",
+            }
+        )
+    except ValueError as exc:
+        assert str(exc) == "coletor_invalido"
+    else:
+        raise AssertionError("expected coletor_invalido")
 
     try:
         jobs.build_update_spec(

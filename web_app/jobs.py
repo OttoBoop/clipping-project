@@ -363,10 +363,12 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
         target_keys = validate_target_keys(payload_list(payload, "target_keys", "targetKeys"))
         date_from = validate_date(str(payload.get("date_from") or payload.get("dateFrom") or ""))
         date_to = validate_date(str(payload.get("date_to") or payload.get("dateTo") or ""))
+        collector = str(payload.get("collector") or DEFAULT_COLLECTOR).strip() or DEFAULT_COLLECTOR
     else:
         raise ValueError("preset_invalido")
 
-    collector = DEFAULT_COLLECTOR
+    if preset != "custom":
+        collector = DEFAULT_COLLECTOR
     if collector not in SAFE_COLLECTORS:
         raise ValueError("coletor_invalido")
     if date_from > date_to:

@@ -123,6 +123,18 @@ Still incomplete:
 - Current code pass applies the same secondary-target safe-surface filter to
   merged story records before target counts and `clipping-data.json` are built.
 
+### 2026-05-05 17:20 BRT
+
+- Public export `742b2c6207b1` verified the merge filter: Shakira dropped to 86
+  stories / 166 articles, and the four known stale stories disappeared from
+  `assets/clipping-data.json`.
+- Public run `df7674bc73e0` saved one additional Shakira-related backfill and
+  then was marked `interrupted`; export `37574d4cf298` published it, bringing
+  the filter to 87 stories / 167 articles.
+- A second monolithic `all` run reached `Veja Rio Archive`, hit a 502, and did
+  not recover as current status. The short-term mitigation is to run public
+  custom collector slices instead of one fragile all-in-one worker job.
+
 ## Required Product Rules
 
 - Confirmed news must be saved immediately when the pipeline accepts it.
