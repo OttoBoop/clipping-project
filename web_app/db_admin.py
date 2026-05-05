@@ -31,7 +31,7 @@ SYNTHETIC_TARGET_MARKERS = ("atlas_teste", "atlas teste")
 SLUG_RE = re.compile(r"[^a-z0-9]+")
 TAG_RE = re.compile(r"<[^>]+>")
 RELATED_MATCH_NOISE_RE = re.compile(
-    r"(?is)\b(not[ií]cias?\s+relacionadas?|leia\s+tamb[eé]m|veja\s+tamb[eé]m|textos?\s+relacionados?)\b.*"
+    r"(?is)\b(not[ií]cias?\s+relacionadas?|leia\s+tamb[eé]m|veja\s+tamb[eé]m|textos?\s+relacionados?|links?\s+relacionados?)\b.*"
 )
 
 
@@ -439,13 +439,20 @@ def target_matches_safe_article_fields(target: Any, row: sqlite3.Row | dict[str,
 
 
 def safe_article_match_text(row: sqlite3.Row | dict[str, Any]) -> str:
-    raw_text = " ".join(
-        [
-            str(row["title"] or ""),
-            str(row["snippet"] or "")[:500],
-            str(row["summary"] or "")[:500],
-        ]
-    )
+    def value(key: str) -> str:
+        try:
+            return str(row[key] or "")
+        except (KeyError, IndexError):
+            return ""
+
+    body_parts: list[str] = []
+    if value("summary"):
+        body_parts.append(value("summary")[:500])
+    if value("full_text"):
+        body_parts.append(value("full_text")[:500])
+    if not body_parts:
+        body_parts.append(value("snippet")[:500])
+    raw_text = " ".join([value("title"), *body_parts])
     text = html.unescape(TAG_RE.sub(" ", raw_text))
     text = RELATED_MATCH_NOISE_RE.sub(" ", text)
     return re.sub(r"\s+", " ", text).strip()
@@ -470,6 +477,7 @@ def cleanup_false_backfilled_target_mentions(db_file: Path, target_keys: list[st
                     m.article_id,
                     a.title,
                     a.snippet,
+                    a.full_text,
                     a.summary,
                     sa.story_id
                 FROM mentions m
@@ -533,6 +541,7 @@ def backfill_missing_target_mentions(db_file: Path, target_keys: list[str]) -> d
                 a.source_type,
                 COALESCE(a.published_at, a.discovered_at) AS published_at,
                 a.snippet,
+                a.full_text,
                 a.summary,
                 sa.story_id
             FROM articles a

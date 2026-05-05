@@ -59,7 +59,7 @@ URL_RE = re.compile(r"https?://\S+")
 TAG_RE = re.compile(r"<[^>]+>")
 SEARCH_NOISE_RE = re.compile(r"(resultado[s]?\s+da\s+pesquisa|wp-content|comments?)", re.IGNORECASE)
 RELATED_MATCH_NOISE_RE = re.compile(
-    r"(?is)\b(not[ií]cias?\s+relacionadas?|leia\s+tamb[eé]m|veja\s+tamb[eé]m|textos?\s+relacionados?)\b.*"
+    r"(?is)\b(not[ií]cias?\s+relacionadas?|leia\s+tamb[eé]m|veja\s+tamb[eé]m|textos?\s+relacionados?|links?\s+relacionados?)\b.*"
 )
 
 POSITIVE_MARKERS = {
@@ -161,6 +161,17 @@ def safe_target_match_surface(*parts: str) -> str:
         if text:
             cleaned_parts.append(text)
     return " ".join(cleaned_parts)
+
+
+def safe_article_match_surface(title: str, snippet: str, summary: str, full_text: str) -> str:
+    body_parts: list[str] = []
+    if summary:
+        body_parts.append(summary[:500])
+    if full_text:
+        body_parts.append(full_text[:500])
+    if not body_parts:
+        body_parts.append(snippet[:500])
+    return safe_target_match_surface(title, *body_parts)
 
 
 def normalize_forced_terms(terms: list[str] | None) -> list[str]:
@@ -749,10 +760,11 @@ def process_candidates(
         title_for_article = clean_title(title_for_article)
         summary = summarize_text(full_text or candidate.snippet or title_for_article)
         if secondary_target_keys:
-            safe_surface_text = safe_target_match_surface(
+            safe_surface_text = safe_article_match_surface(
                 title_for_article,
-                (candidate.snippet or "")[:500],
-                (summary or "")[:500],
+                candidate.snippet or "",
+                summary or "",
+                full_text or "",
             )
             safe_hits = matcher.find_hits(safe_surface_text)
             safe_hits_by_target: dict[str, object] = {}

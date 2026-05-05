@@ -1192,6 +1192,81 @@ def test_cleanup_removes_secondary_target_only_in_late_incidental_preview(monkey
     assert story_targets == {"flavio_valle"}
 
 
+def test_cleanup_prefers_saved_text_over_misleading_secondary_snippet(monkeypatch, tmp_path):
+    db_admin, _, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    from pipeline import settings
+
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "flavio_valle", "label": "Flavio Valle", "keywords": ["Flavio Valle"], "primary": True},
+                {"key": "shakira", "label": "shakira", "keywords": ["shakira"], "primary": False},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+    monkeypatch.setattr(settings, "TARGETS_JSON_PATH", targets_path)
+    with ClippingDB(db_file) as db:
+        article_id = db.insert_article(
+            url="https://example.com/projeto-sem-shakira",
+            title="Projeto busca orientar mulheres a lidarem com processos de transicao na vida",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-05-05T14:56:48+00:00",
+            snippet="Trecho de busca enganoso cita Shakira em uma lista lateral.",
+            full_text="Texto real da materia sobre empreendedorismo, carreira e inteligencia emocional.",
+        )
+        assert article_id is not None
+        db.conn.execute(
+            "UPDATE articles SET summary = ? WHERE id = ?",
+            ("Resumo real da materia sobre empreendedorismo, carreira e inteligencia emocional.", article_id),
+        )
+        db.conn.commit()
+        db.insert_mention(article_id, "flavio_valle", "Flavio Valle", "Flavio Valle")
+        story_id = db.create_story(
+            title="Projeto busca orientar mulheres a lidarem com processos de transicao na vida",
+            summary="Resumo real da materia.",
+            temperature=34.0,
+            target_keys=["flavio_valle"],
+        )
+        db.attach_article_to_story(story_id, article_id)
+        db.insert_mentions(
+            article_id,
+            [
+                {
+                    "target_key": "shakira",
+                    "target_name": "shakira",
+                    "keyword_matched": "shakira",
+                    "sentiment": "neutral",
+                    "sentiment_reason": "",
+                    "context": "",
+                }
+            ],
+        )
+        db.ensure_story_target(story_id, "shakira")
+
+    cleanup = db_admin.cleanup_false_backfilled_target_mentions(db_file, ["shakira"])
+
+    assert cleanup["removedMentions"] == 1
+    with sqlite3.connect(db_file) as conn:
+        assert {
+            row[0]
+            for row in conn.execute(
+                "SELECT target_key FROM mentions WHERE article_id = ?",
+                (article_id,),
+            ).fetchall()
+        } == {"flavio_valle"}
+        assert {
+            row[0]
+            for row in conn.execute(
+                "SELECT target_key FROM story_targets WHERE story_id = ?",
+                (story_id,),
+            ).fetchall()
+        } == {"flavio_valle"}
+
+
 def test_process_candidates_skips_secondary_target_only_in_page_boilerplate(monkeypatch, tmp_path):
     from pipeline import ingest
     from pipeline.matcher import Target
@@ -1344,6 +1419,66 @@ def test_process_candidates_skips_secondary_target_only_as_late_incidental_menti
         source_type="rss",
         published_at="2026-05-05T14:56:48+00:00",
         snippet=late_incidental_context,
+        metadata={},
+    )
+
+    result = ingest.process_candidates(
+        "Diario do Rio",
+        "rss",
+        [candidate],
+        options=ingest.IngestionOptions(
+            target_keys=["shakira"],
+            date_from="2026-05-05",
+            date_to="2026-05-05",
+            db_path=str(db_file),
+        ),
+        progress_callback=lambda event, payload: events.append((event, payload)),
+    )
+
+    assert result.candidates_seen == 1
+    assert result.articles_inserted == 0
+    assert result.mentions_inserted == 0
+    assert result.stories_touched == 0
+    assert any(
+        event == "candidate_evaluated" and payload.get("reason") == "target_only_in_page_boilerplate"
+        for event, payload in events
+    )
+    with sqlite3.connect(db_file) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM mentions").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM stories").fetchone()[0] == 0
+
+
+def test_process_candidates_prefers_fetched_text_over_misleading_secondary_snippet(monkeypatch, tmp_path):
+    from pipeline import ingest
+    from pipeline.matcher import Target
+
+    db_file = tmp_path / "secondary-misleading-snippet.db"
+    events = []
+
+    def fake_fetch_full_article_text(*_args, **_kwargs):
+        full_text = "Texto real da materia sobre empreendedorismo, carreira e inteligencia emocional."
+        return (
+            "https://example.com/projeto-sem-shakira",
+            "<html></html>",
+            full_text,
+            "Projeto busca orientar mulheres a lidarem com processos de transicao na vida",
+            "2026-05-05T14:56:48+00:00",
+        )
+
+    monkeypatch.setattr(ingest, "fetch_full_article_text", fake_fetch_full_article_text)
+    monkeypatch.setattr(
+        ingest,
+        "get_active_targets",
+        lambda: [Target(key="shakira", display_name="shakira", keywords=["shakira"], primary=False)],
+    )
+    candidate = ingest.CandidateArticle(
+        title="Projeto busca orientar mulheres a lidarem com processos de transicao na vida",
+        url="https://example.com/projeto-sem-shakira",
+        source_name="Diario do Rio",
+        source_type="rss",
+        published_at="2026-05-05T14:56:48+00:00",
+        snippet="Trecho de busca enganoso cita Shakira em uma lista lateral.",
         metadata={},
     )
 

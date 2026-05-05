@@ -90,6 +90,18 @@ Still incomplete:
   500 characters of snippet/summary, and the cleanup/export path uses the same
   safe surface so stale incidental tags can be removed before publication.
 
+### 2026-05-05 16:45 BRT
+
+- Public export `ac02087a5fd3` succeeded and uploaded the current artifacts,
+  but verification showed the static `assets/clipping-data.json` still had 170
+  Shakira articles while the live/base endpoint showed 166 after cleanup.
+- Root cause found in the cleanup rule: it still trusted `snippet` even when a
+  saved article had authoritative `summary`/`full_text`. Search snippets can
+  carry misleading related-item text.
+- New rule for secondary targets: when `summary` or `full_text` exists, match
+  the secondary target against title plus the early saved text; use snippet only
+  when no saved text exists.
+
 ## Required Product Rules
 
 - Confirmed news must be saved immediately when the pipeline accepts it.
