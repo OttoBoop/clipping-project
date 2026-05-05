@@ -113,6 +113,16 @@ Still incomplete:
   target keys are rebuilt from the filtered article keys before
   `clipping-data.json` is written.
 
+### 2026-05-05 17:07 BRT
+
+- Public export `6af2a01c0605` ran with the deployed health version visible,
+  but the stale Shakira stories still appeared in `assets/clipping-data.json`.
+- Root cause narrowed again: old story records merged from `index.html` bypassed
+  the new database-story export filter and reintroduced stale secondary
+  `targetKeys`.
+- Current code pass applies the same secondary-target safe-surface filter to
+  merged story records before target counts and `clipping-data.json` are built.
+
 ## Required Product Rules
 
 - Confirmed news must be saved immediately when the pipeline accepts it.

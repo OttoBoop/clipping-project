@@ -450,7 +450,15 @@ def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
         response = client.get("/healthz")
     assert response.status_code == 200
     payload = response.json()
-    assert set(payload) == {"ok", "dbExists", "authConfigured", "storage", "localWritesAllowed", "job"}
+    assert set(payload) == {
+        "ok",
+        "dbExists",
+        "authConfigured",
+        "storage",
+        "localWritesAllowed",
+        "job",
+        "shakiraLoopVersion",
+    }
     assert payload["ok"] is True
     assert payload["dbExists"] is True
     assert payload["authConfigured"] is True

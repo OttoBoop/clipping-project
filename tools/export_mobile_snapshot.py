@@ -219,6 +219,67 @@ def filter_export_target_keys(
     return [key for key in keys if key not in secondary_targets or key in safe_secondary_keys]
 
 
+def safe_payload_article_match_text(article: dict[str, Any], raw_texts: dict[str, str]) -> str:
+    title = str(article.get("title") or "")
+    url_path = urlparse(str(article.get("url") or "")).path.replace("-", " ").replace("_", " ")
+    raw_key = str(article.get("rawTextKey") or "")
+    raw_text = str(raw_texts.get(raw_key) or "") if raw_key else ""
+    preview = str(article.get("summaryPreview") or "")
+    body = raw_text[:500] if raw_text else preview[:500]
+    text = " ".join([title, url_path, body])
+    text = html.unescape(TAG_RE.sub(" ", text))
+    text = RELATED_MATCH_NOISE_RE.sub(" ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def filter_payload_article_target_keys(
+    article: dict[str, Any],
+    fallback_targets: list[str],
+    secondary_targets: dict[str, Target],
+    raw_texts: dict[str, str],
+) -> list[str]:
+    keys: list[str] = []
+    for key in list(article.get("targetKeys") or fallback_targets or []):
+        key = str(key or "").strip()
+        if key and key not in keys:
+            keys.append(key)
+    selected_secondary = [secondary_targets[key] for key in keys if key in secondary_targets]
+    if not selected_secondary:
+        return keys
+    safe_hits = CitationMatcher(selected_secondary, exact_names_only=True).find_hits(
+        safe_payload_article_match_text(article, raw_texts)
+    )
+    safe_secondary_keys = {hit.target_key for hit in safe_hits}
+    return [key for key in keys if key not in secondary_targets or key in safe_secondary_keys]
+
+
+def filter_secondary_targets_from_story_records(
+    story_records: list[dict[str, Any]],
+    secondary_targets: dict[str, Target],
+    raw_texts: dict[str, str],
+) -> list[dict[str, Any]]:
+    if not secondary_targets:
+        return story_records
+    filtered_records: list[dict[str, Any]] = []
+    for story in story_records:
+        story = dict(story)
+        fallback_targets = [str(key) for key in story.get("targetKeys") or []]
+        article_records: list[dict[str, Any]] = []
+        story_targets: list[str] = []
+        for article in story.get("articles") or []:
+            article = dict(article)
+            article_keys = filter_payload_article_target_keys(article, fallback_targets, secondary_targets, raw_texts)
+            article["targetKeys"] = article_keys
+            for key in article_keys:
+                if key and key not in story_targets:
+                    story_targets.append(key)
+            article_records.append(article)
+        story["articles"] = article_records
+        story["targetKeys"] = story_targets
+        filtered_records.append(story)
+    return filtered_records
+
+
 def excerpt(value: str, limit: int = 420) -> str:
     text = normalize_text(value)
     if len(text) <= limit:
@@ -2530,10 +2591,11 @@ def build_snapshot_artifact(args: argparse.Namespace) -> dict[str, Any]:
         if not bool(getattr(target, "primary", False))
     }
     story_records, raw_texts = build_story_records(stories, article_map, secondary_targets)
+    raw_texts.update(merged_raw_texts)
     story_records.extend(merged_story_records)
     story_records.sort(key=story_sort_key, reverse=True)
+    story_records = filter_secondary_targets_from_story_records(story_records, secondary_targets, raw_texts)
     story_records = remove_excluded_targets_from_stories(story_records, excluded_target_keys)
-    raw_texts.update(merged_raw_texts)
 
     # Deduplicate articles by URL across all stories (first occurrence wins)
     seen_urls: set[str] = set()

@@ -7,6 +7,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from pipeline.database import ClippingDB
+from pipeline.matcher import Target
 from tools import export_mobile_snapshot
 from tools import prepare_wix_clipping_snapshot
 
@@ -260,6 +261,42 @@ def test_export_filters_misleading_secondary_snippet_when_saved_text_disagrees(m
     assert shakira_row["storyCount"] == 0
     assert payload["stories"][0]["targetKeys"] == []
     assert payload["stories"][0]["articles"][0]["targetKeys"] == []
+
+
+def test_export_filters_secondary_targets_from_merged_story_records():
+    story_records = [
+        {
+            "storyIdInt": 127,
+            "title": "Projeto busca orientar mulheres a lidarem com processos de transicao na vida",
+            "targetKeys": ["shakira"],
+            "articleCount": 1,
+            "articles": [
+                {
+                    "articleId": 235,
+                    "title": "Projeto busca orientar mulheres a lidarem com processos de transicao na vida",
+                    "url": "https://example.com/projeto-transicao",
+                    "targetKeys": ["shakira"],
+                    "summaryPreview": "Trecho de busca antigo.",
+                    "rawTextKey": "article-235",
+                }
+            ],
+        }
+    ]
+    raw_texts = {
+        "article-235": "Texto real da materia sobre empreendedorismo, carreira e inteligencia emocional."
+    }
+    secondary_targets = {
+        "shakira": Target(key="shakira", label="shakira", display_name="shakira", keywords=["shakira"])
+    }
+
+    filtered = export_mobile_snapshot.filter_secondary_targets_from_story_records(
+        story_records,
+        secondary_targets,
+        raw_texts,
+    )
+
+    assert filtered[0]["targetKeys"] == []
+    assert filtered[0]["articles"][0]["targetKeys"] == []
 
 
 def test_archived_targets_do_not_reappear_in_export_filters(monkeypatch, tmp_path):
