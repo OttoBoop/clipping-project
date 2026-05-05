@@ -418,6 +418,110 @@ def validate_target_keys(values: list[str]) -> list[str]:
     return cleaned
 
 
+def backfill_missing_target_mentions(db_file: Path, target_keys: list[str]) -> dict[str, Any]:
+    """Attach selected active targets to existing articles whose saved text matches them."""
+    db_file = validate_configured_db_file(db_file)
+    ensure_app_tables(db_file)
+    selected = {str(key or "").strip() for key in target_keys if str(key or "").strip()}
+    if not selected:
+        return {"updated": [], "updatedCount": 0, "mentionsInserted": 0, "storiesTouched": 0}
+
+    from pipeline.matcher import CitationMatcher
+    from pipeline.settings import get_active_targets
+
+    targets = [target for target in get_active_targets() if str(target.key) in selected]
+    if not targets:
+        return {"updated": [], "updatedCount": 0, "mentionsInserted": 0, "storiesTouched": 0}
+
+    db = ClippingDB(db_file)
+    updated: list[dict[str, Any]] = []
+    touched_stories: set[int] = set()
+    with connect(db_file) as conn:
+        article_rows = conn.execute(
+            """
+            SELECT
+                a.id,
+                a.title,
+                a.url,
+                a.source_name,
+                a.source_type,
+                COALESCE(a.published_at, a.discovered_at) AS published_at,
+                a.snippet,
+                a.summary,
+                a.full_text,
+                sa.story_id
+            FROM articles a
+            LEFT JOIN story_articles sa ON sa.article_id = a.id
+            ORDER BY COALESCE(a.published_at, a.discovered_at) DESC
+            """
+        ).fetchall()
+
+    for target in targets:
+        matcher = CitationMatcher([target], exact_names_only=True)
+        for row in article_rows:
+            article_id = int(row["id"])
+            if db.find_mention_id(article_id, target.key) is not None:
+                continue
+            text = " ".join(
+                [
+                    str(row["title"] or ""),
+                    str(row["snippet"] or ""),
+                    str(row["summary"] or ""),
+                    str(row["full_text"] or ""),
+                ]
+            )
+            hits = matcher.find_hits(text)
+            if not hits:
+                continue
+            hit = hits[0]
+            db.insert_mentions(
+                article_id,
+                [
+                    {
+                        "target_key": hit.target_key,
+                        "target_name": hit.target_name,
+                        "keyword_matched": hit.keyword_matched,
+                        "sentiment": "neutral",
+                        "sentiment_reason": "existing_article_backfill",
+                        "context": "",
+                    }
+                ],
+            )
+            story_id = int(row["story_id"] or 0)
+            if not story_id:
+                story_id = db.create_story(
+                    title=str(row["title"] or "Nova historia")[:220],
+                    summary=str(row["summary"] or row["snippet"] or row["title"] or "Nova historia")[:800],
+                    temperature=34.0,
+                    target_keys=[target.key],
+                )
+                db.attach_article_to_story(story_id, article_id)
+            db.ensure_story_target(story_id, target.key)
+            db.update_story(story_id)
+            touched_stories.add(story_id)
+            updated.append(
+                {
+                    "article_id": article_id,
+                    "story_id": story_id,
+                    "target_key": target.key,
+                    "target_label": target.display_name or target.label or target.key,
+                    "keyword_matched": hit.keyword_matched,
+                    "title": str(row["title"] or ""),
+                    "url": str(row["url"] or ""),
+                    "source_name": str(row["source_name"] or ""),
+                    "source_type": str(row["source_type"] or ""),
+                    "published_at": str(row["published_at"] or ""),
+                }
+            )
+
+    return {
+        "updated": updated,
+        "updatedCount": len(updated),
+        "mentionsInserted": len(updated),
+        "storiesTouched": len(touched_stories),
+    }
+
+
 def cleanup_synthetic_smoke_artifacts(db_file: Path) -> dict[str, Any]:
     """Remove only the known production manual smoke artifact."""
     db_file = validate_configured_db_file(db_file)

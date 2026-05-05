@@ -767,6 +767,7 @@ class ClippingDB:
                 a.snippet,
                 a.full_text,
                 a.summary,
+                sa.story_id,
                 CASE
                     WHEN EXISTS (
                         SELECT 1
@@ -777,8 +778,7 @@ class ClippingDB:
                 END AS has_ai_summary,
                 GROUP_CONCAT(DISTINCT m.target_key) AS target_keys,
                 GROUP_CONCAT(DISTINCT m.target_name) AS target_names,
-                GROUP_CONCAT(DISTINCT m.keyword_matched) AS keywords,
-                sa.story_id
+                GROUP_CONCAT(DISTINCT m.keyword_matched) AS keywords
             FROM articles a
             JOIN mentions m ON m.article_id = a.id
             LEFT JOIN story_articles sa ON sa.article_id = a.id
@@ -834,6 +834,7 @@ class ClippingDB:
                 a.snippet,
                 a.full_text,
                 a.summary,
+                sa.story_id,
                 CASE
                     WHEN EXISTS (
                         SELECT 1
@@ -847,6 +848,7 @@ class ClippingDB:
                 GROUP_CONCAT(DISTINCT m.keyword_matched) AS keywords
             FROM articles a
             JOIN mentions m ON m.article_id = a.id
+            LEFT JOIN story_articles sa ON sa.article_id = a.id
             WHERE a.id IN ({placeholders})
             GROUP BY a.id
         """
@@ -863,6 +865,7 @@ class ClippingDB:
                     "snippet": row["snippet"] or "",
                     "full_text": row["full_text"] or "",
                     "summary": row["summary"] or "",
+                    "story_id": int(row["story_id"]) if row["story_id"] else 0,
                     "has_ai_summary": bool(int(row["has_ai_summary"] or 0)),
                     "summary_source": "llm" if bool(int(row["has_ai_summary"] or 0)) else "raw",
                     "target_keys": [v for v in str(row["target_keys"] or "").split(",") if v],

@@ -389,10 +389,10 @@ def sync_existing_article_targets(
     article_title: str,
     article_summary: str,
     source_name: str,
-) -> tuple[int, bool]:
+) -> tuple[int, bool, int]:
     target_keys = sorted({str(m.get("target_key") or "") for m in mention_payload if str(m.get("target_key") or "")})
     if not target_keys:
-        return 0, False
+        return 0, False, 0
 
     missing_mentions = [
         mention
@@ -412,9 +412,9 @@ def sync_existing_article_targets(
             story_touched = True
         if story_touched:
             db.update_story(story_id)
-        return len(missing_mentions), story_touched
+        return len(missing_mentions), story_touched, int(story_id)
 
-    create_or_update_story(
+    story_id = create_or_update_story(
         db,
         article_id=article_id,
         article_title=article_title,
@@ -422,7 +422,7 @@ def sync_existing_article_targets(
         source_name=source_name,
         target_keys=target_keys,
     )
-    return len(missing_mentions), True
+    return len(missing_mentions), True, int(story_id)
 
 
 def process_candidates(
@@ -525,6 +525,43 @@ def process_candidates(
                 "stage": stage or "processing",
                 "matched_targets": sorted({h.target_key for h in hit_list}),
                 "matched_keywords": sorted({h.keyword_matched for h in hit_list}),
+                "summary_excerpt": (summary_value or "").strip()[:320],
+            },
+        )
+
+    def emit_article_saved(
+        *,
+        article_id: int,
+        story_id: int,
+        candidate: CandidateArticle,
+        final_url: str,
+        title_value: str,
+        published_value: str,
+        summary_value: str,
+        target_keys: list[str],
+        article_delta: int,
+        mention_delta: int,
+        story_delta: int,
+        save_reason: str,
+    ) -> None:
+        if not progress_callback:
+            return
+        progress_callback(
+            "article_saved",
+            {
+                "article_id": int(article_id),
+                "story_id": int(story_id or 0),
+                "url": final_url or candidate.url,
+                "title": title_value or candidate.title or "",
+                "published_at": published_value or candidate.published_at or "",
+                "source_name": candidate.source_name or source_name,
+                "source_type": candidate.source_type or source_type,
+                "target_keys": sorted({str(key) for key in target_keys if str(key).strip()}),
+                "articles_inserted_delta": int(article_delta),
+                "mentions_inserted_delta": int(mention_delta),
+                "stories_touched_delta": int(story_delta),
+                "publication_state": "saved",
+                "reason": save_reason,
                 "summary_excerpt": (summary_value or "").strip()[:320],
             },
         )
@@ -785,7 +822,7 @@ def process_candidates(
             metadata_json=json.dumps(candidate.metadata or {}, ensure_ascii=False),
         )
         if not is_new:
-            duplicate_mentions, duplicate_story_touched = sync_existing_article_targets(
+            duplicate_mentions, duplicate_story_touched, story_id = sync_existing_article_targets(
                 db,
                 article_id=article_id,
                 mention_payload=mention_payload,
@@ -807,6 +844,20 @@ def process_candidates(
                 summary_value=summary,
                 stage="stored",
             )
+            emit_article_saved(
+                article_id=article_id,
+                story_id=story_id,
+                candidate=candidate,
+                final_url=final_url,
+                title_value=title_for_article,
+                published_value=published_at,
+                summary_value=summary,
+                target_keys=sorted({m["target_key"] for m in mention_payload}),
+                article_delta=0,
+                mention_delta=duplicate_mentions,
+                story_delta=1 if duplicate_story_touched else 0,
+                save_reason="existing_article_target_updated" if duplicate_mentions or duplicate_story_touched else "already_saved",
+            )
             if progress_callback and (seen == 1 or seen % 5 == 0):
                 emit_source_progress()
             continue
@@ -815,7 +866,7 @@ def process_candidates(
         mentions_inserted += len(mention_payload)
         inserted += 1
         target_keys = sorted({h.target_key for h in hits})
-        create_or_update_story(
+        story_id = create_or_update_story(
             db,
             article_id=article_id,
             article_title=title_for_article or summary or "Historia",
@@ -834,6 +885,20 @@ def process_candidates(
             published_value=published_at,
             summary_value=summary,
             stage="stored",
+        )
+        emit_article_saved(
+            article_id=article_id,
+            story_id=story_id,
+            candidate=candidate,
+            final_url=final_url,
+            title_value=title_for_article,
+            published_value=published_at,
+            summary_value=summary,
+            target_keys=target_keys,
+            article_delta=1,
+            mention_delta=len(mention_payload),
+            story_delta=1,
+            save_reason="saved",
         )
         if progress_callback and (seen == 1 or seen % 3 == 0):
             emit_source_progress()

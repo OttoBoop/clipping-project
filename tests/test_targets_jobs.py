@@ -375,6 +375,77 @@ def test_job_progress_uses_live_source_totals_before_target_finishes(monkeypatch
     assert observed["progress"]["targetKeys"] == ["shakira"]
 
 
+def test_article_saved_events_drive_live_results_and_totals(monkeypatch, tmp_path):
+    _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs.artifact_store, "enabled", False)
+    job_id = "shakira-live-results"
+    jobs.create_job(
+        job_id,
+        "update",
+        {
+            "preset": "custom",
+            "collector": "all",
+            "target_keys": ["shakira"],
+            "date_from": "2026-04-01",
+            "date_to": "2026-05-04",
+        },
+        started_by="coworker",
+    )
+    jobs.update_job(job_id, status="running")
+    with ClippingDB(db_file) as db:
+        article_id = db.insert_article(
+            url="https://example.com/shakira-salva",
+            title="Shakira anuncia show no Rio",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-05-01T12:00:00+00:00",
+            snippet="Shakira aparece no Rio.",
+            full_text="Shakira aparece no Rio.",
+        )
+        assert article_id is not None
+        db.insert_mention(article_id, "shakira", "shakira", "shakira")
+        story_id = db.create_story(
+            title="Shakira anuncia show no Rio",
+            summary="Resumo sobre Shakira.",
+            temperature=34.0,
+            target_keys=["shakira"],
+        )
+        db.attach_article_to_story(story_id, article_id)
+
+    jobs.record_progress(
+        job_id,
+        "article_saved",
+        {
+            "article_id": article_id,
+            "story_id": story_id,
+            "url": "https://example.com/shakira-salva",
+            "title": "Shakira anuncia show no Rio",
+            "published_at": "2026-05-01T12:00:00+00:00",
+            "source_name": "Fonte Teste",
+            "source_type": "test",
+            "target_keys": ["shakira"],
+            "articles_inserted_delta": 1,
+            "mentions_inserted_delta": 1,
+            "stories_touched_delta": 1,
+            "publication_state": "saved",
+        },
+        target_key="shakira",
+        target_label="shakira",
+    )
+
+    observed = jobs.get_job(job_id)
+    live = jobs.live_results_for_job(job_id)
+
+    assert observed["articles_inserted"] == 1
+    assert observed["mentions_inserted"] == 1
+    assert observed["stories_touched"] == 1
+    assert observed["progress"]["storiesTouched"] == 1
+    assert live["count"] == 1
+    assert live["items"][0]["title"] == "Shakira anuncia show no Rio"
+    assert "shakira" in live["items"][0]["targetKeys"]
+    assert live["items"][0]["publicationState"] == "saved"
+
+
 def test_job_progress_totals_stay_coherent_when_collection_events_age_out(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     job_id = "progress-window"
@@ -698,6 +769,78 @@ def test_process_candidates_tags_duplicate_article_for_new_secondary_target(monk
     assert result.articles_inserted == 0
     assert result.mentions_inserted == 1
     assert result.stories_touched == 1
+    with sqlite3.connect(db_file) as conn:
+        mention_targets = {
+            row[0]
+            for row in conn.execute(
+                "SELECT target_key FROM mentions WHERE article_id = ?",
+                (article_id,),
+            ).fetchall()
+        }
+        story_targets = {
+            row[0]
+            for row in conn.execute(
+                "SELECT target_key FROM story_targets WHERE story_id = ?",
+                (story_id,),
+            ).fetchall()
+        }
+    assert mention_targets == {"flavio_valle", "shakira"}
+    assert story_targets == {"flavio_valle", "shakira"}
+
+
+def test_backfill_missing_target_mentions_retags_existing_secondary_story(monkeypatch, tmp_path):
+    db_admin, _, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    from pipeline import settings
+
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "flavio_valle",
+                    "label": "Flavio Valle",
+                    "display_name": "Flavio Valle",
+                    "primary": True,
+                    "keywords": ["Flavio Valle"],
+                },
+                {
+                    "key": "shakira",
+                    "label": "shakira",
+                    "display_name": "shakira",
+                    "primary": False,
+                    "keywords": ["shakira"],
+                    "exact_aliases": [],
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+    monkeypatch.setattr(settings, "TARGETS_JSON_PATH", targets_path)
+    with ClippingDB(db_file) as db:
+        article_id = db.insert_article(
+            url="https://example.com/show-shakira",
+            title="Show de Shakira movimenta turismo no Rio",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-04-30T12:00:00+00:00",
+            snippet="Segundo Flavio Valle, Shakira deve atrair visitantes.",
+            full_text="Segundo Flavio Valle, a apresentacao de Shakira deve atrair visitantes.",
+        )
+        assert article_id is not None
+        db.insert_mention(article_id, "flavio_valle", "Flavio Valle", "Flavio Valle")
+        story_id = db.create_story(
+            title="Show de Shakira movimenta turismo no Rio",
+            summary="Resumo original.",
+            temperature=34.0,
+            target_keys=["flavio_valle"],
+        )
+        db.attach_article_to_story(story_id, article_id)
+
+    result = db_admin.backfill_missing_target_mentions(db_file, ["shakira"])
+
+    assert result["mentionsInserted"] == 1
+    assert result["storiesTouched"] == 1
     with sqlite3.connect(db_file) as conn:
         mention_targets = {
             row[0]

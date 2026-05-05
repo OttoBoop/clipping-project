@@ -108,6 +108,23 @@ class ArtifactStore:
                 uploaded.append(f"runs/{job_id}.json")
         return uploaded
 
+    def upload_database_checkpoint(
+        self,
+        *,
+        manifest: dict[str, Any] | None = None,
+        job_id: str | None = None,
+    ) -> list[str]:
+        uploaded: list[str] = []
+        local_path = db_path()
+        if local_path.is_file() and self.upload_sqlite_snapshot(local_path, self._remote("data/clipping.db") + ".gz"):
+            uploaded.append("data/clipping.db.gz")
+        if manifest and job_id:
+            remote = f"{self.prefix}/runs/{job_id}.json"
+            payload = json.dumps(manifest, ensure_ascii=False, indent=2).encode("utf-8")
+            if self.upload_bytes(payload, remote, "application/json"):
+                uploaded.append(f"runs/{job_id}.json")
+        return uploaded
+
     def download_gzip_file(self, remote_path: str, local_path: Path) -> bool:
         if not self.enabled:
             return False

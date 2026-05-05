@@ -548,6 +548,74 @@ def test_update_status_exposes_artifact_upload_contract_for_completed_jobs(monke
         assert_no_secret_material(status.json())
 
 
+def test_live_results_endpoint_returns_saved_articles_before_export(monkeypatch, tmp_path):
+    app, db_file = load_test_app(monkeypatch, tmp_path)
+    jobs = importlib.import_module("web_app.jobs")
+    job_id = "live-api-job"
+    jobs.create_job(
+        job_id,
+        "update",
+        {
+            "preset": "custom",
+            "collector": "all",
+            "target_keys": ["shakira"],
+            "date_from": "2026-04-01",
+            "date_to": "2026-05-04",
+        },
+        started_by="coworker",
+    )
+    jobs.update_job(job_id, status="running")
+    with ClippingDB(db_file) as db:
+        article_id = db.insert_article(
+            url="https://example.com/shakira-live-api",
+            title="Shakira tem notícia salva durante a rodada",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-05-01T12:00:00+00:00",
+            snippet="Shakira aparece antes do export.",
+            full_text="Shakira aparece antes do export.",
+        )
+        assert article_id is not None
+        db.insert_mention(article_id, "shakira", "shakira", "shakira")
+        story_id = db.create_story(
+            title="Shakira tem notícia salva durante a rodada",
+            summary="Resumo sobre Shakira.",
+            temperature=34.0,
+            target_keys=["shakira"],
+        )
+        db.attach_article_to_story(story_id, article_id)
+
+    jobs.record_progress(
+        job_id,
+        "article_saved",
+        {
+            "article_id": article_id,
+            "story_id": story_id,
+            "title": "Shakira tem notícia salva durante a rodada",
+            "url": "https://example.com/shakira-live-api",
+            "published_at": "2026-05-01T12:00:00+00:00",
+            "source_name": "Fonte Teste",
+            "source_type": "test",
+            "target_keys": ["shakira"],
+            "articles_inserted_delta": 1,
+            "mentions_inserted_delta": 1,
+            "stories_touched_delta": 1,
+            "publication_state": "saved",
+        },
+        target_key="shakira",
+        target_label="shakira",
+    )
+
+    with TestClient(app) as client:
+        response = client.get(f"/api/update/live-results?job_id={job_id}")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["count"] == 1
+    assert payload["items"][0]["title"] == "Shakira tem notícia salva durante a rodada"
+    assert payload["items"][0]["publicationState"] == "saved"
+
+
 def test_admin_route_does_not_serve_password_or_admin_copy(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     with TestClient(app) as client:

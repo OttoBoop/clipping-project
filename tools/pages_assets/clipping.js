@@ -69,6 +69,7 @@
   const progressArticles = document.getElementById("progressArticles");
   const progressMentions = document.getElementById("progressMentions");
   const progressStories = document.getElementById("progressStories");
+  const progressLiveResults = document.getElementById("progressLiveResults");
   const progressRecentSources = document.getElementById("progressRecentSources");
   const progressWarnings = document.getElementById("progressWarnings");
   const baseStoriesStat = document.getElementById("baseStoriesStat");
@@ -92,6 +93,7 @@
   let editingTargetKey = "";
   let pendingArchiveKey = "";
   let latestStatus = null;
+  let liveResultsSignature = "";
   const labelsByKey = {};
 
   function escapeHtml(value) {
@@ -470,7 +472,7 @@
     var id = "run-target-" + target.key;
     var checked = target.primary ? " checked" : "";
     var cls = target.primary ? " run-target--primary" : "";
-    var helper = target.primary ? "Principal" : "Opcional";
+    var helper = target.primary ? "Marcado por padrão" : "Disponível";
     return (
       '<label class="run-target' + cls + '" for="' + escapeHtml(id) + '">' +
       '<input type="checkbox" id="' + escapeHtml(id) + '" value="' + escapeHtml(target.key) + '"' + checked + ">" +
@@ -483,7 +485,7 @@
     if (!primaryRunTargets || !secondaryRunTargets) return;
     var primary = runTargets.filter(function (target) { return target.primary; });
     var secondary = runTargets.filter(function (target) { return !target.primary; });
-    primaryRunTargets.innerHTML = primary.length ? primary.map(renderRunTarget).join("") : '<p class="filter-note">Carregando nomes principais...</p>';
+    primaryRunTargets.innerHTML = primary.length ? primary.map(renderRunTarget).join("") : '<p class="filter-note">Carregando nomes acompanhados...</p>';
     secondaryRunTargets.innerHTML = secondary.length ? secondary.map(renderRunTarget).join("") : '<p class="filter-note">Nenhum nome extra cadastrado ainda.</p>';
   }
 
@@ -976,6 +978,7 @@
       .then(function (data) {
         applySuggestedDates(data);
         renderStatus(data);
+        pollLiveResults(data);
       })
       .catch(function (error) {
         console.error("[clipping] status polling failed", error);
@@ -984,6 +987,38 @@
           pill.textContent = "Sem conexão";
           pill.classList.add("is-error");
         });
+      });
+  }
+
+  function pollLiveResults(statusPayload) {
+    if (!payload) return Promise.resolve();
+    var current = (statusPayload && statusPayload.current) || {};
+    var recent = statusPayload && statusPayload.recent && statusPayload.recent.length ? statusPayload.recent[0] : {};
+    var job = current.status === "idle" && recent.id ? recent : current;
+    var jobId = String(job.id || "");
+    var url = "/api/update/live-results" + (jobId ? "?job_id=" + encodeURIComponent(jobId) : "");
+    return apiFetch(url, { cache: "no-store" })
+      .then(function (resp) {
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        return resp.json();
+      })
+      .then(function (data) {
+        var signature = JSON.stringify((data.items || []).map(function (item) {
+          return [item.articleId, item.storyId, item.publicationState, item.targetKeys || []];
+        }));
+        var changed = mergeLiveResultsIntoPayload(data);
+        renderLiveResults(data);
+        if (changed || signature !== liveResultsSignature) {
+          liveResultsSignature = signature;
+          ensureSelectedTargets();
+          applyState();
+        }
+      })
+      .catch(function () {
+        if (progressLiveResults) {
+          progressLiveResults.hidden = true;
+          progressLiveResults.innerHTML = "";
+        }
       });
   }
 
@@ -1254,6 +1289,187 @@
       pad(date.getUTCMinutes()) +
       " UTC"
     );
+  }
+
+  function hostFromUrl(url) {
+    try {
+      return new URL(String(url || "")).hostname.replace(/^www\./, "");
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function liveSummary(item) {
+    return String(item.summary || item.snippet || "Notícia confirmada e salva nesta rodada.");
+  }
+
+  function ensureLiveTargetRows(items) {
+    if (!payload) return;
+    if (!Array.isArray(payload.targets)) payload.targets = [];
+    var byKey = {};
+    (payload.targets || []).forEach(function (target) {
+      if (target && target.key) byKey[String(target.key)] = target;
+    });
+    (items || []).forEach(function (item) {
+      var labels = item.targetLabels || {};
+      (item.targetKeys || []).forEach(function (key) {
+        key = String(key || "").trim();
+        if (!key) return;
+        labelsByKey[key] = labels[key] || labelsByKey[key] || key;
+        if (!byKey[key]) {
+          byKey[key] = {
+            key: key,
+            label: labelsByKey[key],
+            primary: false,
+            archived: false,
+            storyCount: 0,
+            articleCount: 0,
+          };
+          payload.targets.push(byKey[key]);
+        }
+      });
+    });
+  }
+
+  function recomputeTargetCounts() {
+    if (!payload || !Array.isArray(payload.targets)) return;
+    var counts = {};
+    (payload.stories || []).forEach(function (story) {
+      (story.targetKeys || []).forEach(function (key) {
+        key = String(key || "");
+        if (!key) return;
+        if (!counts[key]) counts[key] = { storyCount: 0, articleCount: 0 };
+        counts[key].storyCount += 1;
+        counts[key].articleCount += Number(story.articleCount || (story.articles || []).length || 0);
+      });
+    });
+    (payload.targets || []).forEach(function (target) {
+      var usage = counts[target.key] || { storyCount: 0, articleCount: 0 };
+      target.storyCount = usage.storyCount;
+      target.articleCount = usage.articleCount;
+    });
+  }
+
+  function mergeLiveResultsIntoPayload(data) {
+    if (!payload || !Array.isArray(data && data.items) || !data.items.length) return false;
+    if (!Array.isArray(payload.stories)) payload.stories = [];
+    if (!payload.meta) payload.meta = {};
+    ensureLiveTargetRows(data.items);
+    var changed = false;
+    var storiesById = {};
+    (payload.stories || []).forEach(function (story) {
+      storiesById[String(story.storyIdInt || story.id || "")] = story;
+    });
+
+    data.items.forEach(function (item) {
+      var storyId = Number(item.storyId || item.articleId || 0);
+      if (!storyId) return;
+      var storyKey = String(storyId);
+      var targetKeys = (item.targetKeys || []).map(String).filter(Boolean);
+      var story = storiesById[storyKey];
+      if (!story) {
+        story = {
+          id: "st-" + storyId,
+          storyIdInt: storyId,
+          title: item.title || "Notícia salva nesta rodada",
+          summaryLabel: "Salvo nesta rodada",
+          summaryText: liveSummary(item),
+          temperature: 34,
+          createdAt: item.savedAt || item.publishedAt || "",
+          updatedAt: item.savedAt || item.publishedAt || "",
+          firstPublishedAt: item.publishedAt || item.savedAt || "",
+          lastPublishedAt: item.publishedAt || item.savedAt || "",
+          targetKeys: [],
+          articleCount: 0,
+          aiCount: 0,
+          rawCount: 0,
+          articles: [],
+          isLiveResult: item.publicationState !== "published",
+        };
+        storiesById[storyKey] = story;
+        payload.stories.unshift(story);
+        changed = true;
+      }
+      if (!Array.isArray(story.targetKeys)) story.targetKeys = [];
+      if (!Array.isArray(story.articles)) story.articles = [];
+      targetKeys.forEach(function (key) {
+        if (story.targetKeys.indexOf(key) === -1) {
+          story.targetKeys.push(key);
+          changed = true;
+        }
+      });
+      var articleId = Number(item.articleId || 0);
+      var existingArticle = null;
+      (story.articles || []).forEach(function (article) {
+        if (Number(article.articleId || 0) === articleId) existingArticle = article;
+      });
+      if (!existingArticle) {
+        story.articles.push({
+          articleId: articleId,
+          title: item.title || "Sem título",
+          url: item.url || "",
+          sourceName: item.sourceName || "Fonte não identificada",
+          sourceHost: hostFromUrl(item.url),
+          publishedAt: item.publishedAt || item.savedAt || "",
+          publishedDisplay: formatDate(item.publishedAt || item.savedAt || ""),
+          targetKeys: targetKeys,
+          summaryLabel: item.publicationState === "published" ? "Publicado no painel" : "Salvo agora",
+          summaryPreview: liveSummary(item),
+          rawTextKey: "",
+          summarySource: "raw",
+          classifications: [],
+          isLiveResult: item.publicationState !== "published",
+        });
+        changed = true;
+      } else {
+        targetKeys.forEach(function (key) {
+          if ((existingArticle.targetKeys || []).indexOf(key) === -1) {
+            existingArticle.targetKeys = (existingArticle.targetKeys || []).concat([key]);
+            changed = true;
+          }
+        });
+      }
+      story.articleCount = story.articles.length;
+      story.rawCount = story.articleCount - Number(story.aiCount || 0);
+    });
+
+    if (changed) {
+      recomputeTargetCounts();
+      payload.meta.totalStories = Math.max(Number(payload.meta.totalStories || 0), payload.stories.length);
+      var totalArticles = 0;
+      (payload.stories || []).forEach(function (story) {
+        totalArticles += Number(story.articleCount || (story.articles || []).length || 0);
+      });
+      payload.meta.totalArticles = Math.max(Number(payload.meta.totalArticles || 0), totalArticles);
+    }
+    return changed;
+  }
+
+  function renderLiveResults(data) {
+    if (!progressLiveResults) return;
+    var items = Array.isArray(data && data.items) ? data.items : [];
+    progressLiveResults.hidden = !items.length;
+    if (!items.length) {
+      progressLiveResults.innerHTML = "";
+      return;
+    }
+    var rows = items.slice(0, 8).map(function (item) {
+      var badges = badgeHtml(item.targetKeys || []);
+      var state = item.publicationState === "published" ? "Publicado no painel" : "Salvo agora";
+      var title = escapeHtml(item.title || "Sem título");
+      var url = item.url ? '<a href="' + escapeHtml(item.url) + '" target="_blank" rel="noreferrer">' + title + "</a>" : title;
+      return (
+        "<li>" +
+        '<div><strong>' + url + "</strong>" +
+        '<span>' + escapeHtml(item.sourceName || "Fonte não identificada") + " · " + escapeHtml(formatDate(item.publishedAt || item.savedAt || "")) + "</span></div>" +
+        '<div class="chips">' + badges + '<span class="chip chip--live">' + escapeHtml(state) + "</span></div>" +
+        "</li>"
+      );
+    });
+    progressLiveResults.innerHTML =
+      "<h2>Notícias salvas nesta rodada</h2>" +
+      "<p>O painel será atualizado ao publicar. Estes itens já foram confirmados e salvos.</p>" +
+      "<ul>" + rows.join("") + "</ul>";
   }
 
   function renderStoryCard(story) {

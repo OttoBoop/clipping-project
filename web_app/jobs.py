@@ -6,15 +6,24 @@ import re
 import subprocess
 import sys
 import threading
+import time
 import uuid
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from pipeline.ingest import IngestionOptions, run_ingestion
+from pipeline.database import ClippingDB
 
 from .config import ROOT, db_path
-from .db_admin import connect, ensure_app_tables, target_labels, validate_configured_db_file, validate_target_keys
+from .db_admin import (
+    backfill_missing_target_mentions,
+    connect,
+    ensure_app_tables,
+    target_labels,
+    validate_configured_db_file,
+    validate_target_keys,
+)
 from .storage_bridge import ArtifactStore, artifact_store
 
 
@@ -58,6 +67,9 @@ PRESETS: dict[str, dict[str, Any]] = {
 
 CUSTOM_MAX_CANDIDATES = 90000
 CUSTOM_MAX_PROCESS_SECONDS = 90000
+LIVE_CHECKPOINT_MIN_SECONDS = 30
+_CHECKPOINT_LOCK = threading.Lock()
+_LAST_CHECKPOINT_UPLOAD: dict[str, float] = {}
 
 
 class JobConflict(RuntimeError):
@@ -195,6 +207,46 @@ class JobManager:
             totals = {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0}
 
             if kind == "update":
+                backfill = backfill_missing_target_mentions(db_path(), list(spec["target_keys"]))
+                if backfill.get("updatedCount"):
+                    labels = target_labels()
+                    totals["mentions_inserted"] += int(backfill.get("mentionsInserted") or 0)
+                    totals["stories_touched"] += int(backfill.get("storiesTouched") or 0)
+                    for item in list(backfill.get("updated") or [])[:100]:
+                        target_key = str(item.get("target_key") or "")
+                        append_event(
+                            job_id,
+                            "article_saved",
+                            {
+                                "article_id": int(item.get("article_id") or 0),
+                                "story_id": int(item.get("story_id") or 0),
+                                "url": str(item.get("url") or ""),
+                                "title": str(item.get("title") or ""),
+                                "published_at": str(item.get("published_at") or ""),
+                                "source_name": str(item.get("source_name") or ""),
+                                "source_type": str(item.get("source_type") or ""),
+                                "target_keys": [target_key] if target_key else [],
+                                "target_key": target_key,
+                                "target_label": labels.get(target_key, target_key),
+                                "articles_inserted_delta": 0,
+                                "mentions_inserted_delta": 1,
+                                "stories_touched_delta": 1,
+                                "publication_state": "saved",
+                                "reason": "existing_article_backfill",
+                            },
+                        )
+                    append_event(
+                        job_id,
+                        "target_backfill_complete",
+                        {
+                            "target_keys": list(spec["target_keys"]),
+                            "mentions_inserted": totals["mentions_inserted"],
+                            "stories_touched": totals["stories_touched"],
+                        },
+                    )
+                    update_job(job_id, **totals)
+                    upload_live_checkpoint(job_id, reason="target-backfill", force=True)
+
                 labels = target_labels()
                 for target_key in spec["target_keys"]:
                     if cancel_event.is_set():
@@ -417,8 +469,31 @@ def record_progress(
     if event == "candidate_evaluated":
         return
     append_event(job_id, event, enrich_progress_payload(payload, target_key=target_key, target_label=target_label))
-    if event in {"source_progress", "source_complete", "run_complete", "run_cancelled"}:
+    if event in {"article_saved", "source_progress", "source_complete", "run_complete", "run_cancelled"}:
         sync_live_progress_totals(job_id)
+    if event == "article_saved":
+        upload_live_checkpoint(job_id, reason="article-saved")
+
+
+def upload_live_checkpoint(job_id: str, *, reason: str, force: bool = False) -> list[str]:
+    if not artifact_store.enabled:
+        return []
+    now = time.monotonic()
+    with _CHECKPOINT_LOCK:
+        previous = _LAST_CHECKPOINT_UPLOAD.get(job_id, 0.0)
+        if not force and now - previous < LIVE_CHECKPOINT_MIN_SECONDS:
+            return []
+        _LAST_CHECKPOINT_UPLOAD[job_id] = now
+    manifest = {
+        "kind": "live-save-checkpoint",
+        "jobId": job_id,
+        "reason": reason,
+        "createdAt": datetime.now(timezone.utc).isoformat(),
+    }
+    uploaded = artifact_store.upload_database_checkpoint(manifest=manifest, job_id=f"{job_id}-live-checkpoint")
+    if uploaded:
+        append_event(job_id, "live_checkpoint_uploaded", artifact_upload_summary(uploaded))
+    return uploaded
 
 
 def enrich_progress_payload(payload: dict[str, Any], *, target_key: str = "", target_label: str = "") -> dict[str, Any]:
@@ -585,6 +660,8 @@ def progress_summary(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[
     sources_total = 0
     latest_by_source: dict[tuple[str, str, str], dict[str, Any]] = {}
     targets: dict[str, str] = {}
+    current_target_key = ""
+    current_source = ""
 
     for event in reversed(events):
         payload = event.get("payload") or {}
@@ -594,6 +671,10 @@ def progress_summary(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[
         target_label = str(payload.get("target_label") or target_key)
         if target_key:
             targets[target_key] = target_label
+            current_target_key = target_key
+        source_label = str(payload.get("source_name") or payload.get("source") or "")
+        if source_label:
+            current_source = source_label
         if event.get("event") == "run_started":
             sources_total += safe_int(payload.get("sources_total"))
             run_candidates_total += safe_int(payload.get("candidates_total"))
@@ -611,27 +692,42 @@ def progress_summary(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[
             latest_by_source[source_key] = payload
 
     source_totals = source_progress_totals(latest_by_source.values())
+    saved_totals = article_saved_totals(events)
     candidates_seen = max(
         run_candidates_seen,
         sum(safe_int(payload.get("candidates_seen")) for payload in latest_by_source.values()),
     )
     progress_candidates_total = sum(safe_int(payload.get("candidates_total")) for payload in latest_by_source.values())
-    candidates_total = max(
-        run_candidates_total,
-        collected_candidates_total,
-        progress_candidates_total,
-        candidates_seen,
-    )
+    known_candidates_total = max(run_candidates_total, collected_candidates_total, progress_candidates_total)
+    candidates_total = known_candidates_total or candidates_seen
+    if known_candidates_total:
+        candidates_seen = min(candidates_seen, known_candidates_total)
     return {
         "status": str(job.get("status") or ""),
         "targetKeys": list(targets),
         "targetLabels": targets,
+        "currentTargetKey": current_target_key,
+        "currentSource": current_source,
+        "dateFrom": str(job.get("date_from") or ""),
+        "dateTo": str(job.get("date_to") or ""),
         "sourcesTotal": max(sources_total, len(latest_by_source)),
         "candidatesSeen": candidates_seen,
         "candidatesTotal": candidates_total,
-        "articlesInserted": max(safe_int(job.get("articles_inserted")), source_totals["articlesInserted"]),
-        "mentionsInserted": max(safe_int(job.get("mentions_inserted")), source_totals["mentionsInserted"]),
-        "storiesTouched": max(safe_int(job.get("stories_touched")), source_totals["storiesTouched"]),
+        "articlesInserted": max(
+            safe_int(job.get("articles_inserted")),
+            source_totals["articlesInserted"],
+            saved_totals["articlesInserted"],
+        ),
+        "mentionsInserted": max(
+            safe_int(job.get("mentions_inserted")),
+            source_totals["mentionsInserted"],
+            saved_totals["mentionsInserted"],
+        ),
+        "storiesTouched": max(
+            safe_int(job.get("stories_touched")),
+            source_totals["storiesTouched"],
+            saved_totals["storiesTouched"],
+        ),
     }
 
 
@@ -643,6 +739,20 @@ def source_progress_totals(payloads: Any) -> dict[str, int]:
         totals["articlesInserted"] += safe_int(payload.get("articles_inserted"))
         totals["mentionsInserted"] += safe_int(payload.get("mentions_inserted"))
         totals["storiesTouched"] += safe_int(payload.get("stories_touched"))
+    return totals
+
+
+def article_saved_totals(events: list[dict[str, Any]]) -> dict[str, int]:
+    totals = {"articlesInserted": 0, "mentionsInserted": 0, "storiesTouched": 0}
+    for event in events:
+        if event.get("event") != "article_saved":
+            continue
+        payload = event.get("payload") or {}
+        if not isinstance(payload, dict):
+            continue
+        totals["articlesInserted"] += safe_int(payload.get("articles_inserted_delta"))
+        totals["mentionsInserted"] += safe_int(payload.get("mentions_inserted_delta"))
+        totals["storiesTouched"] += safe_int(payload.get("stories_touched_delta"))
     return totals
 
 
@@ -659,15 +769,19 @@ def sync_live_progress_totals(job_id: str) -> None:
             (job_id,),
         ).fetchall()
         latest_by_source: dict[tuple[str, str, str], dict[str, Any]] = {}
+        article_events: list[dict[str, Any]] = []
         for row in reversed(rows):
             event = str(row["event"] or "")
-            if event not in {"source_progress", "source_complete"}:
+            if event not in {"article_saved", "source_progress", "source_complete"}:
                 continue
             try:
                 payload = json.loads(row["payload_json"])
             except Exception:
                 continue
             if not isinstance(payload, dict):
+                continue
+            if event == "article_saved":
+                article_events.append({"event": event, "payload": payload})
                 continue
             source_key = (
                 str(payload.get("target_key") or ""),
@@ -676,9 +790,10 @@ def sync_live_progress_totals(job_id: str) -> None:
             )
             latest_by_source[source_key] = payload
         totals = source_progress_totals(latest_by_source.values())
-        next_articles = max(safe_int(job["articles_inserted"]), totals["articlesInserted"])
-        next_mentions = max(safe_int(job["mentions_inserted"]), totals["mentionsInserted"])
-        next_stories = max(safe_int(job["stories_touched"]), totals["storiesTouched"])
+        saved_totals = article_saved_totals(article_events)
+        next_articles = max(safe_int(job["articles_inserted"]), totals["articlesInserted"], saved_totals["articlesInserted"])
+        next_mentions = max(safe_int(job["mentions_inserted"]), totals["mentionsInserted"], saved_totals["mentionsInserted"])
+        next_stories = max(safe_int(job["stories_touched"]), totals["storiesTouched"], saved_totals["storiesTouched"])
         conn.execute(
             """
             UPDATE jobs
@@ -687,6 +802,94 @@ def sync_live_progress_totals(job_id: str) -> None:
             """,
             (next_articles, next_mentions, next_stories, job_id),
         )
+
+
+def live_results_for_job(job_id: str = "", *, limit: int = 60) -> dict[str, Any]:
+    ensure_app_tables(db_path())
+    job: dict[str, Any] | None = None
+    if job_id:
+        job = get_job(job_id)
+    else:
+        job = get_active_job() or (recent_jobs(1)[0] if recent_jobs(1) else None)
+    if not job or not str(job.get("id") or ""):
+        return {"jobId": "", "status": "idle", "items": [], "count": 0}
+
+    job_id = str(job["id"])
+    with connect(db_path()) as conn:
+        rows = conn.execute(
+            """
+            SELECT created_at, payload_json
+            FROM job_events
+            WHERE job_id = ? AND event = 'article_saved'
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (job_id, max(1, int(limit) * 3)),
+        ).fetchall()
+
+    merged: dict[int, dict[str, Any]] = {}
+    order: list[int] = []
+    for row in reversed(rows):
+        try:
+            payload = json.loads(row["payload_json"])
+        except Exception:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        article_id = safe_int(payload.get("article_id"))
+        if article_id <= 0:
+            continue
+        if article_id not in merged:
+            merged[article_id] = {
+                "article_id": article_id,
+                "story_id": safe_int(payload.get("story_id")),
+                "saved_at": str(row["created_at"] or ""),
+                "target_keys": [],
+                "event_payload": payload,
+            }
+            order.append(article_id)
+        item = merged[article_id]
+        item["saved_at"] = str(row["created_at"] or item["saved_at"])
+        if safe_int(payload.get("story_id")):
+            item["story_id"] = safe_int(payload.get("story_id"))
+        for key in list(payload.get("target_keys") or []):
+            key = str(key or "").strip()
+            if key and key not in item["target_keys"]:
+                item["target_keys"].append(key)
+        target_key = str(payload.get("target_key") or "").strip()
+        if target_key and target_key not in item["target_keys"]:
+            item["target_keys"].append(target_key)
+        item["event_payload"] = payload
+
+    article_ids = order[-max(1, int(limit)) :]
+    db_articles = {int(row["article_id"]): row for row in ClippingDB(db_path()).list_articles_by_ids(article_ids)}
+    labels = target_labels(include_archived=True)
+    published = str(job.get("status") or "") == "succeeded" and bool(job.get("artifactUpload"))
+    items: list[dict[str, Any]] = []
+    for article_id in reversed(article_ids):
+        event_item = merged.get(article_id) or {}
+        payload = event_item.get("event_payload") or {}
+        article = db_articles.get(article_id, {})
+        target_keys = list(article.get("target_keys") or event_item.get("target_keys") or [])
+        story_id = safe_int(article.get("story_id")) or safe_int(event_item.get("story_id"))
+        items.append(
+            {
+                "articleId": article_id,
+                "storyId": story_id,
+                "title": str(article.get("title") or payload.get("title") or ""),
+                "url": str(article.get("url") or payload.get("url") or ""),
+                "sourceName": str(article.get("source_name") or payload.get("source_name") or ""),
+                "sourceType": str(article.get("source_type") or payload.get("source_type") or ""),
+                "publishedAt": str(article.get("published_at") or payload.get("published_at") or ""),
+                "savedAt": str(event_item.get("saved_at") or ""),
+                "summary": str(article.get("summary") or payload.get("summary_excerpt") or ""),
+                "snippet": str(article.get("snippet") or ""),
+                "targetKeys": target_keys,
+                "targetLabels": {key: labels.get(key, key) for key in target_keys},
+                "publicationState": "published" if published else "saved",
+            }
+        )
+    return {"jobId": job_id, "status": str(job.get("status") or ""), "items": items, "count": len(items)}
 
 
 def safe_int(value: Any) -> int:
@@ -755,6 +958,17 @@ def sanitize_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "source",
         "status",
         "reason",
+        "article_id",
+        "story_id",
+        "url",
+        "title",
+        "published_at",
+        "target_keys",
+        "articles_inserted_delta",
+        "mentions_inserted_delta",
+        "stories_touched_delta",
+        "publication_state",
+        "summary_excerpt",
         "count",
         "items",
         "lines",

@@ -32,7 +32,7 @@ class CitationMatcher:
         for t in targets:
             aliases = [str(a).strip() for a in (t.exact_aliases or []) if str(a).strip()]
             if exact_names_only:
-                kws = [t.display_name or t.label] + aliases
+                kws = [t.display_name or t.label] + list(t.keywords or []) + aliases
             else:
                 kws = list(t.keywords or []) + aliases + [t.display_name or t.label]
             for kw in kws:

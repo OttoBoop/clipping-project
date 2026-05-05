@@ -30,7 +30,7 @@ from .db_admin import (
     restore_secondary_target,
     update_secondary_target,
 )
-from .jobs import JobConflict, cancel_orphaned_active_jobs, job_manager, recent_jobs, run_export_snapshot
+from .jobs import JobConflict, cancel_orphaned_active_jobs, job_manager, live_results_for_job, recent_jobs, run_export_snapshot
 from .storage_bridge import artifact_store
 from pipeline.database import ClippingDB
 
@@ -217,6 +217,11 @@ def healthz() -> dict[str, Any]:
 @app.get("/api/update/status")
 def update_status() -> dict[str, Any]:
     return {"current": job_manager.current_status(), "recent": recent_jobs()}
+
+
+@app.get("/api/update/live-results")
+def update_live_results(job_id: str = "") -> dict[str, Any]:
+    return live_results_for_job(job_id)
 
 
 @app.post("/api/update/start")

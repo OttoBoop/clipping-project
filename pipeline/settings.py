@@ -391,14 +391,15 @@ def get_active_targets() -> list[Target]:
         for row in payload:
             if not isinstance(row, dict):
                 continue
-            label = str(row.get("label", "")).strip()
+            label = str(row.get("label") or row.get("display_name") or "").strip()
             if not label:
                 continue
             key = str(row.get("key", "")).strip() or slug_key(label)
             marker_text = f"{key} {label}".lower()
             if bool(row.get("archived")) or any(marker in marker_text for marker in SYNTHETIC_TARGET_MARKERS):
                 continue
-            priority = 1 if bool(row.get("primary", False)) else 2
+            primary = bool(row.get("primary", False))
+            priority = 1 if primary else 2
             raw_keywords = row.get("keywords", [])
             if isinstance(raw_keywords, list):
                 keywords = [str(item).strip() for item in raw_keywords if str(item).strip()]
@@ -406,14 +407,26 @@ def get_active_targets() -> list[Target]:
                 keywords = [part.strip() for part in raw_keywords.split(",") if part.strip()]
             else:
                 keywords = []
+            raw_aliases = row.get("exact_aliases")
+            if raw_aliases is None:
+                raw_aliases = row.get("aliases")
+            if isinstance(raw_aliases, list):
+                aliases = [str(item).strip() for item in raw_aliases if str(item).strip()]
+            elif isinstance(raw_aliases, str):
+                aliases = [part.strip() for part in raw_aliases.split(",") if part.strip()]
+            else:
+                aliases = []
             if label not in keywords:
                 keywords = [label, *keywords]
             targets.append(
                 Target(
                     key=key,
+                    label=label,
                     display_name=label,
                     priority=priority,
                     keywords=keywords,
+                    exact_aliases=aliases,
+                    primary=primary,
                 )
             )
         return targets or list(DEFAULT_TARGETS)
