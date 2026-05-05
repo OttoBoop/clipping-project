@@ -448,6 +448,11 @@ def process_candidates(
         )
     # Fase 1 (Ctrl+F) deve usar somente nomes exatos das figuras monitoradas.
     matcher = CitationMatcher(targets, exact_names_only=True)
+    secondary_target_keys = {
+        str(getattr(target, "key", "") or "").strip()
+        for target in targets
+        if str(getattr(target, "key", "") or "").strip() and not bool(getattr(target, "primary", False))
+    }
     inserted = 0
     mentions_inserted = 0
     stories_touched = 0
@@ -726,6 +731,45 @@ def process_candidates(
         title_for_article = (candidate.title or extracted_title or "").strip()
         title_for_article = clean_title(title_for_article)
         summary = summarize_text(full_text or candidate.snippet or title_for_article)
+        if secondary_target_keys:
+            safe_surface_text = " ".join([title_for_article, candidate.snippet or "", summary or ""])
+            safe_hits = matcher.find_hits(safe_surface_text)
+            safe_hits_by_target: dict[str, object] = {}
+            for safe_hit in safe_hits:
+                if safe_hit.target_key in secondary_target_keys:
+                    safe_hits_by_target.setdefault(safe_hit.target_key, safe_hit)
+            filtered_hits = []
+            seen_filtered_hits: set[tuple[str, str]] = set()
+            for hit in hits:
+                filtered_hit = hit
+                if hit.target_key in secondary_target_keys:
+                    filtered_hit = safe_hits_by_target.get(hit.target_key)
+                    if filtered_hit is None:
+                        continue
+                dedupe_key = (
+                    str(filtered_hit.target_key),
+                    str(filtered_hit.keyword_matched or "").strip().lower(),
+                )
+                if dedupe_key in seen_filtered_hits:
+                    continue
+                seen_filtered_hits.add(dedupe_key)
+                filtered_hits.append(filtered_hit)
+            if not filtered_hits:
+                emit_candidate(
+                    candidate=candidate,
+                    status="skipped",
+                    reason="target_only_in_page_boilerplate",
+                    final_url=final_url,
+                    hits_for_candidate=hits,
+                    title_value=title_for_article,
+                    published_value=published_at,
+                    summary_value=summary,
+                    stage="safe_surface_match",
+                )
+                if progress_callback and (seen == 1 or seen % 5 == 0):
+                    emit_source_progress()
+                continue
+            hits = filtered_hits
         combined_text = " ".join([candidate.title or "", candidate.snippet or "", full_text or "", summary or ""])
         if not passes_forced_terms(combined_text, forced_terms, forced_mode):
             emit_candidate(

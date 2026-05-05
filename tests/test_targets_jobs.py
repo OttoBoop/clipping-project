@@ -903,7 +903,7 @@ def test_backfill_ignores_full_text_noise_and_cleanup_removes_false_match(monkey
                     "target_name": "shakira",
                     "keyword_matched": "shakira",
                     "sentiment": "neutral",
-                    "sentiment_reason": "existing_article_backfill",
+                    "sentiment_reason": "lexical_heuristic",
                     "context": "",
                 }
             ],
@@ -932,6 +932,71 @@ def test_backfill_ignores_full_text_noise_and_cleanup_removes_false_match(monkey
         }
     assert mention_targets == {"flavio_valle"}
     assert story_targets == {"flavio_valle"}
+
+
+def test_process_candidates_skips_secondary_target_only_in_page_boilerplate(monkeypatch, tmp_path):
+    from pipeline import ingest
+    from pipeline.matcher import Target
+
+    db_file = tmp_path / "secondary-boilerplate.db"
+    events = []
+
+    def fake_fetch_full_article_text(*_args, **_kwargs):
+        full_text = (
+            "A materia principal descreve a investigacao policial no Rio de Janeiro. "
+            "Autoridades informaram novas etapas do processo nesta semana. "
+            "O texto acompanha a apuracao local com detalhes oficiais. "
+            "Links relacionados: Shakira faz show no Rio."
+        )
+        return (
+            "https://example.com/policia-rio",
+            "<html></html>",
+            full_text,
+            "Corregedoria investiga agentes no Rio",
+            "2026-04-30T12:00:00+00:00",
+        )
+
+    monkeypatch.setattr(ingest, "fetch_full_article_text", fake_fetch_full_article_text)
+    monkeypatch.setattr(
+        ingest,
+        "get_active_targets",
+        lambda: [Target(key="shakira", display_name="shakira", keywords=["shakira"], primary=False)],
+    )
+    candidate = ingest.CandidateArticle(
+        title="Corregedoria investiga agentes no Rio",
+        url="https://example.com/policia-rio",
+        source_name="Fonte Teste",
+        source_type="rss",
+        published_at="2026-04-30T12:00:00+00:00",
+        snippet="A investigacao policial foi aberta nesta semana.",
+        metadata={},
+    )
+
+    result = ingest.process_candidates(
+        "Fonte Teste",
+        "rss",
+        [candidate],
+        options=ingest.IngestionOptions(
+            target_keys=["shakira"],
+            date_from="2026-04-30",
+            date_to="2026-04-30",
+            db_path=str(db_file),
+        ),
+        progress_callback=lambda event, payload: events.append((event, payload)),
+    )
+
+    assert result.candidates_seen == 1
+    assert result.articles_inserted == 0
+    assert result.mentions_inserted == 0
+    assert result.stories_touched == 0
+    assert any(
+        event == "candidate_evaluated" and payload.get("reason") == "target_only_in_page_boilerplate"
+        for event, payload in events
+    )
+    with sqlite3.connect(db_file) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM mentions").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM stories").fetchone()[0] == 0
 
 
 def test_process_candidates_reports_candidate_progress_before_fetch_fail(monkeypatch, tmp_path):

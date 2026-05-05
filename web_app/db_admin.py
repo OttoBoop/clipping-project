@@ -435,7 +435,7 @@ def target_matches_safe_article_fields(target: Any, row: sqlite3.Row | dict[str,
 
 
 def cleanup_false_backfilled_target_mentions(db_file: Path, target_keys: list[str]) -> dict[str, Any]:
-    """Remove broad backfill matches that are absent from title/snippet/summary."""
+    """Remove automatic target matches that are absent from title/snippet/summary."""
     db_file = validate_configured_db_file(db_file)
     ensure_app_tables(db_file)
     targets = selected_active_targets(target_keys)
@@ -459,7 +459,7 @@ def cleanup_false_backfilled_target_mentions(db_file: Path, target_keys: list[st
                 JOIN articles a ON a.id = m.article_id
                 LEFT JOIN story_articles sa ON sa.article_id = a.id
                 WHERE m.target_key = ?
-                  AND COALESCE(m.sentiment_reason, '') = 'existing_article_backfill'
+                  AND COALESCE(m.sentiment_reason, '') IN ('existing_article_backfill', 'lexical_heuristic')
                 """,
                 (target.key,),
             ).fetchall()
