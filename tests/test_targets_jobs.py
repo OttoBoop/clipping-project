@@ -1082,7 +1082,7 @@ def test_backfill_ignores_full_text_noise_and_cleanup_removes_false_match(monkey
                     "target_name": "shakira",
                     "keyword_matched": "shakira",
                     "sentiment": "neutral",
-                    "sentiment_reason": "lexical_heuristic",
+                    "sentiment_reason": "",
                     "context": "",
                 }
             ],
