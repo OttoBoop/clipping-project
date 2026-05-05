@@ -715,6 +715,7 @@
     if (status === "exporting") return "Publicando";
     if (status === "cancel_requested") return "Cancelando";
     if (status === "succeeded") return "Concluído";
+    if (status === "interrupted") return "Interrompido";
     if (status === "failed") return "Precisa de atenção";
     if (status === "cancelled" || status === "canceled") return "Cancelado";
     return "Pronto";
@@ -750,6 +751,7 @@
   function progressState(job, event) {
     var status = job && job.status;
     if (status === "succeeded") return { known: true, percent: 100, label: "Concluído" };
+    if (status === "interrupted") return { known: true, percent: 100, label: "Interrompido por reinício" };
     if (status === "failed") return { known: true, percent: 100, label: "Interrompido por erro" };
     if (status === "cancelled" || status === "canceled") return { known: true, percent: 0, label: "Cancelado" };
     if (status === "cancel_requested") return { known: false, percent: 0, label: "Cancelamento solicitado" };
@@ -779,6 +781,7 @@
       exporting: "publish",
     };
     if (status === "succeeded") return "done";
+    if (status === "interrupted") return step === "search" ? "error" : "pending";
     if (status === "failed") return step === "search" ? "error" : "pending";
     if (status === "cancelled" || status === "canceled") return step === "search" ? "cancelled" : "pending";
     var current = currentByStatus[status] || "";
@@ -826,6 +829,7 @@
     if (status === "exporting") return "Publicando o painel atualizado.";
     if (status === "cancel_requested") return "Cancelamento solicitado. A rodada vai parar ao fim da etapa atual.";
     if (status === "succeeded") return "Atualização concluída.";
+    if (status === "interrupted") return "A atualização foi interrompida por reinício do servidor. As notícias já salvas continuam preservadas.";
     if (status === "failed") return "A atualização encontrou um problema e não terminou.";
     if (status === "cancelled" || status === "canceled") return "Atualização cancelada.";
     return state && state.label ? state.label : "Aguardando início";
@@ -833,6 +837,7 @@
 
   function warningText(job) {
     if (!job) return "";
+    if (job.status === "interrupted") return "A atualização não foi cancelada por alguém; o servidor reiniciou antes da publicação final.";
     if (job.status === "failed") return "A atualização parou antes de terminar.";
     if (job.freshness && job.freshness.stale) return "A publicação pode estar desatualizada em relação à última execução concluída.";
     var warnings = [];

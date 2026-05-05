@@ -557,7 +557,7 @@ def get_active_job() -> dict[str, Any] | None:
     return with_job_observability(dict(row)) if row else None
 
 
-def cancel_orphaned_active_jobs(reason: str = "startup_recovered_active_job") -> int:
+def mark_orphaned_active_jobs_interrupted(reason: str = "startup_recovered_active_job") -> int:
     ensure_app_tables(db_path())
     with connect(db_path()) as conn:
         rows = conn.execute(
@@ -573,8 +573,13 @@ def cancel_orphaned_active_jobs(reason: str = "startup_recovered_active_job") ->
     now = datetime.now(timezone.utc).isoformat()
     for row in rows:
         job_id = str(row["id"])
-        update_job(job_id, status="cancelled", finished_at=now)
-        append_event(job_id, "job_cancelled", {"status": "cancelled", "reason": reason})
+        update_job(
+            job_id,
+            status="interrupted",
+            finished_at=now,
+            error_message="A atualização foi interrompida por reinício do servidor. Os itens já salvos continuam preservados.",
+        )
+        append_event(job_id, "job_interrupted", {"status": "interrupted", "reason": reason})
     return len(rows)
 
 

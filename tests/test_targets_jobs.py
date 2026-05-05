@@ -566,7 +566,7 @@ def test_cancel_active_ignores_terminal_job_still_uploading(monkeypatch, tmp_pat
     assert not manager._cancel_events["terminal-uploading"].is_set()
 
 
-def test_cancel_orphaned_active_jobs_marks_persisted_active_rows_terminal(monkeypatch, tmp_path):
+def test_startup_marks_orphaned_active_jobs_interrupted_not_cancelled(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     jobs.create_job(
         "orphaned-running",
@@ -582,14 +582,15 @@ def test_cancel_orphaned_active_jobs_marks_persisted_active_rows_terminal(monkey
     )
     jobs.update_job("orphaned-running", status="running")
 
-    cancelled = jobs.cancel_orphaned_active_jobs()
+    interrupted = jobs.mark_orphaned_active_jobs_interrupted()
 
-    assert cancelled == 1
+    assert interrupted == 1
     assert jobs.get_active_job() is None
     job = jobs.get_job("orphaned-running")
-    assert job["status"] == "cancelled"
+    assert job["status"] == "interrupted"
+    assert "reinício do servidor" in job["error_message"]
     assert any(
-        event["event"] == "job_cancelled"
+        event["event"] == "job_interrupted"
         and event["payload"].get("reason") == "startup_recovered_active_job"
         for event in job["events"]
     )
