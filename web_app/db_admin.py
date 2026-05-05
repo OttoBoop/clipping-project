@@ -6,6 +6,7 @@ import re
 import sqlite3
 import tempfile
 import unicodedata
+import html
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,6 +29,10 @@ SYNTHETIC_SMOKE_SOURCES = {
 }
 SYNTHETIC_TARGET_MARKERS = ("atlas_teste", "atlas teste")
 SLUG_RE = re.compile(r"[^a-z0-9]+")
+TAG_RE = re.compile(r"<[^>]+>")
+RELATED_MATCH_NOISE_RE = re.compile(
+    r"(?is)\b(not[ií]cias?\s+relacionadas?|leia\s+tamb[eé]m|veja\s+tamb[eé]m|textos?\s+relacionados?)\b.*"
+)
 
 
 class ValidationError(ValueError):
@@ -430,8 +435,14 @@ def selected_active_targets(target_keys: list[str]) -> list[Any]:
 def target_matches_safe_article_fields(target: Any, row: sqlite3.Row | dict[str, Any]) -> bool:
     from pipeline.matcher import CitationMatcher
 
-    text = " ".join([str(row["title"] or ""), str(row["snippet"] or ""), str(row["summary"] or "")])
-    return bool(CitationMatcher([target], exact_names_only=True).find_hits(text))
+    return bool(CitationMatcher([target], exact_names_only=True).find_hits(safe_article_match_text(row)))
+
+
+def safe_article_match_text(row: sqlite3.Row | dict[str, Any]) -> str:
+    raw_text = " ".join([str(row["title"] or ""), str(row["snippet"] or ""), str(row["summary"] or "")])
+    text = html.unescape(TAG_RE.sub(" ", raw_text))
+    text = RELATED_MATCH_NOISE_RE.sub(" ", text)
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def cleanup_false_backfilled_target_mentions(db_file: Path, target_keys: list[str]) -> dict[str, Any]:
@@ -531,8 +542,7 @@ def backfill_missing_target_mentions(db_file: Path, target_keys: list[str]) -> d
             article_id = int(row["id"])
             if db.find_mention_id(article_id, target.key) is not None:
                 continue
-            text = " ".join([str(row["title"] or ""), str(row["snippet"] or ""), str(row["summary"] or "")])
-            hits = matcher.find_hits(text)
+            hits = matcher.find_hits(safe_article_match_text(row))
             if not hits:
                 continue
             hit = hits[0]

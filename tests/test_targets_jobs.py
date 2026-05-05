@@ -883,7 +883,10 @@ def test_backfill_ignores_full_text_noise_and_cleanup_removes_false_match(monkey
             source_name="Fonte Teste",
             source_type="test",
             published_at="2026-04-30T12:00:00+00:00",
-            snippet="Flavio Valle fala sobre ciclovias.",
+            snippet=(
+                "Flavio Valle fala sobre ciclovias. "
+                "<h3>Notícias relacionadas:</h3><ul><li>Shakira no Rio.</li></ul>"
+            ),
             full_text="Flavio Valle fala sobre ciclovias. Links relacionados: Shakira no Rio.",
         )
         assert article_id is not None
@@ -980,6 +983,63 @@ def test_process_candidates_skips_secondary_target_only_in_page_boilerplate(monk
             target_keys=["shakira"],
             date_from="2026-04-30",
             date_to="2026-04-30",
+            db_path=str(db_file),
+        ),
+        progress_callback=lambda event, payload: events.append((event, payload)),
+    )
+
+    assert result.candidates_seen == 1
+    assert result.articles_inserted == 0
+    assert result.mentions_inserted == 0
+    assert result.stories_touched == 0
+    assert any(
+        event == "candidate_evaluated" and payload.get("reason") == "target_only_in_page_boilerplate"
+        for event, payload in events
+    )
+    with sqlite3.connect(db_file) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM mentions").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM stories").fetchone()[0] == 0
+
+
+def test_process_candidates_skips_secondary_target_only_in_related_snippet(monkeypatch, tmp_path):
+    from pipeline import ingest
+    from pipeline.matcher import Target
+
+    db_file = tmp_path / "secondary-related-snippet.db"
+    events = []
+
+    def unexpected_fetch(*_args, **_kwargs):
+        raise AssertionError("related-snippet preview match should not need article fetch")
+
+    monkeypatch.setattr(ingest, "fetch_full_article_text", unexpected_fetch)
+    monkeypatch.setattr(
+        ingest,
+        "get_active_targets",
+        lambda: [Target(key="shakira", display_name="shakira", keywords=["shakira"], primary=False)],
+    )
+    candidate = ingest.CandidateArticle(
+        title="Avião bimotor cai e bate em prédio em Belo Horizonte",
+        url="https://example.com/aviao-bimotor",
+        source_name="Agencia Brasil",
+        source_type="rss",
+        published_at="2026-05-04T19:32:00+00:00",
+        snippet=(
+            "Um avião bimotor atingiu um prédio em Belo Horizonte. "
+            "<h3>Notícias relacionadas:</h3><ul><li>Mesmo com multidão, show de Shakira "
+            "não registra ocorrências graves.</li></ul>"
+        ),
+        metadata={},
+    )
+
+    result = ingest.process_candidates(
+        "Agencia Brasil",
+        "rss",
+        [candidate],
+        options=ingest.IngestionOptions(
+            target_keys=["shakira"],
+            date_from="2026-05-04",
+            date_to="2026-05-04",
             db_path=str(db_file),
         ),
         progress_callback=lambda event, payload: events.append((event, payload)),

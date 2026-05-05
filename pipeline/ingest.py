@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import json
+import html
 import re
 import time
 from dataclasses import dataclass, replace
@@ -55,7 +56,11 @@ from .settings import (
 
 SENTENCE_RE = re.compile(r"(?<=[.!?])\s+")
 URL_RE = re.compile(r"https?://\S+")
+TAG_RE = re.compile(r"<[^>]+>")
 SEARCH_NOISE_RE = re.compile(r"(resultado[s]?\s+da\s+pesquisa|wp-content|comments?)", re.IGNORECASE)
+RELATED_MATCH_NOISE_RE = re.compile(
+    r"(?is)\b(not[ií]cias?\s+relacionadas?|leia\s+tamb[eé]m|veja\s+tamb[eé]m|textos?\s+relacionados?)\b.*"
+)
 
 POSITIVE_MARKERS = {
     "apoio",
@@ -144,6 +149,18 @@ def summarize_text(text: str, max_sentences: int = 3) -> str:
     if not selected:
         selected = parts[:max_sentences]
     return " ".join(selected)[:700]
+
+
+def safe_target_match_surface(*parts: str) -> str:
+    cleaned_parts: list[str] = []
+    for part in parts:
+        text = html.unescape(TAG_RE.sub(" ", str(part or "")))
+        text = URL_RE.sub(" ", text)
+        text = RELATED_MATCH_NOISE_RE.sub(" ", text)
+        text = re.sub(r"\s+", " ", text).strip()
+        if text:
+            cleaned_parts.append(text)
+    return " ".join(cleaned_parts)
 
 
 def normalize_forced_terms(terms: list[str] | None) -> list[str]:
@@ -732,7 +749,11 @@ def process_candidates(
         title_for_article = clean_title(title_for_article)
         summary = summarize_text(full_text or candidate.snippet or title_for_article)
         if secondary_target_keys:
-            safe_surface_text = " ".join([title_for_article, candidate.snippet or "", summary or ""])
+            safe_surface_text = safe_target_match_surface(
+                title_for_article,
+                candidate.snippet or "",
+                summary or "",
+            )
             safe_hits = matcher.find_hits(safe_surface_text)
             safe_hits_by_target: dict[str, object] = {}
             for safe_hit in safe_hits:
