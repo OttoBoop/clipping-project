@@ -10,7 +10,7 @@ _These rules exist to prevent premature stops, self-contradictions, and agent-la
 Every Iris session must start with these three steps before anything else:
 
 1. `git fetch origin && git status --short --branch` — see what changed since last session.
-2. Read `md documents/ATLAS_IRIS_ASYNC.md` — check for Atlas answers to pending questions.
+2. Read `md documents/Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md` — check §1 (AGORA), §2 (Claims), §3 (Bloqueios), §4 (Open Questions) for state and answers to pending questions.
 3. If this is a continuation session, re-read the active short-term plan doc in the repo.
 
 ---
@@ -26,12 +26,13 @@ Done means:
 
 Blocked means:
 - A human (Otávio) must make a decision, OR
-- Atlas must answer a question in `ATLAS_IRIS_ASYNC.md` first.
+- Another agent must answer a question in §4 of `Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md` first.
 
 When genuinely blocked:
-1. Write the question to `ATLAS_IRIS_ASYNC.md` using the Q template.
-2. Continue ALL unblocked tasks.
-3. Tell Otávio once: "I've written Q-NNN to Atlas in ATLAS_IRIS_ASYNC.md. Continuing with [X] now."
+1. Register the block in §3 of `Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md`.
+2. Write the question to §4 (Q-NNN template).
+3. Continue ALL unblocked tasks.
+4. Tell Otávio once: "I've written Q-NNN to [agent] in the live channel. Continuing with [X] now."
 
 **A commit is not a stop signal.** After committing, check the plan — if more
 steps remain, execute them.
@@ -85,10 +86,10 @@ Next: [the next concrete step Iris will take — or "session complete" if done]
 
 Before ending any session, confirm each item:
 
-- [ ] All planned tasks are either done or blocked (with Q written to ATLAS_IRIS_ASYNC.md).
+- [ ] All planned tasks are either done or blocked (with Q written to §4 of the live channel).
 - [ ] Changes committed and pushed to the working branch.
-- [ ] A dated log entry appended to `md documents/ATLAS_CLAUDE_COORDINATION.md`.
-- [ ] Status table in `ATLAS_CLAUDE_COORDINATION.md` updated.
+- [ ] A dated log entry appended to §5 of `Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md`.
+- [ ] §1 (AGORA) row updated to reflect end-of-session state.
 - [ ] Facts/Inferences/Blockers/Next reported to Otávio in plain text.
 
 ---
@@ -98,8 +99,7 @@ Before ending any session, confirm each item:
 Iris owns:
 - The human classification feature (schema, read API, frontend display).
 - The `md documents/IRIS_*` docs.
-- The `md documents/ATLAS_IRIS_ASYNC.md` Q channel (Iris writes questions).
-- Append-only entries in `md documents/ATLAS_CLAUDE_COORDINATION.md`.
+- Iris's own entries in §1, §2, §3, §4, §5 of `md documents/Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md` (the live multi-agent channel).
 
 Iris does **not** rewrite Atlas-owned docs. Disagreements go into a dated log entry
 in the coordination doc, classified as fact/inference/product decision per the framework.
@@ -111,8 +111,8 @@ in the coordination doc, classified as fact/inference/product decision per the f
 | Purpose | File |
 |---|---|
 | Iris identity + subagent naming | `md documents/ORCHESTRATORS_FRAMEWORK_FOR_THE_CLIPPING_PROJECT.md` |
-| Atlas-Iris coordination protocol + log | `md documents/ATLAS_CLAUDE_COORDINATION.md` |
-| Atlas-Iris async Q&A channel | `md documents/ATLAS_IRIS_ASYNC.md` |
+| Multi-agent live channel (status, claims, blocks, Q&A, log) | `md documents/Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md` |
+| Historical coord channels (read-only) | `md documents/legacy/ATLAS_CLAUDE_COORDINATION.md`, `md documents/legacy/ATLAS_IRIS_ASYNC.md` |
 | Project goals and constraints | `md documents/GENERAL_UNDERSTANDING_OF_OUR_GOALS_IN_THIS_PROJECT.md` |
 | Long-term roadmap | `docs/LONG_TERM_GOALS_FOR_THE_CLIPPING_ONLINE_PROJECT.md` |
 | DB schema + helpers | `pipeline/database.py` |

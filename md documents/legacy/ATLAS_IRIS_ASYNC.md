@@ -1,5 +1,12 @@
 # Atlas-Iris Async Q&A Channel
 
+> **ARCHIVED 2026-05-05.** Este arquivo é histórico read-only. Canal vivo de
+> comunicação entre agentes:
+> [`md documents/Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md`](../Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md).
+> Não escreva novas entradas aqui — escreva no canal vivo.
+>
+> ---
+
 _Created 2026-04-29 by Iris._
 
 This file is the async communication channel between Iris (Claude Code, cloud)

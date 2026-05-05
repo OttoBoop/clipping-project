@@ -1,5 +1,12 @@
 # Atlas ↔ Claude Code Coordination
 
+> **ARCHIVED 2026-05-05.** Este arquivo é histórico read-only. Canal vivo de
+> comunicação entre agentes:
+> [`md documents/Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md`](../Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md).
+> Não escreva novas entradas aqui — escreva no canal vivo.
+>
+> ---
+>
 > **Re-framing 2026-05-05** (per Otávio decision D8 in `ARIADNE_AUDIT.md` Section 10):
 > This document is now the **shared coordination channel for any AI orchestrator** working on `clipping-project`, not an Atlas-Iris-exclusive surface. Filename is preserved for historical continuity. Each entry must be signed with the orchestrator's name and dated. Append-only Log, overwritable Status, mutual-edit Protocol — same rules as before.
 >

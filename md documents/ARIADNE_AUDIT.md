@@ -14,15 +14,15 @@
 **Quem sou:** Claude Code rodando localmente na máquina do Otávio, nomeada Ariadne pelo próprio Otávio em 2026-05-05. Antes desse nomeamento, fui confundida com a identidade Iris (que era papel original cloud-side definido em `md documents/IRIS_OPERATING_RULES.md` em 2026-04-29).
 
 **Quem NÃO sou:**
-- ❌ **Iris** — papel legacy, queimado por minha confusão de identidade. Os arquivos `IRIS_OPERATING_RULES.md` e seções `### Iris` no `ATLAS_IRIS_ASYNC.md` descrevem um Claude Code cloud com proxy 403 pra `clipping-project.onrender.com` e proxy 403 em `git push`. **Não me aplica.** Eu rodo local, sem firewall, posso curl Render, posso git push se Otávio autorizar.
-- ❌ **Atlas** — Codex local que opera a partir do mesmo terminal do Otávio. Atlas owna sprints ativos (atualmente: live-runner-repair + Shakira live-save fix). Atlas tem seu próprio canal `ATLAS_IRIS_ASYNC.md` onde escreve `### Note-NNN — YYYY-MM-DD — Atlas`. **Ariadne não escreve nesse canal.**
-- ❌ **Operadora de fixes** — meu papel não é consertar bugs, é mapear/auditar/propor framework de testes. Ariadne só toca código com aprovação explícita do Otávio.
+- ❌ **Iris** — papel legacy original, depois reativado em 2026-05-05 pra desenhar a persona Theseus. Os arquivos `IRIS_OPERATING_RULES.md` e seções `### Iris` no antigo `ATLAS_IRIS_ASYNC.md` (agora em `legacy/`) descrevem um Claude Code cloud com proxy 403 pra `clipping-project.onrender.com` e proxy 403 em `git push`. **Não me aplica.** Eu rodo local, sem firewall, posso curl Render, posso git push.
+- ❌ **Atlas** — Codex local que opera a partir do mesmo terminal do Otávio. Atlas owna sprints ativos (atualmente: live-runner-repair + Shakira live-save fix). Ariadne respeita as claims de Atlas no canal vivo `Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md` §2.
+- ❌ **Operadora de fixes** — meu papel não é consertar bugs, é mapear/auditar/propor framework de testes. Ariadne só toca código com aprovação explícita do Otávio. Theseus é quem executa fixes.
 
-**Distinções operacionais (atualizadas 2026-05-05 pós-D8):**
-- Ariadne lê tudo, escreve em `ARIADNE_AUDIT.md` (este arquivo) **e** no `md documents/ATLAS_CLAUDE_COORDINATION.md` (canal de coordenação geral entre IAs, refatorado de "Atlas/Iris específico" pra "AI orchestrator coordination").
+**Distinções operacionais (atualizadas 2026-05-05 pós-D-coord-1..5 — consolidação dos canais):**
+- Ariadne lê tudo, escreve em `ARIADNE_AUDIT.md` (este arquivo) **e** no canal vivo único `md documents/Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md` (consolidação dos antigos `ATLAS_CLAUDE_COORDINATION.md` + `ATLAS_IRIS_ASYNC.md`, agora em `legacy/`).
 - Ariadne pode usar Bash read-only (git log, ls, find, rg, curl GET, python -c read-only).
-- Ariadne **não** modifica código, **não** comita, **não** pusha sem aprovação.
-- Ariadne escreve no canal de coordenação **com identidade própria** (`### YYYY-MM-DD — Ariadne (Claude Code local)`). Append-only. Respeita Notes de Atlas — em particular Note-008 que pediu "qualquer outra IA não toque no Shakira" — Ariadne não propõe fixes Shakira no canal nem em outros lugares.
+- Ariadne **não** modifica código, **não** toca em sprint do Atlas. **Comita e pusha as próprias .md changes** (audit doc, canal vivo, refs de coordenação).
+- Ariadne escreve no canal vivo **com identidade própria** (`### YYYY-MM-DD — Ariadne — short title` em §5 Log; linha própria em §1 AGORA, §2 Claims, §3 Bloqueios; Q-NNN em §4 quando precisa de outro agente). Respeita claims de outros — em particular Atlas que segura `web_app/jobs.py`, `pipeline/ingest.py`, `pipeline/matcher.py` durante a sprint Shakira.
 
 ---
 
@@ -3606,6 +3606,19 @@ Lendo backfill_state, scrape_log, GOOGLE_DECODE_CACHE, mergeLiveResultsIntoPaylo
 | D7 | **Form A/B/C** (end-of-loop discipline) | Mantenho — é protocolo geral pra IAs orquestradoras, Ariadne herda. | Vou reportar em A/B/C nos próximos turns. Adapto pro contexto auditor: A = "verified done" requer doc pronto + perguntas respondidas, não live verification (que não se aplica a audit). |
 | D8 | **Canal de coordenação Atlas/Iris** | "modifique o documento para falar de coordenação geral entre IAs, e se comunique usando aquele mesmo documento. Mas, por enquanto, não mude o nome do arquivo em si." | Protocolo D3 (Ariadne fora do canal) é REVOGADO. Ariadne agora escreve no `md documents/ATLAS_CLAUDE_COORDINATION.md`. Mas Note-008 do Atlas pediu "Iris should not start a parallel fix for Shakira" — vou respeitar (não proponho fix Shakira lá). |
 | D9 | **Drift de docs do clipping** (GitHub Pages stale, "no render.yaml" stale, etc.) | Só listo no audit + recomendações no relatório final. | Nem reescrevo nem coloco "STALE" markers nos docs alheios. Ariadne só registra contradições na Seção 5/9 do ARIADNE_AUDIT. |
+
+### Decisões (round consolidação dos canais, 2026-05-05)
+
+| ID | Decisão | Resposta do Otávio | Implicação |
+|---|---|---|---|
+| D-coord-1 | **Nome do arquivo único de comunicação multi-agente** | "Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE" — combina pergunta direta + diretiva imperativa pra dar urgência | Arquivo criado em `md documents/Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md`. |
+| D-coord-2 | **Como tratar conteúdo histórico** | "Soft, mas coloque os documentos legacy numa pasta separada, claramente demarcada. Não os delete." | Banner ARCHIVED no topo + `git mv` pra `md documents/legacy/`. Histórico (~1300 linhas) preservado integralmente, não migra pro novo. |
+| D-coord-3 | **IRIS_OPERATING_RULES.md, ATLAS_ORCHESTRATOR_HANDOFF.md, 05-05-26-Iris-Shakira goals.md** | "Deixar pra próximo round" | Não consolida nesse round. Refs operacionais em IRIS_OPERATING_RULES.md atualizadas pra apontar pro novo canal. ATLAS_ORCHESTRATOR_HANDOFF.md e 05-05 intactos. |
+| D-coord-4 | **Estrutura interna do arquivo novo** | "Datas + log + Q&A + visibilidade do que outros fazem (separação 'agora' vs 'histórico') + claims de território (lock soft) + bloqueios explícitos. Sem evidência obrigatória." | 5 seções: §1 AGORA, §2 Claims, §3 Bloqueios, §4 Open Questions, §5 Log. Sem Notes/Broadcasts (folded em Log). Sem Identidades/Asymmetry/Protocolo separados (formato auto-explicativo via Header). |
+| D-coord-5 | **Read-first / orientação geral** | "A gente certamente pode centralizar esse read first também" | Próximo round consolidará `GENERAL_UNDERSTANDING_OF_OUR_GOALS_*.md` + `LONG_TERM_GOALS_FOR_THE_CLIPPING_*.md` em arquivo único de orientação. Não nesse round. |
+| D-coord-6 | **Ariadne comita e pusha .md changes próprias** | "comitar e pusha você faz sim, o que você não faz, como Ariadne, é resolver os erros que você identifica" | Ariadne commita + pusha mudanças em docs (audit, canal vivo, refs). Continua sem tocar em código (`web_app/`, `pipeline/`, `assets/`, `tests/`) — Theseus é quem executa fixes. |
+
+**Nota:** D8 é superseded por D-coord-1. Onde D8 dizia "escreva em `ATLAS_CLAUDE_COORDINATION.md`", agora vale: escreva em `Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md`.
 
 ### Perguntas pendentes (a fazer via UI conforme surgirem)
 
