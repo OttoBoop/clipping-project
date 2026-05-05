@@ -21,6 +21,8 @@ from .db_admin import (
     cleanup_false_backfilled_target_mentions,
     connect,
     ensure_app_tables,
+    load_targets,
+    primary_target_keys,
     target_labels,
     validate_configured_db_file,
     validate_target_keys,
@@ -299,6 +301,19 @@ class JobManager:
             if cancel_event.is_set():
                 return
             if spec.get("export"):
+                if kind == "export":
+                    cleanup = cleanup_false_backfilled_target_mentions(db_path(), active_secondary_target_keys())
+                    if cleanup.get("removedMentions"):
+                        append_event(
+                            job_id,
+                            "target_backfill_cleanup",
+                            {
+                                "target_keys": active_secondary_target_keys(),
+                                "mentions_inserted": 0,
+                                "stories_touched": int(cleanup.get("storiesTouched") or 0),
+                                "count": int(cleanup.get("removedMentions") or 0),
+                            },
+                        )
                 update_job(job_id, status="exporting", **totals)
                 run_export_snapshot(job_id)
 
@@ -385,6 +400,17 @@ def payload_list(payload: dict[str, Any], snake_key: str, camel_key: str) -> lis
     if value is None:
         value = payload.get(camel_key)
     return value if isinstance(value, list) else []
+
+
+def active_secondary_target_keys() -> list[str]:
+    primary = set(primary_target_keys())
+    keys: list[str] = []
+    for row in load_targets():
+        key = str(row.get("key") or "").strip()
+        if not key or key in primary or bool(row.get("archived")):
+            continue
+        keys.append(key)
+    return keys
 
 
 def run_export_snapshot(job_id: str | None = None) -> None:
@@ -824,8 +850,16 @@ def sync_live_progress_totals(job_id: str) -> None:
         )
 
 
-def live_results_for_job(job_id: str = "", *, limit: int = 60) -> dict[str, Any]:
+def live_results_for_job(
+    job_id: str = "",
+    *,
+    target_key: str = "",
+    scope: str = "",
+    limit: int = 60,
+) -> dict[str, Any]:
     ensure_app_tables(db_path())
+    if scope == "base":
+        return live_results_for_base(target_key=target_key, limit=limit)
     job: dict[str, Any] | None = None
     if job_id:
         job = get_job(job_id)
@@ -844,9 +878,52 @@ def live_results_for_job(job_id: str = "", *, limit: int = 60) -> dict[str, Any]
             ORDER BY id DESC
             LIMIT ?
             """,
-            (job_id, max(1, int(limit) * 3)),
+            (job_id, max(1, normalized_limit(limit) * 3)),
         ).fetchall()
 
+    items = live_items_from_event_rows(
+        rows,
+        target_key=target_key,
+        limit=limit,
+        published_cutoff=latest_successful_publish_time(),
+    )
+    return {"jobId": job_id, "status": str(job.get("status") or ""), "items": items, "count": len(items)}
+
+
+def live_results_for_base(*, target_key: str = "", limit: int = 240) -> dict[str, Any]:
+    ensure_app_tables(db_path())
+    row_limit = max(300, normalized_limit(limit) * 8)
+    with connect(db_path()) as conn:
+        rows = conn.execute(
+            """
+            SELECT e.created_at, e.payload_json
+            FROM job_events e
+            JOIN jobs j ON j.id = e.job_id
+            WHERE e.event = 'article_saved'
+            ORDER BY e.id DESC
+            LIMIT ?
+            """,
+            (row_limit,),
+        ).fetchall()
+
+    items = live_items_from_event_rows(
+        rows,
+        target_key=target_key,
+        limit=limit,
+        published_cutoff=latest_successful_publish_time(),
+    )
+    return {"jobId": "", "status": "base", "items": items, "count": len(items)}
+
+
+def live_items_from_event_rows(
+    rows: list[Any],
+    *,
+    target_key: str = "",
+    limit: int = 60,
+    published_cutoff: str = "",
+) -> list[dict[str, Any]]:
+    labels = target_labels()
+    active_keys = set(labels)
     merged: dict[int, dict[str, Any]] = {}
     order: list[int] = []
     for row in reversed(rows):
@@ -858,6 +935,11 @@ def live_results_for_job(job_id: str = "", *, limit: int = 60) -> dict[str, Any]
             continue
         article_id = safe_int(payload.get("article_id"))
         if article_id <= 0:
+            continue
+        payload_keys = event_target_keys(payload)
+        if target_key and target_key not in payload_keys:
+            continue
+        if active_keys and not active_keys.intersection(payload_keys):
             continue
         if article_id not in merged:
             merged[article_id] = {
@@ -876,22 +958,29 @@ def live_results_for_job(job_id: str = "", *, limit: int = 60) -> dict[str, Any]
             key = str(key or "").strip()
             if key and key not in item["target_keys"]:
                 item["target_keys"].append(key)
-        target_key = str(payload.get("target_key") or "").strip()
-        if target_key and target_key not in item["target_keys"]:
-            item["target_keys"].append(target_key)
+        event_key = str(payload.get("target_key") or "").strip()
+        if event_key and event_key not in item["target_keys"]:
+            item["target_keys"].append(event_key)
         item["event_payload"] = payload
 
-    article_ids = order[-max(1, int(limit)) :]
+    article_ids = order[-normalized_limit(limit) :]
     db_articles = {int(row["article_id"]): row for row in ClippingDB(db_path()).list_articles_by_ids(article_ids)}
-    labels = target_labels(include_archived=True)
-    published = str(job.get("status") or "") == "succeeded" and bool(job.get("artifactUpload"))
     items: list[dict[str, Any]] = []
     for article_id in reversed(article_ids):
         event_item = merged.get(article_id) or {}
         payload = event_item.get("event_payload") or {}
         article = db_articles.get(article_id, {})
-        target_keys = list(article.get("target_keys") or event_item.get("target_keys") or [])
+        if article:
+            target_keys = [key for key in list(article.get("target_keys") or []) if key in active_keys]
+        else:
+            target_keys = [key for key in list(event_item.get("target_keys") or []) if key in active_keys]
+        if target_key and target_key not in target_keys:
+            continue
+        if not target_keys:
+            continue
         story_id = safe_int(article.get("story_id")) or safe_int(event_item.get("story_id"))
+        saved_at = str(event_item.get("saved_at") or "")
+        published = bool(published_cutoff and saved_at and saved_at <= published_cutoff)
         items.append(
             {
                 "articleId": article_id,
@@ -901,7 +990,7 @@ def live_results_for_job(job_id: str = "", *, limit: int = 60) -> dict[str, Any]
                 "sourceName": str(article.get("source_name") or payload.get("source_name") or ""),
                 "sourceType": str(article.get("source_type") or payload.get("source_type") or ""),
                 "publishedAt": str(article.get("published_at") or payload.get("published_at") or ""),
-                "savedAt": str(event_item.get("saved_at") or ""),
+                "savedAt": saved_at,
                 "summary": str(article.get("summary") or payload.get("summary_excerpt") or ""),
                 "snippet": str(article.get("snippet") or ""),
                 "targetKeys": target_keys,
@@ -909,7 +998,41 @@ def live_results_for_job(job_id: str = "", *, limit: int = 60) -> dict[str, Any]
                 "publicationState": "published" if published else "saved",
             }
         )
-    return {"jobId": job_id, "status": str(job.get("status") or ""), "items": items, "count": len(items)}
+    return items
+
+
+def event_target_keys(payload: dict[str, Any]) -> list[str]:
+    keys: list[str] = []
+    for key in list(payload.get("target_keys") or payload.get("targetKeys") or []):
+        key = str(key or "").strip()
+        if key and key not in keys:
+            keys.append(key)
+    target_key = str(payload.get("target_key") or "").strip()
+    if target_key and target_key not in keys:
+        keys.append(target_key)
+    return keys
+
+
+def latest_successful_publish_time() -> str:
+    with connect(db_path()) as conn:
+        row = conn.execute(
+            """
+            SELECT COALESCE(finished_at, started_at, '') AS published_at
+            FROM jobs
+            WHERE status = 'succeeded' AND kind IN ('update', 'export', 'manual')
+            ORDER BY COALESCE(finished_at, started_at, '') DESC
+            LIMIT 1
+            """
+        ).fetchone()
+    return str(row["published_at"] or "") if row else ""
+
+
+def normalized_limit(limit: int) -> int:
+    try:
+        value = int(limit)
+    except Exception:
+        value = 60
+    return min(500, max(1, value))
 
 
 def safe_int(value: Any) -> int:

@@ -847,7 +847,7 @@ class ClippingDB:
                 GROUP_CONCAT(DISTINCT m.target_name) AS target_names,
                 GROUP_CONCAT(DISTINCT m.keyword_matched) AS keywords
             FROM articles a
-            JOIN mentions m ON m.article_id = a.id
+            LEFT JOIN mentions m ON m.article_id = a.id
             LEFT JOIN story_articles sa ON sa.article_id = a.id
             WHERE a.id IN ({placeholders})
             GROUP BY a.id

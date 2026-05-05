@@ -551,6 +551,7 @@ def test_update_status_exposes_artifact_upload_contract_for_completed_jobs(monke
 def test_live_results_endpoint_returns_saved_articles_before_export(monkeypatch, tmp_path):
     app, db_file = load_test_app(monkeypatch, tmp_path)
     jobs = importlib.import_module("web_app.jobs")
+    monkeypatch.setattr(jobs, "target_labels", lambda include_archived=False: {"shakira": "shakira"})
     job_id = "live-api-job"
     jobs.create_job(
         job_id,
@@ -834,7 +835,7 @@ def test_public_dashboard_wording_contract():
     assert "Ajustar busca" in html
     assert "Termos relacionados" in html
     assert "Correspondências exatas" in html
-    assert "Gerenciar nomes extras" in html
+    assert "Gerenciar nomes secundários" in html
     assert 'type="date"' not in html
     assert "Data inicial (DD/MM/AAAA)" in html
     assert "Data final (DD/MM/AAAA)" in html

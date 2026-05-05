@@ -378,6 +378,7 @@ def test_job_progress_uses_live_source_totals_before_target_finishes(monkeypatch
 def test_article_saved_events_drive_live_results_and_totals(monkeypatch, tmp_path):
     _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
     monkeypatch.setattr(jobs.artifact_store, "enabled", False)
+    monkeypatch.setattr(jobs, "target_labels", lambda include_archived=False: {"shakira": "shakira"})
     job_id = "shakira-live-results"
     jobs.create_job(
         job_id,
@@ -444,6 +445,131 @@ def test_article_saved_events_drive_live_results_and_totals(monkeypatch, tmp_pat
     assert live["items"][0]["title"] == "Shakira anuncia show no Rio"
     assert "shakira" in live["items"][0]["targetKeys"]
     assert live["items"][0]["publicationState"] == "saved"
+
+
+def test_base_live_results_return_recent_saved_articles_after_export_job(monkeypatch, tmp_path):
+    _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs.artifact_store, "enabled", False)
+    monkeypatch.setattr(jobs, "target_labels", lambda include_archived=False: {"shakira": "shakira"})
+    update_job_id = "shakira-update-for-base"
+    jobs.create_job(
+        update_job_id,
+        "update",
+        {
+            "preset": "custom",
+            "collector": "all",
+            "target_keys": ["shakira"],
+            "date_from": "2026-04-01",
+            "date_to": "2026-05-05",
+        },
+        started_by="coworker",
+    )
+    with ClippingDB(db_file) as db:
+        article_id = db.insert_article(
+            url="https://example.com/shakira-base-atual",
+            title="Shakira entra direto na Base atual",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-05-02T12:00:00+00:00",
+            snippet="Shakira aparece na Base atual.",
+            full_text="Shakira aparece na Base atual.",
+        )
+        assert article_id is not None
+        db.insert_mention(article_id, "shakira", "shakira", "shakira")
+        story_id = db.create_story(
+            title="Shakira entra direto na Base atual",
+            summary="Resumo sobre Shakira.",
+            temperature=34.0,
+            target_keys=["shakira"],
+        )
+        db.attach_article_to_story(story_id, article_id)
+
+    jobs.record_progress(
+        update_job_id,
+        "article_saved",
+        {
+            "article_id": article_id,
+            "story_id": story_id,
+            "url": "https://example.com/shakira-base-atual",
+            "title": "Shakira entra direto na Base atual",
+            "published_at": "2026-05-02T12:00:00+00:00",
+            "source_name": "Fonte Teste",
+            "source_type": "test",
+            "target_keys": ["shakira"],
+            "articles_inserted_delta": 1,
+            "mentions_inserted_delta": 1,
+            "stories_touched_delta": 1,
+            "publication_state": "saved",
+        },
+        target_key="shakira",
+        target_label="shakira",
+    )
+    jobs.create_job(
+        "newer-export-job",
+        "export",
+        {"preset": "export", "collector": "export", "target_keys": [], "date_from": "", "date_to": ""},
+        started_by="coworker",
+        enforce_single_active=False,
+    )
+
+    live = jobs.live_results_for_job(scope="base", target_key="shakira", limit=10)
+
+    assert live["status"] == "base"
+    assert live["count"] == 1
+    assert live["items"][0]["title"] == "Shakira entra direto na Base atual"
+    assert live["items"][0]["targetKeys"] == ["shakira"]
+
+
+def test_live_results_do_not_resurrect_removed_target_from_stale_event(monkeypatch, tmp_path):
+    _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs.artifact_store, "enabled", False)
+    monkeypatch.setattr(jobs, "target_labels", lambda include_archived=False: {"shakira": "shakira"})
+    job_id = "stale-event-target"
+    jobs.create_job(
+        job_id,
+        "update",
+        {
+            "preset": "custom",
+            "collector": "all",
+            "target_keys": ["shakira"],
+            "date_from": "2026-04-01",
+            "date_to": "2026-05-05",
+        },
+        started_by="coworker",
+    )
+    with ClippingDB(db_file) as db:
+        article_id = db.insert_article(
+            url="https://example.com/not-shakira",
+            title="Materia sem alvo depois da limpeza",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-05-02T12:00:00+00:00",
+            snippet="Sem alvo ativo.",
+            full_text="Sem alvo ativo.",
+        )
+        assert article_id is not None
+
+    jobs.record_progress(
+        job_id,
+        "article_saved",
+        {
+            "article_id": article_id,
+            "story_id": 0,
+            "url": "https://example.com/not-shakira",
+            "title": "Materia sem alvo depois da limpeza",
+            "published_at": "2026-05-02T12:00:00+00:00",
+            "source_name": "Fonte Teste",
+            "source_type": "test",
+            "target_keys": ["shakira"],
+            "publication_state": "saved",
+        },
+        target_key="shakira",
+        target_label="shakira",
+    )
+
+    live = jobs.live_results_for_job(job_id, target_key="shakira")
+
+    assert live["count"] == 0
 
 
 def test_job_progress_totals_stay_coherent_when_collection_events_age_out(monkeypatch, tmp_path):
@@ -675,6 +801,55 @@ def test_run_export_snapshot_preserves_historical_merge_contract(monkeypatch, tm
         str(db_file.resolve()),
     ]
     assert calls[0]["cwd"] == jobs.ROOT
+
+
+def test_export_job_cleans_secondary_false_matches_before_snapshot(monkeypatch, tmp_path):
+    import threading
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "preset": "export",
+        "collector": "export",
+        "target_keys": [],
+        "date_from": "",
+        "date_to": "",
+        "export": True,
+    }
+    jobs.create_job("export-cleanup", "export", spec, started_by="coworker")
+    cleanup_calls = []
+    export_calls = []
+    upload_manifests = []
+
+    monkeypatch.setattr(jobs, "active_secondary_target_keys", lambda: ["shakira"])
+
+    def fake_cleanup(_db_path, target_keys):
+        cleanup_calls.append(list(target_keys))
+        return {"removedMentions": 2, "storiesTouched": 2}
+
+    monkeypatch.setattr(jobs, "cleanup_false_backfilled_target_mentions", fake_cleanup)
+    monkeypatch.setattr(jobs, "run_export_snapshot", lambda job_id: export_calls.append(job_id))
+
+    store = SimpleNamespace(
+        writes_available=True,
+        backup_current_artifacts=lambda _job_id: None,
+        upload_current_artifacts=lambda **kwargs: upload_manifests.append(kwargs) or [],
+    )
+    manager = jobs.JobManager(store)
+    manager._active_job_id = "export-cleanup"
+    cancel_event = threading.Event()
+    manager._cancel_events["export-cleanup"] = cancel_event
+
+    manager._run("export-cleanup", "export", spec, cancel_event)
+
+    assert cleanup_calls == [["shakira"]]
+    assert export_calls == ["export-cleanup"]
+    assert upload_manifests
+    job = jobs.get_job("export-cleanup")
+    assert job["status"] == "succeeded"
+    assert any(
+        event["event"] == "target_backfill_cleanup" and event["payload"]["count"] == 2
+        for event in job["events"]
+    )
 
 
 def test_run_ingestion_builds_collection_queries_for_selected_target(monkeypatch, tmp_path):

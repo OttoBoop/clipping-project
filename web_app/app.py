@@ -220,8 +220,8 @@ def update_status() -> dict[str, Any]:
 
 
 @app.get("/api/update/live-results")
-def update_live_results(job_id: str = "") -> dict[str, Any]:
-    return live_results_for_job(job_id)
+def update_live_results(job_id: str = "", target_key: str = "", scope: str = "", limit: int = 60) -> dict[str, Any]:
+    return live_results_for_job(job_id, target_key=target_key, scope=scope, limit=limit)
 
 
 @app.post("/api/update/start")

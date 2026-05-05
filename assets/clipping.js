@@ -422,7 +422,7 @@
         targetFilters.parentNode.insertBefore(outrosEl, targetFilters.nextSibling);
       }
       outrosEl.innerHTML =
-        "<summary>Outros candidatos (" + other.length + ")</summary>" +
+        "<summary>Nomes secundários (" + other.length + ")</summary>" +
         '<div class="filter-row">' +
         other.map(chipHtml).join("") +
         "</div>";
@@ -486,7 +486,7 @@
     var primary = runTargets.filter(function (target) { return target.primary; });
     var secondary = runTargets.filter(function (target) { return !target.primary; });
     primaryRunTargets.innerHTML = primary.length ? primary.map(renderRunTarget).join("") : '<p class="filter-note">Carregando nomes acompanhados...</p>';
-    secondaryRunTargets.innerHTML = secondary.length ? secondary.map(renderRunTarget).join("") : '<p class="filter-note">Nenhum nome extra cadastrado ainda.</p>';
+    secondaryRunTargets.innerHTML = secondary.length ? secondary.map(renderRunTarget).join("") : '<p class="filter-note">Nenhum nome secundário cadastrado ainda.</p>';
   }
 
   function fallbackTargetsFromPayload() {
@@ -620,7 +620,7 @@
     var archived = managedTargets.filter(function (target) { return !target.primary && target.archived; });
     manageTargetsList.innerHTML = active.length
       ? active.map(managedTargetCard).join("")
-      : '<p class="filter-note">Nenhum nome extra ativo cadastrado.</p>';
+      : '<p class="filter-note">Nenhum nome secundário ativo cadastrado.</p>';
     archivedTargetsList.innerHTML = archived.length
       ? archived.map(managedTargetCard).join("")
       : '<p class="filter-note">Nenhum nome arquivado.</p>';
@@ -822,7 +822,7 @@
       var detail = state && state.known && state.label ? " " + state.label + "." : "";
       var savedStories = progressCount(job, event, "storiesTouched", "stories_touched", "stories_touched");
       var savedPart = savedStories > 0
-        ? " Histórias salvas nesta rodada: " + savedStories + ". O painel será atualizado ao publicar."
+        ? " Histórias salvas nesta rodada: " + savedStories + ". A Base atual já mostra o que foi salvo."
         : "";
       return "Buscando notícias" + targetPart + sourcePart + "." + detail + savedPart;
     }
@@ -1024,6 +1024,24 @@
           progressLiveResults.hidden = true;
           progressLiveResults.innerHTML = "";
         }
+      });
+  }
+
+  function pollBaseLiveResults() {
+    if (!payload) return Promise.resolve();
+    return apiFetch("/api/update/live-results?scope=base&limit=240", { cache: "no-store" })
+      .then(function (resp) {
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        return resp.json();
+      })
+      .then(function (data) {
+        if (mergeLiveResultsIntoPayload(data)) {
+          ensureSelectedTargets();
+          applyState();
+        }
+      })
+      .catch(function () {
+        // Keep the published snapshot usable if the live overlay is unavailable.
       });
   }
 
@@ -1473,7 +1491,7 @@
     });
     progressLiveResults.innerHTML =
       "<h2>Notícias salvas nesta rodada</h2>" +
-      "<p>O painel será atualizado ao publicar. Estes itens já foram confirmados e salvos.</p>" +
+      "<p>Estes itens já foram confirmados, salvos e entram automaticamente na Base atual.</p>" +
       "<ul>" + rows.join("") + "</ul>";
   }
 
@@ -2180,7 +2198,9 @@
       applyState();
       refreshTargets();
       pollStatus();
+      pollBaseLiveResults();
       window.setInterval(pollStatus, 5000);
+      window.setInterval(pollBaseLiveResults, 15000);
     })
     .catch(function (error) {
       showError(error && error.message ? error.message : "Erro inesperado.");
