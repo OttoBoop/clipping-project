@@ -418,18 +418,88 @@ def validate_target_keys(values: list[str]) -> list[str]:
     return cleaned
 
 
+def selected_active_targets(target_keys: list[str]) -> list[Any]:
+    selected = {str(key or "").strip() for key in target_keys if str(key or "").strip()}
+    if not selected:
+        return []
+    from pipeline.settings import get_active_targets
+
+    return [target for target in get_active_targets() if str(target.key) in selected]
+
+
+def target_matches_safe_article_fields(target: Any, row: sqlite3.Row | dict[str, Any]) -> bool:
+    from pipeline.matcher import CitationMatcher
+
+    text = " ".join([str(row["title"] or ""), str(row["snippet"] or ""), str(row["summary"] or "")])
+    return bool(CitationMatcher([target], exact_names_only=True).find_hits(text))
+
+
+def cleanup_false_backfilled_target_mentions(db_file: Path, target_keys: list[str]) -> dict[str, Any]:
+    """Remove broad backfill matches that are absent from title/snippet/summary."""
+    db_file = validate_configured_db_file(db_file)
+    ensure_app_tables(db_file)
+    targets = selected_active_targets(target_keys)
+    if not targets:
+        return {"removedMentions": 0, "storiesTouched": 0}
+
+    removed_mentions = 0
+    touched_stories: set[int] = set()
+    with connect(db_file) as conn:
+        for target in targets:
+            rows = conn.execute(
+                """
+                SELECT
+                    m.id AS mention_id,
+                    m.article_id,
+                    a.title,
+                    a.snippet,
+                    a.summary,
+                    sa.story_id
+                FROM mentions m
+                JOIN articles a ON a.id = m.article_id
+                LEFT JOIN story_articles sa ON sa.article_id = a.id
+                WHERE m.target_key = ?
+                  AND COALESCE(m.sentiment_reason, '') = 'existing_article_backfill'
+                """,
+                (target.key,),
+            ).fetchall()
+            for row in rows:
+                if target_matches_safe_article_fields(target, row):
+                    continue
+                mention_id = int(row["mention_id"])
+                story_id = int(row["story_id"] or 0)
+                conn.execute("DELETE FROM classifications WHERE mention_id = ?", (mention_id,))
+                conn.execute("DELETE FROM mentions WHERE id = ?", (mention_id,))
+                removed_mentions += 1
+                if not story_id:
+                    continue
+                remaining = conn.execute(
+                    """
+                    SELECT 1
+                    FROM story_articles sa
+                    JOIN mentions m ON m.article_id = sa.article_id
+                    WHERE sa.story_id = ? AND m.target_key = ?
+                    LIMIT 1
+                    """,
+                    (story_id, target.key),
+                ).fetchone()
+                if not remaining:
+                    conn.execute(
+                        "DELETE FROM story_targets WHERE story_id = ? AND target_key = ?",
+                        (story_id, target.key),
+                    )
+                conn.execute("UPDATE stories SET updated_at = ? WHERE id = ?", (utc_now_iso(), story_id))
+                touched_stories.add(story_id)
+    return {"removedMentions": removed_mentions, "storiesTouched": len(touched_stories)}
+
+
 def backfill_missing_target_mentions(db_file: Path, target_keys: list[str]) -> dict[str, Any]:
     """Attach selected active targets to existing articles whose saved text matches them."""
     db_file = validate_configured_db_file(db_file)
     ensure_app_tables(db_file)
-    selected = {str(key or "").strip() for key in target_keys if str(key or "").strip()}
-    if not selected:
-        return {"updated": [], "updatedCount": 0, "mentionsInserted": 0, "storiesTouched": 0}
-
     from pipeline.matcher import CitationMatcher
-    from pipeline.settings import get_active_targets
 
-    targets = [target for target in get_active_targets() if str(target.key) in selected]
+    targets = selected_active_targets(target_keys)
     if not targets:
         return {"updated": [], "updatedCount": 0, "mentionsInserted": 0, "storiesTouched": 0}
 
@@ -448,7 +518,6 @@ def backfill_missing_target_mentions(db_file: Path, target_keys: list[str]) -> d
                 COALESCE(a.published_at, a.discovered_at) AS published_at,
                 a.snippet,
                 a.summary,
-                a.full_text,
                 sa.story_id
             FROM articles a
             LEFT JOIN story_articles sa ON sa.article_id = a.id
@@ -462,14 +531,7 @@ def backfill_missing_target_mentions(db_file: Path, target_keys: list[str]) -> d
             article_id = int(row["id"])
             if db.find_mention_id(article_id, target.key) is not None:
                 continue
-            text = " ".join(
-                [
-                    str(row["title"] or ""),
-                    str(row["snippet"] or ""),
-                    str(row["summary"] or ""),
-                    str(row["full_text"] or ""),
-                ]
-            )
+            text = " ".join([str(row["title"] or ""), str(row["snippet"] or ""), str(row["summary"] or "")])
             hits = matcher.find_hits(text)
             if not hits:
                 continue

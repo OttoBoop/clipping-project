@@ -860,6 +860,80 @@ def test_backfill_missing_target_mentions_retags_existing_secondary_story(monkey
     assert story_targets == {"flavio_valle", "shakira"}
 
 
+def test_backfill_ignores_full_text_noise_and_cleanup_removes_false_match(monkeypatch, tmp_path):
+    db_admin, _, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    from pipeline import settings
+
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "flavio_valle", "label": "Flavio Valle", "keywords": ["Flavio Valle"], "primary": True},
+                {"key": "shakira", "label": "shakira", "keywords": ["shakira"], "primary": False},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+    monkeypatch.setattr(settings, "TARGETS_JSON_PATH", targets_path)
+    with ClippingDB(db_file) as db:
+        article_id = db.insert_article(
+            url="https://example.com/flavio-com-widget",
+            title="Ciclovias em pauta no Rio",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-04-30T12:00:00+00:00",
+            snippet="Flavio Valle fala sobre ciclovias.",
+            full_text="Flavio Valle fala sobre ciclovias. Links relacionados: Shakira no Rio.",
+        )
+        assert article_id is not None
+        db.insert_mention(article_id, "flavio_valle", "Flavio Valle", "Flavio Valle")
+        story_id = db.create_story(
+            title="Ciclovias em pauta no Rio",
+            summary="Resumo sem a cantora.",
+            temperature=34.0,
+            target_keys=["flavio_valle"],
+        )
+        db.attach_article_to_story(story_id, article_id)
+        db.insert_mentions(
+            article_id,
+            [
+                {
+                    "target_key": "shakira",
+                    "target_name": "shakira",
+                    "keyword_matched": "shakira",
+                    "sentiment": "neutral",
+                    "sentiment_reason": "existing_article_backfill",
+                    "context": "",
+                }
+            ],
+        )
+        db.ensure_story_target(story_id, "shakira")
+
+    backfill = db_admin.backfill_missing_target_mentions(db_file, ["shakira"])
+    cleanup = db_admin.cleanup_false_backfilled_target_mentions(db_file, ["shakira"])
+
+    assert backfill["mentionsInserted"] == 0
+    assert cleanup["removedMentions"] == 1
+    with sqlite3.connect(db_file) as conn:
+        mention_targets = {
+            row[0]
+            for row in conn.execute(
+                "SELECT target_key FROM mentions WHERE article_id = ?",
+                (article_id,),
+            ).fetchall()
+        }
+        story_targets = {
+            row[0]
+            for row in conn.execute(
+                "SELECT target_key FROM story_targets WHERE story_id = ?",
+                (story_id,),
+            ).fetchall()
+        }
+    assert mention_targets == {"flavio_valle"}
+    assert story_targets == {"flavio_valle"}
+
+
 def test_process_candidates_reports_candidate_progress_before_fetch_fail(monkeypatch, tmp_path):
     from pipeline import ingest
 

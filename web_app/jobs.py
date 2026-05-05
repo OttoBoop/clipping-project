@@ -18,6 +18,7 @@ from pipeline.database import ClippingDB
 from .config import ROOT, db_path
 from .db_admin import (
     backfill_missing_target_mentions,
+    cleanup_false_backfilled_target_mentions,
     connect,
     ensure_app_tables,
     target_labels,
@@ -207,6 +208,20 @@ class JobManager:
             totals = {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0}
 
             if kind == "update":
+                cleanup = cleanup_false_backfilled_target_mentions(db_path(), list(spec["target_keys"]))
+                if cleanup.get("removedMentions"):
+                    append_event(
+                        job_id,
+                        "target_backfill_cleanup",
+                        {
+                            "target_keys": list(spec["target_keys"]),
+                            "mentions_inserted": 0,
+                            "stories_touched": int(cleanup.get("storiesTouched") or 0),
+                            "count": int(cleanup.get("removedMentions") or 0),
+                        },
+                    )
+                    upload_live_checkpoint(job_id, reason="target-backfill-cleanup", force=True)
+
                 backfill = backfill_missing_target_mentions(db_path(), list(spec["target_keys"]))
                 if backfill.get("updatedCount"):
                     labels = target_labels()
