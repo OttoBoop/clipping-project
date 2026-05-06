@@ -180,6 +180,46 @@ def cmd_stub(data: dict, raw: dict, aid: str) -> int:
     return 0
 
 
+def emit_template(rec: dict) -> str:
+    """Empty Etapa-1-shaped block ready to be filled in."""
+    return f"""\n---\n## {rec['id']} — {rec['title']}
+
+**Fonte:** {rec['sourceName']} ({rec['sourceHost']})
+**Data:** {rec['publishedDisplay']}
+**URL:** {rec['url']}
+
+### Resumo Narrativo
+
+[FILL: 1–3 parágrafos em prosa contextualizada descrevendo o
+enquadramento, pontos centrais, e a história que o artigo conta. Sem
+bullet points. Tom explicativo. Se off-scope: começar com "Artigo fora
+de escopo — não trata do show da Shakira [de 2026]." e dar 1 parágrafo
+curto de contexto.]
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| [tema 1] | [posicionamento] | [muito negativo / negativo / neutro / positivo / muito positivo] |
+| [tema 2] | [...] | [...] |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** [muito negativo / negativo / neutro / positivo / muito positivo / N/A se off-scope]
+"""
+
+
+def cmd_template(data: dict, raw: dict, aid: str) -> int:
+    aid = aid if aid.startswith("a-") else f"a-{aid}"
+    arts = shakira_articles(data, raw)
+    rec = next((r for r in arts if r["id"] == aid), None)
+    if not rec:
+        print(f"not found: {aid}", file=sys.stderr)
+        return 1
+    print(emit_template(rec))
+    return 0
+
+
 def main(argv: list[str]) -> int:
     if len(argv) < 2:
         print(__doc__, file=sys.stderr)
@@ -195,6 +235,8 @@ def main(argv: list[str]) -> int:
         return cmd_todo(data, raw)
     if cmd == "stub" and len(argv) >= 3:
         return cmd_stub(data, raw, argv[2])
+    if cmd == "template" and len(argv) >= 3:
+        return cmd_template(data, raw, argv[2])
     print(__doc__, file=sys.stderr)
     return 2
 
