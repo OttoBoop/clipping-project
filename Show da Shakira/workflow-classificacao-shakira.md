@@ -23,6 +23,54 @@ Análise Show Shakira/
 
 ---
 
+## Etapa Pré-0 — Convocação da Persona Loop-Runner
+
+> Adicionada 2026-05-06 por Penelope+Iris. Esta etapa só é necessária quando o
+> loop vai rodar autônomo, longo, e sem supervisão humana ativa. Para um run
+> supervisionado curto, pode ser pulada.
+
+### Objetivo
+
+Antes de começar a tecer, garantir que existe uma identidade nomeada
+responsável pelo loop, com claims registrados no canal vivo
+(`md documents/Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md`) e um
+character sheet que outros agentes (e Otávio, ao revisar) possam consultar.
+
+### Por que isso importa
+
+Loops longos sem supervisão correm dois riscos: (a) o agente desviar do plano
+porque ninguém está olhando, e (b) a perda de contexto se a sessão for
+interrompida e outro agente precisar continuar. Uma persona nomeada com
+character sheet escrito mitiga ambos: o agente atual sabe exatamente que
+disciplina lhe foi confiada, e o sucessor (humano ou IA) tem um documento de
+referência para retomar.
+
+### Tarefas
+
+1. Confirmar que a persona apropriada existe em `md documents/`. Para o
+   arquétipo "executor cíclico de plano pré-escrito", a persona é **Penelope**
+   (`md documents/PENELOPE_CHARACTER_SHEET.md`). Para outros arquétipos
+   (auditor, fix-implementer, orquestrador), consultar
+   `md documents/ORCHESTRATORS_FRAMEWORK_FOR_THE_CLIPPING_PROJECT.md`.
+2. Se a persona não existir, criar o character sheet seguindo o padrão de
+   Ariadne/Iris/Penelope (epígrafe mitológica + identidade + regra
+   principal + protocolos + ownership).
+3. Registrar a convocação no canal vivo:
+   - §1 AGORA: linha nova com a persona ativa, atividade, data início,
+     "aberto pra colab?" geralmente "não — loop autônomo".
+   - §2 Claims: claims sobre os arquivos/pastas que o loop vai modificar.
+   - §5 Log: entrada datada explicando o que/por que/qual plano.
+4. Identidade híbrida: declarar a stack completa que está rodando (ex.
+   `Penelope + Iris + CC (Opus 4.7)`) — útil para auditoria post-mortem.
+5. Commitar este pré-passo como unidade lógica antes de começar a Etapa 0.
+
+### Checkpoint
+
+Persona convocada e canal vivo atualizado. Não esperar aprovação humana se
+Otávio já autorizou o run autônomo na conversa que deu origem ao loop.
+
+---
+
 ## Etapa 0 — Reconhecimento da Base de Dados
 
 ### Objetivo
