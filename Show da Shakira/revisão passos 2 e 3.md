@@ -141,22 +141,39 @@ tabelas e adicionando trechos representativos. Mantém estrutura
 editorial; não refaz do zero, não cria sub-bloco "cobertura
 crítica" segregado.
 
-### D5 — Posição editorial sobre truth-teller (calibragem geral)
+### D5 — Posição editorial: crítico, não contrarian
 
-Truth-teller **não é negative nancy** (não sai caçando problemas)
-e **não é contrarian** (não inverte sinal por princípio). É o
-agente que entrega a leitura **realista** — o que significa que
-quando uma cobertura é, de fato, excepcionalmente positiva, ele
-reflete isso; quando é, de fato, excepcionalmente negativa,
-também. O valor está em permitir que o leitor (ou agente
-downstream) **se fixe em uma solução** com base em terreno
-sólido, não em narrativa enviesada por nenhuma direção.
+**Correção importante feita pelo Otávio em 06/05/2026:** Penelope
+vinha rotulando como "truth-teller" o que de fato funcionou como
+**negative nancy / contrarian** no `consolidacao-temas.md` e
+propagou para os relatórios. São coisas diferentes:
 
-Aplicação prática: ao revisar o bloco Categorias Temáticas,
-checar caso a caso se a síntese reflete o sinal real do volume
-de cobertura naquela categoria — sem caçar contradição artificial
-nem suavizar onde a crítica é genuína (cat 5 hotel/repasse,
-cat 11 tragédia, cat 3 vigilância continuam com peso crítico).
+| Papel | O que faz | Quando atua |
+|---|---|---|
+| **Crítico (literal, tipo crítica de cinema)** | Avalia prós e contras; checa se o que a imprensa disse corresponde à realidade dos dados; pode concluir "majoritariamente positivo" ou "majoritariamente negativo" conforme o caso. | É o papel desejado para todo o pipeline. |
+| **Truth-teller** | Variante do crítico com ênfase em desfazer narrativa quando há descolamento entre cobertura e fato. Não inverte sinal por princípio — só aponta onde a imprensa exagerou ou omitiu. | Subcaso do crítico, válido. |
+| **Negative nancy** | Sai caçando problemas; encontra o lado ruim de tudo. | **Não é o papel desejado. Foi o que aconteceu.** |
+| **Contrarian** | Inverte o sinal por princípio: se a imprensa diz positivo, ele diz negativo, sem testar. | **Não é o papel desejado. Foi o que aconteceu.** |
+
+**O que isso muda na prática:**
+
+1. A revisão do bloco Categorias Temáticas **não é "suavizar
+   onde foi negativo demais"** — é refazer o teste editorial:
+   *isso aqui é prós-e-contras checados contra a tabela
+   MN/N/Ne/P/MP, ou é caça a problemas / inversão de sinal?*
+2. A tabela quantitativa por categoria é o **piso de realidade**
+   da revisão. Se uma categoria tem 30 P/MP contra 4 MN/N e a
+   síntese carrega no tom crítico, é contrarian — corrigir. Se
+   tem 25 MN/N contra 6 P/MP e a síntese carrega no positivo,
+   também está descolada — corrigir no outro sentido.
+3. Crítica genuína permanece onde os dados sustentam: cat 5
+   (custo/repasse/hotel — assimetria real entre quem ganhou e
+   quem pagou), cat 11 (tragédia — fato negativo objetivo), cat 3
+   (vigilância — questão real de privacidade), cat 10 enxuta
+   (fricções político-administrativas reais).
+4. Categorias onde a cobertura agregada foi de fato positiva
+   precisam ser **lidas como positivas** na síntese, não
+   reescritas em chave de "mas nem tudo são flores".
 
 ---
 
@@ -190,3 +207,12 @@ cat 11 tragédia, cat 3 vigilância continuam com peso crítico).
   realista, nem negative nancy nem contrarian" e sinaliza que vai
   explicar pessoalmente as correções específicas a fazer no bloco
   Categorias Temáticas.
+- **06/05/2026 (parte 3):** Otávio corrige Penelope: ela estava
+  rotulando como "truth-teller" o que produziu como negative
+  nancy / contrarian no `consolidacao-temas.md`. O papel desejado
+  é o do **crítico literal** (tipo crítica de cinema): prós e
+  contras, checagem entre narrativa da imprensa e realidade dos
+  dados, sem inversão de sinal por princípio. D5 reescrita para
+  refletir essa distinção. A revisão das Categorias Temáticas
+  passa a ser uma revisão de **descolamento síntese × tabela
+  quantitativa**, em ambas as direções.
