@@ -3069,6 +3069,970 @@ Recap final do dia do show. Tom muito positivo. Bloco único cobre os dois IDs.
 
 ---
 
+## a-108 — (= a-125) Embaixada EUA alerta turistas
+
+Mesma matéria de `a-125`. **Sentimento geral do artigo:** negativo.
+
+---
+
+## a-225 — (= a-171) Tudo que precisa saber
+
+Mesma matéria de `a-171`. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-112 — De Turnê Bilionária a Copacabana: como Shakira construiu sua fortuna
+
+**Fonte:** Forbes Brasil  **Data:** 02/05/2026 08:00 UTC
+
+Forbes Brasil: Shakira é a 6ª musicista mais bem paga do mundo (US$ 105 mi em 2025). Turnê "Las Mujeres Ya No Lloran" arrecadou US$ 421,6 mi com 3,3 mi ingressos em 86 shows até janeiro. Recorde Guinness de turnê de maior bilheteria de artista latino. 4 Grammys, 15 Latin Grammys, 12 álbuns, 95 mi cópias. Tom muito positivo, perfil financeiro.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Posicionamento global Shakira (top 6 musicistas) | Tom celebratório. | muito positivo |
+| Recorde de turnê latina | Reforço aspiracional. | muito positivo |
+| Visibilidade Forbes (mídia financeira premium) | Reforço de prestígio. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-117 — Por que Shakira faz tanto sucesso no Brasil? Empresários, artistas e fãs explicam
+
+**Fonte:** Estadão (estadao.com.br)  **Data:** 02/05/2026 09:00 UTC
+
+Reportagem-perfil profunda do Estadão (André Bernardo): retrospectiva da relação Shakira × Brasil desde 1996 (Teatro Amazonas, Manaus, 684 pessoas). 49º show no Brasil será este de Copacabana. Depoimentos: **Luiz Calainho** (ex-Sony Music, montou estratégia de R$ 3 mi em 1996), **DJ Memê** (remixou 4 canções), **Chico César** ("Mama África" cantada por Shakira em vários shows desde 1997), guitarrista **Grecco Buratto**, estilista **Dario Mittmann**, e fãs (Levi Tavares do Shakira Brasil 1,2 mi seguidores; Diogo Barros do Pies Descalzos Brasil; Mauricio de Souza do Portal Shakira). Shakira-fundação na Colômbia (19 escolas, 224 mil estudantes). 393 pessoas no Brasil chamam-se Shakira (Censo 2022). Tom muito positivo, jornalismo cultural denso.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Histórico de longa data Shakira × Brasil | Reverência cultural. | muito positivo |
+| Estratégia de marketing pioneira no Brasil (Calainho) | Detalhe positivo. | muito positivo |
+| Diálogo cultural multimúsicos brasileiros | Soft power. | muito positivo |
+| Empoderamento feminino como mensagem de marca | Reforço positivo. | muito positivo |
+| Fundación Pies Descalzos (impacto social) | Tema novo: filantropia. | muito positivo |
+| Comunidade fã ("alcateia"; 393 brasileiras chamadas Shakira) | Profundidade do impacto cultural. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-91 — Onde vai passar na TV e streaming?
+
+**Fonte:** Estadão  **Data:** 02/05/2026 09:01 UTC
+
+Recap utilitário Estadão: TV Globo (após Três Graças), Globoplay e Multishow (a partir das 21h20). Esquenta com Vintage Culture (17h45-18h45) e DJ Maz (19h-20h30). After com Papatinho e Melody. Tom positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Cobertura multi-plataforma Globo | Reforço positivo. | muito positivo |
+| Programação completa esquenta + after | Inclui artistas brasileiros. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-109 — Hoje é dia de Shakira! Tire todas as dúvidas (FAQ de 35 perguntas)
+
+**Fonte:** G1 (g1.globo.com)  **Data:** 02/05/2026 10:27 UTC
+
+Mega-FAQ utilitário g1: 35 perguntas cobrindo horário, palco, transporte (carro proibido após 18h em Copa, metrô 24h, BRT, ônibus, VLT, barco), proibições, banheiros, comida, posto médico, área PCD, setlist, esquenta, after, segurança contra furtos, policiamento (7.927). 9 pessoas/m² perto do palco. Operação Tatuí. 4 mil ambulantes credenciados. Tom muito positivo-utilidade.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Logística completa de transporte | Detalhamento exaustivo positivo. | muito positivo |
+| Política anti-camping (Operação Tatuí) | Preventiva positiva. | positivo |
+| Densidade de público (9 pessoas/m²) | Mencionada factualmente. | neutro |
+| Acessibilidade PCD (3 áreas) | Inclusão positiva. | positivo |
+| Segurança contra furtos / dicas práticas | Utilidade ampla. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-146 — Ao contrário de Madonna e Lady Gaga, Shakira autoriza Globo a transmitir SEM delay
+
+**Fonte:** Folha de S. Paulo / Coluna Outro Canal  **Data:** 02/05/2026 11:25 UTC
+
+Coluna Outro Canal (Gabriel Vaquer) revela que Shakira não exigiu delay na transmissão pela Globo (Madonna e Lady Gaga sim). Apresentadoras: Ana Clara Lima e Kenya Sade. Tom positivo, "abertura" da artista.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Transmissão ao vivo sem delay (diferencial) | Confiança positiva. | muito positivo |
+| Comparação com Madonna/Lady Gaga | Posiciona Shakira como mais aberta. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-176 — Show turbina economia (UOL Economia, RSS)
+
+**Fonte:** UOL Economia (via Google News RSS)  **Data:** 02/05/2026 12:30 UTC
+
+Apenas link RSS no snapshot — conteúdo não foi capturado pelo pipeline. Pelo título: matéria sobre impacto econômico (turismo e negócios disparando), em linha com `a-281/127/94/97` (R$ 800 mi). Sentimento geral inferido por título.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Impacto econômico (UOL Economia) | Inferido positivo. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-240 — Shakira acumulou fortuna com sucesso global; saiba o valor
+
+**Fonte:** O Globo (oglobo.globo.com)  **Data:** 02/05/2026 12:30 UTC
+
+Variação editorial sobre fortuna: O Globo cita US$ 300 mi (~R$ 1,5 bi, fonte: Celebrity Net Worth) — número distinto do US$ 105 mi/ano da Forbes (a-112). Foco no patrimônio acumulado. Recap palco, programação. Tom muito positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Fortuna acumulada Shakira (US$ 300 mi) | Tom celebratório. | muito positivo |
+| Diversificação de fontes de renda | Empreendedorismo positivo. | positivo |
+| "Loba" como narrativa de empoderamento | Reforço positivo. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-226 — Esquema de trânsito e transporte para o show (CBN)
+
+**Fonte:** CBN / G1  **Data:** 02/05/2026 12:38 UTC
+
+Recap de trânsito e transporte: Av. Atlântica fechada das 19h até 4h dom, SuperVia trens extras na madrugada, Central do Brasil única para embarque pós-show, BRT 24h, VLT operação especial. Estação Cardeal Arcoverde apenas desembarque. Tom factual-positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Bloqueios viários totais Copa | Logística adequada. | positivo |
+| Reforço de transporte público (trens, BRT, VLT) | Resposta institucional positiva. | positivo |
+| Recomendação "deixe o carro em casa" | Comunicação preventiva. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-145 — Quem são os patrocinadores e o que eles ganham (ISTOÉ Dinheiro)
+
+**Fonte:** ISTOÉ Dinheiro (istoedinheiro.com.br)  **Data:** 02/05/2026 13:00 UTC
+
+Reportagem especializada em marketing: **15 marcas patrocinadoras**, mais a Prefeitura, governo estadual e Procolombia (agência colombiana). Lista: Corona (apresentadora), Santander, 99, Zé Delivery, Google Gemini, Dove, BETMGM (apenas transmissão), Latam, C&A, Bears, Guaraná Antártica, Deezer, Jeep, Ingresse, Shakira Perfumes (Puig). 80% rede hoteleira esgotada. Última edição (Lady Gaga) teve 32 mi espectadores na Globo. Bonus Track tem contrato 4 edições (2025-2028). Tom positivo, marketing-business.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Ecosistema multi-marca (15 patrocinadores) | Tom celebratório-business. | muito positivo |
+| Audiência Globo (32 mi espectadores Lady Gaga) | Reforço de alcance. | muito positivo |
+| Procolombia (agência diplomática) | Soft power Colômbia × Brasil. | positivo |
+| Bonus Track contrato plurianual | Continuidade institucional. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-213 — Rio entra em Estágio 2 por causa do show
+
+**Fonte:** Diário do Rio (diariodorio.com)  **Data:** 02/05/2026 14:32 UTC
+
+COR-Rio coloca a cidade em **Estágio 2** (segundo de cinco níveis) à 0h de 02/05. Bloqueios totais a partir das 19h. Marinha emite **alerta de ressaca** (ondas 2,5-3 m entre dom noite e ter tarde). Pulseira de retorno do metrô (R$ 15,80). Estações Copa 24h. Tom factual; o Estágio 2 é tratado como medida adequada de resposta.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Estágio 2 do COR-Rio (impactos na rotina) | Tratado como resposta adequada. | neutro |
+| Marinha — alerta de ressaca | Aviso preventivo. | neutro |
+| Pulseira metrô / operação 24h | Logística positiva. | positivo |
+| Comunicação institucional COR-Rio | Tom oficial-positivo. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-212 — Galeão recebeu 25 toneladas de equipamentos
+
+**Fonte:** G1  **Data:** 02/05/2026 14:54 UTC
+
+Atualização logística: total de 25 toneladas de equipamentos chegaram ao Galeão (incremento sobre as 10t reportadas em a-267). Tom positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Logística aérea (25 t equipamentos) | Magnitude reforçada. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-211 — Câmara do Rio propõe título de Cidadã Honorária para Shakira
+
+**Fonte:** G1  **Data:** 02/05/2026 15:03 UTC
+
+Câmara Municipal propõe título de Cidadã Honorária do Rio para Shakira. Reforça narrativa "Shakira-carioca" do artigo no O Globo. Tom muito positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Reconhecimento institucional Câmara do Rio | Honraria política positiva. | muito positivo |
+| Identificação Shakira × cidade do Rio | Soft power simbólico. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-159 — (= a-146) Transmissão sem delay
+
+Mesma matéria de `a-146` (variação de fonte). **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-210 — Cavaliere visita Saara e destaca impacto econômico
+
+**Fonte:** G1  **Data:** 02/05/2026 17:45 UTC
+
+Prefeito Eduardo Cavaliere visita o comércio popular da Saara para destacar o efeito-Shakira no turismo e nas pequenas vendas. Marketing político-comercial. Tom positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Visita política do prefeito (foto-op) | Marketing institucional. | positivo |
+| Comércio popular da Saara como beneficiário | Inclusão econômica positiva. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-209 — Policiais bilíngues para atender turistas
+
+**Fonte:** G1  **Data:** 02/05/2026 18:03 UTC
+
+PM mobiliza policiais com inglês/espanhol para atender turistas internacionais. Resposta positiva à "invasão latina" + alerta da Embaixada EUA. Tom positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Atendimento bilíngue na segurança pública | Profissionalismo positivo. | muito positivo |
+| Resposta institucional a turistas internacionais | Cuidado adequado. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-208 — RioLuz reforça iluminação em Copacabana
+
+**Fonte:** G1  **Data:** 02/05/2026 18:07 UTC
+
+RioLuz aumenta iluminação pública em Copacabana e arredores para o show. Manutenção preventiva. Tom positivo-utilidade.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Reforço de iluminação pública | Preventivo positivo. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-207 — Reconhecimento facial, drones e 300+ câmeras
+
+**Fonte:** G1  **Data:** 02/05/2026 18:10 UTC
+
+Detalhamento do esquema de vigilância: reconhecimento facial em todos os pórticos, 6 drones com IA, 300+ câmeras extras. Tom factual; potencial debate sobre privacidade fica subentendido mas não levantado.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Vigilância massiva (reconhecimento facial / drones) | Apresentada como reforço positivo. | positivo |
+| Ausência de debate sobre privacidade | Notável omissão editorial. | neutro |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-119 — Tire todas as dúvidas sobre o megashow (CNN Brasil)
+
+**Fonte:** CNN Brasil  **Data:** 02/05/2026 18:36 UTC
+
+Recap CNN Brasil paralelo ao a-109. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-79 — Marinha alerta para mar com ressaca e ondas de 3 metros
+
+**Fonte:** G1  **Data:** 02/05/2026 19:02 UTC
+
+Aviso da Marinha (já mencionado em a-213): ondas 2,5-3m entre dom noite e ter tarde. Implicação: público que ficaria à beira-mar deve ter cuidado pós-show. Tom factual-cautelar.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Alerta de ressaca | Preventivo. | neutro |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-206 — Show será sem chuva, mas frente fria muda o tempo
+
+**Fonte:** G1  **Data:** 02/05/2026 19:59 UTC
+
+Climatempo: sábado quente (mín 20°C, máx 34°C), céu parcialmente nublado, sem previsão de chuva. Frente fria chega à tarde de domingo, mudando o tempo. Tom factual-positivo (clima favorável ao show).
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Previsão favorável (sem chuva, calor moderado) | Tom positivo. | muito positivo |
+| Frente fria pós-show | Mencionada sem alarme. | neutro |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-166 — Famosos marcam presença em Copacabana
+
+**Fonte:** Gshow  **Data:** 02/05/2026 20:37 UTC
+
+Cobertura "celebridades": Anitta, Bethânia, Caetano, Ivete Sangalo (que ainda subiria ao palco), e outros famosos chegando ao Copacabana Palace. Tom muito positivo, fofoca-cultural.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Presenças de famosos (Anitta, Ivete, Bethânia, Caetano) | Diálogo cultural positivo. | muito positivo |
+| Hype de bastidor | Reforça expectativa. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-205 — Postos de saúde no show
+
+**Fonte:** G1  **Data:** 02/05/2026 20:48 UTC
+
+3 postos médicos: esquina Atlântica × Princesa Isabel, Praça do Lido, esquina Atlântica × República do Peru. Tom positivo-utilidade.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Atendimento médico preventivo (3 postos) | Logística adequada. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-131 — Setlist de Shakira em Copacabana
+
+**Fonte:** Estadão  **Data:** 02/05/2026 21:00 UTC
+
+Setlist preliminar publicado: clássicos ("Estoy Aquí", "Inevitable", "Whenever, Wherever", "Hips Don't Lie", "Waka Waka") + faixas recentes ("Las Mujeres Ya No Lloran", "Choka Choka", "Bzrp 53"). Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-124 — Famosos marcam presença em camarotes
+
+**Fonte:** O Globo  **Data:** 02/05/2026 21:02 UTC
+
+Cobertura de camarotes VIP: famosos brasileiros, embaixador da Colômbia, executivos das marcas patrocinadoras. Tom positivo-celebrities.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-216 — Fotos de Shakira em Copacabana (galeria Estadão)
+
+**Fonte:** Estadão  **Data:** 02/05/2026 21:05 UTC
+
+Galeria fotográfica do Estadão. Sem texto editorial significativo. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-123 / a-122 / a-148 / a-137 / a-141 — Horário e onde assistir (recap múltiplos veículos)
+
+**Fontes:** Estadão (a-123/122), CNN Brasil (a-148), Gshow (a-137), InfoMoney (a-141)
+**Datas:** 02/05/2026 21:23 / 21:24 / 21:30 / 23:32 / 23:35 UTC
+
+Bloco coletivo: 5 versões editoriais do mesmo recap final pré-show (horário 21h45, transmissão TV Globo / Multishow / Globoplay). Tom muito positivo, marketing de transmissão. Bloco único cobre os 5 IDs.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-152 — Público faz filas nos pontos de acesso
+
+**Fonte:** G1  **Data:** 02/05/2026 22:19 UTC
+
+Cobertura ao vivo: filas nos pontos de acesso, clima de animação. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-136 — Copacabana lota para megashow
+
+**Fonte:** CNN Brasil  **Data:** 02/05/2026 22:39 UTC
+
+CNN cobertura tempo-real: praia lotando, expectativa 2+ mi. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-174 — Relembre as visitas mais icônicas de Shakira ao Brasil (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 02/05/2026 22:52 UTC
+
+Retrospectiva CNN: Manaus 1996, Rock in Rio IV (2011 com Ivete), Engenhão 2025, Morumbis 2025. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-133 — 'O fenômeno Shakira': imprensa internacional repercute megashow
+
+**Fonte:** O Globo  **Data:** 02/05/2026 23:00 UTC
+
+Imprensa internacional (Reuters, AFP, AP, BBC, El País, La Nación, Clarín) repercute o show. Tom muito positivo, soft power global.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Repercussão internacional positiva | Tom celebratório. | muito positivo |
+| Posicionamento global do Rio | Soft power. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-149 — Copacabana reúne fãs à espera de Shakira (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 02/05/2026 23:04 UTC
+
+Cobertura ao vivo CNN. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-204 — Área VIP para fãs e familiares colada ao palco
+
+**Fonte:** G1  **Data:** 02/05/2026 23:10 UTC
+
+Shakira destinou área VIP especial para fãs (não só patrocinadores) próxima ao palco. Tom muito positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Generosidade Shakira × fãs (VIP gratuito) | Tom muito positivo. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-167 — Famosos chegam para show (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 03/05/2026 00:08 UTC
+
+Cobertura de chegadas de famosos no Copacabana Palace. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-122 / a-148 / a-137 / a-141 — (cobertos no bloco coletivo a-123)
+
+Recap horário/transmissão. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-203 — Seis equipes a mais de policiamento que Lady Gaga
+
+**Fonte:** O Globo  **Data:** 03/05/2026 00:35 UTC
+
+Detalhamento: 6 equipes adicionais comparado ao show de Lady Gaga. Tom positivo-segurança.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-202 — (= a-146) Transmissão sem delay
+
+Variação editorial de `a-146`. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-157 — Shakira e os lobos: relação da cantora com o animal e apelido
+
+**Fonte:** Estadão  **Data:** 03/05/2026 01:16 UTC
+
+Reportagem cultural sobre o simbolismo "Loba" (já tratado em a-229). Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-101 — Shakira mistura latinidade e estrelas brasileiras, faz Copacabana dançar
+
+**Fonte:** O Globo  **Data:** 03/05/2026 01:44 UTC
+
+**Cobertura editorial pós-show.** Shakira incorporou Anitta (Choka Choka), Caetano Veloso, Maria Bethânia (Mama África) e Ivete Sangalo (País Tropical) no show. Encerramento monumental. Tom muito positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Latinidade × brasileirismo no setlist | Soft power supremo. | muito positivo |
+| Convidados brasileiros (Anitta, Bethânia, Caetano, Ivete) | Diálogo cultural histórico. | muito positivo |
+| Encerramento do show | Climax positivo. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-120 / a-201 — Shakira atrasa show; público vaia
+
+**Fontes:** Estadão (a-120) / O Globo (a-201)  **Data:** 03/05/2026 01:50 UTC
+
+**Notícia negativa significativa.** Shakira atrasou mais que Madonna e Lady Gaga (~1h+ de atraso). Público reagiu com vaias. a-201 cita "problema pessoal" como justificativa não-detalhada. Tom factual mas crítico. Bloco único cobre os dois IDs.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Atraso significativo (1h+) | Crítica explícita. | negativo |
+| Vaias do público | Reação negativa documentada. | muito negativo |
+| Comparação desfavorável a Madonna/Lady Gaga | Posicionamento crítico. | negativo |
+| "Problema pessoal" como justificativa | Sem transparência detalhada. | neutro |
+
+**Sentimento geral do artigo:** negativo
+
+---
+
+## a-100 — Após atraso, Shakira surpreende com saraivada de beats e declaração de amor ao Brasil
+
+**Fonte:** O Globo  **Data:** 03/05/2026 02:24 UTC
+
+**Recuperação do show.** Após o atraso, Shakira entrou com energia, fez declaração de amor ao Brasil em português, abriu setlist forte. Tom muito positivo. Compensa parcialmente o aspecto negativo do atraso.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Recuperação após atraso | Profissionalismo positivo. | positivo |
+| Declaração de amor ao Brasil | Engajamento afetivo. | muito positivo |
+| Energia da abertura | Compensação positiva. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-111 — Fotos do show histórico (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 03/05/2026 02:38 UTC
+
+Galeria fotográfica. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-168 — Looks usados por Shakira em Copacabana (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 03/05/2026 02:50 UTC
+
+Cobertura de moda: looks Shakira no show, incluindo figurinos do estilista catarinense Dario Mittmann (referência a a-269/268). Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-113 / a-170 — 2 milhões em Copacabana, diz Prefeitura/Riotur
+
+**Fontes:** O Globo (a-113), Gshow (a-170)  **Data:** 03/05/2026 03:28 / 03:49 UTC
+
+Confirmação oficial: 2 milhões de pessoas (não os 2,5 mi anunciados em expectativa). Riotur confirma. Tom positivo, embora o número seja **menor que o de Lady Gaga (2,1 mi)**. Bloco único cobre os dois IDs.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Público oficial 2 milhões | Tom positivo, mas abaixo da expectativa de 2,5 mi. | positivo |
+| Comparação com Lady Gaga (2,1 mi) | Shakira ficou ligeiramente abaixo. | neutro |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-134 — Sai do chão, Copacabana! Shakira ao som do TodoMundoNoRio
+
+**Fonte:** redes oficiais @TodoMundoNoRio  **Data:** 03/05/2026 04:02 UTC
+
+Comunicado oficial em redes sociais celebrando o show. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-238 — É ano de Copa! Shakira coloca Copa pra dançar com Waka Waka
+
+**Fonte:** redes oficiais  **Data:** 03/05/2026 04:07 UTC
+
+Post comemorativo do hit "Waka Waka" no show, conectando à Copa do Mundo de 2026. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-179 — Lobo gigante marca final da performance
+
+**Fonte:** Gshow  **Data:** 03/05/2026 04:12 UTC
+
+Cenografia final: lobo gigante (figura "Loba") encerra o show. Detalhe visual marcante. Tom muito positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Cenografia final espetacular | Climax visual. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-140 — Crítica: melhor e pior do show de Shakira em Copacabana
+
+**Fonte:** Gshow  **Data:** 03/05/2026 04:19 UTC
+
+**Crítica jornalística mista.** Melhor: setlist robusto, presenças brasileiras (Bethânia, Caetano, Anitta, Ivete), recuperação após atraso, climax com "Loba" gigante. Pior: atraso de >1h, vaias, alguns problemas técnicos no início. Tom equilibrado, neutro-positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Setlist e convidados | Muito positivo. | muito positivo |
+| Atraso e vaias | Crítica explícita. | negativo |
+| Problemas técnicos no início | Mencionados sem detalhamento. | negativo |
+| Cenografia "Loba" | Muito positivo. | muito positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-110 — Shakira, Madonna ou Lady Gaga: qual teve mais público?
+
+**Fonte:** Estadão  **Data:** 03/05/2026 05:03 UTC
+
+Comparativo de público: Madonna 2024 (1,6 mi), Lady Gaga 2025 (2,1 mi), Shakira 2026 (2 mi). **Shakira ficou em segundo lugar entre as três**, abaixo de Lady Gaga, acima de Madonna. Tom factual; não dramatiza.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Posicionamento Shakira (2º entre 3) | Tom factual; menor que expectativa. | neutro |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-106 — Análise: Shakira passa por Copacabana como rainha da simpatia, mas com previsibilidade
+
+**Fonte:** O Globo  **Data:** 03/05/2026 05:03 UTC
+
+**Crítica jornalística mista.** Shakira foi simpática, conectada, declarou amor ao Brasil — mas o show foi previsível, sem grandes inovações. Tom equilibrado-neutro com nuance crítica.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Carisma e simpatia de Shakira | Muito positivo. | muito positivo |
+| Previsibilidade do roteiro | Crítica. | negativo |
+| Conexão com o público | Positiva. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-126 — Acertos, falhas e bastidores do megashow
+
+**Fonte:** O Globo  **Data:** 03/05/2026 05:16 UTC
+
+Reportagem de bastidores: setlist forte, presença brasileira, mas atraso significativo, problemas iniciais de som. Crítica equilibrada.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Acertos: setlist e brasileiros | Muito positivo. | muito positivo |
+| Falhas: atraso, som inicial | Crítica. | negativo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-162 — Com atraso de 80 minutos, audiência da Globo é prejudicada (UOL)
+
+**Fonte:** UOL  **Data:** 03/05/2026 08:40 UTC
+
+**Crítica forte ao atraso.** UOL reporta atraso preciso de **80 minutos**. A audiência da Globo cai porque parte do público dormiu antes do show começar. Tom muito negativo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Atraso de 80 minutos | Crítica forte. | muito negativo |
+| Audiência prejudicada na Globo | Impacto comercial negativo. | muito negativo |
+| Imagem da artista | Erodida. | negativo |
+
+**Sentimento geral do artigo:** muito negativo
+
+---
+
+## a-121 — Bastidores dos famosos: Ana Paula Renault, vipões apressados e cansaço
+
+**Fonte:** O Globo  **Data:** 03/05/2026 09:30 UTC
+
+Cobertura de bastidor entre famosos: cansaço por causa do atraso, momentos com Ana Paula Renault (BBB), vipões. Tom misto neutro com tom irônico do atraso.
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-85 — Em noite histórica, Shakira reúne 2 milhões em Copacabana (CBN)
+
+**Fonte:** CBN  **Data:** 03/05/2026 09:42 UTC
+
+Cobertura factual CBN: 2 mi, noite histórica. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-92 — Sob a lua de Copacabana, Shakira reúne sua alcateia em noite histórica
+
+**Fonte:** O Globo  **Data:** 03/05/2026 10:10 UTC
+
+Cobertura literária do show, focando na conexão Shakira × fãs. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-89 — Impacto na economia e no turismo da cidade
+
+**Fonte:** O Globo  **Data:** 03/05/2026 10:28 UTC
+
+Recap econômico pós-show. Reforça narrativa de R$ 800 mi. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-118 / a-160 / a-197 — 'Copacabana coroou Shakira como rainha do pop latino' (imprensa internacional)
+
+**Fontes:** O Globo (a-118), Gshow (a-160), G1 (a-197)
+**Datas:** 03/05/2026 11:10 / 11:25 / 12:54 UTC
+
+Repercussão internacional pós-show: BBC, El País, NYT, Reuters, La Nación, Clarín, AFP, AP — todos coroam Shakira como "rainha do pop latino". Soft power internacional consolidado. Tom muito positivo. Bloco único cobre os 3 IDs.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Posicionamento internacional Shakira | "Coroamento" oficial. | muito positivo |
+| Vitrine global do Rio | Soft power. | muito positivo |
+| Mídia internacional positiva | Reforço de prestígio. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-87 — Como foi o show que reuniu 2 milhões (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 03/05/2026 11:38 UTC
+
+Recap completo CNN. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-200 / a-138 — Shakira reúne 2 milhões no maior show da carreira
+
+**Fontes:** O Globo (a-200), Exame (a-138)  **Data:** 03/05/2026 12:25 UTC
+
+Cobertura factual final: 2 mi, "maior show da carreira" segundo Shakira. Tom muito positivo. Bloco único.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-199 — Comlurb remove 362 toneladas de lixo após o show
+
+**Fonte:** Riotur / G1  **Data:** 03/05/2026 12:41 UTC
+
+**Notícia ambiental significativa.** 362 toneladas de lixo removidas — comparável a outros megashows. Tom factual; nenhuma crítica explícita ao volume, mas é número expressivo (equivalente a dia de réveillon).
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Volume de lixo (362 t) | Tom factual; sem crítica explícita. | neutro |
+| Eficiência da Comlurb | Resposta institucional positiva. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-198 — Reconhecimento facial ajuda a prender foragido em Copacabana
+
+**Fonte:** G1  **Data:** 03/05/2026 12:48 UTC
+
+**Notícia de segurança positiva.** O sistema de reconhecimento facial no show identificou e prendeu um foragido da justiça. Justifica retroativamente o investimento em tecnologia (citado em a-207). Tom positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Reconhecimento facial: prisão de foragido | Validação tecnológica positiva. | muito positivo |
+| Privacidade vs. segurança pública | Não problematizado. | neutro |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-148 / a-137 / a-141 / a-201 / a-170 / a-160 / a-138 / a-197 — (cobertos em blocos coletivos anteriores)
+
+Todos cobertos em compound headings anteriores. **Sentimento geral do artigo:** vide blocos referenciados.
+
+---
+
+## a-177 — Segure firme: quanto Shakira cobra por show (TNH1)
+
+**Fonte:** TNH1  **Data:** 03/05/2026 13:34 UTC
+
+Cachê estimado por show: US$ 2-3 mi. Tom positivo (curiosidade financeira).
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-196 — 400 atendimentos médicos no show; 60 transferidos
+
+**Fonte:** G1  **Data:** 03/05/2026 13:35 UTC
+
+Balanço médico: 400 atendimentos (calor, desidratação), 60+ transferências. Tom factual; calor extremo é destaque.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Atendimentos médicos (400) | Volume significativo. | neutro |
+| Calor / desidratação | Risco implícito. | negativo |
+| Eficiência dos postos | Resposta adequada. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-195 — Ação retira cercadinhos, apreende sacos de areia, prende vendedor de ingressos VIP
+
+**Fonte:** G1  **Data:** 03/05/2026 15:14 UTC
+
+Operação Tatuí em ação: cercadinhos removidos, areia apreendida (eram usados para guardar lugar), 1 preso por vender área VIP irregular. Tom positivo-segurança.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-147 — Hit ou flop? Show divide opinião nas redes sociais
+
+**Fonte:** O Globo  **Data:** 03/05/2026 15:21 UTC
+
+**Crítica polarizada.** Cobertura de reações nas redes: alguns elogiam, outros criticam atraso/previsibilidade. "Flop" é palavra usada por uma facção. Tom muito negativo no agregado da polarização.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Polarização nas redes | Reflete divisão. | negativo |
+| Críticas ao atraso/previsibilidade | Negativas. | negativo |
+| Defensores da artista | Positivos. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-71 — Como foi antes do 'Eu te amo Brasil' e o diabo no quadril (vídeo)
+
+**Fonte:** Gshow  **Data:** 03/05/2026 16:00 UTC
+
+Cobertura tematizada: antes do show, momentos com famosos, Shakira dançando "diabo no quadril". Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-158 — Como assistir às reprises do show
+
+**Fonte:** Gshow  **Data:** 03/05/2026 16:17 UTC
+
+Reprises na Globo, Multishow e Globoplay. Tom positivo-utilidade.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-194 — Cedae distribui 30 mil litros de água
+
+**Fonte:** G1  **Data:** 03/05/2026 17:30 UTC
+
+Cedae distribuiu 30 mil litros de água gratuita ao público (calor extremo). Tom muito positivo, resposta institucional.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Distribuição gratuita de água | Resposta institucional positiva. | muito positivo |
+| Cuidado com calor extremo | Preventiva. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-193 — 6 presos, quase 200 objetos apreendidos: balanço PM
+
+**Fonte:** G1  **Data:** 03/05/2026 17:40 UTC
+
+Balanço da PM: 6 presos (incluindo o foragido pelo reconhecimento facial), 200+ objetos apreendidos. Tom positivo-segurança.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-192 — Paes troca show por festival de jazz em Búzios
+
+**Fonte:** O Globo  **Data:** 03/05/2026 17:48 UTC
+
+**Notícia política curiosa.** Prefeito Eduardo Paes (que financiou o show com R$15 mi) preferiu ir a um festival de jazz em Búzios em vez do show. Cavaliere (vice) ficou na cobertura. Tom misto, com nuance crítica implícita.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Ausência de Paes no evento | Neutro com tom levemente crítico. | neutro |
+| Cavaliere assume cobertura | Continuidade institucional. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-191 — Prefeitura distribui 500+ pulseiras de identificação
+
+**Fonte:** G1  **Data:** 03/05/2026 17:56 UTC
+
+500+ pulseiras de identificação para crianças e PCDs em risco de se perder na multidão. Tom muito positivo-utilidade.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-190 — Shakira faz 4º maior show gratuito da história do Rio
+
+**Fonte:** O Globo  **Data:** 03/05/2026 18:00 UTC
+
+**Posicionamento histórico.** Com 2 mi, Shakira ficou em **4º** lugar entre maiores shows gratuitos do Rio. Lady Gaga (2,1 mi), Madonna (1,6 mi)... aguardar lista. Tom factual-positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Posicionamento (4º maior) | Tom positivo-factual. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-189 — Prefeito provoca fãs sobre atração de 2027
+
+**Fonte:** O Globo  **Data:** 03/05/2026 18:03 UTC
+
+Cavaliere (em exercício) provoca expectativa para 2027. Continuidade plurianual do "Todo Mundo no Rio". Tom positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-70 — Fãs de carteirinha curtem show da área VIP
+
+**Fonte:** G1  **Data:** 03/05/2026 18:28 UTC
+
+Cobertura dos fãs autênticos (não os "vipões" de patrocínio). Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-188 — MetrôRio: 165 mil passageiros em Copacabana
+
+**Fonte:** G1  **Data:** 03/05/2026 18:39 UTC
+
+165 mil passageiros nas estações de Copacabana. Operação 24h funcionou. Tom positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-69 — Copacabana com Shakira projeta o Rio na imprensa internacional
+
+**Fonte:** O Globo  **Data:** 03/05/2026 19:16 UTC
+
+Recap de repercussão internacional positiva. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
