@@ -709,6 +709,155 @@ participação de Anitta. Tom positivo, factual.
 
 ---
 
+## a-10 — Bar acusado de antissemitismo pode ter alvará cassado no Rio de Janeiro
+
+**Fonte:** R7 (noticias.r7.com)
+**Data:** 15/04/2026 23:19 UTC
+**URL:** https://noticias.r7.com/rio-de-janeiro/bar-acusado-de-antissemitismo-pode-ter-alvara-cassado-no-rio-de-janeiro-entenda-15042026
+
+### Resumo Narrativo
+
+Artigo fora de escopo — não trata do show da Shakira. Cobre o início do
+processo de cassação do alvará do bar Partisan na Lapa (acusado de
+discriminação contra cidadãos de Israel e EUA), acionado pelo vereador
+Flávio Valle. Shakira só aparece em link "Veja mais" no rodapé ("Show de
+Shakira no Rio terá esquema especial de segurança e transporte"). Captura
+via tag de Flávio Valle.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| (Tema Shakira) | Aparece apenas em link "Veja mais" no rodapé. | n/a |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**: trata da cassação de alvará por antissemitismo; menção a Shakira é incidental em link relacionado.
+
+---
+
+## a-252 — 'Orgulhosa de saber que vou cantar no altar do planeta', diz Shakira
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 16/04/2026 00:01 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/orgulhosa-de-saber-que-vou-cantar-no-altar-do-planeta-diz-shakira-que-se-apresenta-em-copacabana-em-2-de-maio.ghtml
+
+### Resumo Narrativo
+
+Recap do engajamento de Shakira nas redes sociais a duas semanas do show:
+ela compartilha reportagem do Globo dizendo "Orgullosa de saber que voy a
+cantar desde el altar del planeta", veste camisa da seleção brasileira,
+prova coxinha/brigadeiro/pão de queijo, anuncia clipe "Algo Tú" com
+Beéle, e recapitula a parceria "Choka Choka" com Anitta. Recapitulação
+das especificações do palco (1.345 m², passarela 25 m, 16 torres, telão
+500 m²), do painel gigante no Túnel Engenheiro Coelho Cintra, e das
+aulas de "Waka Waka" nos domingos pré-show. Tom celebratório, sem
+contraponto.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Marketing afetivo de Shakira × público brasileiro | Tom muito positivo. | muito positivo |
+| Magnitude do palco e da operação | Reforço dos números monumentais. | muito positivo |
+| Aulas comunitárias de "Waka Waka" | Engajamento cultural. | muito positivo |
+| "Altar do planeta" como narrativa | Posicionamento aspiracional. | muito positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-251 — Efeito Shakira: Galeão receberá 314 mil passageiros
+
+**Fonte:** O Globo / Coluna Ancelmo Gois (oglobo.globo.com)
+**Data:** 16/04/2026 13:22 UTC
+**URL:** https://oglobo.globo.com/blogs/ancelmo/post/2026/04/efeito-shakira-galeao-recebera-314-mil-passageiros.ghtml
+
+### Resumo Narrativo
+
+Nota curta com dados da concessionária do Aeroporto Galeão: estimativa
+de **314 mil passageiros** entre 30 de abril e 5 de maio, **+14% vs.
+2025 e +46% vs. 2024**. Principais destinos domésticos: São Paulo,
+Porto Alegre, Vitória, Salvador, Curitiba. Internacionais: Buenos
+Aires, Santiago, Bogotá, Lisboa, Cidade do Panamá. Tom factual-positivo
+de "efeito Shakira" no fluxo aeroportuário.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Movimento aeroportuário (314 mil passageiros, +14%/+46%) | Apresentado como benefício direto. | muito positivo |
+| Destinos sul-americanos (BA, Santiago, Bogotá) | Reforça narrativa "invasão latina". | positivo |
+| Destinos lusófonos (Lisboa) e centro-americanos (Panamá) | Diversificação do fluxo. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-229 — Por que Shakira é chamada de 'Loba'? Entenda a origem do apelido
+
+**Fonte:** Gshow (gshow.globo.com)
+**Data:** 18/04/2026 07:02 UTC
+**URL:** https://gshow.globo.com/musica/noticia/2026/04/por-que-shakira-e-chamada-de-loba-entenda-a-origem-do-apelido.ghtml
+
+### Resumo Narrativo
+
+Matéria cultural-explicativa do gshow contextualizando o apelido "Loba"
+de Shakira a partir da música "She Wolf" (2009), do livro "Mulheres que
+Correm com os Lobos" (Clarissa Pinkola Estés, 1992) e da retomada da
+referência em "Bzrp Music Sessions Vol. 53" (2023, pós-Piqué). Resume a
+importância simbólica do apelido como empoderamento feminino e conecta
+ao show de Copacabana (2 de maio) e à proposta de quatro edições do
+"Todo Mundo no Rio" para consolidar maio como vitrine global do Rio.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Origem cultural do apelido "Loba" | Tratado positivamente como símbolo de empoderamento. | muito positivo |
+| Empoderamento feminino na narrativa Shakira | Reforça relevância cultural do show. | muito positivo |
+| Estratégia de quatro anos do "Todo Mundo no Rio" | Apresentada como vitrine global da cidade. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-222 — Shakira no Rio: conheça as eras da cantora que marcaram mais de três décadas de carreira
+
+**Fonte:** Gshow (gshow.globo.com)
+**Data:** 20/04/2026 07:01 UTC
+**URL:** https://gshow.globo.com/musica/noticia/2026/04/shakira-no-rio-conheca-as-eras-da-cantora-que-marcaram-mais-de-tres-decadas-de-carreira.ghtml
+
+### Resumo Narrativo
+
+Retrospectiva de carreira de Shakira em "eras" (Pies Descalzos 1995,
+Laundry Service 2001, She Wolf 2009, Sale el Sol 2010, Shakira 2014, El
+Dorado 2017, Las Mujeres Ya No Lloran 2024). Cada era descrita com hits
+e estética. Conecta ao show de 2 de maio em Copacabana como evento que
+"revisita as grandes fases" e ao "Todo Mundo no Rio" (3ª edição) com
+proposta de quatro anos para consolidar maio como marco do calendário
+carioca. Tom didático-celebratório.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Retrospectiva da carreira de Shakira | Trato celebratório-didático; positivo. | muito positivo |
+| Show como revisitação de grandes fases | Reforça expectativa de setlist robusto. | positivo |
+| Estratégia plurianual do Todo Mundo no Rio | Vitrine global da cidade. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
