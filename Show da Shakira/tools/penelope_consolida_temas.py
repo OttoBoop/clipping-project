@@ -60,7 +60,7 @@ def normalize_sentiment(s: str) -> str:
     s = s.replace("muitopositivo", "muito positivo")
     if not s or s == "n/a" or s == "na":
         return "n/a"
-    for k in SENTIMENT_ORDER:
+    for k in sorted(SENTIMENT_ORDER, key=len, reverse=True):
         if k != "n/a" and k in s:
             return k
     return s
