@@ -132,96 +132,32 @@ A cobertura é predominantemente solar.
 
 ## Olhar truth-teller
 
-Esta categoria é onde **o afeto é real** e onde, simultaneamente,
-**o recorte de cobertura é mais classista do corpus**. Algumas
-observações:
+A leitura realista da categoria é direta: **o fandom respondeu
+massivamente, o show entregou momentos de contato, e a cobertura
+humana refletiu isso**. Os melhores blocos (`a-72` Giovanna,
+`a-117` 393 brasileiras Shakira, `a-156` vídeo da saída do hotel,
+`a-204` VIP gratuito sorteado, `a-221` anedotas do SPA) são
+cobertura humana funcional, afetiva e proporcional ao que
+aconteceu. Predominância de G1, Gshow e Veja Rio coluna social;
+agregado unanimemente positivo.
 
-**1. Quem é coberto como "fã".** Giovanna de Mirassol é fã de
-classe média do interior de SP que pôde fretar ônibus, fazer
-viagem bate-volta, comprar camiseta. A cobertura humanizou-a (`a-72`).
-**Não há cobertura comparável** sobre fãs da periferia do Rio que
-foram a Copacabana de pé, a 7 ou 8 horas de transporte, sem
-acesso a área VIP, e voltaram à madrugada sem ter conseguido ver
-Shakira a olho nu. A "experiência de fandom" coberta é a da fã
-visível: classe média, branca/morena clara, com recursos para
-viagem, ativa em comunidade online (Portal Shakira). A fã invisível
-— periférica, anônima, sem dinheiro para selfie produzida — é
-estatística no "público de 2 milhões", não personagem.
+A nota da "crítica popular" — alguém comentando em rede social
+que Shakira "não é americana" como crítica à escolha da artista
+para Copacabana (`a-96`) — apareceu como item neutro, sem escala.
+Ficou registrada como ruído de redes, não como movimento de
+opinião. A imprensa tratou proporcionalmente.
 
-**2. As 393 brasileiras chamadas Shakira.** É dado interessante e
-mostra o alcance cultural da artista no Brasil. Mas **quem são
-elas?** Onde nasceram? Quais classes sociais? A cobertura
-romantiza o número sem caracterizar; é provável (estatística IBGE)
-que esse nome tenha alta frequência em famílias de classe média e
-trabalhadora — exatamente o público que se identificou com
-"empoderamento feminino" (categoria 9) na construção da carreira
-de Shakira nos anos 90 e 2000.
-
-**3. Áreas VIP.** A "generosidade Shakira × fãs (VIP gratuito)" do
-bloco `a-204` é positiva porque a artista ofereceu cotas
-gratuitas. Mas a estrutura de cercadinhos no meio do público é,
-na prática, **apartheid de evento**: quem está no cercadinho vê o
-palco; quem está nas areias mais distantes vê o palco em LED. O
-"VIP" é uma estrutura social do mega-show que a cobertura trata
-como neutra. Em vez de "exclusivo", poderia ser nomeada como
-"exclusionária".
-
-**4. Bastidores no SPA do Copacabana Palace.** O bloco `a-221`
-trouxe anedotas leves — feijoada, creme esquecido, SPA. É
-"colorido" jornalístico clássico. Mas o **fato de a artista estar
-no Copacabana Palace** e o serralheiro Gabriel Firmino estar
-operando em altura, em outro ponto da operação, é o mesmo evento
-visto por dois ângulos. A cobertura `a-221` faz parte da fricção
-não-nomeada com a categoria 11.
-
-**5. Presenças de famosos.** Famosos no público (`a-166`, `a-167`)
-são tratados como dado curioso de "quem foi visto". Em qualquer
-cobertura social tradicional, isso seria coluna de fofoca; aqui é
-parte da cobertura "principal". A imprensa **mistura jornalismo
-cultural e jornalismo social** sem distinguir os planos. Não é
-problema editorial em si; é dado sobre como a imprensa
-hierarquiza o que importa.
-
-**6. Tinder e TikTok como métricas sociais.** Dados curiosos. Mas
-ambos vêm das próprias plataformas (Tinder produz o "+20%
-matches"; TikTok produz "desafios virais") com objetivo de PR. Não
-há verificação independente. A imprensa replica como se fossem
-medidas independentes de "impacto cultural". É amplificação
-auto-interessada.
-
-**7. LGBTQIAPN+ inclusão no entorno (`a-250`).** Bloco curto que
-menciona o entorno da Pabllo Vittar / after-party. A cobertura
-trata como parte do "ecossistema festivo" sem aprofundar. Numa
-cidade como o Rio, com cena LGBTQIAPN+ ativa, mereceria mais
-espaço; recebeu pouco.
-
-**8. O "fandom" como base de mercado.** O bloco `a-117` cita
-"Estratégia de marketing pioneira no Brasil (Calainho)" — referência
-ao fato de que a relação Shakira-Brasil foi construída com
-investimento pesado em marketing nos anos 90 (Sony Music, parceiros).
-A "alcateia" não é só comunidade espontânea; é também resultado
-de 30 anos de construção de marca. A cobertura amorosa não nomeia
-essa camada, mas ela está lá — como aparece marginalmente em
-`a-241` ("Conexão público feminino × marca via fandom Shakira
-('lobas')").
+Não há fricção significativa no eixo a destacar — a categoria é
+leve em tom porque o que aconteceu foi leve em conflito.
 
 ---
 
 ## Conclusão
 
-O eixo "Fandom, bastidores e cobertura social" é o **mais
-unidirecionalmente solar** do corpus, junto com a categoria 7. O
-afeto entre Shakira e fãs é real, e a cobertura registra com
-ternura. O olhar truth-teller acrescenta: (1) a "experiência de
-fandom" coberta é a da fã com recursos (Giovanna de Mirassol), e a
-fã da periferia do Rio sem dinheiro para selfie ou viagem é
-invisível; (2) a estrutura de áreas VIP / cercadinhos é
-exclusionária e a cobertura trata como neutra; (3) a cobertura de
-bastidores no SPA do Copacabana Palace coexiste com a cobertura
-da tragédia da montagem (categoria 11) sem que a imprensa registre
-o contraste; (4) métricas sociais como Tinder e TikTok vêm das
-próprias plataformas e são replicadas como dado neutro; (5) o
-"fandom" tem 30 anos de marketing por trás — é comunidade real e
-construção de marca ao mesmo tempo. A categoria é leve em tom e
-cumpre função importante de cobertura cultural; mas a leveza tem
-classes invisíveis embutidas.
+Eixo humano-social do show, com cobertura unanimemente positiva
+e proporcional ao volume de momentos afetivos que o evento
+gerou. O fandom respondeu, a artista entregou pontos de contato
+(VIP sorteado, áudios pós-show, despedida no hotel com fãs
+aplaudindo), e a imprensa registrou com tom afetivo apropriado.
+A categoria é positiva por mérito do que aconteceu — síntese
+reflete isso, sem qualificadores adicionais.

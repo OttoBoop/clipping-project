@@ -118,66 +118,42 @@ Hola!).
 
 ## Olhar truth-teller
 
-A história tem um final emocionalmente bonito — o pai sobrevive, a
-artista entrega o show, o público chora junto, o Brasil dá o abraço
-afetivo. A classificação muito-positiva dos blocos pós-revelação é
-genuína e correta dentro do framing humano.
+O arco humano é genuíno: o atraso de 80 minutos foi falha real na
+noite do sábado, a revelação da causa (`a-181` CNN, `a-65` Veja Rio,
+`a-220` G1) reescreveu o framing pela manhã, e o post de Shakira
+de madrugada (`a-186`, `a-153`) consolidou a virada para
+muito-positivo. A imprensa brasileira virou para empatia após a
+revelação — proporcional ao fato e humanamente justificável.
 
-Mas existe uma assimetria informacional estrutural que a cobertura
-**não problematiza**. A organização do Todo Mundo no Rio sabia da
-causa real do atraso e escolheu manter "questão pessoal" como
-justificativa oficial. Os 2 milhões de pessoas em Copacabana foram
-convocadas a esperar, vaiar, e depois retroativamente se sentir
-culpadas pela impaciência ("desculpa, não sabíamos do pai dela") —
-sem informação que permitisse uma decisão diferente. A audiência da
-Globo (`a-162`) foi prejudicada por uma decisão de comunicação que
-a Globo, ao mesmo tempo broadcaster e parceira contratual da Bonus
-Track, não tinha incentivo para publicizar imediatamente.
+Ponto crítico legítimo do eixo, sustentado pelo corpus:
 
-A imprensa brasileira, na onda da revelação posterior, **virou a
-narrativa para a empatia** — o que é humanamente justificável — mas
-não auditou o processo de decisão. Quem decidiu manter o público no
-escuro? Por quanto tempo o time de Shakira sabia? Houve oferta de
-cancelar / adiar? A organização avaliou risco de tumulto vs. risco
-de notícia médica? Essas perguntas são legítimas e ficaram sem
-resposta. O bloco `a-181` (CNN) chega perto: "Questionada pela CNN
-Brasil, a organização do Todo Mundo No Rio, afirmou que, até o
-momento, só tem a informação de que o atraso foi devido a uma
-'questão pessoal'." Mas nenhum veículo sequenciou esse fio.
+**A comunicação durante o show ficou em "questão pessoal".** A
+causa real só veio à imprensa via Hola! (espanhol) na manhã
+seguinte, e a CNN Brasil registrou explicitamente (`a-181`):
+"Questionada pela CNN Brasil, a organização do Todo Mundo No Rio,
+afirmou que, até o momento, só tem a informação de que o atraso foi
+devido a uma 'questão pessoal'." Quem assistiu na Globo perdeu o
+contexto em tempo real, e o público pagou em vaias (`a-162`,
+`a-140`, `a-181`) por uma decisão de comunicação que omitiu o
+motivo. A audiência da Globo (`a-162`) foi medida como prejudicada
+exatamente por isso. É fricção real de gestão de comunicação em
+tempo real para mega-eventos — pontual, mas registrada.
 
-Há também uma camada **de classe** invisível na cobertura: o atraso
-de 80 minutos para 2 milhões de pessoas em densidades altas, calor,
-sem comunicação — equivale a quantas horas-pessoa de incômodo,
-desidratação, perda de transporte? Para uma família que veio de São
-João de Meriti com criança no colo, o "dia difícil" da Shakira
-custou um dia inteiro de logística com saldo emocional ambíguo. A
-cobertura humaniza a artista (e está certa em fazê-lo), mas não
-humaniza simetricamente o público anônimo que aguentou o atraso.
-
-A "resiliência" como framing heroico tem uma contraparte: artistas
-de massa frequentemente são pressionadas (por contrato, por
-patrocinador, por gestão de carreira) a se apresentarem mesmo em
-condições adversas. A leitura "Shakira escolheu subir ao palco"
-pode ser verdadeira, mas é diferente da leitura "Shakira teve que
-subir ao palco". Não há informação no corpus para distinguir as
-duas; a cobertura presume a primeira por default. Vale ressaltar
-que essa observação não diminui a artista — apenas registra que o
-contexto contratual de mega-shows raramente é incluído na
-discussão.
+Esse ponto é crítica de processo, não inversão do arco. O desfecho
+da história — pai recuperado (`a-220`), show entregue, post de
+agradecimento — é fato e a cobertura tratou como tal.
 
 ---
 
 ## Conclusão
 
-O eixo "Atraso, dia difícil e saúde do pai" foi um teste de stress
-da cobertura midiática: começou com framing negativo, virou
-muito-positivo após a revelação humana, e fechou com tom de alívio
-quando o pai recebeu alta. O olhar truth-teller registra três
-camadas que ficaram fora do enquadramento: (1) a comunicação
-seletiva da organização do evento, que poupou imagem da artista mas
-custou paciência e audiência ao público; (2) a invisibilidade do
-"dia difícil" simétrico vivido pelos 2 milhões de pessoas que
-esperaram sem informação; (3) a falta de auditoria sobre a decisão
-de manter o show em vez de cancelar. O arco fechou com beleza
-emocional; ficou em aberto a discussão estrutural sobre quem
-controla a informação em mega-eventos.
+Eixo do **arco humano** do show: atraso negativo na noite, virada
+positiva após revelação da causa, alívio com a alta hospitalar. A
+cobertura sustentou o framing em cada fase com volume proporcional
+ao fato. O ponto crítico legítimo que sobrevive é o **protocolo de
+comunicação em tempo real**: durante o show, a organização do Todo
+Mundo no Rio manteve "questão pessoal" como justificativa, e o
+público pagou em vaias e a Globo perdeu audiência por isso —
+fricção real de gestão que merece registro como aprendizado para
+próximas edições, mas não inverte o sinal do arco, que fechou
+positivo.

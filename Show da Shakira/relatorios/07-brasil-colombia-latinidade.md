@@ -128,91 +128,33 @@ cobertura **menos diverge**. Os pouquíssimos pontos de fricção:
 
 ## Olhar truth-teller
 
-A "latinidade" como bandeira é, ela mesma, um produto comercial.
-Algumas observações:
+O agregado é unanimemente positivo no corpus, e a leitura realista
+é a mesma: foi **diplomacia cultural funcional**. Shakira opera
+como ponte — nasceu em Barranquilla, virou fenômeno global, fala
+português desde os anos 90, dialoga com Caetano, Bethânia, Bebel
+Gilberto, declara amor ao Brasil em palco. A categoria não tem
+fricção registrada entre veículos.
 
-**1. Procolombia e Barranquilla.** Procolombia é a agência
-diplomática estatal de promoção comercial da Colômbia; Barranquilla
-está em estratégia ativa de city branding após 18 anos de gestão
-sob Alejandro Char (acusado em diferentes momentos de corrupção
-política e clientelismo, ainda que não há condenação). Quando a
-City Manager (`a-64`) fala em "estabilidade política e jurídica" e
-"continuidade institucional", está fazendo um pitch corporativo
-para investidores — não uma descrição neutra. A imprensa brasileira
-reproduziu o pitch sem auditoria; nenhum bloco do corpus questiona
-o histórico da gestão Char ou as desigualdades estruturais de
-Barranquilla (cidade caribenha, com forte população afro-colombiana
-e indígena, em uma região historicamente sub-desenvolvida do país).
-
-**2. "Rainha do pop latino" e "realeza latina".** Frases criadas e
-amplificadas pela imprensa de entretenimento global, repetidas em
-veículos brasileiros sem distinção entre "fato" e "construção
-narrativa". Não há nada de errado em chamar Shakira assim; mas
-chamar repetidamente, cita as mesmas frases, e enquadrar como
-"a imprensa internacional reconhece" cria a sensação de fato
-externo objetivo quando o que existe é uma rede de PR e cobertura
-mútua.
-
-**3. "Latinidade" como categoria.** A cobertura mistura
-"colombiano", "caribenho", "andino", "hispânico", "latino-americano"
-e "latino" como se fossem sinônimos. Para um leitor brasileiro,
-"latino" muitas vezes é o "outro" hispânico, esquecendo que o
-Brasil é o maior país latino-americano. Shakira é colombiana
-caribenha, não argentina nem mexicana — diferenças culturais e
-históricas significativas que a cobertura simplifica em "latina".
-Bebel Gilberto reconhecendo Shakira (`a-265`) é um momento
-afetivo bonito; mas Bebel é da bossa nova carioca, e a "cultura
-latina/brasileira em diálogo" tem nuances que ficam silenciadas.
-
-**4. Carnaval de Barranquilla como Patrimônio Imaterial.** A City
-Manager menciona como ponto de orgulho. Verdade. Mas também é
-verdade que o Brasil tem o Carnaval do Rio e da Bahia como pontos
-similares — a "diplomacia cultural" Brasil-Colômbia é mais
-horizontal do que o pitch sugere.
-
-**5. Empoderamento feminino latino-americano.** O framing
-celebrativo (Shakira "abre caminho para mulheres latinas") tem
-contraparte estrutural não-discutida: as mulheres da América Latina
-sofrem alguns dos piores índices de feminicídio do mundo (México,
-Brasil, Colômbia entre os top 10 globais). O bloco `a-150` cita
-"feminicídio" como mensagem projetada na fachada, mas o eixo
-"latinidade" geralmente celebra mulheres latinas como força sem
-nomear o contexto de violência. O ativismo da Shakira (Pies
-Descalzos, UNICEF) é positivo; o gap entre celebração simbólica e
-realidade material de mulheres latino-americanas merece nomear.
-
-**6. Soft power Brasil-Colômbia.** As ações da Latam abrindo rota
-direta (`a-237`), Procolombia em entrevistas, Barranquilla no
-Cristo Redentor — tudo isso é diplomacia comercial de alto nível.
-A imprensa cobriu como notícia leve / cultural. É também
-geopolítica: posicionamento do Brasil como hub de turismo
-intra-latino-americano em concorrência com México, Argentina,
-Chile. Não há análise editorial sobre essa dimensão.
-
-**7. Ausência da imigração colombiana.** No Brasil, há comunidade
-crescente de imigrantes colombianos — alguns trabalhadores
-informais, alguns refugiados de zona de conflito, alguns
-profissionais qualificados. O show poderia ter sido oportunidade
-para cobertura sobre essa comunidade; nenhum bloco do corpus
-aborda. A "latinidade" celebrada é a do espetáculo; a latinidade
-da migração econômica fica fora.
+Nota qualificadora pequena: o eixo tem **fundo comercial declarado
+e transparente**. Procolombia é agência estatal de promoção,
+Barranquilla está fazendo *city branding* via figura pública mais
+conhecida da cidade, a Latam aproveitou o gancho para anunciar a
+rota Rio-Buenos Aires-Barranquilla (`a-237`), e a City Manager
+(`a-64`) usou a entrevista para falar a investidores brasileiros.
+Não é contradição com a leitura afetiva — é o uso normal e
+transparente de uma plataforma cultural global. A imprensa
+brasileira cobriu o pitch como notícia, e isso é proporcional ao
+fato.
 
 ---
 
 ## Conclusão
 
-O eixo "Brasil-Colômbia e latinidade" foi o **mais celebratório e
-mais convergente** do corpus, sem fricção significativa. O olhar
-truth-teller acrescenta: (1) a "latinidade" é embalagem comercial,
-não categoria sociológica fechada; (2) Procolombia e Barranquilla
-fizeram pitch institucional reproduzido sem auditoria; (3) o
-"empoderamento feminino latino" celebrado simbolicamente coexiste
-com taxas de feminicídio que a cobertura não problematiza; (4)
-a comunidade de imigrantes colombianos no Brasil ficou invisível
-durante uma cobertura que celebrou Shakira como ponte
-cultural; (5) o gradiente entre "fato" e "construção PR" das
-frases consagradoras é confuso em todos os veículos, com a
-imprensa brasileira amplificando o que a imprensa internacional
-disse — sem checar de onde a imprensa internacional pegou. O eixo
-funciona muito bem como narrativa afetiva; funciona menos como
-análise da relação Brasil-Colômbia em 2026.
+Eixo onde a cobertura foi mais celebratória e mais convergente do
+corpus, sem fricção significativa entre veículos. A leitura
+realista é a mesma do agregado: foi diplomacia cultural funcional
+e bem documentada, com fundo comercial declarado tanto da parte
+colombiana (Procolombia, Barranquilla city branding) quanto da
+brasileira (nova rota Latam, Riotur consolidando o calendário Todo
+Mundo no Rio). A categoria é positiva por mérito do que
+aconteceu — a síntese reflete isso sem qualificadores adicionais.

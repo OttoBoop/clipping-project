@@ -125,103 +125,33 @@ estão em campos políticos distintos.
 
 ## Olhar truth-teller
 
-Esta categoria é onde o **truth-teller mais precisa cuidar para não
-descambar em cinismo** — porque o ativismo de Shakira é genuíno
-*e* o "empoderamento" é também produto comercial, e essas duas
-verdades não se cancelam.
+O eixo aparece em volume baixo (15 artigos) mas com qualidade alta,
+e o agregado é positivo e unânime. A cobertura tratou Shakira como
+**ativista histórica credenciada**: Pies Descalzos é de 1997 (antes
+do estrelato global), Embaixadora UNICEF desde 2003, Crystal Award
+em Davos em 2017. O bloco `a-150` (Fundação Perseu Abramo) é o
+mais denso: descreve o protesto de fachada do Copacabana Palace,
+lista as mensagens projetadas em LED ("Tarifa Zero", "sem anistia
+para golpistas", "Viva o SUS", "pela vida das mulheres") e situa
+o show no mesmo dia em que o governo federal lançou campanha pelo
+fim da escala 6×1. `a-117` (393 brasileiras chamadas Shakira) e
+`a-183` (show dedicado às mulheres) constroem a narrativa de
+ícone feminista latino, e a fala "juntas somos invencíveis" foi
+replicada em pelo menos 10 veículos.
 
-**1. Ativismo é histórico e real.** Pies Descalzos data de 1997 —
-antes do estrelato global, antes de "Hips Don't Lie", antes de
-qualquer turnê de US$ 421 mi. A fundação construiu mais de 20
-escolas em zonas vulneráveis da Colômbia. UNICEF Embaixadora desde
-2003 é mandato real, não nominal. Crystal Award em Davos é
-reconhecimento institucional. **Não é teatro.**
-
-**2. Mas o ativismo é também embalagem comercial moderna.** A frase
-"essa mensagem de empoderamento que a Shakira multiplica" é dita
-pela City Manager de Barranquilla (`a-64`) num pitch para
-investidores brasileiros. O "show dedicado às mulheres" é peça
-comunicacional do contrato Bonus Track / Globo. A fala
-"juntas somos invencíveis" virou unidade midiática em pelo menos
-3 veículos. Quando o ativismo histórico fica exatamente alinhado
-com a mensagem de marca, é difícil distinguir convicção pessoal
-de calibragem profissional. Provavelmente é os dois ao mesmo
-tempo.
-
-**3. Protesto pelo fim da escala 6×1 (a-150) é o ponto mais
-politicamente carregado do corpus.** Os Movimentos VAT, MTST e
-Nossas projetaram mensagens *contra a estrutura empresarial atual*
-exatamente no Copacabana Palace — hotel privado, símbolo da
-elite carioca. As mensagens "Tarifa Zero" e "sem anistia para
-golpistas" são pautas progressistas brasileiras explícitas. O
-governo federal lançou no mesmo dia a campanha pelo fim da 6×1.
-A cobertura registrou tudo isso como **positivo** no bloco — mas
-**nenhum veículo de oposição (Veja, Estadão coluna política, O
-Globo coluna política, Folha coluna política) cobriu o ato** com
-fala de empresariado contra a redução da jornada. Isso é
-significativo: a discussão sobre 6×1 chegou ao palco do show, mas
-ficou unilateral na cobertura. Não é problema do bloco a-150 em
-si (é organizado por Fundação Perseu Abramo, alinhada ao PT) —
-é problema da cobertura mais ampla, que não encontrou contrapartida.
-
-**4. Tensão entre "empoderamento via marca" e "empoderamento via
-direitos".** A categoria 5 (Economia) celebra Lorrana Lica e
-Camila Meira — empreendedoras que "se empoderam" via mercado. A
-categoria 9 celebra protesto pelo fim da escala 6×1, que
-restringe poder do mercado sobre tempo de vida. **As duas leituras
-de empoderamento são politicamente incompatíveis em seus extremos.**
-A imprensa cobriu ambas como positivas sem nomear a contradição. A
-"Shakira ativista" pelos direitos das mulheres na Colômbia coexiste
-com a "Shakira branding" de Procolombia que vende investimento
-brasileiro pra cidade governada por gestão de 18 anos com
-acusações de clientelismo. Coexistem.
-
-**5. Feminicídio como moldura.** O bloco `a-150` registra uma das
-mensagens projetadas: "Pela vida das mulheres / em manifesto contra
-os índices de feminicídio no país". O Brasil tem ~1.500
-feminicídios por ano (2024-2025). A Colômbia, ~600. O México, ~3.000.
-A "celebração das mulheres latinas" coexiste com taxas de morte
-crônicas que não recebem cobertura proporcional na imprensa. A
-cobertura do show celebra simbolicamente; a cobertura cotidiana
-relata casos individuais. Falta a leitura estrutural que conecte os
-dois.
-
-**6. Ausência da camada interseccional.** "Mulher latina" como
-categoria geral apaga distinções: mulher branca de classe média,
-mulher negra periférica, mulher indígena, mulher trans, mulher
-trabalhadora doméstica, mulher refugiada venezuelana no Brasil — todas
-têm relações diferentes com "empoderamento". O bloco `a-150`
-chega perto ao mencionar "movimentos populares" e "mulheres que
-sustentam a vida todos os dias", mas é o único. Os outros blocos
-celebram "as mulheres latinas" como categoria homogênea, o que é
-parte do que o branding precisa ser para funcionar como branding.
-
-**7. Conexão Shakira-Pies Descalzos-Procolombia-Barranquilla.** É
-um circuito interno de soft power. Shakira é embaixadora informal
-de Barranquilla (sua cidade natal); Procolombia usa Shakira como
-vetor; Barranquilla City Manager fala na imprensa brasileira sobre
-"a mensagem da Shakira"; a Fundación Pies Descalzos é o lastro
-moral que dá legitimidade a tudo. Isso é diplomacia cultural
-funcionando como deve. Não é necessariamente mau; é apenas
-**não-acidental** e mereceria ser nomeado como tal.
+Não há fricção registrada na categoria. A leitura realista é
+exatamente o que o agregado mostra: **ativismo de longa data +
+show como plataforma de causas**, com cobertura proporcional ao
+volume e proporcional ao que aconteceu no palco e na fachada do
+hotel.
 
 ---
 
 ## Conclusão
 
-O eixo "Empoderamento feminino, ativismo e legado social" tem o
-**menor volume de cobertura** mas a **maior densidade política**
-do corpus. O olhar truth-teller registra: (1) o ativismo de Shakira
-é histórico, real e ao mesmo tempo embalagem comercial moderna —
-ambas verdades coexistem; (2) o protesto pelo fim da 6×1 (a-150)
-foi o ponto mais politicamente carregado, e a cobertura ficou
-unilateral por ausência de contrapartida do empresariado; (3) a
-imprensa celebra "empoderamento via marca" e "empoderamento via
-direitos trabalhistas" como se fossem o mesmo, sem nomear que são
-politicamente distintos; (4) "mulher latina" como categoria
-homogeneíza diferenças interseccionais relevantes; (5) o circuito
-Shakira-Pies Descalzos-Procolombia-Barranquilla é diplomacia
-cultural funcional, mas raramente nomeada. A categoria é
-quantitativamente pequena e editorialmente extensa — talvez a que
-mais merece ler junto com a categoria 5 (Economia) e a 7
-(Brasil-Colômbia) para recuperar a polaridade da discussão.
+Eixo de volume baixo e tom convergente, sem fricção significativa
+no corpus. A cobertura tratou Shakira como ativista credenciada
+(Pies Descalzos 1997, UNICEF 2003, Davos 2017) e o show como
+plataforma de pautas alinhadas (feminicídio, SUS, fim da 6×1,
+contra anistia). É positivo por mérito do que aconteceu — a
+síntese reflete isso, sem qualificadores adicionais.

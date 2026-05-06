@@ -115,78 +115,39 @@ necessariamente concordância.
 
 ## Olhar truth-teller
 
-Esta categoria é onde o **círculo vicioso de auto-confirmação** da
-cobertura é mais nítido. As três principais estatísticas — público
-(2 mi), mídia espontânea (US$ 250 mi), audiência Globo (referência
-32 mi) — são todas produzidas por agentes interessados:
+A cobertura consagrou o show como fenômeno global com base em
+indicadores robustos e checáveis: segundo lugar histórico no
+ranking de Copacabana, audiência Globo expressiva, ~80 mi de
+ouvintes mensais no Spotify, US$ 250 mi de valor de mídia
+espontânea estimado por Forbes (`a-281`), repercussão internacional
+positiva em BBC, AFP, Reuters, NYT, El País e Hola!. O agregado
+muito-positivo é proporcional ao porte real do evento.
 
-**1. Os 2 milhões.** Estimados pela Riotur, replicados em todos os
-veículos brasileiros. A BBC contestou. Cálculos físicos: 4 km de
-orla × ~50 m de profundidade útil = 200.000 m². Em densidades
-"confortáveis" (4 pessoas/m²), comportariam 800 mil. Em densidade
-extrema (10 pessoas/m²), 2 milhões. A Riotur trabalha com a
-estimativa máxima; a BBC estimou números próximos de 1,2 mi com base
-em fotografias aéreas. Nenhum veículo brasileiro tentou contestar
-metodologicamente. O número 2 mi é então uma **estatística política
-que serve à legitimação do gasto público** (R$ 15 mi → R$ 776 mi de
-retorno → "vale a pena") — replicada acriticamente.
+Ponto crítico legítimo no eixo, sustentado pelo corpus:
 
-**2. US$ 250 mi de mídia espontânea.** Cálculo proprietário,
-provavelmente produzido pela Bonus Track e/ou pela Globo, baseado em
-"quanto custaria comprar em anúncio o espaço midiático ocupado".
-Métodos PR padrão (clipping × valor de tabela). Não é número auditado
-externamente; serve para justificar o investimento dos
-patrocinadores e o contrato plurianual.
+**A BBC (`a-95`) foi o único veículo a contestar a aritmética dos
+2 milhões.** A questão metodológica é legítima — 4 km de orla com
+densidade física limitada — e a estimativa é a mesma usada para
+shows anteriores (Madonna 1,6 mi, Lady Gaga 2,1 mi), replicada pela
+imprensa nacional como dado da Riotur sem auditoria independente.
+Não invalida o porte do evento, que é real e visível em qualquer
+foto aérea da orla; registra apenas que o número específico de 2
+mi é **estimativa oficial**, e que apenas um veículo internacional
+fez a checagem que se esperaria de mais redações.
 
-**3. Audiência Globo.** A audiência da Globo é dado de Ibope com
-precisão razoável, mas o **enquadramento** "audiência de Lady Gaga
-foi 32 mi" estabelece um patamar comparativo que beneficia Shakira
-mesmo se ela ficar abaixo (porque o número absoluto ainda parece
-grande). A Globo é simultaneamente broadcaster, parceira contratual
-da Bonus Track, e dona dos veículos que cobriram (G1, O Globo,
-Gshow, Multishow). O conflito de interesses informacional é
-estrutural.
-
-**4. Cobertura internacional.** "BBC, NYT, Reuters" cobrem
-genericamente shows de Shakira — é parte da tour de uma artista
-global. O framing "imprensa internacional se rende" amplifica o
-status local da Globo / Bonus Track / Prefeitura. Mas a cobertura
-internacional do show de Madonna em 2024 e Gaga em 2025 foi
-similar — não há aceleração específica de Shakira que justifique
-essa frase.
-
-**5. Os silêncios.** A imprensa **não cobriu**: (a) a polarização
-Globo / SBT / Record na disputa por direitos, (b) o contrato
-financeiro entre Globo e Bonus Track, (c) a lógica de fechar
-direito de transmissão exclusiva de evento "público gratuito"
-financiado por R$ 15 mi de recurso público, (d) o conflito entre
-"interesse público" e "exclusividade comercial Globo".
-
-**6. O leitor médio que se informa via aglomerado de manchetes** sai
-desta categoria com a impressão de que "o show foi um sucesso global
-inquestionável". Tecnicamente correto dentro do framing comercial.
-Estruturalmente, é uma narrativa produzida por um ecossistema de
-interesses alinhados.
-
-A BBC (`a-95`), ao contestar o número, fez o que jornalismo
-brasileiro de gestão pública não fez. Não é problema de competência
-— os jornalistas brasileiros sabem auditar números. É problema de
-incentivo institucional: a maioria dos veículos faz parte do mesmo
-ecossistema (Globo) ou tem relação contratual / acesso à fonte com
-prefeitura e Riotur. Auditar custaria acesso futuro.
+A "crítica popular" registrada em `a-96` ("não é americana") não é
+movimento de opinião — apareceu como um item neutro de redes
+sociais, sem escala. Vale registrar como ruído, não como tendência.
 
 ---
 
 ## Conclusão
 
-O eixo "Audiência, ranking e cobertura midiática" é onde a estatística
-política mais flui acriticamente entre fonte oficial → manchete →
-leitor. O olhar truth-teller registra que: (1) os principais números
-do eixo são produzidos por agentes interessados (Riotur, Bonus
-Track, Globo); (2) a única auditoria do corpus veio da BBC, e foi
-quase ignorada pela imprensa local; (3) o conflito estrutural entre
-veículos jornalísticos e parceiros contratuais do evento é
-invisibilizado; (4) a "consagração internacional" é em parte
-inflada por amplificação local. A cobertura desta categoria não é
-*falsa* — é parcial, e a parcialidade segue o gradiente de quem
-tem incentivo para perguntar e quem tem incentivo para repetir.
+Eixo onde a cobertura é majoritariamente muito-positiva e onde as
+estatísticas oficiais (2 mi de público, US$ 250 mi de mídia
+espontânea, ranking entre as três divas) viraram unidades textuais
+replicadas em volume alto. O ponto crítico genuíno é a contestação
+metodológica da BBC (`a-95`) sobre o número de público — questão
+legítima de aritmética que apenas um veículo do corpus levantou.
+Fica como nota qualificadora; o agregado da categoria é forte e
+proporcional ao porte real do evento.

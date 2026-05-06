@@ -131,82 +131,37 @@ mesmo dueto como "momento histórico".
 
 ## Olhar truth-teller
 
-Esta categoria mostra **um pacto editorial implícito de não
-problematizar a entrega musical**. Algumas observações:
+As participações funcionaram como selo de brasilidade e a cobertura
+tratou como ápice afetivo (`a-153`, `a-167`, `a-214`): Shakira
+"abençoada" pelos pilares da MPB (Caetano, Bethânia), pela rainha do
+pop nacional (Anitta) e pela rainha do axé (Ivete). O áudio
+pós-show entre Shakira e Bethânia (`a-214`, `a-218`) virou conteúdo
+viral, e o sonho de Shakira de cantar com Caetano desde 1997
+("Leãozinho") fechou um arco geracional real. O agregado da
+categoria é forte e proporcional ao que aconteceu no palco.
 
-**1. O dueto desafinado.** O fato de apenas a VEJA ter registrado o
-desafine é informação editorialmente significativa. O dueto foi
-*ouvido* por milhões; o desafine foi *audível*. Mas a cobertura
-predominante decidiu enquadrar o momento como "histórico afetivo" e
-não como "execução musical avaliável". Não é fofoca apontar isso —
-é registro de que existe uma diferença entre "encontro
-historicamente significativo" e "momento musicalmente bem
-executado", e os outros veículos optaram por colapsar os dois.
+Ponto crítico legítimo no eixo:
 
-**2. As participações como arranjo comercial.** Caetano e Bethânia
-são pilares simbólicos da MPB; suas presenças trazem prestígio
-geracional. Anitta está em ano de lançamento de álbum e tem
-gravadora (Warner) e agenda promocional alinhadas com a Globo. Ivete
-Sangalo é parceira histórica da Globo e do circuito de mega-shows.
-Todas essas participações são, simultaneamente:
-- Momentos artísticos genuínos (cada artista tem relação real com
-  Shakira);
-- Arranjos contratuais e estratégicos dentro do ecossistema
-  Bonus Track / Globo / gravadoras / agentes.
-A cobertura trata exclusivamente da primeira camada e ignora a
-segunda. Não há nada de errado com a segunda existir; mas a
-*invisibilidade* da segunda gera percepção romantizada do que é,
-em parte, transação de mercado.
-
-**3. O sonho de Shakira com Caetano.** A história — Shakira
-mencionando em entrevista de 1997 que sonhava cantar com Caetano,
-e o sonho realizando-se em 2026 — é genuína e bonita. Mas é também
-**uma história que se tornou útil para o lançamento da turnê**,
-contada repetidamente em entrevistas e materiais de imprensa. A
-imprensa brasileira reproduziu como anedota afetiva, não como
-material de campanha (que também é). Ambas as leituras são verdade.
-
-**4. A bateria da Unidos da Tijuca.** O envolvimento da escola de
-samba é tratado positivamente e é positivo no plano simbólico. Mas
-é também **trabalho contratado**: 200+ músicos e ritmistas
-recebendo um cachê institucional. As condições contratuais entre a
-escola e a Bonus Track / Globo não são divulgadas. Em geral, escolas
-de samba contratadas para mega-shows recebem valores significativos
-para a escola, mas pouco para o ritmista individual. Não há
-cobertura crítica sobre isso.
-
-**5. Ausência de cobertura sobre artistas brasileiros não
-convidados.** O Rio tem cena de música latina ativa — Cortejo
-Afro, Liniker, Letrux, Mart'nália, Karol Conká, Iza, Pabllo Vittar
-(que aparece marginalmente em a-250). Por que apenas o panteão MPB
-+ Anitta? A escolha é editorialmente curatorial e está alinhada com
-o "Todo Mundo no Rio" como produto Globo. Artistas mais jovens,
-mais pretas, mais periféricas, ou mais alinhadas a estéticas
-contemporâneas urbanas não foram chamadas. A cobertura não
-problematiza essa curadoria.
-
-**6. Empoderamento simbólico × condição material.** Bethânia,
-Caetano, Ivete e Anitta são artistas estabelecidas; participar do
-show foi acréscimo de visibilidade, não rompimento de invisibilidade.
-A "diversidade brasileira" do palco foi, na prática, uma
-amostragem do mainstream estabelecido. Útil simbolicamente, sem
-abrir espaço para vozes menos consolidadas.
+**A Veja (`a-218`) foi o único veículo a registrar publicamente
+que o dueto Shakira-Bethânia "foi marcado por execução desafinada
+de O Que É o Que É?, de Gonzaguinha, em descompasso com a bateria
+da Unidos da Tijuca".** Não é fofoca — é fricção entre o que foi
+vendido como "momento histórico" e a execução técnica observável,
+e o leitor que assistiu ouviu o descompasso. Os outros veículos
+optaram por não problematizar esse aspecto. A Veja contribui com
+um qualificador isolado e factual; vale registrar como
+contraponto técnico, sem que isso inverta o sinal afetivo dominante
+da categoria.
 
 ---
 
 ## Conclusão
 
-O eixo "Artistas brasileiros e participações" é onde a celebração
-afetiva é mais convergente e a única fricção (`a-218`) revela uma
-**decisão editorial coletiva** de não problematizar a qualidade
-musical entregue. O olhar truth-teller registra que: (1) as
-participações são simultaneamente arte e arranjo comercial, e a
-imprensa cobre apenas a primeira camada; (2) a história do "sonho
-de Shakira com Caetano" é genuína e ao mesmo tempo material de
-campanha; (3) o desafine documentado por VEJA é apenas a ponta
-visível de uma decisão editorial mais ampla de tratar o show como
-intocável; (4) a curadoria do palco brasileiro foi mainstream
-estabelecido, sem espaço para vozes mais novas, periféricas ou
-emergentes — escolha editorial não problematizada. A presença
-brasileira no palco foi real e valiosa; a leitura que a imprensa
-fez dela foi sentimentalmente intensa e analiticamente cautelosa.
+Eixo onde a celebração afetiva é convergente e proporcional ao que
+o palco entregou: Caetano cumprindo um sonho de 1997, Bethânia
+trocando áudios viralizados, Anitta confirmando "Choka Choka",
+Ivete repetindo a parceria de Rock in Rio 2011. A única fricção
+registrada é a nota da Veja (`a-218`) sobre o desafine do dueto —
+qualificador técnico legítimo, isolado, que merece registro mas
+não inverte a leitura dominante. O agregado é positivo e a
+síntese reflete isso.

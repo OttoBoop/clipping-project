@@ -131,80 +131,36 @@ As críticas são poucas e quase sempre apresentadas como neutras:
 
 ## Olhar truth-teller
 
-A categoria é onde o **morador da cidade** desaparece da cobertura.
-A operação foi montada para acomodar 2 mi de visitantes; o
-residente de Copacabana, Ipanema e Botafogo aguentou:
+A categoria é unanimemente positiva no corpus — não há fricção
+registrada entre veículos sobre a operação, e o agregado reflete a
+realidade: o MetrôRio bateu 165 mil passageiros (`a-188`, `a-67`),
+a Comlurb removeu 362 t de lixo (`a-199`), os Bombeiros inovaram
+com médicos em moto aquática (`a-135`), o palco foi entregue em
+1.500 m² (`a-228`, `a-257`), a operação aeroportuária somou +14% no
+Galeão e +46% no Santos Dumont (`a-251`, `a-260`). A cidade fez
+funcionar, e a imprensa documentou que fez funcionar.
 
-1. **Bloqueios viários totais por 18h.** Quem precisava de
-   ambulância? Quem precisava ir ao trabalho de domingo de
-   madrugada? Quem precisava do hospital Miguel Couto na Gávea?
-   Nenhum bloco do corpus aborda essa dimensão.
-2. **MetrôRio com pico de 22 mil às 2h.** Funcionou para o público
-   do show. Mas os trens regulares foram sobrecarregados, a operação
-   24h é exceção do dia, e a infraestrutura não foi expandida — foi
-   apenas reagida ao evento. O custo dessa operação extraordinária
-   sai de onde?
-3. **Comlurb com 362 t de lixo.** Operação valorosa, mas o custo
-   adicional é repassado a todo o Rio. As favelas da Zona Norte e
-   Oeste com problemas crônicos de saneamento (a-194 menciona
-   marginalmente Cedae no entorno) não tiveram operação especial
-   nesse fim de semana — todos os recursos foram para a Zona Sul. O
-   custo de oportunidade é silencioso.
-4. **Acessibilidade PCD: 3 áreas para 2 milhões.** Isso é um
-   absurdo proporcional, mas a cobertura registra como positivo.
-   Aproximadamente 6% da população tem deficiência (IBGE); 3 áreas
-   é simbólico, não funcional.
-5. **Densidade de 9 pessoas/m².** Em engenharia de eventos, 4
-   pessoas/m² já é considerado risco. 9 pessoas/m² é densidade que
-   torna mover-se livremente impossível e pode causar acidentes
-   de aglomeração. A imprensa registra o número como dado neutro;
-   especialistas em segurança de eventos chamariam de risco crítico.
-6. **Reforço de iluminação pública.** Para o show; e depois? A
-   iluminação fora do contexto do show segue desigual entre Zona
-   Sul e periferia.
-7. **Logística aérea da equipe da artista (10-25 t):** virou
-   matéria de superlativo positivo, mas é também combustível, é
-   pegada de carbono, é frete pago — categorias normalmente cobertas
-   na imprensa internacional como dimensão ambiental do mega-show.
-   Aqui, ausentes.
-8. **Calor extremo + 9 pessoas/m² + filas longas.** A combinação
-   dessas três variáveis explica os 400 atendimentos médicos e 60
-   transferências hospitalares. Em vez de problematizar a
-   composição do risco, a cobertura celebrou a competência da
-   resposta. É como elogiar a perícia do bombeiro depois do
-   incêndio sem perguntar por que o incêndio aconteceu.
-
-A **comunicação institucional** do COR-Rio é tratada como vitrine
-positiva. Mas o COR-Rio é, no fundo, uma central de gestão de
-emergência da cidade. Quando a operação normal já consome o COR
-em "Estágio 2" (alto), significa que a margem para outras
-emergências reais foi consumida pelo show. Um incêndio simultâneo
-em outro bairro, um deslizamento, um acidente de massa em outro
-ponto — todos teriam menos recursos disponíveis. Isso não é
-problematizado.
-
-A **frente fria pós-show** (chuva no domingo) é tratada como
-curiosidade meteorológica (com a Cacique Cobra Coral em a-187 como
-nota humorística). Mas é também uma sorte: se a frente fria
-tivesse chegado no sábado, o "9 pessoas/m²" + chuva + escuro =
-risco de pânico de massa. A operação foi competente mas teve
-margem de sorte.
+Nota qualificadora pequena, sustentada pelo corpus: a cobertura
+focou no funcionamento do show (que funcionou) e dedicou pouco
+espaço aos efeitos colaterais para o **morador local**. Os
+bloqueios viários totais de 18h em Copacabana, Ipanema e Botafogo
+e a ressaca pós-show no domingo (chuva, alertas de banhistas em
+`a-79`, `a-206`) tiveram registro factual mas pouca cobertura
+qualitativa do ponto de vista de quem mora no entorno. É
+observação sobre o que a cobertura escolheu enquadrar — não é
+crítica à operação, que entregou o que prometeu para os 2 milhões
+que vieram ao show.
 
 ---
 
 ## Conclusão
 
-O eixo "Infraestrutura, logística e operação urbana" é onde o
-**estado faz seu trabalho** e a imprensa registra o sucesso. Os
-números são reais, a operação foi competente. O olhar truth-teller
-acrescenta: (1) a operação foi otimizada para o visitante, não
-para o morador local que aguentou bloqueios e barulho; (2) o custo
-de oportunidade dos recursos públicos canalizados para o evento
-não é discutido; (3) métricas tratadas como neutras (densidade 9
-pessoas/m²) são, em engenharia de eventos, indicadores de risco
-crítico; (4) a competência da resposta de emergência (400
-atendimentos) elogia a operação mas omite que a *composição do
-risco* — calor + densidade + filas — é evitável; (5) o eixo
-ambiental (carbono, frete, lixo) é praticamente ausente da
-cobertura. A "cidade que funcionou" funcionou para quem visita; o
-que sustentou e custou ficou em segundo plano.
+Eixo onde a operação foi competente e a imprensa registrou o
+sucesso de forma proporcional: 165 mil pax no MetrôRio, 362 t de
+lixo retiradas, palco superlativo, motos aquáticas com médicos
+como inovação. A categoria é positiva no agregado e a síntese
+reflete isso. A única nota qualificadora é leve: a cobertura
+focou no funcionamento para o público do show e dedicou pouco
+espaço aos efeitos colaterais do bloqueio prolongado para o
+morador local — observação sobre escolha de enquadramento, não
+sobre falha da operação.
