@@ -81,7 +81,8 @@ def ensure_app_tables(db_file: Path) -> None:
                 articles_inserted INTEGER DEFAULT 0,
                 mentions_inserted INTEGER DEFAULT 0,
                 stories_touched INTEGER DEFAULT 0,
-                error_message TEXT
+                error_message TEXT,
+                spec_json TEXT
             );
 
             CREATE TABLE IF NOT EXISTS job_events (
@@ -90,6 +91,28 @@ def ensure_app_tables(db_file: Path) -> None:
                 created_at TEXT NOT NULL,
                 event TEXT NOT NULL,
                 payload_json TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS job_source_runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_id TEXT NOT NULL,
+                target_key TEXT NOT NULL,
+                source_key TEXT NOT NULL,
+                source_name TEXT NOT NULL,
+                source_type TEXT NOT NULL,
+                status TEXT NOT NULL,
+                cursor_json TEXT NOT NULL DEFAULT '{}',
+                candidates_seen INTEGER DEFAULT 0,
+                candidates_total INTEGER DEFAULT 0,
+                articles_inserted INTEGER DEFAULT 0,
+                mentions_inserted INTEGER DEFAULT 0,
+                stories_touched INTEGER DEFAULT 0,
+                attempts INTEGER DEFAULT 0,
+                last_error TEXT,
+                started_at TEXT,
+                updated_at TEXT NOT NULL,
+                finished_at TEXT,
+                UNIQUE(job_id, target_key, source_key)
             );
 
             CREATE TABLE IF NOT EXISTS manual_entries (
@@ -110,6 +133,12 @@ def ensure_app_tables(db_file: Path) -> None:
             CREATE INDEX IF NOT EXISTS idx_job_events_job_id
                 ON job_events(job_id, id);
 
+            CREATE INDEX IF NOT EXISTS idx_job_source_runs_job_status
+                ON job_source_runs(job_id, status, id);
+
+            CREATE INDEX IF NOT EXISTS idx_job_source_runs_source
+                ON job_source_runs(source_type, source_name);
+
             CREATE UNIQUE INDEX IF NOT EXISTS idx_manual_entries_article
                 ON manual_entries(article_id);
 
@@ -117,6 +146,13 @@ def ensure_app_tables(db_file: Path) -> None:
                 ON manual_entries(story_id);
             """
         )
+        for statement in (
+            "ALTER TABLE jobs ADD COLUMN spec_json TEXT",
+        ):
+            try:
+                conn.execute(statement)
+            except sqlite3.OperationalError:
+                pass
 
 
 def is_synthetic_test_target(row: dict[str, Any]) -> bool:

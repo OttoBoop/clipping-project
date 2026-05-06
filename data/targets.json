@@ -5,6 +5,7 @@
     "display_name": "Flávio Valle",
     "className": "primary",
     "primary": true,
+    "archived": false,
     "keywords": [
       "Flavio Valle",
       "Flávio Valle",
@@ -24,6 +25,7 @@
     "display_name": "Pedro Duarte",
     "className": "",
     "primary": false,
+    "archived": false,
     "keywords": [
       "Pedro Duarte",
       "deputado Pedro Duarte",
@@ -38,6 +40,7 @@
     "display_name": "Pedro Angelito",
     "className": "primary",
     "primary": true,
+    "archived": false,
     "keywords": [
       "Pedro Angelito"
     ],
@@ -49,9 +52,22 @@
     "display_name": "Bernardo Rubião",
     "className": "",
     "primary": false,
+    "archived": false,
     "keywords": [
       "Bernardo Rubiao",
       "Bernardo Rubião"
+    ],
+    "exact_aliases": []
+  },
+  {
+    "key": "shakira",
+    "label": "Shakira",
+    "display_name": "Shakira",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "Shakira"
     ],
     "exact_aliases": []
   }

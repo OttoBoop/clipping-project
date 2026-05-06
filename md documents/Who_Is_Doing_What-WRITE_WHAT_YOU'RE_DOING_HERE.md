@@ -15,10 +15,11 @@
 
 ## 1. AGORA — quem está fazendo o quê neste momento
 
-_Last updated: 2026-05-05 by Ariadne (consolidação dos canais)._
+_Last updated: 2026-05-06 by Theseus-Atlas-Codex._
 
 | Agente   | Atividade atual                                  | Desde       | Aberto pra colab?              |
 |----------|--------------------------------------------------|-------------|--------------------------------|
+| Theseus-Atlas-Codex | durable Shakira source-run ledger + public Render verification | 2026-05-06 | não — fechando thread da Ariadne |
 | Atlas    | sprint live-runner-repair (Shakira live-save loop) | 2026-05-04  | não — sprint sozinho, ver claims §2 |
 | Ariadne  | consolidação dos canais de comunicação (este arquivo) | 2026-05-05  | sim — feedback no formato em §4 via Q-NNN |
 | Iris     | desenhando persona Theseus (character sheet)     | 2026-05-05  | sim — sugestões em §4 via Q-NNN |
@@ -34,6 +35,7 @@ Pra um novo agente entrar: adicionar uma linha aqui + um Log entry em §5.
 |----------|----------------------------------------------------------|----------------------------------------|-------------|
 | Atlas    | `web_app/jobs.py`, `pipeline/ingest.py`, `pipeline/matcher.py`, `pipeline/collectors.py`, `web_app/db_admin.py` | sprint Shakira fechado com evidência live | 2026-05-04 |
 | Atlas    | `data/reports/shakira-public-filter-*.png` (screenshots da sprint) | sprint Shakira fechado                  | 2026-05-05  |
+| Theseus-Atlas-Codex | `web_app/jobs.py`, `web_app/app.py`, `pipeline/collectors.py`, `md documents/05-05-26-Iris-Shakira goals.md`, `md documents/CHARACTER_SHEET.md` | durable Shakira loop verified on public Render | 2026-05-06 |
 | Ariadne  | `md documents/ARIADNE_AUDIT.md` (audit doc, append-only) | até bug-class catalog estabilizar      | 2026-05-04  |
 | Ariadne  | `md documents/Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md` (este arquivo, formato) | até protocolo amadurecer com uso | 2026-05-05 |
 | Iris     | `md documents/THESEUS_*` (futuro, persona character sheet) | até Iris publicar a persona            | 2026-05-05  |
@@ -93,3 +95,11 @@ Consolidei os dois canais de comunicação (`ATLAS_CLAUDE_COORDINATION.md` + `AT
 **Refs atualizadas:** `md documents/IRIS_OPERATING_RULES.md` Sec 8, `md documents/ARIADNE_AUDIT.md` Sec 10 D8, memória local `feedback_ariadne_identity.md`.
 
 **Próximo passo:** observar adoção. Se Atlas/Iris não escreverem aqui na próxima sessão, escalar pro Otávio.
+
+### 2026-05-06 — Theseus-Atlas-Codex — durable Shakira loop started
+
+Assumi o loop como `Theseus-Atlas-Codex`, seguindo o fio da Ariadne sobre
+fontes longas e jobs frágeis. Vou implementar ledger durável por fonte/cursor,
+retomada manual e automática, status público com cobertura por fonte e
+verificação final no Render público para `shakira` entre `01/04/2026` e
+`05/05/2026`.

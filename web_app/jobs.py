@@ -8,12 +8,35 @@ import sys
 import threading
 import time
 import uuid
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from pipeline.ingest import IngestionOptions, run_ingestion
+from pipeline.collectors import (
+    CandidateArticle,
+    collect_camara_archive,
+    collect_google_news,
+    collect_internal_site_search,
+    collect_rss,
+    collect_sitemap_daily,
+    collect_vejario_archive,
+    collect_wordpress_api,
+)
+from pipeline.ingest import IngestionOptions, ordered_unique, process_candidates, run_ingestion, select_targets
 from pipeline.database import ClippingDB
+from pipeline.settings import (
+    CAMARA_ARCHIVE_TARGET,
+    FLAVIO_INTERNAL_SEARCH_TARGETS,
+    RSS_FEEDS,
+    SITEMAP_DAILY_SOURCES,
+    VEJARIO_ARCHIVE_TARGETS,
+    WORDPRESS_API_SITES,
+    build_google_queries_for_target,
+    build_internal_search_queries_for_target,
+    build_wordpress_queries_for_target,
+    get_active_targets,
+)
 
 from .config import ROOT, db_path
 from .db_admin import (
@@ -42,8 +65,16 @@ SAFE_COLLECTORS = {
 }
 
 ACTIVE_JOB_STATUSES = ("queued", "running", "exporting")
+RESUMABLE_JOB_STATUSES = ("interrupted_resumable", "failed_needs_fix")
+SOURCE_ACTIVE_STATUSES = {"pending", "running", "retrying", "interrupted_resumable"}
+SOURCE_TERMINAL_STATUSES = {"complete", "failed_needs_fix"}
 DEFAULT_COLLECTOR = "all"
 EXPORT_TIMEOUT_SECONDS = 300
+INCREMENTAL_EXPORT_MIN_SECONDS = 90
+WORDPRESS_PAGE_SIZE = 100
+WORDPRESS_MAX_PAGES = 60
+VEJARIO_MAX_PAGES = 50
+CAMARA_MAX_PAGES = 100
 SECRET_ENV_MARKERS = ("PASSWORD", "SECRET", "TOKEN", "API_KEY", "SERVICE_KEY", "DATABASE_URL", "DEPLOY_HOOK")
 SECRET_ASSIGNMENT_RE = re.compile(
     r"(?i)(\b(?:authorization|api[-_]?key|apikey|service[-_]?key|session[-_]?secret|secret|token|password)\b\s*[:=]\s*)([^,\s;]+)"
@@ -73,6 +104,16 @@ CUSTOM_MAX_PROCESS_SECONDS = 90000
 LIVE_CHECKPOINT_MIN_SECONDS = 30
 _CHECKPOINT_LOCK = threading.Lock()
 _LAST_CHECKPOINT_UPLOAD: dict[str, float] = {}
+_LAST_INCREMENTAL_EXPORT: dict[str, float] = {}
+
+
+@dataclass(slots=True)
+class SourceUnit:
+    source_key: str
+    source_name: str
+    source_type: str
+    cursor: dict[str, Any]
+    order: int
 
 
 class JobConflict(RuntimeError):
@@ -125,6 +166,59 @@ class JobManager:
     def start_update(self, payload: dict[str, Any], *, started_by: str) -> dict[str, Any]:
         spec = build_update_spec(payload)
         return self._start("update", spec, started_by=started_by)
+
+    def resume_update(self, job_id: str = "", *, started_by: str) -> dict[str, Any]:
+        if not self.store.writes_available:
+            raise RuntimeError("persistent_storage_not_configured")
+        ensure_app_tables(db_path())
+        with self._lock:
+            if self._active_job_id or get_active_job():
+                raise JobConflict("job_already_running")
+            job = get_resumable_job(job_id)
+            if not job:
+                raise JobConflict("no_resumable_job")
+            resume_job_id = str(job["id"])
+            spec = job_spec(job)
+            if not spec.get("durable"):
+                raise JobConflict("no_resumable_job")
+            reset_resumable_source_runs(resume_job_id)
+            update_job(
+                resume_job_id,
+                status="queued",
+                finished_at="",
+                error_message="",
+            )
+            append_event(
+                resume_job_id,
+                "job_resumed",
+                {"status": "queued", "reason": "manual_resume", "started_by": started_by},
+            )
+            self._active_job_id = resume_job_id
+            cancel_event = threading.Event()
+            self._cancel_events[resume_job_id] = cancel_event
+            thread = threading.Thread(
+                target=self._run,
+                args=(resume_job_id, "update", spec, cancel_event),
+                name=f"clipping-job-{resume_job_id}-resume",
+                daemon=True,
+            )
+            thread.start()
+        return get_job(resume_job_id) or {"id": resume_job_id, "status": "queued"}
+
+    def resume_startup_jobs(self) -> int:
+        if not self.store.writes_available:
+            return 0
+        ensure_app_tables(db_path())
+        if self._active_job_id or get_active_job():
+            return 0
+        job = get_resumable_job("")
+        if not job:
+            return 0
+        try:
+            self.resume_update(str(job["id"]), started_by="startup")
+        except Exception:
+            return 0
+        return 1
 
     def start_export(self, *, started_by: str) -> dict[str, Any]:
         spec = {
@@ -208,6 +302,7 @@ class JobManager:
             update_job(job_id, status="running")
             self.store.backup_current_artifacts(job_id)
             totals = {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0}
+            coverage_state = ""
 
             if kind == "update":
                 cleanup = cleanup_false_backfilled_target_mentions(db_path(), list(spec["target_keys"]))
@@ -264,39 +359,77 @@ class JobManager:
                     update_job(job_id, **totals)
                     upload_live_checkpoint(job_id, reason="target-backfill", force=True)
 
-                labels = target_labels()
-                for target_key in spec["target_keys"]:
-                    if cancel_event.is_set():
-                        return
-                    target_label = labels.get(target_key, target_key)
-                    options = IngestionOptions(
-                        target_keys=[target_key],
-                        date_from=spec["date_from"],
-                        date_to=spec["date_to"],
-                        request_timeout_seconds=10,
-                        skip_direct_scrape=True,
-                        max_candidates_per_source=int(spec["max_candidates"]),
-                        max_process_seconds=int(spec["max_process_seconds"]),
-                        db_path=str(db_path()),
-                        cancel_check=cancel_event.is_set,
-                    )
-                    results = run_ingestion(
-                        spec["collector"],
-                        options=options,
-                        progress_callback=lambda event, data, jid=job_id, tk=target_key, tl=target_label: record_progress(
-                            jid,
-                            event,
-                            data,
-                            target_key=tk,
-                            target_label=tl,
-                        ),
-                    )
-                    totals["articles_inserted"] += sum(r.articles_inserted for r in results)
-                    totals["mentions_inserted"] += sum(r.mentions_inserted for r in results)
-                    totals["stories_touched"] += sum(r.stories_touched for r in results)
+                if spec.get("durable"):
+                    durable_result = run_durable_update(job_id, spec, cancel_event)
+                    totals["articles_inserted"] += int(durable_result.get("articles_inserted") or 0)
+                    totals["mentions_inserted"] += int(durable_result.get("mentions_inserted") or 0)
+                    totals["stories_touched"] += int(durable_result.get("stories_touched") or 0)
+                    coverage_state = str(durable_result.get("coverage_state") or "")
                     update_job(job_id, **totals)
-                    if cancel_event.is_set():
+                    if durable_result.get("failed_sources"):
+                        update_job(
+                            job_id,
+                            status="failed_needs_fix",
+                            finished_at=datetime.now(timezone.utc).isoformat(),
+                            error_message="Uma ou mais fontes precisam de correção antes da cobertura completa.",
+                            **totals,
+                        )
+                        append_event(
+                            job_id,
+                            "coverage_failed",
+                            {
+                                "status": "failed_needs_fix",
+                                "count": len(durable_result.get("failed_sources") or []),
+                            },
+                        )
+                        publish_incremental_snapshot(job_id, reason="failed-needs-fix", force=True)
+                        uploaded = self.store.upload_current_artifacts(
+                            manifest={
+                                "jobId": job_id,
+                                "kind": kind,
+                                "spec": {k: v for k, v in spec.items() if k not in {"error"}},
+                                "totals": totals,
+                                "coverageState": coverage_state or "failed_needs_fix",
+                                "finishedAt": datetime.now(timezone.utc).isoformat(),
+                            },
+                            job_id=job_id,
+                        )
+                        append_event(job_id, "artifacts_uploaded", artifact_upload_summary(uploaded))
                         return
+                else:
+                    labels = target_labels()
+                    for target_key in spec["target_keys"]:
+                        if cancel_event.is_set():
+                            return
+                        target_label = labels.get(target_key, target_key)
+                        options = IngestionOptions(
+                            target_keys=[target_key],
+                            date_from=spec["date_from"],
+                            date_to=spec["date_to"],
+                            request_timeout_seconds=10,
+                            skip_direct_scrape=True,
+                            max_candidates_per_source=int(spec["max_candidates"]),
+                            max_process_seconds=int(spec["max_process_seconds"]),
+                            db_path=str(db_path()),
+                            cancel_check=cancel_event.is_set,
+                        )
+                        results = run_ingestion(
+                            spec["collector"],
+                            options=options,
+                            progress_callback=lambda event, data, jid=job_id, tk=target_key, tl=target_label: record_progress(
+                                jid,
+                                event,
+                                data,
+                                target_key=tk,
+                                target_label=tl,
+                            ),
+                        )
+                        totals["articles_inserted"] += sum(r.articles_inserted for r in results)
+                        totals["mentions_inserted"] += sum(r.mentions_inserted for r in results)
+                        totals["stories_touched"] += sum(r.stories_touched for r in results)
+                        update_job(job_id, **totals)
+                        if cancel_event.is_set():
+                            return
 
             if cancel_event.is_set():
                 return
@@ -324,6 +457,7 @@ class JobManager:
                 "kind": kind,
                 "spec": {k: v for k, v in spec.items() if k not in {"error"}},
                 "totals": totals,
+                "coverageState": coverage_state or source_coverage_state(job_id),
                 "finishedAt": datetime.now(timezone.utc).isoformat(),
             }
             update_job(job_id, status="succeeded", finished_at=manifest["finishedAt"], **totals)
@@ -384,6 +518,7 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
         "max_candidates": max_candidates,
         "max_process_seconds": max_process_seconds,
         "skip_direct_scrape": True,
+        "durable": True,
     }
 
 
@@ -433,6 +568,689 @@ def run_export_snapshot(job_id: str | None = None) -> None:
         append_event(job_id, "export_complete", {"lines": len(completed.stdout.splitlines())})
 
 
+def run_durable_update(job_id: str, spec: dict[str, Any], cancel_event: threading.Event) -> dict[str, Any]:
+    ensure_app_tables(db_path())
+    labels = target_labels()
+    totals = {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0}
+    for target_key in list(spec.get("target_keys") or []):
+        if cancel_event.is_set():
+            break
+        target_label = labels.get(target_key, target_key)
+        ensure_source_runs(job_id, spec, str(target_key))
+        while not cancel_event.is_set():
+            row = next_pending_source_run(job_id, str(target_key))
+            if not row:
+                break
+            result = run_source_run(job_id, spec, row, target_label=target_label, cancel_event=cancel_event)
+            for key in totals:
+                totals[key] += int(result.get(key) or 0)
+            update_job(job_id, **totals)
+            if result.get("saved"):
+                publish_incremental_snapshot(job_id, reason="source-run-saved")
+            upload_live_checkpoint(job_id, reason="source-run-checkpoint", force=True)
+    if cancel_event.is_set():
+        return {**totals, "coverage_state": "cancel_requested", "failed_sources": []}
+    failed = failed_source_runs(job_id)
+    coverage = source_coverage_state(job_id)
+    append_event(
+        job_id,
+        "coverage_summary",
+        {
+            "coverage_state": coverage,
+            "status": coverage,
+            "count": len(failed),
+        },
+    )
+    publish_incremental_snapshot(job_id, reason="coverage-complete", force=True)
+    return {**totals, "coverage_state": coverage, "failed_sources": failed}
+
+
+def ensure_source_runs(job_id: str, spec: dict[str, Any], target_key: str) -> None:
+    units = build_source_units(spec, target_key)
+    now = datetime.now(timezone.utc).isoformat()
+    with connect(db_path()) as conn:
+        for unit in units:
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO job_source_runs (
+                    job_id, target_key, source_key, source_name, source_type, status,
+                    cursor_json, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    job_id,
+                    target_key,
+                    unit.source_key,
+                    unit.source_name,
+                    unit.source_type,
+                    "pending",
+                    json.dumps(unit.cursor, ensure_ascii=False),
+                    now,
+                ),
+            )
+
+
+def build_source_units(spec: dict[str, Any], target_key: str) -> list[SourceUnit]:
+    collector = str(spec.get("collector") or DEFAULT_COLLECTOR)
+    targets = select_targets(get_active_targets(), [target_key])
+    if not targets:
+        return []
+    target = targets[0]
+    units: list[SourceUnit] = []
+    order = 0
+
+    def include(source_type: str) -> bool:
+        return collector == "all" or collector == source_type or (collector == "internal_search" and source_type == "internal_search")
+
+    if include("rss"):
+        for idx, feed in enumerate(RSS_FEEDS):
+            units.append(
+                SourceUnit(
+                    source_key=f"rss:{idx}",
+                    source_name=str(feed.get("source_name") or f"RSS {idx + 1}"),
+                    source_type="rss",
+                    cursor={"feed_index": idx},
+                    order=order,
+                )
+            )
+            order += 1
+
+    if include("google_news"):
+        for idx, query in enumerate(build_google_queries_for_target(target)):
+            units.append(
+                SourceUnit(
+                    source_key=f"google_news:{idx}",
+                    source_name="Google News",
+                    source_type="google_news",
+                    cursor={"query_index": idx, "query": query},
+                    order=order,
+                )
+            )
+            order += 1
+
+    if include("wordpress_api"):
+        queries = build_wordpress_queries_for_target(target)
+        for site_idx, site in enumerate(WORDPRESS_API_SITES):
+            site_name = str(site.get("source_name") or "WordPress").strip() or "WordPress"
+            site_queries = site.get("query_variants") if target.key == "flavio_valle" and isinstance(site.get("query_variants"), list) else queries
+            for query_idx, query in enumerate(ordered_unique([str(item or "").strip() for item in site_queries if str(item or "").strip()])):
+                units.append(
+                    SourceUnit(
+                        source_key=f"wordpress_api:{site_idx}:{query_idx}",
+                        source_name=site_name,
+                        source_type="wordpress_api",
+                        cursor={"site_index": site_idx, "query_index": query_idx, "query": query, "page": 1},
+                        order=order,
+                    )
+                )
+                order += 1
+
+    if include("internal_search"):
+        queries = build_internal_search_queries_for_target(target)
+        for adapter_idx, adapter in enumerate(FLAVIO_INTERNAL_SEARCH_TARGETS):
+            for query_idx, query in enumerate(queries):
+                units.append(
+                    SourceUnit(
+                        source_key=f"internal_search:{adapter_idx}:{query_idx}",
+                        source_name=str(adapter.source_name),
+                        source_type="internal_search",
+                        cursor={"adapter_index": adapter_idx, "query_index": query_idx, "query": query},
+                        order=order,
+                    )
+                )
+                order += 1
+
+    if include("sitemap_daily"):
+        days = source_window_days(str(spec.get("date_from") or ""), str(spec.get("date_to") or ""))
+        queries = build_internal_search_queries_for_target(target)
+        for source_idx, source in enumerate(SITEMAP_DAILY_SOURCES):
+            for day_idx, day in enumerate(days):
+                units.append(
+                    SourceUnit(
+                        source_key=f"sitemap_daily:{source_idx}:{day}",
+                        source_name=str(source.get("source_name") or "Sitemap Daily"),
+                        source_type="sitemap_daily",
+                        cursor={"source_index": source_idx, "day_index": day_idx, "day": day, "queries": queries},
+                        order=order,
+                    )
+                )
+                order += 1
+
+    if include("vejario_archive"):
+        for target_idx, archive_target in enumerate(VEJARIO_ARCHIVE_TARGETS):
+            for page in range(1, VEJARIO_MAX_PAGES + 1):
+                units.append(
+                    SourceUnit(
+                        source_key=f"vejario_archive:{target_idx}:{page}",
+                        source_name=str(archive_target.get("source_name") or "Veja Rio Archive"),
+                        source_type="vejario_archive",
+                        cursor={"target_index": target_idx, "page": page},
+                        order=order,
+                    )
+                )
+                order += 1
+
+    if include("camara_archive"):
+        for page in range(1, CAMARA_MAX_PAGES + 1):
+            units.append(
+                SourceUnit(
+                    source_key=f"camara_archive:0:{page}",
+                    source_name=str(CAMARA_ARCHIVE_TARGET.get("source_name") or "Camara Rio Archive"),
+                    source_type="camara_archive",
+                    cursor={"page": page},
+                    order=order,
+                )
+            )
+            order += 1
+
+    return units
+
+
+def source_window_days(date_from: str, date_to: str) -> list[str]:
+    try:
+        start = date.fromisoformat(date_from)
+    except Exception:
+        start = date.today() - timedelta(days=7)
+    try:
+        end = date.fromisoformat(date_to)
+    except Exception:
+        end = date.today()
+    if start > end:
+        start, end = end, start
+    days: list[str] = []
+    current = start
+    while current <= end:
+        days.append(current.isoformat())
+        current += timedelta(days=1)
+    return days
+
+
+def next_pending_source_run(job_id: str, target_key: str) -> dict[str, Any] | None:
+    with connect(db_path()) as conn:
+        row = conn.execute(
+            """
+            SELECT * FROM job_source_runs
+            WHERE job_id = ? AND target_key = ? AND status IN ('pending', 'retrying', 'interrupted_resumable')
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (job_id, target_key),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def run_source_run(
+    job_id: str,
+    spec: dict[str, Any],
+    row: dict[str, Any],
+    *,
+    target_label: str,
+    cancel_event: threading.Event,
+) -> dict[str, Any]:
+    source_run_id = int(row["id"])
+    target_key = str(row["target_key"])
+    source_name = str(row["source_name"])
+    source_type = str(row["source_type"])
+    cursor = safe_json_dict(row.get("cursor_json"))
+    mark_source_run_running(source_run_id)
+    append_event(
+        job_id,
+        "source_run_started",
+        {
+            "source_name": source_name,
+            "source_type": source_type,
+            "target_key": target_key,
+            "target_label": target_label,
+            "status": "running",
+        },
+    )
+    try:
+        candidates, next_cursor, complete = collect_source_run_candidates(spec, row, cursor)
+        if cancel_event.is_set():
+            mark_source_run_interrupted(source_run_id, reason="cancel_requested")
+            return {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0, "saved": False}
+        record_progress(
+            job_id,
+            "source_collected",
+            {"source_name": source_name, "source_type": source_type, "candidates_total": len(candidates)},
+            target_key=target_key,
+            target_label=target_label,
+        )
+        options = IngestionOptions(
+            target_keys=[target_key],
+            date_from=str(spec.get("date_from") or ""),
+            date_to=str(spec.get("date_to") or ""),
+            request_timeout_seconds=10,
+            skip_direct_scrape=True,
+            max_candidates_per_source=max(1, int(spec.get("max_candidates") or CUSTOM_MAX_CANDIDATES)),
+            max_process_seconds=max(10, int(spec.get("max_process_seconds") or CUSTOM_MAX_PROCESS_SECONDS)),
+            db_path=str(db_path()),
+            cancel_check=cancel_event.is_set,
+            archive_full_text=True,
+        )
+        result = process_candidates(
+            source_name,
+            source_type,
+            candidates,
+            options=options,
+            progress_callback=lambda event, data, jid=job_id, tk=target_key, tl=target_label: record_progress(
+                jid,
+                event,
+                data,
+                target_key=tk,
+                target_label=tl,
+            ),
+        )
+        if cancel_event.is_set():
+            mark_source_run_interrupted(source_run_id, reason="cancel_requested")
+            return {
+                "articles_inserted": result.articles_inserted,
+                "mentions_inserted": result.mentions_inserted,
+                "stories_touched": result.stories_touched,
+                "saved": bool(result.articles_inserted or result.mentions_inserted or result.stories_touched),
+            }
+        next_status = "complete" if complete else "pending"
+        update_source_run(
+            source_run_id,
+            status=next_status,
+            cursor=next_cursor,
+            candidates_seen=result.candidates_seen,
+            candidates_total=len(candidates),
+            articles_inserted=result.articles_inserted,
+            mentions_inserted=result.mentions_inserted,
+            stories_touched=result.stories_touched,
+            last_error="",
+            finished=complete,
+        )
+        append_event(
+            job_id,
+            "source_run_complete" if complete else "source_run_checkpoint",
+            {
+                "source_name": source_name,
+                "source_type": source_type,
+                "target_key": target_key,
+                "target_label": target_label,
+                "candidates_seen": result.candidates_seen,
+                "candidates_total": len(candidates),
+                "articles_inserted": result.articles_inserted,
+                "mentions_inserted": result.mentions_inserted,
+                "stories_touched": result.stories_touched,
+                "status": next_status,
+            },
+        )
+        return {
+            "articles_inserted": result.articles_inserted,
+            "mentions_inserted": result.mentions_inserted,
+            "stories_touched": result.stories_touched,
+            "saved": bool(result.articles_inserted or result.mentions_inserted or result.stories_touched),
+        }
+    except Exception as exc:
+        message = sanitize_error(exc)
+        update_source_run(
+            source_run_id,
+            status="failed_needs_fix",
+            cursor=cursor,
+            last_error=message,
+            finished=True,
+        )
+        append_event(
+            job_id,
+            "source_run_failed",
+            {
+                "source_name": source_name,
+                "source_type": source_type,
+                "target_key": target_key,
+                "target_label": target_label,
+                "status": "failed_needs_fix",
+                "error": message,
+            },
+        )
+        return {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0, "saved": False}
+
+
+def collect_source_run_candidates(
+    spec: dict[str, Any],
+    row: dict[str, Any],
+    cursor: dict[str, Any],
+) -> tuple[list[CandidateArticle], dict[str, Any], bool]:
+    source_type = str(row["source_type"])
+    request_timeout = 10
+    date_from = str(spec.get("date_from") or "")
+    date_to = str(spec.get("date_to") or "")
+    max_candidates = max(1, int(spec.get("max_candidates") or CUSTOM_MAX_CANDIDATES))
+
+    if source_type == "rss":
+        feed = RSS_FEEDS[max(0, int(cursor.get("feed_index") or 0))]
+        candidates = collect_rss(
+            feeds=[feed],
+            limit_per_feed=max_candidates,
+            request_timeout=request_timeout,
+            date_from=date_from,
+            date_to=date_to,
+            collection_timeout=max(20, request_timeout + 10),
+            raise_on_error=True,
+        )
+        return candidates, cursor, True
+
+    if source_type == "google_news":
+        query = str(cursor.get("query") or "")
+        candidates = collect_google_news(
+            queries=[query],
+            date_from=date_from,
+            date_to=date_to,
+            limit_per_query=max_candidates,
+            request_timeout=request_timeout,
+            resolve_timeout=max(2, request_timeout - 2),
+        )
+        return candidates, cursor, True
+
+    if source_type == "wordpress_api":
+        site = WORDPRESS_API_SITES[max(0, int(cursor.get("site_index") or 0))]
+        page = max(1, int(cursor.get("page") or 1))
+        candidates = collect_wordpress_api(
+            str(cursor.get("query") or ""),
+            source_name=str(site.get("source_name") or "WordPress"),
+            base_url=str(site.get("base_url") or ""),
+            date_from=date_from,
+            date_to=date_to,
+            per_site_limit=WORDPRESS_PAGE_SIZE,
+            request_timeout=request_timeout,
+            start_page=page,
+            max_pages=1,
+            raise_on_error=True,
+        )
+        complete = len(candidates) < WORDPRESS_PAGE_SIZE or page >= WORDPRESS_MAX_PAGES
+        next_cursor = dict(cursor)
+        next_cursor["page"] = page + 1 if not complete else page
+        return candidates, next_cursor, complete
+
+    if source_type == "internal_search":
+        adapter = FLAVIO_INTERNAL_SEARCH_TARGETS[max(0, int(cursor.get("adapter_index") or 0))]
+        candidates = collect_internal_site_search(
+            queries=[str(cursor.get("query") or "")],
+            adapters=[adapter],
+            date_from=date_from,
+            date_to=date_to,
+            limit_per_adapter=max_candidates,
+            max_pages_per_adapter=20,
+            request_timeout=request_timeout,
+        )
+        return candidates, cursor, True
+
+    if source_type == "sitemap_daily":
+        source = SITEMAP_DAILY_SOURCES[max(0, int(cursor.get("source_index") or 0))]
+        day = str(cursor.get("day") or date_from or date_to)
+        queries = [str(item or "").strip() for item in list(cursor.get("queries") or []) if str(item or "").strip()]
+        candidates = collect_sitemap_daily(
+            queries=queries,
+            sources=[source],
+            date_from=day,
+            date_to=day,
+            limit_per_source=max_candidates,
+            request_timeout=request_timeout,
+            collection_timeout=max(30, request_timeout * 4),
+        )
+        return candidates, cursor, True
+
+    if source_type == "vejario_archive":
+        target = dict(VEJARIO_ARCHIVE_TARGETS[max(0, int(cursor.get("target_index") or 0))])
+        page = max(1, int(cursor.get("page") or 1))
+        if page > 1:
+            target["start_url"] = paged_url(str(target.get("start_url") or ""), page)
+        candidates = collect_vejario_archive(
+            targets=[target],
+            date_from=date_from,
+            date_to=date_to,
+            limit_per_target=max_candidates,
+            max_pages_per_target=1,
+            request_timeout=request_timeout,
+        )
+        return candidates, cursor, True
+
+    if source_type == "camara_archive":
+        page = max(1, int(cursor.get("page") or 1))
+        page_size = max(1, int(CAMARA_ARCHIVE_TARGET.get("page_size") or 10))
+        candidates = collect_camara_archive(
+            date_from=date_from,
+            date_to=date_to,
+            limit_total=max_candidates,
+            max_pages=1,
+            request_timeout=request_timeout,
+            start_offset=(page - 1) * page_size,
+        )
+        return candidates, cursor, True
+
+    raise ValueError(f"unknown_source_type:{source_type}")
+
+
+def paged_url(base_url: str, page: int) -> str:
+    clean = str(base_url or "").split("?", 1)[0].rstrip("/")
+    return f"{clean}/pagina/{max(1, int(page))}/"
+
+
+def mark_source_run_running(source_run_id: int) -> None:
+    now = datetime.now(timezone.utc).isoformat()
+    with connect(db_path()) as conn:
+        conn.execute(
+            """
+            UPDATE job_source_runs
+            SET status = 'running', attempts = attempts + 1, started_at = COALESCE(started_at, ?),
+                updated_at = ?, last_error = NULL
+            WHERE id = ?
+            """,
+            (now, now, source_run_id),
+        )
+
+
+def update_source_run(
+    source_run_id: int,
+    *,
+    status: str,
+    cursor: dict[str, Any],
+    candidates_seen: int = 0,
+    candidates_total: int = 0,
+    articles_inserted: int = 0,
+    mentions_inserted: int = 0,
+    stories_touched: int = 0,
+    last_error: str = "",
+    finished: bool = False,
+) -> None:
+    now = datetime.now(timezone.utc).isoformat()
+    finished_at = now if finished else None
+    with connect(db_path()) as conn:
+        conn.execute(
+            """
+            UPDATE job_source_runs
+            SET status = ?, cursor_json = ?, candidates_seen = candidates_seen + ?,
+                candidates_total = candidates_total + ?, articles_inserted = articles_inserted + ?,
+                mentions_inserted = mentions_inserted + ?, stories_touched = stories_touched + ?,
+                last_error = ?, updated_at = ?, finished_at = COALESCE(?, finished_at)
+            WHERE id = ?
+            """,
+            (
+                status,
+                json.dumps(cursor, ensure_ascii=False),
+                int(candidates_seen or 0),
+                int(candidates_total or 0),
+                int(articles_inserted or 0),
+                int(mentions_inserted or 0),
+                int(stories_touched or 0),
+                last_error or None,
+                now,
+                finished_at,
+                source_run_id,
+            ),
+        )
+
+
+def mark_source_run_interrupted(source_run_id: int, *, reason: str) -> None:
+    now = datetime.now(timezone.utc).isoformat()
+    with connect(db_path()) as conn:
+        conn.execute(
+            """
+            UPDATE job_source_runs
+            SET status = 'interrupted_resumable', last_error = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (reason, now, source_run_id),
+        )
+
+
+def mark_running_source_runs_resumable(job_id: str, *, reason: str) -> None:
+    now = datetime.now(timezone.utc).isoformat()
+    with connect(db_path()) as conn:
+        conn.execute(
+            """
+            UPDATE job_source_runs
+            SET status = 'interrupted_resumable', last_error = ?, updated_at = ?
+            WHERE job_id = ? AND status IN ('pending', 'running', 'retrying')
+            """,
+            (reason, now, job_id),
+        )
+
+
+def reset_resumable_source_runs(job_id: str) -> None:
+    now = datetime.now(timezone.utc).isoformat()
+    with connect(db_path()) as conn:
+        conn.execute(
+            """
+            UPDATE job_source_runs
+            SET status = 'pending', updated_at = ?, finished_at = NULL
+            WHERE job_id = ? AND status IN ('interrupted_resumable', 'failed_needs_fix', 'running', 'retrying')
+            """,
+            (now, job_id),
+        )
+
+
+def failed_source_runs(job_id: str) -> list[dict[str, Any]]:
+    return [
+        source_run_public(row)
+        for row in source_run_rows(job_id)
+        if str(row.get("status") or "") == "failed_needs_fix"
+    ]
+
+
+def source_coverage_state(job_id: str) -> str:
+    rows = source_run_rows(job_id)
+    if not rows:
+        return "untracked"
+    statuses = {str(row.get("status") or "") for row in rows}
+    if "failed_needs_fix" in statuses:
+        return "failed_needs_fix"
+    if statuses.issubset({"complete"}):
+        return "complete"
+    if "interrupted_resumable" in statuses:
+        return "interrupted_resumable"
+    if statuses.intersection({"running", "retrying"}):
+        return "running"
+    return "pending"
+
+
+def source_run_rows(job_id: str) -> list[dict[str, Any]]:
+    with connect(db_path()) as conn:
+        rows = conn.execute(
+            "SELECT * FROM job_source_runs WHERE job_id = ? ORDER BY id ASC",
+            (job_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def source_run_public(row: dict[str, Any]) -> dict[str, Any]:
+    cursor = safe_json_dict(row.get("cursor_json"))
+    return {
+        "sourceKey": str(row.get("source_key") or ""),
+        "targetKey": str(row.get("target_key") or ""),
+        "sourceName": str(row.get("source_name") or ""),
+        "sourceType": str(row.get("source_type") or ""),
+        "status": str(row.get("status") or ""),
+        "cursor": sanitize_cursor(cursor),
+        "candidatesSeen": safe_int(row.get("candidates_seen")),
+        "candidatesTotal": safe_int(row.get("candidates_total")),
+        "articlesInserted": safe_int(row.get("articles_inserted")),
+        "mentionsInserted": safe_int(row.get("mentions_inserted")),
+        "storiesTouched": safe_int(row.get("stories_touched")),
+        "attempts": safe_int(row.get("attempts")),
+        "lastError": str(row.get("last_error") or ""),
+        "updatedAt": str(row.get("updated_at") or ""),
+    }
+
+
+def sanitize_cursor(cursor: dict[str, Any]) -> dict[str, Any]:
+    allowed = {"feed_index", "query_index", "site_index", "adapter_index", "source_index", "day_index", "day", "page"}
+    return {key: cursor[key] for key in allowed if key in cursor}
+
+
+def safe_json_dict(raw: Any) -> dict[str, Any]:
+    try:
+        value = json.loads(str(raw or "{}"))
+    except Exception:
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def get_resumable_job(job_id: str = "") -> dict[str, Any] | None:
+    ensure_app_tables(db_path())
+    with connect(db_path()) as conn:
+        if job_id:
+            row = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+            if not row:
+                return None
+            data = dict(row)
+            return data if str(data.get("status") or "") in RESUMABLE_JOB_STATUSES else None
+        row = conn.execute(
+            f"""
+            SELECT * FROM jobs
+            WHERE status IN ({','.join('?' for _ in RESUMABLE_JOB_STATUSES)})
+            ORDER BY COALESCE(finished_at, started_at, '') DESC
+            LIMIT 1
+            """,
+            RESUMABLE_JOB_STATUSES,
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def job_spec(job: dict[str, Any]) -> dict[str, Any]:
+    spec = safe_json_dict(job.get("spec_json"))
+    if spec:
+        return spec
+    return {
+        "preset": str(job.get("preset") or "custom"),
+        "collector": str(job.get("collector") or DEFAULT_COLLECTOR),
+        "target_keys": parse_target_keys(job.get("target_keys")),
+        "date_from": str(job.get("date_from") or ""),
+        "date_to": str(job.get("date_to") or ""),
+        "export": True,
+        "max_candidates": CUSTOM_MAX_CANDIDATES,
+        "max_process_seconds": CUSTOM_MAX_PROCESS_SECONDS,
+        "skip_direct_scrape": True,
+        "durable": False,
+    }
+
+
+def publish_incremental_snapshot(job_id: str, *, reason: str, force: bool = False) -> None:
+    if not artifact_store.enabled:
+        return
+    now = time.monotonic()
+    previous = _LAST_INCREMENTAL_EXPORT.get(job_id, 0.0)
+    if not force and now - previous < INCREMENTAL_EXPORT_MIN_SECONDS:
+        return
+    _LAST_INCREMENTAL_EXPORT[job_id] = now
+    try:
+        run_export_snapshot(job_id)
+        uploaded = artifact_store.upload_current_artifacts(
+            manifest={
+                "kind": "incremental-publish",
+                "jobId": job_id,
+                "reason": reason,
+                "createdAt": datetime.now(timezone.utc).isoformat(),
+            },
+            job_id=f"{job_id}-incremental-publish",
+        )
+        append_event(job_id, "incremental_publish_complete", artifact_upload_summary(uploaded))
+    except Exception as exc:
+        append_event(job_id, "incremental_publish_failed", {"error": sanitize_error(exc)})
+
+
 def create_job(
     job_id: str,
     kind: str,
@@ -454,8 +1272,8 @@ def create_job(
             """
             INSERT INTO jobs (
                 id, kind, status, preset, target_keys, collector, date_from, date_to,
-                started_by, started_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                started_by, started_at, spec_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 job_id,
@@ -468,6 +1286,7 @@ def create_job(
                 spec.get("date_to", ""),
                 started_by,
                 datetime.now(timezone.utc).isoformat(),
+                json.dumps(spec, ensure_ascii=False),
             ),
         )
 
@@ -605,13 +1424,23 @@ def mark_orphaned_active_jobs_interrupted(reason: str = "startup_recovered_activ
     now = datetime.now(timezone.utc).isoformat()
     for row in rows:
         job_id = str(row["id"])
+        job = get_job(job_id) or {"id": job_id}
+        durable = bool(job_spec(job).get("durable"))
+        next_status = "interrupted_resumable" if durable else "interrupted"
+        message = (
+            "A atualização foi interrompida por reinício do servidor. Ela pode ser retomada do último checkpoint."
+            if durable
+            else "A atualização foi interrompida por reinício do servidor. Os itens já salvos continuam preservados."
+        )
         update_job(
             job_id,
-            status="interrupted",
+            status=next_status,
             finished_at=now,
-            error_message="A atualização foi interrompida por reinício do servidor. Os itens já salvos continuam preservados.",
+            error_message=message,
         )
-        append_event(job_id, "job_interrupted", {"status": "interrupted", "reason": reason})
+        if durable:
+            mark_running_source_runs_resumable(job_id, reason=reason)
+        append_event(job_id, "job_interrupted", {"status": next_status, "reason": reason})
     return len(rows)
 
 
@@ -710,7 +1539,36 @@ def job_observability_from_events(job: dict[str, Any], events: list[dict[str, An
     data = artifact_upload_from_events(events)
     data["recentEvents"] = recent_events
     data["progress"] = progress_summary(job, events)
+    data.update(source_runs_observability(str(job.get("id") or ""), str(job.get("status") or "")))
     return data
+
+
+def source_runs_observability(job_id: str, job_status: str = "") -> dict[str, Any]:
+    if not job_id:
+        return {
+            "coverageState": "untracked",
+            "sourceRuns": [],
+            "failedSources": [],
+            "resumeAvailable": False,
+            "publishedAt": latest_successful_publish_time(),
+        }
+    rows = [source_run_public(row) for row in source_run_rows(job_id)]
+    failed = [row for row in rows if row.get("status") == "failed_needs_fix"]
+    if rows:
+        coverage = source_coverage_state(job_id)
+    elif job_status in {"succeeded", "failed", "interrupted", "cancelled"}:
+        coverage = "untracked"
+    else:
+        coverage = "pending"
+    priority = {"failed_needs_fix": 0, "running": 1, "retrying": 2, "interrupted_resumable": 3, "pending": 4, "complete": 5}
+    visible_rows = sorted(rows, key=lambda row: (priority.get(str(row.get("status") or ""), 6), str(row.get("updatedAt") or "")))[:80]
+    return {
+        "coverageState": coverage,
+        "sourceRuns": visible_rows,
+        "failedSources": failed[:20],
+        "resumeAvailable": bool(job_status in RESUMABLE_JOB_STATUSES and rows and any(row.get("status") != "complete" for row in rows)),
+        "publishedAt": latest_successful_publish_time(),
+    }
 
 
 def progress_summary(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1113,8 +1971,12 @@ def sanitize_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "target_key",
         "target_label",
         "source",
+        "source_key",
         "status",
         "reason",
+        "coverage_state",
+        "resume_available",
+        "started_by",
         "article_id",
         "story_id",
         "url",

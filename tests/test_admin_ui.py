@@ -288,6 +288,25 @@ def test_cancel_update_returns_409_when_no_active_job(monkeypatch, tmp_path):
     assert response.json()["detail"] == "no_active_job"
 
 
+def test_resume_update_is_public_coworker_endpoint(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+    calls = []
+
+    def fake_resume_update(job_id="", *, started_by):
+        calls.append((job_id, started_by))
+        return {"id": job_id or "latest-resumable", "status": "queued"}
+
+    monkeypatch.setattr(app_module.job_manager, "resume_update", fake_resume_update)
+
+    with TestClient(app) as client:
+        response = client.post("/api/update/resume", json={"job_id": "durable-job"})
+
+    assert response.status_code == 200
+    assert response.json() == {"id": "durable-job", "status": "queued"}
+    assert calls == [("durable-job", "coworker")]
+
+
 def test_targets_api_is_public_and_uploads_target_manifest(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     app_module = importlib.import_module("web_app.app")

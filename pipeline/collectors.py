@@ -211,13 +211,16 @@ def collect_rss(
     date_from: str = "",
     date_to: str = "",
     collection_timeout: int = 1200,
+    feeds: list[dict[str, str]] | None = None,
+    raise_on_error: bool = False,
 ) -> list[CandidateArticle]:
     articles: list[CandidateArticle] = []
     t0 = time.monotonic()
     feed_timeout = min(request_timeout, 8)
-    for i, feed in enumerate(RSS_FEEDS):
+    feed_list = feeds or RSS_FEEDS
+    for i, feed in enumerate(feed_list):
         if time.monotonic() - t0 > collection_timeout:
-            logging.warning(f"RSS collection time budget exhausted after {i}/{len(RSS_FEEDS)} feeds")
+            logging.warning(f"RSS collection time budget exhausted after {i}/{len(feed_list)} feeds")
             break
         try:
             _, xml_text = fetch_url(feed["url"], timeout=feed_timeout)
@@ -229,9 +232,11 @@ def collect_rss(
             )
             filtered = [item for item in items if _within_window(item.published_at, date_from=date_from, date_to=date_to)]
             articles.extend(filtered[: max(1, limit_per_feed)])
-            logging.info(f"RSS [{i+1}/{len(RSS_FEEDS)}] {feed['source_name']}: {len(filtered)} items")
+            logging.info(f"RSS [{i+1}/{len(feed_list)}] {feed['source_name']}: {len(filtered)} items")
         except Exception as e:
-            logging.info(f"RSS [{i+1}/{len(RSS_FEEDS)}] {feed['source_name']}: FAILED ({type(e).__name__})")
+            logging.warning(f"RSS [{i+1}/{len(feed_list)}] {feed['source_name']}: FAILED ({type(e).__name__})")
+            if raise_on_error:
+                raise
             continue
     return articles
 
@@ -738,6 +743,9 @@ def collect_wordpress_api(
     date_to: str = "",
     per_site_limit: int = 120,
     request_timeout: int = 10,
+    start_page: int = 1,
+    max_pages: int | None = None,
+    raise_on_error: bool = False,
 ) -> list[CandidateArticle]:
     q = (query or "").strip()
     if not q:
@@ -749,13 +757,18 @@ def collect_wordpress_api(
 
     endpoint = f"{base}/wp-json/wp/v2/posts"
     per_page = 100
-    max_pages = max(3, min(60, (max(1, per_site_limit) // per_page) + 10))
+    page_start = max(1, int(start_page or 1))
+    if max_pages is None:
+        page_count = max(3, min(60, (max(1, per_site_limit) // per_page) + 10))
+    else:
+        page_count = max(1, int(max_pages))
+    page_end = page_start + page_count - 1
 
     articles: list[CandidateArticle] = []
     seen_urls: set[str] = set()
     accepted = 0
 
-    for page in range(1, max_pages + 1):
+    for page in range(page_start, page_end + 1):
         if accepted >= max(1, per_site_limit):
             break
         params: dict[str, str] = {
@@ -774,10 +787,14 @@ def collect_wordpress_api(
 
         try:
             _, body = fetch_url(url, timeout=request_timeout)
-        except urllib.error.HTTPError:
+        except urllib.error.HTTPError as exc:
             # Typically "invalid page number" once we go beyond available results.
+            if raise_on_error and int(getattr(exc, "code", 0) or 0) >= 500:
+                raise
             break
         except Exception:
+            if raise_on_error:
+                raise
             break
 
         try:
@@ -1302,6 +1319,7 @@ def collect_camara_archive(
     limit_total: int = 120,
     max_pages: int = 24,
     request_timeout: int = 10,
+    start_offset: int = 0,
 ) -> list[CandidateArticle]:
     config = target or CAMARA_ARCHIVE_TARGET
     base_url = str(config.get("start_url") or "").strip()
@@ -1312,7 +1330,8 @@ def collect_camara_archive(
         return []
     start = _parse_window_boundary(date_from, end_of_day=False)
     end = _parse_window_boundary(date_to, end_of_day=True)
-    next_url = f"{base_url}?limit={page_size}&start=0"
+    offset = max(0, int(start_offset or 0))
+    next_url = f"{base_url}?limit={page_size}&start={offset}"
     pages_seen: set[str] = set()
     collected: list[CandidateArticle] = []
     seen_urls: set[str] = set()

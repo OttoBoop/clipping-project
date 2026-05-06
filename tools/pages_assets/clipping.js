@@ -55,6 +55,7 @@
   const runUpdateButton = document.getElementById("runUpdateButton");
   const cancelUpdateButton = document.getElementById("cancelUpdateButton");
   const cancelUpdateButtonProgress = document.getElementById("cancelUpdateButtonProgress");
+  const resumeUpdateButton = document.getElementById("resumeUpdateButton");
   const runFormMessage = document.getElementById("runFormMessage");
   const addTargetMessage = document.getElementById("addTargetMessage");
   const runnerStatusPill = document.getElementById("runnerStatusPill");
@@ -715,6 +716,11 @@
     if (status === "exporting") return "Publicando";
     if (status === "cancel_requested") return "Cancelando";
     if (status === "succeeded") return "Concluído";
+    if (status === "complete") return "Fonte concluída";
+    if (status === "pending") return "Aguardando fonte";
+    if (status === "retrying") return "Tentando novamente";
+    if (status === "interrupted_resumable") return "Pronto para retomar";
+    if (status === "failed_needs_fix") return "Fonte precisa de correção";
     if (status === "interrupted") return "Interrompido";
     if (status === "failed") return "Precisa de atenção";
     if (status === "cancelled" || status === "canceled") return "Cancelado";
@@ -751,6 +757,8 @@
   function progressState(job, event) {
     var status = job && job.status;
     if (status === "succeeded") return { known: true, percent: 100, label: "Concluído" };
+    if (status === "interrupted_resumable") return { known: true, percent: 100, label: "Interrompido, com retomada disponível" };
+    if (status === "failed_needs_fix") return { known: true, percent: 100, label: "Fonte precisa de correção" };
     if (status === "interrupted") return { known: true, percent: 100, label: "Interrompido por reinício" };
     if (status === "failed") return { known: true, percent: 100, label: "Interrompido por erro" };
     if (status === "cancelled" || status === "canceled") return { known: true, percent: 0, label: "Cancelado" };
@@ -781,6 +789,8 @@
       exporting: "publish",
     };
     if (status === "succeeded") return "done";
+    if (status === "interrupted_resumable") return step === "search" || step === "save" ? "error" : "pending";
+    if (status === "failed_needs_fix") return step === "search" ? "error" : "pending";
     if (status === "interrupted") return step === "search" ? "error" : "pending";
     if (status === "failed") return step === "search" ? "error" : "pending";
     if (status === "cancelled" || status === "canceled") return step === "search" ? "cancelled" : "pending";
@@ -829,6 +839,8 @@
     if (status === "exporting") return "Publicando o painel atualizado.";
     if (status === "cancel_requested") return "Cancelamento solicitado. A rodada vai parar ao fim da etapa atual.";
     if (status === "succeeded") return "Atualização concluída.";
+    if (status === "interrupted_resumable") return "O servidor reiniciou, mas há checkpoint salvo. A atualização pode ser retomada.";
+    if (status === "failed_needs_fix") return "Uma fonte falhou e precisa de correção antes de fechar a cobertura.";
     if (status === "interrupted") return "A atualização foi interrompida por reinício do servidor. As notícias já salvas continuam preservadas.";
     if (status === "failed") return "A atualização encontrou um problema e não terminou.";
     if (status === "cancelled" || status === "canceled") return "Atualização cancelada.";
@@ -837,6 +849,8 @@
 
   function warningText(job) {
     if (!job) return "";
+    if (job.failedSources && job.failedSources.length) return "Há fonte com falha visível. Corrija a fonte e retome a atualização para completar a cobertura.";
+    if (job.status === "interrupted_resumable") return "A atualização não foi cancelada; ela parou por reinício e pode continuar do checkpoint.";
     if (job.status === "interrupted") return "A atualização não foi cancelada por alguém; o servidor reiniciou antes da publicação final.";
     if (job.status === "failed") return "A atualização parou antes de terminar.";
     if (job.freshness && job.freshness.stale) return "A publicação pode estar desatualizada em relação à última execução concluída.";
@@ -877,6 +891,28 @@
 
   function renderRecentSources(job) {
     if (!progressRecentSources) return;
+    if (job && Array.isArray(job.sourceRuns) && job.sourceRuns.length) {
+      var sourceRows = job.sourceRuns.slice(0, 8).map(function (source) {
+        var status = statusLabel(source.status || "");
+        var detail = [];
+        var total = numberValue(source.candidatesTotal);
+        var seen = numberValue(source.candidatesSeen);
+        if (total > 0 || seen > 0) detail.push(seen + "/" + Math.max(total, seen) + " itens");
+        if (numberValue(source.storiesTouched) > 0) detail.push(numberValue(source.storiesTouched) + " história(s)");
+        if (source.cursor && source.cursor.day) detail.push(isoToBrDate(source.cursor.day));
+        if (source.cursor && source.cursor.page) detail.push("página " + source.cursor.page);
+        if (source.lastError) detail.push(source.lastError);
+        return (
+          "<li><strong>" + escapeHtml(source.sourceName || source.sourceType || "Fonte") + "</strong>" +
+          " · " + escapeHtml(status) +
+          (detail.length ? " · " + escapeHtml(detail.join(", ")) : "") +
+          "</li>"
+        );
+      });
+      progressRecentSources.hidden = !sourceRows.length;
+      progressRecentSources.innerHTML = sourceRows.length ? "<h2>Cobertura por fonte</h2><ul>" + sourceRows.join("") + "</ul>" : "";
+      return;
+    }
     var events = job ? (job.recentEvents || []).concat(job.events || []) : [];
     var rows = [];
     var seenKeys = {};
@@ -962,6 +998,10 @@
     }
     if (isError && job.error_message) console.error("[clipping] update failed", job.error_message);
     if (runUpdateButton) runUpdateButton.disabled = isRunning;
+    if (resumeUpdateButton) {
+      resumeUpdateButton.hidden = !job.resumeAvailable || isRunning;
+      resumeUpdateButton.disabled = false;
+    }
     if (runFormMessage) {
       if (isRunning) setMessage(runFormMessage, ACTIVE_RUN_MESSAGE, "");
       else if (runFormMessage.textContent === ACTIVE_RUN_MESSAGE) setMessage(runFormMessage, "", "");
@@ -1926,6 +1966,22 @@
     if (!button) return;
     button.addEventListener("click", cancelActiveUpdate);
   });
+
+  async function resumeActiveUpdate() {
+    if (!resumeUpdateButton) return;
+    setMessage(progressActionMessage || runFormMessage, "Retomando atualização...", "");
+    resumeUpdateButton.disabled = true;
+    try {
+      await apiPost("/api/update/resume", latestStatus && latestStatus.current && latestStatus.current.id ? { job_id: latestStatus.current.id } : {});
+      setMessage(progressActionMessage || runFormMessage, "Atualização retomada. Acompanhe as fontes nesta aba.", "ok");
+      await pollStatus();
+    } catch (error) {
+      setMessage(progressActionMessage || runFormMessage, friendlyError(error, "Não foi possível retomar a atualização."), "error");
+      resumeUpdateButton.disabled = false;
+    }
+  }
+
+  if (resumeUpdateButton) resumeUpdateButton.addEventListener("click", resumeActiveUpdate);
 
   if (addTargetForm) {
     addTargetForm.addEventListener("submit", async function (event) {

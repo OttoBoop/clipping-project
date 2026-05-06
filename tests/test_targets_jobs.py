@@ -737,6 +737,143 @@ def test_startup_marks_orphaned_active_jobs_interrupted_not_cancelled(monkeypatc
     )
 
 
+def test_durable_jobs_become_resumable_on_startup_restart(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "preset": "custom",
+        "collector": "rss",
+        "target_keys": ["shakira"],
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "export": True,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+        "durable": True,
+    }
+    monkeypatch.setattr(jobs, "RSS_FEEDS", [{"source_name": "Fonte RSS", "url": "https://example.com/rss.xml"}])
+    jobs.create_job("durable-orphan", "update", spec, started_by="coworker")
+    jobs.ensure_source_runs("durable-orphan", spec, "shakira")
+    jobs.update_job("durable-orphan", status="running")
+
+    interrupted = jobs.mark_orphaned_active_jobs_interrupted()
+
+    assert interrupted == 1
+    job = jobs.get_job("durable-orphan")
+    assert job["status"] == "interrupted_resumable"
+    assert job["resumeAvailable"] is True
+    assert job["coverageState"] == "interrupted_resumable"
+    assert job["sourceRuns"][0]["status"] == "interrupted_resumable"
+    assert "retomada" in job["error_message"]
+
+
+def test_reset_resumable_source_runs_requeues_failed_and_interrupted_rows(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "preset": "custom",
+        "collector": "rss",
+        "target_keys": ["shakira"],
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "export": True,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+        "durable": True,
+    }
+    monkeypatch.setattr(jobs, "RSS_FEEDS", [{"source_name": "Fonte RSS", "url": "https://example.com/rss.xml"}])
+    jobs.create_job("resume-rows", "update", spec, started_by="coworker")
+    jobs.ensure_source_runs("resume-rows", spec, "shakira")
+    row = jobs.source_run_rows("resume-rows")[0]
+    jobs.update_source_run(row["id"], status="failed_needs_fix", cursor={}, last_error="parser_error", finished=True)
+
+    jobs.reset_resumable_source_runs("resume-rows")
+
+    row = jobs.source_run_rows("resume-rows")[0]
+    assert row["status"] == "pending"
+    assert row["finished_at"] is None
+
+
+def test_durable_wordpress_units_use_secondary_target_query_not_flavio_site_variants(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        jobs,
+        "WORDPRESS_API_SITES",
+        [{"source_name": "Agenda do Poder", "base_url": "https://agendadopoder.com.br", "query_variants": ["Flavio Valle"]}],
+    )
+
+    units = jobs.build_source_units({"collector": "wordpress_api"}, "shakira")
+
+    assert units
+    assert {unit.cursor["query"] for unit in units} == {"Shakira"}
+
+
+def test_durable_runner_processes_source_units_and_exposes_coverage(monkeypatch, tmp_path):
+    import threading
+    from pipeline import ingest
+    from pipeline.collectors import CandidateArticle
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs.artifact_store, "enabled", False)
+    monkeypatch.setattr(jobs, "RSS_FEEDS", [{"source_name": "Fonte RSS", "url": "https://example.com/rss.xml"}])
+    spec = {
+        "preset": "custom",
+        "collector": "rss",
+        "target_keys": ["shakira"],
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "export": False,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+        "durable": True,
+    }
+    jobs.create_job("durable-runner", "update", spec, started_by="coworker")
+
+    def fake_collect_rss(**_kwargs):
+        return [
+            CandidateArticle(
+                title="Shakira canta em Copacabana",
+                url="https://example.com/shakira",
+                source_name="Fonte RSS",
+                source_type="rss",
+                published_at="2026-05-05T12:00:00+00:00",
+                snippet="Shakira no Rio.",
+                metadata={},
+            )
+        ]
+
+    def fake_process_candidates(source_name, source_type, candidates, *, options=None, progress_callback=None):
+        if progress_callback:
+            progress_callback(
+                "article_saved",
+                {
+                    "article_id": 1,
+                    "story_id": 1,
+                    "url": candidates[0].url,
+                    "title": candidates[0].title,
+                    "published_at": candidates[0].published_at,
+                    "source_name": source_name,
+                    "source_type": source_type,
+                    "target_keys": ["shakira"],
+                    "articles_inserted_delta": 1,
+                    "mentions_inserted_delta": 1,
+                    "stories_touched_delta": 1,
+                    "publication_state": "saved",
+                },
+            )
+        return ingest.IngestionResult(source_name, source_type, len(candidates), 1, 1, 1, [])
+
+    monkeypatch.setattr(jobs, "collect_rss", fake_collect_rss)
+    monkeypatch.setattr(jobs, "process_candidates", fake_process_candidates)
+
+    result = jobs.run_durable_update("durable-runner", spec, threading.Event())
+    observed = jobs.get_job("durable-runner")
+
+    assert result["coverage_state"] == "complete"
+    assert result["stories_touched"] == 1
+    assert observed["coverageState"] == "complete"
+    assert observed["sourceRuns"][0]["status"] == "complete"
+    assert observed["progress"]["storiesTouched"] == 1
+
+
 def test_job_runner_passes_cancel_check_into_ingestion(monkeypatch, tmp_path):
     import threading
 

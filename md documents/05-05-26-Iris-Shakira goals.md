@@ -1,6 +1,7 @@
 # 05-05-26 Iris-Shakira Goals
 
 _Created 2026-05-05 by Atlas, from Otavio's direct instruction._
+_Updated 2026-05-06 by Theseus-Atlas-Codex._
 
 This document is the living contract for the Shakira recovery loop. It exists
 to stop the work from drifting whenever a new bug, interruption, or side-topic
@@ -15,6 +16,10 @@ view while implementing, testing, and verifying on the public site.
 
 The public Render site must show real Shakira news in the correct `shakira`
 filter for the period `01/04/2026` through `05/05/2026`.
+
+This loop is now owned by `Theseus-Atlas-Codex`: a local Codex fixer following
+the Ariadne audit thread. Theseus may close this mission only after public
+Render verification, not after local tests, local exports, or unverified deploys.
 
 The acceptance bar is the live site:
 
@@ -74,6 +79,22 @@ Still incomplete:
   accidental local/off-site pipeline run still needs to be tested explicitly.
 - Export/publication must remain observable and recoverable whenever a saved
   checkpoint needs to be republished after an interrupted run.
+- Long sources must be checkpointed by source/query/page/day so the public
+  Render job can resume and exhaust sources instead of restarting broad
+  collection work from zero.
+- Any visible source failure is a repair target, not an acceptable ending. The
+  final state is every configured source completed, or a human-visible blocker
+  for a truly unavailable external source.
+
+### 2026-05-06 00:00 BRT
+
+- `Theseus-Atlas-Codex` begins the durable-job implementation pass.
+- The active role contract comes from `md documents/CHARACTER_SHEET.md`.
+- The job thread is no longer allowed to be treated as the source of truth. The
+  durable source ledger in the backend database/checkpoint is the source of
+  truth for Shakira coverage.
+- Public acceptance still requires Render endpoints, `assets/clipping-data.json`,
+  visible UI, and screenshot evidence.
 
 ## Loop Log
 
@@ -205,6 +226,8 @@ loop. This document is the short-term memory anchor for the mission.
   Shakira.
 - The current in-process worker model is fragile: if the web process restarts,
   the running clipping thread dies.
+- Durable source state must survive that fragility. Restart/redeploy should
+  mark the job resumable and continue from the latest saved source cursor.
 - False positives from page boilerplate or `Notícias relacionadas` must not tag
   unrelated articles as Shakira.
 - The known false positive shape includes a non-Shakira article whose snippet or
@@ -231,8 +254,8 @@ loop. This document is the short-term memory anchor for the mission.
 1. Verify that the next Shakira run is started on the public Render site, with
    public endpoints used for monitoring.
 2. Fix the minimum job durability needed for the Shakira mission on Render.
-3. Preserve already-saved items across restart through durable database
-   checkpoints.
+3. Preserve already-saved items and source cursors across restart through
+   durable database checkpoints.
 4. Ensure an interrupted job keeps saved items visible as saved, not lost or
    mislabeled as cancelled.
 5. Separately test the Render restart/redeploy edge case instead of treating it
@@ -243,6 +266,8 @@ loop. This document is the short-term memory anchor for the mission.
    Render site.
 8. Monitor `/api/update/status` and `/api/update/live-results` while the run is
    active.
+8.1. Confirm `/api/update/status` exposes `sourceRuns`, `coverageState`,
+     `failedSources`, `resumeAvailable`, and `publishedAt`.
 9. Verify `/assets/clipping-data.json` after publication contains:
    - target key `shakira`;
    - stories whose `targetKeys` include `shakira`;

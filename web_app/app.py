@@ -121,19 +121,22 @@ async def lifespan(_: FastAPI):
     targets_normalized = normalize_targets_file()
     ensure_app_tables(db_path())
     interrupted_jobs = mark_orphaned_active_jobs_interrupted()
+    resume_startup = getattr(job_manager, "resume_startup_jobs", None)
+    resumed_jobs = resume_startup() if resume_startup else 0
     # Ensure classification + category tables exist (idempotent CREATE IF NOT EXISTS).
     cdb = ClippingDB(db_path())
     existing_names = {row["name"] for row in cdb.list_categories()}
     newly_seeded = [n for n in BASE_CATEGORIES if n not in existing_names]
     for name in newly_seeded:
         cdb.get_or_create_category(name, created_by="system")
-    if (newly_seeded or targets_normalized or interrupted_jobs) and artifact_store.enabled:
+    if (newly_seeded or targets_normalized or interrupted_jobs or resumed_jobs) and artifact_store.enabled:
         artifact_store.upload_current_artifacts(
             manifest={
                 "kind": "startup-normalization",
                 "seededCategories": newly_seeded,
                 "targetsNormalized": targets_normalized,
                 "orphanedJobsInterrupted": interrupted_jobs,
+                "resumedJobs": resumed_jobs,
             },
             job_id="startup-runtime-normalization",
         )
@@ -211,7 +214,7 @@ def healthz() -> dict[str, Any]:
         "storage": artifact_store.status(),
         "localWritesAllowed": local_writes_allowed(),
         "job": safe_current_status().get("status", "idle"),
-        "shakiraLoopVersion": "2026-05-05-safe-status-endpoints",
+        "shakiraLoopVersion": "2026-05-06-durable-source-ledger",
     }
 
 
@@ -248,6 +251,18 @@ async def start_update(request: Request) -> JSONResponse:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return JSONResponse(job)
+
+
+@app.post("/api/update/resume")
+async def resume_update(request: Request) -> JSONResponse:
+    payload = await read_json(request)
+    try:
+        job = job_manager.resume_update(str(payload.get("job_id") or payload.get("jobId") or ""), started_by="coworker")
+    except JobConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return JSONResponse(job)
