@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Penelope Etapa 2 helper: consolida temas from analise-individual.md.
 
-Reads `Análise Show Shakira/analise-individual.md` and produces a
-quantitative draft of `Análise Show Shakira/consolidacao-temas.md`.
+Reads `Show da Shakira/analise-individual.md` and produces a
+quantitative draft of `Show da Shakira/consolidacao-temas.md`.
 
 This script does the **mechanical** part of Etapa 2:
 - Extracts each finished article block (skips EM ANDAMENTO stubs).
@@ -32,8 +32,8 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ANALISE = ROOT / "Análise Show Shakira" / "analise-individual.md"
-CONSOLIDA = ROOT / "Análise Show Shakira" / "consolidacao-temas.md"
+ANALISE = ROOT / "Show da Shakira" / "analise-individual.md"
+CONSOLIDA = ROOT / "Show da Shakira" / "consolidacao-temas.md"
 ALIAS_PATH = ROOT / "tools" / "penelope_temas_aliases.json"
 
 SENTIMENT_ORDER = [

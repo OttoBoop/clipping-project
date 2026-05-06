@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ANALISE = ROOT / "Análise Show Shakira" / "analise-individual.md"
+ANALISE = ROOT / "Show da Shakira" / "analise-individual.md"
 TARGET_KEY = "shakira"
 
 DATA_PATHS = [
