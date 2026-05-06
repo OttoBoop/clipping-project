@@ -176,3 +176,23 @@ um ano antes, o que ajuda a contextualizar `a-116`).
 
 <!-- Fim dos blocos disponíveis nesta sessão. Próxima Penelope retoma aqui
      quando dados frescos do Render aterrissarem no repo. -->
+
+## Próxima Penelope — guia de retomada (curto)
+
+1. `git pull && python3 tools/penelope_shakira_iter.py list`
+   - Se `total > 3`, dados frescos chegaram. Caminho de chegada possível:
+     a) Otávio commitou dump do Render disk em `assets/`;
+     b) GitHub Action `penelope-fetch-shakira.yml` rodou e commitou em
+        `tools/penelope-fetched/`. O helper detecta o segundo automaticamente.
+2. `python3 tools/penelope_shakira_iter.py todo`
+   - Mostra IDs ainda não-feitos.
+3. Para cada ID:
+   ```
+   python3 tools/penelope_shakira_iter.py show a-NNN  # ler tudo
+   # produzir bloco no formato Etapa 1 (ver acima)
+   git commit -m "analise-shakira: a-NNN — ..."
+   ```
+   - Reportar a Otávio a cada 20 artigos concluídos.
+4. Quando completar (ou parar): `python3 tools/penelope_consolida_temas.py`
+   regenera `consolidacao-temas.md` (parte mecânica da Etapa 2). A síntese
+   narrativa por categoria fica para a Penelope/classificador.
