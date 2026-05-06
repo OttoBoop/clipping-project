@@ -113,6 +113,19 @@ Still incomplete:
   a real feed URL exists; the separate Conib internal-search source remains in
   the durable source plan.
 
+### 2026-05-06 13:45 BRT
+
+- The public job `85c43d642782` recovered from a temporary public `502` and
+  continued running on Render; the job was not marked `cancelled`.
+- `/api/update/live-results` continued showing saved Shakira items while the
+  run processed `Diario do Rio`.
+- `assets/clipping-data.json` still published the public `shakira` filter with
+  121 stories / 231 articles, but `/api/update/status` still reported an old
+  `publishedAt` because it only looked at finished jobs.
+- Current code pass fixes that observability gap: incremental publish events
+  now count as publication time, and status exposes source-run totals/counts so
+  long-source coverage cannot be hidden behind the 80-row visible list.
+
 ## Loop Log
 
 ### 2026-05-05 16:36 BRT

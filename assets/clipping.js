@@ -892,6 +892,18 @@
   function renderRecentSources(job) {
     if (!progressRecentSources) return;
     if (job && Array.isArray(job.sourceRuns) && job.sourceRuns.length) {
+      var counts = job.sourceRunCounts || {};
+      var totalSources = numberValue(job.sourceRunCount);
+      var visibleSources = numberValue(job.sourceRunVisibleCount) || job.sourceRuns.length;
+      var summaryParts = [];
+      ["running", "retrying", "interrupted_resumable", "failed_needs_fix", "pending", "complete"].forEach(function (statusKey) {
+        var count = numberValue(counts[statusKey]);
+        if (count > 0) summaryParts.push(count + " " + statusLabel(statusKey).toLowerCase());
+      });
+      var summary = summaryParts.length ? summaryParts.join(", ") : "";
+      if (totalSources > visibleSources) {
+        summary += (summary ? " · " : "") + visibleSources + "/" + totalSources + " fontes exibidas";
+      }
       var sourceRows = job.sourceRuns.slice(0, 8).map(function (source) {
         var status = statusLabel(source.status || "");
         var detail = [];
@@ -910,7 +922,7 @@
         );
       });
       progressRecentSources.hidden = !sourceRows.length;
-      progressRecentSources.innerHTML = sourceRows.length ? "<h2>Cobertura por fonte</h2><ul>" + sourceRows.join("") + "</ul>" : "";
+      progressRecentSources.innerHTML = sourceRows.length ? "<h2>Cobertura por fonte</h2>" + (summary ? "<p>" + escapeHtml(summary) + "</p>" : "") + "<ul>" + sourceRows.join("") + "</ul>" : "";
       return;
     }
     var events = job ? (job.recentEvents || []).concat(job.events || []) : [];

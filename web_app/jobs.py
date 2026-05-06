@@ -1581,9 +1581,12 @@ def source_runs_observability(job_id: str, job_status: str = "") -> dict[str, An
         return {
             "coverageState": "untracked",
             "sourceRuns": [],
+            "sourceRunCount": 0,
+            "sourceRunVisibleCount": 0,
+            "sourceRunCounts": {},
             "failedSources": [],
             "resumeAvailable": False,
-            "publishedAt": latest_successful_publish_time(),
+            "publishedAt": latest_publish_time(),
         }
     rows = [source_run_public(row) for row in source_run_rows(job_id)]
     failed = [row for row in rows if row.get("status") == "failed_needs_fix"]
@@ -1595,12 +1598,19 @@ def source_runs_observability(job_id: str, job_status: str = "") -> dict[str, An
         coverage = "pending"
     priority = {"failed_needs_fix": 0, "running": 1, "retrying": 2, "interrupted_resumable": 3, "pending": 4, "complete": 5}
     visible_rows = sorted(rows, key=lambda row: (priority.get(str(row.get("status") or ""), 6), str(row.get("updatedAt") or "")))[:80]
+    status_counts: dict[str, int] = {}
+    for row in rows:
+        status = str(row.get("status") or "unknown")
+        status_counts[status] = status_counts.get(status, 0) + 1
     return {
         "coverageState": coverage,
         "sourceRuns": visible_rows,
+        "sourceRunCount": len(rows),
+        "sourceRunVisibleCount": len(visible_rows),
+        "sourceRunCounts": status_counts,
         "failedSources": failed[:20],
         "resumeAvailable": bool(job_status in RESUMABLE_JOB_STATUSES and rows and any(row.get("status") != "complete" for row in rows)),
-        "publishedAt": latest_successful_publish_time(),
+        "publishedAt": latest_publish_time(job_id),
     }
 
 
@@ -1790,7 +1800,7 @@ def live_results_for_job(
         rows,
         target_key=target_key,
         limit=limit,
-        published_cutoff=latest_successful_publish_time(),
+        published_cutoff=latest_publish_time(job_id),
     )
     return {"jobId": job_id, "status": str(job.get("status") or ""), "items": items, "count": len(items)}
 
@@ -1815,7 +1825,7 @@ def live_results_for_base(*, target_key: str = "", limit: int = 240) -> dict[str
         rows,
         target_key=target_key,
         limit=limit,
-        published_cutoff=latest_successful_publish_time(),
+        published_cutoff=latest_publish_time(),
     )
     return {"jobId": "", "status": "base", "items": items, "count": len(items)}
 
@@ -1930,6 +1940,29 @@ def latest_successful_publish_time() -> str:
             """
         ).fetchone()
     return str(row["published_at"] or "") if row else ""
+
+
+def latest_publish_time(job_id: str = "") -> str:
+    latest = latest_successful_publish_time()
+    params: tuple[Any, ...] = ()
+    job_filter = ""
+    if job_id:
+        job_filter = "AND job_id = ?"
+        params = (job_id,)
+    with connect(db_path()) as conn:
+        row = conn.execute(
+            f"""
+            SELECT MAX(created_at) AS published_at
+            FROM job_events
+            WHERE event IN ('export_complete', 'incremental_publish_complete', 'artifacts_uploaded')
+              {job_filter}
+            """,
+            params,
+        ).fetchone()
+    event_time = str(row["published_at"] or "") if row else ""
+    if event_time and (not latest or event_time > latest):
+        return event_time
+    return latest
 
 
 def normalized_limit(limit: int) -> int:

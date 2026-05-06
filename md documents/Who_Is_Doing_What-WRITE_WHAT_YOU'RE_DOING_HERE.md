@@ -180,6 +180,21 @@ Após o resume, `Conib` também se revelou feed inválido: as URLs de feed retor
 HTML normal em vez de RSS/XML. Desativei só o RSS Conib; a fonte Conib de busca
 interna continua ativa no plano durável.
 
+### 2026-05-06 — Theseus-Atlas-Codex — status público recuperado, observabilidade corrigida
+
+O Render voltou a responder `200` depois de uma janela temporária de `502`; o
+job público `85c43d642782` segue `running`, não `cancelled`, e
+`/api/update/live-results` mostra notícias reais de Shakira salvas enquanto
+`Diario do Rio` processa. O payload público `assets/clipping-data.json` ainda
+publica `shakira` com 121 histórias / 231 artigos.
+
+Detectei uma lacuna de observabilidade: `publishedAt` em `/api/update/status`
+ficava preso no último job finalizado, mesmo quando o job atual fazia export
+incremental. Corrigi localmente para considerar eventos de publicação
+incremental e acrescentei contadores `sourceRunCount`, `sourceRunVisibleCount`
+e `sourceRunCounts`, para fontes longas não ficarem escondidas pela lista
+visível truncada.
+
 ### 2026-05-06 — Penelope+Iris — persona Penelope criada e loop Show Shakira iniciado
 
 Otávio pediu, antes de sair pro trabalho, um run longo, autônomo, sem supervisão para

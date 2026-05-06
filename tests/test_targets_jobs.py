@@ -792,6 +792,45 @@ def test_reset_resumable_source_runs_requeues_failed_and_interrupted_rows(monkey
     assert row["finished_at"] is None
 
 
+def test_source_observability_reports_counts_and_incremental_publish_time(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "preset": "custom",
+        "collector": "rss",
+        "target_keys": ["shakira"],
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "export": True,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+        "durable": True,
+    }
+    monkeypatch.setattr(
+        jobs,
+        "RSS_FEEDS",
+        [
+            {"source_name": "Fonte RSS 1", "url": "https://example.com/1.xml"},
+            {"source_name": "Fonte RSS 2", "url": "https://example.com/2.xml"},
+        ],
+    )
+    jobs.create_job("old-export", "export", {**spec, "target_keys": []}, started_by="coworker")
+    jobs.update_job("old-export", status="succeeded", finished_at="2026-05-06T00:00:00+00:00")
+    jobs.create_job("durable-visible", "update", spec, started_by="coworker")
+    jobs.ensure_source_runs("durable-visible", spec, "shakira")
+    rows = jobs.source_run_rows("durable-visible")
+    jobs.update_source_run(rows[0]["id"], status="complete", cursor={}, candidates_seen=2, candidates_total=2, finished=True)
+    jobs.update_source_run(rows[1]["id"], status="failed_needs_fix", cursor={}, last_error="feed broke", finished=True)
+    jobs.append_event("durable-visible", "incremental_publish_complete", {"count": 1, "items": ["assets/clipping-data.json"]})
+
+    observed = jobs.get_job("durable-visible")
+
+    assert observed["sourceRunCount"] == 2
+    assert observed["sourceRunVisibleCount"] == 2
+    assert observed["sourceRunCounts"] == {"complete": 1, "failed_needs_fix": 1}
+    assert observed["coverageState"] == "failed_needs_fix"
+    assert observed["publishedAt"] > "2026-05-06T00:00:00+00:00"
+
+
 def test_disabled_source_units_are_reconciled_out_of_resumed_jobs(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     spec = {
