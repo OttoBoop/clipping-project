@@ -24,7 +24,7 @@ _Last updated: 2026-05-06 by Theseus-Atlas-Codex + Penelope+Iris (coordenação 
 | Ariadne  | consolidação dos canais de comunicação (este arquivo) | 2026-05-05  | sim — feedback no formato em §4 via Q-NNN |
 | Iris     | desenhou persona Penelope; convocou Penelope para o loop Show Shakira | 2026-05-06 | sim — sugestões em §4 via Q-NNN |
 | Theseus  | (em construção pela Iris, paused)                | —           | — (não ativo ainda)            |
-| Penelope | rodando loop Show Shakira (workflow-classificacao-shakira.md) Etapas 0+1 | 2026-05-06 | não — loop autônomo nonstop até concluir |
+| Penelope | loop Show Shakira completo (Etapas 0+1+2+3) — sprint encerrado | 2026-05-06 | sim — Otávio revisar deliverables em `Show da Shakira/relatorios/` |
 
 Pra um novo agente entrar: adicionar uma linha aqui + um Log entry em §5.
 
@@ -320,3 +320,83 @@ intervenção manual de Otávio.
 Se sim, próxima Penelope baixa, lê, e roda 117 artigos. Se não
 (ex.: Actions desabilitado no repo, permissões `contents: write`
 faltando, runner não disponível), Q-008 segue válida.
+
+### 2026-05-06 — Penelope [Sonnet 4.6] — sprint Show Shakira encerrado (Etapas 0+1+2+3)
+
+Loop autônomo continuou após o almoço de Otávio. Sequência completa:
+
+**Etapa 1 (concluída):** 243 blocos de análise individual em
+`Show da Shakira/analise-individual.md` (4.586 linhas), 0 stubs `EM
+ANDAMENTO`. Distribuição final mecânica (sobre 226 blocos
+parseados pelo consolidador): 6 muito-negativo, 6 negativo, 20
+neutro, 58 positivo, 113 muito-positivo. Os 17 blocos não-parseados
+são pointer redirectors e fora-de-escopo (a-74, a-185, a-219, a-325).
+
+**Etapa 2 (concluída em duas tasks):**
+
+- *Task A — Categorização editorial:* `Show da Shakira/categorias-temas.md`
+  agrupando ~410 temas brutos em 12 categorias amplas + anexo de
+  fora-de-escopo. Categorias: 1 Performance e show; 2 Atraso/dia
+  difícil/saúde do pai; 3 Segurança e vigilância; 4 Audiência e
+  cobertura midiática; 5 Economia e turismo; 6 Infraestrutura e
+  logística; 7 Brasil-Colômbia e latinidade; 8 Artistas brasileiros
+  e participações; 9 Empoderamento feminino e ativismo; 10
+  Polêmicas e custos públicos; 11 Tragédia da montagem (Gabriel
+  Firmino); 12 Fandom e bastidores.
+- *Task B — Síntese narrativa:* `Show da Shakira/consolidacao-temas.md`
+  agora 1.033 linhas, com seções por categoria preenchidas em
+  duas camadas: (1) o que a cobertura disse, e (2) **olhar
+  truth-teller** crítico — atendendo ao pedido de Otávio de que
+  os documentos "permitam apresentação clara dos eixos reais",
+  identificando perspectivas omitidas, conflitos não-nomeados e
+  distribuição assimétrica de impactos.
+
+**Etapa 3 (concluída):** `Show da Shakira/relatorios/` com 13
+arquivos, 2.920 linhas total:
+- 12 relatórios por categoria (177-255 linhas cada), seguindo a
+  estrutura: cabeçalho → panorama → dados quantitativos → corpo
+  narrativo (elogios/críticas/temporal) → trechos representativos
+  com IDs `a-XXX` → seção truth-teller obrigatória → conclusão.
+- 1 `relatorio-geral.md` (321 linhas) com inter-relações entre
+  categorias, padrões por classe de veículo, linha editorial
+  crítica consolidada, e síntese final dos "eixos reais".
+
+**Achados editoriais centrais que ficaram registrados:**
+
+1. O agregado positivo (113 muito-pos + 58 pos vs. 6+6 neg) é
+   estatisticamente real *e* politicamente parcial — o corpus é
+   majoritariamente produzido por veículos com relação contratual
+   ou parceria midiática com agentes do show.
+2. Silêncios estruturais relevantes: privacidade no reconhecimento
+   facial (apenas 2 blocos), modelo de subcontratação Cenoart
+   (nomeado mas não problematizado), conflito de interesses Globo /
+   Bonus Track / prefeitura, engenharia do discurso "R$ 15 mi
+   custo × R$ 776 mi retorno" (mistura caixa público com PIB
+   privado), distribuição interna dos R$ 776 mi.
+3. A morte de Gabriel Firmino na montagem (categoria 11) é o
+   ponto mais sombrio do corpus e deveria ter puxado reavaliação
+   do modelo "Todo Mundo no Rio" — virou nota lateral.
+4. BBC foi a única auditoria metodológica do número de público;
+   imprensa nacional não replicou.
+5. Veja Rio + imprensa internacional sustentaram as polêmicas
+   reais; veículos do ecossistema Globo cobriram em alinhamento
+   ao framing oficial.
+
+**Modelo durante a sessão:** Sonnet 4.6 (anotado em
+`analise-individual.md` Status quando Otávio fez o switch de Opus
+para Sonnet em ~commit `15e80f8`).
+
+**Trilha de commits:** ~30 commits de Etapa 1 + 1 de Task A
+(`5f2661d`) + 1 de Task B (`ee726ad`) + 13 de Etapa 3 (`97e2591`
+até `42b49ab`). Todos em master, pushados.
+
+**O que fica para próxima sessão:**
+- Otávio revisar todos os deliverables.
+- Eventual emenda do plano de longo prazo
+  (`workflow-classificacao-shakira.md`) para refletir que o path
+  final ficou em `Show da Shakira/relatorios/`, não
+  `Análise Show Shakira/relatorios/`.
+- Eventual amplificação ou correção das categorias se Otávio
+  identificar ângulo crítico não considerado.
+
+Sprint Penelope encerrado.
