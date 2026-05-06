@@ -626,13 +626,18 @@ def _collect_globo_internal_search(
     request_timeout: int,
     date_from: str,
     date_to: str,
+    start_offset: int = 0,
+    max_pages: int | None = None,
 ) -> list[CandidateArticle]:
     candidates: list[CandidateArticle] = []
     seen_urls: set[str] = set()
     start = _parse_window_boundary(date_from, end_of_day=False)
-    offset = 0
+    offset = max(0, int(start_offset or 0))
     page_size = max(1, int(adapter.page_size or 10))
+    pages_seen = 0
     while len(candidates) < max(1, limit_per_adapter):
+        if max_pages is not None and pages_seen >= max(1, int(max_pages)):
+            break
         tenant_id = adapter.host.split(".")[0]  # oglobo.globo.com → oglobo, g1.globo.com → g1
         origin = f"https://{adapter.host}"
         try:
@@ -659,6 +664,7 @@ def _collect_globo_internal_search(
         hits = (((first.get("result") or {}).get("hits") or {}).get("hits")) or []
         if not hits:
             break
+        pages_seen += 1
         page_candidates: list[CandidateArticle] = []
         older_hits = 0
         dated_hits = 0
@@ -875,6 +881,7 @@ def collect_internal_site_search(
     date_to: str = "",
     limit_per_adapter: int = 60,
     max_pages_per_adapter: int = 6,
+    start_page: int = 1,
     request_timeout: int = 10,
 ) -> list[CandidateArticle]:
     query_list = [str(item or "").strip() for item in (queries or FLAVIO_INTERNAL_SEARCH_QUERIES) if str(item or "").strip()]
@@ -882,10 +889,14 @@ def collect_internal_site_search(
     collected: list[CandidateArticle] = []
     global_seen_urls: set[str] = set()
     start = _parse_window_boundary(date_from, end_of_day=False)
+    page_start = max(1, int(start_page or 1))
+    page_count = max(1, int(max_pages_per_adapter or 1))
+    page_end = page_start + page_count - 1
 
     for adapter in adapter_list:
         adapter_candidates: list[CandidateArticle] = []
         adapter_seen_urls: set[str] = set()
+        page_size = max(1, int(adapter.page_size or 10))
         for query in query_list:
             if len(adapter_candidates) >= max(1, limit_per_adapter):
                 break
@@ -897,13 +908,15 @@ def collect_internal_site_search(
                     request_timeout=request_timeout,
                     date_from=date_from,
                     date_to=date_to,
+                    start_offset=(page_start - 1) * page_size,
+                    max_pages=page_count,
                 )
             else:
                 batch = []
                 next_url = adapter.search_url_template.format(query=quote_plus(query))
                 pages_seen: set[str] = set()
                 current_page = 0
-                while next_url and current_page < max(1, max_pages_per_adapter):
+                while next_url and current_page < page_end:
                     page_url = _canonicalize_search_page_url(next_url)
                     if page_url in pages_seen:
                         break
@@ -914,6 +927,9 @@ def collect_internal_site_search(
                     except Exception:
                         break
                     page_candidates, discovered_next = _extract_internal_search_results(adapter, html_page=html_page, search_url=page_url)
+                    if current_page < page_start:
+                        next_url = discovered_next
+                        continue
                     older_hits = 0
                     dated_hits = 0
                     for item in page_candidates:
@@ -928,6 +944,8 @@ def collect_internal_site_search(
                     if len(adapter_candidates) + len(batch) >= max(1, limit_per_adapter):
                         break
                     if dated_hits and older_hits == dated_hits:
+                        break
+                    if current_page >= page_end:
                         break
                     next_url = discovered_next
             for item in batch:

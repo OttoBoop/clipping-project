@@ -74,6 +74,8 @@ INCREMENTAL_EXPORT_MIN_SECONDS = 90
 WORDPRESS_SOURCE_VERSION = "v2"
 WORDPRESS_PAGE_SIZE = 25
 WORDPRESS_MAX_PAGES = 240
+INTERNAL_SEARCH_SOURCE_VERSION = "v2"
+INTERNAL_SEARCH_MAX_PAGES = 60
 VEJARIO_MAX_PAGES = 50
 CAMARA_MAX_PAGES = 100
 SECRET_ENV_MARKERS = ("PASSWORD", "SECRET", "TOKEN", "API_KEY", "SERVICE_KEY", "DATABASE_URL", "DEPLOY_HOOK")
@@ -729,12 +731,19 @@ def build_source_units(spec: dict[str, Any], target_key: str) -> list[SourceUnit
         queries = build_internal_search_queries_for_target(target)
         for adapter_idx, adapter in enumerate(FLAVIO_INTERNAL_SEARCH_TARGETS):
             for query_idx, query in enumerate(queries):
+                page_size = max(1, int(getattr(adapter, "page_size", 10) or 10))
                 units.append(
                     SourceUnit(
-                        source_key=f"internal_search:{adapter_idx}:{query_idx}",
+                        source_key=f"internal_search_{INTERNAL_SEARCH_SOURCE_VERSION}:{adapter_idx}:{query_idx}",
                         source_name=str(adapter.source_name),
                         source_type="internal_search",
-                        cursor={"adapter_index": adapter_idx, "query_index": query_idx, "query": query},
+                        cursor={
+                            "adapter_index": adapter_idx,
+                            "query_index": query_idx,
+                            "query": query,
+                            "page": 1,
+                            "page_size": page_size,
+                        },
                         order=order,
                     )
                 )
@@ -1007,16 +1016,23 @@ def collect_source_run_candidates(
 
     if source_type == "internal_search":
         adapter = FLAVIO_INTERNAL_SEARCH_TARGETS[max(0, int(cursor.get("adapter_index") or 0))]
+        page = max(1, int(cursor.get("page") or 1))
+        page_size = max(1, int(getattr(adapter, "page_size", 10) or 10))
         candidates = collect_internal_site_search(
             queries=[str(cursor.get("query") or "")],
             adapters=[adapter],
             date_from=date_from,
             date_to=date_to,
-            limit_per_adapter=max_candidates,
-            max_pages_per_adapter=20,
+            limit_per_adapter=page_size,
+            max_pages_per_adapter=1,
+            start_page=page,
             request_timeout=request_timeout,
         )
-        return candidates, cursor, True
+        complete = len(candidates) < page_size or page >= INTERNAL_SEARCH_MAX_PAGES
+        next_cursor = dict(cursor)
+        next_cursor["page"] = page + 1 if not complete else page
+        next_cursor["page_size"] = page_size
+        return candidates, next_cursor, complete
 
     if source_type == "sitemap_daily":
         source = SITEMAP_DAILY_SOURCES[max(0, int(cursor.get("source_index") or 0))]

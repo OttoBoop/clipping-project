@@ -135,6 +135,11 @@ Still incomplete:
   durable WordPress source key is now versioned as `wordpress_api_v2`, forcing a
   clean WordPress restart from page 1 with 25-item pages. Reprocessing already
   saved items is acceptable; skipping unseen offsets is not.
+- The next long-source bottleneck surfaced in `O Globo Internal Search`: one
+  source-run was trying to process hundreds of candidates before checkpointing.
+  Current code pass versions internal search as `internal_search_v2` and runs
+  it one search page at a time, with cursor page/page_size, so restarts do not
+  send it back through hundreds of already-seen candidates.
 
 ## Loop Log
 

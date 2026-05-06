@@ -209,6 +209,11 @@ source-runs WordPress como `wordpress_api_v2` para recomeçar essa família de
 fontes do início com a paginação nova. Isso aceita retrabalho idempotente e
 evita pular artigos.
 
+Depois do deploy `a43bcc4`, WordPress v2 ficou completo e o job avançou para
+`O Globo Internal Search`, expondo outro chunk grande: centenas de candidatos
+num único source-run. Estou aplicando o mesmo padrão para internal search:
+`internal_search_v2`, cursor por página e uma página por checkpoint.
+
 ### 2026-05-06 — Penelope+Iris — persona Penelope criada e loop Show Shakira iniciado
 
 Otávio pediu, antes de sair pro trabalho, um run longo, autônomo, sem supervisão para

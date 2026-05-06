@@ -929,6 +929,56 @@ def test_durable_wordpress_source_runs_use_small_api_pages(monkeypatch, tmp_path
     assert observed["max_pages"] == 1
 
 
+def test_durable_internal_search_units_are_versioned_and_paged(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    units = jobs.build_source_units({"collector": "internal_search"}, "shakira")
+
+    assert units
+    assert all(unit.source_key.startswith("internal_search_v2:") for unit in units)
+    assert {unit.cursor["query"] for unit in units} == {"Shakira"}
+    assert all(unit.cursor["page"] == 1 for unit in units)
+    assert all(unit.cursor["page_size"] >= 1 for unit in units)
+
+
+def test_durable_internal_search_source_runs_use_one_page(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "preset": "custom",
+        "collector": "internal_search",
+        "target_keys": ["shakira"],
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "export": True,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+        "durable": True,
+    }
+    adapter = jobs.FLAVIO_INTERNAL_SEARCH_TARGETS[0]
+    observed: dict[str, object] = {}
+
+    def fake_collect_internal_site_search(**kwargs):
+        observed.update(kwargs)
+        return [object()] * int(adapter.page_size or 10)
+
+    monkeypatch.setattr(jobs, "collect_internal_site_search", fake_collect_internal_site_search)
+
+    candidates, next_cursor, complete = jobs.collect_source_run_candidates(
+        spec,
+        {"source_type": "internal_search", "source_name": adapter.source_name},
+        {"adapter_index": 0, "query_index": 0, "query": "Shakira", "page": 4},
+    )
+
+    assert len(candidates) == int(adapter.page_size or 10)
+    assert complete is False
+    assert next_cursor["page"] == 5
+    assert next_cursor["page_size"] == int(adapter.page_size or 10)
+    assert observed["queries"] == ["Shakira"]
+    assert observed["adapters"] == [adapter]
+    assert observed["limit_per_adapter"] == int(adapter.page_size or 10)
+    assert observed["max_pages_per_adapter"] == 1
+    assert observed["start_page"] == 4
+
+
 def test_durable_runner_processes_source_units_and_exposes_coverage(monkeypatch, tmp_path):
     import threading
     from pipeline import ingest

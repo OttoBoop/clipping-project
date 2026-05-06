@@ -214,7 +214,7 @@ def healthz() -> dict[str, Any]:
         "storage": artifact_store.status(),
         "localWritesAllowed": local_writes_allowed(),
         "job": safe_current_status().get("status", "idle"),
-        "shakiraLoopVersion": "2026-05-06-durable-source-ledger-wp-v2",
+        "shakiraLoopVersion": "2026-05-06-durable-source-ledger-wp-internal-v2",
     }
 
 
