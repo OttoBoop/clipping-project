@@ -3699,6 +3699,158 @@ Comparativo de público: Madonna 2024 (1,6 mi), Lady Gaga 2025 (2,1 mi), Shakira
 
 ---
 
+## a-106 — Análise: Shakira passa por Copacabana como rainha da simpatia, mas com previsibilidade
+
+**Fonte:** O Globo  **Data:** 03/05/2026 05:03 UTC
+
+**Crítica jornalística mista.** Shakira foi simpática, conectada, declarou amor ao Brasil — mas o show foi previsível, sem grandes inovações. Tom equilibrado-neutro com nuance crítica.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Carisma e simpatia de Shakira | Muito positivo. | muito positivo |
+| Previsibilidade do roteiro | Crítica. | negativo |
+| Conexão com o público | Positiva. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-126 — Acertos, falhas e bastidores do megashow
+
+**Fonte:** O Globo  **Data:** 03/05/2026 05:16 UTC
+
+Reportagem de bastidores: setlist forte, presença brasileira, mas atraso significativo, problemas iniciais de som. Crítica equilibrada.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Acertos: setlist e brasileiros | Muito positivo. | muito positivo |
+| Falhas: atraso, som inicial | Crítica. | negativo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-162 — Com atraso de 80 minutos, audiência da Globo é prejudicada (UOL)
+
+**Fonte:** UOL  **Data:** 03/05/2026 08:40 UTC
+
+**Crítica forte ao atraso.** UOL reporta atraso preciso de **80 minutos**. A audiência da Globo cai porque parte do público dormiu antes do show começar. Tom muito negativo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Atraso de 80 minutos | Crítica forte. | muito negativo |
+| Audiência prejudicada na Globo | Impacto comercial negativo. | muito negativo |
+| Imagem da artista | Erodida. | negativo |
+
+**Sentimento geral do artigo:** muito negativo
+
+---
+
+## a-121 — Bastidores dos famosos: Ana Paula Renault, vipões apressados e cansaço
+
+**Fonte:** O Globo  **Data:** 03/05/2026 09:30 UTC
+
+Cobertura de bastidor entre famosos: cansaço por causa do atraso, momentos com Ana Paula Renault (BBB), vipões. Tom misto neutro com tom irônico do atraso.
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-85 — Em noite histórica, Shakira reúne 2 milhões em Copacabana (CBN)
+
+**Fonte:** CBN  **Data:** 03/05/2026 09:42 UTC
+
+Cobertura factual CBN: 2 mi, noite histórica. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-92 — Sob a lua de Copacabana, Shakira reúne sua alcateia em noite histórica
+
+**Fonte:** O Globo  **Data:** 03/05/2026 10:10 UTC
+
+Cobertura literária do show, focando na conexão Shakira × fãs. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-89 — Impacto na economia e no turismo da cidade
+
+**Fonte:** O Globo  **Data:** 03/05/2026 10:28 UTC
+
+Recap econômico pós-show. Reforça narrativa de R$ 800 mi. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-118 / a-160 / a-197 — 'Copacabana coroou Shakira como rainha do pop latino' (imprensa internacional)
+
+**Fontes:** O Globo (a-118), Gshow (a-160), G1 (a-197)
+**Datas:** 03/05/2026 11:10 / 11:25 / 12:54 UTC
+
+Repercussão internacional pós-show: BBC, El País, NYT, Reuters, La Nación, Clarín, AFP, AP — todos coroam Shakira como "rainha do pop latino". Soft power internacional consolidado. Tom muito positivo. Bloco único cobre os 3 IDs.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Posicionamento internacional Shakira | "Coroamento" oficial. | muito positivo |
+| Vitrine global do Rio | Soft power. | muito positivo |
+| Mídia internacional positiva | Reforço de prestígio. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-87 — Como foi o show que reuniu 2 milhões (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 03/05/2026 11:38 UTC
+
+Recap completo CNN. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-200 / a-138 — Shakira reúne 2 milhões no maior show da carreira
+
+**Fontes:** O Globo (a-200), Exame (a-138)  **Data:** 03/05/2026 12:25 UTC
+
+Cobertura factual final: 2 mi, "maior show da carreira" segundo Shakira. Tom muito positivo. Bloco único.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-199 — Comlurb remove 362 toneladas de lixo após o show
+
+**Fonte:** Riotur / G1  **Data:** 03/05/2026 12:41 UTC
+
+**Notícia ambiental significativa.** 362 toneladas de lixo removidas — comparável a outros megashows. Tom factual; nenhuma crítica explícita ao volume, mas é número expressivo (equivalente a dia de réveillon).
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Volume de lixo (362 t) | Tom factual; sem crítica explícita. | neutro |
+| Eficiência da Comlurb | Resposta institucional positiva. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-198 — Reconhecimento facial ajuda a prender foragido em Copacabana
+
+**Fonte:** G1  **Data:** 03/05/2026 12:48 UTC
+
+**Notícia de segurança positiva.** O sistema de reconhecimento facial no show identificou e prendeu um foragido da justiça. Justifica retroativamente o investimento em tecnologia (citado em a-207). Tom positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Reconhecimento facial: prisão de foragido | Validação tecnológica positiva. | muito positivo |
+| Privacidade vs. segurança pública | Não problematizado. | neutro |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
