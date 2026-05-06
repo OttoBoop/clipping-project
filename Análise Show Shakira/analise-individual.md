@@ -535,6 +535,180 @@ Tom positivo, factual, com contexto de continuidade (Madonna → Lady Gaga
 
 ---
 
+## a-224 — Shakira no Rio: a 18 dias do show em Copacabana, saiba o que a colombiana anda fazendo
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 15/04/2026 07:01 UTC
+**URL:** https://oglobo.globo.com/cultura/musica/noticia/2026/04/shakira-no-rio-a-18-dias-do-show-em-copacabana-saiba-o-que-a-colombiana-anda-fazendo.ghtml
+
+### Resumo Narrativo
+
+Recap da semana de Shakira a 18 dias do show: vídeo provando comidas
+brasileiras, parceria "Choka Choka" com Anitta lançada em 9 de abril, e o
+contexto da turnê "Las mujeres ya no lloran" (iniciada no Rio em fevereiro
+de 2025). A turnê entrou para o Guinness como a de maior bilheteria de um
+artista latino na história — US$ 421,6 milhões, 3,3 milhões de ingressos
+em 86 shows. Após Copacabana (2 de maio), Shakira segue para EUA (junho/
+julho), residência em Madri (11 datas em outubro), e shows no Catar,
+Emirados Árabes e nas pirâmides de Gizé em novembro. Tom de "fenômeno
+global em ascensão"; sem crítica.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Recap das movimentações pré-show de Shakira | Tratado como expectativa positiva. | positivo |
+| Recordes da turnê (Guinness, US$ 421,6 mi) | Reforça posicionamento de classe mundial. | muito positivo |
+| Calendário internacional pós-Copacabana | Apresentado como prestígio para o show carioca. | positivo |
+| Conexão emocional com público brasileiro (vídeo das comidas) | Engajamento afetivo. | muito positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-249 — Leque 'shakidólar', bandeiras e camisetas: comércio na Saara lucra com expectativa pelo show de Shakira
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 15/04/2026 07:30 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/leque-shakidolar-bandeiras-e-camisetas-comercio-na-saara-lucra-com-expectativa-pelo-show-de-shakira-em-copacabana.ghtml
+
+### Resumo Narrativo
+
+Reportagem multifacetada sobre o efeito-Shakira no comércio popular e na
+infraestrutura. **Saara**: a loja Lix vende o "shakidólar" (leque com
+rosto de Shakira em uma nota de US$ 100, R$ 79,90) — 800 das primeiras
+mil unidades vendidas, principalmente online; coleção também tem copos
+(R$ 24,90), camisetas (R$ 95), pochetes (R$ 64,90) e bandeiras (R$
+129,90). **Praia/Copacabana**: 4 mil pessoas trabalham nos preparativos;
+o palco será o maior dos três (1.345 m², passarela 25 m, 16 torres,
+telão de 500 m²); painel gigante de 74,5 m × 10 m no Túnel Engenheiro
+Coelho Cintra dá boas-vindas. Aulas de "Waka Waka" nos domingos 19 e 26
+em frente ao palco. **Quiosques**: Morena (em frente à Praça do Lido)
+cobra R$ 1.300/ingresso com bufê e bebida; Areia MPB e Nacho organizam
+"Waka & Fiesta" pelo mesmo valor. **Hospedagem**: Embratur registra ~8,5
+mil passagens internacionais (Argentina lidera com 3,5 mil, EUA com
+753). HotéisRio (presidente Alfredo Lopes) projeta ocupação acima de 70%
+na Zona Sul e 65% na cidade — abaixo dos 86,6% de Lady Gaga (público de
+2,1 milhões), em parte por preços de passagens 32% mais altos pela
+guerra no Oriente Médio e por Shakira já ter cantado no Engenhão em
+fevereiro de 2025. **Segurança**: estratégia ainda não divulgada, mas
+provavelmente similar à de Madonna/Lady Gaga (bloqueios, revistas,
+detectores).
+
+A reportagem é positiva no comércio e na expectativa cultural, mas
+introduz a primeira nota cautelar dos hotéis (ocupação possivelmente
+abaixo do recorde de Lady Gaga) — um contraponto sutil ao discurso de
+boom universal.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Comércio popular da Saara lucrando ("shakidólar", camisetas, leques) | Caso celebrado, com números. | muito positivo |
+| Magnitude da operação (4 mil trabalhadores, palco de 1.345 m²) | Apresentada como espetáculo de classe mundial. | muito positivo |
+| Expectativa de ocupação hoteleira moderada (70% Zona Sul) | Contraponto cautelar; ressalva ao "Shakira-effect" universal. | neutro |
+| Custo das passagens aéreas (+32% por guerra no Oriente Médio) | Citado como freio à demanda. | negativo |
+| Quiosques de Copacabana com jantares premium (R$ 1.300) | Tratados como alta procura. | positivo |
+| Marketing urbano (painel gigante no Túnel) | Reforça hype. | positivo |
+| Aulas de "Waka Waka" para fãs nos domingos pré-show | Engajamento cultural-comunitário. | muito positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-50 — Secretário de Ordem Pública vai à Câmara do Rio discutir políticas para ambulantes após ação violenta em Ipanema
+
+**Fonte:** Tempo Real (tempo-real.com)
+**Data:** 15/04/2026 18:10 UTC
+**URL:** https://tempo-real.com/post/secretario-de-ordem-publica-vai-a-camara-do-rio-discutir-politicas-para-ambulantes-apos-acao-violenta-em-ipanema/
+
+### Resumo Narrativo
+
+Artigo fora de escopo — não trata do show da Shakira. Reportagem sobre
+abordagem violenta da Seop contra a artesã Vitória Aguiar em Ipanema
+(sábado 11/04), reunião extraordinária na Câmara do Rio em 30/04 para
+discutir políticas para ambulantes, e afastamento dos agentes envolvidos.
+Mencionados: Marcus Belchior (Seop), Andrea Riechert Senko (Fazenda),
+prefeito Eduardo Cavaliere, vereadores Rosa Fernandes (PSD), Welington
+Dias (PDT) e Flávio Valle (PSD). A única conexão Shakira é via sidebar
+"Você pode gostar" — link para "Big Brother em Copacabana: governo do
+estado contrata IA e reconhecimento facial para o show da Shakira por R$
+15,9 milhões". Capturado pelo pipeline via tag de Flávio Valle, igual a
+`a-51`.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| (Tema Shakira) | Aparece apenas em sidebar de artigos relacionados. | n/a |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**: trata da ação da Seop contra ambulantes em Ipanema; menção a Shakira é incidental em sidebar. Bloco mantido por integridade do protocolo.
+
+---
+
+## a-248 — Show da Shakira em Copacabana: diárias no Rio podem até quintuplicar
+
+**Fonte:** O Globo / Coluna Lauro Jardim (oglobo.globo.com)
+**Data:** 15/04/2026 18:22 UTC
+**URL:** https://oglobo.globo.com/blogs/lauro-jardim/post/2026/04/show-da-shakira-em-copacabana-diarias-no-rio-podem-ate-quintuplicar.ghtml
+
+### Resumo Narrativo
+
+Nota curta da coluna Lauro Jardim com estimativa do CEO do Trade
+Imobiliário, Ramiro Delgado: o show pode fazer diárias quintuplicarem
+dependendo da localização e tipo de imóvel; valorização média de 60%, e
+ocupação acima de 90% em Copacabana, Ipanema e Barra da Tijuca. Estimativa
+baseada em dados históricos, monitoramento em tempo real e inteligência
+de campo. Tom puramente comercial-imobiliário; nenhum contraponto sobre
+acessibilidade ou pressão sobre moradores.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Valorização de aluguel por temporada (até 5×) | Apresentada como benefício; ângulo de mercado imobiliário. | muito positivo |
+| Ocupação >90% em Copacabana/Ipanema/Barra | Reforça boom. | muito positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-247 — A pouco mais de 2 semanas de show na Praia de Copacabana, Shakira lança vídeo de 'Algo Tú'
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 15/04/2026 21:59 UTC
+**URL:** https://oglobo.globo.com/cultura/musica/noticia/2026/04/a-pouco-mais-de-2-semanas-de-show-na-praia-de-copacabana-shakira-lanca-clipe-de-algo-tu.ghtml
+
+### Resumo Narrativo
+
+Anúncio de lançamento do clipe "Algo Tú", parceria com Beéle, marcado
+para 16 de abril às 13h após cerca de seis meses de produção. Matéria
+posiciona o lançamento como movimento de marketing pré-show: aumenta
+expectativa do setlist em Copacabana e alimenta especulação de
+participação de Anitta. Tom positivo, factual.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Lançamento de clipe "Algo Tú" (parceria com Beéle) | Movimento de marketing pré-show; positivo. | positivo |
+| Expectativa de setlist e participações especiais (Anitta) | Especulação dos fãs; positiva. | positivo |
+| Estratégia de parcerias musicais recentes de Shakira | Apresentada como acerto. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
