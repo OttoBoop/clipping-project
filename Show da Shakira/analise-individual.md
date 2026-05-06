@@ -3520,6 +3520,185 @@ Cobertura de chegadas de famosos no Copacabana Palace. **Sentimento geral do art
 
 ---
 
+## a-122 / a-148 / a-137 / a-141 — (cobertos no bloco coletivo a-123)
+
+Recap horário/transmissão. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-203 — Seis equipes a mais de policiamento que Lady Gaga
+
+**Fonte:** O Globo  **Data:** 03/05/2026 00:35 UTC
+
+Detalhamento: 6 equipes adicionais comparado ao show de Lady Gaga. Tom positivo-segurança.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-202 — (= a-146) Transmissão sem delay
+
+Variação editorial de `a-146`. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-157 — Shakira e os lobos: relação da cantora com o animal e apelido
+
+**Fonte:** Estadão  **Data:** 03/05/2026 01:16 UTC
+
+Reportagem cultural sobre o simbolismo "Loba" (já tratado em a-229). Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-101 — Shakira mistura latinidade e estrelas brasileiras, faz Copacabana dançar
+
+**Fonte:** O Globo  **Data:** 03/05/2026 01:44 UTC
+
+**Cobertura editorial pós-show.** Shakira incorporou Anitta (Choka Choka), Caetano Veloso, Maria Bethânia (Mama África) e Ivete Sangalo (País Tropical) no show. Encerramento monumental. Tom muito positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Latinidade × brasileirismo no setlist | Soft power supremo. | muito positivo |
+| Convidados brasileiros (Anitta, Bethânia, Caetano, Ivete) | Diálogo cultural histórico. | muito positivo |
+| Encerramento do show | Climax positivo. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-120 / a-201 — Shakira atrasa show; público vaia
+
+**Fontes:** Estadão (a-120) / O Globo (a-201)  **Data:** 03/05/2026 01:50 UTC
+
+**Notícia negativa significativa.** Shakira atrasou mais que Madonna e Lady Gaga (~1h+ de atraso). Público reagiu com vaias. a-201 cita "problema pessoal" como justificativa não-detalhada. Tom factual mas crítico. Bloco único cobre os dois IDs.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Atraso significativo (1h+) | Crítica explícita. | negativo |
+| Vaias do público | Reação negativa documentada. | muito negativo |
+| Comparação desfavorável a Madonna/Lady Gaga | Posicionamento crítico. | negativo |
+| "Problema pessoal" como justificativa | Sem transparência detalhada. | neutro |
+
+**Sentimento geral do artigo:** negativo
+
+---
+
+## a-100 — Após atraso, Shakira surpreende com saraivada de beats e declaração de amor ao Brasil
+
+**Fonte:** O Globo  **Data:** 03/05/2026 02:24 UTC
+
+**Recuperação do show.** Após o atraso, Shakira entrou com energia, fez declaração de amor ao Brasil em português, abriu setlist forte. Tom muito positivo. Compensa parcialmente o aspecto negativo do atraso.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Recuperação após atraso | Profissionalismo positivo. | positivo |
+| Declaração de amor ao Brasil | Engajamento afetivo. | muito positivo |
+| Energia da abertura | Compensação positiva. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-111 — Fotos do show histórico (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 03/05/2026 02:38 UTC
+
+Galeria fotográfica. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-168 — Looks usados por Shakira em Copacabana (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 03/05/2026 02:50 UTC
+
+Cobertura de moda: looks Shakira no show, incluindo figurinos do estilista catarinense Dario Mittmann (referência a a-269/268). Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-113 / a-170 — 2 milhões em Copacabana, diz Prefeitura/Riotur
+
+**Fontes:** O Globo (a-113), Gshow (a-170)  **Data:** 03/05/2026 03:28 / 03:49 UTC
+
+Confirmação oficial: 2 milhões de pessoas (não os 2,5 mi anunciados em expectativa). Riotur confirma. Tom positivo, embora o número seja **menor que o de Lady Gaga (2,1 mi)**. Bloco único cobre os dois IDs.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Público oficial 2 milhões | Tom positivo, mas abaixo da expectativa de 2,5 mi. | positivo |
+| Comparação com Lady Gaga (2,1 mi) | Shakira ficou ligeiramente abaixo. | neutro |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-134 — Sai do chão, Copacabana! Shakira ao som do TodoMundoNoRio
+
+**Fonte:** redes oficiais @TodoMundoNoRio  **Data:** 03/05/2026 04:02 UTC
+
+Comunicado oficial em redes sociais celebrando o show. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-238 — É ano de Copa! Shakira coloca Copa pra dançar com Waka Waka
+
+**Fonte:** redes oficiais  **Data:** 03/05/2026 04:07 UTC
+
+Post comemorativo do hit "Waka Waka" no show, conectando à Copa do Mundo de 2026. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-179 — Lobo gigante marca final da performance
+
+**Fonte:** Gshow  **Data:** 03/05/2026 04:12 UTC
+
+Cenografia final: lobo gigante (figura "Loba") encerra o show. Detalhe visual marcante. Tom muito positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Cenografia final espetacular | Climax visual. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-140 — Crítica: melhor e pior do show de Shakira em Copacabana
+
+**Fonte:** Gshow  **Data:** 03/05/2026 04:19 UTC
+
+**Crítica jornalística mista.** Melhor: setlist robusto, presenças brasileiras (Bethânia, Caetano, Anitta, Ivete), recuperação após atraso, climax com "Loba" gigante. Pior: atraso de >1h, vaias, alguns problemas técnicos no início. Tom equilibrado, neutro-positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Setlist e convidados | Muito positivo. | muito positivo |
+| Atraso e vaias | Crítica explícita. | negativo |
+| Problemas técnicos no início | Mencionados sem detalhamento. | negativo |
+| Cenografia "Loba" | Muito positivo. | muito positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-110 — Shakira, Madonna ou Lady Gaga: qual teve mais público?
+
+**Fonte:** Estadão  **Data:** 03/05/2026 05:03 UTC
+
+Comparativo de público: Madonna 2024 (1,6 mi), Lady Gaga 2025 (2,1 mi), Shakira 2026 (2 mi). **Shakira ficou em segundo lugar entre as três**, abaixo de Lady Gaga, acima de Madonna. Tom factual; não dramatiza.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Posicionamento Shakira (2º entre 3) | Tom factual; menor que expectativa. | neutro |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
