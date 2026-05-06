@@ -3851,6 +3851,188 @@ Cobertura factual final: 2 mi, "maior show da carreira" segundo Shakira. Tom mui
 
 ---
 
+## a-148 / a-137 / a-141 / a-201 / a-170 / a-160 / a-138 / a-197 — (cobertos em blocos coletivos anteriores)
+
+Todos cobertos em compound headings anteriores. **Sentimento geral do artigo:** vide blocos referenciados.
+
+---
+
+## a-177 — Segure firme: quanto Shakira cobra por show (TNH1)
+
+**Fonte:** TNH1  **Data:** 03/05/2026 13:34 UTC
+
+Cachê estimado por show: US$ 2-3 mi. Tom positivo (curiosidade financeira).
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-196 — 400 atendimentos médicos no show; 60 transferidos
+
+**Fonte:** G1  **Data:** 03/05/2026 13:35 UTC
+
+Balanço médico: 400 atendimentos (calor, desidratação), 60+ transferências. Tom factual; calor extremo é destaque.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Atendimentos médicos (400) | Volume significativo. | neutro |
+| Calor / desidratação | Risco implícito. | negativo |
+| Eficiência dos postos | Resposta adequada. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-195 — Ação retira cercadinhos, apreende sacos de areia, prende vendedor de ingressos VIP
+
+**Fonte:** G1  **Data:** 03/05/2026 15:14 UTC
+
+Operação Tatuí em ação: cercadinhos removidos, areia apreendida (eram usados para guardar lugar), 1 preso por vender área VIP irregular. Tom positivo-segurança.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-147 — Hit ou flop? Show divide opinião nas redes sociais
+
+**Fonte:** O Globo  **Data:** 03/05/2026 15:21 UTC
+
+**Crítica polarizada.** Cobertura de reações nas redes: alguns elogiam, outros criticam atraso/previsibilidade. "Flop" é palavra usada por uma facção. Tom muito negativo no agregado da polarização.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Polarização nas redes | Reflete divisão. | negativo |
+| Críticas ao atraso/previsibilidade | Negativas. | negativo |
+| Defensores da artista | Positivos. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-71 — Como foi antes do 'Eu te amo Brasil' e o diabo no quadril (vídeo)
+
+**Fonte:** Gshow  **Data:** 03/05/2026 16:00 UTC
+
+Cobertura tematizada: antes do show, momentos com famosos, Shakira dançando "diabo no quadril". Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-158 — Como assistir às reprises do show
+
+**Fonte:** Gshow  **Data:** 03/05/2026 16:17 UTC
+
+Reprises na Globo, Multishow e Globoplay. Tom positivo-utilidade.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-194 — Cedae distribui 30 mil litros de água
+
+**Fonte:** G1  **Data:** 03/05/2026 17:30 UTC
+
+Cedae distribuiu 30 mil litros de água gratuita ao público (calor extremo). Tom muito positivo, resposta institucional.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Distribuição gratuita de água | Resposta institucional positiva. | muito positivo |
+| Cuidado com calor extremo | Preventiva. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-193 — 6 presos, quase 200 objetos apreendidos: balanço PM
+
+**Fonte:** G1  **Data:** 03/05/2026 17:40 UTC
+
+Balanço da PM: 6 presos (incluindo o foragido pelo reconhecimento facial), 200+ objetos apreendidos. Tom positivo-segurança.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-192 — Paes troca show por festival de jazz em Búzios
+
+**Fonte:** O Globo  **Data:** 03/05/2026 17:48 UTC
+
+**Notícia política curiosa.** Prefeito Eduardo Paes (que financiou o show com R$15 mi) preferiu ir a um festival de jazz em Búzios em vez do show. Cavaliere (vice) ficou na cobertura. Tom misto, com nuance crítica implícita.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Ausência de Paes no evento | Neutro com tom levemente crítico. | neutro |
+| Cavaliere assume cobertura | Continuidade institucional. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-191 — Prefeitura distribui 500+ pulseiras de identificação
+
+**Fonte:** G1  **Data:** 03/05/2026 17:56 UTC
+
+500+ pulseiras de identificação para crianças e PCDs em risco de se perder na multidão. Tom muito positivo-utilidade.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-190 — Shakira faz 4º maior show gratuito da história do Rio
+
+**Fonte:** O Globo  **Data:** 03/05/2026 18:00 UTC
+
+**Posicionamento histórico.** Com 2 mi, Shakira ficou em **4º** lugar entre maiores shows gratuitos do Rio. Lady Gaga (2,1 mi), Madonna (1,6 mi)... aguardar lista. Tom factual-positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Posicionamento (4º maior) | Tom positivo-factual. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-189 — Prefeito provoca fãs sobre atração de 2027
+
+**Fonte:** O Globo  **Data:** 03/05/2026 18:03 UTC
+
+Cavaliere (em exercício) provoca expectativa para 2027. Continuidade plurianual do "Todo Mundo no Rio". Tom positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-70 — Fãs de carteirinha curtem show da área VIP
+
+**Fonte:** G1  **Data:** 03/05/2026 18:28 UTC
+
+Cobertura dos fãs autênticos (não os "vipões" de patrocínio). Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-188 — MetrôRio: 165 mil passageiros em Copacabana
+
+**Fonte:** G1  **Data:** 03/05/2026 18:39 UTC
+
+165 mil passageiros nas estações de Copacabana. Operação 24h funcionou. Tom positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-69 — Copacabana com Shakira projeta o Rio na imprensa internacional
+
+**Fonte:** O Globo  **Data:** 03/05/2026 19:16 UTC
+
+Recap de repercussão internacional positiva. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
