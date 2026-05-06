@@ -2892,6 +2892,147 @@ Comunicado oficial-celebratório anunciando a chegada de Shakira. Tom muito posi
 
 ---
 
+## a-59 — (= a-24) Câmara rejeita ambulantes patrimônio
+
+Re-publicação de `a-24`. **Sentimento geral do artigo:** N/A — fora de escopo.
+
+---
+
+## a-151 — Tudo que sabemos sobre o show (Gshow)
+
+**Fonte:** Gshow  **Data:** 01/05/2026 03:00 UTC
+
+Recap final Gshow. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-161 — Programação com 'after' é estratégia anti-'perrengue' na volta
+
+**Fonte:** O Globo  **Data:** 01/05/2026 07:02 UTC
+
+Reportagem sobre o ecossistema de afters no entorno (Pabllo Vittar Club Vittar, Waka & Fiesta etc.) como estratégia logística para fluir o público pós-show. Tom positivo.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-180 — Opções de pré e pós-show, pagos e gratuitos
+
+**Fonte:** O Globo  **Data:** 01/05/2026 08:00 UTC
+
+Lista completa de eventos paralelos: aulas de Waka Waka, Shakira Experience na Marina da Glória (R$ 40), Club Vittar, festas em quiosques. Tom positivo-utilidade.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-178 — Como chegar: transportes públicos
+
+**Fonte:** O Globo  **Data:** 01/05/2026 13:00 UTC
+
+Guia de transporte: metrô (24h durante o evento, pulseira de retorno), ônibus, táxi tabelado. Tom positivo-utilidade.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-125 / a-108 — Embaixada dos EUA alerta turistas americanos
+
+**Fontes:** CNN Brasil (a-125, a-108)  **Datas:** 01/05/2026 14:19 / 21:04 UTC
+
+**Notícia internacional sensível.** Embaixada dos EUA emite alerta a cidadãos americanos sobre o show, citando preocupações com aglomeração e segurança. Reportagem factual sobre comunicação consular. Bloco único cobre os dois IDs (mesma matéria).
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Alerta consular EUA | Tom factual; impressão neutra-negativa de segurança. | negativo |
+| Aglomeração como risco percebido | Reconhecido. | neutro |
+
+**Sentimento geral do artigo:** negativo
+
+---
+
+## a-230 — Onde assistir ao show na TV (recap)
+
+**Fonte:** G1  **Data:** 01/05/2026 15:52 UTC
+
+Recap de transmissão. Tom positivo.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-129 — Multidão se concentra em Copacabana para ensaio
+
+**Fonte:** CNN Brasil  **Data:** 01/05/2026 21:38 UTC
+
+Ensaio na véspera atrai multidão. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-142 — Shakira ensaia e se surpreende com público
+
+**Fonte:** O Globo  **Data:** 01/05/2026 22:27 UTC
+
+Shakira posta nas redes durante ensaio: "Isso tudo é pra mim?". Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-169 — Shakira ensaia com Maria Bethânia e Caetano Veloso
+
+**Fonte:** O Globo (oglobo.globo.com)  **Data:** 01/05/2026 23:31 UTC
+
+**Notícia cultural forte.** Shakira ensaia com Maria Bethânia e Caetano Veloso na praia de Copacabana para o show. Encontro entre ícones latinos. Tom muito positivo, soft power cultural.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Encontro Shakira × Bethânia/Caetano | Soft power supremo. | muito positivo |
+| Diálogo cultural Brasil × Colômbia | Reforço de latinidade. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-84 — As imagens do show em 'Lobacabana' (BBC)
+
+**Fonte:** BBC News Brasil  **Data:** 02/05/2026 00:00 UTC
+
+Cobertura visual da BBC com imagens. Mídia internacional. Tom positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-95 — Por que é improvável que 2 milhões tenham ido ao show (BBC)
+
+**Fonte:** BBC News Brasil  **Data:** 02/05/2026 00:00 UTC
+
+**Nota crítica importante.** Reportagem da BBC questiona o número oficial de 2,5 milhões com base em método de contagem por densidade de praia (estimativa real ~1,5–2 mi). Primeira matéria a contestar publicamente o número oficial.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Contestação do número oficial 2,5 mi | Crítica metodológica. | negativo |
+| Mídia internacional (BBC) levantando dúvida | Questão de credibilidade. | negativo |
+
+**Sentimento geral do artigo:** negativo
+
+---
+
+## a-171 / a-225 — Tudo que você precisa saber: setlist, transmissão, horário
+
+**Fontes:** G1 (a-171) / O Globo (a-225)  **Datas:** 02/05/2026 07:02 / 07:30 UTC
+
+Recap final do dia do show. Tom muito positivo. Bloco único cobre os dois IDs.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
