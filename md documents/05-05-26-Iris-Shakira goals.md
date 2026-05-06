@@ -108,6 +108,10 @@ Still incomplete:
   `Estadao` returned `404`. Band and Estadão have current replacement feeds;
   R7 has no working RSS/sitemap endpoint in the probes performed so far and is
   being treated as disabled until a real source URL is found.
+- A second RSS repair surfaced after resume: `Conib` returns an HTML page from
+  its feed-like URLs instead of RSS/XML. The Conib RSS source is disabled until
+  a real feed URL exists; the separate Conib internal-search source remains in
+  the durable source plan.
 
 ## Loop Log
 

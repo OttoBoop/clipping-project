@@ -87,7 +87,7 @@ RSS_FEEDS: list[dict[str, str]] = [
     {"source_name": "Diario do Rio", "url": "https://diariodorio.com/feed/"},
     {"source_name": "Tempo Real RJ", "url": "https://temporealrj.com/feed/"},
     {"source_name": "Agenda do Poder", "url": "https://agendadopoder.com.br/feed/"},
-    {"source_name": "Conib", "url": "https://www.conib.org.br/feed/"},
+    {"source_name": "Conib", "url": "https://www.conib.org.br/feed/", "disabled": "true"},
     {"source_name": "Tribuna da Serra", "url": "https://tribunadaserra.com.br/feed/"},
 ]
 

@@ -176,6 +176,10 @@ e Estadão para os feeds atuais encontrados no HTML público, desativei o RSS R7
 até existir URL real, e estou fazendo o ledger reconciliar fontes removidas ou
 desativadas em jobs retomados.
 
+Após o resume, `Conib` também se revelou feed inválido: as URLs de feed retornam
+HTML normal em vez de RSS/XML. Desativei só o RSS Conib; a fonte Conib de busca
+interna continua ativa no plano durável.
+
 ### 2026-05-06 — Penelope+Iris — persona Penelope criada e loop Show Shakira iniciado
 
 Otávio pediu, antes de sair pro trabalho, um run longo, autônomo, sem supervisão para
