@@ -145,88 +145,55 @@ As críticas existem mas são **localizadas e isoladas**:
 
 ## Olhar truth-teller
 
-Este eixo é onde **o framing positivo é mais sistematicamente um
-framing de classe**. A "alta de hospedagem" classificada como
-muito-positiva nos blocos é positiva *para o hoteleiro*; é
-**fortemente negativa para o hóspede** que viu o aluguel por
-temporada subir 5× (`a-248`). A "+34% nas buscas no Booking" é
-positiva para a Booking; é negativa para o orçamento do fã. As "+22%
-de oferta de voos pela Latam" são positivas para a Latam; é negativa
-para o preço da passagem (que subiu +32% em parte por externalidade
-real — guerra no Oriente Médio — mas também porque a Latam pode
-precificar com base em demanda inelástica para um show específico).
+A categoria mais densa do corpus é também a mais positiva no
+agregado: o evento moveu R$ 776 mi estimados, encheu hotéis,
+ampliou voos, fez supermercados venderem +30%, beneficiou pequenos
+comerciantes do Saara, gerou ISS turística +23,2% real e estendeu
+a permanência de turistas estrangeiros. Os blocos centrais
+(`a-127` UOL Economia, `a-176`, `a-281` Forbes, `a-94` ISS,
+`a-237` Latam, `a-249` consolidado pré-show, `a-259` ocupação
+hoteleira) traçam um círculo virtuoso real, e o `a-73` (PEGN) é o
+melhor exemplo de cobertura que **nomeia os beneficiados pequenos**
+— Lorrana e Camila — em vez de só agregados.
 
-Os mesmos R$ 776 mi de "movimentação econômica" são, dependendo do
-ângulo:
-- **Positivo** para hoteleiros, restauranteurs, Latam, Booking,
-  Bonus Track, Globo, prefeitura, Procolombia, Barranquilla.
-- **Negativo** para o fã que viajou (passagem cara, hotel caro,
-  aluguel cinco vezes mais caro, jantar de quiosque a R$ 1.300).
-- **Ambíguo** para a economia popular: o comércio do Saara faturou,
-  mas é trabalho informal, sem direitos trabalhistas, sem garantia
-  de continuidade.
-- **Neutro/negativo** para o residente carioca não envolvido no
-  setor turístico que viu trânsito travado, ruas sujas, e
-  inflação localizada.
+Pontos críticos genuínos do eixo, sustentados pelo corpus:
 
-A **distribuição** desses R$ 776 mi é o que falta no corpus. O
-agregado é positivo; a parte de quem fica com o dinheiro
-internamente não é discutida. Análise mínima de Pareto:
+1. **Assimetria entre quem ganhou e quem pagou.** A alta de
+   hospedagem é positiva para o proprietário e negativa para o
+   hóspede — aluguel por temporada até 5× (`a-248`). A alta de 32%
+   nas passagens aéreas é positiva para a companhia e negativa
+   para o fã (`a-249`). O estacionamento a R$ 250 (`a-264`) é
+   cobrança abusiva registrada como muito-negativa em bloco
+   próprio. A imprensa documentou cada um desses pontos; a
+   distribuição desigual está no material.
+2. **Custo público × repasse privado.** R$ 15 milhões em recursos
+   públicos foram repassados à Bonus Track (mesma produtora dos
+   shows anteriores), enquanto a movimentação estimada (R$ 776 mi)
+   é privada. A comparação "R$ 15 mi gerou R$ 776 mi" mistura
+   caixa público com receita privada — vale registrar como ponto
+   de comunicação institucional, não como acusação.
+3. **Streaming desigual.** O `a-66` (Conferência Latin Rio) traz
+   Will Page (ex-Spotify) lembrando que 1 bilhão de streams na
+   América Latina paga menos do que o mesmo volume nos EUA / UK
+   — nota dura sobre desigualdade estrutural da indústria, e
+   aparece só num bloco. É observação macro-estrutural sustentada
+   por fonte qualificada do corpus.
 
-- **Bonus Track + Globo + patrocinadores premium:** captura grande
-  parte do "valor proprietário" (mídia espontânea, exclusividade).
-- **Latam, Booking, Airbnb, Marriott:** captura grande parte do
-  "valor turístico" (passagens, hospedagem).
-- **Pequeno comércio Saara, vendedores ambulantes, fretadores de
-  ônibus, agências de viagem regionais (Camila Meira, Lorrana
-  Lica):** captura uma fatia menor mas distribuída — esta é a
-  **parte que o `a-73` (PEGN) cobriu bem**.
-- **Cenoart e cadeia de subcontratação trabalhista da montagem
-  do palco:** captura sobras do contrato Bonus Track. (Ver
-  categoria 11.)
-- **Trabalhador serralheiro Gabriel Firmino:** capturou um salário
-  pré-show e morreu no processo.
-
-A "economia criativa" celebrada por `a-73`, `a-127`, `a-281` é
-**real e positiva**, mas é real e positiva *para os agentes que
-puderam capitalizar* — Lorrana, Camila, Procolombia, Latam, Booking,
-o Tinder (que ganhou matches), a Globo (que ganhou audiência), a
-Bonus Track (que ganhou contrato plurianual). A camada simétrica —
-o trabalhador da montagem, o ambulante sem licença, o fã que
-endividou cartão para vir — é menos coberta.
-
-O bloco `a-66` (Will Page na Conferência Latin Rio) é o **único**
-do corpus a fazer uma observação macro-estrutural: 1 bi de streams
-na América Latina paga menos que nos EUA / UK. Essa é uma frase de
-desigualdade econômica entre mercados que foi mencionada uma única
-vez. A própria Conferência Latin Rio cobra R$ 649 de ingresso para
-discutir essa desigualdade — o que é parte do problema.
-
-A **inflação predatória** reportada em `a-264` (R$ 250 de
-estacionamento) é um sinal de mercado: quando demanda fica
-inelástica (público vai ao show de qualquer jeito), o estacionamento
-local extorque. Esse padrão se repete em hotelaria, restauração,
-agência de turismo. A imprensa cobriu o caso pontual mas não fez a
-generalização — não há matéria de "como o show inflou os preços
-para quem não é dono de hotel/restaurante".
-
-O **Tinder +20% matches** (`a-76`, Folha) é o tipo de dado curioso
-que vira manchete leve, mas é também uma estatística produzida pela
-plataforma para PR; não há verificação independente.
+Estes três pontos não invertem o sinal positivo da categoria;
+qualificam o "círculo virtuoso" mostrando que sua distribuição
+interna é desigual.
 
 ---
 
 ## Conclusão
 
-O eixo "Economia, turismo e mercado" é o coração do framing
-oficial: o show "vale a pena" porque traz R$ 776 mi de retorno. O
-olhar truth-teller registra que: (1) o agregado positivo esconde
-distribuição desigual; (2) "alta de preços" é positiva para vendedor
-e negativa para comprador na mesma proporção; (3) a única discussão
-macro-estrutural sobre desigualdade econômica da música latina veio
-de um economista britânico (Will Page) num evento pago — não da
-imprensa cotidiana; (4) a economia popular foi celebrada (PEGN
-exemplar com `a-73`), mas a economia informal e o trabalho subcontratado
-ficaram sem cobertura. O eixo é onde a **assimetria entre quem ganha
-e quem aguenta** é mais visível para quem olha de fora — e mais
-invisível para quem lê a manchete.
+Eixo onde o agregado é claramente positivo e bem documentado: R$
+776 mi de movimentação, ISS +23,2%, hotéis cheios, voos ampliados,
+comércio popular faturando, pequenos empreendedores nominados pela
+PEGN. A categoria é onde os pontos críticos legítimos têm
+sustentação mais sólida no próprio material — assimetria entre
+quem ganhou e quem pagou (estacionamento R$ 250, hospedagem 5×,
+passagens +32%), comparação enviesada entre custo público e
+movimentação privada, e a única observação macro do corpus sobre
+desigualdade estrutural da música latina (`a-66`). Ficam como nota
+qualificadora; não invertem o sinal forte da categoria.

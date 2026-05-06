@@ -140,116 +140,52 @@ diluição de responsabilidade trabalhista no Brasil.
 
 ## Olhar truth-teller
 
-Esta categoria é onde **o show entrega seu custo material** e onde
-a cobertura midiática mais visivelmente **falha em proporcionar
-escala ao fato**. Algumas observações:
+É o ponto mais sombrio do corpus, e a leitura realista é
+exatamente essa: **um trabalhador morreu na montagem do palco,
+e isso é fato negativo objetivo**. Os veículos que detalharam o
+caso (`a-270` Veja Rio, `a-277` matéria mais completa, `a-278`
+apuração da subcontratação, `a-279` silêncio internacional)
+reconstruíram a cadeia: Bonus Track contratou MG Coutinho, que
+subcontratou Cenoart, que tinha o serralheiro operando em altura
+de 25 m. A Polícia Civil instaurou inquérito. A Bonus Track
+demorou a se manifestar para a imprensa estrangeira. Shakira
+emitiu nota dizendo-se "profundamente comovida".
 
-**1. Hierarquia de pauta.** Os blocos sobre o palco (categoria 1, 6)
-celebram a magnitude — 1.500 m², 4.000 trabalhadores, 60 t de
-lastro, "quase 2× Madonna". Esses números são tratados como
-positivos. Os mesmos blocos não fazem pergunta sobre **condições de
-trabalho** dos 4.000. A morte do Gabriel Firmino, que faz parte
-desses 4.000, fica em categoria separada e em volume de cobertura
-muito menor. **A morte do trabalhador não puxou a cobertura do
-palco para baixo**; ficou em paralelo.
+Pontos críticos sustentados pelo corpus:
 
-**2. O modelo de subcontratação como estrutura.** Bonus Track →
-MG Coutinho → Cenoart é um arranjo legalmente válido no Brasil que
-cumpre função econômica específica: **diluir responsabilidade
-trabalhista**. Quando alguém morre na ponta, a Bonus Track pode
-dizer "não fomos nós, foi a Cenoart". A Cenoart pode dizer "estamos
-operando dentro do que MG Coutinho contratou". MG Coutinho pode
-dizer "nossa relação é com Bonus Track". O acidente é tratado como
-caso isolado, não como sintoma da estrutura. **A imprensa
-brasileira nomeia a cadeia (`a-278`) mas não problematiza o modelo.**
+1. **A subcontratação em três níveis** (Bonus Track → MG Coutinho
+   → Cenoart) é o modelo clássico de diluição de responsabilidade
+   trabalhista, e a apuração policial está investigando
+   exatamente isso. A imprensa nomeou a cadeia (`a-278`); a
+   Justiça vai dizer onde a responsabilidade fica.
+2. **O silêncio inicial da Bonus Track na imprensa estrangeira**
+   (`a-279`) é cobertura crítica de gestão de imagem, registrada
+   por veículo brasileiro. É fricção real em comunicação de
+   crise.
+3. **Distribuição assimétrica do peso editorial.** Nem Globo, nem
+   O Globo, nem G1 fizeram do caso pauta de capa. Predominou a
+   cobertura local (Veja Rio, Diário do Rio) e a imprensa
+   internacional como contraponto. A gravidade do fato e o volume
+   de cobertura nacional não são proporcionais.
 
-**3. Silêncio da Bonus Track na imprensa estrangeira.** O bloco
-`a-279` registra explicitamente: a Bonus Track foi questionada por
-veículos internacionais e demorou a responder. Esse silêncio é
-**gestão de crise**: empresa sob holofote internacional, calculando
-tempo de resposta. Em comunicação de crise, isso é estratégia
-padrão. Eticamente, é comunicar a empresa antes do trabalhador
-morto.
-
-**4. Resposta de Shakira.** "Profundamente comovida" é o registro
-oficial. Há diferença entre a artista pessoalmente (que
-provavelmente está, sim, comovida) e a equipe de comunicação que
-escreveu a frase em nota oficial. O bloco `a-277` registra como
-neutro — corretamente: a frase é genérica, é a frase mínima
-juridicamente prudente. O que **não** acontece: a Shakira não fez
-visita à família, não destinou recurso visível para apoio, não
-assumiu nenhum custo proporcional aos US$ 421,6 mi da turnê. Em
-contextos similares de mortes em montagem (acidentes em
-turnês de Lady Gaga, Madonna, Beyoncé), houve em geral fundo de
-apoio e visibilidade pública. Aqui, ficou em nota.
-
-**5. Quem foi Gabriel Firmino.** O bloco `a-277` registra
-"detalhes humanos da vítima (família, origem)". É notável que **só
-um bloco** trouxe a humanidade do trabalhador. Em mega-eventos, o
-trabalhador morto frequentemente fica como nome estatístico. A
-imprensa carioca local foi melhor do que a nacional em humanizar.
-
-**6. Comparação com o pai de Shakira.** Esta categoria coexiste
-com a categoria 2 (atraso e saúde do pai). O pai da artista teve
-um susto médico e a cobertura virou empática, escreveu sobre saúde
-frágil, idade avançada, histórico clínico. O pai sobreviveu. Gabriel
-Firmino morreu. **A cobertura do pai foi várias vezes mais
-detalhada que a cobertura do Firmino.** Isso é estatístico, não
-opinativo. Diz alguma coisa sobre quem a imprensa identifica como
-gente cuja história importa contar.
-
-**7. R$ 15 mi de contrato público × salário do serralheiro.** O
-contrato Bonus Track foi de R$ 15 mi. O salário do serralheiro
-não é divulgado, mas serralheiros qualificados em obras de
-construção civil no Brasil ganham entre R$ 2.500 e R$ 5.000 por
-mês. A cadeia de subcontratação Bonus Track → MG Coutinho →
-Cenoart implica **diluição de margem** em cada etapa, com
-provável aperto sobre custo de mão de obra na ponta. Não há
-verificação no corpus sobre se Cenoart cumpria condições de
-trabalho em altura (NR-35 da legislação brasileira), se Firmino
-tinha treinamento adequado, equipamentos, supervisão.
-
-**8. Justiça do trabalho.** O caso não é só polícia (Polícia Civil
-investiga homicídio culposo); é também justiça do trabalho. A
-família do Firmino tem direito a indenização — quem paga? Bonus
-Track? MG Coutinho? Cenoart? A cobertura não acompanha esse fio.
-Em geral, mortes em subcontratação se arrastam por anos no
-trabalhista, com resultado financeiro modesto.
-
-**9. O custo do espetáculo.** A categoria 5 calcula R$ 776 mi de
-movimentação econômica. A categoria 11 registra uma morte. A
-imprensa não faz a conta: **2 milhões de pessoas viram o show de
-Shakira, e um trabalhador morreu pra isso ficar de pé**. Não é uma
-conta consoladora; é uma conta que merece ser feita explicitamente.
-
-**10. Repercussão internacional negativa.** O bloco `a-279`
-registra que veículos estrangeiros cobraram resposta da Bonus
-Track. Imprensa internacional teve mais cuidado editorial com a
-tragédia do que parte da imprensa nacional. Isso é diagnóstico de
-**proximidade**: jornalistas locais estão dentro do mesmo
-ecossistema profissional que produziu o show; jornalistas
-internacionais cobrem com distância.
+Esta categoria **contracorrige o agregado positivo das outras**:
+a tragédia não é nota de rodapé do show, é o eixo onde o custo
+material apareceu, e o sinal aqui é negativo por mérito próprio.
 
 ---
 
 ## Conclusão
 
-O eixo "Tragédia da montagem (Gabriel Firmino)" é o **ponto mais
-sombrio do corpus** e o que mais merece ser lido junto com todas
-as outras categorias. O olhar truth-teller registra: (1) a morte
-de um trabalhador não puxou a cobertura do espetáculo para baixo —
-ficou em paralelo, com cobertura muito menor proporcionalmente;
-(2) a cadeia de subcontratação Bonus Track → MG Coutinho →
-Cenoart é arranjo padrão de diluição de responsabilidade
-trabalhista no Brasil, e a imprensa nomeou a cadeia mas não
-problematizou o modelo; (3) o silêncio inicial da Bonus Track na
-imprensa estrangeira é gestão de crise; (4) a humanização da
-vítima (`a-277`) foi exceção, não regra; (5) o contraste entre
-cobertura empática do pai de Shakira (categoria 2) e cobertura
-factual-grave do trabalhador (categoria 11) é estatístico e
-revelador; (6) Veja Rio e imprensa internacional foram os
-veículos que mais sustentaram o assunto; G1, Globo, Folha,
-Estadão cobriram pouco proporcionalmente. O eixo Gabriel Firmino
-*deveria* puxar uma reavaliação do modelo "Todo Mundo no Rio"; em
-vez disso, virou nota lateral. Esse é o achado central da
-categoria.
+Eixo onde o sinal é negativo por mérito próprio: morte de Gabriel
+Firmino na montagem, em 27/04, esmagado por queda de estrutura em
+elevador a 25 m. Veja Rio e Diário do Rio sustentaram a cobertura;
+imprensa internacional cobrou resposta da Bonus Track; G1, O Globo,
+Folha e Estadão cobriram pouco proporcionalmente. O eixo registra
+três pontos críticos legítimos — a cadeia de subcontratação como
+modelo de diluição de responsabilidade, o silêncio inicial da
+Bonus Track na imprensa estrangeira, e a assimetria de peso
+editorial entre a gravidade do fato e o volume de cobertura
+nacional. É o ponto mais sombrio do corpus e merece leitura junto
+com a categoria 5 (custo público × repasse privado) e a categoria
+10 (gestão administrativa) para entender o quadro completo de
+fricções legítimas reportadas.

@@ -112,66 +112,46 @@ A cobertura segue o arco esperado:
 
 ## Olhar truth-teller
 
-O framing dominante de "espetáculo histórico" funciona perfeitamente
-para a indústria que produziu o show — Globo (broadcaster), Bonus
-Track (produtora), Corona / Santander / Beats (patrocinadores),
-Prefeitura (gestor da política pública) — e para a artista. A
-classificação muito-positiva nos blocos individuais reflete o
-enquadramento da imprensa, e está correta dentro desse
-enquadramento.
+O agregado da categoria é forte e sustentado: o show entregou
+tecnicamente o que a curadoria prometeu, e o muito-positivo
+dominante reflete o que está nos blocos. Não há fricção
+significativa entre veículos sobre a qualidade da entrega cênica.
 
-Mas a "performance" não foi vivida igualmente por todos os 2 milhões
-de pessoas. A cobertura quase nunca distingue **quem assistiu de
-onde**: as áreas VIP exclusivas (`a-104`, `a-204`) tinham estrutura
-de cercadinho e visibilidade do palco; o público das areias mais
-distantes assistiu por painéis de LED espalhados em 16 torres, em
-densidade de 9 pessoas/m² (`a-109`), com calor extremo (30°C+,
-`a-194`, `a-271`) e horas de espera. A "experiência muito-positiva"
-classificada nos blocos é muitas vezes a experiência mediada — pela
-TV Globo (que transmitiu), pelo Multishow, pelo Globoplay, ou pelos
-pontos de melhor visada. O fã que viajou de Mirassol e ficou perto do
-palco (`a-72`) tem uma história de superação; o anônimo distante que
-veio de São Gonçalo de manhã e voltou às 3h sem ter visto Shakira a
-olho nu é invisível na cobertura.
+Pontos críticos genuínos sustentados pelo corpus, que ficam como
+nota qualificadora — não como inversão de sinal:
 
-Adicionalmente, o "espetáculo" é fortemente curado em termos de
-narrativa: a era pós-Piqué (`a-274`), o sonho de cantar com Caetano
-(`a-214`), a relação de 30 anos com o Brasil (`a-183`) — são
-elementos biográficos genuínos, mas que também são embalagem
-comercial premeditada para um lançamento de turnê (Las Mujeres Ya No
-Lloran, US$ 421,6 mi, 86 shows). A linha entre "história autêntica"
-e "narrativa de marketing" não é problematizada por nenhum veículo
-do corpus. Veículos críticos do espectro pop existem no Brasil, mas
-poucos cobriram o show; os que cobriram (Estadão, Folha, Veja)
-oscilaram entre elogio e tom morno, sem uma análise estrutural do
-que esse tipo de mega-show representa para a economia política da
-música no país.
+1. **Problemas técnicos no início** (`a-126` O Globo,
+   balanço acertos-falhas; `a-140` registro do atraso e som
+   inicial). É fato observável reportado por veículo de peso, e
+   merece registro.
+2. **"Previsibilidade do roteiro"** (`a-106` Estadão; `a-147`
+   coluna Otávio Furtado em Veja Rio). É a única crítica
+   artística de fundo no corpus — argumento de que a turnê
+   *Las Mujeres Ya No Lloran* é repetitiva e Shakira "joga
+   seguro". Ficou em volume baixo, mas é uma posição editorial
+   legítima, não um descompasso.
+3. **Dueto desafinado Shakira-Bethânia** (`a-218` Veja). Único
+   veículo a registrar publicamente "execução desafinada de O
+   Que É o Que É?, em descompasso com a bateria da Unidos da
+   Tijuca". É fricção entre o que foi vendido como momento
+   histórico e a execução técnica observável. O leitor que
+   assistiu ouviu o descompasso; a Veja contribuiu com
+   qualificador isolado e factual.
 
-A "previsibilidade do roteiro" mencionada por `a-106` e `a-147` é o
-mais próximo que a imprensa chegou de uma crítica artística de
-fundo — e ainda assim foi enquadrada como "hit-flop" de coluna social,
-não como ensaio cultural. O dueto desafinado registrado por `a-218`
-desapareceu nos outros veículos, indicando que houve uma decisão
-editorial coletiva (consciente ou não) de não problematizar a
-qualidade musical do que foi entregue.
+Esses três pontos são minoria localizada, não tendência. A leitura
+realista é a mesma do agregado: espetáculo tecnicamente bem
+entregue, com bolsões críticos pontuais que merecem registro
+proporcional.
 
 ---
 
 ## Conclusão
 
-O eixo "Performance e show" é onde a cobertura é mais
-**unidirecionalmente positiva** e onde há maior alinhamento entre os
-veículos. O olhar truth-teller acrescenta três camadas: (1) o
-"espetáculo histórico" foi vivido de formas muito desiguais pelos 2
-milhões presentes, mas a cobertura representa a experiência mediada
-ou VIP como se fosse a experiência geral; (2) a narrativa biográfica
-da artista (era pós-Piqué, sonho com Caetano, 30 anos de Brasil) é
-ao mesmo tempo verdadeira e produto de marketing — e a imprensa não
-distingue; (3) as críticas técnicas que apareceram (atraso, som
-inicial, dueto desafinado, repetitividade do setlist) ficaram
-periféricas, sugerindo um pacto editorial implícito de *não
-problematizar a qualidade musical* do produto entregue. O eixo do
-"show em si" é talvez o que mais merece ser lido junto com a
-categoria 11 (tragédia da montagem) e a categoria 5 (economia) para
-recuperar a totalidade do que aconteceu — não apenas o palco, mas o
-custo, o trabalho e a distribuição.
+Eixo onde a cobertura é mais **unidirecionalmente positiva** e onde
+há maior alinhamento entre veículos, com sustentação técnica
+(palco superlativo, setlist consistente, conexão de palco em
+português, integração com a cultura brasileira). Pontos críticos
+genuínos — problemas técnicos no início, "previsibilidade" como
+nota de coluna, dueto desafinado registrado pela Veja — são
+minoria localizada e foram tratados proporcionalmente. A categoria
+é positiva no agregado, e a síntese reflete isso.
