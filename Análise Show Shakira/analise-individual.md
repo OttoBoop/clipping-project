@@ -858,6 +858,318 @@ carioca. Tom didático-celebratório.
 
 ---
 
+## a-49 — Câmara do Rio remarca reunião com secretário de Ordem Pública
+
+**Fonte:** Tempo Real (tempo-real.com)
+**Data:** 20/04/2026 15:38 UTC
+**URL:** https://tempo-real.com/post/camara-do-rio-remarca-reuniao-com-secretario-de-ordem-publica-para-um-dia-apos-audiencia-publica-sobre-ambulantes-na-orla/
+
+### Resumo Narrativo
+
+Artigo fora de escopo — não trata do show da Shakira. Cobre o
+remarcamento da reunião sobre ação da Seop contra ambulantes em Ipanema
+para 6 de maio (após audiência pública em 5 de maio). Vereadores
+mencionados incluem Flávio Valle (PSD). Shakira aparece apenas em link
+"Veja mais" e em sidebar de "Últimas Notícias" ("Operação Shakira na
+areia: Seop prende homem que tentou cobrar R$ 1,8 mil por caipirinha").
+Capturado pelo tag de Flávio Valle.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| (Tema Shakira) | Aparece apenas em sidebar e link relacionado. | n/a |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**: trata de reunião sobre ambulantes; menção a Shakira é incidental.
+
+---
+
+## a-254 — Efeito Shakira: supermercados projetam aumento de venda de até 30% em lojas de Copacabana e Leme
+
+**Fonte:** O Globo / Coluna Míriam Leitão (oglobo.globo.com)
+**Data:** 20/04/2026 16:47 UTC
+**URL:** https://oglobo.globo.com/blogs/miriam-leitao/post/2026/04/efeito-shakira-supermercados-projetam-aumento-de-venda-de-ate-30percent-em-lojas-de-copacabana.ghtml
+
+### Resumo Narrativo
+
+Coluna Míriam Leitão / Luciana Casemiro reporta pesquisa da Asserj
+(Associação de Supermercados do Estado do Rio de Janeiro) projetando
+crescimento de até 30% em vendas em supermercados de Copacabana e Leme
+durante a primeira semana de maio. Mesmo padrão do show de Lady Gaga
+(+30%); Madonna teve impacto menor (+15%). Bebidas, biscoitos, prontos
+para consumo são as categorias-chave. Gerentes do Pão de Açúcar (Marcílio
+Santos) e Supermarket (Enderson Nascimento) descrevem reforço de estoque,
+ampliação de horário, e bazar com cadeiras de praia, isopores e copos. Tom
+celebratório, varejo-positivo.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Aumento de vendas em supermercados (+30%) | Apresentado como benefício direto. | muito positivo |
+| Logística do varejo (estoque, horário ampliado) | Adaptação positiva ao megaevento. | positivo |
+| Categorias beneficiadas (bebidas, prontos) | Tendência de consumo de evento. | positivo |
+| Comparação com Madonna (+15%) e Lady Gaga (+30%) | Coloca Shakira no mesmo patamar de Lady Gaga. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-253 — Airbnb: cresce a procura de quartos no Rio de olho no show de Shakira
+
+**Fonte:** O Globo / Coluna Ancelmo Gois (oglobo.globo.com)
+**Data:** 20/04/2026 16:53 UTC
+**URL:** https://oglobo.globo.com/blogs/ancelmo/post/2026/04/airbnb-cresce-a-procura-de-quartos-no-rio-de-olho-no-show-de-shakira-em-copacabana.ghtml
+
+### Resumo Narrativo
+
+Nota com dados do Airbnb mostrando aumento na procura de hospedagem no
+Rio para o período do show. Origens domésticas: SP, BH, Campinas. América
+Latina: Santiago, Buenos Aires, Montevidéu. Internacional (Europa/EUA):
+Paris, Londres, Nova York. Detalhe relevante: estrangeiros têm
+permanência média 2× maior que brasileiros. Tom factual-positivo.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Demanda Airbnb / hospedagem alternativa | Crescimento positivo. | muito positivo |
+| Mistura de fluxos doméstico × internacional × latino-americano | Diversificação positiva. | positivo |
+| Permanência mais longa de estrangeiros | Implícito ganho em pernoites turísticas. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-221 — Antes de Copacabana, Shakira reuniu 4 mil pessoas em show na Grande SP nos anos 90
+
+**Fonte:** G1 Mogi das Cruzes (g1.globo.com)
+**Data:** 21/04/2026 08:01 UTC
+**URL:** https://g1.globo.com/sp/mogi-das-cruzes-suzano/noticia/2026/04/21/antes-de-copacabana-shakira-reuniu-4-mil-pessoas-em-show-na-grande-sp-nos-anos-90.ghtml
+
+### Resumo Narrativo
+
+Reportagem nostálgica do g1 Mogi das Cruzes recupera show de Shakira em
+1997 na casa La Boom (shopping local), com 4 mil pessoas e ingresso de
+~R$ 50. Inclui depoimentos do arquiteto Roberto Kimura (sócio da casa) e
+do médico Luiz Antonio Ribeiro (dono do SPA da Serra do Itapeti onde
+Shakira ficou hospedada após o show). Anedotas: feijoada, loção
+hidratante esquecida, fãs na porta, segurança improvisada. Tom afetivo,
+celebratório do passado da artista no Brasil.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Histórico Shakira × Brasil (1997, ~40 shows nos 90s) | Tratado nostalgicamente; positivo. | muito positivo |
+| Conexão de longa data com público brasileiro | Reforça legitimidade do show de 2026. | muito positivo |
+| Anedotas pessoais (SPA, feijoada, creme esquecido) | Humanizam a artista. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-256 — Shakira em Copacabana: Rodoviária do Rio se prepara para receber 215 mil passageiros no feriado
+
+**Fonte:** O Globo / Coluna Ancelmo Gois (oglobo.globo.com)
+**Data:** 21/04/2026 15:45 UTC
+**URL:** https://oglobo.globo.com/blogs/ancelmo/post/2026/04/shakira-em-copacabana-rodoviaria-do-rio-se-prepara-para-receber-215-mil-passageiros-no-feriado.ghtml
+
+### Resumo Narrativo
+
+Nota factual da coluna Ancelmo Gois: Rodoviária do Rio espera 215 mil
+passageiros no período do show. Origens principais: SP, MG, ES, Brasília.
+Movimento turbinado pelo feriado de 1º de maio. Ressalva explícita: é
+**abaixo** do volume de Lady Gaga (290 mil) e de Madonna (235 mil) — ainda
+que próximo aos níveis do Carnaval. Tom factual-cauteloso; primeira nota
+relevante de comparação **negativa** com edições anteriores no fluxo
+rodoviário.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Movimento rodoviário (215 mil passageiros) | Apresentado como expressivo, mas explicitamente abaixo dos shows anteriores. | neutro |
+| Comparação com Lady Gaga (290 mil) e Madonna (235 mil) | Mostra Shakira como o **menor** dos três no fluxo de ônibus. | neutro |
+| Origem dos passageiros (SP/MG/ES/DF) | Diversificação doméstica. | positivo |
+| Feriado de 1º de maio como turbinador | Conjuntura favorável. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-255 — Shakira diz que 'Anitta é uma rainha'; e brasileira revela que foi convidada para show em Copacabana
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 21/04/2026 23:41 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/shakira-diz-que-anitta-e-uma-rainha-e-brasileira-revela-que-foi-convidada-para-show-em-copacabana.ghtml
+
+### Resumo Narrativo
+
+Confirmação parcial do dueto Shakira × Anitta: Anitta revelou em
+podcast (Charla Podcast) que foi convidada por Shakira para o show em
+Copacabana — "vamos cantar juntas?" perguntou Shakira; "Choka Choka"
+seria a música. Nem oficializado mas fortemente sinalizado. Shakira
+elogiou Anitta ("uma rainha", "essa amizade é um presente") e declarou
+expectativa de **2,5 milhões de pessoas** no show — "uma loucura".
+Reforça relação de longa data com o Brasil ("aprendi a falar português
+primeiro que o inglês"). Tom celebratório.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Confirmação parcial de dueto Anitta × Shakira | Apresentada como expectativa positiva. | muito positivo |
+| Expectativa de público (2,5 milhões) | Tom de "loucura/recorde". | muito positivo |
+| Relação afetiva Shakira × Brasil (40+ shows, fluência em português) | Reforça legitimidade. | muito positivo |
+| Elogio público de Shakira a Anitta | Positivo bilateral. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-82 — Shakira em Copacabana: Cantora enfrenta 'maré de azar' e show no Brasil é decisivo (opinião)
+
+**Fonte:** Estadão / Coluna Carol Prado (estadao.com.br)
+**Data:** 22/04/2026 07:00 UTC
+**URL:** https://www.estadao.com.br/cultura/shakira-em-copacabana-cantora-enfrenta-mare-de-azar-e-show-no-brasil-e-decisivo
+
+### Resumo Narrativo
+
+Coluna de opinião de Carol Prado no Estadão argumenta que o show de
+Copacabana é decisivo para Shakira após uma "maré de azar" na turnê "Las
+Mujeres Ya No Lloran": atraso em SP em 2025, cancelamento no Chile e nos
+EUA por problemas técnicos, alerta de saúde nos EUA por sarampo de fã,
+quedas no palco no Canadá e em El Salvador, internação por problema
+estomacal no Peru. A colunista vê o Brasil como "terreno perfeito" para
+redenção pela longa relação histórica (40 shows nos anos 90), e considera
+"escolha acertada" a aposta do Brasil para a apresentação mais importante
+da carreira. Mistura ângulo crítico ao reconhecimento da resiliência
+artística — primeira matéria do corpus que articula explicitamente um
+contraponto sobre a trajetória recente da artista.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Histórico problemático da turnê (cancelamentos, quedas, doenças) | Reconhecido como fato; "maré de azar" — ângulo crítico. | negativo |
+| Brasil como terreno de redenção da carreira | Apresentado positivamente; "escolha acertada". | positivo |
+| Relação histórica de Shakira com o público brasileiro | Reforça a aposta. | muito positivo |
+| Pressão sobre a performance de Shakira em Copacabana | Tratada como decisiva. | neutro |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-228 — Shakira terá palco maior que os de Madonna e Lady Gaga; veja as dimensões
+
+**Fonte:** G1 / Globonews (g1.globo.com)
+**Data:** 22/04/2026 12:22 UTC
+**URL:** https://g1.globo.com/rj/rio-de-janeiro/noticia/2026/04/22/shakira-tera-palco-maior-que-os-de-madonna-e-lady-gaga-veja-as-dimensoes.ghtml
+
+### Resumo Narrativo
+
+Reportagem do Globonews atualizando as dimensões: o palco será de
+**1.500 m²** (não 1.345 m² como anteriormente reportado — ampliação a
+pedido da equipe da artista), maior que Madonna (812 m²) e Lady Gaga
+(1.260 m²). Painéis de LED de 680 m² (também acima dos 500 m² antes
+divulgados). Passarela de 25 m até a área em frente ao Copacabana
+Palace. Show com transmissão pela TV Globo, Multishow e Globoplay.
+Recapitula: 16 torres de 45 m² ao longo de Copacabana até o Leme,
+expectativa de 2,5 milhões de pessoas (acima de Madonna 1,6 mi e Lady
+Gaga 2,1 mi), histórico desde 1997 no Brasil, show gratuito no México em
+março com 400 mil pessoas. Tom muito positivo, "mega-evento".
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Palco superlativo (1.500 m², painéis 680 m²) | Reforça classe mundial; "maior já montado". | muito positivo |
+| Comparação com Madonna/Lady Gaga (palco e público) | Shakira supera ambas em projeção. | muito positivo |
+| Transmissão TV Globo/Multishow/Globoplay | Amplifica alcance midiático. | positivo |
+| Recorde de 400 mil pessoas no México (março) | Reforça aura de evento global. | muito positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-231 — Show de Shakira vai custar R$ 15 milhões para a Prefeitura do Rio
+
+**Fonte:** Gshow (gshow.globo.com)
+**Data:** 22/04/2026 17:05 UTC
+**URL:** https://gshow.globo.com/musica/noticia/2026/04/show-de-shakira-vai-custar-r-15-milhoes-para-a-prefeitura-do-rio.ghtml
+
+### Resumo Narrativo
+
+Reportagem factual: a Prefeitura do Rio investirá **R$ 15 milhões** no
+show de Shakira (mesmo valor de Lady Gaga em 2025, e R$ 5 mi acima dos
+R$ 10 mi destinados a Madonna em 2024). Autorização publicada no DOM em
+17 de abril; repasse para a Bonus Track. Expectativa: 2,5 milhões de
+pessoas. Tom factual, sem ângulo crítico do gasto público, mas a peça
+**explicita o custo** — primeira vez no corpus em que o investimento
+público é objeto central da reportagem.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Custo público (R$ 15 milhões) | Tratado factualmente; sem questionamento explícito, mas exposto. | neutro |
+| Comparação com Madonna (R$ 10 mi) e Lady Gaga (R$ 15 mi) | Shakira no mesmo patamar de Lady Gaga. | neutro |
+| Expectativa econômica (movimentar a economia da cidade) | Justificativa positiva do gasto. | positivo |
+| Bonus Track como destinatária do repasse | Citada sem juízo. | neutro |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-223 — Shakira faz post em português dias antes de show: 'Deus me livre não ser latina'
+
+**Fonte:** G1 (g1.globo.com)
+**Data:** 22/04/2026 18:20 UTC
+**URL:** https://g1.globo.com/rj/rio-de-janeiro/musica/show-shakira-rj/noticia/2026/04/22/shakira-faz-post-em-portugues-dias-antes-de-show-em-copacabana-deus-me-livre-nao-ser-latina.ghtml
+
+### Resumo Narrativo
+
+Recap promocional: Shakira posta nas redes com um boné "Deus me livre
+não ser latina" em verde-amarelo-branco-vermelho. Recapitula a
+infraestrutura do show (1.345 m² palco, 25 m passarela, 680 m² LED — vs
+Madonna 812 m² / Lady Gaga 1.260 m²), a expectativa de 2,5 milhões, o
+recorde de 400 mil no México em março, e a transmissão pela TV Globo /
+Multishow / Globoplay. Tom muito positivo.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Post afetivo de Shakira em português | Engajamento positivo com o público brasileiro. | muito positivo |
+| Identidade latina como bandeira | Reforça narrativa "onda latina" / "altar do planeta". | muito positivo |
+| Recap de infraestrutura | Reforço do hype. | positivo |
+| Transmissão multi-plataforma (TV Globo / Multishow / Globoplay) | Amplifica alcance. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
