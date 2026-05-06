@@ -2035,6 +2035,293 @@ contraponto humano profundo; agora, há uma morte vinculada à produção.
 
 ---
 
+## a-282 — Ipanema: Garcia D'Ávila vira 'calçadão' de luxo (off-scope)
+
+**Fonte:** Veja Rio Archive (vejario.abril.com.br)
+**Data:** 27/04/2026 06:30 UTC (data do snapshot; conteúdo é de 06/06/2025)
+**URL:** https://vejario.abril.com.br/coluna/lu-lacerda/ipanema-garcia-davila-vira-calcadao-luxo-aposta-reurbanizacao-crise/
+
+### Resumo Narrativo
+
+Artigo fora de escopo — não trata do show da Shakira. Cobre projeto de
+reurbanização da Rua Garcia D'Ávila (Ipanema) com calçadas alargadas e
+fim das vagas, articulado pelo vereador Flávio Valle. Captura via tag
+de Flávio Valle. Título do snapshot estava mal-classificado.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| (Tema Shakira) | Não aparece. | n/a |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**: matéria sobre Ipanema/Garcia D'Ávila; não trata de Shakira.
+
+---
+
+## a-281 — Shakira deve movimentar economia carioca em quase R$ 800 milhões
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 27/04/2026 07:30 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/shakira-deve-movimentar-economia-carioca-em-quase-r-800-milhoes-entenda.ghtml
+
+### Resumo Narrativo
+
+Estudo da Secretaria de Desenvolvimento Econômico + Riotur projeta
+**R$ 776,2 milhões de impacto econômico**. Distribuição: 13,9% turistas
+nacionais (278 mil), 1,6% internacionais (32 mil), 84,6% cariocas/RM
+(1,7 mi). Ticket médio R$ 547,30/dia (BR), R$ 626,40/dia (estrangeiro), R$ 141,75/dia (local). Mídia espontânea estimada em US$ 250 milhões (~R$ 1,3 bi). Cita declaração de Shakira no Fantástico ("Copacabana, para mim, é um sonho"). Tom muito positivo, governamental.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Impacto econômico (R$ 776 mi) | Apresentado como sucesso. | muito positivo |
+| Mídia espontânea internacional (US$ 250 mi) | Reforça posicionamento global. | muito positivo |
+| Distribuição de público | Maioria carioca (84,6%). | positivo |
+| Custo público (R$ 15 mi) | Citado factualmente. | neutro |
+| Declaração de Shakira ("altar") | Engajamento afetivo. | muito positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-127 — Shakira no Rio deve movimentar R$ 800 milhões, impacto maior que Madonna e Lady Gaga
+
+**Fonte:** G1 / GloboNews (g1.globo.com)
+**Data:** 27/04/2026 08:41 UTC
+**URL:** https://g1.globo.com/rj/rio-de-janeiro/musica/show-shakira-rj/noticia/2026/04/27/shakira-no-rio-deve-movimentar-r-800-milhoes-impacto-maior-que-os-dos-shows-de-madonna-e-lady-gaga.ghtml
+
+### Resumo Narrativo
+
+GloboNews replica e amplia o estudo: **R$ 776,2 mi** vs. **R$ 469 mi
+(Madonna 2024)** e **R$ 592 mi (Lady Gaga 2025)** — recorde da série
+Todo Mundo no Rio. Inclui depoimento de Niemeyer ("Shakira já colocou
+esse evento como um altar da música"), de Cavaliere ("posicionamento
+internacional"), e da empresária Jaqueline Cascardo (camisetas, +30%).
+Tom muito positivo.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Impacto econômico recorde (R$ 776 mi vs. histórico) | Tom muito positivo. | muito positivo |
+| Geração de empregos (4.000 na montagem) | Reforço positivo. | muito positivo |
+| Pequenos negócios beneficiados | Inclusão econômica. | positivo |
+| Estratégia de eventos como política pública | Apresentada positivamente. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-280 — Rua Arnaldo Quintela em Botafogo (off-scope)
+
+**Fonte:** Veja Rio Archive (vejario.abril.com.br)
+**Data:** 27/04/2026 11:48 UTC (snapshot; conteúdo de 04/11/2025)
+**URL:** https://vejario.abril.com.br/coluna/lu-lacerda/arnaldo-quintela-pode-ganhar-projeto-requalificacao-urbana/
+
+### Resumo Narrativo
+
+Artigo fora de escopo. Trata de projeto de requalificação urbana da Rua
+Arnaldo Quintela em Botafogo, articulado pelo vereador Flávio Valle.
+Captura via tag.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| (Tema Shakira) | Não aparece no corpo do texto. | n/a |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**.
+
+---
+
+## a-279 — 'Horror', 'Tragédia': imprensa internacional destaca morte de trabalhador
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 27/04/2026 13:52 UTC
+**URL:** https://oglobo.globo.com/cultura/noticia/2026/04/tragico-horrivel-imprensa-internacional-destaca-morte-de-trabalhador-em-palco-de-shakira-no-rio.ghtml
+
+### Resumo Narrativo
+
+Repercussão internacional da morte de **Gabriel de Jesus Firmino**:
+The Sun (UK) "Horror no palco", Page Six (US) "acidente horrível", NME
+e News AZ (Azerbaijão) "trágico", France 24 e ENews citando AFP,
+Toronto Sun (Canadá) reproduzindo notas oficiais, People reportando
+silêncio inicial da Bonus Track. A reportagem documenta como a
+tragédia ofuscou a expectativa internacional pelo show — primeira
+peça do corpus a tratar a morte como **fato editorial dominante** na
+cobertura externa.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Morte do serralheiro Gabriel Firmino | Tom respeitoso, factual. | muito negativo |
+| Repercussão internacional negativa | Imprensa global enquadra como tragédia. | muito negativo |
+| Silêncio inicial da Bonus Track na imprensa estrangeira | Crítica implícita à comunicação da produtora. | negativo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito negativo
+
+---
+
+## a-94 — Prefeitura: show terá impacto econômico de R$ 800 mi
+
+**Fonte:** Riotur — site oficial (riotur.rio)
+**Data:** 27/04/2026 14:07 UTC
+**URL:** https://riotur.rio/noticias/shakira-impacto-economico
+
+### Resumo Narrativo
+
+Comunicado oficial da Prefeitura/Riotur ratificando o estudo "Potenciais
+Impactos Econômicos do Todo Mundo no Rio 2026 – Shakira": R$ 776,2 mi de
+movimentação, 2 mi de público, US$ 250 mi de mídia espontânea, soma com
+edições anteriores R$ 2,7 bi de visibilidade. Cita Cavaliere, Bernardo
+Fellows (Riotur), e o secretário Osmar Lima. Inclui dados de
+arrecadação ISS (maio 2025: R$ 66,8 mi vs. maio 2023: R$ 54,3 mi). Tom
+oficial-celebratório, "vitrine global".
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Comunicação institucional do impacto econômico | Tom institucional positivo. | muito positivo |
+| Arrecadação ISS turística (+23,2% real) | Validação fiscal do investimento. | muito positivo |
+| Estratégia plurianual (2024-2028) | Continuidade reforçada. | positivo |
+| UNESCO Patrimônio Mundial | Reforço aspiracional. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-278 — Após morte de operário, Polícia Civil realiza perícia
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 27/04/2026 14:20 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/apos-morte-de-operario-durante-montagem-de-palco-para-show-de-shakira-em-copacabana-policia-civil-realiza-pericia.ghtml
+
+### Resumo Narrativo
+
+Reportagem detalhada da perícia da 12ª DP, com depoimento do delegado
+Ângelo Lages: dois elevadores adjacentes, vítima soldando entre eles
+quando elevador 1 subiu e a estrutura inferior esmagou Gabriel sobre o
+elevador 2 (espaço de 6 cm). "Foi uma morte muito cruel." Norma de
+segurança proibia operação com funcionário dentro. Bonus Track (Cenoart
+/ MG Coutinho como subcontratada) pode responder por homicídio culposo
+ou omissão. Local desinterditado e montagem retomada após perícia.
+Apenas um produtor executivo da Bonus Track prestou depoimento. Tom
+factual-investigativo, sério.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Perícia oficial e investigação policial | Tom rigoroso. | negativo |
+| Possível homicídio culposo / omissão | Crítica grave à segurança do trabalho. | muito negativo |
+| Subcontratação (Bonus Track → MG Coutinho/Cenoart) | Cadeia de responsabilidade exposta. | negativo |
+| Detalhes graves do acidente (esmagamento, gritos) | Tratamento humano-respeitoso. | muito negativo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito negativo
+
+---
+
+## a-28 — Muro da Praça Sarah Kubitschek demolido (off-scope)
+
+**Fonte:** Tempo Real (tempo-real.com)
+**Data:** 27/04/2026 15:09 UTC
+**URL:** https://tempo-real.com/post/muro-da-praca-sarah-kubitschek-e-demolido-em-copacabana/
+
+### Resumo Narrativo
+
+Artigo fora de escopo. Trata da demolição do muro da Praça Sarah
+Kubitschek em Copacabana (vereador Flávio Valle). Shakira aparece
+apenas em sidebar "Você pode gostar" + artigo anterior referenciado no
+título ("Todo Mundo no Rio até 2028: prefeitura garante investimento de
+R$ 45 milhões para Shakira e outros megashows").
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| (Tema Shakira) | Aparece apenas em sidebar. | n/a |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**.
+
+---
+
+## a-97 — Riotur (rep): show prevê impacto de R$ 800 mi (replicado)
+
+**Fonte:** Riotur — site oficial (riotur.rio)
+**Data:** 27/04/2026 15:58 UTC
+**URL:** https://riotur.rio/noticias/shakira-impacto-economico-rio (re-publicação)
+
+### Resumo Narrativo
+
+Replicação do comunicado oficial Riotur (mesmo conteúdo de `a-94`),
+publicado novamente algumas horas depois. Mesmos números, mesmas
+declarações. Bloco mantido por integridade do protocolo. Marca o caso
+de **republicação institucional** quando o veículo é o próprio
+ente público.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Comunicação institucional repetida | Mesma análise de `a-94`. | muito positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-277 — Operário deixa mulher e dois filhos; perícia segue
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 27/04/2026 20:00 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/operario-que-morreu-durante-montagem-de-palco-para-show-de-shakira-deixa-mulher-e-dois-filhos.ghtml
+
+### Resumo Narrativo
+
+Reportagem segue cobrindo a tragédia com o ângulo humano: Gabriel de
+Jesus Firmino, 28 anos, natural de Magé, deixa mulher (26 anos) e dois
+filhos. Funcionário da MG Coutinho Serviços Cenográficos (Cenoart) há
+mais de três anos. Detalhes da perícia repetidos. Inclui declaração
+nova: **"Shakira entrou em contato com a organização assim que soube
+do ocorrido e tem mantido contato constante com nossa equipe… está
+muito profundamente comovida"** (Bonus Track). MG Coutinho não
+respondeu. Tom respeitoso, humano.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Detalhes humanos da vítima (família, origem) | Tom respeitoso. | muito negativo |
+| Resposta de Shakira ("profundamente comovida") | Humaniza o lado da artista. | neutro |
+| Subcontratação Cenoart | Foco na responsabilidade trabalhista. | negativo |
+| Contraste com magnitude do palco | Justaposição editorial inquietante. | negativo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito negativo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
