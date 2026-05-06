@@ -1,0 +1,43 @@
+name: penelope-permission-test
+
+# Diagnostic: does the default GITHUB_TOKEN have permission to push back?
+
+on:
+  push:
+    branches:
+      - 'claude/shakira-show-stage-0-NEVYj'
+    paths:
+      - '.github/workflows/penelope-permission-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Try a tiny commit-and-push
+        shell: bash
+        run: |
+          set -x
+          git config user.name "Penelope (Action)"
+          git config user.email "penelope+actions@noreply.users.github.com"
+          mkdir -p tools/penelope-fetched
+          echo "ping $(date -u --iso-8601=seconds) from action $GITHUB_RUN_ID" \
+            > tools/penelope-fetched/PERMISSION_TEST.txt
+          git add tools/penelope-fetched/PERMISSION_TEST.txt
+          git status
+          git diff --cached --stat
+          git commit -m "penelope/test: permission test ping ($GITHUB_RUN_ID)"
+          git remote -v
+          git push origin "HEAD:${GITHUB_REF#refs/heads/}" 2>&1 || {
+            echo "PUSH FAILED — exit $?"
+            git config --list | grep -i remote || true
+            exit 1
+          }
+          echo "push succeeded"
