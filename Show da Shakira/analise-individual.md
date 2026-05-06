@@ -3244,6 +3244,166 @@ COR-Rio coloca a cidade em **Estágio 2** (segundo de cinco níveis) à 0h de 02
 
 ---
 
+## a-212 — Galeão recebeu 25 toneladas de equipamentos
+
+**Fonte:** G1  **Data:** 02/05/2026 14:54 UTC
+
+Atualização logística: total de 25 toneladas de equipamentos chegaram ao Galeão (incremento sobre as 10t reportadas em a-267). Tom positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Logística aérea (25 t equipamentos) | Magnitude reforçada. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-211 — Câmara do Rio propõe título de Cidadã Honorária para Shakira
+
+**Fonte:** G1  **Data:** 02/05/2026 15:03 UTC
+
+Câmara Municipal propõe título de Cidadã Honorária do Rio para Shakira. Reforça narrativa "Shakira-carioca" do artigo no O Globo. Tom muito positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Reconhecimento institucional Câmara do Rio | Honraria política positiva. | muito positivo |
+| Identificação Shakira × cidade do Rio | Soft power simbólico. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-159 — (= a-146) Transmissão sem delay
+
+Mesma matéria de `a-146` (variação de fonte). **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-210 — Cavaliere visita Saara e destaca impacto econômico
+
+**Fonte:** G1  **Data:** 02/05/2026 17:45 UTC
+
+Prefeito Eduardo Cavaliere visita o comércio popular da Saara para destacar o efeito-Shakira no turismo e nas pequenas vendas. Marketing político-comercial. Tom positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Visita política do prefeito (foto-op) | Marketing institucional. | positivo |
+| Comércio popular da Saara como beneficiário | Inclusão econômica positiva. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-209 — Policiais bilíngues para atender turistas
+
+**Fonte:** G1  **Data:** 02/05/2026 18:03 UTC
+
+PM mobiliza policiais com inglês/espanhol para atender turistas internacionais. Resposta positiva à "invasão latina" + alerta da Embaixada EUA. Tom positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Atendimento bilíngue na segurança pública | Profissionalismo positivo. | muito positivo |
+| Resposta institucional a turistas internacionais | Cuidado adequado. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-208 — RioLuz reforça iluminação em Copacabana
+
+**Fonte:** G1  **Data:** 02/05/2026 18:07 UTC
+
+RioLuz aumenta iluminação pública em Copacabana e arredores para o show. Manutenção preventiva. Tom positivo-utilidade.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Reforço de iluminação pública | Preventivo positivo. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-207 — Reconhecimento facial, drones e 300+ câmeras
+
+**Fonte:** G1  **Data:** 02/05/2026 18:10 UTC
+
+Detalhamento do esquema de vigilância: reconhecimento facial em todos os pórticos, 6 drones com IA, 300+ câmeras extras. Tom factual; potencial debate sobre privacidade fica subentendido mas não levantado.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Vigilância massiva (reconhecimento facial / drones) | Apresentada como reforço positivo. | positivo |
+| Ausência de debate sobre privacidade | Notável omissão editorial. | neutro |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-119 — Tire todas as dúvidas sobre o megashow (CNN Brasil)
+
+**Fonte:** CNN Brasil  **Data:** 02/05/2026 18:36 UTC
+
+Recap CNN Brasil paralelo ao a-109. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-79 — Marinha alerta para mar com ressaca e ondas de 3 metros
+
+**Fonte:** G1  **Data:** 02/05/2026 19:02 UTC
+
+Aviso da Marinha (já mencionado em a-213): ondas 2,5-3m entre dom noite e ter tarde. Implicação: público que ficaria à beira-mar deve ter cuidado pós-show. Tom factual-cautelar.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Alerta de ressaca | Preventivo. | neutro |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-206 — Show será sem chuva, mas frente fria muda o tempo
+
+**Fonte:** G1  **Data:** 02/05/2026 19:59 UTC
+
+Climatempo: sábado quente (mín 20°C, máx 34°C), céu parcialmente nublado, sem previsão de chuva. Frente fria chega à tarde de domingo, mudando o tempo. Tom factual-positivo (clima favorável ao show).
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Previsão favorável (sem chuva, calor moderado) | Tom positivo. | muito positivo |
+| Frente fria pós-show | Mencionada sem alarme. | neutro |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-166 — Famosos marcam presença em Copacabana
+
+**Fonte:** Gshow  **Data:** 02/05/2026 20:37 UTC
+
+Cobertura "celebridades": Anitta, Bethânia, Caetano, Ivete Sangalo (que ainda subiria ao palco), e outros famosos chegando ao Copacabana Palace. Tom muito positivo, fofoca-cultural.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Presenças de famosos (Anitta, Ivete, Bethânia, Caetano) | Diálogo cultural positivo. | muito positivo |
+| Hype de bastidor | Reforça expectativa. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-205 — Postos de saúde no show
+
+**Fonte:** G1  **Data:** 02/05/2026 20:48 UTC
+
+3 postos médicos: esquina Atlântica × Princesa Isabel, Praça do Lido, esquina Atlântica × República do Peru. Tom positivo-utilidade.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Atendimento médico preventivo (3 postos) | Logística adequada. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
