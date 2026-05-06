@@ -3404,6 +3404,122 @@ Cobertura "celebridades": Anitta, Bethânia, Caetano, Ivete Sangalo (que ainda s
 
 ---
 
+## a-131 — Setlist de Shakira em Copacabana
+
+**Fonte:** Estadão  **Data:** 02/05/2026 21:00 UTC
+
+Setlist preliminar publicado: clássicos ("Estoy Aquí", "Inevitable", "Whenever, Wherever", "Hips Don't Lie", "Waka Waka") + faixas recentes ("Las Mujeres Ya No Lloran", "Choka Choka", "Bzrp 53"). Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-124 — Famosos marcam presença em camarotes
+
+**Fonte:** O Globo  **Data:** 02/05/2026 21:02 UTC
+
+Cobertura de camarotes VIP: famosos brasileiros, embaixador da Colômbia, executivos das marcas patrocinadoras. Tom positivo-celebrities.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-216 — Fotos de Shakira em Copacabana (galeria Estadão)
+
+**Fonte:** Estadão  **Data:** 02/05/2026 21:05 UTC
+
+Galeria fotográfica do Estadão. Sem texto editorial significativo. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-123 / a-122 / a-148 / a-137 / a-141 — Horário e onde assistir (recap múltiplos veículos)
+
+**Fontes:** Estadão (a-123/122), CNN Brasil (a-148), Gshow (a-137), InfoMoney (a-141)
+**Datas:** 02/05/2026 21:23 / 21:24 / 21:30 / 23:32 / 23:35 UTC
+
+Bloco coletivo: 5 versões editoriais do mesmo recap final pré-show (horário 21h45, transmissão TV Globo / Multishow / Globoplay). Tom muito positivo, marketing de transmissão. Bloco único cobre os 5 IDs.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-152 — Público faz filas nos pontos de acesso
+
+**Fonte:** G1  **Data:** 02/05/2026 22:19 UTC
+
+Cobertura ao vivo: filas nos pontos de acesso, clima de animação. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-136 — Copacabana lota para megashow
+
+**Fonte:** CNN Brasil  **Data:** 02/05/2026 22:39 UTC
+
+CNN cobertura tempo-real: praia lotando, expectativa 2+ mi. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-174 — Relembre as visitas mais icônicas de Shakira ao Brasil (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 02/05/2026 22:52 UTC
+
+Retrospectiva CNN: Manaus 1996, Rock in Rio IV (2011 com Ivete), Engenhão 2025, Morumbis 2025. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-133 — 'O fenômeno Shakira': imprensa internacional repercute megashow
+
+**Fonte:** O Globo  **Data:** 02/05/2026 23:00 UTC
+
+Imprensa internacional (Reuters, AFP, AP, BBC, El País, La Nación, Clarín) repercute o show. Tom muito positivo, soft power global.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Repercussão internacional positiva | Tom celebratório. | muito positivo |
+| Posicionamento global do Rio | Soft power. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-149 — Copacabana reúne fãs à espera de Shakira (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 02/05/2026 23:04 UTC
+
+Cobertura ao vivo CNN. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-204 — Área VIP para fãs e familiares colada ao palco
+
+**Fonte:** G1  **Data:** 02/05/2026 23:10 UTC
+
+Shakira destinou área VIP especial para fãs (não só patrocinadores) próxima ao palco. Tom muito positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Generosidade Shakira × fãs (VIP gratuito) | Tom muito positivo. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-167 — Famosos chegam para show (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 03/05/2026 00:08 UTC
+
+Cobertura de chegadas de famosos no Copacabana Palace. **Sentimento geral do artigo:** muito positivo.
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
