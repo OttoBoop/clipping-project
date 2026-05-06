@@ -2548,6 +2548,132 @@ mencionada. Captura via tag de Flávio Valle / Pedro Angelito.
 
 ---
 
+## a-9 — (= a-35) Painel Millôr Fernandes (off-scope)
+
+Mesma matéria de `a-35`. Bloco redirecionador. **Sentimento geral do artigo:** N/A — fora de escopo.
+
+---
+
+## a-11 — (= a-39) Bar Partisan na Lapa cassado (off-scope)
+
+Mesma matéria de `a-39`. Bloco redirecionador. **Sentimento geral do artigo:** N/A — fora de escopo.
+
+---
+
+## a-286 — Sony Music: promoção VIP para 100 fãs
+
+**Fonte:** O Globo (oglobo.globo.com)  **Data:** 28/04/2026 19:24 UTC
+
+Sony Music Brasil oferece 100 vagas VIP via cadastro em vamoscomlaloba.com.br (texto sobre admiração por Shakira). Inscrições 14h 28/04 — 14h 30/04. Marketing VIP positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Promoção VIP via gravadora | Marketing positivo. | positivo |
+| Engajamento de fãs (texto) | Inclusão criativa. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-285 — Taxistas poderão cobrar preços fixos pós-show
+
+**Fonte:** O Globo (oglobo.globo.com)  **Data:** 28/04/2026 19:26 UTC
+
+Prefeitura tabela tarifas fixas (R$ 35 a R$ 361 conforme destino) para corridas de táxi do bolsão da Rua Siqueira Campos pós-show, das 24h de 02/05 às 6h de 03/05. Evita preços abusivos. Tom positivo-utilidade pública.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Tabelamento anti-abuso | Regulação positiva. | positivo |
+| Logística pós-show | Organização preventiva. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-284 — Rodrigo Lemos é o novo presidente da Ocyan (off-scope)
+
+**Fonte:** Petronotícias (petronoticias.com.br)  **Data:** 28/04/2026 20:24 UTC (snapshot; conteúdo de 02/04/2025)
+
+Artigo fora de escopo — não trata do show. Notícia corporativa de óleo & gás (presidência da Ocyan), capturada por homonímia com "Flávio Valle" (presidente do Conselho da Ocyan, mesmo nome do vereador, pessoas distintas).
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| (Tema Shakira) | Não aparece. | n/a |
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo** (confusão de homonímia "Flávio Valle"; pessoa diferente do vereador).
+
+---
+
+## a-15 — Comissão sobre veículos elétricos (off-scope)
+
+**Fonte:** Tempo Real (tempo-real.com)  **Data:** 28/04/2026 20:43 UTC
+
+Artigo fora de escopo — disputa interna do PSD na Câmara do Rio. Shakira não mencionada.
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**.
+
+---
+
+## a-283 — Paes recua sobre garrafas de vidro nos quiosques (off-scope)
+
+**Fonte:** O Globo (oglobo.globo.com)  **Data:** 28/04/2026 20:55 UTC (snapshot; conteúdo de 27/05/2025)
+
+Artigo fora de escopo — regulamentação de quiosques na orla, anterior ao show. Shakira não mencionada.
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**.
+
+---
+
+## a-25 — Seop suspende cancelamento do Bar Partisan (off-scope)
+
+**Fonte:** O Dia (odia.ig.com.br)  **Data:** 29/04/2026 01:19 UTC
+
+Artigo fora de escopo — atualização do caso Bar Partisan (Seop recua). Shakira em sidebar.
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**.
+
+---
+
+## a-232 — Quando, que horas e onde assistir ao show
+
+**Fonte:** Gshow (gshow.globo.com)  **Data:** 29/04/2026 03:00 UTC
+
+Recap final pré-show: dia 02/05, Praia de Copacabana, transmissão TV Globo após novela Três Graças, Globoplay/Multishow a partir das 21h20. Apresentadores: Ana Clara, Dedé Teicher, Kenya Sade, Laura Vicente. Tom positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Cobertura multi-plataforma Globo | Reforço positivo. | muito positivo |
+| Programação detalhada | Engajamento positivo. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-155 — Quem vai abrir o show: DJ Maz e Vintage Culture
+
+**Fonte:** G1 / GloboNews (g1.globo.com)  **Data:** 29/04/2026 08:49 UTC
+
+GloboNews revela exclusivo: DJ Maz (afro-house, 2,5 mi ouvintes/mês Spotify) e Vintage Culture (eletrônica, 8 mi ouvintes/mês) farão o esquenta na areia. Patrocínio Corona via Sunset. Tom positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Abertura com brasileiros (DJ Maz, Vintage Culture) | Soft power nacional. | muito positivo |
+| Continuidade da fórmula Corona Sunset | Patrocínio reforça. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-44 — Seop recua e cancela punição ao bar Partisan (off-scope)
+
+**Fonte:** Tempo Real (tempo-real.com)  **Data:** 29/04/2026 10:23 UTC
+
+Artigo fora de escopo — Seop recua após recurso do bar. Shakira em sidebar.
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**.
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
