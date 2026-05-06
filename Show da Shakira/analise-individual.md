@@ -26,8 +26,44 @@
   Resumos podem precisar de revisita se houver versões atualizadas no
   snapshot novo (mesma URL, mas o pipeline pode ter re-ingerido com mais
   contexto).
-- **Restantes:** 240. Processar em ordem cronológica via
-  `python3 tools/penelope_shakira_iter.py todo`.
+- **Restantes (no momento das notas abaixo):** 117 ainda por fazer; 126
+  já feitos. Processar em ordem cronológica via
+  `python3 "Show da Shakira/tools/penelope_shakira_iter.py" todo`.
+
+## Notas de execução / debug
+
+### 2026-05-06 — Switch Opus → Sonnet
+
+A partir do próximo commit (depois deste registro), o modelo base de
+Penelope passa de **Opus 4.7 (1M context)** para **Sonnet 4.6**. Otávio
+fez o switch por limite horário do Opus. Os 126 blocos anteriores
+(a-241, a-237, a-242, ..., a-86, a-151, a-161, ..., a-225) foram
+escritos pela Opus. Os blocos a partir do próximo commit são da Sonnet.
+Comparação de qualidade fica no escopo da revisão do Otávio.
+
+### 2026-05-06 — Anomalia a-325 (artigo de fora da janela temporal)
+
+Otávio apontou: o artigo `a-325` (Diário do Rio, "Barra da Tijuca se
+consolida...") tem `publishedAt = 10/02/2025` — um ano antes da janela
+da mission Shakira (01/04/2026 a 05/05/2026). O bloco classificou
+corretamente como **fora de escopo**, mas a presença dele no snapshot
+filtrado por target `shakira` é estranha. Hipóteses para Atlas/Ariadne
+investigarem:
+
+1. **Backfill retroativo:** quando o target `shakira` foi adicionado em
+   2026, o pipeline pode ter retroativamente re-matched artigos
+   antigos no banco que mencionavam Shakira em texto, sem respeitar a
+   janela atual de coleta.
+2. **Tag herdada via story:** a-325 pode estar numa story tagged
+   `shakira` por conta de outros artigos (a-116/a-633 estão no mesmo
+   contexto turismo-latino).
+3. **Path de mention secundário fora do safe-surface:** o pipeline tem
+   rule de só salvar matches secundários nos primeiros 500 chars; mas
+   backfilled mentions podem ter passado por um path diferente.
+
+**Não bloqueia o loop de Penelope** — é debug item para próxima
+auditoria da Ariadne em `pipeline/ingest.py` ou
+`web_app/db_admin.py:cleanup_false_backfilled_target_mentions`.
 
 ---
 
