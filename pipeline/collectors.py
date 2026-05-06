@@ -79,6 +79,16 @@ def _parse_datetime(text: str) -> str:
         return datetime.now(timezone.utc).isoformat()
 
 
+def _parse_xml_root(xml_text: str) -> ET.Element:
+    try:
+        return ET.fromstring(xml_text)
+    except ET.ParseError:
+        cleaned = re.sub(r"<(/?)([A-Za-z_][\w.-]*):", r"<\1\2_", xml_text)
+        cleaned = re.sub(r"\s([A-Za-z_][\w.-]*):([A-Za-z_][\w.-]*)=", r" \1_\2=", cleaned)
+        cleaned = re.sub(r"&(?!#\d+;|#x[0-9a-fA-F]+;|[A-Za-z][A-Za-z0-9]+;)", "&amp;", cleaned)
+        return ET.fromstring(cleaned)
+
+
 def _parse_window_boundary(value: str, *, end_of_day: bool) -> datetime | None:
     raw = (value or "").strip()
     if not raw:
@@ -119,7 +129,7 @@ def _within_window(value: str, *, date_from: str = "", date_to: str = "") -> boo
 def parse_rss_or_atom(xml_text: str, source_name: str, source_type: str, metadata: dict | None = None) -> list[CandidateArticle]:
     metadata = metadata or {}
     results: list[CandidateArticle] = []
-    root = ET.fromstring(xml_text)
+    root = _parse_xml_root(xml_text)
 
     # RSS 2.0 path.
     for item in root.findall(".//item"):

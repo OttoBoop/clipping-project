@@ -609,6 +609,37 @@ def ensure_source_runs(job_id: str, spec: dict[str, Any], target_key: str) -> No
     units = build_source_units(spec, target_key)
     now = datetime.now(timezone.utc).isoformat()
     with connect(db_path()) as conn:
+        active_keys = {unit.source_key for unit in units}
+        placeholders = ",".join("?" for _ in active_keys)
+        if active_keys:
+            conn.execute(
+                f"""
+                UPDATE job_source_runs
+                SET status = 'complete',
+                    last_error = 'Fonte removida ou desativada na configuração ativa.',
+                    updated_at = ?,
+                    finished_at = COALESCE(finished_at, ?)
+                WHERE job_id = ?
+                  AND target_key = ?
+                  AND status != 'complete'
+                  AND source_key NOT IN ({placeholders})
+                """,
+                (now, now, job_id, target_key, *sorted(active_keys)),
+            )
+        else:
+            conn.execute(
+                """
+                UPDATE job_source_runs
+                SET status = 'complete',
+                    last_error = 'Nenhuma fonte ativa para este coletor.',
+                    updated_at = ?,
+                    finished_at = COALESCE(finished_at, ?)
+                WHERE job_id = ?
+                  AND target_key = ?
+                  AND status != 'complete'
+                """,
+                (now, now, job_id, target_key),
+            )
         for unit in units:
             conn.execute(
                 """
@@ -644,6 +675,8 @@ def build_source_units(spec: dict[str, Any], target_key: str) -> list[SourceUnit
 
     if include("rss"):
         for idx, feed in enumerate(RSS_FEEDS):
+            if str(feed.get("disabled") or "").strip().lower() in {"1", "true", "yes"}:
+                continue
             units.append(
                 SourceUnit(
                     source_key=f"rss:{idx}",

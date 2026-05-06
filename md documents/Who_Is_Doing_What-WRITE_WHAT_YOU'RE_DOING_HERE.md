@@ -164,6 +164,18 @@ retomada manual e automática, status público com cobertura por fonte e
 verificação final no Render público para `shakira` entre `01/04/2026` e
 `05/05/2026`.
 
+### 2026-05-06 — Theseus-Atlas-Codex — public durable run found RSS repairs
+
+Deploy `a73602d` ficou live no Render com `/healthz` mostrando
+`2026-05-06-durable-source-ledger`. Iniciei o job público `85c43d642782`
+para `shakira`, `01/04/2026`–`05/05/2026`, collector `all`.
+
+O ledger público apareceu em `/api/update/status`, mas a rodada revelou falhas
+reais de fonte: RSS de `R7`, `Band` e `Estadao` retornando `404`. Corrigi Band
+e Estadão para os feeds atuais encontrados no HTML público, desativei o RSS R7
+até existir URL real, e estou fazendo o ledger reconciliar fontes removidas ou
+desativadas em jobs retomados.
+
 ### 2026-05-06 — Penelope+Iris — persona Penelope criada e loop Show Shakira iniciado
 
 Otávio pediu, antes de sair pro trabalho, um run longo, autônomo, sem supervisão para

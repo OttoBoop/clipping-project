@@ -792,6 +792,49 @@ def test_reset_resumable_source_runs_requeues_failed_and_interrupted_rows(monkey
     assert row["finished_at"] is None
 
 
+def test_disabled_source_units_are_reconciled_out_of_resumed_jobs(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "preset": "custom",
+        "collector": "rss",
+        "target_keys": ["shakira"],
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "export": True,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+        "durable": True,
+    }
+    monkeypatch.setattr(
+        jobs,
+        "RSS_FEEDS",
+        [
+            {"source_name": "R7", "url": "https://noticias.r7.com/rss.xml"},
+            {"source_name": "Band", "url": "https://example.com/band.xml"},
+        ],
+    )
+    jobs.create_job("disabled-feed", "update", spec, started_by="coworker")
+    jobs.ensure_source_runs("disabled-feed", spec, "shakira")
+    assert [row["source_key"] for row in jobs.source_run_rows("disabled-feed")] == ["rss:0", "rss:1"]
+
+    monkeypatch.setattr(
+        jobs,
+        "RSS_FEEDS",
+        [
+            {"source_name": "R7", "url": "https://noticias.r7.com/rss.xml", "disabled": "true"},
+            {"source_name": "Band", "url": "https://example.com/band.xml"},
+        ],
+    )
+    jobs.ensure_source_runs("disabled-feed", spec, "shakira")
+
+    rows = jobs.source_run_rows("disabled-feed")
+    disabled = next(row for row in rows if row["source_key"] == "rss:0")
+    active = next(row for row in rows if row["source_key"] == "rss:1")
+    assert disabled["status"] == "complete"
+    assert "desativada" in disabled["last_error"]
+    assert active["status"] == "pending"
+
+
 def test_durable_wordpress_units_use_secondary_target_query_not_flavio_site_variants(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     monkeypatch.setattr(
@@ -1771,6 +1814,30 @@ def test_classification_listing_survives_missing_article_context(tmp_path):
     assert rows[0]["article_id"] == 643
     assert rows[0]["target_key"] == "bernardo_rubiao"
     assert rows[0]["article_sentiment"] == "neutral"
+
+
+def test_rss_parser_recovers_common_malformed_feed_markup():
+    from pipeline.collectors import parse_rss_or_atom
+
+    xml = """<?xml version="1.0"?>
+    <rss version="2.0">
+      <channel>
+        <item>
+          <title>Shakira & prefeitura do Rio</title>
+          <link>https://example.com/shakira</link>
+          <description>Show confirmado</description>
+          <media:content url="https://example.com/foto.jpg" />
+          <pubDate>Tue, 05 May 2026 12:00:00 GMT</pubDate>
+        </item>
+      </channel>
+    </rss>
+    """
+
+    rows = parse_rss_or_atom(xml, "Feed Malformado", "rss")
+
+    assert len(rows) == 1
+    assert rows[0].title == "Shakira & prefeitura do Rio"
+    assert rows[0].url == "https://example.com/shakira"
 
 
 def test_sqlite_snapshot_includes_uncheckpointed_wal_rows(tmp_path):

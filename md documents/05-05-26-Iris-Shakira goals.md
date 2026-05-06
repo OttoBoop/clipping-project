@@ -96,6 +96,19 @@ Still incomplete:
 - Public acceptance still requires Render endpoints, `assets/clipping-data.json`,
   visible UI, and screenshot evidence.
 
+### 2026-05-06 13:00 BRT
+
+- Public durable job `85c43d642782` started on Render for `shakira`,
+  `01/04/2026` through `05/05/2026`, collector `all`.
+- `/healthz` confirmed deployed version
+  `2026-05-06-durable-source-ledger` before the run was started.
+- The source ledger became visible in `/api/update/status`, confirming that
+  this is a Render job with durable source rows, not a local run.
+- The first real repair surfaced: configured RSS feeds for `R7`, `Band`, and
+  `Estadao` returned `404`. Band and Estadão have current replacement feeds;
+  R7 has no working RSS/sitemap endpoint in the probes performed so far and is
+  being treated as disabled until a real source URL is found.
+
 ## Loop Log
 
 ### 2026-05-05 16:36 BRT
