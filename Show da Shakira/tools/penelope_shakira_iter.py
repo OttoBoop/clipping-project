@@ -27,13 +27,13 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 ANALISE = ROOT / "Show da Shakira" / "analise-individual.md"
 TARGET_KEY = "shakira"
 
 DATA_PATHS = [
-    (ROOT / "tools" / "penelope-fetched" / "assets_clipping-data.json",
-     ROOT / "tools" / "penelope-fetched" / "assets_clipping-raw-texts.json"),
+    (ROOT / "Show da Shakira" / "penelope-fetched" / "assets_clipping-data.json",
+     ROOT / "Show da Shakira" / "penelope-fetched" / "assets_clipping-raw-texts.json"),
     (ROOT / "assets" / "clipping-data.json",
      ROOT / "assets" / "clipping-raw-texts.json"),
 ]

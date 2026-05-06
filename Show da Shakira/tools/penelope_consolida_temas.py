@@ -31,7 +31,7 @@ import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 ANALISE = ROOT / "Show da Shakira" / "analise-individual.md"
 CONSOLIDA = ROOT / "Show da Shakira" / "consolidacao-temas.md"
 ALIAS_PATH = ROOT / "tools" / "penelope_temas_aliases.json"
