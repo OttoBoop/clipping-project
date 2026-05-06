@@ -4345,6 +4345,223 @@ Mesmo artigo que a-81 (URL duplicada com barra final). **Sentimento geral do art
 
 ---
 
+## a-150 — Show da Shakira tem protesto pelo fim da escala 6×1 (Fundação Perseu Abramo)
+
+**Fonte:** Fundação Perseu Abramo  **Data:** 04/05/2026 18:43 UTC
+
+**Ativismo político no espaço do megashow.** Movimentos VAT (Vida Além do Trabalho), MTST e Nossas projetaram frases na fachada do Copacabana Palace: "Estoy aqui pela vida além do trabalho e pelo fim da escala 6×1", "Tarifa Zero" e "sem anistia para golpistas". Mensagens de saúde pública ("Viva o SUS"), educação e feminicídio também foram projetadas. Plateia reagiu com aplausos e assobios. No mesmo dia, governo federal lançou campanha nacional pelo fim da escala 6×1 (40h semanais, 2 dias de folga). Artigo cita histórico de ativismo de Shakira: Fundação Pies Descalzos (1997), embaixadora UNICEF (2003), Crystal Award em Davos (2017). Tom positivo-mobilizador; alinha Shakira a causas progressistas.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Fim da escala 6×1 / direitos trabalhistas | Protesto pacífico; governo federal lança campanha simultânea. | positivo |
+| Ativismo de Shakira (histórico) | Fundação Pies Descalzos, UNICEF, Davos — perfil de ativista. | muito positivo |
+| Feminicídio / saúde / educação | Mensagens projetadas; Shakira como símbolo de luta. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-64 — Na onda Shakira: Barranquilla se apresenta ao Brasil
+
+**Fonte:** Veja Rio  **Data:** 04/05/2026 18:46 UTC
+
+**Oportunidade diplomático-comercial aproveitada pela cidade natal de Shakira.** City Manager de Barranquilla Ana María Aljure Reales veio ao Rio para o show e concedeu entrevista à Veja Rio. A cidade realizou projeção no Cristo Redentor como ação de ativação urbana. Barranquilla oferece: localização estratégica no Caribe, estabilidade política (gestão Alejandro Char, 18 anos), mão de obra qualificada, turismo de propósito. Proposta às empresas brasileiras: rotas diretas Rio-Buenos Aires→Buenos Aires-Barranquilla, comércio e transferência de conhecimento. Carnaval de Barranquilla como segundo maior da América Latina (Patrimônio Oral da Humanidade). Shakira como vetor de soft power da cidade. Tom muito positivo e comercial.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Shakira como soft power de Barranquilla | Show usado como gancho para promoção da cidade. | muito positivo |
+| Investimento brasileiro na Colômbia | Oportunidade comercial e turística. | positivo |
+| Empoderamento feminino (Barranquilla) | Cidade alinha mensagem de Shakira a políticas locais. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-76 — Número de 'matches' aumentou 20% durante show de Shakira, diz Tinder
+
+**Fonte:** Folha de S.Paulo  **Data:** 04/05/2026 19:03 UTC
+
+**Dado curioso de impacto sociocultural.** Tinder registrou aumento de 20% nos matches no Rio de Janeiro durante o show. Menções à Shakira nas biografias de usuários cresceram mais de 235% no Brasil. Folha enquadra como dado de plataforma: grandes eventos culturais geram picos de atividade. Nota: rawText está truncado por paywall (artigo pago); análise baseada em sumário. Tom leve e positivo — curiosidade cultural sobre o alcance do show.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Impacto no comportamento social (Tinder) | Dado quantitativo: +20% matches, +235% menções no perfil. | muito positivo |
+| Shakira como fenômeno cultural de massa | Influência além do palco, na vida social dos fãs. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-183 — Shakira, Lady Gaga ou Madonna? Ranking histórico de público em Copacabana
+
+**Fonte:** Diário do Rio  **Data:** 04/05/2026 19:13 UTC
+
+**Consolidação histórica do projeto Todo Mundo no Rio.** Ranking oficial Riotur: 1º Lady Gaga (2025) — 2,1 mi; 2º Shakira (2026) — 2 mi; 3º Madonna (2024) — 1,6 mi. Nota histórica: Rod Stewart (Réveillon 1994) aparece com 3,5–4,2 mi (Guinness Book, porém contestado — público estava para a virada do ano, não exclusivamente para o show). Shakira discursou em português: "Pensar que cheguei aqui com 18 anos, sonhando em cantar para vocês… e acabei me apaixonando por vocês." Dedicou o show às mulheres. Tom muito positivo — consolida o legado histórico do projeto.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Ranking histórico de público | Shakira em 2º lugar; contexto dos 3 anos do projeto. | muito positivo |
+| Shakira e o Brasil (30 anos de relação) | Discurso emocionado em português; trajetória desde os 18 anos. | muito positivo |
+| Empoderamento feminino (dedicação) | Show dedicado às mulheres; "juntas somos invencíveis". | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-80 — (vide bloco a-182)
+
+Mesmo artigo que a-182 (URL duplicada com barra final; rawTextKey vazio em a-80). **Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-182 — Forças de Segurança reduzem ocorrências em 52% no "Todo mundo no Rio" (Diário do Rio)
+
+**Fonte:** Diário do Rio  **Data:** 04/05/2026 20:59 UTC
+
+**Versão mais detalhada do balanço de segurança por força.** Decompõe os dados por órgão: Polícia Civil — 66 furtos celular, 10 roubos a transeunte, 4 portes de droga, 3 estelionatos, 3 lesões corporais; PM — 6 presos, 185 perfurocortantes, 2 adolescentes; Bombeiros — 176 militares, 20 postos de guarda-vidas, 80 socorros no mar, médicos em motos aquáticas (pioneiro); Lei Seca — 7 ações, 847 abordagens, 108 infrações por alcoolemia; Segurança Presente — 150 agentes, 50 viaturas; Municipal — >1.000 garrafas de vidro, >2.000 itens irregulares apreendidos; 1 preso por ingressos falsos vendidos a colombianos (R$ 1.500 cada). Tom muito positivo de accountability público detalhado.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Segurança comparativa (-52%) | Confirmado com detalhamento por força. | muito positivo |
+| Inovação (motos aquáticas com médicos) | Serviço pioneiro do Corpo de Bombeiros. | muito positivo |
+| Ingressos falsos (1 preso) | Colombianos enganados; caso encaminhado à DEAT. | negativo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-75 — Ocorrências em Copacabana com show de Shakira são metade do registrado com Lady Gaga (Folha)
+
+**Fonte:** Folha de S.Paulo  **Data:** 04/05/2026 22:36 UTC
+
+**Cobertura da Folha — versão mais completa da narrativa de segurança.** 115 ocorrências, queda de 52% vs. Gaga (238), 54% vs. Madonna (252). Nenhuma grave. Destaque: 66 furtos de celular, 10 roubos a transeunte, 8 roubos de celular. 8 mil agentes, Operação Shakira. Artigo contextualiza também: atraso de 1h+ por "motivos pessoais" (pai com AVC, segundo Hola!), show para 2 mi de pessoas (inferior aos 2,1 mi de Gaga mas superior aos 1,6 mi de Madonna). Tom positivo-factual, equilibrado — menciona o atraso mas com contexto humanizante.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Segurança (-52%) | Dado central; enquadramento positivo com nuance comparativa. | muito positivo |
+| Furtos de celular (66) | Dado específico; menor que Gaga (222) — queda implícita. | positivo |
+| Atraso / pai com AVC | Contexto humanizante: "pai com AVC" (Hola!). | neutro |
+| Público (2 mi) | Inferior a Gaga mas superior a Madonna. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-135 — Show da Shakira: ocorrências caíram em 52% (CNN Brasil)
+
+**Fonte:** CNN Brasil  **Data:** 04/05/2026 22:58 UTC
+
+**Cobertura da CNN Brasil — balanço por força detalhado.** Mesmos dados das coberturas anteriores + detalhe: ingressos falsos vendidos por R$ 1.500 a turistas colombianos, encaminhados à DEAT. Também cita: 80 socorros no mar pelo Corpo de Bombeiros, médicos em motos aquáticas, 176 militares em 20 postos de guarda-vidas. Tom factual positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Segurança (-52%) | Confirmado; foco em dados operacionais. | muito positivo |
+| Fraude (ingressos falsos, show gratuito) | Ironia: show gratuito, colombianos pagaram R$ 1.500 por ingressos falsos. | negativo |
+| Bombeiros (inovação aquática) | Motos aquáticas com médicos destacadas. | muito positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-74 — Corregedoria da Polícia Civil investiga invasão armada a depósito de carros
+
+**Fonte:** G1 / Jornal Nacional  **Data:** 05/05/2026 02:16 UTC
+
+**Artigo fora de escopo.** `targetKeys: []`, `articleInScope: false`, `mentionOnlyInText: true`. Versão do Jornal Nacional do mesmo incidente coberto em a-185 (invasão armada ao depósito do Andaraí). Conexão com Shakira apenas temporal ("a história desse abuso começou durante o show da Shakira em Copacabana"). Artigo cobre conduta policial indevida (policial apontou fuzil para funcionário municipal). Desfecho: policial afastado, Corregedoria investigando. **Conteúdo principal: abuso policial, não Shakira.**
+
+**Sentimento geral do artigo:** N/A (fora de escopo)
+
+---
+
+## a-73 — Como pequenos negócios aproveitaram o show de Shakira (G1/PEGN)
+
+**Fonte:** G1 (PEGN)  **Data:** 05/05/2026 05:00 UTC
+
+**Economia criativa e empreendedorismo no contexto do show.** Dois perfis de empreendedores: (1) Lorrana Lica, dona de loja no Saara (RJ), vendeu camisetas, bonés, leques temáticos a partir de R$ 49,90; já havia faturado R$ 600 mil em shows anteriores (Madonna, Gaga). (2) Camila Meira (Sorocaba), agente de viagens, organizou pacote bate-volta para 64 pessoas por R$ 300 cada (investimento inicial de R$ 20 mil); usou comunidades de fãs em redes sociais para preencher o ônibus fretado. Tom muito positivo — "economia criativa entra no ritmo".
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Empreendedorismo / economia criativa | Dois casos concretos com dados financeiros. | muito positivo |
+| Shakira como motor econômico | Show como catalisador de negócios além do Rio. | muito positivo |
+| Comunidades de fãs como canal comercial | Redes sociais de fãs usadas para viabilizar pacotes. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-72 — Fã viaja para ver show e volta com selfie ao lado de Shakira (G1)
+
+**Fonte:** G1  **Data:** 05/05/2026 08:00 UTC
+
+**História humana de fandom.** Giovanna Ribeiro Vestina dos Santos, 23 anos, auxiliar administrativa de Mirassol (SP), viajou de ônibus fretado de São José do Rio Preto às 16h26 de sexta, chegou às 8h de sábado, assistiu ao show e voltou na madrugada. Durante "BZRP Music Sessions #53/66", Shakira desceu ao cercadinho e Giovanna tirou selfie e beijou os cabelos da cantora. Membro do Portal Shakira. "A ficha ainda não caiu." Mãe Ana Karla: "cogitei dar o nome de Shakira a ela." Tom muito positivo — narrativa de sonho realizado.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Fandom / experiência do fã | Narrativa emotiva de jornada de fã dedicada. | muito positivo |
+| Shakira interagindo com o público | Desceu ao cercadinho, tirou foto com fã. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-214 — 'Oi, Maria. É a Shakira aqui. O público amou' — áudio de agradecimento a Bethânia (G1)
+
+**Fonte:** G1  **Data:** 05/05/2026 12:27 UTC
+
+**Momento pós-show entre duas ícones.** Shakira enviou áudio por WhatsApp para Maria Bethânia agradecendo pelo dueto em "O que é, o que é?" de Gonzaguinha. Bethânia divulgou nas redes: "Parabéns, Shakira. O Brasil te recebendo de braços abertos, com tanto carinho, tudo o que você merece." Artigo também resume as outras parcerias do show: Caetano Veloso ("Leãozinho" — sonho de Shakira desde 1997), Ivete Sangalo ("País Tropical", como no Rock in Rio 2011), Anitta ("Choka Choka"). Tom muito positivo — diálogo entre culturas, afeto genuíno.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Dueto Shakira / Maria Bethânia | Áudio de agradecimento; Bethânia retribui com calor. | muito positivo |
+| Shakira / Caetano Veloso | Sonho de 27 anos realizado; Milan ouvia "Rai das Cores". | muito positivo |
+| Artistas brasileiros (visão geral) | Anitta, Ivete, Bethânia, Caetano, Unidos da Tijuca — simbiose. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-219 — Todo Mundo no Rio: Aérea teve crescimento de 30% na busca por passagens
+
+**Fonte:** Veja Rio  **Data:** 05/05/2026 14:00 UTC
+
+**Artigo fora de escopo.** `targetKeys: []`, `articleInScope: false`, `mentionOnlyInText: true`. Dados da Latam sobre impacto do show no tráfego aéreo: +30% na busca por passagens no período 30/04–02/05 vs. mesmo período do ano anterior; voos de São Paulo +5% acima do período regular; nova rota RioGaleão–Aeroparque (Buenos Aires) inaugurada em 1º de maio. Shakira é mencionada apenas como contexto do evento. **Conteúdo principal: dados de aviação comercial da Latam, não análise de Shakira.**
+
+**Sentimento geral do artigo:** N/A (fora de escopo)
+
+---
+
+## a-220 — Pai de Shakira se recupera em casa após isquemia (G1)
+
+**Fonte:** G1  **Data:** 05/05/2026 20:46 UTC
+
+**Resolução positiva da narrativa de saúde do pai.** William Mebarak, 94, recebeu alta hospitalar e se recupera em casa na Colômbia, segundo imprensa colombiana (Blu Radio, El País). Após 24h críticas na UTI, evolução foi considerada favorável. Artigo detalha histórico de saúde: 6 cirurgias, 2 casos de Covid, 2 quedas (2022), hemorragia cerebral, válvula no cérebro para hidrocefalia (2023). "Ele continuou a iluminar a vida daqueles que o amam com seu sorriso", disse Shakira. William completa 95 anos em setembro. Tom muito positivo-emotivo — fechamento esperançoso de um arco de 3 dias.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Saúde do pai (alta hospitalar) | Resolução positiva: em casa, evolução favorável. | muito positivo |
+| Histórico de saúde de William Mebarak | 6 cirurgias, 2 Covids, hidrocefalia — trajetória resiliente. | neutro |
+| Shakira / relação com o pai | Citação emotiva sobre o pai. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-218 — O áudio de Shakira para Maria Bethânia após dueto desafinado (VEJA)
+
+**Fonte:** VEJA  **Data:** 05/05/2026 21:32 UTC
+
+**Mesmo evento que a-214, cobertura da VEJA — com nota crítica.** VEJA reproduz o áudio de agradecimento ("Oi, Maria, é a Shakira aqui… eu adorei, o público amou") e a resposta de Bethânia, mas adiciona uma nota que a-214 (G1) omite: o dueto foi marcado por "execução desafinada de 'O Que É o Que É?', em descompasso com a bateria da Unidos da Tijuca." Shakira convidou Bethânia — foi a colombiana quem fez o convite. Tom predominantemente positivo mas com registro crítico do desafine técnico.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Dueto Shakira / Maria Bethânia | Agradecimento caloroso post-show. | muito positivo |
+| Qualidade técnica do dueto | Nota crítica: execução desafinada, descompasso com a bateria. | negativo |
+| Bethânia resposta | Elogio ao show e ao Brasil. | muito positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
