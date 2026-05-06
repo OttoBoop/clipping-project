@@ -12,34 +12,22 @@
 - **Persona ativa:** Penelope (`md documents/PENELOPE_CHARACTER_SHEET.md`).
 - **Plano de execução:** `Show da Shakira/workflow-classificacao-shakira.md`,
   Etapa 1.
-- **Total esperado de artigos (segundo Otávio):** 119 (target `shakira` na
-  base de produção).
-- **Total acessível nesta sessão:** 2 artigos únicos (3 IDs com 1 duplicata
-  por URL), encontrados varrendo `assets/clipping-raw-texts.json` por menção
-  literal a "shakira". O snapshot comitado é de 13/04/2026 — antes do target
-  `shakira` ser formalizado, mas o pipeline já havia ingerido essas notícias
-  via outros targets (Flávio Valle).
-- **Artigos concluídos nesta sessão:** 2 / 119 visíveis na base disponível.
-- **Pendente:** ~117 artigos só existem no disco do Render. Egress
-  do sandbox cloud para `*.onrender.com` está bloqueado pelo proxy gerenciado
-  da Anthropic (`host_not_allowed`, issue upstream
-  `anthropics/claude-code#52982`). Tentativas via Playwright (request +
-  goto), via raw.githubusercontent.com em todos os branches/tags/repos do
-  OttoBoop, via GitHub MCP code search, e via DNS workarounds — todas falham
-  (Render só responde para clientes whitelisted) ou não retornam nenhum
-  artigo Shakira além desses 2 (o repo OttoBoop não tem outro snapshot
-  Shakira-enriched). Detalhes em Q-008 do canal vivo.
-
-A próxima Penelope que retomar este arquivo (após Otávio comitar dump fresco
-do Render OU resolver o egress) deve:
-
-1. Carregar `assets/clipping-data.json` + `assets/clipping-raw-texts.json`
-   atualizados.
-2. Re-executar o filtro de Etapa 0 (`'shakira' in story.targetKeys` ou
-   `'shakira' in article.targetKeys`).
-3. Para cada novo `articleId` que não apareça abaixo, inserir bloco
-   `EM ANDAMENTO` → bloco final, conforme protocolo da Etapa 1.
-4. Atualizar a contagem em "Status do loop".
+- **Fonte de dados ativa:** `tools/penelope-fetched/assets_clipping-data.json`
+  + `assets_clipping-raw-texts.json`, baixados pelo workflow GitHub Actions
+  `penelope-fetch-shakira.yml` em 2026-05-06 15:11 UTC, com `meta.generatedAt
+  = 06/05/2026 00:03 UTC`. Foi como Penélope contornou o egress block do
+  sandbox para `*.onrender.com` — ver §5 do canal vivo, run 8 do workflow.
+- **Total real de artigos a analisar:** 243 (220 strict-tag + 23 indiretos
+  via story-tag ou mention-em-texto). Otávio estimou 119 — esse é o número
+  de **stories** (`stories[*]` com `'shakira' in targetKeys`); **artigos
+  individuais** dentro dessas stories são 220 strict + alguns indiretos.
+- **Artigos já concluídos:** 3 (a-116, a-633, a-325) — feitos antes do
+  unblock do egress. Usaram dados do snapshot estático stale (13/04/2026).
+  Resumos podem precisar de revisita se houver versões atualizadas no
+  snapshot novo (mesma URL, mas o pipeline pode ter re-ingerido com mais
+  contexto).
+- **Restantes:** 240. Processar em ordem cronológica via
+  `python3 tools/penelope_shakira_iter.py todo`.
 
 ---
 
