@@ -3069,6 +3069,181 @@ Recap final do dia do show. Tom muito positivo. Bloco único cobre os dois IDs.
 
 ---
 
+## a-108 — (= a-125) Embaixada EUA alerta turistas
+
+Mesma matéria de `a-125`. **Sentimento geral do artigo:** negativo.
+
+---
+
+## a-225 — (= a-171) Tudo que precisa saber
+
+Mesma matéria de `a-171`. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-112 — De Turnê Bilionária a Copacabana: como Shakira construiu sua fortuna
+
+**Fonte:** Forbes Brasil  **Data:** 02/05/2026 08:00 UTC
+
+Forbes Brasil: Shakira é a 6ª musicista mais bem paga do mundo (US$ 105 mi em 2025). Turnê "Las Mujeres Ya No Lloran" arrecadou US$ 421,6 mi com 3,3 mi ingressos em 86 shows até janeiro. Recorde Guinness de turnê de maior bilheteria de artista latino. 4 Grammys, 15 Latin Grammys, 12 álbuns, 95 mi cópias. Tom muito positivo, perfil financeiro.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Posicionamento global Shakira (top 6 musicistas) | Tom celebratório. | muito positivo |
+| Recorde de turnê latina | Reforço aspiracional. | muito positivo |
+| Visibilidade Forbes (mídia financeira premium) | Reforço de prestígio. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-117 — Por que Shakira faz tanto sucesso no Brasil? Empresários, artistas e fãs explicam
+
+**Fonte:** Estadão (estadao.com.br)  **Data:** 02/05/2026 09:00 UTC
+
+Reportagem-perfil profunda do Estadão (André Bernardo): retrospectiva da relação Shakira × Brasil desde 1996 (Teatro Amazonas, Manaus, 684 pessoas). 49º show no Brasil será este de Copacabana. Depoimentos: **Luiz Calainho** (ex-Sony Music, montou estratégia de R$ 3 mi em 1996), **DJ Memê** (remixou 4 canções), **Chico César** ("Mama África" cantada por Shakira em vários shows desde 1997), guitarrista **Grecco Buratto**, estilista **Dario Mittmann**, e fãs (Levi Tavares do Shakira Brasil 1,2 mi seguidores; Diogo Barros do Pies Descalzos Brasil; Mauricio de Souza do Portal Shakira). Shakira-fundação na Colômbia (19 escolas, 224 mil estudantes). 393 pessoas no Brasil chamam-se Shakira (Censo 2022). Tom muito positivo, jornalismo cultural denso.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Histórico de longa data Shakira × Brasil | Reverência cultural. | muito positivo |
+| Estratégia de marketing pioneira no Brasil (Calainho) | Detalhe positivo. | muito positivo |
+| Diálogo cultural multimúsicos brasileiros | Soft power. | muito positivo |
+| Empoderamento feminino como mensagem de marca | Reforço positivo. | muito positivo |
+| Fundación Pies Descalzos (impacto social) | Tema novo: filantropia. | muito positivo |
+| Comunidade fã ("alcateia"; 393 brasileiras chamadas Shakira) | Profundidade do impacto cultural. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-91 — Onde vai passar na TV e streaming?
+
+**Fonte:** Estadão  **Data:** 02/05/2026 09:01 UTC
+
+Recap utilitário Estadão: TV Globo (após Três Graças), Globoplay e Multishow (a partir das 21h20). Esquenta com Vintage Culture (17h45-18h45) e DJ Maz (19h-20h30). After com Papatinho e Melody. Tom positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Cobertura multi-plataforma Globo | Reforço positivo. | muito positivo |
+| Programação completa esquenta + after | Inclui artistas brasileiros. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-109 — Hoje é dia de Shakira! Tire todas as dúvidas (FAQ de 35 perguntas)
+
+**Fonte:** G1 (g1.globo.com)  **Data:** 02/05/2026 10:27 UTC
+
+Mega-FAQ utilitário g1: 35 perguntas cobrindo horário, palco, transporte (carro proibido após 18h em Copa, metrô 24h, BRT, ônibus, VLT, barco), proibições, banheiros, comida, posto médico, área PCD, setlist, esquenta, after, segurança contra furtos, policiamento (7.927). 9 pessoas/m² perto do palco. Operação Tatuí. 4 mil ambulantes credenciados. Tom muito positivo-utilidade.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Logística completa de transporte | Detalhamento exaustivo positivo. | muito positivo |
+| Política anti-camping (Operação Tatuí) | Preventiva positiva. | positivo |
+| Densidade de público (9 pessoas/m²) | Mencionada factualmente. | neutro |
+| Acessibilidade PCD (3 áreas) | Inclusão positiva. | positivo |
+| Segurança contra furtos / dicas práticas | Utilidade ampla. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-146 — Ao contrário de Madonna e Lady Gaga, Shakira autoriza Globo a transmitir SEM delay
+
+**Fonte:** Folha de S. Paulo / Coluna Outro Canal  **Data:** 02/05/2026 11:25 UTC
+
+Coluna Outro Canal (Gabriel Vaquer) revela que Shakira não exigiu delay na transmissão pela Globo (Madonna e Lady Gaga sim). Apresentadoras: Ana Clara Lima e Kenya Sade. Tom positivo, "abertura" da artista.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Transmissão ao vivo sem delay (diferencial) | Confiança positiva. | muito positivo |
+| Comparação com Madonna/Lady Gaga | Posiciona Shakira como mais aberta. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-176 — Show turbina economia (UOL Economia, RSS)
+
+**Fonte:** UOL Economia (via Google News RSS)  **Data:** 02/05/2026 12:30 UTC
+
+Apenas link RSS no snapshot — conteúdo não foi capturado pelo pipeline. Pelo título: matéria sobre impacto econômico (turismo e negócios disparando), em linha com `a-281/127/94/97` (R$ 800 mi). Sentimento geral inferido por título.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Impacto econômico (UOL Economia) | Inferido positivo. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-240 — Shakira acumulou fortuna com sucesso global; saiba o valor
+
+**Fonte:** O Globo (oglobo.globo.com)  **Data:** 02/05/2026 12:30 UTC
+
+Variação editorial sobre fortuna: O Globo cita US$ 300 mi (~R$ 1,5 bi, fonte: Celebrity Net Worth) — número distinto do US$ 105 mi/ano da Forbes (a-112). Foco no patrimônio acumulado. Recap palco, programação. Tom muito positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Fortuna acumulada Shakira (US$ 300 mi) | Tom celebratório. | muito positivo |
+| Diversificação de fontes de renda | Empreendedorismo positivo. | positivo |
+| "Loba" como narrativa de empoderamento | Reforço positivo. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-226 — Esquema de trânsito e transporte para o show (CBN)
+
+**Fonte:** CBN / G1  **Data:** 02/05/2026 12:38 UTC
+
+Recap de trânsito e transporte: Av. Atlântica fechada das 19h até 4h dom, SuperVia trens extras na madrugada, Central do Brasil única para embarque pós-show, BRT 24h, VLT operação especial. Estação Cardeal Arcoverde apenas desembarque. Tom factual-positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Bloqueios viários totais Copa | Logística adequada. | positivo |
+| Reforço de transporte público (trens, BRT, VLT) | Resposta institucional positiva. | positivo |
+| Recomendação "deixe o carro em casa" | Comunicação preventiva. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-145 — Quem são os patrocinadores e o que eles ganham (ISTOÉ Dinheiro)
+
+**Fonte:** ISTOÉ Dinheiro (istoedinheiro.com.br)  **Data:** 02/05/2026 13:00 UTC
+
+Reportagem especializada em marketing: **15 marcas patrocinadoras**, mais a Prefeitura, governo estadual e Procolombia (agência colombiana). Lista: Corona (apresentadora), Santander, 99, Zé Delivery, Google Gemini, Dove, BETMGM (apenas transmissão), Latam, C&A, Bears, Guaraná Antártica, Deezer, Jeep, Ingresse, Shakira Perfumes (Puig). 80% rede hoteleira esgotada. Última edição (Lady Gaga) teve 32 mi espectadores na Globo. Bonus Track tem contrato 4 edições (2025-2028). Tom positivo, marketing-business.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Ecosistema multi-marca (15 patrocinadores) | Tom celebratório-business. | muito positivo |
+| Audiência Globo (32 mi espectadores Lady Gaga) | Reforço de alcance. | muito positivo |
+| Procolombia (agência diplomática) | Soft power Colômbia × Brasil. | positivo |
+| Bonus Track contrato plurianual | Continuidade institucional. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-213 — Rio entra em Estágio 2 por causa do show
+
+**Fonte:** Diário do Rio (diariodorio.com)  **Data:** 02/05/2026 14:32 UTC
+
+COR-Rio coloca a cidade em **Estágio 2** (segundo de cinco níveis) à 0h de 02/05. Bloqueios totais a partir das 19h. Marinha emite **alerta de ressaca** (ondas 2,5-3 m entre dom noite e ter tarde). Pulseira de retorno do metrô (R$ 15,80). Estações Copa 24h. Tom factual; o Estágio 2 é tratado como medida adequada de resposta.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Estágio 2 do COR-Rio (impactos na rotina) | Tratado como resposta adequada. | neutro |
+| Marinha — alerta de ressaca | Aviso preventivo. | neutro |
+| Pulseira metrô / operação 24h | Logística positiva. | positivo |
+| Comunicação institucional COR-Rio | Tom oficial-positivo. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
