@@ -162,8 +162,213 @@ um ano antes, o que ajuda a contextualizar `a-116`).
 
 ---
 
-<!-- Fim dos blocos disponíveis nesta sessão. Próxima Penelope retoma aqui
-     quando dados frescos do Render aterrissarem no repo. -->
+---
+
+## a-241 — Dove se torna patrocinadora do Todo Mundo no Rio, que terá show da Shakira
+
+**Fonte:** O Globo Sitemap (oglobo.globo.com)
+**Data:** 01/04/2026 09:00 UTC
+**URL:** https://oglobo.globo.com/blogs/capital/post/2026/04/dove-se-torna-patrocinadora-do-todo-mundo-no-rio-que-tera-show-da-shakira.ghtml
+
+### Resumo Narrativo
+
+O Globo (coluna Capital, Rennan Setti) anuncia que a Dove, marca de higiene
+pessoal da Unilever, entrou para o rol de patrocinadores do "Todo Mundo no
+Rio" que organizará o show gratuito de Shakira em Copacabana em maio. O
+texto detalha a campanha "#LobasVãoDeDove", criada pela DAVID em parceria
+com BR Media Group, Tastemakers Brasil e Initiative Brasil, com ativações
+in loco, distribuição de brindes, mídia OOH e frentes com influenciadores.
+A executiva Mariana Krause, gerente de marketing de desodorantes, justifica
+o ângulo conectando o antitranspirante aerossol ao público feminino do
+festival — "em meio a coreografias, refrões em coro e momentos de euforia
+coletiva, levantar os braços é inevitável", explica. A matéria também cita
+pesquisa proprietária Dove segundo a qual 61% das brasileiras já deixaram
+de levantar os braços por vergonha das axilas. Outros patrocinadores
+listados: Corona (apresentadora), Santander, Latam, C&A, 99, Beats, Deezer.
+
+O ângulo é estritamente comercial-publicitário: o show é tratado como
+plataforma de marca, sem comentários sobre a artista, infraestrutura
+pública ou impacto cidadão. O fandom "lobas" aparece como categoria de
+consumidor. Tom positivo de "diversificação de portfólio" para a Dove.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Patrocínio comercial / branding ao redor do show | Apresentado como aposta estratégica de marca em festivais musicais; lista expansiva de patrocinadores (Dove, Corona, Santander, Latam, C&A, 99, Beats, Deezer). | positivo |
+| Conexão público feminino × marca via fandom Shakira ("lobas") | Argumentado pela executiva Dove como ativação natural; pesquisa apoia o ângulo. | positivo |
+| Show de Shakira como evento de massa | Mencionado como contexto; não detalhado. | neutro |
+| Bonus Track / produção do Todo Mundo no Rio | Mencionada como organizadora; sem juízo. | neutro |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-237 — A um mês do megashow de Shakira, Rio aguarda 'invasão latina' com disparada de voos e reservas
+
+**Fonte:** G1 (g1.globo.com)
+**Data:** 02/04/2026 12:08 UTC
+**URL:** https://g1.globo.com/rj/rio-de-janeiro/musica/show-shakira-rj/noticia/2026/04/02/a-um-mes-do-megashow-de-shakira-rio-aguarda-invasao-latina-com-disparada-de-voos-e-reservas.ghtml
+
+### Resumo Narrativo
+
+A reportagem do G1, assinada por Ana Paula Jaume, apresenta o show de
+Shakira como motor de "invasão latina" no Rio: dados da Embratur indicam
+que o número de colombianos que virão à cidade quase quadruplica em
+relação a 2025 — o maior aumento registrado. Cerca de 8.500 passagens
+aéreas internacionais foram reservadas para o período do evento, 80% a
+mais que para o show de Madonna em 2024. A Latam aumentou em 22% o número
+de voos em comparação com 2025 (ano de Lady Gaga), com origem
+principalmente em Lima, Santiago e Buenos Aires. As buscas por hospedagem
+para 1–3 de maio cresceram 34% na Booking após a confirmação do show.
+
+A peça humaniza o fenômeno com três entrevistados: Gustavo Mayaute, fã
+peruano que estima gastar US$ 3.500–4.000 (≈ R$ 20 mil) por pessoa;
+Manuel Navarro, fã chileno que viaja em grupo de quase 20 pessoas; e
+Welisom Myers, fã brasileiro de Guaratinguetá que reencontrará amiga
+conhecida em show anterior. A diretora da Associação Brasileira de
+Agências de Viagens, Cristina Fritsch, contextualiza como "onda latina"
+puxada por artistas como Bad Bunny — turismo conectado à identidade
+cultural, não apenas consumo de entretenimento. A expectativa final é
+"repetir o sucesso de Madonna e Lady Gaga e reunir 2 milhões de pessoas".
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Turismo internacional / "invasão latina" | Boom quantificado (4× colombianos, 8.500 reservas, 80% mais que Madonna). Tom celebratório. | muito positivo |
+| Aumento de oferta de voos (Latam +22%) | Apresentado como resposta à demanda; positivo para conectividade Brasil–América Latina. | positivo |
+| Hospedagem / Booking (+34% buscas) | Sinal de demanda forte. | positivo |
+| Identificação cultural latina como vetor turístico | Contextualizado como "onda latina" emocional, não apenas consumista. | positivo |
+| Expectativa de público (2 milhões) | Comparado a Madonna/Lady Gaga; meta otimista. | positivo |
+| Custo individual da viagem para os fãs | Citado como significativo (R$ 20 mil/pessoa peruana) sem juízo crítico — economia familiar/grupo de fãs. | neutro |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-242 — Música com Shakira, referências do candomblé: o que se sabe sobre o álbum de Anitta 'Equilibrivm'
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 06/04/2026 18:18 UTC
+**URL:** https://oglobo.globo.com/cultura/musica/noticia/2026/04/musica-com-shakira-referencias-do-candomble-o-que-se-sabe-sobre-o-album-de-anitta-equilibrivm.ghtml
+
+### Resumo Narrativo
+
+O Globo cobre o lançamento do álbum "Equilibrivm" de Anitta (16 de abril)
+e da faixa "Choka choka" (9 de abril), parceria com Shakira. O recorte é
+sobre o álbum de Anitta — sua dupla estrutura (português e
+inglês/espanhol), referências ao candomblé em "Meia-noite", e outros
+feats com Luedji Luna ("Bemba") e Os Garotin ("Caso de Amor"). A
+participação de Shakira aparece como destaque do projeto e é
+explicitamente vinculada à apresentação gratuita da artista colombiana em
+Copacabana no "Todo Mundo no Rio" em 2 de maio. Outras canções listadas:
+"Pinterest", "Desgraça", "Mandinga", "Caminhador", "Ternura", "Deus
+existe", "So Much Love", "Nanã", "Vai dar caô", "Ouro". A nota fecha
+mencionando a estreia de Anitta no Saturday Night Live em 11 de abril.
+
+Shakira é tratada como ativo de prestígio (cobranding entre as duas
+artistas) e o show de Copacabana ganha menção contextual. Tom positivo,
+sem crítica. Para o escopo da mission, o artigo é tangencialmente Shakira
+mas direta e explicitamente conecta a canção "Choka choka" ao show de
+maio — está dentro do escopo com peso médio.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Parceria musical Anitta × Shakira ("Choka choka") | Destaque positivo do álbum; cobranding internacional. | positivo |
+| Show de Shakira em Copacabana (2/5/2026) | Mencionado como contexto temporal da release da faixa. | positivo |
+| Álbum "Equilibrivm" de Anitta — escopo amplo | Foco principal da matéria; tom celebrativo. | muito positivo |
+| Espiritualidade / candomblé na obra | Anitta cita "religiosidade em todas as suas vertentes". | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-243 — Shakira entra para o Guinness como a artista hispânica com maior bilheteria de todos os tempos
+
+**Fonte:** O Globo / Coluna Ancelmo Gois (oglobo.globo.com)
+**Data:** 07/04/2026 07:00 UTC
+**URL:** https://oglobo.globo.com/blogs/ancelmo/post/2026/04/shakira-entra-para-o-guinness-como-a-artista-hispanica-com-maior-bilheteria-de-todos-os-tempos.ghtml
+
+### Resumo Narrativo
+
+A coluna Ancelmo Gois informa que o palco do show de Shakira em Copacabana
+já está sendo montado, com números que "impressionam": **1.345 m² de
+palco, passarela de 25 metros de comprimento, 500 m² de LED**, palco
+elevado a 2,20 m da areia, **16 torres** com som e vídeo ao longo da praia
+(cada telão LED de 45 m²). A informação é atribuída a Luiz Guilherme
+Niemeyer, sócio da Bonus Track. A coluna também traz métricas de
+engajamento: desde a confirmação do show em 11 de fevereiro até 31 de
+março, **209 mil menções nas redes sociais por 77.900 usuários únicos**,
+com alcance estimado de **366,2 milhões de pessoas**. Fecha registrando
+que Shakira entrou para o Guinness como a artista hispânica de maior
+bilheteria de todos os tempos, complementando com a residência na Espanha
+(11 shows / 600 mil ingressos vendidos entre setembro e outubro).
+
+Tom claramente celebratório e apoiado em métricas. Sem contraponto
+crítico (segurança, mobilidade, custo público).
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Infraestrutura / palco do show | Especificações monumentais (1.345 m², 500 m² LED, 16 torres). Celebrado como "o maior já montado" em Copacabana. | muito positivo |
+| Engajamento em redes sociais / hype | 209 mil menções, alcance de 366,2 mi pessoas. Apresentado como sucesso de comunicação. | muito positivo |
+| Recorde Guinness de Shakira | Reforça aura de evento de classe mundial. | muito positivo |
+| Bonus Track (produtora) | Citada como executora, sem crítica. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-239 — Shakira terá maior palco maior do que Lady Gaga e Madonna em show em Copacabana
+
+**Fonte:** CBN (cbn.globoradio.globo.com)
+**Data:** 07/04/2026 22:25 UTC
+**URL:** https://cbn.globoradio.globo.com/cidades/rio-de-janeiro/2026/04/07/shakira-tera-maior-palco-maior-do-que-lady-gaga-e-madonna-em-show-em-copacabana.htm
+
+### Resumo Narrativo
+
+Nota da redação CBN informando que o palco para o show de Shakira em
+Copacabana será maior que os de Madonna e Lady Gaga: **1.345 m² (vs.
+1.260 m² de Lady Gaga em 2025)**, passarela de 25 m, 500 m² de LED, 16
+torres de som e vídeo ao longo da praia, palco elevado a 2,20 m. A nota
+remete também ao álbum de Anitta com participação de Shakira ("Choka
+choka") como contexto musical. Conteúdo essencialmente igual ao de
+`a-243` (mesma fonte de informação Bonus Track), mas em tom mais factual
+de redação radiofônica, sem o ângulo "Guinness/recordes globais" e sem
+métricas de redes sociais.
+
+Trata-se essencialmente de re-publicação/repackage do release da
+produtora; o ranking comparativo (maior que Madonna/Lady Gaga) é o
+gancho que distingue esta versão.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Palco do show / superlativos comparativos | Maior que Madonna e Lady Gaga; positivo, factual. | muito positivo |
+| Tecnologia do show (LEDs, torres) | Mencionada como diferencial; positivo. | positivo |
+| Conexão com Anitta ("Choka choka") | Contexto musical; positivo. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+<!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
+     para listar artigos restantes em ordem cronológica. -->
 
 ## Próxima Penelope — guia de retomada (curto)
 
