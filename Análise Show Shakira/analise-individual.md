@@ -2674,6 +2674,107 @@ Artigo fora de escopo — Seop recua após recurso do bar. Shakira em sidebar.
 
 ---
 
+## a-649 / a-21 — Câmara do Rio aprova plataforma de apoio a mulheres vítimas de violência (off-scope)
+
+**Fontes:** Câmara Municipal do Rio (a-649) e re-publicação (a-21). 29/04/2026.
+
+Artigos fora de escopo — não tratam do show. Aprovação de plataforma digital municipal. Capturados via tag de Flávio Valle. Bloco único cobre os dois IDs.
+
+**Sentimento geral do artigo:** N/A — **Artigos fora de escopo**.
+
+---
+
+## a-98 — Shakira chega ao Rio para show e faz 'coração' para fãs
+
+**Fonte:** G1 (g1.globo.com)  **Data:** 29/04/2026 13:51 UTC
+
+Shakira desembarca no Rio na quarta-feira pré-show, faz "coração" para fãs em registro do TV Globo. Pequena mas afetiva nota. Tom muito positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Chegada da artista no Rio | Tom muito positivo. | muito positivo |
+| Engajamento de fãs no aeroporto | Positivo. | positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-105 — Horário do show e recap
+
+**Fonte:** CNN Brasil (cnnbrasil.com.br)  **Data:** 29/04/2026 14:26 UTC
+
+Recap utilitário pré-show: 02/05, 21h45 início, transmissão TV Globo/Multishow/Globoplay, esquema de segurança, palco. Tom positivo.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-83 / a-236 — Prefeitura apresenta planejamento operacional
+
+**Fontes:** Riotur oficial (a-83) / O Globo (a-236).  **Data:** 29/04/2026 16:33 / 19:42 UTC
+
+Coletiva oficial Cavaliere + Riotur (Bernardo Fellows): detalha esquema de transporte, segurança (7.927 agentes), interdições, pulseiras de retorno do metrô, presença reforçada em hospitais. Bloco único cobre os dois IDs.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Planejamento operacional municipal | Tom oficial-positivo. | positivo |
+| Detalhes pulseiras retorno metrô | Logística positiva. | positivo |
+| Reforço segurança/saúde | Preventivo positivo. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-99 — Interdições no bairro de Copacabana começam 0h sábado
+
+**Fonte:** O Globo (oglobo.globo.com)  **Data:** 29/04/2026 17:05 UTC
+
+Detalhamento do esquema de trânsito: bloqueios começam 0h de 02/05 e duram até 8h de 03/05. Tom factual-positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Interdições viárias prolongadas | Tom factual; sem crítica. | neutro |
+| Comunicação preventiva | Positiva. | positivo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-163 — Quanto o show custará à Prefeitura (Rolling Stone)
+
+**Fonte:** Rolling Stone Brasil (rollingstone.com.br)  **Data:** 29/04/2026 17:22 UTC
+
+Replicação do dado R$ 15 mi. Tom factual. Veículo internacional-musical adicionando à cobertura.
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-154 — CNN Brasil: programação do Todo Mundo no Rio
+
+**Fonte:** CNN Brasil (cnnbrasil.com.br)  **Data:** 29/04/2026 18:31 UTC
+
+Recap completo CNN: dia, hora, palco, abertura DJ Maz/Vintage Culture, transmissão. Tom positivo.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-173 / a-233 — O que está proibido em Copacabana / o que não levar
+
+**Fontes:** O Globo (a-173) / Gshow (a-233)  **Datas:** 29/04/2026 20:49 / 23:32 UTC
+
+Lista de itens proibidos no show: garrafas de vidro, latas, capacete, guarda-chuva grande, bebidas alcoólicas pesadas, mochilas grandes, equipamentos de som, drones, armas. Tom utilidade pública positiva. Bloco único cobre ambos IDs (mesmo conteúdo).
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Lista de itens proibidos | Utilidade preventiva. | positivo |
+| Esquema rigoroso de revista | Tom factual. | neutro |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
