@@ -1,0 +1,183 @@
+# Relatório 02 — Atraso, dia difícil e saúde do pai
+
+**Categoria:** Atraso, dia difícil e saúde do pai
+**Volume:** ~25 artigos únicos
+**Distribuição agregada:** mistura — o atraso isolado foi negativo;
+a revelação da causa e o post de agradecimento puxaram a curva para
+neutro/positivo; a recuperação do pai fechou o arco com tom
+muito-positivo.
+
+---
+
+## Panorama
+
+É o **arco humano** do show, e talvez o eixo onde a relação entre
+fato bruto e enquadramento midiático mais se reescreve com o passar
+das horas. No sábado à noite (02/05), o atraso de cerca de 80 minutos
+em relação ao horário oficial (21h45 → 23h05) foi enquadrado pelos
+veículos como falha pura, com vaias do público como dado factual.
+Na manhã do domingo (03/05), o Correio Braziliense furou que o pai
+da artista, William Mebarak, havia tido um mal-estar; nas horas
+seguintes, a revista espanhola Hola! detalhou que se tratou de
+isquemia (interrupção do fluxo sanguíneo) e ele havia sido internado
+em UTI em Bogotá. O post de agradecimento de Shakira, publicado na
+madrugada de segunda em português ("Não consegui dormir. Emoção
+demais. (...) Mesmo que o dia tenha sido difícil para muitos de
+nós, fomos celebrar a vida do jeito que ela é"), reescreveu o
+framing. Na tarde de segunda, vídeos mostraram a partida silenciosa
+do Copacabana Palace às 2h10 e o voo das 4h da manhã. Na terça (05/05),
+G1 reportou alta hospitalar do pai e recuperação em casa.
+
+---
+
+## Dados quantitativos por sub-tema
+
+| Sub-tema | Artigos | Sentimento dominante |
+|---|---|---|
+| Atraso de ~80 min e vaias | ~6 | negativo / muito-negativo |
+| Pai com isquemia (causa do atraso) | ~5 | negativo / neutro |
+| Post de agradecimento ("dia difícil") | ~4 | muito-positivo |
+| Partida silenciosa do Brasil | ~3 | positivo / neutro |
+| Recuperação do pai em casa | ~2 | muito-positivo |
+| Resiliência de Shakira (subiu mesmo assim) | ~3 | muito-positivo |
+| Comparativo histórico de atraso | ~2 | neutro |
+
+---
+
+## Como a imprensa elogiou
+
+Após a revelação da causa do atraso, **toda a cobertura virou
+empática**. Os blocos `a-65` (Veja Rio), `a-181` (CNN Brasil) e
+`a-220` (G1) trouxeram detalhe médico (isquemia, UTI, evolução
+favorável após 24h críticas) e contextualizaram a saúde frágil de
+William Mebarak — 94 anos, 6 cirurgias, 2 Covids, hidrocefalia,
+hemorragia cerebral, queda em 2022. Shakira "manteve a força" e
+subiu ao palco mesmo com o pai na UTI: framing heroico-resiliente,
+muito-positivo. O post integral foi reproduzido em pelo menos 4
+veículos (`a-153` G1, `a-186` Diário do Rio integral, `a-156` G1
+com vídeo da saída, `a-175` Gshow). A frase-chave "esses dois
+milhões e meio de almas são a minha família" virou unidade
+midiática repetida.
+
+## Como a imprensa criticou
+
+Antes da revelação da causa, predominou **crítica direta ao atraso**:
+`a-162` (Globo) classificou como muito-negativo "atraso de 80
+minutos" e mencionou "audiência prejudicada na Globo"; `a-140` e
+`a-181` (em fase inicial) tratam vaias como dado de impaciência
+pública; `a-68` (Veja Rio) faz comparativo histórico — Madonna às
+22h37, Lady Gaga às 22h09 (a mais pontual), Shakira às 23h05 (a
+mais atrasada). `a-147` (G1) registra "polarização nas redes" entre
+quem condenou e quem defendeu.
+
+A camada crítica que sobreviveu à revelação da causa: o **modo de
+comunicação da organização**. A Bonus Track / Todo Mundo no Rio só
+manteve "questão pessoal" como justificativa oficial, e a verdade
+veio por veículo espanhol (`a-65`, `a-181` registram explicitamente
+que a CNN só conseguiu confirmar após o Correio Braziliense via
+Hola!).
+
+## Evolução temporal
+
+- **02/05 23h05 → 03/05 09h:** atraso é falha; tom predominantemente
+  negativo. Vaias documentadas.
+- **03/05 manhã:** Correio Braziliense fura sobre o pai. Cobertura
+  começa a se reorganizar.
+- **03/05 tarde:** Hola! detalha isquemia. Veículos brasileiros
+  reproduzem.
+- **04/05 madrugada:** post de Shakira em português é publicado.
+  Curva sobe para muito-positivo.
+- **04/05 tarde:** vídeo da saída + voo das 4h.
+- **05/05 noite:** alta hospitalar do pai. Arco fecha com tom de
+  alívio.
+
+---
+
+## Trechos representativos
+
+- **`a-162` (Globo, muito-negativo):** "Atraso de 80 minutos.
+  Audiência prejudicada na Globo. Imagem da artista." — bloco
+  crítico mais duro do corpus para esta categoria.
+- **`a-181` (CNN Brasil):** "Show de Shakira no Rio atrasou porque
+  pai da cantora passou mal, diz jornal. (...) Marcado para 21h45,
+  o espetáculo só teve início às 23h05."
+- **`a-65` (Veja Rio):** "Manteve a força: antes de apresentação em
+  Copacabana, pai de Shakira foi internado." — framing
+  heroico-resiliente.
+- **`a-186` (Diário do Rio, post integral):** "Não consegui dormir.
+  Emoção demais. (...) esses dois milhões e meio de almas são a
+  minha família. Obrigada, Brasil. Eu amo vocês!"
+- **`a-156` (G1, vídeo da saída):** "Shakira deixou o hotel
+  Copacabana Palace, em Copacabana, e se despediu dos fãs antes de
+  deixar o Rio. (...) 'É ela?', questionou uma pessoa."
+- **`a-220` (G1, recuperação):** "Pai de Shakira se recupera em
+  casa após isquemia, diz jornal. (...) Após 24 horas críticas na
+  UTI, a evolução foi considerada favorável."
+
+---
+
+## Olhar truth-teller
+
+A história tem um final emocionalmente bonito — o pai sobrevive, a
+artista entrega o show, o público chora junto, o Brasil dá o abraço
+afetivo. A classificação muito-positiva dos blocos pós-revelação é
+genuína e correta dentro do framing humano.
+
+Mas existe uma assimetria informacional estrutural que a cobertura
+**não problematiza**. A organização do Todo Mundo no Rio sabia da
+causa real do atraso e escolheu manter "questão pessoal" como
+justificativa oficial. Os 2 milhões de pessoas em Copacabana foram
+convocadas a esperar, vaiar, e depois retroativamente se sentir
+culpadas pela impaciência ("desculpa, não sabíamos do pai dela") —
+sem informação que permitisse uma decisão diferente. A audiência da
+Globo (`a-162`) foi prejudicada por uma decisão de comunicação que
+a Globo, ao mesmo tempo broadcaster e parceira contratual da Bonus
+Track, não tinha incentivo para publicizar imediatamente.
+
+A imprensa brasileira, na onda da revelação posterior, **virou a
+narrativa para a empatia** — o que é humanamente justificável — mas
+não auditou o processo de decisão. Quem decidiu manter o público no
+escuro? Por quanto tempo o time de Shakira sabia? Houve oferta de
+cancelar / adiar? A organização avaliou risco de tumulto vs. risco
+de notícia médica? Essas perguntas são legítimas e ficaram sem
+resposta. O bloco `a-181` (CNN) chega perto: "Questionada pela CNN
+Brasil, a organização do Todo Mundo No Rio, afirmou que, até o
+momento, só tem a informação de que o atraso foi devido a uma
+'questão pessoal'." Mas nenhum veículo sequenciou esse fio.
+
+Há também uma camada **de classe** invisível na cobertura: o atraso
+de 80 minutos para 2 milhões de pessoas em densidades altas, calor,
+sem comunicação — equivale a quantas horas-pessoa de incômodo,
+desidratação, perda de transporte? Para uma família que veio de São
+João de Meriti com criança no colo, o "dia difícil" da Shakira
+custou um dia inteiro de logística com saldo emocional ambíguo. A
+cobertura humaniza a artista (e está certa em fazê-lo), mas não
+humaniza simetricamente o público anônimo que aguentou o atraso.
+
+A "resiliência" como framing heroico tem uma contraparte: artistas
+de massa frequentemente são pressionadas (por contrato, por
+patrocinador, por gestão de carreira) a se apresentarem mesmo em
+condições adversas. A leitura "Shakira escolheu subir ao palco"
+pode ser verdadeira, mas é diferente da leitura "Shakira teve que
+subir ao palco". Não há informação no corpus para distinguir as
+duas; a cobertura presume a primeira por default. Vale ressaltar
+que essa observação não diminui a artista — apenas registra que o
+contexto contratual de mega-shows raramente é incluído na
+discussão.
+
+---
+
+## Conclusão
+
+O eixo "Atraso, dia difícil e saúde do pai" foi um teste de stress
+da cobertura midiática: começou com framing negativo, virou
+muito-positivo após a revelação humana, e fechou com tom de alívio
+quando o pai recebeu alta. O olhar truth-teller registra três
+camadas que ficaram fora do enquadramento: (1) a comunicação
+seletiva da organização do evento, que poupou imagem da artista mas
+custou paciência e audiência ao público; (2) a invisibilidade do
+"dia difícil" simétrico vivido pelos 2 milhões de pessoas que
+esperaram sem informação; (3) a falta de auditoria sobre a decisão
+de manter o show em vez de cancelar. O arco fechou com beleza
+emocional; ficou em aberto a discussão estrutural sobre quem
+controla a informação em mega-eventos.
