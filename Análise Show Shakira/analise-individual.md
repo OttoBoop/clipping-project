@@ -1170,6 +1170,295 @@ Multishow / Globoplay. Tom muito positivo.
 
 ---
 
+## a-257 — Palco de Shakira terá quase o dobro do tamanho do de Madonna
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 22/04/2026 19:10 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/palco-de-shakira-tera-quase-o-dobro-do-tamanho-do-de-madonna.ghtml
+
+### Resumo Narrativo
+
+Variação editorial sobre o palco recordista. Recapitula 1.500 m² (vs.
+Madonna 812 m² — quase o dobro), passarela 25 m, telões 680 m², 16 torres,
+expectativa 2 milhões. Inclui aulas de Waka Waka nos domingos pré-show e
+as reservas premium dos quiosques (R$ 1,3 mil em Morena e Waka & Fiesta).
+Esquema de segurança similar ao réveillon — bloqueio, revistas, detectores.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Palco superlativo (1.500 m², quase 2× Madonna) | Tom celebratório. | muito positivo |
+| Aulas comunitárias de Waka Waka | Engajamento cultural. | muito positivo |
+| Quiosques com jantar premium (R$ 1,3 mil) | Comércio aproveita demanda. | positivo |
+| Esquema de segurança similar a réveillon | Sinaliza preparação adequada. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-260 — Galeão espera receber 314 mil passageiros na semana do show de Shakira
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 23/04/2026 06:00 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/galeao-espera-receber-314-mil-passageiros-na-semana-do-show-de-shakira.ghtml
+
+### Resumo Narrativo
+
+Detalhamento dos números do Galeão: 314 mil passageiros (213 mil
+domésticos + 101 mil internacionais), 1.990 voos (+13% vs 2025, +32% vs
+2024), 32 voos extras domésticos. Argentina lidera origens internacionais
+(31%), seguida por Chile (14%), EUA (8%), Portugal (7%), Colômbia (6%).
+Santos Dumont também: 394 voos / 56.316 assentos entre 1–3 de maio. Tom
+factual-celebratório.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Galeão: 314 mil passageiros (+14% / +46%) | Crescimento expressivo. | muito positivo |
+| Distribuição de origens internacionais | Argentina/Chile dominam. | positivo |
+| Santos Dumont (394 voos) | Aeroporto secundário também movimentado. | positivo |
+| 1.990 voos (+13% vs 2025, +32% vs 2024) | Conectividade ampliada. | muito positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-259 — Efeito 'loba': ocupação hoteleira na Zona Sul atinge média de 80% dez dias antes do show
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 23/04/2026 10:00 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/efeito-loba-ocupacao-hoteleira-na-zona-sul-atinge-media-de-80percent-dez-dias-antes-do-show-de-shakira-em-copacabana.ghtml
+
+### Resumo Narrativo
+
+HotéisRio (Alfredo Lopes) divulga: 80% de ocupação média na Zona Sul, 68%
+em toda a cidade — atingidos dez dias antes do show. Lopes reconhece que
+a alta nas passagens aéreas atrasou o crescimento da ocupação ("mas com
+certeza esse índice vai aumentar"). Recapitula palco 1.500 m² e
+expectativa 2 milhões. Tom positivo, com nuance cautelar (a ocupação
+ainda está abaixo dos níveis de Lady Gaga implícitamente).
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Ocupação hoteleira (80% Zona Sul, 68% cidade) | Apresentada como forte mas com ressalva de demora. | positivo |
+| Impacto da alta de passagens aéreas | Reconhecido como freio. | negativo |
+| Movimentação econômica e imagem global do Rio | Reforço positivo do show. | muito positivo |
+| Palco (1.500 m²) | Recapitulação positiva. | muito positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-132 — Todo Mundo No Rio: palco do show de Shakira já está sendo montado
+
+**Fonte:** CNN Brasil (cnnbrasil.com.br)
+**Data:** 23/04/2026 10:45 UTC
+**URL:** https://www.cnnbrasil.com.br/entretenimento/todo-mundo-no-rio-palco-do-show-de-shakira-ja-esta-sendo-montado/
+
+### Resumo Narrativo
+
+CNN Brasil cobre a montagem do palco com imagens de drone. Inclui
+declaração de Luiz Guilherme Niemeyer (Bonus Track): "Esse é o maior
+palco que já montamos na praia de Copacabana, com certeza vai
+impressionar." Cita 1.345 m² (versão anterior, antes da expansão para
+1.500 m²) e 500 m² LED. Apelido "Shakicabana" pelo governo do Rio.
+Recapitula histórico: 30+ apresentações no Brasil em 1996/97. Show no
+México atraiu 400 mil pessoas. Quase 80 milhões de ouvintes mensais no
+Spotify.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Palco/recorde de estrutura | Tom celebratório. | muito positivo |
+| Apelido "Shakicabana" (governo do Rio) | Marketing institucional. | positivo |
+| Histórico Brasil-Shakira (anos 90) | Reforça legitimidade. | positivo |
+| Recorde no México (400 mil pessoas) | Reforça aura global. | muito positivo |
+| Audiência Spotify (~80 mi/mês) | Ratifica relevância da artista. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-258 — Shakira no Rio: rodoviária prepara show cover da cantora para receber fãs
+
+**Fonte:** O Globo / Coluna Ancelmo Gois (oglobo.globo.com)
+**Data:** 23/04/2026 11:00 UTC
+**URL:** https://oglobo.globo.com/blogs/ancelmo/post/2026/04/shakira-no-rio-rodoviaria-prepara-show-cover-da-cantora-para-receber-fas.ghtml
+
+### Resumo Narrativo
+
+Rodoviária do Rio preparou recepção especial: cover ao vivo de Shakira
+(Izlene Cristina, atriz/cantora lírica/bailarina) em 30 de abril das 7h
+às 13h. Estimativa do período (30/4–5/5): 215,8 mil pessoas, 6.700 ônibus
+(1.500 extras), 39 viações. Tom celebratório-promocional.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Recepção cultural na rodoviária (cover ao vivo) | Engajamento positivo. | muito positivo |
+| Volume de ônibus (6.700, 1.500 extras) | Logística reforçada. | positivo |
+| Movimentação rodoviária (215,8 mil) | Apresentada positivamente. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-264 — Efeito Shakira: estacionamento cobra R$ 250 por uma vaga em Copacabana
+
+**Fonte:** O Globo / Coluna Ancelmo Gois (oglobo.globo.com)
+**Data:** 24/04/2026 07:00 UTC
+**URL:** https://oglobo.globo.com/blogs/ancelmo/post/2026/04/efeito-shakira-estacionamento-cobra-r-250-por-uma-vaga-em-copacabana.ghtml
+
+### Resumo Narrativo
+
+Coluna Ancelmo Gois denuncia inflação de preço de vaga: estacionamento
+privado na Rua Barata Ribeiro cobrando R$ 250 fixos pelo dia do show
+versus R$ 10 normais por 30 minutos. Tom crítico ("absurdo", "como se
+estivesse na área VIP"). Primeira matéria explicitamente crítica de
+gouging de preço pela alta demanda do show.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Inflação predatória de estacionamento (R$ 250 vs R$ 10/30min) | Crítica direta — "absurdo". | muito negativo |
+| Especulação comercial em torno do show | Negativo, lado escuro do "efeito Shakira". | negativo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** negativo
+
+---
+
+## a-128 — Custo de show de Shakira em Copacabana supera o de Madonna; entenda
+
+**Fonte:** CNN Brasil (cnnbrasil.com.br)
+**Data:** 24/04/2026 08:00 UTC
+**URL:** https://www.cnnbrasil.com.br/entretenimento/custo-de-show-de-shakira-em-copacabana-supera-o-de-madonna-entenda/
+
+### Resumo Narrativo
+
+CNN Brasil confirma: show custará R$ 15 milhões à Prefeitura, contra R$
+10 milhões para Madonna em 2024. Repasse à Bonus Track. DOM publicado em
+17 de abril. Recapitula estrutura recorde (1.345 m² palco — versão
+anterior à atualização para 1.500 m²; 16 torres). Tom factual; expõe o
+gasto público sem questionamento explícito.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Custo público (R$ 15 mi vs R$ 10 mi de Madonna) | Tratado factualmente. | neutro |
+| Repasse à Bonus Track | Citado sem juízo. | neutro |
+| Estrutura recorde do palco | Justificativa positiva implícita. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-263 — Além de Shakira, Joss Stone também faz show gratuito no Brasil em maio
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 24/04/2026 11:59 UTC
+**URL:** https://oglobo.globo.com/cultura/musica/noticia/2026/04/alem-de-shakira-joss-stone-tambem-faz-show-gratuito-no-brasil-em-maio-saiba-mais.ghtml
+
+### Resumo Narrativo
+
+Matéria contextual: Joss Stone fará show grátis em Florianópolis em
+16/05 no centenário da Ponte Hercílio Luz. Shakira é mencionada
+introdutoriamente como referência ("Além da colombiana Shakira...") e o
+palco de Copacabana (1.500 m²) é citado em parágrafo final. Show
+principal da matéria é Joss Stone; Shakira é gancho/contexto. Marginal-
+mente em escopo (informação útil para o panorama de eventos
+musicais-gratuitos brasileiros de maio que cerca o show da Shakira).
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Show de Shakira como referência de "show gratuito de maio" | Contexto positivo. | positivo |
+| Palco de Copacabana (1.500 m²) | Mencionado factualmente. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-262 — Jaé lança cartão personalizado para o show da Shakira
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 24/04/2026 12:25 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/jae-lanca-cartao-personalizado-para-o-show-da-shakira.ghtml
+
+### Resumo Narrativo
+
+Jaé (cartão de transporte do Rio) lança edição limitada para
+colecionadores: R$ 25 (R$ 15,80 em créditos + R$ 9,20 do casco). Pix.
+Vendido das 8h às 18h em estações chave (Jardim Oceânico, Botafogo,
+Central, Carioca, Largo do Machado), entre 24/04 e 2/05. Tom
+positivo-promocional.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Merchandising oficial via cartão de transporte | Iniciativa criativa institucional. | positivo |
+| Engajamento de colecionadores | Positivo cultural. | positivo |
+| Pagamento via Pix | Modernidade. | neutro |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-217 — Palco de Shakira em Copacabana tem passarela de 25 metros montada em direção ao público
+
+**Fonte:** G1 / RJ1 (g1.globo.com)
+**Data:** 24/04/2026 16:05 UTC
+**URL:** https://g1.globo.com/rj/rio-de-janeiro/noticia/2026/04/24/palco-de-shakira-em-copacabana-tem-passarela-de-25-metros-montada-em-direcao-ao-publico.ghtml
+
+### Resumo Narrativo
+
+Atualização visual da montagem: passarela de 25 m foi instalada na manhã
+de 24/04. Recapitula palco maior que Lady Gaga e Madonna; 16 torres ao
+longo da orla; 314 mil passageiros esperados no Galeão; transmissão TV
+Globo / Multishow / Globoplay; "maior apresentação da carreira" segundo
+Shakira. Tom muito positivo.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Passarela de 25 m em direção ao público | Aproximação artista-fã; positivo. | muito positivo |
+| Marco de "maior apresentação da carreira" | Reforça aura aspiracional. | muito positivo |
+| Recap de logística (Galeão, transmissão) | Reforço positivo. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
