@@ -71,6 +71,7 @@ SOURCE_TERMINAL_STATUSES = {"complete", "failed_needs_fix"}
 DEFAULT_COLLECTOR = "all"
 EXPORT_TIMEOUT_SECONDS = 300
 INCREMENTAL_EXPORT_MIN_SECONDS = 90
+WORDPRESS_SOURCE_VERSION = "v2"
 WORDPRESS_PAGE_SIZE = 25
 WORDPRESS_MAX_PAGES = 240
 VEJARIO_MAX_PAGES = 50
@@ -709,10 +710,16 @@ def build_source_units(spec: dict[str, Any], target_key: str) -> list[SourceUnit
             for query_idx, query in enumerate(ordered_unique([str(item or "").strip() for item in site_queries if str(item or "").strip()])):
                 units.append(
                     SourceUnit(
-                        source_key=f"wordpress_api:{site_idx}:{query_idx}",
+                        source_key=f"wordpress_api_{WORDPRESS_SOURCE_VERSION}:{site_idx}:{query_idx}",
                         source_name=site_name,
                         source_type="wordpress_api",
-                        cursor={"site_index": site_idx, "query_index": query_idx, "query": query, "page": 1},
+                        cursor={
+                            "site_index": site_idx,
+                            "query_index": query_idx,
+                            "query": query,
+                            "page": 1,
+                            "page_size": WORDPRESS_PAGE_SIZE,
+                        },
                         order=order,
                     )
                 )
@@ -1210,7 +1217,17 @@ def source_run_public(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def sanitize_cursor(cursor: dict[str, Any]) -> dict[str, Any]:
-    allowed = {"feed_index", "query_index", "site_index", "adapter_index", "source_index", "day_index", "day", "page"}
+    allowed = {
+        "feed_index",
+        "query_index",
+        "site_index",
+        "adapter_index",
+        "source_index",
+        "day_index",
+        "day",
+        "page",
+        "page_size",
+    }
     return {key: cursor[key] for key in allowed if key in cursor}
 
 

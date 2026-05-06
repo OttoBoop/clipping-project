@@ -130,6 +130,11 @@ Still incomplete:
   Current code pass reduces durable WordPress API chunks to 25 API items per
   page while preserving the previous overall page span, so checkpoints advance
   faster without silently skipping pages.
+- Follow-up while observing the public run: changing WordPress page size inside
+  an active job can mix old/new pagination offsets during Render overlap. The
+  durable WordPress source key is now versioned as `wordpress_api_v2`, forcing a
+  clean WordPress restart from page 1 with 25-item pages. Reprocessing already
+  saved items is acceptable; skipping unseen offsets is not.
 
 ## Loop Log
 

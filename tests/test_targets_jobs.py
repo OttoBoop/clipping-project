@@ -885,7 +885,9 @@ def test_durable_wordpress_units_use_secondary_target_query_not_flavio_site_vari
     units = jobs.build_source_units({"collector": "wordpress_api"}, "shakira")
 
     assert units
+    assert all(unit.source_key.startswith("wordpress_api_v2:") for unit in units)
     assert {unit.cursor["query"] for unit in units} == {"Shakira"}
+    assert {unit.cursor["page_size"] for unit in units} == {25}
 
 
 def test_durable_wordpress_source_runs_use_small_api_pages(monkeypatch, tmp_path):

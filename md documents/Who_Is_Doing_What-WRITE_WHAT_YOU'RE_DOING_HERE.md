@@ -202,6 +202,13 @@ reiniciavam demais em `Diario do Rio`; estou reduzindo o chunk durável
 WordPress para 25 itens por página real da API, preservando o alcance total
 anterior com mais páginas e checkpoints menores.
 
+Enquanto monitorava `a220b2d`, apareceu outro detalhe do edge case: mudar
+`per_page` durante um job ativo pode misturar offsets antigos e novos se uma
+thread antiga sobreviver brevemente ao rolling deploy. Estou versionando os
+source-runs WordPress como `wordpress_api_v2` para recomeçar essa família de
+fontes do início com a paginação nova. Isso aceita retrabalho idempotente e
+evita pular artigos.
+
 ### 2026-05-06 — Penelope+Iris — persona Penelope criada e loop Show Shakira iniciado
 
 Otávio pediu, antes de sair pro trabalho, um run longo, autônomo, sem supervisão para
