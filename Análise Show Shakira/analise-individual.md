@@ -1459,6 +1459,276 @@ Shakira. Tom muito positivo.
 
 ---
 
+## a-88 — Show da Shakira deve reunir 2,5 milhões de pessoas em Copacabana
+
+**Fonte:** Brasil de Fato (brasildefato.com.br)
+**Data:** 24/04/2026 16:33 UTC
+**URL:** https://www.brasildefato.com.br/2026/04/24/show-da-shakira-deve-reunir-2-5-milhoes-de-pessoas-em-copacabana/
+
+### Resumo Narrativo
+
+Brasil de Fato cobre o show com perspectiva de "soft power": expectativa
+de 2,5 milhões, palco 1.345 m², 16 torres, 314 mil passageiros no Galeão,
+custo R$ 15 mi à Prefeitura, repasse via Secretaria de Cultura à Bonus
+Track. Repertório esperado: clássicos + faixas de "Las Mujeres Ya No
+Lloran". Cita possível dueto com Anitta. Tom positivo, sem crítica
+significativa apesar do veículo ter perfil de esquerda — curiosamente
+não problematiza o gasto público.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Expectativa de público (2,5 mi) | Tom celebratório. | muito positivo |
+| Custo público (R$ 15 mi) | Citado factualmente. | neutro |
+| Movimento turístico via Galeão | Positivo. | positivo |
+| Dueto Anitta especulado | Reforça hype. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-104 — Shakira no Rio: veja se ainda dá tempo de ganhar experiência VIP em show
+
+**Fonte:** CNN Brasil (cnnbrasil.com.br)
+**Data:** 24/04/2026 17:43 UTC
+**URL:** https://www.cnnbrasil.com.br/entretenimento/shakira-no-rio-veja-se-ainda-da-tempo-de-ganhar-experiencia-vip-em-show/
+
+### Resumo Narrativo
+
+CNN Brasil destaca campanhas comerciais para acesso VIP: Santander
+"Todas as Sharás no Rio" (25 ingressos para brasileiras chamadas
+Shakira), Beats "My Beats Don't Lie" (campanha TikTok com áudio Anitta
+guiando recriação de poses do clipe "Hips Don't Lie", 9 vídeos vencedores
+ganham par de ingressos para área de convidados). Inscrições até 27/04,
+resultado 29/04. Tom positivo-promocional.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Marketing de patrocinadores (Santander, Beats) | Apresentado positivamente. | positivo |
+| Acesso VIP exclusivo | Cobertura factual. | neutro |
+| Engajamento via TikTok / desafios virais | Apresentado como inclusivo. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-261 — Faltando uma semana, Shakira lança compilação 'Shakira no Rio: As melhores'
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 24/04/2026 18:35 UTC
+**URL:** https://oglobo.globo.com/cultura/musica/noticia/2026/04/faltando-uma-semana-para-show-em-copacabana-shakira-lanca-compilacao-de-musicas-inspirada-no-rio.ghtml
+
+### Resumo Narrativo
+
+Lançamento de playlist oficial "Shakira no Rio: As melhores" com 30
+faixas selecionadas para aquecimento ("Whenever, wherever", "Estoy
+aquí", "Hips don't lie", "La la la", "She wolf", "Waka waka"). Recap
+palco 1.500 m². Tom positivo-promocional, marketing musical.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Lançamento de playlist oficial | Marketing positivo. | muito positivo |
+| Repertório esperado no setlist | Reforça expectativa. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-269 / a-268 — Estilista brasileiro Dario Mitmann assina figurino de encerramento
+
+**Fonte:** O Globo (oglobo.globo.com) — duplicada em dois IDs (a-269 e a-268, mesmo URL/conteúdo)
+**Data:** 25/04/2026 07:01 UTC
+**URL:** https://oglobo.globo.com/cultura/musica/noticia/2026/04/estilista-brasileiro-assina-figurino-que-shakira-vai-usar-no-encerramento-do-show-em-copacabana.ghtml
+
+### Resumo Narrativo
+
+Reportagem cultural sobre o estilista catarinense Dario Mitmann, que
+assina o figurino de encerramento do show ("brilho, cores, visual
+sexy", referências tribais, segunda-pele, persona "loba"). Histórico do
+estilista: Casa de Criadores, London Fashion Week, SPFW; já vestiu
+Anitta, Luísa Sonza, Ludmilla, Xamã, Linn da Quebrada, Gloria Groove.
+Parceria com Shakira começou em trabalho publicitário; processo de 4
+meses na primeira versão. Aviso: novos figurinos seguirão até a
+apresentação nas Pirâmides do Egito em 28/11. Tom de "brasilianidade
+exportada"; orgulho nacional positivo. **Bloco único cobre os dois IDs
+duplicados.**
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Estilista brasileiro com figurino internacional | Orgulho nacional; muito positivo. | muito positivo |
+| Persona "loba" / estética da turnê | Reforça narrativa visual. | positivo |
+| Continuidade Shakira × moda brasileira | Bandeira de soft power. | positivo |
+| Carreira do estilista (Anitta, Ludmilla, Gloria Groove) | Legitimação. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-267 — A mobilização para receber as 10 toneladas de equipamentos
+
+**Fonte:** O Globo / Coluna Ancelmo Gois (oglobo.globo.com)
+**Data:** 25/04/2026 12:00 UTC
+**URL:** https://oglobo.globo.com/blogs/ancelmo/post/2026/04/a-mobilizacao-para-receber-as-10-toneladas-de-equipamentos-para-o-show-de-shakira-no-rio.ghtml
+
+### Resumo Narrativo
+
+Nota curta sobre logística aérea: 10 toneladas de equipamentos da
+turnê desembarcaram no RIOgaleão Cargo via Atlas e American Airlines,
+com destino a Copacabana. Tom factual-positivo, "engenharia da turnê".
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Logística aérea (10 toneladas) | Apresentada como magnitude impressionante. | muito positivo |
+| Operações Atlas + American Airlines | Citadas factualmente. | neutro |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-103 — Shakira no Rio: saiba quando, onde assistir e o que esperar
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 25/04/2026 14:12 UTC
+**URL:** https://oglobo.globo.com/cultura/musica/noticia/2026/04/shakira-no-rio-saiba-quando-sera-onde-assistir-e-o-que-esperar-do-show-da-cantora-em-copacabana.ghtml
+
+### Resumo Narrativo
+
+Guia completo do show: dia, hora, palco (1.500 m², passarela 25 m, 500
+m² LED, 16 torres), expectativa 2 milhões, transmissão TV Globo /
+Multishow / Globoplay, repertório esperado (clássicos + Las Mujeres),
+possível convidado (Anitta), gratuidade, frase de Shakira "maior
+concerto da minha vida". Tom muito positivo, formato de utilidade
+pública.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Cobertura "tudo que precisa saber" | Tom muito positivo. | muito positivo |
+| Gratuidade do show | Reforço positivo. | muito positivo |
+| Transmissão multi-plataforma | Inclusiva. | positivo |
+| Setlist esperado e surpresas Anitta | Hype. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-96 — Quando Shakira chega ao RJ? Em finalização, palco vira ponto de encontro de fãs
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 25/04/2026 14:24 UTC
+**URL:** https://oglobo.globo.com/cultura/noticia/2026/04/quando-shakira-chega-ao-rj-em-finalizacao-palco-vira-ponto-de-encontro-de-fas.ghtml
+
+### Resumo Narrativo
+
+Reportagem ricamente narrativa: 4.000 profissionais trabalhando há
+quase um mês na praia; estrutura básica termina hoje, cenografia
+começa amanhã (instalação pela equipe da artista); Shakira chega "a
+qualquer momento a partir de segunda-feira"; testes de som/luz na
+quarta; passagem de som na sexta com a artista; hospedagem no
+Copacabana Palace, com corredor suspenso até o palco. Boca de cena
+**56 m de largura, altura 26 m**, 2 a mais que Madonna/Lady Gaga; 680
+m² de painéis móveis de LED; passarela com 2 elevadores ocultos. 60
+toneladas de lastro em pedras. Entrevistados (Victor Madeira, morador;
+Hugo Alexandre, anestesiologista de Fortaleza; Cynthia Silva, autônoma
+de Belém) — dão tons humanos. Cynthia: "Tem gente reclamando só porque
+Shakira não é uma popstar americana — Queria ver a Beyoncé? Queria,
+claro… mas só de ser de graça já está ótimo." Tom muito positivo, com
+nota sutil sobre crítica popular ("não é americana") sendo desautorizada.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Magnitude da operação (4.000 trabalhadores, 60 t lastro) | Tom muito positivo. | muito positivo |
+| Estrutura técnica detalhada (56×26 m, 2 elevadores) | Reforço de mega-evento. | muito positivo |
+| Engajamento popular (turistas no calçadão) | Indica antecipação positiva. | positivo |
+| Crítica popular ("não é americana") | Mencionada e desautorizada pela entrevistada. | neutro |
+| Logística do hotel-palco (corredor suspenso) | Detalhe positivo da operação. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-107 — Palco da Shakira vai ficar ainda maior; entenda
+
+**Fonte:** G1 / GloboNews (g1.globo.com)
+**Data:** 25/04/2026 16:40 UTC
+**URL:** https://g1.globo.com/rj/rio-de-janeiro/musica/show-shakira-rj/noticia/2026/04/25/palco-da-shakira-vai-ficar-ainda-maior-entenda.ghtml
+
+### Resumo Narrativo
+
+Atualização confirmando ampliação a pedido da equipe da artista: palco
+de 1.345 → **1.500 m²**, painéis LED de 500 → **680 m²**, altura
+mantida em 2,20 m, boca de cena 56 m, passarela 25 m. Expectativa de 2
+milhões. Tom positivo-factual.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Ampliação do palco a pedido da artista | Reforça aura de exigência/qualidade. | muito positivo |
+| Painéis LED expandidos (500 → 680 m²) | Investimento em qualidade visual. | positivo |
+| Reforço comparativo (maior que Madonna/Gaga) | Posicionamento competitivo. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-34 — Projeto Horto Maravilha prevê reformas em comunidade do Jardim Botânico
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 25/04/2026 18:25 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/projeto-horto-maravilha-preve-reformas-em-comunidade-que-ha-pouco-ganhou-o-direito-de-permanecer-no-jardim-botanico.ghtml
+
+### Resumo Narrativo
+
+Artigo fora de escopo — não trata do show da Shakira. Cobre o projeto
+"Horto Maravilha" (R$ 9 mi de investimento da prefeitura na comunidade
+do Horto/Jardim Botânico) com presença do prefeito Cavaliere e do
+vereador Flávio Valle. Shakira aparece apenas no rodapé "Notícias do
+Rio: Show de Shakira terá pulseira de retorno do metrô" e em link
+relacionado sobre incidente trágico ("técnico que acionou botão que
+causou morte de serralheiro em montagem para show de Shakira poderá
+responder por homicídio culposo"). Capturado pelo tag de Flávio Valle.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| (Tema Shakira) | Aparece apenas em sidebar/rodapé. | n/a |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**: trata do projeto Horto Maravilha; menção a Shakira é incidental. Bloco mantido por integridade do protocolo. **Note**: o link do rodapé revela existência de morte de serralheiro durante montagem do palco — fato grave que aparecerá em outros artigos do corpus (a buscar a-NNN específico).
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
