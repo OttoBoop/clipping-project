@@ -2775,6 +2775,123 @@ Lista de itens proibidos no show: garrafas de vidro, latas, capacete, guarda-chu
 
 ---
 
+## a-21 — (= a-649) Câmara plataforma (off-scope)
+
+Re-publicação de `a-649`. **Sentimento geral do artigo:** N/A — fora de escopo.
+
+---
+
+## a-236 — (= a-83) Prefeitura planejamento operacional
+
+Re-publicação de `a-83`. **Sentimento geral do artigo:** positivo.
+
+---
+
+## a-233 — (= a-173) Proibido levar ao show
+
+Mesma matéria de `a-173`. **Sentimento geral do artigo:** positivo.
+
+---
+
+## a-90 — Por que Shakira fez show a R$ 5 em Uberlândia?
+
+**Fonte:** BBC News Brasil  **Data:** 30/04/2026 00:00 UTC
+
+Reportagem histórica da BBC: em 1996 Shakira fez show a R$ 5 em Uberlândia (MG), começo de carreira no Brasil. Contextualiza a ascensão para mega-show grátis em Copacabana 2026. Tom muito positivo, retrospectiva.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Histórico da carreira de Shakira no Brasil | Tom celebrativo. | muito positivo |
+| Cobertura BBC (mídia internacional) | Reforça projeção. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-172 — Shakira pede sugestões; g1 lista possíveis participações
+
+**Fonte:** G1 (g1.globo.com)  **Data:** 30/04/2026 07:02 UTC
+
+Especulação sobre convidados (Anitta, Beéle, Karol G, Bizarrap...). Engajamento dos fãs. Tom positivo.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-164 — Ativações de patrocinadores (Meio e Mensagem)
+
+**Fonte:** Meio e Mensagem (meioemensagem.com.br)  **Data:** 30/04/2026 09:00 UTC
+
+Reportagem especializada em marketing/publicidade detalha ativações de Corona, Santander, Latam, C&A, 99, Beats, Deezer, Dove, Sony Music. Posiciona o show como vitrine de marketing latino. Tom positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-144 — Governo do RJ anuncia que NÃO patrocinará o show
+
+**Fonte:** CNN Brasil (cnnbrasil.com.br)  **Data:** 30/04/2026 11:13 UTC
+
+**Notícia política negativa.** Governador em exercício Ricardo Couto anuncia que o Governo do Estado **não dará patrocínio** ao show de Shakira (rompendo expectativa de cota estadual). Subsecretário de Grandes Eventos Marcus Romero **pediu demissão** após a decisão. Tom factual mas com peso negativo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Recuo do Governo Estado (não-patrocínio) | Crítica política implícita. | negativo |
+| Demissão do subsecretário | Crise institucional. | muito negativo |
+| Continuidade do show via Prefeitura | Contraponto positivo. | neutro |
+
+**Sentimento geral do artigo:** negativo
+
+---
+
+## a-93 — O que está proibido fazer na hora do show (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 30/04/2026 14:37 UTC
+
+Replicação da lista de proibições. **Sentimento geral do artigo:** positivo (utilidade pública).
+
+---
+
+## a-139 — Curiosidades sobre o show (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 30/04/2026 16:59 UTC
+
+Recap leve com curiosidades (Shakira em programas de Hebe nos anos 90, "Choka Choka", palco recorde). Tom positivo.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-24 / a-59 — Câmara rejeita projeto de ambulantes como patrimônio (off-scope)
+
+**Fontes:** Tempo Real (a-24) / Câmara Municipal (a-59)  **Data:** 30/04/2026 19:08 UTC
+
+Artigos fora de escopo — política local sobre ambulantes. Shakira em sidebar.
+
+**Sentimento geral do artigo:** N/A — **Artigos fora de escopo**.
+
+---
+
+## a-114 — Tudo o que você precisa saber sobre o show (CNN)
+
+**Fonte:** CNN Brasil  **Data:** 30/04/2026 21:24 UTC
+
+Recap completo final pré-show. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-86 — Todo Mundo no Rio: a Loba já está entre nós
+
+**Fonte:** Todo Mundo no Rio / Riotur  **Data:** 01/05/2026 01:30 UTC
+
+Comunicado oficial-celebratório anunciando a chegada de Shakira. Tom muito positivo.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
