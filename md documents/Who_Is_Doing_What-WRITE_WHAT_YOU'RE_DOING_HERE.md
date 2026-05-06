@@ -52,7 +52,7 @@ _Cada agente que estiver parado esperando algo registra aqui. Apaga a linha quan
 
 | Agente   | Esperando o quê                          | De quem              | Desde       |
 |----------|------------------------------------------|----------------------|-------------|
-| —        | (nenhum bloqueio ativo)                  | —                    | —           |
+| Penelope | Acesso aos 119 artigos Shakira (sandbox bloqueia Render; snapshot comitado é pré-Shakira). Ver Q-008. | Otávio (caminhos a/b/c em Q-008) | 2026-05-06 |
 
 ---
 
@@ -76,7 +76,63 @@ _Q-NNN append-only. Quando respondida, A-NNN inline e marca **Status: Resolved**
 
 _(Q-001 a Q-007 do canal antigo estão preservados em [`legacy/ATLAS_IRIS_ASYNC.md`](legacy/ATLAS_IRIS_ASYNC.md) — todos resolvidos ou superados pela consolidação.)_
 
-(Sem perguntas abertas no momento.)
+### Q-008 — 2026-05-06 — Penelope → Otávio
+
+**Topic:** Como Penelope acessa os 119 artigos Shakira para rodar a Etapa 1 do
+workflow, dado que o sandbox firewalled o site live e o snapshot comitado é
+pré-Shakira?
+
+**Context:** Otávio pediu, antes de sair pro trabalho, que Penelope rodasse o
+loop completo (Etapa 0 + Etapa 1, possivelmente 2/3) do
+`Show da Shakira/workflow-classificacao-shakira.md`. Penelope descobriu duas
+barreiras independentes:
+
+1. **Egress do sandbox bloqueado.** Tentativas de `curl` e `WebFetch` para
+   `https://clipping-project.onrender.com/api/targets` e
+   `/assets/clipping-data.json` retornam HTTP 403
+   `host_not_allowed`. A branch `claude/fix-clipping-website-access-JmfDJ`
+   (commit `b9c5b43`, 30/04/2026) já tentou allowlist via
+   `.claude/settings.json`; a nota do commit confirma que o proxy
+   gerenciado da Anthropic **ignora** allowlists user-side até que o
+   issue upstream `anthropics/claude-code#52982` seja resolvido.
+2. **Snapshot comitado é pré-Shakira.** Tanto a branch atual quanto
+   `origin/master` e todas as outras branches públicas (`review-*`,
+   `fix-clipping-website-access-*`, `copilot/*`) têm
+   `assets/clipping-data.json` com `meta.generatedAt = "13/04/2026 17:28
+   UTC"` e zero artigos com `targetKeys` contendo `"shakira"`. O target
+   `shakira` foi adicionado depois dessa geração.
+
+**Trabalho concluído mesmo sem dados:**
+
+- Identidade Penelope criada (Task 1 do short-term plan).
+- Etapa 0 do plano de longo prazo está **completamente documentada** (schema
+  do snapshot, formato de cada Article, pseudocódigo de iteração,
+  tratamento de raw text, observações sobre safe-surface filter), de forma
+  que o loop pode começar imediatamente assim que a Q-008 for resolvida.
+  Ver "Descobertas da Base de Dados" em
+  `Show da Shakira/workflow-classificacao-shakira.md`.
+- Scaffold `Análise Show Shakira/analise-individual.md` criado com
+  cabeçalho e a seção "Bloqueio ativo" auto-removível pela próxima Penelope.
+
+**Question:** Otávio, qual desses três caminhos resolve para você?
+
+- **(a)** Você (ou o Atlas, no terminal local) faz dump do
+  `data/clipping.db` do Render (ou exporta os dois JSONs Shakira-enriched
+  diretamente) e comita no repo. **Recomendado** — mais simples, durável,
+  e desbloqueia Penelope sem dependência de fix do sandbox.
+- **(b)** Allowlist do egress acionável de algum jeito (Render-side proxy
+  whitelisted? VPN? Ambiente alternativo?). Custoso e talvez não viável
+  no curto prazo enquanto o issue upstream estiver aberto.
+- **(c)** Você roda Penelope num runtime alternativo (Claude Code local na
+  sua máquina, sem o sandbox cloud) — Penelope-the-process consegue acesso
+  direto à Render. Boa opção se você já tem o setup local pronto, mas
+  exige que você mesma esteja presente para iniciá-lo.
+
+**Status:** Open
+
+---
+
+(Sem outras perguntas abertas no momento.)
 
 ---
 
@@ -127,3 +183,36 @@ assinados como Penelope (a executora), com Iris como autora original da persona.
 **Próximo passo:** Penelope começa Etapa 0 (reconhecimento da base de dados via site
 live, não via mirror local). Otávio confirmou o site `https://clipping-project.onrender.com/`
 como source of truth; conta de artigos esperada no target `shakira` é 119.
+
+### 2026-05-06 — Penelope — Etapa 0 documentada; loop bloqueado em Q-008
+
+**Trabalho desta sessão (depois do commit da Task 1):**
+
+1. **Etapa 0 do `Show da Shakira/workflow-classificacao-shakira.md` preenchida**
+   integralmente com descobertas técnicas (schema do snapshot JSON, formato de
+   cada `Article`, pseudocódigo de iteração de 119 artigos via filtro
+   `targetKeys`, regra de fallback de raw text, observações sobre safe-surface
+   filtering já aplicado pelo pipeline). A seção pode ser executada como-is
+   pela próxima Penelope assim que a Q-008 for resolvida.
+2. **`Análise Show Shakira/analise-individual.md` criado** com cabeçalho e
+   uma seção "Bloqueio ativo" que se auto-documenta para o próximo agente.
+3. **Bloqueio identificado e registrado** — sandbox cloud do Claude Code
+   bloqueia egress para Render, e o snapshot comitado é pré-Shakira (gerado
+   13/04/2026, 0 artigos com `targetKeys` Shakira).
+4. **Q-008 aberta** em §4 propondo três caminhos de remediação a/b/c.
+   Recomendação Penelope é (a): Otávio/Atlas comita um dump fresco do
+   `clipping.db` ou dos JSONs do Render disk no repo. Resolve durável e não
+   depende de fix do sandbox upstream.
+
+**Por que não tentei mais caminhos:**
+
+- GitHub MCP (`mcp__github__get_file_contents`) só lê arquivos do mesmo repo
+  GitHub que já foi clonado — sem dado novo lá.
+- Sibling branch `claude/fix-clipping-website-access-JmfDJ` (Apr 30) já
+  documentou que o egress allowlist user-side é ignorado pelo proxy
+  gerenciado.
+- Não há repo/branch alternativo com snapshot Shakira-enriched.
+
+**Próximo passo:** aguardar resposta de Q-008. Quando chegar (qualquer um dos
+caminhos a/b/c), a próxima sessão Penelope retoma direto na Etapa 1 — toda
+a infraestrutura (persona, scaffold, schema, iteração) já está pronta.

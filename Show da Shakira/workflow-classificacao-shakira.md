@@ -87,21 +87,227 @@ Descobrir como os artigos estão armazenados no repositório e documentar o mét
 
 ### Descobertas da Base de Dados
 
-> **Esta seção deve ser preenchida pelo agente após explorar o repositório.**
+> **Preenchido em 2026-05-06 por Penelope (sessão Penelope+Iris+CC).**
+> **Status:** descobertas técnicas completas via leitura de código; **bloqueio
+> operacional** identificado para acessar a fonte de dados real (Shakira) — ver
+> seção dedicada abaixo.
 
-**Formato de armazenamento:** [a preencher]
+#### Arquitetura de armazenamento (em ordem de "verdade")
 
-**Campos disponíveis por artigo:** [a preencher]
+A base de dados real do projeto é **dual**:
 
-**Quantidade total de artigos:** [a preencher]
+1. **SQLite no disco do Render** (`data/clipping.db`) — fonte primária de
+   ingestão. Schema definido em `pipeline/database.py` (linhas 23–122).
+   Tabelas relevantes para o show da Shakira:
+   - `articles(id, url, title, source_name, source_type, published_at,
+     discovered_at, snippet, full_text, raw_html, summary, metadata)` — uma
+     linha por URL única.
+   - `mentions(id, article_id, target_key, target_name, keyword_matched,
+     sentiment, sentiment_reason, context)` — N×M; um artigo pode mencionar
+     vários targets, e um target pode ter várias mentions. `target_key` =
+     `"shakira"` filtra os relevantes.
+   - `stories(id, title, summary, temperature, created_at, updated_at)` —
+     agrupamento de artigos similares.
+   - `story_articles(story_id, article_id)` e `story_targets(story_id,
+     target_key)` — tabelas de junção.
+2. **Snapshot estático** (`assets/clipping-data.json` +
+   `assets/clipping-raw-texts.json`) — exportado periodicamente por
+   `tools/export_mobile_snapshot.py` a partir do SQLite. É o que o **site
+   público** (`https://clipping-project.onrender.com/` e a versão GitHub Pages
+   `https://ottoboop.github.io/clipping-project/`) consome diretamente. É o
+   formato **mais conveniente para iterar** durante a análise — não exige
+   conexão com SQLite, é JSON puro, já pré-processado.
 
-**Como iterar pelos artigos:** [a preencher — descrever o método exato: ler linhas de um CSV, iterar por chaves de um JSON, listar arquivos de um diretório, etc.]
+A Etapa 0 e 1 deste workflow devem usar **o snapshot JSON**, não consultas
+diretas ao SQLite. O snapshot é a versão "publicada", sem campos internos
+ruidosos.
 
-**Como acessar o texto bruto de cada artigo:** [a preencher — o caminho/campo exato que contém o conteúdo]
+#### Formato de armazenamento (snapshot JSON)
 
-**Observações relevantes:** [a preencher]
+**`assets/clipping-data.json`** — dicionário top-level com chaves:
 
-**Checkpoint:** apresentar estas descobertas ao usuário e aguardar aprovação antes de prosseguir à Etapa 1.
+```
+meta:           dict (totalStories, totalArticles, generatedAt, etc.)
+targets:        list[Target]   # alvos monitorados ativos
+defaultTargets: list[str]      # alvo selecionado por padrão na UI
+stories:        list[Story]    # núcleo do payload
+```
+
+**Story (objeto):**
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `storyIdInt` | int | ID interno da story |
+| `title` | str | Título representativo da história agrupada |
+| `summaryLabel` | str | Rótulo do tipo de resumo ("Resumo IA", "Sem resumo", etc.) |
+| `summaryText` | str | Texto do resumo (curto) |
+| `temperature` | float | Pontuação interna (não relevante para análise temática) |
+| `articleCount` | int | Quantos artigos a história agrupa |
+| `aiCount` | int | Quantos têm summary IA |
+| `rawCount` | int | Quantos só têm texto bruto |
+| `firstPublishedAt` | str (ISO) | Data do artigo mais antigo na história |
+| `lastPublishedAt` | str (ISO) | Data do mais recente |
+| `targetKeys` | list[str] | Chaves de alvos cujas histórias entram no agrupamento |
+| `articles` | list[Article] | Os artigos agrupados |
+
+**Article (objeto, dentro de `story.articles`):**
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `articleId` | int | ID único do artigo (chave primária no SQLite) |
+| `title` | str | Título do artigo |
+| `url` | str | URL original |
+| `sourceName` | str | Nome do veículo/fonte conforme registrado no pipeline |
+| `sourceHost` | str | Host do domínio (ex. `tupi.fm`) |
+| `publishedAt` | str (ISO 8601) | Data de publicação |
+| `publishedDisplay` | str | Data formatada para UI (ex. `"12/04/2026 11:45 UTC"`) |
+| `targetKeys` | list[str] | Alvos que este artigo individualmente menciona (após safe-surface check) |
+| `summaryLabel` | str | "Resumo IA", "Resumo simples", "Sem resumo" |
+| `summaryPreview` | str | Preview do resumo (truncado) |
+| `summarySource` | str | `"ai"` ou `"preview"` |
+| `rawTextKey` | str \| null | Chave para buscar texto bruto em `clipping-raw-texts.json` (ex. `"article-602"`); pode ser `null` para artigos sem texto extraído |
+
+**`assets/clipping-raw-texts.json`** — `dict[str, str]`. Chaves no formato
+`"article-{articleId}"`, valores são o texto bruto do artigo (já com markup
+HTML removido, mas com algum boilerplate de menu/navegação preservado).
+Tamanho típico do arquivo: ~17 MB no estado pós-Shakira.
+
+#### Quantidade total de artigos (target shakira)
+
+Otávio confirmou: **119 artigos** na base de produção sob o target
+`"shakira"`, no momento desta documentação (2026-05-06). Esse número pode ter
+crescido se o pipeline rodar novamente antes do início da análise; o agente
+deve recontar via `len([a for s in stories for a in s.articles if 'shakira'
+in a.targetKeys])` ao iniciar.
+
+(O snapshot atualmente comitado em `assets/clipping-data.json` é de
+13/04/2026 17:28 UTC e tem 0 artigos Shakira — predates o adicionamento do
+target `shakira` ao sistema. Ver seção "Bloqueio operacional" abaixo.)
+
+#### Como iterar pelos artigos
+
+Pseudocódigo de iteração (para o Etapa 1 loop):
+
+```python
+import json
+
+with open("assets/clipping-data.json") as f:
+    payload = json.load(f)
+with open("assets/clipping-raw-texts.json") as f:
+    raw_texts = json.load(f)
+
+shakira_articles = []
+seen = set()
+for story in payload["stories"]:
+    if "shakira" not in (story.get("targetKeys") or []):
+        continue
+    for article in story.get("articles") or []:
+        if "shakira" not in (article.get("targetKeys") or []):
+            # artigo está numa story tagueada Shakira mas o artigo
+            # individual não passou no safe-surface — incluir mesmo assim
+            # no escopo (regra do plano: "fora de escopo" recebe bloco
+            # com classificação N/A).
+            pass
+        aid = article["articleId"]
+        if aid in seen:
+            continue
+        seen.add(aid)
+        shakira_articles.append({
+            "id_artigo": f"a-{aid}",
+            "title": article["title"],
+            "url": article["url"],
+            "source": article["sourceName"],
+            "source_host": article["sourceHost"],
+            "published": article["publishedDisplay"],
+            "raw_text": raw_texts.get(article.get("rawTextKey") or "", "")
+                        or article.get("summaryPreview") or "",
+            "story_title": story["title"],
+            "story_id": story["storyIdInt"],
+            "in_strict_shakira_scope": "shakira" in (article.get("targetKeys") or []),
+        })
+
+# `shakira_articles` é a lista canônica de iteração para a Etapa 1.
+```
+
+**ID do artigo no `analise-individual.md`:** usar o formato `a-{articleId}`
+(ex. `a-626`). É estável, único e bate com o ID interno do SQLite e com a
+chave do raw-texts.
+
+#### Como acessar o texto bruto
+
+Para um artigo específico:
+
+1. Ler `article.rawTextKey` do snapshot. Se `null`, usar `summaryPreview` +
+   `title` como fallback (texto pobre, mas é o que existe).
+2. Se não-null, buscar `raw_texts[rawTextKey]` em `clipping-raw-texts.json`.
+3. O texto vem com algum boilerplate (cabeçalhos de menu, navegação) — é
+   responsabilidade do agente classificador identificar e descartar
+   boilerplate na hora de produzir o resumo narrativo.
+
+#### Observações relevantes
+
+1. **Filtragem secondary-target safe-surface**: o pipeline (em
+   `pipeline/ingest.py`) filtra mentions de targets secundários (`shakira` é
+   secundário) para que só apareçam quando o nome aparecer no título ou nos
+   primeiros 500 caracteres do snippet/summary/full_text. Histórias que só
+   mencionam Shakira em "Notícias relacionadas" / "Veja também" / "Leia mais"
+   foram explicitamente removidas (regra adicionada no commit `bb6218e`
+   2026-05-05). Isso significa que os 119 artigos esperados já vêm pré-
+   filtrados — o agente provavelmente vai encontrar muito poucos
+   "Artigo fora de escopo" durante o loop, porque o pipeline já fez essa
+   filtragem.
+2. **Resumos IA pré-existentes**: cerca de 33 artigos no banco têm
+   `summaryLabel="Resumo IA"`; os demais têm `summaryPreview` mais curto
+   gerado por preview. O agente pode usar o resumo IA como ponto de partida,
+   mas a Etapa 1 exige resumo narrativo *novo*, focado nos temas (não no
+   conteúdo geral) — não copiar o resumo IA verbatim.
+3. **Datas**: `publishedAt` é UTC ISO. O escopo da mission Shakira (per
+   `md documents/05-05-26-Iris-Shakira goals.md`) é `01/04/2026` a
+   `05/05/2026`. Artigos fora dessa janela podem aparecer no snapshot
+   (backfill de história mais antiga) — analisar mesmo assim, marcar a data
+   no bloco. O plano não exige filtro temporal na Etapa 1.
+4. **Cleanup post-export**: histórias antigas tagueadas como "stale shakira"
+   foram removidas via `web_app/db_admin.py:cleanup_false_backfilled_target_mentions`
+   no sprint Atlas em curso. O snapshot de produção atual reflete esse
+   cleanup. Não é necessário re-filtrar em Penelope-side.
+
+#### Bloqueio operacional 2026-05-06
+
+> **Importante para qualquer Penelope/agente que retomar este loop.**
+
+A Penelope **não** conseguiu acessar os dados Shakira nesta sessão. Causa
+raíz:
+
+1. O sandbox cloud do Claude Code (proxy `host_not_allowed`) recusa egress
+   para `*.onrender.com` e `*.supabase.co`. Bloqueia `curl`, `httpx` e
+   `WebFetch`. Bug upstream aberto — `anthropics/claude-code#52982` (ver
+   commit `b9c5b43` na branch `claude/fix-clipping-website-access-JmfDJ` que
+   tentou allowlist via `.claude/settings.json` e descobriu que o proxy
+   gerenciado ignora a config user-side).
+2. Os arquivos comitados no repo (`assets/clipping-data.json` +
+   `assets/clipping-raw-texts.json`) são da geração **13/04/2026 17:28 UTC**,
+   anteriores ao adicionamento do target `shakira`. Têm 0 artigos Shakira.
+3. Não há repo/branch alternativo conhecido com snapshot Shakira-enriched.
+
+**Caminhos de remediação (qualquer um destes desbloqueia):**
+
+- **(a)** Otávio (ou Atlas) faz um dump do `data/clipping.db` do Render OU
+  exporta `assets/clipping-data.json`+`assets/clipping-raw-texts.json` da
+  Render disk e comita no repo. Penelope retoma na sessão seguinte. Mais
+  simples, mais durável, e não depende de fix do sandbox.
+- **(b)** Anthropic resolve o issue `#52982` ou Otávio configura egress
+  via Render-side proxy em domínio whitelisted. Improvável short-term.
+- **(c)** Otávio ativa um runtime alternativo (Claude Code local em
+  máquina dele, ou ambiente sem o egress proxy gerenciado) onde a Penelope
+  rodaria o loop com acesso direto a `clipping-project.onrender.com`.
+
+**Q-NNN registrada em** `Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md`
+§4 (Q-008) com esses três caminhos enumerados como opções.
+
+**Checkpoint:** Etapa 0 está documentada e pronta. Quando o bloqueio for
+resolvido (qualquer um dos caminhos a/b/c), a próxima Penelope retoma
+direto na Etapa 1 sem precisar refazer Etapa 0 — o método de iteração já
+está completo aqui.
 
 ---
 
