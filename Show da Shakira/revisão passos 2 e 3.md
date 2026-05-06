@@ -177,17 +177,24 @@ propagou para os relatórios. São coisas diferentes:
 
 ---
 
-## Pendentes (a decidir nas próximas perguntas)
+## Pendentes (resolvidos)
 
-- **P1 — Correções específicas no bloco Categorias Temáticas:**
+- ~~**P1 — Correções específicas no bloco Categorias Temáticas:**
   Otávio sinalizou que vai "explicar as coisas a corrigir" nas
   Categorias Temáticas. Aguardando essa lista para revisar
-  categoria a categoria.
-- **P2 — Sequência de execução:** revisar Categorias Temáticas
-  primeiro (corrigindo o que Otávio apontar), depois aplicar D1
-  (redistribuição cat 10), depois D3 (reordenar consolidacao),
-  depois D4 (editar relatórios afetados), por último ajustar
-  síntese final do `relatorio-geral.md`.
+  categoria a categoria.~~ **Resolvido na parte 4 (06/05/2026):**
+  reescrita completa de `categorias-temas.md` e
+  `consolidacao-temas.md` aplicando D1, D3 e D5; revisão dos 12
+  relatórios temáticos individuais e do `relatorio-geral.md` para
+  alinhar o tom; criação de dois relatórios curtos para a
+  prefeitura (`relatorio-prefeitura-publico.md` e
+  `relatorio-prefeitura-interno.md`).
+- ~~**P2 — Sequência de execução**~~ **Executada conforme
+  planejado**: D1/D3/D5 em consolidacao + categorias (commit
+  `567208f`); recalibragem dos 12 relatórios temáticos (commit
+  `aa6760f`); reescrita do `relatorio-geral.md` (commit
+  `c840d03`); criação dos dois documentos para a prefeitura
+  (commit `365e06a`).
 
 ---
 
@@ -216,3 +223,31 @@ propagou para os relatórios. São coisas diferentes:
   refletir essa distinção. A revisão das Categorias Temáticas
   passa a ser uma revisão de **descolamento síntese × tabela
   quantitativa**, em ambas as direções.
+- **06/05/2026 (parte 4 — fechamento):** Loop final do projeto.
+  Otávio decide aplicar D5 a tudo: recalibrar os 12 relatórios
+  temáticos individuais, reescrever inteiro o `relatorio-geral.md`,
+  e criar dois documentos curtos para a prefeitura (um público,
+  otimista e compartilhável; um interno, truth-teller breve para
+  o chefe). Os 12 relatórios passaram por edição cirúrgica das
+  seções "Truth-teller" e "Conclusão", com exceção do relatório
+  10 (refeito completamente conforme cat 10 enxuta) e do
+  relatório 11 (manteve quase tudo, apenas removendo
+  editorialização final). O `relatorio-geral.md` foi reescrito
+  inteiro mantendo a estrutura macro mas com tom recalibrado:
+  abertura com agregado real (75,7% positivo), 12 categorias
+  resumidas alinhadas ao consolidado, "Linha editorial crítica"
+  reescrita listando apenas pontos críticos legítimos sustentados
+  pelo corpus, e conclusão substituindo o trecho anterior
+  ("operação cultural que custou vida e normalizou vigilância
+  biométrica e foi coberta por imprensa que amplificou framing
+  oficial") por síntese que reflete o agregado: show
+  majoritariamente bem-sucedido, pontos de fricção concentrados
+  em três eixos (tragédia da montagem, assimetria econômica,
+  ruído administrativo), cobertura proporcional ao volume. Os
+  dois documentos da prefeitura foram criados como peças de uma
+  página cada: `relatorio-prefeitura-publico.md` com headlines
+  numéricos para imprensa, e `relatorio-prefeitura-interno.md`
+  com cinco pontos de melhoria para o chefe (tragédia,
+  privacidade, comunicação do atraso, assimetria econômica,
+  custo público × movimentação privada). Este é, do ponto de
+  vista de Otávio, o último loop do projeto Show da Shakira.
