@@ -1,21 +1,43 @@
 # Categorias Editoriais — Show da Shakira
 
-> Mapeamento editorial dos ~410 temas brutos de `consolidacao-temas.md`
-> em 12 categorias amplas. Este documento é a fonte de verdade para o
-> agrupamento que será refletido em (a) `consolidacao-temas.md` na seção
-> "Categorias Temáticas" (Etapa 2 narrativa) e (b) `relatorios/[slug].md`
-> (Etapa 3).
+> Mapeamento editorial dos ~410 temas brutos em 12 categorias amplas.
+> Este documento é a fonte de verdade para o agrupamento que aparece
+> em (a) `consolidacao-temas.md` na seção "Categorias Temáticas"
+> (Etapa 2 narrativa) e (b) `relatorios/[slug].md` (Etapa 3).
 >
 > Regra de mapeamento: **cada tema bruto entra em exatamente uma
-> categoria** (a dominante). Um mesmo artigo (ID `a-XXX`) pode aparecer
-> em múltiplas categorias quando seus temas distintos mapearam para
-> categorias distintas — isso é desejado, porque o corpus mostra
-> múltiplos eixos por matéria.
+> categoria** (a dominante). Um mesmo artigo (ID `a-XXX`) pode
+> aparecer em múltiplas categorias quando seus temas distintos
+> mapearam para categorias distintas — isso é desejado, porque o
+> corpus mostra múltiplos eixos por matéria.
 >
-> Ordem das categorias é editorial: começa com o ato artístico em si,
-> passa pela narrativa de crise (atraso/pai), os eixos operacionais e
-> econômicos, depois os eixos críticos (polêmicas, tragédia) e fecha
-> com a recepção (fandom).
+> Ordem das categorias é editorial: começa com o ato artístico em
+> si, passa pela narrativa de crise (atraso/pai), os eixos
+> operacionais e econômicos, depois os eixos com fricção
+> (tragédia, ruído político-administrativo) e fecha com a recepção
+> (fandom).
+>
+> **Revisão de 06/05/2026 (cat 10).** Na primeira versão, a
+> categoria 10 ("Polêmicas, custos públicos e conflitos políticos")
+> foi usada como guarda-chuva de qualquer cobertura crítica de
+> outros eixos — virou inchada e descritivamente errada. Foi
+> redistribuída: itens que eram cobertura crítica de Segurança
+> (XPTO, fraude, privacidade) foram para cat 3; itens que eram
+> cobertura crítica de Economia (custo público R$ 15 mi, repasse
+> Bonus Track, inflação de estacionamento) foram para cat 5;
+> "não é americana" foi para cat 12; contestação BBC foi para
+> cat 4; críticas ao atraso foram para cat 1 e cat 2; itens de
+> tragédia (subcontratação, repercussão internacional) consolidaram
+> em cat 11. A cat 10 ficou enxuta, com apenas as fricções
+> **político-administrativas** genuínas. Detalhes em
+> `revisão passos 2 e 3.md`.
+>
+> **Postura editorial — crítico, não contrarian.** As sínteses em
+> `consolidacao-temas.md` adotam leitura crítica no sentido literal
+> (tipo crítica de cinema): prós e contras, checagem da imprensa
+> contra os dados, sem inversão de sinal por princípio. Onde o
+> agregado é positivo, a síntese é positiva; onde é negativo, é
+> negativa.
 
 ---
 
@@ -32,7 +54,7 @@
 | 7 | Brasil-Colômbia e latinidade | `07-brasil-colombia-latinidade` | ~25 |
 | 8 | Artistas brasileiros e participações | `08-artistas-brasileiros` | ~25 |
 | 9 | Empoderamento feminino, ativismo e legado social | `09-empoderamento-e-ativismo` | ~15 |
-| 10 | Polêmicas, custos públicos e conflitos políticos | `10-polemicas-e-custos` | ~20 |
+| 10 | Bastidores políticos e gestão administrativa do evento | `10-polemicas-e-custos` | ~6–8 (após D1) |
 | 11 | Tragédia da montagem (Gabriel Firmino) | `11-tragedia-da-montagem` | ~10 |
 | 12 | Fandom, bastidores e cobertura social | `12-fandom-e-bastidores` | ~30 |
 
@@ -252,8 +274,9 @@ motor de viagem; Identificação cultural latina como vetor turístico;
 Ocupação hoteleira (80% Zona Sul, 68% cidade); Expectativa de
 ocupação hoteleira moderada; Ocupação >90% em Copacabana/Ipanema/
 Barra; Valorização de aluguel por temporada (até 5×); Custo público
-(R$ 15 mi) — mas ver categoria 10 para a polêmica; Repasse à Bonus
-Track; Bonus Track contrato plurianual; Bonus Track (produtora);
+R$ 15 mi (vs R$ 10 mi de Madonna, R$ 15 mi de Gaga — migrado de
+cat 10 na revisão D1); Repasse à Bonus Track (migrado de cat 10);
+Bonus Track contrato plurianual; Bonus Track (produtora);
 Bonus Track / produção do Todo Mundo no Rio; Bonus Track como
 destinatária do repasse; Procolombia (agência diplomática); Música
 latina / mercado; Streaming e desigualdade econômica; Turnê de
@@ -437,40 +460,50 @@ a-64, a-115, a-117, a-150, a-183, a-229, a-241.
 
 ---
 
-## 10. Polêmicas, custos públicos e conflitos políticos
+## 10. Bastidores políticos e gestão administrativa do evento
 
-**Definição editorial.** Os pontos de fricção que a cobertura
-registrou explicitamente: o custo público de R$ 15 mi (vs. R$ 10 mi
-de Madonna, R$ 15 mi de Gaga), o repasse à Bonus Track, a demissão
-do subsecretário Antonio Ricardo Rebello, a ausência de Eduardo Paes
-(em viagem oficial em Búzios) e Cavaliere assumindo a foto-op, o
-recuo do Governo do Estado em não ser patrocinador, a falha dos
-pórticos inteligentes da empresa XPTO Inc, a contestação do número
-oficial pela BBC, a inflação predatória de estacionamento, o silêncio
-inicial da Bonus Track na imprensa estrangeira sobre a tragédia, a
-crítica popular ("não é americana"), a polarização nas redes em
-torno do atraso, a tensão privacidade × reconhecimento facial.
+**Definição editorial.** Categoria enxuta após a redistribuição
+D1 (06/05/2026). Cobre apenas as **fricções
+político-administrativas genuínas** que não são cobertura crítica
+de outro eixo: a demissão do subsecretário Antonio Ricardo
+Rebello, a ausência de Eduardo Paes (em viagem oficial em Búzios)
+e Cavaliere assumindo a foto-op, o recuo do Governo do Estado
+em não ser patrocinador, e o silêncio inicial da Bonus Track na
+imprensa estrangeira sobre a tragédia (cruz-ref direto com
+categoria 11). Categoria de **ruído de gestão**, não de
+controvérsia central.
 
-**Temas brutos componentes:**
-Custo público (R$ 15 mi); Custo público (R$ 15 milhões); Custo
-público (R$ 15 mi vs R$ 10 mi de Madonna); Comparação com Madonna
-(R$ 10 mi) e Lady Gaga (R$ 15 mi); Repasse à Bonus Track; Ausência
-de Paes no evento; Cavaliere assume cobertura; Visita política do
-prefeito (foto-op); Demissão do subsecretário; Recuo do Governo
-Estado (não-patrocínio); Falha dos pórticos (XPTO Inc); Contestação
-do número oficial 2,5 mi; Mídia internacional (BBC) levantando
-dúvida; Crítica popular ("não é americana"); Críticas ao atraso/
-previsibilidade; Polarização nas redes; Inflação predatória de
-estacionamento; Especulação comercial em torno do show; Silêncio
-inicial da Bonus Track na imprensa estrangeira; Privacidade vs.
-segurança pública (cruz-ref categoria 3); Ausência de debate sobre
-privacidade; Subcontratação Cenoart; Subcontratação (Bonus Track →
-MG Coutinho/Cenoart); Repercussão internacional negativa; Streaming
-e desigualdade econômica.
+**O que NÃO está aqui (e por quê):**
+- Custo público R$ 15 mi, repasse à Bonus Track, inflação
+  predatória de estacionamento, especulação comercial, streaming
+  e desigualdade econômica → **categoria 5** (Economia).
+- Falha dos pórticos XPTO Inc, fraude de ingressos, privacidade ×
+  reconhecimento facial, ausência de debate sobre privacidade →
+  **categoria 3** (Segurança).
+- Contestação do número oficial pela BBC → **categoria 4**
+  (Audiência).
+- Críticas ao atraso / previsibilidade do roteiro → **categoria 1**
+  (Performance).
+- Polarização nas redes em torno do atraso → **categoria 2**
+  (Atraso e pai).
+- Crítica popular "não é americana" → **categoria 12** (Fandom).
+- Subcontratação Cenoart, subcontratação Bonus Track → MG
+  Coutinho → Cenoart, repercussão internacional negativa sobre
+  a tragédia → **categoria 11** (Tragédia).
+
+Esses itens são, todos, cobertura crítica de outros eixos —
+agregá-los aqui criava a falsa impressão de uma categoria
+"polêmicas" volumosa quando, na verdade, eram fricções
+distribuídas naturalmente pelos eixos próprios.
+
+**Temas brutos componentes (categoria enxuta):**
+Demissão do subsecretário; Ausência de Paes no evento; Cavaliere
+assume cobertura; Visita política do prefeito (foto-op); Recuo do
+Governo Estado (não-patrocínio); Silêncio inicial da Bonus Track
+na imprensa estrangeira (cruz-ref categoria 11).
 
 **IDs representativos:**
-a-66, a-88, a-95, a-96, a-128, a-140, a-143, a-144, a-147, a-162,
-a-165, a-192, a-198, a-207, a-231, a-264, a-279, a-281.
+a-144, a-192, a-210, a-279.
 
 ---
 
@@ -574,18 +607,45 @@ Esses 4 artigos não entram em nenhuma das 12 categorias acima.
 - A categoria 1 (Performance) e a categoria 4 (Audiência/cobertura)
   têm muita interseção: a "performance" foi a coisa enquadrada como
   "fenômeno midiático" pelos veículos. A separação editorial é:
-  categoria 1 olha para *o que aconteceu no palco*; categoria 4 olha
-  para *como a cobertura dimensionou o evento*.
-- A categoria 5 (Economia) é a maior em volume bruto de temas. O
-  truth-teller dela vai ser o mais denso: hospedagem, preços
-  inflacionados, comércio Saara vs. patrocinadores Corona/Santander,
-  a desigualdade de quem ganha quando o show acontece.
-- A categoria 11 (Tragédia) tem só ~5 IDs mas é editorialmente
-  central: o silêncio inicial da Bonus Track na imprensa estrangeira
-  e o contraste entre o "espetáculo" e a "morte do trabalhador" é
-  exatamente o tipo de eixo que o olhar truth-teller deve iluminar.
-- A categoria 9 (Empoderamento/Ativismo) é a menor em volume. Mas o
-  truth-teller dela tem material rico: Shakira como ativista
-  histórica vs. Shakira como produto comercial; o protesto pelo
-  fim da 6×1 alinhado a uma campanha do governo federal lançada no
-  mesmo dia (a-150).
+  categoria 1 olha para *o que aconteceu no palco*; categoria 4
+  olha para *como a cobertura dimensionou o evento*.
+- A categoria 5 (Economia) é a maior em volume bruto de temas e
+  reúne o maior conjunto de **fricções genuínas sustentadas pelo
+  corpus**: assimetria entre quem ganha (proprietário, companhia
+  aérea, varejo) e quem paga (hóspede, fã, comércio informal sem
+  direitos), inflação predatória de estacionamento, custo público
+  R$ 15 mi × movimentação privada R$ 776 mi, streaming desigual
+  América Latina vs EUA/UK. Esses pontos são leitura crítica
+  literal — não inversão de sinal — e devem aparecer como
+  qualificadores dentro de uma categoria que, no agregado, é
+  positiva.
+- A categoria 11 (Tragédia) é o eixo onde o sinal é genuinamente
+  negativo. Ali a leitura crítica converge com o agregado: morte
+  do trabalhador, subcontratação em três níveis, silêncio inicial
+  da Bonus Track na imprensa estrangeira, distribuição editorial
+  assimétrica (Veja Rio e Diário do Rio cobriram em detalhe;
+  Globo, O Globo, G1 não fizeram capa). Não é caça a problema; é
+  o problema.
+- A categoria 9 (Empoderamento/Ativismo) é pequena em volume e
+  unanimemente positiva no corpus. Não há fricção sustentada para
+  registrar — Shakira tem trajetória histórica documentada (Pies
+  Descalzos 1997, Crystal Award Davos 2017) e o show usou a
+  plataforma para causas alinhadas. A leitura realista é a mesma
+  da cobertura.
+- **Sobre a postura editorial:** crítico ≠ negative nancy ≠
+  contrarian. Crítico (no sentido de crítica de cinema) avalia
+  prós e contras e checa se a narrativa da imprensa bate com os
+  dados. Pode chegar à conclusão "majoritariamente positivo" se
+  for de fato. Negative nancy sai caçando problemas; contrarian
+  inverte sinal por princípio. A primeira versão do
+  `consolidacao-temas.md` (06/05/2026) operou em modo negative
+  nancy / contrarian em várias categorias e foi reescrita.
+  Detalhes em `revisão passos 2 e 3.md` (decisão D5).
+- **Sobre cat 10 enxuta:** a redistribuição D1 é a fonte de
+  verdade. Se uma futura Penelope encontrar uma "polêmica" do
+  show, deve perguntar antes de adicionar à cat 10: *isso é
+  cobertura crítica de outro eixo (Segurança, Economia,
+  Audiência, Performance, Atraso, Fandom, Tragédia)?* Se sim, vai
+  para o eixo natural. A cat 10 só absorve o que é estritamente
+  ruído político-administrativo do governo municipal/estadual e
+  da gestão de imagem da Bonus Track.
