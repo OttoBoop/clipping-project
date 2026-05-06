@@ -1729,6 +1729,312 @@ responder por homicídio culposo"). Capturado pelo tag de Flávio Valle.
 
 ---
 
+## a-268 — (já coberto em a-269) Estilista brasileiro Dario Mitmann
+
+Bloco redirecionador. O conteúdo de `a-268` é byte-identico ao de `a-269` (mesma matéria, IDs duplicados pela ingestão dual). Análise completa em `a-269` acima. **Sentimento geral do artigo:** muito positivo.
+
+---
+
+## a-266 — A uma semana de show, Shakira manda recado: 'Quase lá, Rio!'
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 25/04/2026 18:49 UTC
+**URL:** https://oglobo.globo.com/cultura/musica/noticia/2026/04/a-uma-semana-de-show-na-praia-de-copacabana-shakira-manda-recado-para-os-fas-quase-la-rio.ghtml
+
+### Resumo Narrativo
+
+Shakira posta nas redes: "Quase lá, Rio! Preparando muitas surpresas:
+artistas convidados, figurino novo, músicas que vocês vão adorar… no
+altar do planeta!" Anitta curtiu. Mais de 100 mil curtidas. Recap das
+dimensões do palco e gratuidade. Tom muito positivo.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Engajamento direto Shakira × fãs | Tom muito positivo. | muito positivo |
+| Surpresas teasing (Anitta, figurino) | Hype crescente. | muito positivo |
+| Recap palco/gratuidade | Reforço positivo. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-234 — Faixa em Botafogo avisa que acesso a Copacabana fechará às 18h
+
+**Fonte:** G1 (g1.globo.com)
+**Data:** 25/04/2026 19:15 UTC
+**URL:** https://g1.globo.com/rj/rio-de-janeiro/musica/show-shakira-rj/noticia/2026/04/25/shakira-no-rio-faixa-em-botafogo-avisa-que-acesso-a-copacabana-fechara-as-18h.ghtml
+
+### Resumo Narrativo
+
+Faixa na Rua Pinheiro Guimarães (Botafogo) anuncia bloqueio de carros,
+ônibus e motos a Copacabana às 18h do dia 2/05. Coletiva de imprensa do
+prefeito Cavaliere e Riotur (Bernardo Fellows) marcada para 28/04. Recap
+palco 1.500 m². Tom factual, positivo.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Bloqueio de acesso veicular (18h) | Sinalizado factualmente; logística adequada. | positivo |
+| Coletiva oficial Prefeitura/Riotur | Comunicação institucional positiva. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-265 — Bebel Gilberto sonha em fazer parceria com Shakira
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 25/04/2026 20:17 UTC
+**URL:** https://oglobo.globo.com/cultura/noticia/2026/04/e-esse-feet-bebel-gilberto-sonha-em-fazer-parceria-com-shakira.ghtml
+
+### Resumo Narrativo
+
+Nota cultural: Bebel Gilberto, em caixinha de perguntas no Instagram,
+diz sonhar em fazer feat com Shakira ("ela me elogiou uma vez nos
+Rolling Stones"). Bebel também elogia Anitta pela regravação de
+"Cordeiro de Nanã" do pai João Gilberto. Tom positivo, fofo. Tangencial
+ao show específico mas in-scope (Shakira-cultura).
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Reconhecimento de Shakira por Bebel Gilberto | Positivo, bilateral. | positivo |
+| Cultura latina/brasileira em diálogo | Soft power positivo. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-274 — Show celebra a carreira de artista que abriu caminhos para o boom da música latina
+
+**Fonte:** O Globo / Silvio Essinger (oglobo.globo.com)
+**Data:** 26/04/2026 06:31 UTC
+**URL:** https://oglobo.globo.com/cultura/musica/noticia/2026/04/shakira-no-rio-show-em-copacabana-celebra-a-carreira-de-artista-que-abriu-caminhos-o-atual-boom-da-musica-latina.ghtml
+
+### Resumo Narrativo
+
+Reportagem-perfil cultural muito rica de Silvio Essinger. Posiciona
+Shakira como a artista que "abriu caminho" para o boom latino atual
+(Bad Bunny, Karol G). Recapitula: "Hips don't lie" (2006), "Bzrp Music
+Sessions Vol. 53" (2023, pós-Piqué) e "Las mujeres ya no lloran" (2024,
+13º na parada americana, 1º em pop latino). Cita declaração de Niemeyer
+(Bonus Track) sobre "latinidade" como valor curatorial e Bad Bunny no
+Super Bowl como contexto. Estima 500 mil turistas no fim de semana,
+"versão intensificada" de plano de segurança (mais câmeras de
+reconhecimento facial, mais pessoas para revista). Tom muito positivo,
+com profundidade jornalística.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Shakira como pioneira do boom latino global | Reverência cultural; muito positivo. | muito positivo |
+| Rolagem da carreira (1995→2024) | Tom celebratório. | muito positivo |
+| Latinidade como valor curatorial do Todo Mundo no Rio | Posicionamento positivo. | muito positivo |
+| Estimativa de 500 mil turistas / segurança intensificada | Logística positiva, aviso de câmeras de reconhecimento facial. | positivo |
+| Era pós-Piqué / superação | Reforça narrativa de empoderamento. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-273 — 'Hips don't lie' ou 'Girl like me'? Shakira pergunta qual música os fãs querem
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 26/04/2026 13:10 UTC
+**URL:** https://oglobo.globo.com/cultura/musica/noticia/2026/04/hips-dont-lie-ou-girl-like-me-shakira-pergunta-qual-musica-fas-querem-ouvir-no-show-em-copacabana.ghtml
+
+### Resumo Narrativo
+
+Shakira faz enquete no Instagram em português ("Brasil, o que vocês
+querem ouvir?") com 4 opções: "Hips don't lie", "Chantaje", "Can't
+remember to forget you", "Girl like me". Recap palco/transmissão.
+Engajamento positivo direto.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Engajamento bilateral artista × fãs | Muito positivo. | muito positivo |
+| Recap padrão (palco/setlist) | Reforço. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-272 — Shakira 'vai' às compras na Saara, mas divulga show com réplica de leque
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 26/04/2026 13:58 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/shakira-vai-as-compras-na-saaramas-divulga-show-com-replica-de-leque-entenda.ghtml
+
+### Resumo Narrativo
+
+Note cultural-curiosa: a equipe de Shakira encomendou 15 itens da loja
+Lix (Saara) para Miami; o leque que Shakira mostra nas redes é
+réplica/cópia, não original (não chegou a tempo). Lorrana Lica (dona da
+Lix) reconhece o engano mas valoriza a divulgação. 5 dos 15 itens são
+leques "lobacabana"; outros 10 "para se vestir". Tom positivo-comercial.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Comércio Saara × marketing internacional | Positivo, "soft power" comercial. | positivo |
+| Leque "lobacabana" como símbolo | Rede de fãs apropria fenômeno. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-115 — Shakira exalta mulheres latinas e dedica show a elas (artigo no O Globo)
+
+**Fonte:** G1 (g1.globo.com) — sobre artigo de Shakira no Jornal O Globo
+**Data:** 26/04/2026 14:27 UTC
+**URL:** https://g1.globo.com/rj/rio-de-janeiro/musica/show-shakira-rj/noticia/2026/04/26/shakira-exalta-mulheres-latinas-e-diz-que-show-em-copacabana-sera-dedicado-a-elas.ghtml
+
+### Resumo Narrativo
+
+G1 cobre artigo "Chorar já não basta" assinado por Shakira no Jornal O
+Globo de domingo (26/04). Shakira exalta a "garra das mulheres latinas",
+diz ter se surpreendido com o número de lares brasileiros chefiados por
+mulheres ("mais de 40 milhões"), e dedica o show de 2 de maio a essas
+mulheres. Compara Copacabana ao "altar do planeta" — "se o planeta
+Terra tivesse um altar capaz de falar por si só, esse altar seria
+Copacabana". Tom muito positivo, retórica de empoderamento feminino e
+amor pelo Rio.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Empoderamento feminino latino-americano | Tom celebratório. | muito positivo |
+| Identificação com mulheres brasileiras chefes de lar | Aproximação afetiva. | muito positivo |
+| Copacabana como "altar do planeta" | Posicionamento aspiracional. | muito positivo |
+| Show dedicado às mulheres latinas | Reforça narrativa social. | muito positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-271 — Fãs de Shakira reúnem-se em Copacabana para aprender coreografia de 'Waka Waka'
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 26/04/2026 14:56 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/copacabana-vira-pista-de-danca-antes-de-show-de-shakira-e-fas-encaram-calor-para-aprender-passos-de-waka-waka.ghtml
+
+### Resumo Narrativo
+
+Reportagem-cobertura das aulas gratuitas de "Waka Waka" no Posto 3
+(domingo 26/04, dois horários). Cerca de 60 pessoas resistem ao calor
+de 30°C+. Professores Esther Lobo e Christian Bazano. Entrevistadas/os
+ricos: Júlia Mello (cientista, fã desde criança, aprendeu espanhol com
+Shakira), Thalia Cruz (fã exclusiva da música em espanhol), Paulo Reis
+(mineiro residente no Rio há 10 anos, "presente de aniversário desses
+anos no Rio"), Luciene Batista (48 anos, "se soltar"). Tom muito
+positivo, comunidade-celebração.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Engajamento comunitário pré-show (aulas gratuitas) | Muito positivo. | muito positivo |
+| Identificação cultural Shakira × fãs brasileiros | Profunda, multifacetada. | muito positivo |
+| Inclusão (idades 28-48, várias regiões) | Diversidade positiva. | muito positivo |
+| Calor extremo (30°C+) como obstáculo | Mencionado mas superado pelos fãs. | neutro |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-130 — Shakira no Rio: imagens da montagem do palco
+
+**Fonte:** CNN Brasil (cnnbrasil.com.br)
+**Data:** 26/04/2026 18:45 UTC
+**URL:** https://www.cnnbrasil.com.br/entretenimento/shakira-no-rio-veja-imagens-da-montagem-do-palco-do-show-em-copacabana/
+
+### Resumo Narrativo
+
+CNN Brasil confirma com Bonus Track: estrutura 1.500 m² (vs 1.345 m²
+anunciado anteriormente). 56 m altura total (não 26 m da boca de cena —
+provável erro editorial), passarela 25 m, 16 telões de 45 m². 10
+toneladas de equipamentos chegaram via Atlas e American Airlines. Show
+apelidado "Lobacabana" pela própria cantora.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Recap de estrutura recorde | Tom muito positivo. | muito positivo |
+| Logística aérea (10 t equipamentos) | Reforço. | positivo |
+| Alcunha "Lobacabana" | Marketing positivo. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-270 — Funcionário morre após acidente durante montagem do palco do show da Shakira
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 26/04/2026 21:07 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/funcionario-morre-apos-acidente-durante-montagem-do-show-da-shakira-em-copacabana.ghtml
+
+### Resumo Narrativo
+
+**Tragédia.** O serralheiro **Gabriel de Jesus Firmino, 28 anos**,
+morreu na tarde de 26/04 durante a montagem do palco em Copacabana,
+**esmagado por parte de uma estrutura** (sistema de elevação, segundo o
+Corpo de Bombeiros). Socorrido ao Hospital Municipal Miguel Couto
+(Gávea), não resistiu. Caso será investigado pela 12ª DP (Copacabana).
+Vídeo nas redes sociais mostra colegas tentando socorrer com maquinário
+hidráulico. Bonus Track lamentou em nota, "prestando todo apoio,
+acolhimento e solidariedade à empresa responsável, sua equipe e aos
+familiares da vítima". A reportagem fecha mencionando a magnitude do
+palco (1.500 m², "quase o dobro do de Madonna") — composição editorial
+que **justapõe** a tragédia ao espetáculo.
+
+Este é o **primeiro evento muito negativo** do corpus. Marca uma virada
+ética na cobertura: a empolgação midiática até aqui não tinha
+contraponto humano profundo; agora, há uma morte vinculada à produção.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Morte do serralheiro Gabriel de Jesus Firmino | Reportagem factual; tom respeitoso/sério. | muito negativo |
+| Segurança do trabalho na montagem do palco | Falha mortal exposta. | muito negativo |
+| Resposta da Bonus Track (nota de pesar e apoio) | Reativa, sem assumir falha. | neutro |
+| Investigação policial (12ª DP) | Apenas anunciada. | neutro |
+| Magnitude do palco como contexto editorial | Justaposição inquietante. | neutro |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito negativo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
