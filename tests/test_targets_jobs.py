@@ -888,6 +888,45 @@ def test_durable_wordpress_units_use_secondary_target_query_not_flavio_site_vari
     assert {unit.cursor["query"] for unit in units} == {"Shakira"}
 
 
+def test_durable_wordpress_source_runs_use_small_api_pages(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "preset": "custom",
+        "collector": "wordpress_api",
+        "target_keys": ["shakira"],
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "export": True,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+        "durable": True,
+    }
+    monkeypatch.setattr(jobs, "WORDPRESS_API_SITES", [{"source_name": "Diario", "base_url": "https://example.com"}])
+    observed: dict[str, object] = {}
+
+    def fake_collect_wordpress_api(query, **kwargs):
+        observed["query"] = query
+        observed.update(kwargs)
+        return []
+
+    monkeypatch.setattr(jobs, "collect_wordpress_api", fake_collect_wordpress_api)
+
+    candidates, next_cursor, complete = jobs.collect_source_run_candidates(
+        spec,
+        {"source_type": "wordpress_api", "source_name": "Diario"},
+        {"site_index": 0, "query_index": 0, "query": "Shakira", "page": 3},
+    )
+
+    assert candidates == []
+    assert complete is True
+    assert next_cursor["page"] == 3
+    assert observed["query"] == "Shakira"
+    assert observed["per_site_limit"] == jobs.WORDPRESS_PAGE_SIZE == 25
+    assert observed["per_page"] == 25
+    assert observed["start_page"] == 3
+    assert observed["max_pages"] == 1
+
+
 def test_durable_runner_processes_source_units_and_exposes_coverage(monkeypatch, tmp_path):
     import threading
     from pipeline import ingest

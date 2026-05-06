@@ -195,6 +195,13 @@ incremental e acrescentei contadores `sourceRunCount`, `sourceRunVisibleCount`
 e `sourceRunCounts`, para fontes longas não ficarem escondidas pela lista
 visível truncada.
 
+Depois do deploy `0d5411d`, o status público mostrou `409` source-runs
+(`22 complete`, `1 running`, `386 pending`) e confirmou que o job continuou
+`running`. A mesma observação revelou que chunks WordPress de 100 itens
+reiniciavam demais em `Diario do Rio`; estou reduzindo o chunk durável
+WordPress para 25 itens por página real da API, preservando o alcance total
+anterior com mais páginas e checkpoints menores.
+
 ### 2026-05-06 — Penelope+Iris — persona Penelope criada e loop Show Shakira iniciado
 
 Otávio pediu, antes de sair pro trabalho, um run longo, autônomo, sem supervisão para

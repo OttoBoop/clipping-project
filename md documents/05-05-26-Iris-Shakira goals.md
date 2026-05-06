@@ -125,6 +125,11 @@ Still incomplete:
 - Current code pass fixes that observability gap: incremental publish events
   now count as publication time, and status exposes source-run totals/counts so
   long-source coverage cannot be hidden behind the 80-row visible list.
+- The redeploy also showed why a 100-item WordPress page is still too large for
+  the Render web-worker model: `Diario do Rio` restarted page 1 multiple times.
+  Current code pass reduces durable WordPress API chunks to 25 API items per
+  page while preserving the previous overall page span, so checkpoints advance
+  faster without silently skipping pages.
 
 ## Loop Log
 

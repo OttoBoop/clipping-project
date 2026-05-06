@@ -752,6 +752,7 @@ def collect_wordpress_api(
     date_from: str = "",
     date_to: str = "",
     per_site_limit: int = 120,
+    per_page: int = 100,
     request_timeout: int = 10,
     start_page: int = 1,
     max_pages: int | None = None,
@@ -766,7 +767,7 @@ def collect_wordpress_api(
         return []
 
     endpoint = f"{base}/wp-json/wp/v2/posts"
-    per_page = 100
+    per_page = max(1, min(100, int(per_page or 100)))
     page_start = max(1, int(start_page or 1))
     if max_pages is None:
         page_count = max(3, min(60, (max(1, per_site_limit) // per_page) + 10))
