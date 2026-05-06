@@ -3857,6 +3857,62 @@ Todos cobertos em compound headings anteriores. **Sentimento geral do artigo:** 
 
 ---
 
+## a-137 — (coberto no bloco coletivo a-123)
+
+Vide análise em `## a-123 / a-122 / a-148 / a-137 / a-141 — Horário e onde assistir`.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-141 — (coberto no bloco coletivo a-123)
+
+Vide análise em `## a-123 / a-122 / a-148 / a-137 / a-141 — Horário e onde assistir`.
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-201 — (coberto no bloco coletivo a-120)
+
+Vide análise em `## a-120 / a-201 — Shakira atrasa show; público vaia`.
+
+**Sentimento geral do artigo:** negativo
+
+---
+
+## a-170 — (coberto no bloco coletivo a-113)
+
+Vide análise em `## a-113 / a-170 — 2 milhões em Copacabana, diz Prefeitura/Riotur`.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-160 — (coberto no bloco coletivo a-118)
+
+Vide análise em `## a-118 / a-160 / a-197 — 'Copacabana coroou Shakira como rainha do pop latino'`.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-138 — (coberto no bloco coletivo a-200)
+
+Vide análise em `## a-200 / a-138 — Shakira reúne 2 milhões no maior show da carreira`.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-197 — (coberto no bloco coletivo a-118)
+
+Vide análise em `## a-118 / a-160 / a-197 — 'Copacabana coroou Shakira como rainha do pop latino'`.
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
 ## a-177 — Segure firme: quanto Shakira cobra por show (TNH1)
 
 **Fonte:** TNH1  **Data:** 03/05/2026 13:34 UTC
@@ -4030,6 +4086,262 @@ Cobertura dos fãs autênticos (não os "vipões" de patrocínio). Tom muito pos
 Recap de repercussão internacional positiva. Tom muito positivo.
 
 **Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-68 — O atraso de Shakira não é inédito em Todo Mundo no Rio
+
+**Fonte:** Veja Rio  **Data:** 03/05/2026 19:36 UTC
+
+**Contextualização do atraso.** Coluna de Otávio Furtado compara os atrasos das três edições do Todo Mundo no Rio: Madonna subiu ao palco às 22h37 (menos atrasada), Lady Gaga às 22h09 (a mais pontual), e Shakira começou ~23h05 — ~80 min de atraso, recorde negativo da série. O texto contextualiza com bom humor ("jeito latino-americano nada pontual") e registra que não houve explicação oficial no momento, apenas "problema pessoal". Tom neutro-analítico, sem dramatismo excessivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Atraso do show (comparativo histórico) | Contextualiza: Shakira foi a mais atrasada da série. | neutro |
+| Cultura latina / pontualidade | Menção humorística ao estereótipo latino. | neutro |
+| Segurança / operação | Não abordado. | — |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-181 — Show atrasou porque pai da cantora passou mal (CNN Brasil)
+
+**Fonte:** CNN Brasil  **Data:** 03/05/2026 19:48 UTC
+
+**Causa do atraso revelada: saúde do pai.** Artigo da CNN Brasil reporta que o atraso de 1h20 deveu-se a um mal-estar do pai de Shakira, o libanês-colombiano William Mebarak Chadid, 94 anos, nos bastidores pouco antes do show. Fonte do Correio Braziliense confirmou; organização do Todo Mundo no Rio manteve apenas "questão pessoal". Artigo contextualiza a saúde frágil do pai desde 2024 (Shakira postou sobre emergência médica em junho/2024). Tom emotivo-compreensivo; enquadra o atraso como decisão humana legítima, não descaso.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Atraso do show (causa) | Revelação da causa: mal-estar do pai (isquemia confirmada em artigos posteriores). | negativo |
+| Família de Shakira / pai William | Perfil humanizador: imigrante libanês, escritor, 94 anos, saúde frágil. | neutro |
+| Gestão do evento (comunicação) | Organização omitiu a causa — crítica implícita pela comparação com a revelação jornalística. | neutro |
+
+**Sentimento geral do artigo:** negativo
+
+---
+
+## a-102 — Show de Shakira: PM prende 6 em Copacabana e mulher detida com 28 celulares
+
+**Fonte:** G1  **Data:** 03/05/2026 20:04 UTC
+
+**Nota:** o rawText armazenado para este artigo está corrompido (conteúdo de outro artigo capturado por erro de fetch). Análise baseada em título + sumário disponíveis.
+
+**Balanço policial pós-show.** PM divulgou balanço de prisões e apreensões: 6 pessoas presas em Copacabana; destaque para mulher detida na Av. Brasil com 28 celulares (suspeita de roubo). Artigo mais detalhado que o a-193 (que citava "185 apreensões") — aqui o foco é no caso individual mais marcante. Tom factual-neutro de prestação de contas policial.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Segurança pública / PM | Balanço factual: 6 presos, caso dos 28 celulares como destaque. | neutro |
+| Furtos / criminalidade no show | Registrado como episódio específico, sem alarmismo. | negativo |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-187 — Cacique Cobra Coral garantiu tempo firme no show de Shakira
+
+**Fonte:** Diário do Rio  **Data:** 03/05/2026 20:29 UTC
+
+**Curiosidade cultural: clima e espiritualismo.** A Fundação Cacique Cobra Coral (ligada à médium Adelaide Scritori) afirmou ter garantido o tempo firme durante o show. Porta-voz Osmar Santos confirmou que a fundação havia cumprido "pedido anterior da equipe do Dudu [Eduardo Paes]" antes de sua saída, mas o convênio com a prefeitura não foi renovado. O contraste dramático: no dia seguinte ao show chegou frente fria, chuva, ressaca e bandeiras de alerta nas praias. Tom neutro-factual com carga de curiosidade cultural; não endossa nem refuta a afirmação espiritual.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Clima / condições durante o show | Tempo firme na noite do show; virada no dia seguinte. | positivo |
+| Cultura popular / espiritualismo | Cacique Cobra Coral como curiosidade carioca; abordagem respeitosamente neutra. | neutro |
+| Gestão pública (convênio prefeitura) | Convênio extinto com saída de Paes; narrativa de continuidade administrativa. | neutro |
+
+**Sentimento geral do artigo:** neutro
+
+---
+
+## a-67 — Balanço da Polícia: 6 presos e 185 apreensões no show de Shakira
+
+**Fonte:** Veja Rio  **Data:** 03/05/2026 20:54 UTC
+
+**Balanço policial completo.** Artigo detalha o esquema de segurança e o resultado: 6 adultos presos + 2 adolescentes apreendidos. 16 ocorrências registradas no Juizado do Torcedor (5 porte de drogas, 3 roubos, 2 furtos, etc.). Dois presos identificados por reconhecimento facial: Wallace Rodrigues (23, foragido) e Gláucio Diniz (42, mandado por lesão corporal, 11 fichas). 185 objetos perfurocortantes apreendidos nos detectores de metal. 3.700 policiais mobilizados (+14% vs. Lady Gaga). Também registra: MetrôRio, 165 mil passageiros. Tom neutro-positivo (segurança operou bem com poucos incidentes).
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Segurança pública / PM | Detalhe rico: reconhecimento facial, detectores, 3.700 agentes. | positivo |
+| Tecnologia de vigilância | Reconhecimento facial efetivo; dois presos via câmeras. | positivo |
+| Criminalidade / ocorrências | 6 presos, 16 ocorrências — volume baixo para 2 mi de pessoas. | neutro |
+| Transporte (MetrôRio) | 165 mil passageiros, operação 24h. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-78 — Mesmo com multidão, show de Shakira não registra ocorrências graves
+
+**Fonte:** Agência Brasil  **Data:** 03/05/2026 22:52 UTC
+
+**Perspectiva federal / EBC.** Relato da Agência Brasil enfatiza ausência de ocorrências graves apesar do público de 2 milhões. 1 flagrante durante o show (homem com bolsas roubadas); outros 5 presos via mandado, leitura de placa ou porte de drogas. 185 perfurocortantes apreendidos. 16 casos no Juizado do Torcedor, 9 convertidos em prisão preventiva. Tom explicitamente positivo-tranquilizador: o destaque é "sem ocorrências graves".
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Segurança pública / resultado | Enquadramento positivo: "sem ocorrências graves". | positivo |
+| Prisões e apreensões | Factual; ênfase na baixa gravidade relativa. | neutro |
+| Tecnologia (câmeras, leitura de placa) | Citado como ferramenta eficaz de policiamento. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-153 — Shakira fala em 'dia difícil' e agradece público (G1)
+
+**Fonte:** G1  **Data:** 04/05/2026 09:29 UTC
+
+**Post de agradecimento de Shakira — cobertura G1.** Artigo reporta a publicação de Shakira nas redes sociais na madrugada de segunda-feira (4), em português. Frases-chave: "inesquecível e arrepiante", "mesmo que o dia tenha sido difícil para muitos de nós, fomos celebrar a vida". Shakira agradece Anitta, Caetano Veloso, Ivete Sangalo, Maria Bethânia, Unidos da Tijuca, Dance Maré, prefeito Cavaliere e fãs que viajaram de outros países. Mensagem filosófica: o Rio ensina que "a América Latina deu ao mundo: é simples ser feliz." Tom muito positivo-emotivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Agradecimento / fechamento emocional | Post emocionado de Shakira, dia difícil reconhecido mas superado. | muito positivo |
+| Artistas brasileiros (colaboração) | Anitta, Caetano, Ivete, Bethânia, Unidos da Tijuca — reconhecimento público. | muito positivo |
+| Rio / Brasil como símbolo | "É simples ser feliz" — Rio como exemplo para o mundo. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-186 — Shakira agradece público e diz que Rio mostra ao mundo como é simples ser feliz (Diário do Rio)
+
+**Fonte:** Diário do Rio  **Data:** 04/05/2026 13:58 UTC
+
+**Mesmo evento que a-153, cobertura do Diário do Rio.** Artigo reproduz o texto completo do post de Shakira no Instagram: "Não consegui dormir. Emoção demais." Inclui trecho inédito: "esses dois milhões e meio de almas são a minha família." A cobertura do Diário do Rio é mais fiel ao texto original integral que a versão G1. Tom muito positivo-emotivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Post de agradecimento (texto integral) | Reprodução completa; tom íntimo e emocionado. | muito positivo |
+| Família / público como família | Metáfora poderosa: 2,5 mi de fãs como "família". | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-175 — Shakira deixou o Brasil horas depois do show (Gshow)
+
+**Fonte:** Gshow  **Data:** 04/05/2026 14:09 UTC
+
+**Partida silenciosa da Loba.** Shakira saiu do Rio de Janeiro em voo que partiu às 4h da manhã do domingo (3), horas após o show. Gshow confirma a partida. Artigo conecta: atraso do show ("motivo pessoal" = mal-estar do pai), post emocionado de madrugada, e partida furtiva "como uma loba". Tom neutro com carga emotiva — não é crítica, é narrativa de despedida.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Partida de Shakira / despedida | Narrativa humanizadora: saiu sem alarde, mas agradecida. | neutro |
+| Atraso / "dia difícil" | Contexto retomado: causa (pai) + superação (show). | neutro |
+| Shakira e o Brasil | Tom de amor correspondido, mesmo em momento difícil. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-143 — Ocorrências de segurança caíram à metade vs. show da Lady Gaga (G1)
+
+**Fonte:** G1  **Data:** 04/05/2026 14:52 UTC
+
+**Balanço oficial do Governo do Estado — mais completo da série.** 115 ocorrências totais (vs. 238 no show de Gaga; vs. 252 no de Madonna) — queda de 52% e 54% respectivamente. Nenhum caso grave. Detalhes: 66 furtos de celular (abaixo dos 200+ de outros eventos). Operação Shakira: ~8 mil agentes (PM, Civil, Bombeiros, Segurança Presente, Lei Seca). 3 dias antes: retirada de garrafas de vidro, botijões e facas enterrados na areia. Destaque negativo: dois pórticos inteligentes da empresa XPTO Inc falharam; governo suspendeu pagamento e pediu laudo. Adolescente perdido localizado por reconhecimento facial e devolvido à família. Tom positivo com nota de accountability (falha dos pórticos).
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Segurança comparativa (52% queda) | Dado central; enquadramento de sucesso. | muito positivo |
+| Tecnologia de vigilância | Reconhecimento facial eficaz; caso do adolescente. | positivo |
+| Falha dos pórticos (XPTO Inc) | Dois pórticos falharam; governo suspendeu pagamento. | negativo |
+| Artistas brasileiros / diversidade do show | Shakira dedicou o show às mulheres; artistas BR no palco. | muito positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-66 — Conferência Latin Rio, na FGV, com ingressos a R$ 649
+
+**Fonte:** Veja Rio  **Data:** 04/05/2026 15:00 UTC
+
+**Shakira como contexto para evento de mercado musical.** Artigo sobre a Conferência Internacional Latin Rio (FGV, 18–20/05, ingressos R$ 649) usa o show de Shakira como gancho ("depois do furacão Shakira, a onda latina segue forte"). Cita recordes da turnê "Las Mujeres Ya No Lloran": US$ 421,6 mi, 3,3 mi ingressos, 86 shows. Principal palestrante: Will Page (ex-economista-chefe do Spotify), que discutirá a lacuna econômica entre América Latina e mercados anglófonos em streaming. Shakira é mencionada como exemplo de alcance global da música latina, não como sujeito principal. Escopo: tangencial mas em escopo (artigo em `articleInScope: true`, `targetKeys: ["shakira"]`).
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Música latina / mercado | Conferência de negócios; Shakira como referência comercial. | positivo |
+| Turnê de Shakira (dados financeiros) | Recordes históricos: US$ 421,6 mi, 86 shows. | muito positivo |
+| Streaming e desigualdade econômica | Crítica estrutural: 1 bi de streams na LATAM vale menos que nos EUA. | negativo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-185 — Após carro ser rebocado, policiais invadem pátio da prefeitura
+
+**Fonte:** Diário do Rio  **Data:** 04/05/2026 15:27 UTC
+
+**Artigo fora de escopo.** `targetKeys: []`, `articleInScope: false`, `mentionOnlyInText: true`. O artigo trata de uma invasão de policiais civis ao depósito de veículos da prefeitura (Andaraí) para resgatar uma viatura rebocada durante as operações do show. Shakira é mencionada apenas como contexto temporal ("durante as operações do show da cantora Shakira"). Incidente: policiais da 60ª DP apontaram fuzil para servidores municipais e derrubaram portão. Caso registrado na Corregedoria da Polícia Civil como transgressão disciplinar. **Conteúdo principal: conflito policial com servidores municipais, não Shakira.**
+
+**Sentimento geral do artigo:** N/A (fora de escopo)
+
+---
+
+## a-65 — Shakira cita 'dia difícil'; pai teve isquemia (Veja Rio)
+
+**Fonte:** Veja Rio  **Data:** 04/05/2026 16:14 UTC
+
+**Revelação completa: isquemia confirmada pela revista Hola!** Veja Rio consolida a narrativa: William Mebarak, 94, sofreu isquemia na manhã do sábado (2) e foi internado na UTI de hospital em Bogotá. Shakira se apresentou mesmo assim. Segundo Hola!, o pai já havia saído da UTI e estava em quarto. Artigo contextualiza medicamente o que é isquemia (interrupção do fluxo sanguíneo, emergência). Também reproduz o post de agradecimento. Tom emotivo, admirativo ("manteve a força"), humanizante.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Saúde do pai (isquemia) | Revelação factual completa; fonte: Hola! (espanhola). | negativo |
+| Resiliência de Shakira | Subiu ao palco mesmo com pai na UTI — framing heroico. | muito positivo |
+| Post de agradecimento | Reprodução parcial; "dia difícil" contextualizado. | muito positivo |
+| Atraso do show | Agora explicado: pai na UTI. | neutro |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-184 — Estado aponta queda de 50%+ nas ocorrências vs. show de Gaga (Diário do Rio)
+
+**Fonte:** Diário do Rio  **Data:** 04/05/2026 16:48 UTC
+
+**Mesmo dado que a-143, cobertura do Diário do Rio.** 115 ocorrências, queda 52% vs. Lady Gaga (238), 54% vs. Madonna (252). Nenhuma grave. 8 mil agentes. 6 presos, 2 adolescentes, 185 perfurocortantes, 1 moto recuperada, 6 tabletes de maconha. Secretário Victor Santos: "Garantimos a boa reputação que o estado e o município do Rio têm em realizar grandes eventos." Artigo mais enxuto que a-143 (sem mencionar falha dos pórticos XPTO). Tom positivo-factual.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Segurança comparativa (52% queda) | Confirmação do dado oficial. | muito positivo |
+| Operação policial (8 mil agentes) | Detalhes operacionais: reconhecimento facial, drones, torres. | positivo |
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-156 — Vídeo mostra Shakira saindo do Copacabana Palace e se despedindo de fãs
+
+**Fonte:** G1  **Data:** 04/05/2026 17:22 UTC
+
+**Cena de despedida filmada por fãs.** Shakira saiu do Hotel Copacabana Palace por volta das 2h10 do domingo (3), poucos minutos depois do show. Fãs que aguardavam na saída aplaudiram; ela acenou simpaticamente. "É ela?", perguntou uma voz no vídeo. Artigo combina o momento visual com o post de agradecimento. Tom humanizador; a Loba que saiu na calada da noite mas se despediu com carinho.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Partida de Shakira (vídeo) | Cena humanizante: acenou para os fãs na saída às 2h. | muito positivo |
+| Post de agradecimento | Reprodução do trecho filosófico sobre o Rio. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-81 / a-215 — Show de Shakira registra queda de 52% nas ocorrências (Tempo Real RJ)
+
+**Fontes:** Tempo Real RJ (a-81 / a-215 — mesma URL com e sem barra final)  **Data:** 04/05/2026 17:25 UTC
+
+**Mesmo dado que a-143/a-184, cobertura do Tempo Real RJ.** Destaque adicional: **furtos de celulares caíram 70,2%** (de 222 no show de Gaga para 66 no de Shakira). Roubos de celulares: 8 (estável). 115 ocorrências totais vs. 238 e 252. Tom muito positivo.
+
+| Tema | Como é tratado | Classificação |
+|---|---|---|
+| Queda de 52% nas ocorrências | Dado reconfirmado pela fonte estadual. | muito positivo |
+| Furtos de celular (-70,2%) | Dado destaque: maior queda proporcional na série. | muito positivo |
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-215 — (vide bloco a-81)
+
+Mesmo artigo que a-81 (URL duplicada com barra final). **Sentimento geral do artigo:** muito positivo
 
 ---
 
