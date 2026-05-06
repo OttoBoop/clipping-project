@@ -2322,6 +2322,232 @@ respondeu. Tom respeitoso, humano.
 
 ---
 
+## a-276 — Ex-BBB Samira na cobertura do show para Multishow/Globoplay
+
+**Fonte:** O Globo (oglobo.globo.com)  **Data:** 27/04/2026 20:01 UTC
+**URL:** https://oglobo.globo.com/cultura/noticia/2026/04/ex-bbb-samira-vai-participar-de-cobertura-de-megashow-de-shakira-para-multishow-e-globoplay.ghtml
+
+### Resumo Narrativo
+
+Ex-BBB 26 Samira anunciada na cobertura do show pela Multishow/Globoplay,
+com vídeo trocadilho usando seus chorôs no reality e o refrão "Las
+mujeres ya no lloran, las mujeres facturan". Marketing de transmissão.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---|---|
+| Cross-promo Globo (Samira × Shakira) | Marketing positivo. | positivo |
+| Transmissão Multishow/Globoplay | Reforço alcance. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-165 — Shakira está 'comovida' com morte de serralheiro, diz produtora
+
+**Fonte:** G1 (g1.globo.com)  **Data:** 27/04/2026 20:30 UTC
+**URL:** https://g1.globo.com/rj/rio-de-janeiro/musica/show-shakira-rj/noticia/2026/04/27/shakira-esta-comovida-com-morte-de-serralheiro-em-montagem-do-palco-em-copacabana-diz-produtora.ghtml
+
+### Resumo Narrativo
+
+GloboNews/G1 amplifica a nota da Bonus Track sobre Shakira "comovida".
+Detalhes técnicos da perícia: elevador acionado a 25 m de distância;
+vítima estava dentro do equipamento (proibido por norma de segurança).
+Bonus Track diz que cronograma segue. Polícia investiga homicídio
+culposo. Tom muito negativo.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---|---|
+| Resposta institucional Shakira/Bonus Track | Tom de respeito. | neutro |
+| Detalhes da negligência (elevador a 25m) | Crítica grave. | muito negativo |
+| Investigação policial em curso | Sério. | negativo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito negativo
+
+---
+
+## a-275 — Cuidados para não perder documentos no show
+
+**Fonte:** O Globo (oglobo.globo.com)  **Data:** 27/04/2026 21:56 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/shakira-em-copacabana-veja-os-cuidados-para-nao-perder-documentos.ghtml
+
+### Resumo Narrativo
+
+Nota utilitária do 15º Ofício de Notas: levar cópias autenticadas em
+vez de originais para evitar transtornos com furto. Para crianças,
+Autorização de Viagem para Menores. Tom positivo-utilidade.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---|---|
+| Orientação anti-furto | Preventiva positiva. | positivo |
+| Aglomerações como risco | Reconhecido factualmente. | neutro |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-35 / a-9 — Painel de Millôr Fernandes em muro demolido (Sarah Kubitschek) (off-scope)
+
+**Fonte:** O Globo (a-35) / Extra (a-9), mesma matéria por Henrique Barbi
+**Datas:** 28/04/2026 08:03 / 10:00 UTC
+**URLs:** oglobo.globo.com/.../painel-de-millor-fernandes... / extra.globo.com/...
+
+### Resumo Narrativo
+
+Artigo fora de escopo — duplicado em dois IDs, mesmo conteúdo. Trata da
+demolição do muro da Praça Sarah Kubitschek (Copacabana) e replicação
+do mural de Millôr Fernandes em escola, articulada por Flávio Valle.
+Shakira aparece em sidebar. Bloco único cobre os dois IDs.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---|---|
+| (Tema Shakira) | Sidebar apenas. | n/a |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo** (revitalização Praça Sarah Kubitschek). Bloco cobre `a-35` + `a-9`.
+
+---
+
+## a-39 / a-11 — Bar Partisan na Lapa cassado (off-scope)
+
+**Fonte:** Tempo Real (a-39) / O Dia (a-11)
+**Datas:** 28/04/2026 11:56 / 12:46 UTC
+**URLs:** tempo-real.com/.../prefeitura-do-rio-cancela-registro... / odia.ig.com.br/.../bar-na-lapa-tem-cadastro-cancelado...
+
+### Resumo Narrativo
+
+Artigos fora de escopo — duas variações da mesma cobertura. Cancelamento
+do alvará do Bar Partisan na Lapa após placa antissemita/contra-EUA;
+articulação do vereador Flávio Valle. Captura via tag.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---|---|
+| (Tema Shakira) | Não aparece no corpo. | n/a |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**. Bloco cobre `a-39` + `a-11`.
+
+---
+
+## a-227 — Show de Shakira terá reforço de quase 8 mil agentes
+
+**Fonte:** G1 (g1.globo.com)  **Data:** 28/04/2026 15:01 UTC
+**URL:** https://g1.globo.com/rj/rio-de-janeiro/musica/show-shakira-rj/noticia/2026/04/28/show-de-shakira-tera-reforco-no-policiamento-com-quase-8-mil-agentes.ghtml
+
+### Resumo Narrativo
+
+Detalhamento do esquema de segurança pelo Governo RJ: **7.927 agentes**
+(3.700 PMs +14% vs Lady Gaga; 2.200 guardas municipais; 1.500 polícia
+civil; 176 bombeiros; 150 Segurança Presente; 110 Lei Seca). 18 pontos
+de interceptação com detectores de metal e reconhecimento facial. 78
+torres de observação, 6 drones, 175 viaturas. Operação Tatuí (busca de
+material cortante na areia) começa 29/04. Lista de 16 vias bloqueadas
+("ninguém passa") e 16 vias de acesso. Tom factual-positivo, "operação
+de réveillon".
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---|---|
+| Segurança pública massiva (7.927 agentes) | Apresentada como reforço positivo. | positivo |
+| Câmeras de reconhecimento facial e drones | Tecnologia de ponta. | positivo |
+| Bloqueios extensos de vias | Restrição inevitável; tom factual. | neutro |
+| Operação Tatuí (revista da areia) | Preventivo positivo. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-288 — Momo Gelato cria sabor em homenagem a Shakira
+
+**Fonte:** O Globo / Coluna Saideira (oglobo.globo.com)  **Data:** 28/04/2026 17:34 UTC
+**URL:** https://oglobo.globo.com/blogs/saideira/post/2026/04/momo-gelato-cria-sabor-em-homenagem-a-shakira.ghtml
+
+### Resumo Narrativo
+
+Momo Gelato lança gelato "Shakira no Rio" (R$ 27 / 100 g) com cacau e
+café colombianos + brigadeiro. Disponível na unidade Copacabana Palace
+(perto do palco) e demais lojas do Rio. Tom positivo-promocional.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---|---|
+| Comércio criativo aproveitando o show | Positivo, "marketing local". | positivo |
+| Diálogo Brasil × Colômbia (cacau/café/brigadeiro) | Soft power gastronômico. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-26 — Prefeitura volta atrás na cassação do Bar Partisan (off-scope)
+
+**Fonte:** O Globo (oglobo.globo.com)  **Data:** 28/04/2026 17:59 UTC
+**URL:** https://oglobo.globo.com/rio/noticia/2026/04/apos-cassar-alvara-de-funcionamento-de-bar-na-lapa-em-que-teve-aviso-contra-clientes-de-eua-e-israel-prefeitura-volta-atras.ghtml
+
+### Resumo Narrativo
+
+Artigo fora de escopo — atualização do caso Bar Partisan. Prefeitura
+voltou atrás na cassação do alvará após recurso. Shakira aparece
+apenas em sidebar/links relacionados.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---|---|
+| (Tema Shakira) | Sidebar apenas. | n/a |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**.
+
+---
+
+## a-287 — Pedro Angelito assume Subprefeitura da Zona Sul (off-scope)
+
+**Fonte:** O Globo Zona Sul (oglobo.globo.com)
+**Data:** 28/04/2026 18:17 UTC (snapshot; conteúdo de 05/02/2026)
+**URL:** https://oglobo.globo.com/rio/zona-sul/noticia/2026/02/novo-subprefeito-da-zona-sul-diz-que-populacao-em-situacao-de-rua-sera-o-principal-foco-de-sua-gestao.ghtml
+
+### Resumo Narrativo
+
+Artigo fora de escopo — perfil do novo subprefeito da Zona Sul Pedro
+Angelito (foco em população em situação de rua). Shakira não
+mencionada. Captura via tag de Flávio Valle / Pedro Angelito.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---|---|
+| (Tema Shakira) | Não aparece. | n/a |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**.
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
