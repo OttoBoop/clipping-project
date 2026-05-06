@@ -367,6 +367,174 @@ gancho que distingue esta versão.
 
 ---
 
+## a-245 — 'Choka Choka': Música de Anitta e Shakira gera engajamento de quase 2 milhões nas redes
+
+**Fonte:** O Globo / Coluna Lauro Jardim (oglobo.globo.com)
+**Data:** 10/04/2026 18:22 UTC
+**URL:** https://oglobo.globo.com/blogs/lauro-jardim/post/2026/04/choka-choka-musica-de-anitta-e-shakira-gera-engajamento-de-quase-2-milhoes-nas-redes.ghtml
+
+### Resumo Narrativo
+
+A coluna do Lauro Jardim documenta a explosão de engajamento digital da
+parceria Anitta × Shakira: 1,9 milhão de interações até a manhã seguinte
+ao lançamento de "Choka Choka". Levantamento da Nexus posiciona a música
+em 2º lugar nos Trending Topics Brasil das últimas 24 horas (com "Anitta
+e Shakira" em 3º) e 20º lugar nos Trending Topics Global. Análise
+amostral de 140 mil menções em português indica alcance estimado de 14,8
+milhões de impressões. A coluna sublinha a especulação de que Anitta
+fará participação especial no show de Copacabana de 2 de maio. Termos
+recorrentes na nuvem incluem "Spotify", "Brasil", "Equilibrivm", "Deus",
+"Saturday Night Live" e "realeza latina".
+
+A peça é puramente de métricas de marketing/engajamento; não traz
+contraponto crítico. Tom celebratório.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Engajamento digital da colaboração Anitta × Shakira | Quantificado com métricas robustas (1,9M interações, 14,8M impressões); tom de "fenômeno". | muito positivo |
+| Especulação de participação Anitta no show de Copacabana | Apresentada como expectativa positiva dos fãs. | positivo |
+| "Realeza latina" como narrativa | Termo na nuvem de redes sociais; reforça posicionamento aspiracional. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-244 — O que significa 'Choka Choka', título de feat de Anitta e Shakira que rendeu milhões de interações nas redes
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 10/04/2026 21:10 UTC
+**URL:** https://oglobo.globo.com/cultura/musica/noticia/2026/04/o-que-significa-choka-choka-titulo-de-feat-de-anitta-e-shakira-que-rendeu-milhoes-de-interacoes-nas-redes.ghtml
+
+### Resumo Narrativo
+
+Nota cultural-explicativa sobre o significado de "Choka Choka": a
+expressão remete ao verbo "chocar" (em português e espanhol — bater,
+encostar, colidir), mas no contexto da música funciona como onomatopeia
+rítmica do reggaeton, semelhante a "Waka Waka" da própria Shakira. O
+professor de espanhol Gabriel Bernardo Saraiva Pereira contextualiza a
+função sensual e dançante do termo. A matéria também recapitula o
+histórico de colaborações Anitta × Shakira (clipe de "Soltera"), e reforça
+a expectativa de dueto ao vivo no show de Copacabana em 2 de maio. Lista
+outras canções homônimas no pop latino (Chayanne ft. Ozuna, Kiko Rivera).
+
+Tom positivo de jornalismo cultural; aproveita o momentum de "Choka
+Choka" para dar contexto linguístico-musical.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Significado/contexto cultural do termo "Choka Choka" | Explicado de forma didática; positivo. | positivo |
+| Expectativa de dueto Anitta × Shakira em Copacabana | Tratada como aposta positiva dos fãs. | positivo |
+| Histórico de colaboração Anitta × Shakira ("Soltera") | Reforça legitimidade da parceria. | positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
+## a-246 — Shakira prova comidas típicas brasileiras a duas semanas de show no Rio
+
+**Fonte:** O Globo (oglobo.globo.com)
+**Data:** 14/04/2026 12:03 UTC
+**URL:** https://oglobo.globo.com/cultura/noticia/2026/04/shakira-prova-comidas-tipicas-brasileira-a-um-mes-de-show-no-rio.ghtml
+
+### Resumo Narrativo
+
+Matéria leve e promocional: Shakira publicou vídeo nas redes provando
+coxinha (que comparou a "croquete espanhol"), pão de queijo (declarado
+"uma das melhores coisas do Brasil") e brigadeiro. A nota retoma o
+contexto do show — Copacabana, 2 de maio, expectativa de >2 milhões de
+pessoas, sequência de Madonna e Lady Gaga — e cita Shakira em português
+fluente: "Brasil, eu vou estar com vocês, em breve, no concerto mais
+sonhado da minha vida". Tom afetivo, direcionado ao engajamento do
+público brasileiro com a artista.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Engajamento afetivo Shakira × público brasileiro | Vídeo de aproximação cultural; tom muito positivo. | muito positivo |
+| Marketing de antecipação do show | Contagem regressiva ("a duas semanas") como gancho. | positivo |
+| Expectativa de público gigante | Citação de >2 milhões; positivo. | muito positivo |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** muito positivo
+
+---
+
+## a-51 — Projeto de naturalização da Lagoa Rodrigo de Freitas inicia nova fase
+
+**Fonte:** Tempo Real (tempo-real.com)
+**Data:** 14/04/2026 18:17 UTC
+**URL:** https://tempo-real.com/post/projeto-de-naturalizacao-da-lagoa-rodrigo-de-freitas-inicia-nova-fase-e-intervencoes-chegam-ao-parque-dos-patins/
+
+### Resumo Narrativo
+
+Artigo fora de escopo — não trata do show da Shakira. A peça cobre o
+projeto de naturalização da Lagoa Rodrigo de Freitas tocado pelo vereador
+Flávio Valle (PSD) com o biólogo Mário Moscatelli — terceira e quarta
+etapas com intervenções no Parque dos Patins e Corte do Cantagalo,
+plantio de manguezal/restinga, reintrodução da Annona glabra, etc. A
+única ocorrência de "Shakira" no texto é num bloco "Você pode gostar
+também" listando notícias relacionadas ("Big Brother em Copacabana:
+governo do estado contrata IA e reconhecimento facial para o show da
+Shakira por R$ 15,9 milhões"). É exemplar do shape de falso-positivo via
+related-link que o pipeline já filtra por safe-surface, mas que este
+artigo capturou via story-tag herdado do tag de Flávio Valle.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| (Tema Shakira) | Aparece apenas em bloco "Você pode gostar" — não é objeto da matéria. | n/a |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** N/A — **Artigo fora de escopo**: trata do projeto ambiental da Lagoa Rodrigo de Freitas; menção a Shakira é incidental em sidebar de artigos relacionados. Bloco mantido por integridade do protocolo.
+
+---
+
+## a-250 — Pabllo Vittar comanda festa no Jockey após megashow de Shakira
+
+**Fonte:** O Globo / Rio Show (oglobo.globo.com)
+**Data:** 15/04/2026 06:00 UTC
+**URL:** https://oglobo.globo.com/rio-show/eventos/noticia/2026/04/todo-mundo-no-rio-pabllo-vittar-comanda-after-de-megashow-de-shakira.ghtml
+
+### Resumo Narrativo
+
+Matéria do Rio Show anuncia que Pabllo Vittar comandará a festa "after"
+oficial do show de Shakira em Copacabana, no dia 2 de maio, com seu
+projeto Club Vittar em parceria com a boate LGBTQIAPN+ Zig (de São Paulo).
+A festa "Todo mundo na Zig com Club Vittar" acontece no EXC Rio (Jockey
+Club), das 23h30 até 8h da manhã. Ingressos: R$ 80 (1º lote) a R$ 120 (4º
+lote). A nota recapitula o histórico de Pabllo no "Todo Mundo no Rio":
+abertura para Lady Gaga em 2025 e participação no show de Madonna em 2024.
+
+Tom positivo, factual, com contexto de continuidade (Madonna → Lady Gaga
+→ Shakira). Sem crítica.
+
+### Temas Identificados
+
+| Tema | Como é tratado | Classificação |
+|------|---------------|---------------|
+| Festa after-party do show / ecosistema de eventos paralelos | Apresentada como extensão natural da experiência do show. | positivo |
+| Continuidade Pabllo Vittar × "Todo Mundo no Rio" | Histórico positivo (Madonna, Lady Gaga). | positivo |
+| LGBTQIAPN+ inclusão no entorno do evento | Boate Zig sediando o after. | positivo |
+| Preço do after-party (R$ 80–120) | Mencionado factualmente, sem juízo. | neutro |
+
+### Classificação Geral
+
+**Sentimento geral do artigo:** positivo
+
+---
+
 <!-- Próxima Penelope retoma aqui. Use python3 tools/penelope_shakira_iter.py todo
      para listar artigos restantes em ordem cronológica. -->
 
