@@ -59,10 +59,12 @@
 | 12 | Fandom, bastidores e cobertura social | `12-fandom-e-bastidores` | ~30 |
 
 > Os volumes são contagens de IDs únicos com pelo menos um tema bruto
-> mapeado àquela categoria. A soma cruza 243 porque artigos tocam
+> mapeado àquela categoria. A soma cruza 215 porque artigos tocam
 > múltiplas categorias por design. Bloqueios fora de escopo
-> (`a-74`, `a-185`, `a-219`, anomalia `a-325`) ficam num **anexo** ao
-> final, fora das 12 categorias principais.
+> (`a-74`, `a-185`, `a-219`, anomalia `a-325`) e blocos `n/a` por
+> cobertura redundante ficam num **anexo** ao final, fora das 12
+> categorias principais. Universo total: **243 blocos parseados ·
+> 215 em escopo com classificação · 28 excluídos**.
 
 ---
 
@@ -579,7 +581,14 @@ a-204, a-211, a-221, a-249, a-250, a-262, a-271, a-273, a-286.
 
 ---
 
-## Anexo — Artigos fora de escopo / anômalos
+## Anexo — Artigos fora de escopo, n/a e anômalos (28 blocos)
+
+**Atualizado em 08/05/2026.** A versão anterior listava apenas os 4
+fora-de-escopo nominais. A revisão direta no `analise-individual.md`
+encontrou **28 blocos** sem classificação válida (não somam na
+distribuição 120/61/20/8/6 = 215). Detalhe abaixo.
+
+### Fora de escopo nominais (4)
 
 **a-74** — Corregedoria da Polícia Civil investiga invasão armada ao
 depósito de carros (G1 / Jornal Nacional). Conexão com Shakira é apenas
@@ -598,7 +607,17 @@ no Estádio Nilton Santos (turnê anterior, não o Copacabana). Debug item
 para Ariadne, registrado em `analise-individual.md` Status. Excluído
 do corpus de Etapas 2 e 3.
 
-Esses 4 artigos não entram em nenhuma das 12 categorias acima.
+### Blocos `n/a` adicionais (24)
+
+Cobertura redundante de mesmo evento (Tempo Real, R7, Petronotícias,
+Diário do Rio, O Globo) ou blocos com referência cruzada ("vide blocos
+referenciados"): **a-9, a-10, a-11, a-15, a-21, a-24, a-25, a-26, a-28,
+a-34, a-35, a-39, a-44, a-49, a-50, a-51, a-59, a-148, a-280, a-282,
+a-283, a-284, a-287, a-649**. Estão presentes no `analise-individual.md`
+mas sem campo de classificação válido — não entram na distribuição
+quantitativa nem nas sínteses temáticas.
+
+Esses 28 artigos não entram em nenhuma das 12 categorias acima.
 
 ---
 

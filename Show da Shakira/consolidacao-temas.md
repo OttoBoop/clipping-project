@@ -19,19 +19,27 @@
 
 ## Sumário Quantitativo
 
-- Total de artigos analisados: **226**
-- Artigos em escopo: **226**
-- Artigos fora de escopo: **0**
+> **Atualizado em 08/05/2026 a partir do `analise-individual.md`.** A
+> versão anterior deste sumário (06/05/2026) declarava 226 / 0 fora-de-
+> escopo / distribuição 113-58-20-6-6. Esses números refletiam um
+> recorte mais antigo do corpus, antes da entrada dos blocos da faixa
+> a-280+ e a-640+. Os números abaixo são extraídos diretamente do
+> `analise-individual.md` (fonte primária) e batem com a peça pública
+> em `relatorios/relatorio-geral.md` / `.pdf`.
 
-**Distribuição geral de sentimento:**
+- Total de blocos parseados: **243**
+- Artigos em escopo, com classificação válida: **215**
+- Artigos excluídos (fora-de-escopo, n/a, cobertura redundante): **28**
 
-| Muito Negativo | Negativo | Neutro | Positivo | Muito Positivo | N/A |
-|---|---|---|---|---|---|
-| 6 | 6 | 20 | 58 | 113 | 0 |
+**Distribuição geral de sentimento (sobre os 215 em escopo):**
 
-> Leitura direta da tabela: **75,7%** dos artigos foram positivos
-> ou muito-positivos (171 de 226); 8,8% neutros; 5,3% negativos
-> ou muito-negativos. O agregado da cobertura é claramente
+| Muito Negativo | Negativo | Neutro | Positivo | Muito Positivo |
+|---|---|---|---|---|
+| 6 | 8 | 20 | 61 | 120 |
+
+> Leitura direta da tabela: **84,2%** dos artigos foram positivos
+> ou muito-positivos (181 de 215); 9,3% neutros; 6,5% negativos
+> ou muito-negativos. Soma 100%. O agregado da cobertura é claramente
 > favorável, com bolsões críticos concentrados em eixos específicos
 > (tragédia da montagem, fricções político-administrativas, alguns
 > custos individuais para o público).
@@ -41,11 +49,18 @@
 ## Categorias Temáticas
 
 > Mapeamento completo em `Show da Shakira/categorias-temas.md`.
-> 12 categorias editoriais cobrindo o corpus, mais um anexo de 4
-> artigos fora-de-escopo (a-74, a-185, a-219, a-325). As contagens
-> de artigos por categoria são de IDs únicos com pelo menos um tema
-> bruto mapeado; um mesmo ID pode aparecer em várias categorias por
-> tocar múltiplos eixos.
+> 12 categorias editoriais cobrindo o corpus. **Anexo expandido em
+> 08/05/2026:** além dos 4 fora-de-escopo nominais (a-74, a-185,
+> a-219, a-325), há 24 blocos adicionais marcados `n/a` no
+> `analise-individual.md` (cobertura redundante de mesmo evento ou
+> blocos sem campo de classificação). Lista completa no anexo de
+> `categorias-temas.md`. As contagens de artigos por categoria são
+> de IDs únicos com pelo menos um tema bruto mapeado; um mesmo ID
+> pode aparecer em várias categorias por tocar múltiplos eixos.
+> Os volumes "~" mostrados em cada seção são aproximações da
+> versão de 06/05/2026 e podem ter crescido marginalmente com a
+> entrada dos blocos a-280+ e a-640+; recálculo exato fica para
+> próxima rodada se necessário.
 
 ### 1. Performance e show
 
