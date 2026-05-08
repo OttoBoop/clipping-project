@@ -2,14 +2,14 @@
 **3ª edição Todo Mundo no Rio · Show: 02/05/2026**
 
 ## O que analisamos
-**243 matérias** publicadas em **23 veículos de comunicação nacionais** entre **01/04/2026 e 05/05/2026** (35 dias) · **12 categorias temáticas**.
+**215 matérias** publicadas em **25 veículos de comunicação nacionais** entre **01/04/2026 e 05/05/2026** (35 dias) · **12 categorias temáticas**.
 
 | Muito + | Positivo | Neutro | Negativo | Muito − |
 |:---:|:---:|:---:|:---:|:---:|
-| **113** | **58** | **20** | **6** | **6** |
-| 55,7% | 28,6% | 9,9% | 3,0% | 3,0% |
+| **120** | **61** | **20** | **8** | **6** |
+| 55,8% | 28,4% | 9,3% | 3,7% | 2,8% |
 
-> **84,2% positiva ou muito-positiva** · 9,9% neutra · 5,9% negativa · soma 100%
+> **84,2% positiva ou muito-positiva** · 9,3% neutra · 6,5% negativa · soma 100%
 
 ## Como classificamos cada notícia
 Cada matéria foi quebrada em **eixos livres** (os tópicos distintos cobertos pelo texto), posteriormente **agrupados em 12 categorias temáticas gerais** entre as matérias. Cada eixo recebeu uma **valência** (muito-negativo a muito-positivo). O sentimento geral da matéria é uma medida de **intensidade** que pondera quanto espaço o texto dedicou a cada eixo e quão forte foi a cobertura em cada um.
