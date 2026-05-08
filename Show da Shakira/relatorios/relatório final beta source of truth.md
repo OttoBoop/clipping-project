@@ -16,44 +16,32 @@
 ## Como classificamos cada notícia
 Cada matéria foi quebrada em **eixos livres** (os tópicos distintos cobertos pelo texto), posteriormente **agrupados em 12 categorias temáticas gerais** entre as matérias. Cada eixo recebeu uma **valência** (muito-negativo a muito-positivo). O sentimento geral da matéria é uma medida de **intensidade** que pondera quanto espaço o texto dedicou a cada eixo e quão forte foi a cobertura em cada um.
 
-<div class="ex-primario">
-
-**Exemplo principal · matéria muito-positiva** — `a-239` (CBN, 07/04/2026, sobre o palco)
+**Exemplo de matéria muito-positiva — `a-239` (CBN, 07/04/2026, sobre o palco):**
 
 | Eixo | Tratamento | Valência |
 |---|---|:---:|
-| Palco · superlativos comparativos | Maior que Madonna e Lady Gaga | <span class="v-mp">Muito +</span> |
-| Tecnologia (LEDs, torres, áudio) | Diferencial técnico destacado | <span class="v-p">Positivo</span> |
-| Conexão com Anitta ("Choka choka") | Contexto musical brasileiro | <span class="v-p">Positivo</span> |
+| Palco · superlativos comparativos | Maior que Madonna e Lady Gaga | Muito + |
+| Tecnologia (LEDs, torres, áudio) | Diferencial técnico destacado | Positivo |
+| Conexão com Anitta ("Choka choka") | Contexto musical brasileiro | Positivo |
 
-→ **Sentimento geral: <span class="v-mp">muito-positivo</span>.**
+→ **Sentimento geral: muito-positivo.**
 
-</div>
-
-<div class="ex-contraste">
-
-**Exemplo contrastante · matéria com valências opostas** — `a-126` (O Globo, "Acertos, falhas e bastidores do megashow")
+**Exemplo de matéria com valências opostas — `a-126` (O Globo, "Acertos, falhas e bastidores do megashow"):**
 
 | Eixo | Tratamento | Valência |
 |---|---|:---:|
-| Acertos: setlist e participações brasileiras | Avaliação muito favorável | <span class="v-mp">Muito +</span> |
-| Falhas: atraso e problemas iniciais de som | Crítica direta | <span class="v-n">Negativo</span> |
+| Acertos: setlist e participações brasileiras | Avaliação muito favorável | Muito + |
+| Falhas: atraso e problemas iniciais de som | Crítica direta | Negativo |
 
-→ **Sentimento geral: <span class="v-ne">neutro</span>.** Os dois eixos têm peso comparável e valências opostas; a intensidade ponderada balanceia para neutro.
+→ **Sentimento geral: neutro.** Os dois eixos têm peso comparável e valências opostas; a intensidade ponderada balanceia para neutro.
 
-</div>
+**Outros exemplos por valência:**
 
-<div class="ex-sintese">
-
-**Outros exemplos rápidos, por valência geral**
-
-<table class="t-sintese">
-<tr><td class="v-cell v-p">Positivo</td><td><code>a-67</code> · Veja Rio</td><td>Balanço da PM: 6 presos, 185 apreensões, reconhecimento facial</td></tr>
-<tr><td class="v-cell v-n">Negativo</td><td><code>a-264</code> · O Globo (Ancelmo Gois)</td><td>"Efeito Shakira": estacionamento a R$ 250 em Copacabana</td></tr>
-<tr><td class="v-cell v-mn">Muito −</td><td><code>a-162</code> · UOL</td><td>Atraso de 80 min prejudicou audiência da Globo</td></tr>
-</table>
-
-</div>
+| Valência | Bloco · Veículo | Sobre o quê |
+|:---:|---|---|
+| Positivo | `a-67` · Veja Rio | Balanço da PM: 6 presos, 185 apreensões, reconhecimento facial |
+| Negativo | `a-264` · O Globo (Ancelmo Gois) | "Efeito Shakira": estacionamento a R$ 250 em Copacabana |
+| Muito − | `a-162` · UOL | Atraso de 80 min prejudicou audiência da Globo |
 
 ## Os números que viraram manchete
 
@@ -77,8 +65,4 @@ Cada matéria foi quebrada em **eixos livres** (os tópicos distintos cobertos p
 - **Ausência do Prefeito Paes em Búzios** (`a-192`) — Vice-prefeito Cavaliere cobriu institucionalmente; ruído administrativo leve, sem desdobramento.
 - **"Efeito Shakira" em preços** — Estacionamento, hospedagem e passagens com altas relevantes; bom para a economia local, ruim para o consumidor — vale acompanhar o impacto sobre o frequentador da próxima edição.
 
-<div class="correcoes">
-
-**Sobre as correções (08/05).** **Versão preliminar (06/05):** 226 matérias e 75,7% de cobertura positiva, calculadas a partir de um sumário consolidado num momento em que parte do corpus ainda não havia sido analisada; trazia também duas inconsistências internas (declarava zero matérias fora-de-escopo quando havia pelo menos quatro, e a distribuição de sentimentos somava 89,8%, não 100%). **Versão atual (08/05):** contagem refeita matéria por matéria sobre o conjunto completo coletado — **243 matérias coletadas**, **215 sobre o show** (28 excluídas: 4 fora-de-escopo nominais e 24 com cobertura redundante de mesmo evento), distribuição final **120 / 61 / 20 / 8 / 6** (soma 100%) e cobertura positiva de **84,2%**. Variação favorável de **+8,5 pontos percentuais** porque as matérias adicionadas eram majoritariamente favoráveis ao show. As 12 sínteses temáticas internas seguem válidas; apenas os totais quantitativos foram revisados.
-
-</div>
+*Sobre as correções (08/05). **Versão preliminar (06/05):** 226 matérias / 75,7% positivo, baseada em sumário interno (`consolidacao-temas.md`) gerado num recorte antigo do corpus — antes da entrada dos blocos com IDs altos (a-280+, a-640+) — e com duas inconsistências internas: declarava 0 fora-de-escopo quando havia ao menos 4, e a soma de sentimentos fechava em 89,8%, não 100%. **Versão atual (08/05):** reauditoria direta na fonte primária (`analise-individual.md`, bloco a bloco) — **243 matérias parseadas**, **215 com classificação válida** (28 excluídas: 4 fora-de-escopo nominais + 24 com cobertura redundante por portais de agregação automática), distribuição **120 / 61 / 20 / 8 / 6** (soma 100%), cobertura positiva **84,2%**. Variação favorável de **+8,5 pontos percentuais** ao agregado, porque os blocos novos eram majoritariamente positivos. As 12 sínteses temáticas em `Show da Shakira/relatorios/01-…12` seguem válidas — só os totais quantitativos foram revisados.*
