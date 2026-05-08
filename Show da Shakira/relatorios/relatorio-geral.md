@@ -11,6 +11,8 @@
 
 > **84,2% positiva ou muito-positiva** · 9,3% neutra · 6,5% negativa · soma 100%
 
+*Universo de 215: das 243 matérias coletadas no período, 28 foram excluídas — 4 fora-de-escopo nominais (cobertura sobre abuso policial, voos comerciais e uma anomalia de 2025) e 24 sem classificação válida (cobertura redundante do mesmo evento por portais de agregação automática, sem texto editorial próprio). As 215 restantes tratam diretamente do show.*
+
 ## Como classificamos cada notícia
 Cada matéria foi quebrada em **eixos livres** (os tópicos distintos cobertos pelo texto), posteriormente **agrupados em 12 categorias temáticas gerais** entre as matérias. Cada eixo recebeu uma **valência** (muito-negativo a muito-positivo). O sentimento geral da matéria é uma medida de **intensidade** que pondera quanto espaço o texto dedicou a cada eixo e quão forte foi a cobertura em cada um.
 
