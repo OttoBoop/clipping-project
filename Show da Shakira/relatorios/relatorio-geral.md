@@ -26,18 +26,22 @@ Cada matéria foi quebrada em **eixos livres** (os tópicos distintos cobertos p
 
 → **Sentimento geral: muito-positivo.**
 
-**Exemplo de matéria com valências mistas — `a-120 / a-201` (Estadão / O Globo, atraso e vaias):**
+**Exemplo de matéria com valências opostas — `a-126` (O Globo, "Acertos, falhas e bastidores do megashow"):**
 
 | Eixo | Tratamento | Valência |
 |---|---|:---:|
-| Atraso significativo (1h+) | Crítica explícita | Negativo |
-| Vaias do público | Reação negativa documentada | Muito − |
-| Comparação desfavorável a Madonna / Lady Gaga | Posicionamento crítico | Negativo |
-| "Problema pessoal" como justificativa | Sem transparência detalhada | Neutro |
+| Acertos: setlist e participações brasileiras | Avaliação muito favorável | Muito + |
+| Falhas: atraso e problemas iniciais de som | Crítica direta | Negativo |
 
-→ **Sentimento geral: negativo.**
+→ **Sentimento geral: neutro.** Os dois eixos têm peso comparável e valências opostas; a intensidade ponderada balanceia para neutro.
 
-*Outros exemplos por valência geral: `a-67` Veja Rio (positivo, balanço da PM), `a-126` O Globo (neutro, acertos × falhas), `a-264` Coluna Ancelmo Gois (negativo, estacionamento R$ 250), `a-162` UOL (muito-negativo, audiência da Globo prejudicada pelo atraso).*
+**Outros exemplos por valência:**
+
+| Valência | Bloco · Veículo | Sobre o quê |
+|:---:|---|---|
+| Positivo | `a-67` · Veja Rio | Balanço da PM: 6 presos, 185 apreensões, reconhecimento facial |
+| Negativo | `a-264` · O Globo (Ancelmo Gois) | "Efeito Shakira": estacionamento a R$ 250 em Copacabana |
+| Muito − | `a-162` · UOL | Atraso de 80 min prejudicou audiência da Globo |
 
 ## Os números que viraram manchete
 
