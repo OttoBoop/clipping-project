@@ -1,0 +1,8 @@
+# One email per line. Blank lines and lines starting with '#' are ignored.
+# Initial test list (provided by Otávio 2026-05-11):
+otaviobopp@gmail.com
+otavio2809@gmail.com
+otavio0999@gmail.com
+otavio0999@hotmail.com
+robaynasafra@gmail.com
+steamargentina585@gmail.com
