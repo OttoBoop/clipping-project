@@ -1,0 +1,21 @@
+# Never commit secrets — even by accident.
+*.secret
+*.secret.txt
+secret.txt
+credentials.txt
+credentials.json
+*.env
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Editor
+.vscode/
+.idea/
+*.swp
