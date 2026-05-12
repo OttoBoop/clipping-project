@@ -41,9 +41,15 @@ on:
         required: false
         type: string
         default: ''
+  push:
+    paths:
+      - 'mass_email_invites/pending-send.url'
+    branches:
+      - 'claude/gmail-email-invitations-**'
+      - 'master'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: send-invites
@@ -62,14 +68,43 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Mask URL in subsequent logs
-        run: echo "::add-mask::${{ inputs.secret_url }}"
+      - name: Resolve URL source (workflow_dispatch input vs. trigger file)
+        id: src
+        env:
+          DISPATCH_URL: ${{ inputs.secret_url }}
+          DISPATCH_DRY: ${{ inputs.dry_run }}
+          DISPATCH_SUBJECT: ${{ inputs.subject_override }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            URL="$DISPATCH_URL"
+            DRY="$DISPATCH_DRY"
+            SUBJ="$DISPATCH_SUBJECT"
+          else
+            URL="$(head -n1 mass_email_invites/pending-send.url | tr -d '[:space:]')"
+            DRY="false"
+            SUBJ=""
+          fi
+          if [ -z "$URL" ]; then
+            echo "::error::No secret URL found."
+            exit 1
+          fi
+          echo "::add-mask::$URL"
+          {
+            echo "URL<<__EOF__"
+            echo "$URL"
+            echo "__EOF__"
+            echo "DRY=$DRY"
+            echo "SUBJ<<__EOF__"
+            echo "$SUBJ"
+            echo "__EOF__"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Fire the invites
         env:
-          OTS_URL: ${{ inputs.secret_url }}
-          DRY_RUN: ${{ inputs.dry_run }}
-          SUBJECT_OVERRIDE: ${{ inputs.subject_override }}
+          OTS_URL: ${{ steps.src.outputs.URL }}
+          DRY_RUN: ${{ steps.src.outputs.DRY }}
+          SUBJECT_OVERRIDE: ${{ steps.src.outputs.SUBJ }}
         run: |
           set -euo pipefail
           args=( "$OTS_URL" )
@@ -80,3 +115,16 @@ jobs:
             args+=( --subject "$SUBJECT_OVERRIDE" )
           fi
           python3 mass_email_invites/retrieve_and_send.py "${args[@]}"
+
+      - name: Consume the trigger file (push only)
+        if: github.event_name == 'push' && always()
+        run: |
+          set -euo pipefail
+          if [ ! -f mass_email_invites/pending-send.url ]; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm mass_email_invites/pending-send.url
+          git commit -m "send-invites: consume trigger file (URL is one-time, now dead)"
+          git push
