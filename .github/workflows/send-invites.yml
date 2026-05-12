@@ -68,6 +68,28 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Diagnose runner state
+        run: |
+          echo "event_name : ${{ github.event_name }}"
+          echo "ref        : ${{ github.ref }}"
+          echo "sha        : ${{ github.sha }}"
+          echo "workspace  : $GITHUB_WORKSPACE"
+          echo "pwd        : $(pwd)"
+          echo "--- ls -la ---"
+          ls -la
+          echo "--- ls -la mass_email_invites/ ---"
+          ls -la mass_email_invites/ || echo "DIR MISSING"
+          echo "--- pending-send.url (or MISSING) ---"
+          if [ -f mass_email_invites/pending-send.url ]; then
+            wc -c mass_email_invites/pending-send.url
+            # don't cat full content — we don't want the URL in plain logs.
+            # show only first 30 chars and length.
+            FIRST="$(head -c 30 mass_email_invites/pending-send.url)"
+            echo "first_30_chars=[$FIRST...]"
+          else
+            echo "pending-send.url MISSING"
+          fi
+
       - name: Resolve URL source (workflow_dispatch input vs. trigger file)
         id: src
         env:
@@ -75,20 +97,30 @@ jobs:
           DISPATCH_DRY: ${{ inputs.dry_run }}
           DISPATCH_SUBJECT: ${{ inputs.subject_override }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            URL="$DISPATCH_URL"
-            DRY="$DISPATCH_DRY"
-            SUBJ="$DISPATCH_SUBJECT"
+            URL="${DISPATCH_URL:-}"
+            DRY="${DISPATCH_DRY:-false}"
+            SUBJ="${DISPATCH_SUBJECT:-}"
+            echo "source=workflow_dispatch_input"
           else
-            URL="$(head -n1 mass_email_invites/pending-send.url | tr -d '[:space:]')"
+            FILE="mass_email_invites/pending-send.url"
+            if [ ! -f "$FILE" ]; then
+              echo "::error::Trigger file $FILE not found in checkout."
+              exit 1
+            fi
+            # Pull the first onetimesecret URL out of the file regardless of
+            # whitespace / surrounding text.
+            URL="$(grep -oE 'https://[a-z0-9.-]+\.onetimesecret\.[a-z]+/secret/[A-Za-z0-9]+' "$FILE" | head -n1 || true)"
             DRY="false"
             SUBJ=""
+            echo "source=push_trigger_file"
           fi
-          if [ -z "$URL" ]; then
-            echo "::error::No secret URL found."
+          if [ -z "${URL:-}" ]; then
+            echo "::error::Could not resolve a secret URL (URL empty after parse)."
             exit 1
           fi
+          echo "url_length=${#URL}"
           echo "::add-mask::$URL"
           {
             echo "URL<<__EOF__"
