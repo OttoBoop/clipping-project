@@ -1,0 +1,82 @@
+name: Send Invites
+run-name: Send invites — Penelope
+
+# Triggered manually. Otávio (or anyone with write access) clicks "Run
+# workflow", pastes the one-time-secret URL into the `secret_url` input,
+# and the runner consumes the secret and sends the emails.
+#
+# Why this workflow exists: the Claude Code sandbox has no outbound network
+# (egress proxy returns 403 "Host not in allowlist"), so retrieve_and_send.py
+# can't run from there. GitHub-hosted runners *do* have open egress to
+# onetimesecret.com and smtp.gmail.com:465, so we run the script here.
+#
+# Security notes:
+# - The one-time-secret URL appears in the workflow run metadata (visible
+#   to anyone with read access to this repo). Since the secret is destroyed
+#   the moment the workflow consumes it, the leaked URL is dead within
+#   seconds of being recorded. Use a short TTL (5-15 min) for defence in
+#   depth.
+# - The Gmail App Password itself never appears in logs: the script holds
+#   it as a local Python variable and the script doesn't echo it. The
+#   ::add-mask:: directive below is belt-and-braces in case the URL itself
+#   ever needs to be redacted from a later log line.
+# - The GMAIL_USER value (an email address) will appear in the logs once
+#   ([plan] from: <email>). If that bothers you, treat the workflow run as
+#   private and delete it after the send.
+
+on:
+  workflow_dispatch:
+    inputs:
+      secret_url:
+        description: 'One-time-secret URL. Payload must contain GMAIL_USER=... and GMAIL_APP_PASSWORD=... on separate lines.'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry-run: parse the secret and plan the send, but do NOT contact SMTP. (Still consumes the one-time-secret link.)'
+        required: false
+        type: boolean
+        default: false
+      subject_override:
+        description: 'Optional: override the subject line from invite_template.txt.'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: send-invites
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Mask URL in subsequent logs
+        run: echo "::add-mask::${{ inputs.secret_url }}"
+
+      - name: Fire the invites
+        env:
+          OTS_URL: ${{ inputs.secret_url }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          SUBJECT_OVERRIDE: ${{ inputs.subject_override }}
+        run: |
+          set -euo pipefail
+          args=( "$OTS_URL" )
+          if [ "$DRY_RUN" = "true" ]; then
+            args+=( --dry-run )
+          fi
+          if [ -n "$SUBJECT_OVERRIDE" ]; then
+            args+=( --subject "$SUBJECT_OVERRIDE" )
+          fi
+          python3 mass_email_invites/retrieve_and_send.py "${args[@]}"
