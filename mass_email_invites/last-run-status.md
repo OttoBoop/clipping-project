@@ -1,15 +1,43 @@
 # Last send-invites run
 
-- run_id: 25747690216
-- run_number: 3
-- trigger sha: 047ddd81661a5a9b2a6f1547997449814fc6f370
-- script exit code: 
-- timestamp (UTC): 2026-05-12T16:25:05Z
+- run_id: 25747994160
+- run_number: 4
+- trigger sha: b53ebbe23d5a3f26457f85f79b081ce20decf056
+- script exit code: 0
+- timestamp (UTC): 2026-05-12T16:31:08Z
 
 ## Script output (stdout + stderr)
 
 ```
-HTTP 404 from https://us.onetimesecret.com/api/v1/secret/93h75stl4wsir8eo1f8ermoldorh0fem3d8a7950poahbxr1q8vfnq7kaigjm6.
-Likely causes: the secret was already viewed, has expired, or the URL is wrong.
-Server response: {"secret_key":"93h75stl4wsir8eo1f8ermoldorh0fem3d8a7950poahbxr1q8vfnq7kaigjm6","message":"Unknown secret"}
+[ots] retrieved secret from us.onetimesecret.com (HTTP 200)
+[plan] from        : testertestmann735@gmail.com
+[plan] subject     : Convite — teste de envio
+[plan] recipients  : 6
+         - otaviobopp@gmail.com
+         - otavio2809@gmail.com
+         - otavio0999@gmail.com
+         - otavio0999@hotmail.com
+         - robaynasafra@gmail.com
+         - steamargentina585@gmail.com
+[plan] body preview:
+---
+Olá!
+
+Este é um e-mail de teste enviado pelo Otávio através de uma conta nova do
+Gmail. Se você recebeu esta mensagem, o canal de envio está funcionando.
+
+Nenhuma ação é necessária da sua parte — pode ignorar ou descartar.
+
+Abraço,
+Otávio
+---
+[smtp] connecting to smtp.gmail.com:465 ...
+[ok]    otaviobopp@gmail.com
+[ok]    otavio2809@gmail.com
+[ok]    otavio0999@gmail.com
+[ok]    otavio0999@hotmail.com
+[ok]    robaynasafra@gmail.com
+[ok]    steamargentina585@gmail.com
+
+[done] 6 sent, 0 failed.
 ```
