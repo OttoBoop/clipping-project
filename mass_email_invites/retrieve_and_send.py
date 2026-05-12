@@ -57,12 +57,27 @@ RECIPIENTS_PATH = SCRIPT_DIR / "recipients.txt"
 
 ONETIMESECRET_KEY_RE = re.compile(r"/secret/([A-Za-z0-9]{16,})")
 
+# OTS has separate regional databases. A secret created on `us.` won't be
+# visible from `eu.`. Browsers sometimes get routed to a region based on
+# geo, but the displayed URL might not match the database the secret
+# actually landed in. So we try all regions until one returns 200.
+# A 404 from a region just means "not in this database" -- no burn.
+OTS_REGIONS = [
+    "us.onetimesecret.com",
+    "eu.onetimesecret.com",
+    "uk.onetimesecret.com",
+    "ca.onetimesecret.com",
+    "nz.onetimesecret.com",
+    "onetimesecret.com",
+]
+
 
 def fetch_secret_from_url(url: str) -> str:
     """Retrieve the one-time secret value via the onetimesecret REST API.
 
-    The share URL looks like https://<region>.onetimesecret.com/secret/<KEY>.
-    The API endpoint is the same host with /api/v1/secret/<KEY>, POST.
+    Tries the region in the URL first, then every other region. A
+    successful 200 burns the secret in that region. 404s elsewhere are
+    harmless.
     """
     m = ONETIMESECRET_KEY_RE.search(url)
     if not m:
@@ -72,41 +87,50 @@ def fetch_secret_from_url(url: str) -> str:
         )
     key = m.group(1)
     parsed = urllib.parse.urlparse(url)
-    host = parsed.netloc or "us.onetimesecret.com"
-    api_url = f"https://{host}/api/v1/secret/{key}"
+    primary_host = parsed.netloc or OTS_REGIONS[0]
+    ordered = [primary_host] + [r for r in OTS_REGIONS if r != primary_host]
 
-    req = urllib.request.Request(
-        api_url,
-        method="POST",
-        headers={"Accept": "application/json", "User-Agent": "penelope-invites/1.0"},
+    diagnostic: list[str] = []
+    for host in ordered:
+        api_url = f"https://{host}/api/v1/secret/{key}"
+        req = urllib.request.Request(
+            api_url,
+            method="POST",
+            headers={"Accept": "application/json", "User-Agent": "penelope-invites/1.0"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                raw = resp.read().decode("utf-8")
+                status = resp.status
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", "replace") if e.fp else ""
+            diagnostic.append(f"  {host} -> HTTP {e.code}: {body[:200]}")
+            continue
+        except urllib.error.URLError as e:
+            diagnostic.append(f"  {host} -> URLError: {e}")
+            continue
+
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            diagnostic.append(f"  {host} -> HTTP {status}: non-JSON body: {raw[:200]}")
+            continue
+
+        value = payload.get("value")
+        if value:
+            print(f"[ots] retrieved secret from {host} (HTTP {status})")
+            return value
+
+        # 200 but no value -> some other OTS quirk (already viewed, requires passphrase, etc.)
+        msg = payload.get("message") or "no value field"
+        diagnostic.append(f"  {host} -> HTTP {status}: {msg}; keys={sorted(payload.keys())}")
+
+    raise SystemExit(
+        "Could not retrieve the secret from any onetimesecret region.\n"
+        "Tried (in order):\n" + "\n".join(diagnostic) + "\n\n"
+        "If every region says \"Unknown secret\", the link was already viewed "
+        "or has expired. Generate a fresh one-time-secret and try again."
     )
-    try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            raw = resp.read().decode("utf-8")
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", "replace") if e.fp else ""
-        raise SystemExit(
-            f"HTTP {e.code} from {api_url}.\n"
-            "Likely causes: the secret was already viewed, has expired, or the URL is wrong.\n"
-            f"Server response: {body[:500]}"
-        )
-    except urllib.error.URLError as e:
-        raise SystemExit(f"Network error talking to onetimesecret: {e}")
-
-    try:
-        payload = json.loads(raw)
-    except json.JSONDecodeError:
-        raise SystemExit(
-            f"Unexpected non-JSON response from {api_url}:\n{raw[:500]}"
-        )
-
-    value = payload.get("value")
-    if not value:
-        raise SystemExit(
-            f"Onetimesecret returned no 'value' field. Full response keys: "
-            f"{sorted(payload.keys())}. The secret may have already been read."
-        )
-    return value
 
 
 def read_local_secret(path: str) -> str:
