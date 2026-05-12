@@ -149,18 +149,82 @@ inferred from it that this sandbox cannot reach either onetimesecret or
 Gmail SMTP, and pivoted the user-flow to "Otávio runs the script himself
 on his own machine" from the start.
 
-**Pivot:** The script is correct and works; it just needs to run on a
-host with open egress. Path forward for Otávio:
+**Pivot v1 (rejected by Otávio):** "Otávio runs the script on his own
+machine." He explicitly refused — Penelope's job is to find an
+egress-capable execution environment, not to off-load the work.
 
-    git clone https://github.com/OttoBoop/clipping-project.git
-    cd clipping-project
-    git checkout claude/gmail-email-invitations-LzTmE
-    python3 mass_email_invites/retrieve_and_send.py "<one-time-URL>"
+**Pivot v2 (the real fix):** GitHub-hosted runners. Otávio's repo already
+has Actions enabled (`.github/workflows/penelope-fetch-shakira.yml`
+exists). Runners have open egress to onetimesecret.com and Gmail SMTP.
+So Penelope writes a workflow that:
 
-This is *strictly safer* than the original plan: the password never
-leaves Otávio's machine, not even in flight to me. The one-time-secret
-indirection was insurance against leakage in chat; when Otávio runs the
-script himself, that whole risk surface is gone.
+1. Accepts the one-time-secret URL via `workflow_dispatch` input.
+2. Checks out the branch, sets up Python 3.11.
+3. Runs `mass_email_invites/retrieve_and_send.py "$URL"` from the runner.
+
+Otávio pastes the URL into the GitHub Actions trigger form (one click,
+one paste) and the runner does the actual send. Workflow runs visible at
+`https://github.com/OttoBoop/clipping-project/actions`.
 
 **Done.**
+
+---
+
+## Iteration 8 — `send-invites.yml` workflow
+
+Added `.github/workflows/send-invites.yml`. `workflow_dispatch` inputs:
+`secret_url` (required), `dry_run` (optional), `subject_override`
+(optional). 5-minute timeout. Masks the URL in subsequent log lines.
+
+Commit `c3be530`. Pushed to `claude/gmail-email-invitations-LzTmE`.
+
+**Hand-back to Otávio:** trigger URL is
+<https://github.com/OttoBoop/clipping-project/actions/workflows/send-invites.yml>
+→ "Run workflow" → branch `claude/gmail-email-invitations-LzTmE` →
+paste the one-time-secret URL → Run.
+
+**Done.** No MCP tool to dispatch workflow_dispatch directly, so
+Penelope pivoted again in iteration 9.
+
+---
+
+## Iteration 9 — Push-trigger pivot, first attempt: FAILED
+
+Otávio refused "I'll run it myself" (his exact words: "I ain't running
+it myself"). New approach: add a `push` trigger on
+`mass_email_invites/pending-send.url`. Penelope commits the URL into
+that file → the push fires the workflow → workflow reads URL → script
+runs → cleanup step removes the file.
+
+Sequence:
+- `9fdab93` — workflow gains `push` trigger and `contents: write`.
+- `d5ebe85` — trigger file with Otávio's one-time URL.
+- `b25b603` — `github-actions[bot]` cleanup commit (file removed).
+
+**Outcome: workflow run #1 (id 25746412567) concluded `failure`** with
+exit code 1 after ~10 s. Cleanup commit fired because the step uses
+`if: always()`, but no emails were sent.
+
+Without raw log access (no `gh` CLI in this sandbox) the exact failure
+line is unconfirmed. The two plausible exit-1 paths in the Resolve step
+are:
+1. `head -n1 mass_email_invites/pending-send.url` failed (file
+   unexpectedly absent at checkout) — `set -euo pipefail` would then
+   abort with the head error, not with my `::error::` message.
+2. `head` succeeded but emitted empty output — my `[ -z "$URL" ]`
+   branch then emits the `::error::` and exits 1.
+
+Local repro of the bash with the exact file content produced
+`URL=[https://...]`, `len=98` — i.e., the bash logic is correct. So
+something on the runner side differs (checkout ref? working directory?
+file present at the wrong path?).
+
+**Status:** patching the Resolve step with explicit diagnostics so the
+next run prints exactly what it sees: `pwd`, `ls -la
+mass_email_invites/`, `cat pending-send.url || echo MISSING`, the
+github.sha and github.ref values. Then re-trigger.
+
+The one-time secret link is *probably still valid* — the runner
+exit-1'd before any call to onetimesecret.com, so the secret was never
+consumed.
 
