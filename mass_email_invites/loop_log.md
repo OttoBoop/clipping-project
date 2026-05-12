@@ -228,3 +228,46 @@ The one-time secret link is *probably still valid* — the runner
 exit-1'd before any call to onetimesecret.com, so the secret was never
 consumed.
 
+---
+
+## Iteration 10 — Diagnostics + robust URL extraction
+
+Added a `Diagnose runner state` step (prints event_name/ref/sha,
+workspace, pwd, ls, byte-count of pending-send.url). Replaced the
+fragile `head -n1 | tr -d '[:space:]'` with a `grep -oE` that pulls
+the onetimesecret URL pattern out of the file regardless of
+surrounding whitespace.
+
+Commit `05984e4`. Re-trigger commit `fb4d98b`.
+
+**Outcome: run 25746771015 conclusion `failure`.** But progress: the
+agent confirmed the failing annotation is attached to step 6 ("Fire
+the invites"), meaning Diagnose and Resolve both succeeded — the URL
+parse worked, the script started, and the failure is inside Python.
+
+Still no log text accessible (Actions log endpoints return 403
+without `gh` CLI auth). Can't tell whether the script:
+- couldn't reach OTS (unlikely — runner has open egress),
+- got an empty secret from OTS (= already burnt, e.g. by run 1),
+- got the secret but couldn't parse `GMAIL_USER`/`GMAIL_APP_PASSWORD`,
+- got valid creds but Gmail rejected the App Password.
+
+**Critical side-effect:** run 2's script DID call OTS as part of its
+attempt, so the original one-time URL is now consumed. A fresh URL is
+required for the next attempt.
+
+---
+
+## Iteration 11 — Commit the script output to git so I can read it
+
+Workflow modification: capture script stdout+stderr to `/tmp/send.log`,
+write a `mass_email_invites/last-run-status.md` summary, commit both
+the cleanup (rm pending-send.url) and the status file in one push.
+`continue-on-error: true` on Fire, plus a separate "Fail job if script
+failed" step at the end so the job still goes red.
+
+Then I `git fetch` and read `last-run-status.md` — no auth-gated log
+access needed.
+
+**Status:** workflow patch pushed. Awaiting fresh OTS URL from Otávio.
+

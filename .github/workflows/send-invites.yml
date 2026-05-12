@@ -133,12 +133,14 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Fire the invites
+        id: send
         env:
           OTS_URL: ${{ steps.src.outputs.URL }}
           DRY_RUN: ${{ steps.src.outputs.DRY }}
           SUBJECT_OVERRIDE: ${{ steps.src.outputs.SUBJ }}
+        continue-on-error: true
         run: |
-          set -euo pipefail
+          set -uo pipefail
           args=( "$OTS_URL" )
           if [ "$DRY_RUN" = "true" ]; then
             args+=( --dry-run )
@@ -146,17 +148,51 @@ jobs:
           if [ -n "$SUBJECT_OVERRIDE" ]; then
             args+=( --subject "$SUBJECT_OVERRIDE" )
           fi
-          python3 mass_email_invites/retrieve_and_send.py "${args[@]}"
+          python3 mass_email_invites/retrieve_and_send.py "${args[@]}" 2>&1 | tee /tmp/send.log
+          SCRIPT_EXIT=${PIPESTATUS[0]}
+          echo "script_exit=$SCRIPT_EXIT" >> "$GITHUB_OUTPUT"
 
-      - name: Consume the trigger file (push only)
+      - name: Record run status
         if: github.event_name == 'push' && always()
         run: |
-          set -euo pipefail
-          if [ ! -f mass_email_invites/pending-send.url ]; then
-            exit 0
-          fi
+          {
+            echo "# Last send-invites run"
+            echo ""
+            echo "- run_id: ${{ github.run_id }}"
+            echo "- run_number: ${{ github.run_number }}"
+            echo "- trigger sha: ${{ github.sha }}"
+            echo "- script exit code: ${{ steps.send.outputs.script_exit }}"
+            echo "- timestamp (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo ""
+            echo "## Script output (stdout + stderr)"
+            echo ""
+            echo '```'
+            if [ -f /tmp/send.log ]; then
+              cat /tmp/send.log
+            else
+              echo "(no /tmp/send.log captured — Fire step did not run)"
+            fi
+            echo '```'
+          } > mass_email_invites/last-run-status.md
+
+      - name: Consume trigger and commit status (push only)
+        if: github.event_name == 'push' && always()
+        run: |
+          set -uo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm mass_email_invites/pending-send.url
-          git commit -m "send-invites: consume trigger file (URL is one-time, now dead)"
-          git push
+          # The trigger file may not exist if checkout was empty for some reason.
+          if [ -f mass_email_invites/pending-send.url ]; then
+            git rm mass_email_invites/pending-send.url
+          fi
+          git add mass_email_invites/last-run-status.md
+          # Pull any concurrent changes (cleanup commits from other runs).
+          git pull --rebase origin "${GITHUB_REF##refs/heads/}" || true
+          git commit -m "send-invites: consume trigger + record run status"
+          git push origin "HEAD:${GITHUB_REF##refs/heads/}"
+
+      - name: Fail job if script failed
+        if: steps.send.outputs.script_exit != '0'
+        run: |
+          echo "::error::Script exit code was ${{ steps.send.outputs.script_exit }}. See mass_email_invites/last-run-status.md."
+          exit 1
