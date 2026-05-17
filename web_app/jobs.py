@@ -105,6 +105,7 @@ PRESETS: dict[str, dict[str, Any]] = {
 
 CUSTOM_MAX_CANDIDATES = 90000
 CUSTOM_MAX_PROCESS_SECONDS = 90000
+DEFAULT_CANDIDATE_WORKERS = 4
 LIVE_CHECKPOINT_MIN_SECONDS = 30
 _CHECKPOINT_LOCK = threading.Lock()
 _LAST_CHECKPOINT_UPLOAD: dict[str, float] = {}
@@ -419,6 +420,7 @@ class JobManager:
                             max_process_seconds=int(spec["max_process_seconds"]),
                             db_path=str(db_path()),
                             cancel_check=cancel_event.is_set,
+                            candidate_workers=max(1, int(spec.get("candidate_workers") or DEFAULT_CANDIDATE_WORKERS)),
                         )
                         results = run_ingestion(
                             spec["collector"],
@@ -526,6 +528,7 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
         "export": bool(payload.get("export", True)),
         "max_candidates": max_candidates,
         "max_process_seconds": max_process_seconds,
+        "candidate_workers": DEFAULT_CANDIDATE_WORKERS,
         "skip_direct_scrape": True,
         "durable": True,
     }
@@ -938,6 +941,7 @@ def run_source_run(
             db_path=str(db_path()),
             cancel_check=cancel_event.is_set,
             archive_full_text=True,
+            candidate_workers=max(1, int(spec.get("candidate_workers") or DEFAULT_CANDIDATE_WORKERS)),
         )
         result = process_candidates(
             source_name,

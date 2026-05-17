@@ -115,5 +115,6 @@ def test_ingestion_options_has_original_fields():
     assert hasattr(opts, "target_keys")
     assert hasattr(opts, "date_from")
     assert hasattr(opts, "date_to")
+    assert hasattr(opts, "candidate_workers")
     # Original uses max_candidates_per_source, not db_path
     assert hasattr(opts, "max_candidates_per_source")

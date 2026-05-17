@@ -4,6 +4,8 @@ import importlib
 import json
 import sqlite3
 import sys
+import threading
+import time
 from types import SimpleNamespace
 
 from pipeline.database import ClippingDB
@@ -251,6 +253,7 @@ def test_build_update_spec_accepts_safe_custom_collector_and_long_dates(monkeypa
     assert spec["date_to"] == "2026-04-30"
     assert spec["max_candidates"] == 90000
     assert spec["max_process_seconds"] == 90000
+    assert spec["candidate_workers"] == 4
 
     try:
         jobs.build_update_spec(
@@ -334,6 +337,7 @@ def test_completo_preset_uses_current_primary_circle_without_bernardo(monkeypatc
     assert "bernardo_rubiao" not in spec["target_keys"]
     assert spec["max_candidates"] == 90000
     assert spec["max_process_seconds"] == 90000
+    assert spec["candidate_workers"] == 4
 
 
 def test_job_progress_contract_includes_target_source_counts_and_recent_events(monkeypatch, tmp_path):
@@ -1345,6 +1349,87 @@ def test_process_candidates_uses_frozen_target_snapshot(monkeypatch, tmp_path):
     assert rows == [("ana_teste", "Ana Teste", "Ana Teste")]
 
 
+def test_process_candidates_prefetches_articles_with_serial_db_writes(monkeypatch, tmp_path):
+    from pipeline import ingest
+    from pipeline.matcher import Target
+
+    db_file = tmp_path / "parallel-candidates.db"
+    active_fetches = 0
+    max_active_fetches = 0
+    fetch_lock = threading.Lock()
+    write_threads: list[str] = []
+    events: list[tuple[str, dict]] = []
+
+    def fake_fetch_full_article_text(url, *, request_timeout):
+        nonlocal active_fetches, max_active_fetches
+        with fetch_lock:
+            active_fetches += 1
+            max_active_fetches = max(max_active_fetches, active_fetches)
+        time.sleep(0.05)
+        with fetch_lock:
+            active_fetches -= 1
+        return (
+            url,
+            "<html></html>",
+            (
+                "Flavio Valle confirmou uma agenda cultural no Rio de Janeiro com reunioes "
+                "publicas, visitas tecnicas, planejamento local e novas entregas para moradores."
+            ),
+            "Agenda cultural no Rio",
+            "2026-05-17T12:00:00+00:00",
+        )
+
+    original_insert_article = ClippingDB.insert_article_if_new
+
+    def tracked_insert_article(self, *args, **kwargs):
+        write_threads.append(threading.current_thread().name)
+        return original_insert_article(self, *args, **kwargs)
+
+    monkeypatch.setattr(ingest, "fetch_full_article_text", fake_fetch_full_article_text)
+    monkeypatch.setattr(ClippingDB, "insert_article_if_new", tracked_insert_article)
+    monkeypatch.setattr(
+        ingest,
+        "get_active_targets",
+        lambda: [Target(key="flavio_valle", display_name="Flavio Valle", keywords=["Flavio Valle"], primary=True)],
+    )
+    candidates = [
+        ingest.CandidateArticle(
+            title=f"Agenda cultural no Rio {idx}",
+            url=f"https://example.com/agenda-cultural-{idx}",
+            source_name="Fonte Teste",
+            source_type="rss",
+            published_at="2026-05-17T12:00:00+00:00",
+            snippet="Sem mencao no resumo para forcar busca no texto completo.",
+            metadata={},
+        )
+        for idx in range(3)
+    ]
+
+    result = ingest.process_candidates(
+        "Fonte Teste",
+        "rss",
+        candidates,
+        options=ingest.IngestionOptions(
+            target_keys=["flavio_valle"],
+            date_from="2026-05-17",
+            date_to="2026-05-17",
+            db_path=str(db_file),
+            candidate_workers=2,
+            archive_full_text=False,
+        ),
+        progress_callback=lambda event, payload: events.append((event, payload)),
+    )
+
+    assert max_active_fetches >= 2
+    assert result.candidates_seen == 3
+    assert result.articles_inserted == 3
+    assert set(write_threads) == {threading.current_thread().name}
+    assert [event for event, _ in events].count("article_saved") == 3
+    with sqlite3.connect(db_file) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0] == 3
+        assert conn.execute("SELECT COUNT(*) FROM mentions").fetchone()[0] == 3
+
+
 def test_process_candidates_tags_duplicate_article_for_new_secondary_target(monkeypatch, tmp_path):
     from pipeline import ingest
     from pipeline.matcher import Target
@@ -2038,6 +2123,7 @@ def test_process_candidates_stops_at_candidate_boundary_when_cancelled(monkeypat
             date_to="2026-04-30",
             db_path=str(tmp_path / "cancel-boundary.db"),
             cancel_check=lambda: cancel["requested"],
+            candidate_workers=1,
         ),
         progress_callback=lambda event, payload: events.append((event, payload)),
     )

@@ -17,6 +17,7 @@ import json
 import html
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from difflib import SequenceMatcher
@@ -115,6 +116,7 @@ class IngestionOptions:
     target_snapshots: list[Any] | None = None
     db_path: str = ""
     cancel_check: Callable[[], bool] | None = None
+    candidate_workers: int = 4
 
 
 ProgressCallback = Callable[[str, dict], None]
@@ -499,6 +501,8 @@ def process_candidates(
     forced_mode = (options.forced_terms_mode or "any").strip().lower()
     strict_window = bool(date_from or date_to)
     cancelled = False
+    limited_candidates = candidates[:max_candidates]
+    candidate_workers = max(1, min(16, int(options.candidate_workers or 1)))
 
     if progress_callback:
         progress_callback(
@@ -506,8 +510,9 @@ def process_candidates(
             {
                 "source_name": source_name,
                 "source_type": source_type,
-                "candidates_total": min(len(candidates), max_candidates),
+                "candidates_total": len(limited_candidates),
                 "max_candidates": max_candidates,
+                "candidate_workers": candidate_workers,
                 "articles_inserted": 0,
                 "mentions_inserted": 0,
                 "stories_touched": 0,
@@ -524,7 +529,7 @@ def process_candidates(
                 "source_name": source_name,
                 "source_type": source_type,
                 "candidates_seen": seen,
-                "candidates_total": min(len(candidates), max_candidates),
+                "candidates_total": len(limited_candidates),
                 "articles_inserted": inserted,
                 "mentions_inserted": mentions_inserted,
                 "stories_touched": stories_touched,
@@ -608,7 +613,68 @@ def process_candidates(
         except Exception:
             return False
 
-    for candidate in candidates[:max_candidates]:
+    prefetch_executor: ThreadPoolExecutor | None = None
+    prefetch_futures: dict[tuple[str, int], Any] = {}
+    prefetch_order: list[tuple[str, int]] = []
+    prefetch_index = 0
+
+    def candidate_needs_prefetch(candidate: CandidateArticle) -> bool:
+        candidate_source_type = (candidate.source_type or source_type or "").strip().lower()
+        candidate_metadata = dict(candidate.metadata or {})
+        force_full_fetch = bool(candidate_metadata.get("force_full_fetch"))
+        exact_body_only = bool(candidate_metadata.get("exact_body_only"))
+        require_published_extraction = bool(candidate_metadata.get("require_published_extraction"))
+        needs_published_extraction = bool(
+            require_published_extraction
+            or (strict_window and candidate_source_type == "scrape")
+            or (strict_window and candidate_source_type == "internal_search" and not candidate.published_at)
+        )
+        if not needs_published_extraction and not is_recent_enough(candidate.published_at, date_from=date_from, date_to=date_to):
+            return False
+        searchable = "" if exact_body_only else " ".join([candidate.title or "", candidate.snippet or ""])
+        hits = [] if exact_body_only else matcher.find_hits(searchable)
+        return bool(force_full_fetch or exact_body_only or not hits or needs_published_extraction)
+
+    if candidate_workers > 1:
+        queued_keys: set[tuple[str, int]] = set()
+        for candidate in limited_candidates:
+            key = (str(candidate.url or ""), request_timeout)
+            if not key[0] or key in queued_keys:
+                continue
+            if candidate_needs_prefetch(candidate):
+                queued_keys.add(key)
+                prefetch_order.append(key)
+        if prefetch_order:
+            prefetch_executor = ThreadPoolExecutor(max_workers=candidate_workers, thread_name_prefix="clipping-fetch")
+
+    def schedule_prefetch() -> None:
+        nonlocal prefetch_index
+        if prefetch_executor is None:
+            return
+        max_in_flight = max(1, candidate_workers)
+        while len(prefetch_futures) < max_in_flight and prefetch_index < len(prefetch_order):
+            key = prefetch_order[prefetch_index]
+            prefetch_index += 1
+            if key in prefetch_futures:
+                continue
+            url, timeout = key
+            prefetch_futures[key] = prefetch_executor.submit(fetch_full_article_text, url, request_timeout=timeout)
+
+    def fetch_article_text(url: str, *, request_timeout: int):
+        key = (str(url or ""), int(request_timeout))
+        if prefetch_executor is not None:
+            schedule_prefetch()
+            future = prefetch_futures.pop(key, None)
+            if future is not None:
+                try:
+                    return future.result()
+                finally:
+                    schedule_prefetch()
+        return fetch_full_article_text(url, request_timeout=request_timeout)
+
+    schedule_prefetch()
+
+    for candidate in limited_candidates:
         if cancel_requested(options):
             cancelled = True
             errors.append("cancelled")
@@ -664,7 +730,7 @@ def process_candidates(
 
         if must_fetch_article:
             try:
-                final_url, raw_html, full_text, extracted_title, extracted_published = fetch_full_article_text(
+                final_url, raw_html, full_text, extracted_title, extracted_published = fetch_article_text(
                     candidate.url,
                     request_timeout=request_timeout,
                 )
@@ -745,7 +811,7 @@ def process_candidates(
         should_archive_full_text = options.archive_full_text and (time.monotonic() - started_at) <= archive_cutoff
         if not full_text and should_archive_full_text:
             try:
-                final_url, raw_html, full_text, extracted_title, extracted_published = fetch_full_article_text(
+                final_url, raw_html, full_text, extracted_title, extracted_published = fetch_article_text(
                     candidate.url,
                     request_timeout=request_timeout,
                 )
@@ -1005,6 +1071,8 @@ def process_candidates(
                 "status": "cancelled" if cancelled else "complete",
             },
         )
+    if prefetch_executor is not None:
+        prefetch_executor.shutdown(wait=False, cancel_futures=True)
     return result
 
 

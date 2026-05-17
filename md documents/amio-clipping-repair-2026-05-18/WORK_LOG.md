@@ -472,3 +472,51 @@ Focused suite:
 ```
 
 Result: `44 passed in 1.94s`.
+
+## 2026-05-18 - Seventh Technical Loop: Bounded Candidate Fetch Parallelism
+
+### Problem Found
+
+Candidate processing still fetched article bodies serially. That made update
+debugging and long runs feel frozen even after the target/live-base loop was
+connected. The original long-term loop explicitly called for controlled
+parallelism while keeping SQLite writes serialized.
+
+### Changes Made
+
+- Added `candidate_workers` to `IngestionOptions`, defaulting to `4`.
+- Added `candidate_workers` to update job specs so the chosen worker count is
+  visible and durable with the job.
+- Implemented bounded prefetch for article-body fetches in `process_candidates`.
+  The fetch window is limited by `candidate_workers`.
+- Kept candidate selection, dedupe, SQLite inserts, mention writes,
+  story updates, and `article_saved` emission in the main processing thread.
+- Added regression coverage proving fetches overlap while DB writes remain on
+  the caller thread and `article_saved` still fires once each save finishes.
+
+### Verification
+
+Focused unit:
+
+```bash
+python -m py_compile pipeline/ingest.py web_app/jobs.py
+.venv_playwright/bin/pytest tests/test_targets_jobs.py::test_build_update_spec_accepts_safe_custom_collector_and_long_dates tests/test_targets_jobs.py::test_completo_preset_uses_current_primary_circle_without_bernardo tests/test_targets_jobs.py::test_process_candidates_prefetches_articles_with_serial_db_writes tests/test_targets_jobs.py::test_process_candidates_stops_at_candidate_boundary_when_cancelled tests/test_ingest_restore.py::test_ingestion_options_has_original_fields -q
+```
+
+Result: `5 passed in 0.49s`.
+
+Focused target/job suite:
+
+```bash
+.venv_playwright/bin/pytest tests/test_targets_jobs.py -q
+```
+
+Result: `49 passed in 1.12s`.
+
+Focused ingest/import suite:
+
+```bash
+.venv_playwright/bin/pytest tests/test_targets_jobs.py tests/test_ingest_restore.py tests/test_f4_validation.py -q
+```
+
+Result: `70 passed in 1.16s`.
