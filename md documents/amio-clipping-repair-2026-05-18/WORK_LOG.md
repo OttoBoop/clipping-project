@@ -411,3 +411,13 @@ Focused export/admin suite:
 ```
 
 Result: `41 passed in 1.71s`.
+
+### Post-Commit Focused Verification
+
+Passed:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_targets_jobs.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result: `89 passed in 2.98s`.
