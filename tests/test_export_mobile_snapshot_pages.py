@@ -121,6 +121,17 @@ def test_export_bundle_uses_current_dashboard_javascript():
     assert export_mobile_snapshot.build_pages_javascript() == dashboard_js
 
 
+def test_static_export_marks_bundle_to_skip_api_polling(tmp_path):
+    db_path = tmp_path / "clipping.db"
+    seed_story_db(db_path)
+    args = make_args(tmp_path, db_path)
+
+    artifact = export_mobile_snapshot.build_snapshot_artifact(args)
+
+    assert 'data-clipping-static="1"' in artifact["html_doc"]
+    assert "apiAvailable" in artifact["js_text"]
+
+
 def test_active_targets_without_stories_stay_available_as_filters(monkeypatch, tmp_path):
     db_path = tmp_path / "clipping.db"
     targets_path = tmp_path / "targets.json"

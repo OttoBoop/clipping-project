@@ -4,14 +4,16 @@
 
   const dataUrl = app.dataset.clippingDataUrl;
   const rawUrl = app.dataset.clippingRawUrl;
-  // API base URL. Empty string = same-origin (the FastAPI web_app serves both
-  // the dashboard at "/" and the classification endpoints under "/api/").
+  // API base URL. Empty string = same-origin unless this is a generated static bundle.
   const apiUrl = (app.dataset.clippingApiUrl || "").trim().replace(/\/$/, "");
-  let editorEnabled = true;
+  const staticBundle = app.dataset.clippingStatic === "1";
+  const apiAvailable = Boolean(apiUrl) || !staticBundle;
+  let editorEnabled = apiAvailable;
   let csrfToken = "";
   let categoriesCache = [];
 
   function apiFetch(path, init) {
+    if (!apiAvailable) return Promise.reject(new Error("api_unavailable"));
     return fetch(apiUrl + path, Object.assign({ credentials: "same-origin" }, init || {}));
   }
 
@@ -533,6 +535,34 @@
     runPanels.forEach(function (panel) {
       panel.hidden = panel.dataset.tabPanel !== tabName;
     });
+  }
+
+  function viewerIsAdmin() {
+    if (!apiAvailable) return false;
+    if (!payload || !payload.meta || !Object.prototype.hasOwnProperty.call(payload.meta, "viewerRole")) return true;
+    return payload.meta.viewerRole === "admin";
+  }
+
+  function applyViewerControls() {
+    var isAdmin = viewerIsAdmin();
+    editorEnabled = isAdmin && !(payload && payload.meta && payload.meta.editorEnabled === false);
+    document.body.classList.toggle("viewer-readonly", !isAdmin);
+    runTabs.forEach(function (button) {
+      var tab = button.dataset.runTab || "";
+      button.hidden = !isAdmin && tab !== "base";
+    });
+    if (!isAdmin) {
+      activateRunTab("base");
+      if (addTargetForm && addTargetForm.closest("details")) {
+        addTargetForm.closest("details").hidden = true;
+      }
+      if (manageTargetsBox) manageTargetsBox.hidden = true;
+    } else {
+      if (addTargetForm && addTargetForm.closest("details")) {
+        addTargetForm.closest("details").hidden = false;
+      }
+      if (manageTargetsBox) manageTargetsBox.hidden = false;
+    }
   }
 
   function renderRunTarget(target) {
@@ -1099,7 +1129,27 @@
     renderManageTargets();
   }
 
+  function renderStaticBundleStatus() {
+    [runnerStatusPill, sharedStatusPill].forEach(function (pill) {
+      if (!pill) return;
+      pill.textContent = "Arquivo estático";
+      pill.classList.remove("is-error");
+    });
+    if (runUpdateButton) runUpdateButton.disabled = true;
+    if (resumeUpdateButton) resumeUpdateButton.hidden = true;
+    [cancelUpdateButton, cancelUpdateButtonProgress].forEach(function (button) {
+      if (!button) return;
+      button.hidden = true;
+      button.disabled = true;
+    });
+    setMessage(runFormMessage, "Este arquivo estático não dispara atualizações.", "");
+  }
+
   function pollStatus() {
+    if (!apiAvailable) {
+      renderStaticBundleStatus();
+      return Promise.resolve();
+    }
     return apiFetch("/api/update/status", { cache: "no-store" })
       .then(function (resp) {
         if (!resp.ok) throw new Error("HTTP " + resp.status);
@@ -1121,6 +1171,7 @@
   }
 
   function pollLiveResults(statusPayload) {
+    if (!apiAvailable) return Promise.resolve();
     if (!payload) return Promise.resolve();
     var current = (statusPayload && statusPayload.current) || {};
     var recent = statusPayload && statusPayload.recent && statusPayload.recent.length ? statusPayload.recent[0] : {};
@@ -1153,6 +1204,7 @@
   }
 
   function pollBaseLiveResults() {
+    if (!apiAvailable) return Promise.resolve();
     if (!payload) return Promise.resolve();
     return apiFetch("/api/update/live-results?scope=base&limit=240", { cache: "no-store" })
       .then(function (resp) {
@@ -2273,28 +2325,30 @@
   });
 
 
-  // Categories are public. Always cache them so read-only users still see the
-  // taxonomy on hover/inspection (and admins land with the cache populated).
-  apiFetch("/api/categories", { cache: "no-store" })
-    .then(function (r) { return r.ok ? r.json() : { categories: [] }; })
-    .then(function (data) {
-      categoriesCache = (data.categories || []).map(function (c) { return c.name; });
-    })
-    .catch(function () { /* leave categoriesCache empty */ });
+  if (apiAvailable) {
+    // Categories are public. Always cache them so read-only users still see the
+    // taxonomy on hover/inspection (and admins land with the cache populated).
+    apiFetch("/api/categories", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : { categories: [] }; })
+      .then(function (data) {
+        categoriesCache = (data.categories || []).map(function (c) { return c.name; });
+      })
+      .catch(function () { /* leave categoriesCache empty */ });
 
-  // Live classifications overlay — public read, applies to every visitor so
-  // the static snapshot's classification chips stay current.
-  apiFetch("/api/classifications", { cache: "no-store" })
-    .then(function (r) { return r.ok ? r.json() : { classifications: [] }; })
-    .then(function (data) {
-      var liveByKey = {};
-      (data.classifications || []).forEach(function (c) {
-        var k = c.article_id + "|" + c.target_key;
-        liveByKey[k] = c;
-      });
-      mergeWhenReady(liveByKey);
-    })
-    .catch(function () { /* network failure: keep static payload as is */ });
+    // Live classifications overlay — public read, applies to every visitor so
+    // the static snapshot's classification chips stay current.
+    apiFetch("/api/classifications", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : { classifications: [] }; })
+      .then(function (data) {
+        var liveByKey = {};
+        (data.classifications || []).forEach(function (c) {
+          var k = c.article_id + "|" + c.target_key;
+          liveByKey[k] = c;
+        });
+        mergeWhenReady(liveByKey);
+      })
+      .catch(function () { /* network failure: keep static payload as is */ });
+  }
 
   function mergeWhenReady(liveByKey) {
     var timer = setInterval(function () {
@@ -2327,6 +2381,7 @@
       (payload.targets || []).forEach(function (target) {
         labelsByKey[target.key] = target.label || target.key;
       });
+      applyViewerControls();
       var visibleKeys = (payload.targets || []).filter(isPublicTarget).map(function (target) { return target.key; });
       selectedTargets = new Set((payload.defaultTargets || []).filter(function (key) {
         return visibleKeys.indexOf(key) !== -1;
@@ -2340,11 +2395,15 @@
         loadingState.hidden = true;
       }
       applyState();
-      refreshTargets();
-      pollStatus();
-      pollBaseLiveResults();
-      window.setInterval(pollStatus, 5000);
-      window.setInterval(pollBaseLiveResults, 5000);
+      if (apiAvailable) {
+        refreshTargets();
+        if (viewerIsAdmin()) pollStatus();
+        pollBaseLiveResults();
+        if (viewerIsAdmin()) window.setInterval(pollStatus, 5000);
+        window.setInterval(pollBaseLiveResults, 5000);
+      } else {
+        renderStaticBundleStatus();
+      }
     })
     .catch(function (error) {
       showError(error && error.message ? error.message : "Erro inesperado.");

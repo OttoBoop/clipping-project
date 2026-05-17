@@ -421,3 +421,54 @@ Passed:
 ```
 
 Result: `89 passed in 2.98s`.
+
+## 2026-05-18 - Sixth Technical Loop: Static Export API Isolation
+
+### Problem Found
+
+A Playwright smoke of a generated static export showed that the bundle was
+still calling `/api/categories`, `/api/classifications`, `/api/targets`,
+`/api/update/status`, and `/api/update/live-results` against the static file
+server when `api_url` was empty. That made the export bundle depend on API
+routes that do not exist in static hosting.
+
+### Changes Made
+
+- Generated exports without `api_url` now mark the app root with
+  `data-clipping-static="1"`.
+- `assets/clipping.js` and the synced export template now compute
+  `apiAvailable`; static bundles skip categories/classifications/status/live
+  polling instead of calling same-origin `/api`.
+- Same-origin API still works for the FastAPI-hosted dashboard because the
+  static marker is only added to generated exports.
+- Static bundles render as read-only and show `Arquivo estático` status.
+- Added a unit test asserting static exports carry the marker and the exported
+  JS contains the API availability guard.
+
+### Verification
+
+Focused unit:
+
+```bash
+.venv_playwright/bin/pytest tests/test_export_mobile_snapshot_pages.py::test_static_export_marks_bundle_to_skip_api_polling tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript -q
+```
+
+Result: `2 passed in 0.08s`.
+
+Manual Playwright smoke:
+
+- generated a temporary export bundle with one Flavio article and one Shakira
+  article in the same story;
+- served it through `http.server`;
+- opened it in Chromium;
+- observed no console errors and no `/api/*` requests;
+- verified the default Shakira filter showed "Shakira confirma show" and hid
+  "Flavio Valle confirma agenda".
+
+Focused suite:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result: `44 passed in 1.94s`.

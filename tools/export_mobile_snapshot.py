@@ -2533,6 +2533,8 @@ def build_pages_shell_html(
     html_doc = replace_attr(html_doc, "data-clipping-data-url", versioned_url(data_url, version))
     html_doc = replace_attr(html_doc, "data-clipping-raw-url", versioned_url(raw_url, version))
     html_doc = replace_attr(html_doc, "data-clipping-api-url", api_url)
+    if not api_url:
+        html_doc = re.sub(r'(<main\b[^>]*\bid="app"[^>]*)(>)', r'\1 data-clipping-static="1"\2', html_doc, count=1)
     html_doc = replace_text_by_id(
         html_doc,
         "visibleStoriesStat",
