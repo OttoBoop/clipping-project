@@ -503,6 +503,26 @@ def test_targets_api_validation_errors_are_public_400s(monkeypatch, tmp_path):
     assert "Revise" in payload["detail"]["suggestion"]
 
 
+def test_targets_api_operation_errors_are_structured(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+
+    def fail_create(_payload):
+        raise RuntimeError("targets file is not writable")
+
+    monkeypatch.setattr(app_module, "create_secondary_target", fail_create)
+
+    with TestClient(app) as client:
+        response = client.post("/api/targets", json={"display_name": "Ana Teste"})
+
+    assert response.status_code == 500
+    payload = response.json()
+    assert payload["error"] == "target_operation_failed"
+    assert payload["message"] == "Não foi possível salvar este nome."
+    assert "targets.json" in payload["suggestion"]
+    assert "RuntimeError" in payload["detail"]["cause"]
+
+
 def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     with TestClient(app) as client:

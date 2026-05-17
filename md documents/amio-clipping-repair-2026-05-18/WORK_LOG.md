@@ -299,3 +299,33 @@ Then opened `http://127.0.0.1:8765/` with Playwright Chromium.
   `/api/update/live-results?scope=base&limit=240` successfully.
 
 The server was stopped after the smoke.
+
+## 2026-05-18 - Third Technical Loop: Non-Validation Target Errors
+
+### Problem Found
+
+The target API now returned structured validation errors, but unexpected
+operation failures such as an unreadable or unwritable `data/targets.json` could
+still become a generic 500 and collapse back into the frontend's old generic
+message.
+
+### Changes Made
+
+- Added structured `target_operation_failed` responses for create, update,
+  archive, and restore failures outside normal validation.
+- The response includes `message`, `cause`, and `suggestion` so the UI can show
+  the likely problem and next action.
+- Updated frontend API error formatting to include `cause` details when the
+  backend provides them.
+- Added a regression test that simulates a target save failure and asserts a
+  structured 500 response.
+
+### Verification
+
+Passed:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_targets_jobs.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result: `87 passed in 2.70s`.

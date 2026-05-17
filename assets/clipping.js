@@ -296,6 +296,8 @@
     if (!parts.length && payload.message) parts.push(String(payload.message));
     if (!parts.length && typeof payload.error === "string") parts.push(payload.error);
     if (payload.suggestion && parts.indexOf(String(payload.suggestion)) === -1) parts.push(String(payload.suggestion));
+    if (detail && typeof detail === "object" && detail.cause) parts.push("Detalhe: " + String(detail.cause));
+    else if (payload.cause) parts.push("Detalhe: " + String(payload.cause));
     return parts.filter(Boolean).join(" ") || "HTTP " + status;
   }
 

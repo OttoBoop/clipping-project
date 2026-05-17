@@ -167,6 +167,36 @@ def target_validation_response(exc: ValidationError) -> JSONResponse:
     return JSONResponse(status_code=400, content=target_validation_payload(exc))
 
 
+def target_operation_error_response(operation: str, exc: Exception) -> JSONResponse:
+    operation_label = {
+        "create": "salvar",
+        "update": "atualizar",
+        "archive": "arquivar",
+        "restore": "restaurar",
+    }.get(operation, "alterar")
+    message = f"Não foi possível {operation_label} este nome."
+    cause = f"{type(exc).__name__}: {exc}"
+    suggestion = (
+        "Verifique se data/targets.json está íntegro e gravável; se o problema persistir, rode os testes "
+        "de targets e consulte o WORK_LOG do loop atual."
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "target_operation_failed",
+            "message": message,
+            "cause": cause,
+            "suggestion": suggestion,
+            "detail": {
+                "code": "target_operation_failed",
+                "message": message,
+                "cause": cause,
+                "suggestion": suggestion,
+            },
+        },
+    )
+
+
 def sync_target_after_mutation(target_key: str, *, reason: str, cleanup: bool = False) -> tuple[dict[str, Any], dict[str, Any] | None]:
     try:
         return record_target_sync(target_key, reason=reason, cleanup=cleanup), None
@@ -441,6 +471,8 @@ async def add_target(request: Request) -> JSONResponse:
         result = create_secondary_target(payload)
     except ValidationError as exc:
         return target_validation_response(exc)
+    except Exception as exc:
+        return target_operation_error_response("create", exc)
     key = str(result.get("key") or "created")
     return target_mutation_response("targets-created", result, key, sync_reason="target-created")
 
@@ -452,6 +484,8 @@ async def update_target(target_key: str, request: Request) -> JSONResponse:
         result = update_secondary_target(target_key, payload)
     except ValidationError as exc:
         return target_validation_response(exc)
+    except Exception as exc:
+        return target_operation_error_response("update", exc)
     key = str(result.get("key") or target_key)
     return target_mutation_response("targets-updated", result, key, sync_reason="target-updated", cleanup=True)
 
@@ -463,6 +497,8 @@ async def archive_target(target_key: str, request: Request) -> JSONResponse:
         result = archive_secondary_target(target_key, str(payload.get("reason") or "Arquivado pela equipe."))
     except ValidationError as exc:
         return target_validation_response(exc)
+    except Exception as exc:
+        return target_operation_error_response("archive", exc)
     return target_mutation_response("targets-archived", result, target_key)
 
 
@@ -472,6 +508,8 @@ def restore_target(target_key: str) -> JSONResponse:
         result = restore_secondary_target(target_key)
     except ValidationError as exc:
         return target_validation_response(exc)
+    except Exception as exc:
+        return target_operation_error_response("restore", exc)
     key = str(result.get("key") or target_key)
     return target_mutation_response("targets-restored", result, key, sync_reason="target-restored")
 
