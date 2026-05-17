@@ -1672,11 +1672,14 @@ def mark_orphaned_active_jobs_interrupted(reason: str = "startup_recovered_activ
     return len(rows)
 
 
-def recent_jobs(limit: int = 8) -> list[dict[str, Any]]:
+def recent_jobs(limit: int = 8, *, include_observability: bool = True) -> list[dict[str, Any]]:
     ensure_app_tables(db_path())
     with connect(db_path()) as conn:
         rows = conn.execute("SELECT * FROM jobs ORDER BY started_at DESC LIMIT ?", (int(limit),)).fetchall()
-    return [with_job_observability(dict(row)) for row in rows]
+    jobs = [dict(row) for row in rows]
+    if not include_observability:
+        return jobs
+    return [with_job_observability(job) for job in jobs]
 
 
 def last_successful_update(target_key: str = "") -> dict[str, Any] | None:

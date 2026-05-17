@@ -95,3 +95,60 @@ stage hunks safely, it may append a short claim to the shared file.
 
 After the docs-only checkpoint, the technical loop should implement functional
 password-gated segregation on the existing FastAPI app.
+
+## 2026-05-18 - First Technical Loop: Password-Gated Scoped Views
+
+### Changes Made
+
+- Added viewer-profile sessions alongside the existing admin session.
+- Added `CLIPPING_VIEWER_PASSWORDS` support for profile passwords and default
+  profile scopes for `flavio`, `shakira`, `rio_economico`, and `demo_cliente`.
+- Replaced open static serving for `assets/clipping-data.json` and
+  `assets/clipping-raw-texts.json` with authenticated scoped handlers.
+- Added server-side payload filtering for targets, stories, articles,
+  classifications, live results, and raw text.
+- Gated update, export, target mutation, category creation, and classification
+  writes to admin sessions.
+- Updated the dashboard so non-admin viewers land on Base atual and do not see
+  runner, target-management, or classification-editor controls.
+- Preserved static export usability with `data-clipping-static="1"` and
+  `apiAvailable` guards so generated static bundles do not call protected
+  `/api/*` routes.
+- Added tests proving logged-out JSON access is blocked, Shakira viewer payloads
+  exclude Flavio data, raw text is filtered, direct live-results query params
+  cannot widen scope, and viewer writes are rejected.
+
+### Coordination And Dirty Worktree Notes
+
+- `web_app/app.py` already had an inherited `recent_jobs(include_observability=False)`
+  diff. This implementation touched the same endpoint and kept that behavior
+  intentionally because status polling must stay lightweight.
+- `md documents/amio-clipping-repair-2026-05-18/WORK_LOG.md` became dirty with a
+  separate static-export loop entry while this work was in progress. This loop
+  does not own that file, so it must not be staged here.
+- The shared `Who_Is_Doing_What` file remains dirty from inherited coordination
+  work and was not edited by this loop.
+
+### Verification
+
+Passed:
+
+```bash
+python -m py_compile web_app/auth.py web_app/segmentation.py web_app/app.py
+```
+
+Passed:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_targets_jobs.py tests/test_sprint_regression_harness.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result: `99 passed in 2.47s`.
+
+Passed:
+
+```bash
+.venv_playwright/bin/pytest -q
+```
+
+Result: `251 passed, 1 skipped in 189.04s`.

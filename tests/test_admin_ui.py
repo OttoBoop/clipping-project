@@ -36,6 +36,17 @@ def load_test_app(monkeypatch, tmp_path, *, admin_password="test-password", sess
     monkeypatch.setenv("CLIPPING_DB_PATH", str(db_file))
     monkeypatch.setenv("CLIPPING_ADMIN_PASSWORD", admin_password)
     monkeypatch.setenv("CLIPPING_SESSION_SECRET", session_secret)
+    monkeypatch.setenv(
+        "CLIPPING_VIEWER_PASSWORDS",
+        json.dumps(
+            {
+                "flavio": "viewer-flavio",
+                "shakira": "viewer-shakira",
+                "rio_economico": "viewer-rio",
+            }
+        ),
+    )
+    monkeypatch.delenv("CLIPPING_VIEWER_PROFILES", raising=False)
     monkeypatch.setenv("CLIPPING_ALLOW_LOCAL_WRITES", "1")
     monkeypatch.delenv("SUPABASE_URL", raising=False)
     monkeypatch.delenv("SUPABASE_SERVICE_KEY", raising=False)
@@ -54,6 +65,12 @@ def login(client: TestClient) -> str:
     csrf = client.get("/api/csrf")
     assert csrf.status_code == 200
     return csrf.json()["csrf"]
+
+
+def login_viewer(client: TestClient, password: str = "viewer-shakira") -> None:
+    response = client.post("/api/login", json={"password": password})
+    assert response.status_code == 200
+    assert response.json()["role"] == "viewer"
 
 
 def db_counts(db_file):
@@ -174,18 +191,131 @@ def assert_empty_db(db_file):
     }
 
 
-def test_admin_route_is_retired_and_status_is_public(monkeypatch, tmp_path):
+def write_scoped_asset_fixture(asset_dir: Path) -> None:
+    asset_dir.mkdir(parents=True, exist_ok=True)
+    (asset_dir / "clipping-data.json").write_text(
+        json.dumps(
+            {
+                "meta": {"pageTitle": "Fixture", "generatedAt": "2026-05-18", "totalStories": 2, "totalArticles": 2, "totalAi": 0, "totalRaw": 2},
+                "targets": [
+                    {"key": "flavio_valle", "label": "Flavio Valle", "primary": True},
+                    {"key": "shakira", "label": "Shakira", "primary": False},
+                ],
+                "defaultTargets": ["flavio_valle"],
+                "stories": [
+                    {
+                        "storyIdInt": 1,
+                        "title": "Flavio em pauta",
+                        "targetKeys": ["flavio_valle"],
+                        "articles": [
+                            {
+                                "articleId": 10,
+                                "title": "Flavio em pauta",
+                                "targetKeys": ["flavio_valle"],
+                                "rawTextKey": "article-10",
+                                "summarySource": "raw",
+                            }
+                        ],
+                    },
+                    {
+                        "storyIdInt": 2,
+                        "title": "Shakira no Rio",
+                        "targetKeys": ["shakira"],
+                        "articles": [
+                            {
+                                "articleId": 20,
+                                "title": "Shakira no Rio",
+                                "targetKeys": ["shakira"],
+                                "rawTextKey": "article-20",
+                                "summarySource": "raw",
+                                "classifications": [{"target_key": "shakira", "target_sentiment": "neutral"}],
+                            }
+                        ],
+                    },
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (asset_dir / "clipping-raw-texts.json").write_text(
+        json.dumps({"article-10": "Texto Flavio", "article-20": "Texto Shakira"}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    (asset_dir / "clipping.js").write_text("// fixture", encoding="utf-8")
+
+
+def test_dashboard_payload_and_raw_text_are_password_scoped(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+    asset_dir = tmp_path / "assets"
+    write_scoped_asset_fixture(asset_dir)
+    monkeypatch.setattr(app_module, "ASSETS_DIR", asset_dir)
+
+    with TestClient(app) as client:
+        assert client.get("/assets/clipping-data.json").status_code == 401
+        assert client.get("/assets/clipping-raw-texts.json").status_code == 401
+        login_viewer(client, "viewer-shakira")
+        data = client.get("/assets/clipping-data.json")
+        raw = client.get("/assets/clipping-raw-texts.json")
+
+    assert data.status_code == 200
+    payload = data.json()
+    assert payload["meta"]["viewerRole"] == "viewer"
+    assert payload["meta"]["viewerProfile"] == "shakira"
+    assert [target["key"] for target in payload["targets"]] == ["shakira"]
+    assert payload["defaultTargets"] == ["shakira"]
+    assert [story["title"] for story in payload["stories"]] == ["Shakira no Rio"]
+    assert payload["stories"][0]["articles"][0]["targetKeys"] == ["shakira"]
+    assert raw.status_code == 200
+    assert raw.json() == {"article-20": "Texto Shakira"}
+
+
+def test_viewer_cannot_widen_live_results_or_write_admin_actions(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+
+    def fake_live_results(*_args, **_kwargs):
+        return {
+            "jobId": "job",
+            "status": "running",
+            "items": [
+                {"articleId": 1, "targetKeys": ["flavio_valle"], "targetLabels": {"flavio_valle": "Flavio Valle"}},
+                {"articleId": 2, "targetKeys": ["shakira"], "targetLabels": {"shakira": "Shakira"}},
+            ],
+            "count": 2,
+        }
+
+    monkeypatch.setattr(app_module, "live_results_for_job", fake_live_results)
+
+    with TestClient(app) as client:
+        login_viewer(client, "viewer-shakira")
+        all_results = client.get("/api/update/live-results")
+        widened = client.get("/api/update/live-results?target_key=flavio_valle")
+        write_attempt = client.post("/api/update/start", json={"preset": "rapido"})
+
+    assert all_results.status_code == 200
+    assert [item["articleId"] for item in all_results.json()["items"]] == [2]
+    assert widened.status_code == 200
+    assert widened.json()["items"] == []
+    assert write_attempt.status_code == 401
+
+
+def test_admin_route_is_retired_and_status_requires_login(monkeypatch, tmp_path):
     app, db_file = load_test_app(monkeypatch, tmp_path)
     with TestClient(app) as client:
         admin_page = client.get("/admin", follow_redirects=False)
         bad_login = client.post("/api/login", json={"password": "wrong-password"})
-        status = client.get("/api/update/status")
+        status_without_login = client.get("/api/update/status")
         manual_without_login = client.post("/api/manual-story", json=manual_story_payload())
+        login(client)
+        status = client.get("/api/update/status")
 
     assert admin_page.status_code == 307
     assert admin_page.headers["location"] == "/"
     assert bad_login.status_code == 401
     assert "clipping_admin" not in bad_login.cookies
+    assert status_without_login.status_code == 401
     assert status.status_code == 200
     assert manual_without_login.status_code == 401
     assert_empty_db(db_file)
@@ -202,7 +332,7 @@ def test_admin_auth_fails_closed_when_env_values_are_blank(monkeypatch, tmp_path
     assert admin_page.status_code == 307
     assert admin_page.headers["location"] == "/"
     assert login_attempt.status_code == 503
-    assert status.status_code == 200
+    assert status.status_code == 503
     assert manual_without_login.status_code == 503
     assert_empty_db(db_file)
 
@@ -226,7 +356,7 @@ def test_admin_write_apis_reject_missing_or_bad_csrf(monkeypatch, tmp_path):
     assert_empty_db(db_file)
 
 
-def test_update_and_export_workflows_are_public_coworker_endpoints(monkeypatch, tmp_path):
+def test_update_and_export_workflows_are_admin_endpoints(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     app_module = importlib.import_module("web_app.app")
     calls = []
@@ -243,20 +373,23 @@ def test_update_and_export_workflows_are_public_coworker_endpoints(monkeypatch, 
     monkeypatch.setattr(app_module.job_manager, "start_export", fake_start_export)
 
     with TestClient(app) as client:
+        unauth_update = client.post("/api/update/start", json={"preset": "rapido", "export": False})
+        login(client)
         status = client.get("/api/update/status")
         update = client.post("/api/update/start", json={"preset": "rapido", "export": False})
         export = client.post("/api/export")
 
+    assert unauth_update.status_code == 401
     assert status.status_code == 200
     assert update.status_code == 200
     assert export.status_code == 200
     assert calls == [
-        ("update", {"preset": "rapido", "export": False}, "coworker"),
-        ("export", {}, "coworker"),
+        ("update", {"preset": "rapido", "export": False}, "admin"),
+        ("export", {}, "admin"),
     ]
 
 
-def test_cancel_update_is_public_and_returns_cancelled_job(monkeypatch, tmp_path):
+def test_cancel_update_is_admin_and_returns_cancelled_job(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     app_module = importlib.import_module("web_app.app")
 
@@ -266,6 +399,7 @@ def test_cancel_update_is_public_and_returns_cancelled_job(monkeypatch, tmp_path
     monkeypatch.setattr(app_module.job_manager, "cancel_active", fake_cancel_active)
 
     with TestClient(app) as client:
+        login(client)
         response = client.post("/api/update/cancel")
 
     assert response.status_code == 200
@@ -282,13 +416,14 @@ def test_cancel_update_returns_409_when_no_active_job(monkeypatch, tmp_path):
     monkeypatch.setattr(app_module.job_manager, "cancel_active", fake_cancel_active)
 
     with TestClient(app) as client:
+        login(client)
         response = client.post("/api/update/cancel")
 
     assert response.status_code == 409
     assert response.json()["detail"] == "no_active_job"
 
 
-def test_resume_update_is_public_coworker_endpoint(monkeypatch, tmp_path):
+def test_resume_update_is_admin_endpoint(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     app_module = importlib.import_module("web_app.app")
     calls = []
@@ -300,14 +435,15 @@ def test_resume_update_is_public_coworker_endpoint(monkeypatch, tmp_path):
     monkeypatch.setattr(app_module.job_manager, "resume_update", fake_resume_update)
 
     with TestClient(app) as client:
+        login(client)
         response = client.post("/api/update/resume", json={"job_id": "durable-job"})
 
     assert response.status_code == 200
     assert response.json() == {"id": "durable-job", "status": "queued"}
-    assert calls == [("durable-job", "coworker")]
+    assert calls == [("durable-job", "admin")]
 
 
-def test_targets_api_is_public_and_uploads_target_manifest(monkeypatch, tmp_path):
+def test_targets_api_is_login_scoped_and_admin_uploads_target_manifest(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     app_module = importlib.import_module("web_app.app")
     upload_calls = []
@@ -327,9 +463,12 @@ def test_targets_api_is_public_and_uploads_target_manifest(monkeypatch, tmp_path
     monkeypatch.setattr(app_module.artifact_store, "upload_current_artifacts", fake_upload_current_artifacts)
 
     with TestClient(app) as client:
+        unauth_listed = client.get("/api/targets")
+        login(client)
         listed = client.get("/api/targets")
         created = client.post("/api/targets", json={"label": "Ana Teste"})
 
+    assert unauth_listed.status_code == 401
     assert listed.status_code == 200
     assert listed.json() == {
         "targets": [{"key": "flavio_valle", "label": "Flavio Valle"}],
@@ -387,6 +526,7 @@ def test_targets_api_lists_archived_and_uploads_management_manifests(monkeypatch
     monkeypatch.setattr(app_module.artifact_store, "upload_current_artifacts", fake_upload_current_artifacts)
 
     with TestClient(app) as client:
+        login(client)
         active = client.get("/api/targets")
         with_archived = client.get("/api/targets?include_archived=1")
         updated = client.patch("/api/targets/ana_teste", json={"display_name": "Ana Nova"})
@@ -447,6 +587,7 @@ def test_target_mutations_remain_available_while_update_is_active(monkeypatch, t
     monkeypatch.setattr(app_module.artifact_store, "enabled", False)
 
     with TestClient(app) as client:
+        login(client)
         responses = [
             client.post("/api/targets", json={"display_name": "Ana Teste"}),
             client.patch("/api/targets/ana_teste", json={"display_name": "Ana Nova"}),
@@ -468,6 +609,7 @@ def test_targets_api_returns_real_public_targets_contract(monkeypatch, tmp_path)
     app, _ = load_test_app(monkeypatch, tmp_path)
 
     with TestClient(app) as client:
+        login(client)
         response = client.get("/api/targets")
 
     assert response.status_code == 200
@@ -493,6 +635,7 @@ def test_targets_api_validation_errors_are_public_400s(monkeypatch, tmp_path):
     monkeypatch.setattr(app_module, "create_secondary_target", fail_create)
 
     with TestClient(app) as client:
+        login(client)
         response = client.post("/api/targets", json={"label": ""})
 
     assert response.status_code == 400
@@ -513,6 +656,7 @@ def test_targets_api_operation_errors_are_structured(monkeypatch, tmp_path):
     monkeypatch.setattr(app_module, "create_secondary_target", fail_create)
 
     with TestClient(app) as client:
+        login(client)
         response = client.post("/api/targets", json={"display_name": "Ana Teste"})
 
     assert response.status_code == 500
@@ -533,6 +677,8 @@ def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
         "ok",
         "dbExists",
         "authConfigured",
+        "loginConfigured",
+        "viewerAuthConfigured",
         "storage",
         "localWritesAllowed",
         "job",
@@ -627,6 +773,7 @@ def test_update_status_exposes_artifact_upload_contract_for_completed_jobs(monke
         jobs.update_job(job_id, status="succeeded", articles_inserted=1, stories_touched=1)
 
         with TestClient(app) as client:
+            login(client)
             status = client.get("/api/update/status")
 
         assert status.status_code == 200
@@ -695,6 +842,7 @@ def test_live_results_endpoint_returns_saved_articles_before_export(monkeypatch,
     )
 
     with TestClient(app) as client:
+        login_viewer(client, "viewer-shakira")
         response = client.get(f"/api/update/live-results?job_id={job_id}")
 
     assert response.status_code == 200
@@ -744,6 +892,7 @@ def test_target_create_syncs_live_base_and_export_filter(monkeypatch, tmp_path):
         assert article_id is not None
 
     with TestClient(app) as client:
+        login(client)
         created = client.post("/api/targets", json={"display_name": "Shakira"})
         live = client.get("/api/update/live-results?scope=base&target_key=shakira&limit=20")
 
