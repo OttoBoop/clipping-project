@@ -285,6 +285,22 @@
     if (kind) el.classList.add(kind === "error" ? "is-error" : "is-ok");
   }
 
+  function apiErrorMessage(data, status) {
+    var payload = data && typeof data === "object" ? data : {};
+    var detail = payload.detail;
+    var parts = [];
+    if (detail && typeof detail === "object") {
+      if (detail.message) parts.push(String(detail.message));
+      if (detail.suggestion) parts.push(String(detail.suggestion));
+    } else if (typeof detail === "string") {
+      parts.push(detail);
+    }
+    if (!parts.length && payload.message) parts.push(String(payload.message));
+    if (!parts.length && typeof payload.error === "string") parts.push(payload.error);
+    if (payload.suggestion && parts.indexOf(String(payload.suggestion)) === -1) parts.push(String(payload.suggestion));
+    return parts.filter(Boolean).join(" ") || "HTTP " + status;
+  }
+
   function friendlyError(error, fallback) {
     var raw = error && error.message ? error.message : String(error || "");
     console.error("[clipping] detailed error", error);
@@ -296,7 +312,24 @@
     if (raw.indexOf("data_futura") !== -1) return "As datas precisam ser de hoje ou anteriores.";
     if (raw.indexOf("data_invalida") !== -1) return "Preencha as duas datas.";
     if (raw.indexOf("unknown_target_keys") !== -1) return "Um dos nomes selecionados ainda não está disponível. Atualize a página e tente de novo.";
+    if (raw && raw !== "[object Object]" && raw.indexOf("HTTP ") !== 0) return raw;
     return fallback || "Não foi possível concluir agora. Tente novamente em instantes.";
+  }
+
+  function targetMutationMessage(base, data) {
+    var message = base;
+    var sync = data && data.targetSync ? data.targetSync : null;
+    if (sync) {
+      var count = Number(sync.updatedCount || 0);
+      if (count > 0) {
+        message += " " + count + (count === 1 ? " notícia existente entrou" : " notícias existentes entraram") + " na Base atual.";
+      } else {
+        message += " A base atual foi conferida para esse nome.";
+      }
+    }
+    if (data && data.activeJobNotice) message += " " + data.activeJobNotice;
+    if (data && data.warning && data.warning.message) message += " " + data.warning.message;
+    return message;
   }
 
   function showFriendlyProblem(message) {
@@ -535,8 +568,7 @@
   }
 
   function targetActionsLocked() {
-    var status = latestStatus && latestStatus.current ? latestStatus.current.status : "";
-    return activeStatus(status);
+    return false;
   }
 
   function visibleTargetKeywords(target) {
@@ -632,7 +664,7 @@
     return apiFetch("/api/targets?include_archived=1", { cache: "no-store" })
       .then(function (resp) {
         return resp.json().catch(function () { return {}; }).then(function (data) {
-          if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+          if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
           return data;
         });
       })
@@ -648,8 +680,16 @@
       });
   }
 
-  async function reloadTargetsAfterManagement() {
+  async function reloadTargetsAfterManagement(targetKey, options) {
+    var opts = options || {};
     await refreshTargets();
+    if (targetKey) {
+      if (opts.remove) selectedTargets.delete(targetKey);
+      if (opts.select) selectedTargets.add(targetKey);
+      ensureSelectedTargets();
+      if (payload) applyState();
+    }
+    await pollBaseLiveResults();
     if (manageTargetsBox && manageTargetsBox.open) await refreshManageTargets();
   }
 
@@ -660,11 +700,11 @@
         reason: "Arquivado pelo painel de gerenciamento.",
       });
       var data = await resp.json().catch(function () { return {}; });
-      if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+      if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
       pendingArchiveKey = "";
       editingTargetKey = "";
-      setMessage(manageTargetsMessage, "Nome arquivado. Ele não aparecerá nas próximas atualizações.", "ok");
-      await reloadTargetsAfterManagement();
+      setMessage(manageTargetsMessage, targetMutationMessage("Nome arquivado. Ele não aparecerá nas próximas atualizações.", data), "ok");
+      await reloadTargetsAfterManagement(key, { remove: true });
     } catch (error) {
       setMessage(manageTargetsMessage, friendlyError(error, "Não foi possível arquivar este nome."), "error");
       renderManageTargets();
@@ -676,11 +716,11 @@
     try {
       var resp = await apiPost("/api/targets/" + encodeURIComponent(key) + "/restore", {});
       var data = await resp.json().catch(function () { return {}; });
-      if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+      if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
       pendingArchiveKey = "";
       editingTargetKey = "";
-      setMessage(manageTargetsMessage, "Nome restaurado e disponível para próximas rodadas.", "ok");
-      await reloadTargetsAfterManagement();
+      setMessage(manageTargetsMessage, targetMutationMessage("Nome restaurado e disponível para próximas rodadas.", data), "ok");
+      await reloadTargetsAfterManagement(key, { select: true });
     } catch (error) {
       setMessage(manageTargetsMessage, friendlyError(error, "Não foi possível restaurar este nome."), "error");
       renderManageTargets();
@@ -1931,7 +1971,7 @@
       try {
         var resp = await apiPost("/api/update/start", body);
         var data = await resp.json().catch(function () { return {}; });
-        if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+        if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
         setMessage(runFormMessage, "Atualização iniciada. O progresso aparece na aba compartilhada.", "ok");
         activateRunTab("progress");
         await pollStatus();
@@ -1954,7 +1994,7 @@
     try {
       var resp = await apiPost("/api/update/cancel", {});
       var data = await resp.json().catch(function () { return {}; });
-      if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+      if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
       var nextCurrent = Object.assign({}, latestStatus && latestStatus.current ? latestStatus.current : {}, data);
       var stillActive = activeStatus(nextCurrent.status);
       setMessage(
@@ -2010,10 +2050,16 @@
       try {
         var resp = await apiPost("/api/targets", body);
         var data = await resp.json().catch(function () { return {}; });
-        if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
-        setMessage(addTargetMessage, "Nome extra salvo e disponível para a próxima rodada.", "ok");
+        if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
+        setMessage(addTargetMessage, targetMutationMessage("Nome extra salvo e disponível para a próxima rodada.", data), "ok");
         addTargetForm.reset();
         await refreshTargets();
+        if (data && data.key) {
+          selectedTargets.add(data.key);
+          ensureSelectedTargets();
+          if (payload) applyState();
+        }
+        await pollBaseLiveResults();
         if (manageTargetsBox && manageTargetsBox.open) await refreshManageTargets();
       } catch (error) {
         setMessage(addTargetMessage, friendlyError(error, "Não foi possível salvar este nome."), "error");
@@ -2044,11 +2090,11 @@
     try {
       var resp = await apiPatch("/api/targets/" + encodeURIComponent(key), body);
       var data = await resp.json().catch(function () { return {}; });
-      if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+      if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
       editingTargetKey = "";
       pendingArchiveKey = "";
-      setMessage(manageTargetsMessage, "Nome extra atualizado.", "ok");
-      await reloadTargetsAfterManagement();
+      setMessage(manageTargetsMessage, targetMutationMessage("Nome extra atualizado.", data), "ok");
+      await reloadTargetsAfterManagement(data.key || key, { select: true });
     } catch (error) {
       setMessage(manageTargetsMessage, friendlyError(error, "Não foi possível atualizar este nome."), "error");
       if (submit) submit.disabled = false;
@@ -2157,7 +2203,7 @@
     try {
       var resp = await apiPost("/api/categories", { name: name });
       var data = await resp.json().catch(function () { return {}; });
-      if (!resp.ok) throw new Error(data.detail || data.error || "HTTP " + resp.status);
+      if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
       var canonical = data.name || name;
       if (categoriesCache.indexOf(canonical) === -1) categoriesCache.push(canonical);
       // Add option to every category select on the page; select it in this editor
@@ -2268,7 +2314,7 @@
       pollStatus();
       pollBaseLiveResults();
       window.setInterval(pollStatus, 5000);
-      window.setInterval(pollBaseLiveResults, 15000);
+      window.setInterval(pollBaseLiveResults, 5000);
     })
     .catch(function (error) {
       showError(error && error.message ? error.message : "Erro inesperado.");

@@ -20,7 +20,7 @@ import time
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from difflib import SequenceMatcher
-from typing import Callable
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 from .collectors import (
@@ -112,6 +112,7 @@ class IngestionOptions:
     forced_terms: list[str] | None = None
     forced_terms_mode: str = "any"
     target_keys: list[str] | None = None
+    target_snapshots: list[Any] | None = None
     db_path: str = ""
     cancel_check: Callable[[], bool] | None = None
 
@@ -463,7 +464,8 @@ def process_candidates(
 ) -> IngestionResult:
     options = options or IngestionOptions()
     db = ClippingDB(options.db_path or DB_PATH)
-    targets = select_targets(get_active_targets(), options.target_keys)
+    available_targets = options.target_snapshots if options.target_snapshots is not None else get_active_targets()
+    targets = select_targets(available_targets, options.target_keys)
     if not targets:
         return IngestionResult(
             source_name=source_name,
@@ -1016,7 +1018,8 @@ def run_ingestion(
         if progress_callback:
             progress_callback("run_cancelled", {"collector": collector, "status": "cancelled"})
         return []
-    targets = select_targets(get_active_targets(), options.target_keys)
+    available_targets = options.target_snapshots if options.target_snapshots is not None else get_active_targets()
+    targets = select_targets(available_targets, options.target_keys)
     plans: list[tuple[str, str, list[CandidateArticle]]] = []
     max_candidates = max(1, int(options.max_candidates_per_source))
     # Backfill mode needs deeper pagination than the old hard cap of 30.

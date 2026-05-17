@@ -30,7 +30,15 @@ from .db_admin import (
     restore_secondary_target,
     update_secondary_target,
 )
-from .jobs import JobConflict, job_manager, live_results_for_job, mark_orphaned_active_jobs_interrupted, recent_jobs, run_export_snapshot
+from .jobs import (
+    JobConflict,
+    job_manager,
+    live_results_for_job,
+    mark_orphaned_active_jobs_interrupted,
+    recent_jobs,
+    record_target_sync,
+    run_export_snapshot,
+)
 from .storage_bridge import artifact_store
 from pipeline.database import ClippingDB
 
@@ -108,6 +116,93 @@ def upload_targets_artifacts(kind: str, result: dict[str, Any], key: str) -> lis
         manifest={"kind": kind, "result": result},
         job_id=f"{kind}-{safe_key}",
     )
+
+
+def target_mutation_notice() -> dict[str, Any]:
+    status = job_manager.current_status()
+    current_status = str(status.get("status") or "")
+    if current_status not in ACTIVE_TARGET_MUTATION_STATUSES:
+        return {}
+    return {
+        "activeJobNotice": (
+            "Nome salvo agora. A atualização em andamento continua com os nomes congelados no início; "
+            "esta mudança vale para a base atual e para as próximas rodadas."
+        ),
+        "activeJob": {
+            "id": str(status.get("id") or ""),
+            "status": current_status,
+        },
+    }
+
+
+def target_validation_payload(exc: ValidationError) -> dict[str, Any]:
+    message = str(exc)
+    field = "display_name"
+    suggestion = "Revise o nome e tente novamente."
+    if "pelo menos 3 caracteres" in message:
+        suggestion = "Digite um nome de exibicao com 3 caracteres ou mais."
+    elif "desconhecido" in message:
+        field = "target_key"
+        suggestion = "Atualize a lista de nomes e tente de novo com um nome existente."
+    elif "principais" in message:
+        field = "target_key"
+        suggestion = "Edite apenas nomes secundarios criados no painel."
+    elif "Restaure" in message:
+        suggestion = "Restaure o nome arquivado antes de editar."
+    return {
+        "error": "target_validation_error",
+        "message": message,
+        "field": field,
+        "suggestion": suggestion,
+        "detail": {
+            "code": "target_validation_error",
+            "message": message,
+            "field": field,
+            "suggestion": suggestion,
+        },
+    }
+
+
+def target_validation_response(exc: ValidationError) -> JSONResponse:
+    return JSONResponse(status_code=400, content=target_validation_payload(exc))
+
+
+def sync_target_after_mutation(target_key: str, *, reason: str, cleanup: bool = False) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    try:
+        return record_target_sync(target_key, reason=reason, cleanup=cleanup), None
+    except Exception as exc:
+        return {}, {
+            "code": "target_sync_failed",
+            "message": "O nome foi salvo, mas a sincronizacao com a base atual falhou.",
+            "suggestion": "Rode uma atualizacao ou tente salvar o nome novamente depois de verificar a base.",
+            "error": str(exc),
+        }
+
+
+def target_mutation_response(
+    kind: str,
+    result: dict[str, Any],
+    target_key: str,
+    *,
+    sync_reason: str = "",
+    cleanup: bool = False,
+) -> JSONResponse:
+    target_sync: dict[str, Any] = {}
+    warning: dict[str, Any] | None = None
+    if sync_reason:
+        target_sync, warning = sync_target_after_mutation(target_key, reason=sync_reason, cleanup=cleanup)
+    uploaded = upload_targets_artifacts(kind, result, target_key)
+    response: dict[str, Any] = {
+        **result,
+        "uploadedArtifactCount": len(uploaded),
+        "uploadedArtifacts": uploaded,
+        **target_mutation_notice(),
+    }
+    if sync_reason:
+        response["targetSync"] = target_sync
+        if warning:
+            response["warning"] = warning
+    return JSONResponse(response)
 
 
 def _classification_db() -> ClippingDB:
@@ -341,56 +436,44 @@ def list_targets(include_archived: bool = False) -> dict[str, Any]:
 
 @app.post("/api/targets")
 async def add_target(request: Request) -> JSONResponse:
-    ensure_target_mutations_allowed()
     payload = await read_json(request)
     try:
         result = create_secondary_target(payload)
     except ValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-    uploaded = upload_targets_artifacts("targets-created", result, str(result.get("key") or "created"))
-    return JSONResponse(
-        {
-            **result,
-            "uploadedArtifactCount": len(uploaded),
-            "uploadedArtifacts": uploaded,
-        }
-    )
+        return target_validation_response(exc)
+    key = str(result.get("key") or "created")
+    return target_mutation_response("targets-created", result, key, sync_reason="target-created")
 
 
 @app.patch("/api/targets/{target_key}")
 async def update_target(target_key: str, request: Request) -> JSONResponse:
-    ensure_target_mutations_allowed()
     payload = await read_json(request)
     try:
         result = update_secondary_target(target_key, payload)
     except ValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    uploaded = upload_targets_artifacts("targets-updated", result, target_key)
-    return JSONResponse({**result, "uploadedArtifactCount": len(uploaded), "uploadedArtifacts": uploaded})
+        return target_validation_response(exc)
+    key = str(result.get("key") or target_key)
+    return target_mutation_response("targets-updated", result, key, sync_reason="target-updated", cleanup=True)
 
 
 @app.post("/api/targets/{target_key}/archive")
 async def archive_target(target_key: str, request: Request) -> JSONResponse:
-    ensure_target_mutations_allowed()
     payload = await read_json(request)
     try:
         result = archive_secondary_target(target_key, str(payload.get("reason") or "Arquivado pela equipe."))
     except ValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    uploaded = upload_targets_artifacts("targets-archived", result, target_key)
-    return JSONResponse({**result, "uploadedArtifactCount": len(uploaded), "uploadedArtifacts": uploaded})
+        return target_validation_response(exc)
+    return target_mutation_response("targets-archived", result, target_key)
 
 
 @app.post("/api/targets/{target_key}/restore")
 def restore_target(target_key: str) -> JSONResponse:
-    ensure_target_mutations_allowed()
     try:
         result = restore_secondary_target(target_key)
     except ValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    uploaded = upload_targets_artifacts("targets-restored", result, target_key)
-    return JSONResponse({**result, "uploadedArtifactCount": len(uploaded), "uploadedArtifacts": uploaded})
+        return target_validation_response(exc)
+    key = str(result.get("key") or target_key)
+    return target_mutation_response("targets-restored", result, key, sync_reason="target-restored")
 
 
 @app.post("/api/categories")

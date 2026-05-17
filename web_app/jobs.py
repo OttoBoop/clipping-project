@@ -25,6 +25,7 @@ from pipeline.collectors import (
 )
 from pipeline.ingest import IngestionOptions, ordered_unique, process_candidates, run_ingestion, select_targets
 from pipeline.database import ClippingDB
+from pipeline.matcher import Target
 from pipeline.settings import (
     CAMARA_ARCHIVE_TARGET,
     FLAVIO_INTERNAL_SEARCH_TARGETS,
@@ -325,6 +326,7 @@ class JobManager:
                 backfill = backfill_missing_target_mentions(db_path(), list(spec["target_keys"]))
                 if backfill.get("updatedCount"):
                     labels = target_labels()
+                    labels.update(target_labels_from_spec(spec))
                     totals["mentions_inserted"] += int(backfill.get("mentionsInserted") or 0)
                     totals["stories_touched"] += int(backfill.get("storiesTouched") or 0)
                     for item in list(backfill.get("updated") or [])[:100]:
@@ -401,12 +403,14 @@ class JobManager:
                         return
                 else:
                     labels = target_labels()
+                    labels.update(target_labels_from_spec(spec))
                     for target_key in spec["target_keys"]:
                         if cancel_event.is_set():
                             return
                         target_label = labels.get(target_key, target_key)
                         options = IngestionOptions(
                             target_keys=[target_key],
+                            target_snapshots=[target_to_snapshot(target) for target in selected_targets_from_spec(spec, [target_key])],
                             date_from=spec["date_from"],
                             date_to=spec["date_to"],
                             request_timeout_seconds=10,
@@ -510,11 +514,13 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("coletor_invalido")
     if date_from > date_to:
         raise ValueError("periodo_invalido")
+    target_snapshots = frozen_target_snapshots(target_keys)
 
     return {
         "preset": preset,
         "collector": collector,
         "target_keys": target_keys,
+        "target_snapshots": target_snapshots,
         "date_from": date_from,
         "date_to": date_to,
         "export": bool(payload.get("export", True)),
@@ -540,6 +546,60 @@ def payload_list(payload: dict[str, Any], snake_key: str, camel_key: str) -> lis
     if value is None:
         value = payload.get(camel_key)
     return value if isinstance(value, list) else []
+
+
+def target_to_snapshot(target: Any) -> dict[str, Any]:
+    return {
+        "key": str(getattr(target, "key", "") or ""),
+        "label": str(getattr(target, "label", "") or ""),
+        "display_name": str(getattr(target, "display_name", "") or ""),
+        "keywords": [str(item) for item in (getattr(target, "keywords", None) or []) if str(item).strip()],
+        "exact_aliases": [str(item) for item in (getattr(target, "exact_aliases", None) or []) if str(item).strip()],
+        "className": str(getattr(target, "className", "") or ""),
+        "primary": bool(getattr(target, "primary", False)),
+        "priority": int(getattr(target, "priority", 2) or 2),
+    }
+
+
+def target_from_snapshot(row: dict[str, Any]) -> Target:
+    return Target(
+        key=str(row.get("key") or ""),
+        label=str(row.get("label") or row.get("display_name") or row.get("key") or ""),
+        display_name=str(row.get("display_name") or row.get("label") or row.get("key") or ""),
+        keywords=[str(item) for item in (row.get("keywords") or []) if str(item).strip()],
+        exact_aliases=[str(item) for item in (row.get("exact_aliases") or []) if str(item).strip()],
+        className=str(row.get("className") or row.get("class_name") or ""),
+        primary=bool(row.get("primary")),
+        priority=int(row.get("priority") or 2),
+    )
+
+
+def frozen_target_snapshots(target_keys: list[str]) -> list[dict[str, Any]]:
+    return [target_to_snapshot(target) for target in select_targets(get_active_targets(), target_keys)]
+
+
+def targets_from_spec(spec: dict[str, Any]) -> list[Target]:
+    snapshots = spec.get("target_snapshots") or spec.get("targetSnapshots") or []
+    if isinstance(snapshots, list) and snapshots:
+        targets: list[Target] = []
+        for row in snapshots:
+            if isinstance(row, dict) and str(row.get("key") or "").strip():
+                targets.append(target_from_snapshot(row))
+        if targets:
+            return targets
+    return get_active_targets()
+
+
+def selected_targets_from_spec(spec: dict[str, Any], target_keys: list[str]) -> list[Target]:
+    return select_targets(targets_from_spec(spec), target_keys)
+
+
+def target_labels_from_spec(spec: dict[str, Any]) -> dict[str, str]:
+    return {
+        target.key: target.display_name or target.label or target.key
+        for target in targets_from_spec(spec)
+        if str(target.key or "").strip()
+    }
 
 
 def active_secondary_target_keys() -> list[str]:
@@ -574,6 +634,7 @@ def run_export_snapshot(job_id: str | None = None) -> None:
 def run_durable_update(job_id: str, spec: dict[str, Any], cancel_event: threading.Event) -> dict[str, Any]:
     ensure_app_tables(db_path())
     labels = target_labels()
+    labels.update(target_labels_from_spec(spec))
     totals = {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0}
     for target_key in list(spec.get("target_keys") or []):
         if cancel_event.is_set():
@@ -666,7 +727,7 @@ def ensure_source_runs(job_id: str, spec: dict[str, Any], target_key: str) -> No
 
 def build_source_units(spec: dict[str, Any], target_key: str) -> list[SourceUnit]:
     collector = str(spec.get("collector") or DEFAULT_COLLECTOR)
-    targets = select_targets(get_active_targets(), [target_key])
+    targets = selected_targets_from_spec(spec, [target_key])
     if not targets:
         return []
     target = targets[0]
@@ -867,6 +928,7 @@ def run_source_run(
         )
         options = IngestionOptions(
             target_keys=[target_key],
+            target_snapshots=[target_to_snapshot(target) for target in selected_targets_from_spec(spec, [target_key])],
             date_from=str(spec.get("date_from") or ""),
             date_to=str(spec.get("date_to") or ""),
             request_timeout_seconds=10,
@@ -1423,6 +1485,105 @@ def upload_live_checkpoint(job_id: str, *, reason: str, force: bool = False) -> 
     if uploaded:
         append_event(job_id, "live_checkpoint_uploaded", artifact_upload_summary(uploaded))
     return uploaded
+
+
+def record_target_sync(target_key: str, *, reason: str, cleanup: bool = False, started_by: str = "coworker") -> dict[str, Any]:
+    """Backfill a target into the current base and expose touched articles as live results."""
+    target_key = str(target_key or "").strip()
+    if not target_key:
+        return {
+            "targetKey": "",
+            "updatedCount": 0,
+            "mentionsInserted": 0,
+            "storiesTouched": 0,
+            "cleanup": {},
+            "jobId": "",
+        }
+    ensure_app_tables(db_path())
+    cleanup_result = (
+        cleanup_false_backfilled_target_mentions(db_path(), [target_key])
+        if cleanup
+        else {"removedMentions": 0, "storiesTouched": 0}
+    )
+    backfill = backfill_missing_target_mentions(db_path(), [target_key])
+    try:
+        target_snapshots = frozen_target_snapshots(validate_target_keys([target_key]))
+    except ValueError:
+        target_snapshots = []
+    job_id = f"target-sync-{uuid.uuid4().hex[:12]}"
+    spec = {
+        "preset": "target-sync",
+        "collector": "target-sync",
+        "target_keys": [target_key],
+        "target_snapshots": target_snapshots,
+        "date_from": "",
+        "date_to": "",
+        "export": False,
+        "durable": False,
+        "reason": reason,
+    }
+    create_job(job_id, "target-sync", spec, started_by=started_by, enforce_single_active=False)
+    update_job(job_id, status="running")
+    labels = target_labels(include_archived=True)
+    for item in list(backfill.get("updated") or [])[:240]:
+        if not isinstance(item, dict):
+            continue
+        item_key = str(item.get("target_key") or target_key)
+        append_event(
+            job_id,
+            "article_saved",
+            {
+                "article_id": safe_int(item.get("article_id")),
+                "story_id": safe_int(item.get("story_id")),
+                "target_key": item_key,
+                "target_keys": [item_key],
+                "target_label": str(item.get("target_label") or labels.get(item_key) or item_key),
+                "title": str(item.get("title") or ""),
+                "url": str(item.get("url") or ""),
+                "source_name": str(item.get("source_name") or ""),
+                "source_type": str(item.get("source_type") or ""),
+                "published_at": str(item.get("published_at") or ""),
+                "articles_inserted_delta": 0,
+                "mentions_inserted_delta": 1,
+                "stories_touched_delta": 1,
+                "publication_state": "saved",
+                "reason": reason,
+            },
+        )
+    totals = {
+        "articles_inserted": 0,
+        "mentions_inserted": int(backfill.get("mentionsInserted") or 0),
+        "stories_touched": int(backfill.get("storiesTouched") or 0)
+        + int(cleanup_result.get("storiesTouched") or 0),
+    }
+    append_event(
+        job_id,
+        "target_sync_complete",
+        {
+            "target_key": target_key,
+            "target_label": labels.get(target_key, target_key),
+            "reason": reason,
+            "updated_count": int(backfill.get("updatedCount") or 0),
+            "mentions_inserted": totals["mentions_inserted"],
+            "stories_touched": totals["stories_touched"],
+            "cleanup": cleanup_result,
+        },
+    )
+    update_job(
+        job_id,
+        status="succeeded",
+        finished_at=datetime.now(timezone.utc).isoformat(),
+        **totals,
+    )
+    upload_live_checkpoint(job_id, reason="target-sync", force=True)
+    return {
+        "jobId": job_id,
+        "targetKey": target_key,
+        "updatedCount": int(backfill.get("updatedCount") or 0),
+        "mentionsInserted": totals["mentions_inserted"],
+        "storiesTouched": totals["stories_touched"],
+        "cleanup": cleanup_result,
+    }
 
 
 def enrich_progress_payload(payload: dict[str, Any], *, target_key: str = "", target_label: str = "") -> dict[str, Any]:

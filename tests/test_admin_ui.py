@@ -408,10 +408,43 @@ def test_targets_api_lists_archived_and_uploads_management_manifests(monkeypatch
     ]
 
 
-def test_target_mutations_are_blocked_while_update_is_active(monkeypatch, tmp_path):
+def test_target_mutations_remain_available_while_update_is_active(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     app_module = importlib.import_module("web_app.app")
-    monkeypatch.setattr(app_module.job_manager, "current_status", lambda: {"status": "running"})
+    monkeypatch.setattr(app_module.job_manager, "current_status", lambda: {"id": "update-running", "status": "running"})
+    monkeypatch.setattr(
+        app_module,
+        "create_secondary_target",
+        lambda payload: {"key": "ana_teste", "label": payload["display_name"], "primary": False},
+    )
+    monkeypatch.setattr(
+        app_module,
+        "update_secondary_target",
+        lambda key, payload: {"key": key, "label": payload["display_name"], "primary": False, "archived": False},
+    )
+    monkeypatch.setattr(
+        app_module,
+        "archive_secondary_target",
+        lambda key, reason="": {"key": key, "label": "Ana Teste", "primary": False, "archived": True, "archive_reason": reason},
+    )
+    monkeypatch.setattr(
+        app_module,
+        "restore_secondary_target",
+        lambda key: {"key": key, "label": "Ana Teste", "primary": False, "archived": False},
+    )
+    monkeypatch.setattr(
+        app_module,
+        "record_target_sync",
+        lambda key, **_kwargs: {
+            "jobId": f"sync-{key}",
+            "targetKey": key,
+            "updatedCount": 0,
+            "mentionsInserted": 0,
+            "storiesTouched": 0,
+            "cleanup": {},
+        },
+    )
+    monkeypatch.setattr(app_module.artifact_store, "enabled", False)
 
     with TestClient(app) as client:
         responses = [
@@ -421,11 +454,14 @@ def test_target_mutations_are_blocked_while_update_is_active(monkeypatch, tmp_pa
             client.post("/api/targets/ana_teste/restore"),
         ]
 
-    assert [response.status_code for response in responses] == [409, 409, 409, 409]
-    assert all(
-        response.json()["detail"] == "Aguarde a atualização terminar para mudar os nomes acompanhados."
-        for response in responses
-    )
+    assert [response.status_code for response in responses] == [200, 200, 200, 200]
+    payloads = [response.json() for response in responses]
+    assert all(payload["activeJob"]["status"] == "running" for payload in payloads)
+    assert all("continua com os nomes congelados" in payload["activeJobNotice"] for payload in payloads)
+    assert payloads[0]["targetSync"]["targetKey"] == "ana_teste"
+    assert payloads[1]["targetSync"]["targetKey"] == "ana_teste"
+    assert "targetSync" not in payloads[2]
+    assert payloads[3]["targetSync"]["targetKey"] == "ana_teste"
 
 
 def test_targets_api_returns_real_public_targets_contract(monkeypatch, tmp_path):
@@ -460,7 +496,11 @@ def test_targets_api_validation_errors_are_public_400s(monkeypatch, tmp_path):
         response = client.post("/api/targets", json={"label": ""})
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "Nome acompanhado invalido."
+    payload = response.json()
+    assert payload["message"] == "Nome acompanhado invalido."
+    assert payload["detail"]["message"] == "Nome acompanhado invalido."
+    assert payload["detail"]["field"] == "display_name"
+    assert "Revise" in payload["detail"]["suggestion"]
 
 
 def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):

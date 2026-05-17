@@ -282,6 +282,49 @@ def test_build_update_spec_accepts_safe_custom_collector_and_long_dates(monkeypa
         raise AssertionError("expected data_futura")
 
 
+def test_update_spec_freezes_target_snapshot_for_active_job(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    from pipeline.matcher import Target
+
+    original = Target(
+        key="ana_teste",
+        label="Ana Teste",
+        display_name="Ana Teste",
+        keywords=["Ana Teste"],
+        exact_aliases=["A. Teste"],
+        primary=False,
+    )
+    renamed = Target(
+        key="ana_teste",
+        label="Ana Renomeada",
+        display_name="Ana Renomeada",
+        keywords=["Ana Renomeada"],
+        exact_aliases=[],
+        primary=False,
+    )
+    monkeypatch.setattr(jobs, "get_active_targets", lambda: [original])
+    monkeypatch.setattr(jobs, "validate_target_keys", lambda values: list(values))
+
+    spec = jobs.build_update_spec(
+        {
+            "preset": "custom",
+            "target_keys": ["ana_teste"],
+            "date_from": "2026-05-01",
+            "date_to": "2026-05-17",
+            "collector": "google_news",
+            "export": False,
+        }
+    )
+
+    assert spec["target_snapshots"][0]["display_name"] == "Ana Teste"
+    monkeypatch.setattr(jobs, "get_active_targets", lambda: [renamed])
+    units = jobs.build_source_units(spec, "ana_teste")
+
+    assert units
+    assert any("Ana Teste" in unit.cursor["query"] for unit in units)
+    assert all("Ana Renomeada" not in unit.cursor["query"] for unit in units)
+
+
 def test_completo_preset_uses_current_primary_circle_without_bernardo(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
 
@@ -532,6 +575,53 @@ def test_base_live_results_return_recent_saved_articles_after_export_job(monkeyp
     assert live["status"] == "base"
     assert live["count"] == 1
     assert live["items"][0]["title"] == "Shakira entra direto na Base atual"
+    assert live["items"][0]["targetKeys"] == ["shakira"]
+
+
+def test_target_sync_backfills_new_target_into_base_live_results(monkeypatch, tmp_path):
+    db_admin, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    from pipeline import settings
+
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "shakira",
+                    "label": "Shakira",
+                    "display_name": "Shakira",
+                    "primary": False,
+                    "keywords": ["Shakira"],
+                    "exact_aliases": [],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+    monkeypatch.setattr(settings, "TARGETS_JSON_PATH", targets_path)
+    monkeypatch.setattr(jobs.artifact_store, "enabled", False)
+    with ClippingDB(db_file) as db:
+        article_id = db.insert_article(
+            url="https://example.com/shakira-target-sync",
+            title="Shakira entra na base depois do nome criado",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-05-17T12:00:00+00:00",
+            snippet="Shakira aparece na noticia ja salva.",
+            full_text="Shakira aparece na noticia ja salva.",
+        )
+        assert article_id is not None
+
+    result = jobs.record_target_sync("shakira", reason="target-created")
+    live = jobs.live_results_for_job(scope="base", target_key="shakira", limit=10)
+
+    assert result["updatedCount"] == 1
+    assert result["mentionsInserted"] == 1
+    assert result["storiesTouched"] == 1
+    assert live["status"] == "base"
+    assert live["count"] == 1
+    assert live["items"][0]["title"] == "Shakira entra na base depois do nome criado"
     assert live["items"][0]["targetKeys"] == ["shakira"]
 
 
@@ -1213,6 +1303,46 @@ def test_run_ingestion_builds_collection_queries_for_selected_target(monkeypatch
     assert captured["queries"]
     assert any("Pedro Angelito" in query for query in captured["queries"])
     assert all("Flavio Valle" not in query and "Flávio Valle" not in query for query in captured["queries"])
+
+
+def test_process_candidates_uses_frozen_target_snapshot(monkeypatch, tmp_path):
+    from pipeline import ingest
+    from pipeline.matcher import Target
+
+    db_file = tmp_path / "frozen-target.db"
+    monkeypatch.setattr(
+        ingest,
+        "get_active_targets",
+        lambda: [Target(key="ana_teste", display_name="Ana Renomeada", keywords=["Ana Renomeada"])],
+    )
+    candidate = ingest.CandidateArticle(
+        title="Ana Teste confirma agenda cultural",
+        url="https://example.com/ana-teste",
+        source_name="Google News",
+        source_type="google_news",
+        published_at="2026-05-17T12:00:00+00:00",
+        snippet="Ana Teste foi citada na programacao cultural.",
+        metadata={},
+    )
+
+    result = ingest.process_candidates(
+        "Google News",
+        "google_news",
+        [candidate],
+        options=ingest.IngestionOptions(
+            target_keys=["ana_teste"],
+            target_snapshots=[Target(key="ana_teste", display_name="Ana Teste", keywords=["Ana Teste"])],
+            date_from="2026-05-17",
+            date_to="2026-05-17",
+            db_path=str(db_file),
+        ),
+    )
+
+    assert result.articles_inserted == 1
+    assert result.mentions_inserted == 1
+    with sqlite3.connect(db_file) as conn:
+        rows = conn.execute("SELECT target_key, target_name, keyword_matched FROM mentions").fetchall()
+    assert rows == [("ana_teste", "Ana Teste", "Ana Teste")]
 
 
 def test_process_candidates_tags_duplicate_article_for_new_secondary_target(monkeypatch, tmp_path):

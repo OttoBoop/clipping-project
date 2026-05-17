@@ -110,3 +110,76 @@ is recorded because it matters for the later technical loop.
 Only after the documentation commit may the technical loop begin. The first
 technical loop should focus on proving that monitored-name management, saved
 news, base display, and filters are connected end to end.
+
+## 2026-05-18 - Technical loop started
+
+### Trigger
+
+Otavio asked: "Mano, você não iniciou o loop?"
+
+He was right: after the docs-first commit, the next step was to begin the
+technical loop. This entry starts that loop explicitly.
+
+### Scope For This Loop
+
+The first technical pass will focus on the connected-system failure:
+
+- target mutations must not be fake UI-only actions;
+- target validation errors must be actionable;
+- saved/backfilled target matches must appear through live base results;
+- filters must be backed by real mentions/story targets;
+- tests must prove the connection instead of only testing isolated helpers.
+
+### Files Likely To Be Touched
+
+- `web_app/app.py`
+- `web_app/jobs.py`
+- `assets/clipping.js`
+- `tests/test_admin_ui.py`
+- `tests/test_targets_jobs.py`
+- this `WORK_LOG.md`
+
+### Commit Discipline Note
+
+`web_app/app.py` and `web_app/jobs.py` already had inherited uncommitted diffs
+before this loop. Any commit touching those files must be reviewed with staged
+diffs so inherited work is either intentionally included as required context or
+left unstaged.
+
+## 2026-05-18 - First Technical Loop Implementation
+
+### Changes Made
+
+- Removed the target-management block during active updates in the API and UI.
+- Added structured target validation errors with `message`, `field`, and
+  `suggestion`, so the frontend no longer hides the reason behind a generic
+  failure.
+- Added target sync/backfill after create, update, and restore. The sync emits
+  `article_saved` events so already-saved matching articles can appear through
+  `/api/update/live-results?scope=base`.
+- Added target snapshots to update specs and ingestion options so a running job
+  keeps the names it started with while later UI changes apply to future jobs.
+- Updated the frontend to show structured backend errors, select newly saved or
+  restored targets, refresh live base results after target management, and keep
+  management actions available while an update is active.
+- Reduced the Base atual live-results polling interval from 15 seconds to 5
+  seconds so saved items surface in a few seconds without waiting for export.
+- Added tests for allowed mutations during update, structured target errors,
+  frozen target snapshots, target sync/live base, and frozen-target ingestion.
+
+### Verification
+
+Passed:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_targets_jobs.py -q
+```
+
+Result: `75 passed in 2.22s`.
+
+### Commit Note
+
+The inherited `recent_jobs(include_observability=False)` changes in
+`web_app/app.py` and `web_app/jobs.py` are still present in the worktree from
+before this loop. They must not be casually bundled unless the staged diff is
+reviewed and that inclusion is intentional.
