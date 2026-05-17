@@ -162,3 +162,19 @@ python -m py_compile web_app/auth.py web_app/segmentation.py web_app/app.py
 ```
 
 Result: `92 passed in 2.42s`.
+
+Local FastAPI + Playwright smoke:
+
+```bash
+CLIPPING_ADMIN_PASSWORD=test-password CLIPPING_SESSION_SECRET=test-secret CLIPPING_VIEWER_PASSWORDS='{"shakira":"viewer-shakira","flavio":"viewer-flavio"}' CLIPPING_ALLOW_LOCAL_WRITES=1 .venv_playwright/bin/uvicorn web_app.app:app --host 127.0.0.1 --port 8766
+```
+
+Result:
+
+- viewer login with `viewer-shakira` returned `viewerRole=viewer` and
+  `viewerProfile=shakira`;
+- viewer payload contained no target key outside `shakira`;
+- viewer run tab was hidden;
+- admin login with `test-password` returned `viewerRole=admin`;
+- admin run tab was visible;
+- no Playwright console errors or page errors were observed.
