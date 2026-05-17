@@ -236,3 +236,43 @@ Passed:
 ```
 
 Result: `86 passed in 2.57s`.
+
+## 2026-05-18 - Broad Suite Verification
+
+### First Broad Run
+
+Command:
+
+```bash
+.venv_playwright/bin/pytest -q
+```
+
+Result: `244 passed, 1 skipped, 1 failed in 240.25s`.
+
+Failure:
+
+- `tests/test_f5_live_validation.py::test_wordpress_agendadopoder_returns_articles`
+- The live WordPress API check returned zero articles once for Agenda do Poder.
+
+### Follow-Up
+
+The failing test passed when rerun alone:
+
+```bash
+.venv_playwright/bin/pytest tests/test_f5_live_validation.py::test_wordpress_agendadopoder_returns_articles -q
+```
+
+Result: `1 passed in 0.18s`.
+
+The full suite then passed on rerun:
+
+```bash
+.venv_playwright/bin/pytest -q
+```
+
+Result: `245 passed, 1 skipped in 204.49s`.
+
+Conclusion: no code regression found in the broad suite. The observed failure
+was a transient live-network/source issue, but it matters because the project
+depends on live sources; keep an eye on repeated Agenda do Poder failures in
+future loops.
