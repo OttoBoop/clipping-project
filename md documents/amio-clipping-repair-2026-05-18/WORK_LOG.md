@@ -276,3 +276,26 @@ Conclusion: no code regression found in the broad suite. The observed failure
 was a transient live-network/source issue, but it matters because the project
 depends on live sources; keep an eye on repeated Agenda do Poder failures in
 future loops.
+
+## 2026-05-18 - Local UI Smoke
+
+### Command
+
+Started the local app:
+
+```bash
+.venv_playwright/bin/python -m uvicorn web_app.app:app --host 127.0.0.1 --port 8765
+```
+
+Then opened `http://127.0.0.1:8765/` with Playwright Chromium.
+
+### Result
+
+- Page loaded.
+- `#app` rendered.
+- 5 filter chips rendered.
+- No browser console errors or page exceptions were observed.
+- The app requested `/api/targets`, `/api/update/status`, and
+  `/api/update/live-results?scope=base&limit=240` successfully.
+
+The server was stopped after the smoke.
