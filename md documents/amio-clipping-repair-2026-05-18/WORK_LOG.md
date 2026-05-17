@@ -520,3 +520,11 @@ Focused ingest/import suite:
 ```
 
 Result: `70 passed in 1.16s`.
+
+Combined loop checkpoint after bounded workers commit:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_targets_jobs.py tests/test_export_mobile_snapshot_pages.py tests/test_ingest_restore.py tests/test_f4_validation.py -q
+```
+
+Result: `114 passed in 3.18s`.
