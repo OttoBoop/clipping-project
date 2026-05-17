@@ -115,6 +115,12 @@ def test_pages_bundle_writes_shell_and_assets(tmp_path):
     assert 'src="index_assets/clipping.js?v=' in html_doc
 
 
+def test_export_bundle_uses_current_dashboard_javascript():
+    dashboard_js = (PROJECT_ROOT / "assets" / "clipping.js").read_text(encoding="utf-8")
+
+    assert export_mobile_snapshot.build_pages_javascript() == dashboard_js
+
+
 def test_active_targets_without_stories_stay_available_as_filters(monkeypatch, tmp_path):
     db_path = tmp_path / "clipping.db"
     targets_path = tmp_path / "targets.json"

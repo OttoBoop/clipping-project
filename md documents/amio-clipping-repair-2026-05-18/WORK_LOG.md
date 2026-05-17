@@ -378,3 +378,36 @@ Focused connected areas:
 ```
 
 Result: `88 passed in 2.45s`.
+
+## 2026-05-18 - Fifth Technical Loop: Export Bundle JS Sync
+
+### Problem Found
+
+`tools/export_mobile_snapshot.py` builds exported bundles from
+`tools/pages_assets/clipping.js`, not directly from `assets/clipping.js`. The
+dashboard JS had received the live target/filter fixes, but the exported bundle
+template could drift and ship stale filtering behavior.
+
+### Changes Made
+
+- Synced `tools/pages_assets/clipping.js` with `assets/clipping.js`.
+- Added `test_export_bundle_uses_current_dashboard_javascript` so the exported
+  bundle cannot silently diverge from the dashboard behavior again.
+
+### Verification
+
+Focused contract:
+
+```bash
+.venv_playwright/bin/pytest tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter -q
+```
+
+Result: `2 passed in 0.45s`.
+
+Focused export/admin suite:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result: `41 passed in 1.71s`.
