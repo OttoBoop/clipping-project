@@ -152,3 +152,13 @@ Passed:
 ```
 
 Result: `251 passed, 1 skipped in 189.04s`.
+
+Pre-commit revalidation after the static export API-isolation commit:
+
+```bash
+git diff --cached --check -- "md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md" tests/test_admin_ui.py web_app/app.py web_app/auth.py web_app/jobs.py web_app/segmentation.py
+python -m py_compile web_app/auth.py web_app/segmentation.py web_app/app.py
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_targets_jobs.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result: `92 passed in 2.42s`.
