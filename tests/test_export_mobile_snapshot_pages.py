@@ -208,6 +208,78 @@ def test_secondary_target_stories_are_exported_with_filter(monkeypatch, tmp_path
     assert shakira_stories[0]["articles"][0]["targetKeys"] == ["shakira"]
 
 
+def test_export_counts_articles_per_target_in_mixed_story(monkeypatch, tmp_path):
+    db_path = tmp_path / "clipping.db"
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "flavio_valle",
+                    "label": "Flávio Valle",
+                    "display_name": "Flávio Valle",
+                    "primary": True,
+                    "keywords": ["Flávio Valle"],
+                },
+                {
+                    "key": "shakira",
+                    "label": "shakira",
+                    "display_name": "shakira",
+                    "primary": False,
+                    "keywords": ["shakira"],
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(export_mobile_snapshot, "TARGETS_PATH", targets_path)
+    with ClippingDB(db_path) as db:
+        flavio_article = db.insert_article(
+            url="https://example.com/flavio-agenda",
+            title="Flávio Valle confirma agenda",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-05-01T12:00:00+00:00",
+            snippet="Flávio Valle confirma agenda.",
+            full_text="Flávio Valle confirma agenda.",
+        )
+        shakira_article = db.insert_article(
+            url="https://example.com/shakira-show",
+            title="Shakira anuncia show",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-05-01T13:00:00+00:00",
+            snippet="Shakira anuncia show.",
+            full_text="Shakira anuncia show.",
+        )
+        assert flavio_article is not None
+        assert shakira_article is not None
+        db.insert_mention(flavio_article, "flavio_valle", "Flávio Valle", "Flávio Valle")
+        db.insert_mention(shakira_article, "shakira", "shakira", "shakira")
+        story_id = db.create_story(
+            title="Agenda e show no Rio",
+            summary="Resumo misto.",
+            temperature=42.0,
+            target_keys=["flavio_valle", "shakira"],
+        )
+        db.attach_article_to_story(story_id, flavio_article)
+        db.attach_article_to_story(story_id, shakira_article)
+        db.ensure_story_target(story_id, "flavio_valle")
+        db.ensure_story_target(story_id, "shakira")
+
+    artifact = export_mobile_snapshot.build_snapshot_artifact(make_args(tmp_path, db_path))
+    payload = artifact["data_payload"]
+    by_target = {row["key"]: row for row in payload["targets"]}
+
+    assert payload["stories"][0]["articleCount"] == 2
+    assert by_target["flavio_valle"]["storyCount"] == 1
+    assert by_target["flavio_valle"]["articleCount"] == 1
+    assert by_target["shakira"]["storyCount"] == 1
+    assert by_target["shakira"]["articleCount"] == 1
+    assert payload["meta"]["initialArticleCount"] == 1
+    assert export_mobile_snapshot.visibility_stats(payload["stories"], ["shakira"])["articleCount"] == 1
+
+
 def test_export_filters_misleading_secondary_snippet_when_saved_text_disagrees(monkeypatch, tmp_path):
     db_path = tmp_path / "clipping.db"
     targets_path = tmp_path / "targets.json"

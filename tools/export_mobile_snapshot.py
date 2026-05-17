@@ -586,7 +586,7 @@ def build_target_rows(
                 continue
             bucket = counts.setdefault(key, {"storyCount": 0, "articleCount": 0})
             bucket["storyCount"] += 1
-            bucket["articleCount"] += int(story.get("articleCount") or 0)
+            bucket["articleCount"] += story_article_count_for_target(story, str(key))
 
     target_rows: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -619,6 +619,34 @@ def build_target_rows(
             }
         )
     return target_rows
+
+
+def article_target_keys(article: dict[str, Any], fallback_targets: list[str] | None = None) -> list[str]:
+    keys: list[str] = []
+    for key in list(article.get("targetKeys") or article.get("target_keys") or fallback_targets or []):
+        key = str(key or "").strip()
+        if key and key not in keys:
+            keys.append(key)
+    return keys
+
+
+def article_matches_targets(article: dict[str, Any], story: dict[str, Any], selected_targets: set[str]) -> bool:
+    if not selected_targets:
+        return True
+    keys = set(article_target_keys(article, list(story.get("targetKeys") or [])))
+    return bool(keys & selected_targets)
+
+
+def visible_story_articles(story: dict[str, Any], selected_targets: set[str]) -> list[dict[str, Any]]:
+    return [
+        article
+        for article in list(story.get("articles") or [])
+        if article_matches_targets(article, story, selected_targets)
+    ]
+
+
+def story_article_count_for_target(story: dict[str, Any], target_key: str) -> int:
+    return len(visible_story_articles(story, {str(target_key)}))
 
 
 def remove_excluded_targets_from_stories(
@@ -679,11 +707,17 @@ def visibility_stats(
 ) -> dict[str, Any]:
     selected = set(selected_targets)
     visible_stories = [story for story in stories if story_matches_targets(story, selected)]
+    visible_articles = [
+        article
+        for story in visible_stories
+        for article in visible_story_articles(story, selected)
+    ]
+    ai_count = sum(1 for article in visible_articles if str(article.get("summarySource") or "") == "ai")
     return {
         "storyCount": len(visible_stories),
-        "articleCount": sum(int(story.get("articleCount") or 0) for story in visible_stories),
-        "aiCount": sum(int(story.get("aiCount") or 0) for story in visible_stories),
-        "rawCount": sum(int(story.get("rawCount") or 0) for story in visible_stories),
+        "articleCount": len(visible_articles),
+        "aiCount": ai_count,
+        "rawCount": len(visible_articles) - ai_count,
         "visibleStoryIds": {int(story.get("storyIdInt") or 0) for story in visible_stories},
     }
 

@@ -216,9 +216,7 @@
       var keys = Array.isArray(story.targetKeys) ? story.targetKeys.map(String) : [];
       if (keys.indexOf(key) === -1) return;
       counts.storyCount += 1;
-      counts.articleCount += Number(
-        story.articleCount || (Array.isArray(story.articles) ? story.articles.length : 0) || 0
-      );
+      counts.articleCount += storyArticleCountForTarget(story, key);
     });
     return counts;
   }
@@ -355,6 +353,38 @@
     });
   }
 
+  function allPublicTargetsSelected() {
+    const allKeys = (payload.targets || []).filter(isPublicTarget).map(function (target) {
+      return target.key;
+    });
+    return !allKeys.length || allKeys.every(function (key) { return selectedTargets.has(key); });
+  }
+
+  function articleTargetKeys(article, story) {
+    var keys = article && Array.isArray(article.targetKeys) && article.targetKeys.length ? article.targetKeys : story.targetKeys || [];
+    return activeTargetKeysFrom(keys || []);
+  }
+
+  function articleVisibleForSelection(article, story) {
+    var keys = articleTargetKeys(article, story);
+    if (!activeTargetKeys.size && !keys.length) return true;
+    if (!keys.length) return true;
+    if (allPublicTargetsSelected()) return true;
+    return keys.some(function (key) { return selectedTargets.has(key); });
+  }
+
+  function visibleArticlesForStory(story) {
+    return (story.articles || []).filter(function (article) {
+      return articleVisibleForSelection(article, story);
+    });
+  }
+
+  function storyArticleCountForTarget(story, key) {
+    return (story.articles || []).filter(function (article) {
+      return articleTargetKeys(article, story).indexOf(key) !== -1;
+    }).length;
+  }
+
   function activeLabel() {
     const allKeys = (payload.targets || []).filter(isPublicTarget).map(function (target) {
       return target.key;
@@ -387,10 +417,11 @@
   function visibleArticles(stories) {
     const articles = [];
     stories.forEach(function (story) {
-      (story.articles || []).forEach(function (article) {
-        var originalTargetKeys = article.targetKeys && article.targetKeys.length ? article.targetKeys : story.targetKeys || [];
-        var visibleTargetKeys = activeTargetKeysFrom(originalTargetKeys);
-        if (activeTargetKeys.size && originalTargetKeys.length && !visibleTargetKeys.length) return;
+      visibleArticlesForStory(story).forEach(function (article) {
+        var visibleTargetKeys = articleTargetKeys(article, story);
+        if (!allPublicTargetsSelected()) {
+          visibleTargetKeys = visibleTargetKeys.filter(function (key) { return selectedTargets.has(key); });
+        }
         articles.push({
           storyId: story.storyIdInt,
           storyTitle: story.title,
@@ -468,14 +499,14 @@
   function renderStats(stories) {
     const storyCount = stories.length;
     const articleCount = stories.reduce(function (sum, story) {
-      return sum + Number(story.articleCount || 0);
+      return sum + visibleArticlesForStory(story).length;
     }, 0);
     const aiCount = stories.reduce(function (sum, story) {
-      return sum + Number(story.aiCount || 0);
+      return sum + visibleArticlesForStory(story).filter(function (article) {
+        return article.summarySource === "ai";
+      }).length;
     }, 0);
-    const rawCount = stories.reduce(function (sum, story) {
-      return sum + Number(story.rawCount || 0);
-    }, 0);
+    const rawCount = articleCount - aiCount;
     if (visibleStoriesStat) visibleStoriesStat.textContent = storyCount + " / " + payload.meta.totalStories;
     if (visibleArticlesStat) visibleArticlesStat.textContent = articleCount + " / " + payload.meta.totalArticles;
     if (visibleAiStat) visibleAiStat.textContent = aiCount + " / " + payload.meta.totalAi;
@@ -1455,7 +1486,7 @@
         if (!key) return;
         if (!counts[key]) counts[key] = { storyCount: 0, articleCount: 0 };
         counts[key].storyCount += 1;
-        counts[key].articleCount += Number(story.articleCount || (story.articles || []).length || 0);
+        counts[key].articleCount += storyArticleCountForTarget(story, key);
       });
     });
     (payload.targets || []).forEach(function (target) {
@@ -1588,10 +1619,7 @@
   }
 
   function renderStoryCard(story) {
-    var storyArticles = (story.articles || []).filter(function (article) {
-      var originalTargetKeys = article.targetKeys && article.targetKeys.length ? article.targetKeys : story.targetKeys || [];
-      return !activeTargetKeys.size || !originalTargetKeys.length || activeTargetKeysFrom(originalTargetKeys).length > 0;
-    });
+    var storyArticles = visibleArticlesForStory(story);
     return (
       '<details class="panel story-card" id="story-' +
       story.storyIdInt +
@@ -1615,7 +1643,7 @@
       "</div>" +
       '<div class="story-stats">' +
       "<div><strong>" +
-      escapeHtml(String(story.articleCount || 0)) +
+      escapeHtml(String(storyArticles.length)) +
       "</strong><span>notícias</span></div>" +
       "<div><strong>" +
       escapeHtml(String(Math.round(Number(story.temperature || 0)))) +

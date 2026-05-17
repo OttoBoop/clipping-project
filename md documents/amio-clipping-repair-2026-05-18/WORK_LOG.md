@@ -183,3 +183,56 @@ The inherited `recent_jobs(include_observability=False)` changes in
 `web_app/app.py` and `web_app/jobs.py` are still present in the worktree from
 before this loop. They must not be casually bundled unless the staged diff is
 reviewed and that inclusion is intentional.
+
+## 2026-05-18 - Loop Continuation Correction
+
+### Trigger
+
+Otavio said: "WHY THE FUCKING FUCK ARE YOU NOT LOOPING YOU SHItHEAD, I HAVE STUFFD TO DO"
+
+Then he said: "You didnb't fix all the fucking issues with the website in 10 minutes"
+
+This is correct. The previous commit was only the first technical pass, not the
+end of the repair loop. Continue iterating through the checklist instead of
+treating one passing test slice as completion.
+
+### Next Focus
+
+- prove or fix export/filter/count behavior for newly added secondary targets;
+- make sure frontend filters use target keys that came from real mentions and
+  `story_targets`;
+- add the next contract tests before closing another loop pass;
+- commit only this loop's changes, leaving inherited worktree dirt untouched.
+
+## 2026-05-18 - Second Technical Loop: Export And Filter Counts
+
+### Problem Found
+
+Target article counts were being computed at story level. If one story had two
+targets and two articles, each target could inherit the full story article
+count, even when only one article actually had that target. That makes the
+filter look connected while the count is not backed by article-level mentions.
+
+### Changes Made
+
+- `tools/export_mobile_snapshot.py` now counts articles per target using each
+  article's `targetKeys`, while keeping story counts at story level.
+- Export initial visibility stats now count only articles that match the
+  selected target, instead of all articles in a matching story.
+- `assets/clipping.js` now recomputes target counts from article-level
+  `targetKeys`.
+- The frontend story and flat article views now hide articles that do not match
+  the selected target when the user is filtering by a subset of names.
+- Added an export regression test for a mixed story with one Flavio article and
+  one Shakira article; each target must show one story and one article, not two
+  articles.
+
+### Verification
+
+Passed:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_targets_jobs.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result: `86 passed in 2.57s`.
