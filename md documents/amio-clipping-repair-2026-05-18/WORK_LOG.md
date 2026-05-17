@@ -329,3 +329,13 @@ Passed:
 ```
 
 Result: `87 passed in 2.70s`.
+
+### Broad Verification After Commit
+
+Passed:
+
+```bash
+.venv_playwright/bin/pytest -q
+```
+
+Result: `246 passed, 1 skipped in 184.11s`.
