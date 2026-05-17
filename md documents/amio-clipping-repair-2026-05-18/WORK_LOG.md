@@ -339,3 +339,42 @@ Passed:
 ```
 
 Result: `246 passed, 1 skipped in 184.11s`.
+
+## 2026-05-18 - Fourth Technical Loop: Integrated Contract
+
+### Goal
+
+Stop proving pieces in isolation and prove the actual connection Otavio asked
+for:
+
+```text
+create target -> targets.json/settings -> backfill existing article ->
+mentions/story_targets -> live-results base -> export payload/filter counts
+```
+
+### Changes Made
+
+- Added `test_target_create_syncs_live_base_and_export_filter`.
+- The test uses the real `/api/targets` route with a temporary
+  `data/targets.json`, inserts an existing article containing the new name,
+  creates the target, verifies `targetSync`, verifies `/api/update/live-results`
+  for the new target, checks SQLite `mentions` and `story_targets`, and builds
+  an export artifact to verify target filter/count metadata.
+
+### Verification
+
+Focused contract:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter -q
+```
+
+Result: `1 passed in 0.67s`.
+
+Focused connected areas:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_targets_jobs.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result: `88 passed in 2.45s`.

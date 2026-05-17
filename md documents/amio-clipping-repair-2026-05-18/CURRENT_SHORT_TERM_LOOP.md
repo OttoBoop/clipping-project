@@ -68,3 +68,20 @@ Stop only if:
 - tests reveal a broader architecture break that needs a new short-term loop.
 
 If blocked, write the block in `WORK_LOG.md` and keep all unblocked work moving.
+
+## Debug Discipline
+
+Do not use the full test suite as the first debugging tool. It is too slow for
+the repair loop and makes Otavio wait without actionable signal.
+
+Use this order:
+
+1. Run the smallest focused tests that cover the changed files.
+2. If a failure appears, rerun that exact test with `-q` and then with traceback
+   detail only if needed.
+3. Use `-x` for discovery when the failure location is unknown.
+4. Treat live-network tests as confirmation, not diagnosis; rerun the exact live
+   failure once before changing code.
+5. Run the full suite only at loop checkpoints or before a larger commit.
+6. Log any slow suite run, the reason it was necessary, and whether it found a
+   real regression or a transient/live-source issue.

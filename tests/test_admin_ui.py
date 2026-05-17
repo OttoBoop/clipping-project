@@ -704,6 +704,103 @@ def test_live_results_endpoint_returns_saved_articles_before_export(monkeypatch,
     assert payload["items"][0]["publicationState"] == "saved"
 
 
+def test_target_create_syncs_live_base_and_export_filter(monkeypatch, tmp_path):
+    app, db_file = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+    db_admin = importlib.import_module("web_app.db_admin")
+    jobs = importlib.import_module("web_app.jobs")
+    settings = importlib.import_module("pipeline.settings")
+    export_mobile_snapshot = importlib.import_module("tools.export_mobile_snapshot")
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "flavio_valle",
+                    "label": "Flavio Valle",
+                    "display_name": "Flavio Valle",
+                    "primary": True,
+                    "keywords": ["Flavio Valle"],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+    monkeypatch.setattr(settings, "TARGETS_JSON_PATH", targets_path)
+    monkeypatch.setattr(export_mobile_snapshot, "TARGETS_PATH", targets_path)
+    monkeypatch.setattr(app_module.artifact_store, "enabled", False)
+    monkeypatch.setattr(jobs.artifact_store, "enabled", False)
+    with ClippingDB(db_file) as db:
+        article_id = db.insert_article(
+            url="https://example.com/shakira-integrada",
+            title="Shakira entra no clipping integrado",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-05-17T12:00:00+00:00",
+            snippet="Shakira aparece na base antes do cadastro do nome.",
+            full_text="Shakira aparece na base antes do cadastro do nome.",
+        )
+        assert article_id is not None
+
+    with TestClient(app) as client:
+        created = client.post("/api/targets", json={"display_name": "Shakira"})
+        live = client.get("/api/update/live-results?scope=base&target_key=shakira&limit=20")
+
+    assert created.status_code == 200, created.text
+    created_payload = created.json()
+    assert created_payload["key"] == "shakira"
+    assert created_payload["targetSync"]["updatedCount"] == 1
+    assert created_payload["targetSync"]["mentionsInserted"] == 1
+    assert live.status_code == 200
+    live_payload = live.json()
+    assert live_payload["count"] == 1
+    assert live_payload["items"][0]["title"] == "Shakira entra no clipping integrado"
+    assert live_payload["items"][0]["targetKeys"] == ["shakira"]
+
+    with sqlite3.connect(db_file) as conn:
+        mention_targets = {
+            row[0]
+            for row in conn.execute("SELECT target_key FROM mentions WHERE article_id = ?", (article_id,)).fetchall()
+        }
+        story_targets = {
+            row[0]
+            for row in conn.execute(
+                """
+                SELECT st.target_key
+                FROM story_targets st
+                JOIN story_articles sa ON sa.story_id = st.story_id
+                WHERE sa.article_id = ?
+                """,
+                (article_id,),
+            ).fetchall()
+        }
+    assert mention_targets == {"shakira"}
+    assert story_targets == {"shakira"}
+
+    artifact = export_mobile_snapshot.build_snapshot_artifact(
+        argparse.Namespace(
+            db=str(db_file),
+            date_from="",
+            date_to="",
+            all_stories=True,
+            default_target="shakira",
+            output=str(tmp_path / "index.html"),
+            merge_from="",
+            remap_incoming_ids_on_merge=False,
+            api_url="",
+        )
+    )
+    payload = artifact["data_payload"]
+    by_target = {row["key"]: row for row in payload["targets"]}
+    assert by_target["shakira"]["storyCount"] == 1
+    assert by_target["shakira"]["articleCount"] == 1
+    assert payload["defaultTargets"] == ["shakira"]
+    assert payload["meta"]["initialArticleCount"] == 1
+    assert payload["stories"][0]["targetKeys"] == ["shakira"]
+    assert payload["stories"][0]["articles"][0]["targetKeys"] == ["shakira"]
+
+
 def test_admin_route_does_not_serve_password_or_admin_copy(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     with TestClient(app) as client:
