@@ -4424,3 +4424,47 @@ contract review.
 The hosted service is healthy and the checklist is stronger, but direct live
 payload verification remains gated and the loop still has target/filter/base
 watch items.
+
+## 2026-05-18 - Seventy-Eighth Broad Regression After Publication Fix
+
+### Objective Reviewed
+
+After a publication-state fix, the loop must re-check adjacent admin, jobs,
+export, and browser behavior before treating the patch as stable.
+
+### Audit Performed
+
+- Ran the broad focused suite after `e65c13c` and the checklist update:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py \
+  tests/test_targets_jobs.py \
+  tests/test_export_mobile_snapshot_pages.py \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  -q
+```
+
+Result: `121 passed in 13.60s`.
+
+- Observed one local static-server `404` for
+  `/api/targets?include_archived=1` during the browser suite; the test still
+  passed because the static fallback path is expected to remain usable.
+- Restored generated `pipeline/__pycache__` dirt after the test run.
+- Confirmed the worktree is clean.
+
+### Result
+
+The publication-state repair did not regress the focused admin/jobs/export/
+browser contract set.
+
+### Next Hypothesis
+
+Continue with another audit cycle: hosted auth watch, source review, or target
+management UI contract review.
+
+### Why The Loop Continues
+
+The regression is green, but green tests are a checkpoint. The loop continues
+because live authenticated payload inspection remains blocked and repeated
+target/filter/base review is still useful.
