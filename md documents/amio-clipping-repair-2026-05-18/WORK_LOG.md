@@ -5504,3 +5504,52 @@ Candidate contracts passed, but the deployed product now includes viewer/admin
 scoping work from another loop. That can affect `/api/targets`,
 `/assets/clipping-data.json`, and live-results visibility, so it needs review
 against the long-term target/filter/Base atual goals.
+
+## 2026-05-18 - One Hundred Fourth Viewer Scoping Contract Recheck
+
+### Objective Reviewed
+
+Because another loop added viewer/admin scoping, I needed to check whether the
+new auth layer conflicts with the clipping repair loop: admin target management
+must still work, viewer reads must stay scoped, viewer writes must be rejected,
+and live-results must not widen beyond the viewer profile.
+
+### Audit Performed
+
+- Reviewed the parallel commit `0294f4b test: harden viewer admin write
+  rejection`.
+- Barrier answered: I initially looked for `web_app/scoping.py`, which does not
+  exist. The actual scoping implementation is `web_app/segmentation.py`, found
+  with `rg --files` and `rg`.
+- Reviewed `web_app/auth.py`, `web_app/segmentation.py`, and relevant
+  `web_app/app.py` route use.
+- Ran focused scoping/auth contracts:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_dashboard_payload_and_raw_text_are_password_scoped \
+  tests/test_admin_ui.py::test_viewer_profile_scope_can_come_from_reviewable_config_file \
+  tests/test_admin_ui.py::test_dashboard_shell_marks_viewer_session_before_payload_load \
+  tests/test_admin_ui.py::test_viewer_cannot_widen_live_results_or_write_admin_actions \
+  tests/test_admin_ui.py::test_targets_api_is_login_scoped_and_admin_uploads_target_manifest \
+  tests/test_admin_ui.py::test_update_and_export_workflows_are_admin_endpoints \
+  -q
+```
+
+### Result
+
+`6 passed in 0.77s`.
+
+Restored generated `pipeline/__pycache__` after the run and confirmed the
+worktree was clean before this log entry.
+
+### Next Hypothesis
+
+Commit this scoping recheck log, then do another source review against the
+connection checklist to look for a remaining untested edge.
+
+### Why The Loop Continues
+
+Scoping contracts passing means the parallel auth work is compatible with the
+current target management checks, but it does not prove every live Base atual
+edge. The loop continues into another checklist review.
