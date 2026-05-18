@@ -24,9 +24,9 @@ Health:
 ```text
 loginConfigured=true
 viewerProfilesConfigured=true
-viewerAuthConfigured=false
-missingConfig=["CLIPPING_VIEWER_PASSWORDS"]
-demoViewerConfigured=true after workaround deploy
+viewerAuthConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
 ```
 
 Meaning:
@@ -36,6 +36,7 @@ Meaning:
 - direct private API reads are blocked;
 - `/index.html` does not bypass the FastAPI login surface;
 - the deployed JS includes viewer/admin control markers.
+- Render now has real viewer-password configuration without committing secrets.
 
 ## Local Authenticated Contracts - Proven
 
@@ -68,31 +69,40 @@ manage-targets hidden
 only scoped/empty profile data shown
 ```
 
-## Production Blocked
+## Production Authenticated Segregation - Proven
 
-Not yet proven on Render:
-
-- viewer login returns role/profile;
-- Flavio viewer returns only Flavio-approved targets;
-- Shakira viewer excludes Flavio/Rio/client data;
-- Rio economic profile exists as a separate live view;
-- live raw texts are scoped for a viewer;
-- viewer cannot widen live-results by query param in production;
-- admin login/CSRF behavior in production.
-
-Current blocker:
+Checked on the live Render service after `140a1f9` went live:
 
 ```text
-Render missing CLIPPING_VIEWER_PASSWORDS
+logged-out private payload/API reads -> 401
+flavio login -> role=viewer profile=flavio
+flavio scoped targets -> bernardo_rubiao, flavio_valle, pedro_angelito, pedro_duarte
+flavio forbidden target shakira in live-results -> absent
+shakira login -> role=viewer profile=shakira
+shakira scoped targets -> shakira
+shakira forbidden target flavio_valle in live-results -> absent
+rio_economico login -> role=viewer profile=rio_economico
+rio_economico scoped targets/stories/articles/raw -> empty isolated profile
+viewer POST /api/targets -> 401
 ```
 
-The code, docs, and `render.yaml` now declare the variable, but `/healthz`
-still reports `viewerAuthConfigured=false`.
+Meaning:
+
+- the first real paid-client segregation path is live, not only local;
+- direct query params did not widen viewer scope;
+- Rio economic exists as a separate profile without polluting Flavio/Shakira;
+- raw-text payloads did not expose keys outside the scoped articles checked;
+- viewer profiles cannot use target-management writes.
+
+Remaining production gap:
+
+- positive admin login/CSRF was not tested because the operator admin password
+  was not used or rotated during this loop.
 
 ## Empty Demo Workaround
 
-The app now has a public empty-demo viewer path for production verification
-while real viewer passwords are absent:
+The app has a public empty-demo viewer fallback for production verification
+only while real viewer passwords are absent:
 
 ```text
 password=demo-cliente -> role=viewer profile=demo_cliente
@@ -104,6 +114,14 @@ This path is intentionally limited:
 - only enabled while `demo_cliente` has no target keys;
 - returns an empty scoped payload and empty raw texts;
 - proves viewer session/readonly/scoped-empty behavior, not real client data.
+
+Current production state:
+
+```text
+demoViewerConfigured=false
+```
+
+The fallback is disabled because real viewer passwords are configured.
 
 ## Static Boundary
 
@@ -120,10 +138,11 @@ access.
 
 ## Next Review
 
-After `CLIPPING_VIEWER_PASSWORDS` exists on Render, run the full production
-viewer checklist before calling Axis 1 complete:
+Next cycle should not re-litigate the missing viewer secret unless `/healthz`
+regresses. Continue from the checklist items that remain weak:
 
 ```text
-login/profile -> scoped data -> forbidden target absent -> raw text absent ->
-direct API cannot widen -> viewer write rejected -> admin CSRF works
+client UI fake-action audit -> target management no-fake-UI review ->
+admin positive CSRF check with operator credentials when available ->
+Rio economic target/methodology review
 ```

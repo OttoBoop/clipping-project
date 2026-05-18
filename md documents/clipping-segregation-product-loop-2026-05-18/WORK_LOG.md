@@ -1917,3 +1917,96 @@ the live `demo-cliente` login path end to end.
 
 The workaround creates a live verification path; it still has to deploy and be
 smoked on the actual Render site.
+
+## 2026-05-19 - Loop Cycle: Real Render Viewer Passwords And Production Proof
+
+### Objective Reviewed
+
+The loop re-read the long-term goals and production checklist after Otavio
+rejected the "missing viewer password" stop. Axis 1 still required real live
+viewer-profile proof on Render, not only logged-out gates or local tests.
+
+### Render/MCP Correction
+
+Initial tool visibility made it look like the Render MCP could read service and
+deploy state but not set environment variables. After tool discovery, the
+session exposed `update_environment_variables`.
+
+Superseded note:
+
+```text
+The earlier "no available env-var setter" finding is no longer current.
+```
+
+### Action Taken
+
+- Pushed `03bcb32 fix: add safe empty demo viewer login` to `master`.
+- Configured `CLIPPING_VIEWER_PASSWORDS` on the existing Render service via
+  MCP, with generated viewer passwords for `flavio`, `shakira`,
+  `rio_economico`, and `demo_cliente`.
+- Did not commit or log the secret values.
+- Waited for Render to deploy through `140a1f9 docs: log copy fix deploy watch`,
+  which includes the segregation commit in its history.
+
+### Evidence
+
+Live `/healthz` on `https://clipping-project.onrender.com/`:
+
+```text
+viewerAuthConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+```
+
+Live logged-out checks:
+
+```text
+/assets/clipping-data.json -> 401
+/assets/clipping-raw-texts.json -> 401
+/api/targets -> 401
+```
+
+Live viewer checks:
+
+```text
+flavio -> targets=['bernardo_rubiao', 'flavio_valle', 'pedro_angelito', 'pedro_duarte']
+flavio forbidden shakira live-results -> absent
+shakira -> targets=['shakira']
+shakira forbidden flavio_valle live-results -> absent
+rio_economico -> targets=[], stories=0, articles=0, raw=0
+rio_economico forbidden flavio_valle live-results -> absent
+viewer POST /api/targets -> 401
+```
+
+Local verification before push/rebase:
+
+```text
+python -m py_compile web_app/app.py web_app/auth.py web_app/segmentation.py
+pytest tests/test_admin_ui.py tests/test_targets_jobs.py tests/test_export_mobile_snapshot_pages.py -q
+106 passed
+```
+
+### Remaining Blocker
+
+The missing `CLIPPING_VIEWER_PASSWORDS` blocker is resolved. Remaining live
+gap: positive admin login/CSRF was not tested because the operator admin
+password was not used or rotated during this loop.
+
+### Next Objective From Docs
+
+Return to `SYSTEM_REVIEW_CHECKLIST.md` and audit the live viewer UI for fake or
+admin-only actions:
+
+```text
+viewer shell -> target-management controls hidden/rejected ->
+classification/editor controls hidden -> filters remain scoped and clean
+```
+
+Then review how `rio_economico` should gain real target/search terms without
+polluting Flavio/Shakira.
+
+### Why The Loop Continues
+
+Axis 1 now has real production viewer proof, but the long-term product loop
+also requires no fake UI, target-management review, Rio methodology isolation,
+sellable packaging, and cost/operations review.
