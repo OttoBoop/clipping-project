@@ -5896,3 +5896,67 @@ hosted watch or checklist review.
 
 The rebase verification protects the latest test commit, but it remains a
 checkpoint. More target/filter/Base atual review remains useful.
+
+## 2026-05-18 - One Hundred Thirteenth Coverage Checkpoint Refresh
+
+### Objective Reviewed
+
+After re-reading the short-term loop and checklist, I noticed the coverage
+checkpoint did not yet mention the latest proven guardrails from this loop.
+
+### Audit Performed
+
+- Re-read the end of `WORK_LOG.md`.
+- Re-read `SYSTEM_CONNECTION_CHECKLIST.md`.
+- Re-read the coverage checkpoint in `CURRENT_SHORT_TERM_LOOP.md`.
+- Updated `CURRENT_SHORT_TERM_LOOP.md` to include:
+  - live target-row-only count recomputation;
+  - duplicate existing article retag `article_saved` event;
+  - viewer-scoped raw counter consistency.
+
+### Result
+
+The short-term loop now reflects the latest actual coverage instead of only
+older target-management work.
+
+### Next Hypothesis
+
+Commit this documentation refresh, then continue with hosted watch or another
+local checklist review.
+
+### Why The Loop Continues
+
+Refreshing coverage docs prevents context drift, but documentation freshness is
+also a checkpoint. The loop still needs recurring review of live, export,
+ingestion, and filter behavior.
+
+## 2026-05-18 - One Hundred Fourteenth Push Barrier On Coverage Refresh
+
+### Objective Reviewed
+
+The coverage checkpoint refresh committed locally, but the remote advanced
+before push. The loop rule requires logging the barrier and continuing.
+
+### Audit Performed
+
+- Committed `8c88103 docs: refresh clipping coverage checkpoint`.
+- Push was rejected as non-fast-forward.
+- Inspected `origin/master`.
+
+### Result
+
+Barrier answered: remote advanced to
+`25b99cc docs: log Rio live smoke and deploy watch`, touching only
+`md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md`.
+
+No overlap with the clipping repair coverage docs.
+
+### Next Hypothesis
+
+Amend this barrier entry into the local coverage refresh commit, rebase over
+`origin/master`, push again, then continue.
+
+### Why The Loop Continues
+
+Another parallel-doc git race does not change the clipping repair objective.
+The loop continues with disciplined path-limited commits.

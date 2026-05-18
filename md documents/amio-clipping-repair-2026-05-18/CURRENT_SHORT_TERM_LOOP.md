@@ -151,12 +151,21 @@ Covered by code and tests:
 - Dead target-management lock code was removed from backend and dashboard JS.
 - Live-results can promote a target returned by the live overlay into visible
   filters, so a saved article for a newly observed target is selectable.
+- Live-results target-row-only changes now force count recomputation and UI
+  redraw, so an already-loaded saved article no longer creates a filter chip
+  that says `0 histórias`.
 - Manual story creation emits `article_saved` and appears in Base atual via
   live-results without waiting for a full export.
 - Manual stories saved with `export: false` remain `publicationState: "saved"`
   instead of being mislabeled as already published.
+- Existing duplicate articles retagged for a new secondary target emit
+  `article_saved` with `publicationState: "saved"`, so Base atual can surface
+  the newly connected target immediately.
 - Viewer-only filter scopes without primary targets are promoted into visible
   filter chips.
+- Viewer-scoped payload raw counters now match dashboard/export semantics:
+  non-AI articles count as raw even when they do not have a separate
+  `rawTextKey`.
 - Static export keeps active targets with zero stories available as filters and
   keeps dashboard JS synchronized with `tools/pages_assets/clipping.js`.
 - Broad focused regression after these changes passed:
