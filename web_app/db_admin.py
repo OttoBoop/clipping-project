@@ -833,6 +833,12 @@ def insert_manual_story(db_file: Path, payload: dict[str, Any], *, created_by: s
         "articleId": article_id,
         "storyId": story_id,
         "url": url,
+        "title": title[:500],
+        "sourceName": source_name[:240],
+        "sourceType": "manual",
+        "publishedAt": published_at,
+        "targetKeys": target_keys,
+        "targetLabels": {key: labels.get(key, key) for key in target_keys},
         "message": "Materia adicionada como nova historia.",
     }
 

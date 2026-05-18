@@ -258,6 +258,35 @@ class JobManager:
         create_job(job_id, "manual", spec, started_by=started_by, enforce_single_active=False)
         articles_inserted = 1 if result.get("status") == "created" else 0
         stories_touched = 1 if result.get("storyId") else 0
+        target_keys = [
+            str(key).strip()
+            for key in (result.get("targetKeys") or result.get("target_keys") or [])
+            if str(key).strip()
+        ]
+        target_labels_map = result.get("targetLabels") if isinstance(result.get("targetLabels"), dict) else {}
+        if articles_inserted:
+            first_target = target_keys[0] if target_keys else ""
+            append_event(
+                job_id,
+                "article_saved",
+                {
+                    "article_id": safe_int(result.get("articleId")),
+                    "story_id": safe_int(result.get("storyId")),
+                    "url": str(result.get("url") or ""),
+                    "title": str(result.get("title") or ""),
+                    "published_at": str(result.get("publishedAt") or result.get("published_at") or ""),
+                    "source_name": str(result.get("sourceName") or result.get("source_name") or ""),
+                    "source_type": str(result.get("sourceType") or result.get("source_type") or "manual"),
+                    "target_keys": target_keys,
+                    "target_key": first_target,
+                    "target_label": str(target_labels_map.get(first_target) or first_target),
+                    "articles_inserted_delta": 1,
+                    "mentions_inserted_delta": mentions_inserted,
+                    "stories_touched_delta": stories_touched,
+                    "publication_state": "saved",
+                    "reason": "manual_story",
+                },
+            )
         append_event(
             job_id,
             "manual_story_completed",

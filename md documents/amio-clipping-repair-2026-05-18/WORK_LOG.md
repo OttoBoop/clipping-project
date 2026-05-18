@@ -3912,3 +3912,121 @@ Base atual/live-results or target count drift.
 
 The rebase and focused checks passed, but that is a checkpoint. The loop
 continues with another audit.
+
+## 2026-05-18 - Sixty-Seventh Rule Update And Manual-Live Gap Cycle
+
+### Objective Reviewed
+
+Otávio updated the basic rule while the loop was auditing Base atual/live-results
+connections. The active objective is now stricter: every output must use the
+longer anchor, every action must be logged, doubt must trigger a reread of
+long-term docs and recent logs, and "looks ready" must trigger review rather
+than exit.
+
+### Audit Performed
+
+- Local clock checked with `date -Iseconds`: `2026-05-18T18:46:29-03:00`.
+- Re-read the current protocol, long-term goals, short-term loop, and log tail.
+- Updated `LOOP_OPERATING_PROTOCOL.md` with Otávio's longer Mandatory Output
+  Anchor.
+- Added the updated prompt and a new long-term goal to `LONG_TERM_GOALS.md`.
+- Pointed `CURRENT_SHORT_TERM_LOOP.md` at the updated anchor and the reread rule.
+- While auditing the live-results loop, found a concrete gap: `/api/manual-story`
+  writes articles, mentions, stories, and story targets to SQLite, but
+  `record_completed_manual` emits `manual_story_completed` instead of
+  `article_saved`, so a manual saved article does not use the same immediate
+  Base atual live-results channel as ingestion/backfill saves.
+
+### Result
+
+The new rule is being promoted into the operational memory before the code
+patch. The next code target is narrow: make manual story creation emit an
+`article_saved` event with target metadata so Base atual can show it through
+`/api/update/live-results?scope=base` before any export expectation.
+
+### Next Hypothesis
+
+Patch `web_app/jobs.py` and/or `web_app/app.py` plus focused tests in
+`tests/test_admin_ui.py` so manual story creation enters the live-results path.
+
+### Why The Loop Continues
+
+This is a newly found connection failure in the same long-term objective:
+saved news must appear in Base atual immediately. Logging the rule update is a
+checkpoint, not a finish line.
+
+## 2026-05-18 - Sixty-Eighth Manual Story Live Results Patch Cycle
+
+### Objective Reviewed
+
+Saved news must appear in Base atual as soon as it is saved, and "saved" must
+mean every confirmation path, not only ingestion and target backfill.
+
+### Audit Performed
+
+- Patched `web_app/db_admin.py` so successful manual story creation returns the
+  title, source, published date, target keys, and target labels needed by live
+  results.
+- Patched `web_app/jobs.py` so `record_completed_manual` emits an
+  `article_saved` event for created manual stories before the manual job is
+  marked succeeded.
+- Patched `tests/test_admin_ui.py` so manual story creation must be visible via
+  `/api/update/live-results?scope=base&target_key=flavio_valle&limit=20` and
+  must write exactly one `article_saved` event.
+- Ran the focused single test:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_manual_story_insert_creates_unique_story_graph \
+  -q
+```
+
+Result: `1 passed in 0.66s`.
+
+- Ran the neighboring live/manual/target contracts:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_manual_story_insert_creates_unique_story_graph \
+  tests/test_admin_ui.py::test_manual_story_insert_is_idempotent_for_duplicate_url \
+  tests/test_admin_ui.py::test_live_results_endpoint_returns_saved_articles_before_export \
+  tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter \
+  tests/test_targets_jobs.py::test_base_live_results_return_recent_saved_articles_after_export_job \
+  tests/test_targets_jobs.py::test_target_sync_backfills_new_target_into_base_live_results \
+  -q
+```
+
+Result: `6 passed in 0.68s`.
+
+- Restored generated `pipeline/__pycache__` dirt after the tests.
+- Ran the broader admin/jobs regression:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py tests/test_targets_jobs.py -q
+```
+
+Result: `91 passed in 3.35s`.
+
+- Restored generated `pipeline/__pycache__` dirt after the broader regression.
+
+### Result
+
+Manual story creation now enters the same live Base atual path as ingestion and
+target backfill. This closes a real connection gap discovered during review:
+
+```text
+manual confirmation -> SQLite -> manual job -> article_saved event -> live-results base
+```
+
+### Next Hypothesis
+
+Run a slightly broader admin/jobs regression, then commit this patch with
+path-limited staging. After push, re-read the docs and audit another adjacent
+path instead of stopping.
+
+### Why The Loop Continues
+
+The manual-story live path is patched and locally verified, but this is only one
+saved-news confirmation path. The broader loop still needs repeated review of
+targets, filters, export counts, hosted auth gates, and dashboard polling.

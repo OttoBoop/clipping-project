@@ -1234,8 +1234,14 @@ def test_manual_story_insert_creates_unique_story_graph(monkeypatch, tmp_path):
             headers={"X-CSRF-Token": csrf},
             json=manual_story_payload(note="Inserida durante QA."),
         )
+        live = client.get("/api/update/live-results?scope=base&target_key=flavio_valle&limit=20")
     assert response.status_code == 200
     assert response.json()["status"] == "created"
+    assert live.status_code == 200
+    live_payload = live.json()
+    assert live_payload["count"] == 1
+    assert live_payload["items"][0]["title"] == "Flavio Valle anuncia agenda de fiscalizacao"
+    assert live_payload["items"][0]["targetKeys"] == ["flavio_valle"]
     assert db_counts(db_file) == {
         "articles": 1,
         "mentions": 1,
@@ -1249,6 +1255,9 @@ def test_manual_story_insert_creates_unique_story_graph(monkeypatch, tmp_path):
         article = conn.execute("SELECT * FROM articles").fetchone()
         mention = conn.execute("SELECT * FROM mentions").fetchone()
         manual_entry = conn.execute("SELECT * FROM manual_entries").fetchone()
+        article_saved_events = conn.execute(
+            "SELECT COUNT(*) FROM job_events WHERE event = 'article_saved'"
+        ).fetchone()[0]
     assert article["url"] == "https://example.com/noticia"
     assert article["source_type"] == "manual"
     assert article["source_name"] == "Jornal Teste"
@@ -1256,6 +1265,7 @@ def test_manual_story_insert_creates_unique_story_graph(monkeypatch, tmp_path):
     assert mention["target_key"] == "flavio_valle"
     assert mention["sentiment_reason"] == "manual_entry"
     assert manual_entry["note"] == "Inserida durante QA."
+    assert article_saved_events == 1
 
 
 def test_manual_story_insert_is_idempotent_for_duplicate_url(monkeypatch, tmp_path):
