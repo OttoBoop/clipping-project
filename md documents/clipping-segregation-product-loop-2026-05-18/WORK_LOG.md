@@ -5955,3 +5955,83 @@ updating.
 
 Publish this log path-limited, then keep polling Render until the newest commit
 promotes.
+
+## 2026-05-18 20:44 -03 - Loop Cycle: Smoke Log Pushed And Render Advanced
+
+### Objective Reviewed
+
+The previous smoke log had to be published, then Render state checked again.
+
+### Action Taken
+
+Created and pushed the log commit:
+
+```text
+fc5b0b7 docs: log live smoke after Rio v3 push
+```
+
+Then inspected the local graph and Render deploys.
+
+### Evidence
+
+Local graph now has:
+
+```text
+fc5b0b7 docs: log live smoke after Rio v3 push
+07c6b33 docs: log broad post-fix regression
+30ec6c1 docs: log Rio v3 review push
+5776ebd docs: add Rio economic v3 dry-run review
+```
+
+Render state:
+
+```text
+dep-d86fhisrp5ls739coa7g fc5b0b7 docs: log live smoke after Rio v3 push -> queued
+dep-d86fgpf3jp8c73ai6mqg 30ec6c1 docs: log Rio v3 review push -> build_in_progress
+dep-d86fgccrp5ls739cnaag a503ed3 docs: log browser functional regression -> live
+```
+
+### Barrier Or Failure
+
+No deploy failure. The live site is now `a503ed3`; newest commits remain queued
+or building.
+
+### Next Objective From Docs
+
+Run logged-out smoke on live `a503ed3`, then keep polling.
+
+## 2026-05-18 20:45 -03 - Loop Cycle: Live Logged-Out Smoke On a503ed3
+
+### Objective Reviewed
+
+Render promoted `a503ed3`, so the current live site needed the standard
+logged-out privacy smoke.
+
+### Live Evidence
+
+URL checked: `https://clipping-project.onrender.com/`
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof remains blocked by
+missing local viewer passwords.
+
+### Next Objective From Docs
+
+Publish this log evidence and keep polling Render until the newest deploy is
+live.
