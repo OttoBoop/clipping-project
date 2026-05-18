@@ -6188,3 +6188,40 @@ asset again in a later cycle.
 
 Deploy lag blocks only live confirmation of the newest JS patch. Local tests
 are green and more source/checklist review remains available.
+
+## 2026-05-18 - One Hundred Twentieth Browser Functional Regression
+
+### Objective Reviewed
+
+Because the publication-state fix changed dashboard runtime state, the loop ran
+the full functional browser sanity class rather than only the new test.
+
+### Audit Performed
+
+Ran:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity -q
+```
+
+### Result
+
+`12 passed in 17.58s`.
+
+During the browser run, the local static server logged expected 404s for API
+paths not served by `SimpleHTTPRequestHandler`; those are already handled by
+the routed tests or static fallbacks and did not fail the suite.
+
+Restored generated `pipeline/__pycache__` after the run and confirmed the
+worktree was clean before this log entry.
+
+### Next Hypothesis
+
+Commit this browser regression log, then re-check hosted JS for the publication
+state markers.
+
+### Why The Loop Continues
+
+Browser functional sanity passing reduces risk, but hosted deployment of the
+new JS still needs confirmation.
