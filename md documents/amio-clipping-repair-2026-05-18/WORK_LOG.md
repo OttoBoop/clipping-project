@@ -5682,3 +5682,52 @@ hosted health/assets plus another checklist review.
 The user explicitly reinforced that the loop must continue. This instruction is
 not a new blocker; it is a stronger reason to keep cycling through docs, logs,
 live checks, contracts, and source review.
+
+## 2026-05-18 - One Hundred Eighth Hosted Watch After Broad Regression
+
+### Objective Reviewed
+
+After committing the broad focused regression log and the reaffirmed basic
+rule, the loop returned to hosted checks instead of stopping.
+
+### Audit Performed
+
+- Checked clean worktree and latest local/remote commit.
+- Checked hosted `/healthz`.
+- Checked hosted `/assets/clipping.js` markers.
+- Checked hosted `/api/update/status`.
+- Checked hosted `/api/update/live-results?scope=base&limit=5`.
+
+### Result
+
+Repository state:
+
+```text
+HEAD == origin/master == d93d617 docs: log broad clipping regression
+worktree clean
+```
+
+Hosted state:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+/assets/clipping.js -> targetDisplayNameError, pollBaseLiveResults,
+                       publicationState, if (!payload) return false, and
+                       var changed = ensureLiveTargetRows(data.items) present
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+```
+
+Barrier answered: live data payloads still require a viewer/admin session. The
+hosted JS surface is current and the app is healthy.
+
+### Next Hypothesis
+
+Continue source/contract review for scoped payload and filter edge cases that do
+not require hosted credentials.
+
+### Why The Loop Continues
+
+Hosted health and current JS are checkpoints. The auth gate blocks only direct
+payload inspection, so the loop continues through local contracts and code
+review.
