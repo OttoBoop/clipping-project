@@ -5384,3 +5384,79 @@ contracts that do not require a viewer session.
 The patch being hosted is a checkpoint, not completion. The live data payload
 itself remains auth-gated, so the loop still needs local contract coverage and
 repeated review of export/filter consistency.
+
+## 2026-05-18 - One Hundred First Export Live Consistency Recheck
+
+### Objective Reviewed
+
+With the hosted JS patch verified but live data still auth-gated, the next
+unblocked objective was to recheck local export/live contracts for targets,
+counts, archived target filtering, and saved-but-not-published state.
+
+### Audit Performed
+
+Ran focused export/live contracts:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_recomputes_runtime_target_counts_from_payload \
+  tests/test_export_mobile_snapshot_pages.py::test_active_targets_without_stories_stay_available_as_filters \
+  tests/test_export_mobile_snapshot_pages.py::test_secondary_target_stories_are_exported_with_filter \
+  tests/test_export_mobile_snapshot_pages.py::test_export_counts_articles_per_target_in_mixed_story \
+  tests/test_export_mobile_snapshot_pages.py::test_archived_targets_do_not_reappear_in_export_filters \
+  tests/test_targets_jobs.py::test_update_without_export_keeps_base_live_result_saved \
+  tests/test_targets_jobs.py::test_live_results_do_not_resurrect_removed_target_from_stale_event \
+  -q
+```
+
+### Result
+
+`7 passed in 0.22s`.
+
+Restored generated `pipeline/__pycache__` after the run and confirmed the
+worktree was clean before this log entry.
+
+### Next Hypothesis
+
+Commit this recheck log, then inspect another code path from the checklist:
+candidate processing/frozen target snapshots/duplicate article retagging.
+
+### Why The Loop Continues
+
+Export/live consistency has focused coverage, but the loop still needs repeated
+review of ingestion and candidate processing because a target can pass export
+tests and still fail to be found, tagged, or retagged during a real update.
+
+## 2026-05-18 - One Hundred Second Push Barrier On Export Recheck Log
+
+### Objective Reviewed
+
+The loop must answer and log push barriers instead of stopping after a local
+test/log checkpoint.
+
+### Audit Performed
+
+- Committed `caa4fd4 docs: log export live consistency recheck`.
+- Tried to push to `origin/master`.
+- Push was rejected as non-fast-forward.
+- Inspected the new remote tip.
+
+### Result
+
+Barrier answered: `origin/master` advanced to
+`0294f4b test: harden viewer admin write rejection`, touching
+`tests/test_admin_ui.py` and
+`md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md`.
+
+This does not overlap the current clipping repair `WORK_LOG.md` commit, so the
+safe next step is to amend this barrier record into the local docs checkpoint,
+rebase onto `origin/master`, and push again.
+
+### Next Hypothesis
+
+Amend, rebase, push, then continue into ingestion/candidate snapshot contracts.
+
+### Why The Loop Continues
+
+This is an administrative git race with another loop. It does not resolve or
+invalidate the target/filter/Base atual objectives.
