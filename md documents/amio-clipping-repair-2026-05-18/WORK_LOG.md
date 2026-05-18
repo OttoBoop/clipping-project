@@ -1753,3 +1753,66 @@ auth/password workstream.
 
 A pushed fix is not a live proof. The deploy was still serving old JS, and the
 authenticated Base atual endpoints remain gated.
+
+## 2026-05-18 - Thirtieth Contract Cycle: Real Short-Name Error Shape
+
+### Objective Reviewed
+
+The original complaint named a concrete failure mode: adding a name could
+collapse into "Não foi possível adicionar esse nome" without saying why or how
+to fix it. The long-term goal requires actionable error cause, field, impact,
+and correction path.
+
+### Audit Performed
+
+Inspected `/api/targets` validation and frontend error parsing. Existing tests
+covered structured errors through monkeypatches, but not the real short-name
+validation path from `clean_target_payload(...)`.
+
+### Result
+
+Added a tracked contract test for posting `{"display_name": "ab"}` to
+`/api/targets`. The expected response is HTTP 400 with:
+
+```text
+error=target_validation_error
+field=display_name
+message=Informe um nome de exibicao com pelo menos 3 caracteres.
+suggestion=Digite um nome de exibicao com 3 caracteres ou mais.
+```
+
+The test also asserts the payload does not contain "Não foi possível", so the
+specific validation cause cannot be masked by a generic failure message.
+
+Command:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_targets_api_validation_errors_are_public_400s \
+  tests/test_admin_ui.py::test_targets_api_short_name_error_explains_field_and_fix \
+  tests/test_admin_ui.py::test_targets_api_operation_errors_are_structured \
+  -q
+```
+
+Result: `3 passed in 0.65s`.
+
+Then ran the broader target/admin/export checkpoint:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_targets_jobs.py tests/test_admin_ui.py tests/test_export_mobile_snapshot_pages.py \
+  -q
+```
+
+Result: `102 passed in 2.94s`.
+
+### Next Hypothesis
+
+Commit this regression guard. After that, re-check whether the runtime-count JS
+fix has reached the published site.
+
+### Why The Loop Continues
+
+This locks one error path, but it is still a contract checkpoint. The deployed
+JS was stale on the previous audit, and authenticated live endpoints remain
+blocked by viewer login.

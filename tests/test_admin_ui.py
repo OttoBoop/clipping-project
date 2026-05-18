@@ -743,6 +743,45 @@ def test_targets_api_validation_errors_are_public_400s(monkeypatch, tmp_path):
     assert "Revise" in payload["detail"]["suggestion"]
 
 
+def test_targets_api_short_name_error_explains_field_and_fix(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    db_admin = importlib.import_module("web_app.db_admin")
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "flavio_valle",
+                    "label": "Flavio Valle",
+                    "display_name": "Flavio Valle",
+                    "primary": True,
+                    "keywords": ["Flavio Valle"],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    with TestClient(app) as client:
+        csrf = login(client)
+        response = client.post("/api/targets", headers=csrf_header(csrf), json={"display_name": "ab"})
+
+    assert response.status_code == 400
+    payload = response.json()
+    assert payload["error"] == "target_validation_error"
+    assert payload["message"] == "Informe um nome de exibicao com pelo menos 3 caracteres."
+    assert payload["field"] == "display_name"
+    assert payload["suggestion"] == "Digite um nome de exibicao com 3 caracteres ou mais."
+    assert payload["detail"] == {
+        "code": "target_validation_error",
+        "message": "Informe um nome de exibicao com pelo menos 3 caracteres.",
+        "field": "display_name",
+        "suggestion": "Digite um nome de exibicao com 3 caracteres ou mais.",
+    }
+    assert "Não foi possível" not in json.dumps(payload, ensure_ascii=False)
+
+
 def test_targets_api_operation_errors_are_structured(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     app_module = importlib.import_module("web_app.app")
