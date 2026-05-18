@@ -1258,3 +1258,97 @@ unblocked proof:
 The docs explicitly say a deploy, a live `401`, or a single smoke is not a stop
 condition. This cycle improved the Render contract but did not prove live
 viewer scoping.
+
+## 2026-05-19 - Loop Cycle: Post-Deploy Gate Check And Local Scoping Contracts
+
+### Objective Reviewed
+
+Returned to the product-loop docs after the deploy checkpoint. The next
+unblocked objective from `ACTIVE_NEXT_ACTION.md` and
+`SYSTEM_REVIEW_CHECKLIST.md` was: keep the live logged-out privacy gate checked
+while proving the authenticated scoping contract locally until Render has
+viewer passwords configured.
+
+### Render Audit
+
+Polled production after the path-limited `render.yaml`/loop-protocol commit.
+The live surface stayed gated:
+
+```text
+root=200/login
+assets/clipping-data.json=401
+viewerAuthConfigured=false
+```
+
+Repeated samples:
+
+```text
+12:30:36 root=200/login data=401 "viewerAuthConfigured":false
+12:30:52 root=200/login data=401 "viewerAuthConfigured":false
+12:31:13 root=200/login data=401 "viewerAuthConfigured":false
+12:31:28 root=200/login data=401 "viewerAuthConfigured":false
+12:31:44 root=200/login data=401 "viewerAuthConfigured":false
+12:32:00 root=200/login data=401 "viewerAuthConfigured":false
+12:32:16 root=200/login data=401 "viewerAuthConfigured":false
+12:32:32 root=200/login data=401 "viewerAuthConfigured":false
+```
+
+### Local Authenticated Contract Tests
+
+Because production cannot accept viewer logins until
+`CLIPPING_VIEWER_PASSWORDS` exists on Render, ran focused local contracts for
+the same acceptance path:
+
+```bash
+.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_dashboard_payload_and_raw_text_are_password_scoped \
+  tests/test_admin_ui.py::test_viewer_profile_scope_can_come_from_reviewable_config_file \
+  tests/test_admin_ui.py::test_dashboard_shell_marks_viewer_session_before_payload_load \
+  tests/test_admin_ui.py::test_viewer_cannot_widen_live_results_or_write_admin_actions \
+  tests/test_admin_ui.py::test_admin_write_apis_reject_missing_or_bad_csrf \
+  tests/test_admin_ui.py::test_targets_api_is_login_scoped_and_admin_uploads_target_manifest \
+  tests/test_admin_ui.py::test_hosted_dashboard_enables_same_origin_api_polling \
+  -q
+```
+
+Result:
+
+```text
+7 passed in 0.67s
+```
+
+### Evidence
+
+The local contracts cover:
+
+- scoped dashboard payload and scoped raw texts;
+- profile scopes loaded from reviewable config;
+- viewer shell marked readonly before payload load;
+- direct live-results widening blocked for viewers;
+- viewer write/admin actions rejected;
+- admin CSRF still required;
+- targets API scoped by login;
+- hosted dashboard uses same-origin API polling after login.
+
+### Remaining Blocker
+
+Production still reports `viewerAuthConfigured=false`. This is the hard blocker
+for proving live viewer profiles. The code, docs, and Render blueprint now all
+name `CLIPPING_VIEWER_PASSWORDS`, but the secret value still has to exist in
+Render.
+
+### Next Objective From Docs
+
+Re-read the objective docs again and continue with the next unblocked review:
+
+1. inspect client UI hiding/no-fake-UI behavior against the deployed JS and
+   local viewer shell;
+2. check static export boundaries so private client demos do not point at
+   GitHub Pages/Wix/static raw JSON;
+3. keep `viewerAuthConfigured=false` visible as the production blocker until a
+   live viewer password can be tested.
+
+### Why The Loop Continues
+
+The authenticated scoping tests passed, but the live site still cannot prove a
+viewer profile. Passing local contracts is a checkpoint, not completion.
