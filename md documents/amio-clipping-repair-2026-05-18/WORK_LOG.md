@@ -4208,3 +4208,32 @@ behavior. Do not stop at healthy hosted static assets.
 The site is healthy and the hosted static JS is current, but the live authenticated
 Base atual payload cannot be inspected from this session. The loop remains
 useful through local contracts and source review.
+
+## 2026-05-18 - Seventy-Third Long-Term Anchor Hardening Cycle
+
+### Objective Reviewed
+
+The updated output anchor must remain easy for future agents to find even after
+context compaction or hurried handoff.
+
+### Audit Performed
+
+- Re-read `LONG_TERM_GOALS.md` after the hosted watch.
+- Added a dedicated `Current Mandatory Output Anchor` section with the updated
+  anchor in a plain text code block.
+
+### Result
+
+The long-term memory now contains both Otávio's source prompt and a clean current
+anchor block. Future agents do not need to parse nested quoted text to recover
+the required output prefix.
+
+### Next Hypothesis
+
+Commit this documentation hardening, then continue with another source or local
+contract audit.
+
+### Why The Loop Continues
+
+This strengthens memory but does not finish the product loop. The next cycle
+must return to target/filter/Base atual behavior.

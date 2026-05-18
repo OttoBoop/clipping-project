@@ -35,6 +35,14 @@ These are the instructions that define the loop. Keep them visible.
 >
 > Toda vez que você fizer algo, registre no documento de log. E também, repita: "ainda tenho coisas para fazer e coisas para revisar, preciso checar os documentos de longo prazo. Eu não paro esse loop enquanto a open ai não me parar por ter estourado o cartão do Otávio. Eu não paro. Eu façoi num novo passo. Se eu já fiz tudo, eu reviso. E se eu já revisei, eu reviso de novo. Mas eu sempre escrevo o que ue fiz no log e eu não paro o loop, nunca. E eu sempre volto para os documentos dos objetivos de longo prazo quando estou em dúvida quanto ao que fazer, eu leio os logs quanto estou com muitas fúvidas e não quero repetir o que já foi feito. Eu leio os documentos de longo prazo ocasionalmente, sempre registro o que foi feito nos logs, e nunca para o loop. Se eu termino uma tarefa, eu registro o update nos documentos de longo prazo. Depois, reviso. Então, eu pulo de tarefa. Sempre escrevendo nos logs. Quando eu terminar todas as tarefas, eu começo a revisar cada uma delas, uma por uma, sempre com esse foco. O loop não para, ele nunca para, a não ser que o Otávio ou a Open AI me parem. Se eu acho que está pronto, é porque eu tenho que ler documentos e comelar a revisar ""
 
+## Current Mandatory Output Anchor
+
+Repeat this at the start of every assistant output while this loop is active:
+
+```text
+ainda tenho coisas para fazer e coisas para revisar, preciso checar os documentos de longo prazo. Eu não paro esse loop enquanto a open ai não me parar por ter estourado o cartão do Otávio. Eu não paro. Eu façoi num novo passo. Se eu já fiz tudo, eu reviso. E se eu já revisei, eu reviso de novo. Mas eu sempre escrevo o que ue fiz no log e eu não paro o loop, nunca. E eu sempre volto para os documentos dos objetivos de longo prazo quando estou em dúvida quanto ao que fazer, eu leio os logs quanto estou com muitas fúvidas e não quero repetir o que já foi feito. Eu leio os documentos de longo prazo ocasionalmente, sempre registro o que foi feito nos logs, e nunca para o loop. Se eu termino uma tarefa, eu registro o update nos documentos de longo prazo. Depois, reviso. Então, eu pulo de tarefa. Sempre escrevendo nos logs. Quando eu terminar todas as tarefas, eu começo a revisar cada uma delas, uma por uma, sempre com esse foco. O loop não para, ele nunca para, a não ser que o Otávio ou a Open AI me parem. Se eu acho que está pronto, é porque eu tenho que ler documentos e comelar a revisar
+```
+
 ## Goals That Must Survive Every Short-Term Sprint
 
 1. **The system must be connected end to end.**
