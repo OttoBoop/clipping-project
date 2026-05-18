@@ -141,6 +141,15 @@ If the answer to any self-test is "send final now", the protocol failed.
    - Incorrect next step: `git add .`, broad cleanup, or reverting other
      agents' files.
 
+6. **Stale static artifact simulation.**
+   - Situation: tracked `assets/clipping-data.json` has target rows or counts
+     that disagree with `data/targets.json` or article-level `targetKeys`.
+   - Correct next step: verify export-builder behavior in memory, log the
+     mismatch, and require an explicit source-dataset decision before
+     regenerating large static artifacts.
+   - Incorrect next step: overwrite tracked assets from whichever local DB
+     happens to exist.
+
 ## Checkpoint, Blocker, And Exit Meanings
 
 - **Checkpoint:** a test pass, commit, push, deploy, smoke, log entry, or
@@ -168,6 +177,10 @@ or replaced by a higher-priority live failure:
 - Hosted dashboard not calling `/api/update/status` or `/api/update/live-results`.
 - Target metadata counts not matching article-level `targetKeys`.
 - A new target appearing in `/api/targets` but not in filters/export/live data.
+- Tracked static artifacts whose target rows/counts disagree with
+  `data/targets.json` or article-level `targetKeys`. Do not regenerate large
+  static assets blindly from a local DB unless the intended source dataset is
+  identified.
 
 ## Log Format
 

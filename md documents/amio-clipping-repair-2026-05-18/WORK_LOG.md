@@ -1606,3 +1606,44 @@ as proof of current target/filter behavior.
 This found a real artifact watch item, but not a safe patch to apply blindly.
 The next cycle should keep contract tests and accessible live checks moving
 while this static regeneration decision remains open.
+
+## 2026-05-18 - Twenty-Seventh Loop Hardening: Static Artifact Safety Rule
+
+### Objective Reviewed
+
+The previous cycle found a real mismatch in the tracked static payload:
+`assets/clipping-data.json` omits the active `shakira` target and has target
+metadata counts that disagree with article-level `targetKeys`. The long-term
+goal says filters/export/live data must be connected, but the dirty-worktree
+rules say generated assets cannot be overwritten blindly.
+
+### Audit Performed
+
+Updated `LOOP_OPERATING_PROTOCOL.md` to add a stale-static-artifact self-test
+and a watch item for tracked payload counts that disagree with target config or
+article-level target keys.
+
+### Result
+
+The protocol now distinguishes two facts:
+
+```text
+export builder from the current DB can produce internally consistent target counts
+tracked assets/clipping-data.json is stale/inconsistent against the tracked target config
+```
+
+The required behavior is to log the mismatch, verify builder behavior in
+memory, and get an explicit source-dataset decision before replacing a large
+tracked static snapshot.
+
+### Next Hypothesis
+
+Search the tracked tests for a safe static-artifact contract. If there is no
+tracked test that catches target-row/count drift without relying on the local DB
+dataset, document the gap and keep the loop on local/live-accessible contracts.
+
+### Why The Loop Continues
+
+The protocol is stronger, but this is a checkpoint. The stale static artifact
+watch item still needs either a source-dataset decision or a focused contract
+that can safely fail before generated assets drift again.
