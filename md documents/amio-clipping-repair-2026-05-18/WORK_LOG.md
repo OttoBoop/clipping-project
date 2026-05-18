@@ -2927,3 +2927,60 @@ restore/archive frontend contracts.
 
 This improves one response path, but the loop still has hosted deploy watch and
 more management edges to audit.
+
+## 2026-05-19 - Forty-Ninth Contract Cycle: Archive/Restore During Running Update
+
+### Objective Reviewed
+
+The target-management loop needs all secondary-name actions to remain available
+while an active update uses its frozen target snapshot. Edit had a browser guard;
+archive and restore still needed the same UI-level proof.
+
+### Audit Performed
+
+- Added a Playwright contract with a running update, one active secondary
+  target, and one archived secondary target.
+- Routed archive and restore POSTs through the browser flow with CSRF.
+- Verified archive confirmation is enabled, restore is enabled from the archived
+  section, and neither flow shows the old "Aguarde a atualização terminar"
+  blocker.
+- Verified restore success still mentions Base atual sync and active-job
+  snapshot behavior.
+
+### Result
+
+Added
+`tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_archive_restore_stay_available_during_running_update`.
+
+Focused check:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_archive_restore_stay_available_during_running_update \
+  -q
+```
+
+Result: `1 passed in 1.46s`.
+
+Related checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  tests/test_admin_ui.py::test_target_mutations_remain_available_while_update_is_active \
+  tests/test_admin_ui.py::test_targets_api_lists_archived_and_uploads_management_manifests \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  -q
+```
+
+Result: `11 passed in 8.85s`.
+
+### Next Hypothesis
+
+Commit this browser guard, push, then do another live deployment check and look
+for remaining target-management error paths.
+
+### Why The Loop Continues
+
+Create, edit, archive, and restore now have stronger UI/API contracts, but live
+auth-gated verification and remaining error-message paths still need review.

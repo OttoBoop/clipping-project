@@ -593,6 +593,145 @@ class TestFunctionalSanity:
         assert "continua com os nomes congelados" in message
         assert "Aguarde a atualização terminar" not in message
 
+    def test_manage_target_archive_restore_stay_available_during_running_update(self, browser_ctx, local_server):
+        """Archive/restore controls should stay usable while the active job uses its snapshot."""
+        page = browser_ctx.new_page()
+        rows = {
+            "ana_teste": {
+                "key": "ana_teste",
+                "label": "Ana Teste",
+                "primary": False,
+                "archived": False,
+            },
+            "beta_antigo": {
+                "key": "beta_antigo",
+                "label": "Beta Antigo",
+                "primary": False,
+                "archived": True,
+                "archive_reason": "Cadastro antigo.",
+            },
+        }
+
+        def csrf(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps({"csrf": "test-csrf"}),
+            )
+
+        def targets(route):
+            target_rows = [
+                {"key": "flavio_valle", "label": "Flávio Valle", "primary": True, "archived": False},
+                rows["ana_teste"],
+                rows["beta_antigo"],
+            ]
+            if "include_archived=1" not in route.request.url:
+                target_rows = [row for row in target_rows if not row.get("archived")]
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps({"targets": target_rows, "primaryKeys": ["flavio_valle"]}, ensure_ascii=False),
+            )
+
+        def archive(route):
+            rows["ana_teste"] = {
+                **rows["ana_teste"],
+                "archived": True,
+                "archive_reason": "Arquivado pelo painel de gerenciamento.",
+            }
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        **rows["ana_teste"],
+                        "activeJobNotice": (
+                            "Alteração salva agora. A atualização em andamento continua com os nomes "
+                            "congelados no início; esta mudança vale para a Base atual e para as próximas rodadas."
+                        ),
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        def restore(route):
+            rows["beta_antigo"] = {**rows["beta_antigo"], "archived": False}
+            rows["beta_antigo"].pop("archive_reason", None)
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        **rows["beta_antigo"],
+                        "targetSync": {
+                            "targetKey": "beta_antigo",
+                            "updatedCount": 0,
+                            "mentionsInserted": 0,
+                            "storiesTouched": 0,
+                        },
+                        "activeJobNotice": (
+                            "Alteração salva agora. A atualização em andamento continua com os nomes "
+                            "congelados no início; esta mudança vale para a Base atual e para as próximas rodadas."
+                        ),
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        def route_targets(route):
+            if route.request.method == "POST" and route.request.url.endswith("/archive"):
+                archive(route)
+                return
+            if route.request.method == "POST" and route.request.url.endswith("/restore"):
+                restore(route)
+                return
+            targets(route)
+
+        def update_status(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps({"current": {"id": "running-update", "status": "running"}, "recent": []}),
+            )
+
+        def live_results(route):
+            route.fulfill(status=200, content_type="application/json", body=json.dumps({"items": []}))
+
+        page.route("**/api/csrf", csrf)
+        page.route("**/api/targets**", route_targets)
+        page.route("**/api/update/status", update_status)
+        page.route("**/api/update/live-results**", live_results)
+
+        try:
+            page.goto(f"{local_server}/index.html", wait_until="domcontentloaded")
+            page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)
+            page.locator("#manageTargetsBox").evaluate("el => { el.open = true; }")
+            page.wait_for_selector('[data-target-archive-start="ana_teste"]:not([disabled])', timeout=10000)
+            page.click('[data-target-archive-start="ana_teste"]')
+            page.wait_for_selector('[data-target-archive-confirm="ana_teste"]:not([disabled])', timeout=10000)
+            page.click('[data-target-archive-confirm="ana_teste"]')
+            page.wait_for_selector("#manageTargetsMessage.is-ok", timeout=10000)
+            archive_message = page.locator("#manageTargetsMessage").inner_text()
+
+            page.locator("details.archived-targets-box").evaluate("el => { el.open = true; }")
+            page.wait_for_selector('[data-target-restore="beta_antigo"]:not([disabled])', timeout=10000)
+            page.click('[data-target-restore="beta_antigo"]')
+            page.wait_for_function(
+                "document.getElementById('manageTargetsMessage')?.textContent.includes('Nome restaurado')",
+                timeout=10000,
+            )
+            restore_message = page.locator("#manageTargetsMessage").inner_text()
+        finally:
+            page.close()
+
+        assert "Nome arquivado." in archive_message
+        assert "continua com os nomes congelados" in archive_message
+        assert "Aguarde a atualização terminar" not in archive_message
+        assert "Nome restaurado. Ele já vale para a Base atual e para próximas rodadas." in restore_message
+        assert "A base atual foi conferida para esse nome." in restore_message
+        assert "continua com os nomes congelados" in restore_message
+        assert "Aguarde a atualização terminar" not in restore_message
+
     def test_load_more_works(self, browser_ctx, local_server):
         """Load-more button should increase article count."""
         page = browser_ctx.new_page()
