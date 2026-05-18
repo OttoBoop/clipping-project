@@ -3699,6 +3699,103 @@ update frequency, delivery format, and continued Render live verification.
 
 ### Push Evidence
 
+The demo strategy reached `master`:
+
+```text
+git push origin HEAD:master
+90113ca..40219d8  HEAD -> master
+commit=40219d8 docs: add safe demo profile strategy
+```
+
+Render accepted the commit:
+
+```text
+deploy=dep-d86e6hsm0tmc739scr50
+commit=40219d8 docs: add safe demo profile strategy
+status=build_in_progress
+previous live=90113ca docs: label cleaned Rio economic sample
+```
+
+Production privacy smoke while deploy builds:
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+```
+
+### Next Objective From Docs
+
+Define included update frequency and delivery format for the V1 package so the
+sellable offer remains bounded and cost-aware.
+
+## 2026-05-19 - Loop Cycle: V1 Delivery Scope
+
+### Objective Reviewed
+
+The first sellable package still needed concrete delivery boundaries so the
+product does not become unlimited manual work.
+
+### Action Taken
+
+Added:
+
+```text
+V1_DELIVERY_SCOPE.md
+```
+
+Updated:
+
+```text
+FIRST_SELLABLE_PACKAGE.md
+OPERATOR_COST_DISCIPLINE.md
+ACTIVE_NEXT_ACTION.md
+```
+
+### Decision
+
+Recommended first paid offer is a 30-day pilot:
+
+```text
+up to 5 monitored people/topics
+2 operator-run updates per week
+private dashboard
+one weekly manual summary/export
+business-hours password/access support
+end-of-pilot renewal/scope review
+```
+
+Not included in base: realtime alerts, daily summaries, unlimited targets,
+self-service target creation, custom site/repo, social/TV/radio/print
+monitoring, crisis-room support, or finished Rio economic indicator.
+
+### Barrier Status
+
+No technical blocker. Pricing remains unfinalized until operator time/cost is
+metered during a pilot.
+
+### Why The Loop Continues
+
+The sellable scope is bounded, but the loop still needs Render polling,
+password/offboarding review, admin operator path testing when credentials are
+available, and continued Rio source refinement.
+
+### Rebase Before Publish
+
+`origin/master` advanced while the V1 scope was being written. The V1 scope
+docs were stashed path-limited, rebased, and reapplied without conflict.
+
+```text
+origin/master -> b184dd2 docs: log hosted watch after rule reaffirmation
+git rebase origin/master -> success
+git stash pop -> success
+```
+
+### Push Evidence
+
 The query-file implementation and revised sample reached `master`:
 
 ```text

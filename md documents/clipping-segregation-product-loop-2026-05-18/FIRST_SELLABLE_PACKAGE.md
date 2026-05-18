@@ -142,7 +142,8 @@ Remaining before first paid client:
 
 - create a dedicated demo/client profile that does not reuse Flavio/Shakira;
   strategy documented in `DEMO_PROFILE_STRATEGY.md`;
-- define update frequency and included targets in writing;
+- define update frequency and included targets in writing; initial bounded
+  pilot scope documented in `V1_DELIVERY_SCOPE.md`;
 - test the admin/operator target-update path with operator credentials;
 - write password rotation and offboarding instructions;
 - decide whether the first delivery is dashboard-only or dashboard plus manual

@@ -100,7 +100,7 @@ Continue the production loop. Current priority from the docs:
    dimension refinement before any production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; next packaging step is defining included
-   update frequency and delivery format;
+   update frequency and delivery format; V1 pilot scope now exists;
 6. review costs, password rotation, and operations;
 7. then re-read the docs and choose the next weak axis.
 

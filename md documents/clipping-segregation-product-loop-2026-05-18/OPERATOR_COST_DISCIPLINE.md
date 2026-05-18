@@ -60,6 +60,8 @@ For a first paid client, define in writing:
 - what counts as an add-on;
 - what is explicitly not included.
 
+Initial bounded pilot scope is documented in `V1_DELIVERY_SCOPE.md`.
+
 ## Loop Check
 
 Before adding a feature because a possible buyer asks for it, record:
