@@ -1487,3 +1487,60 @@ run another small tracked contract if needed.
 Public health/assets are stable, but authenticated live verification remains
 blocked and the recent git history shows parallel loop documentation that should
 be read for coordination risk.
+
+## 2026-05-18 - Twenty-Fifth Unattended Cycle: Parallel Product Loop Coordination
+
+### Objective Reviewed
+
+The previous live boundary cycle found recent commits from the parallel
+segregation/product loop. The target/live-base loop needed to read them so it
+does not contradict auth/profile decisions or accidentally use static exports
+as private proof.
+
+### Audit Performed
+
+- Inspected commits:
+  - `ad6a479 docs: log product loop scoping contract cycle`
+  - `bdb4703 docs: log viewer ui and static boundary cycle`
+- Read the current `STATIC_EXPORT_POLICY.md`.
+- Read recent product-loop work-log entries about Render auth gating, local
+  profile scoping, static GitHub Pages boundaries, and Rio economic profile
+  isolation.
+
+### Result
+
+The parallel docs agree with this loop's current live blocker:
+
+```text
+Render root=200/login
+assets/clipping-data.json=401
+viewerAuthConfigured=false
+remaining blocker = missing CLIPPING_VIEWER_PASSWORDS on Render
+```
+
+They also clarify that GitHub Pages/static exports still serve JSON/raw payloads
+and must not be treated as private client access. That means this target/live
+loop should not use GitHub Pages static JSON as proof of private live Base atual
+behavior.
+
+No contradiction was found with this loop's target/live-base protocol. The
+coordination rule is:
+
+```text
+Use local contracts for target/live behavior while production viewer auth is
+missing; do not modify auth/profile secrets or static export policy from this
+loop.
+```
+
+### Next Hypothesis
+
+The next unblocked target/live-base action is another accessible regression or
+static analysis pass, not a production authenticated smoke. If live viewer
+credentials become available, rerun status/live-results/dashboard/export checks
+through the authenticated path.
+
+### Why The Loop Continues
+
+Reading the parallel docs prevents cross-loop mistakes, but it is still a
+checkpoint. Authenticated production verification remains blocked by missing
+viewer credentials.
