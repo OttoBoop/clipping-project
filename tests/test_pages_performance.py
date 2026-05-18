@@ -492,6 +492,107 @@ class TestFunctionalSanity:
         assert "1 história" in text
         assert active
 
+    def test_manage_target_edit_stays_available_during_running_update(self, browser_ctx, local_server):
+        """A running update should not block editing names for future/base sync."""
+        page = browser_ctx.new_page()
+        current_label = {"value": "Ana Teste"}
+
+        def csrf(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps({"csrf": "test-csrf"}),
+            )
+
+        def targets(route):
+            url = route.request.url
+            rows = [
+                {"key": "flavio_valle", "label": "Flávio Valle", "primary": True, "archived": False},
+                {"key": "ana_teste", "label": current_label["value"], "primary": False, "archived": False},
+            ]
+            body = {"targets": rows, "primaryKeys": ["flavio_valle"]}
+            if "include_archived=1" not in url:
+                body["targets"] = [row for row in rows if not row.get("archived")]
+            route.fulfill(status=200, content_type="application/json", body=json.dumps(body, ensure_ascii=False))
+
+        def update_target(route):
+            current_label["value"] = "Ana Nova"
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        "key": "ana_teste",
+                        "label": "Ana Nova",
+                        "primary": False,
+                        "archived": False,
+                        "targetSync": {
+                            "targetKey": "ana_teste",
+                            "updatedCount": 0,
+                            "mentionsInserted": 0,
+                            "storiesTouched": 0,
+                        },
+                        "activeJobNotice": (
+                            "Nome salvo agora. A atualização em andamento continua com os nomes "
+                            "congelados no início; esta mudança vale para a base atual e para as próximas rodadas."
+                        ),
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        def update_status(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        "current": {
+                            "id": "running-update",
+                            "status": "running",
+                            "progress": {"targetKeys": ["flavio_valle"]},
+                        },
+                        "recent": [],
+                    }
+                ),
+            )
+
+        def live_results(route):
+            route.fulfill(status=200, content_type="application/json", body=json.dumps({"items": []}))
+
+        def route_targets(route):
+            if route.request.method == "PATCH":
+                update_target(route)
+                return
+            targets(route)
+
+        page.route("**/api/csrf", csrf)
+        page.route("**/api/targets**", route_targets)
+        page.route("**/api/update/status", update_status)
+        page.route("**/api/update/live-results**", live_results)
+
+        try:
+            page.goto(f"{local_server}/index.html", wait_until="domcontentloaded")
+            page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)
+            page.locator("#manageTargetsBox").evaluate("el => { el.open = true; }")
+            page.wait_for_selector('[data-target-edit="ana_teste"]:not([disabled])', timeout=10000)
+            assert page.locator("#manageTargetsBlocked").is_hidden()
+            page.click('[data-target-edit="ana_teste"]')
+            name_input = page.locator('[data-manage-target-key="ana_teste"] input[name="display_name"]')
+            name_input.wait_for(state="visible", timeout=10000)
+            assert name_input.is_enabled()
+            name_input.fill("Ana Nova")
+            page.click('[data-manage-target-key="ana_teste"] button[type="submit"]')
+            page.wait_for_selector("#manageTargetsMessage.is-ok", timeout=10000)
+            message = page.locator("#manageTargetsMessage").inner_text()
+        finally:
+            page.close()
+
+        assert "Nome extra atualizado." in message
+        assert "A base atual foi conferida para esse nome." in message
+        assert "continua com os nomes congelados" in message
+        assert "Aguarde a atualização terminar" not in message
+
     def test_load_more_works(self, browser_ctx, local_server):
         """Load-more button should increase article count."""
         page = browser_ctx.new_page()

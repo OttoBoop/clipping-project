@@ -2805,3 +2805,63 @@ missing frontend contracts or confusing copy.
 
 The fix is pushed and locally verified, but the hosted asset has not caught up.
 That is explicitly a watch item, not an exit.
+
+## 2026-05-19 - Forty-Seventh Contract Cycle: Edit During Running Update
+
+### Objective Reviewed
+
+Otavio called out that updating a name while an update had run/was running
+should not be blocked by unrelated job state. The backend already had a contract
+for target mutations remaining available during active jobs, but the browser UI
+needed a guard proving the management form itself stays usable and shows the
+snapshot explanation.
+
+### Audit Performed
+
+- Inspected `targetActionsLocked()`, `renderManageTargets()`, management edit
+  click handling, and the `.manage-target-form` submit path.
+- Added a Playwright contract where `/api/update/status` reports `running`,
+  `/api/targets?include_archived=1` returns a secondary target, and PATCH
+  `/api/targets/ana_teste` succeeds with `targetSync` plus `activeJobNotice`.
+- Verified the edit button is not disabled, the blocked warning is hidden, the
+  form input is enabled, and the success message includes both Base atual sync
+  and frozen-snapshot language.
+
+### Result
+
+Added
+`tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_edit_stays_available_during_running_update`.
+
+Focused check:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_edit_stays_available_during_running_update \
+  -q
+```
+
+Result: `1 passed in 1.65s`.
+
+Related dashboard/API/export guards:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  tests/test_admin_ui.py::test_target_mutations_remain_available_while_update_is_active \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_promotes_viewer_filters_when_scope_has_no_primary \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  -q
+```
+
+Result: `10 passed in 7.80s`.
+
+### Next Hypothesis
+
+Commit this UI contract, push it, and return to the live watch for both
+`activeTargetKeys.add(key)` and the parallel viewer-filter promotion line.
+
+### Why The Loop Continues
+
+This protects a second original complaint, but it is still a checkpoint. The
+hosted bundle and adjacent restore/archive/error flows still need repeated
+review.
