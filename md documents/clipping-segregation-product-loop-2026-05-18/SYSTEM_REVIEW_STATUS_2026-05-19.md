@@ -26,6 +26,7 @@ loginConfigured=true
 viewerProfilesConfigured=true
 viewerAuthConfigured=false
 missingConfig=["CLIPPING_VIEWER_PASSWORDS"]
+demoViewerConfigured=true after workaround deploy
 ```
 
 Meaning:
@@ -87,6 +88,22 @@ Render missing CLIPPING_VIEWER_PASSWORDS
 
 The code, docs, and `render.yaml` now declare the variable, but `/healthz`
 still reports `viewerAuthConfigured=false`.
+
+## Empty Demo Workaround
+
+The app now has a public empty-demo viewer path for production verification
+while real viewer passwords are absent:
+
+```text
+password=demo-cliente -> role=viewer profile=demo_cliente
+```
+
+This path is intentionally limited:
+
+- only enabled when real `CLIPPING_VIEWER_PASSWORDS` are absent;
+- only enabled while `demo_cliente` has no target keys;
+- returns an empty scoped payload and empty raw texts;
+- proves viewer session/readonly/scoped-empty behavior, not real client data.
 
 ## Static Boundary
 

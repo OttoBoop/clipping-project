@@ -28,10 +28,36 @@ flavio=...;shakira=...;rio_economico=...;demo_cliente=...
 ```text
 CLIPPING_VIEWER_PROFILES=<json profile override>
 CLIPPING_VIEWER_PROFILES_PATH=/absolute/path/to/viewer_profiles.json
+CLIPPING_EMPTY_DEMO_PASSWORD=<public empty-demo password override>
+CLIPPING_DISABLE_PUBLIC_EMPTY_DEMO=1
+CLIPPING_ENABLE_PUBLIC_EMPTY_DEMO_WITH_REAL_VIEWERS=1
 ```
 
 Use these only when Render/local operations need to override
 `data/viewer_profiles.json`.
+
+## Public Empty Demo Workaround
+
+When `CLIPPING_VIEWER_PASSWORDS` is not configured, the app allows a limited
+viewer login for `demo_cliente` with password:
+
+```text
+demo-cliente
+```
+
+This is not a private client password. It is a live-production workaround for
+proving the viewer login/session/readonly/scoped-empty path without exposing
+Flavio, Shakira, Rio, or client data.
+
+Safety rules:
+
+- it only works while real viewer passwords are missing;
+- it only works if `demo_cliente` has no target keys;
+- it can be disabled with `CLIPPING_DISABLE_PUBLIC_EMPTY_DEMO=1`;
+- it can be re-enabled alongside real viewers only with
+  `CLIPPING_ENABLE_PUBLIC_EMPTY_DEMO_WITH_REAL_VIEWERS=1`;
+- it does not satisfy the production requirement for real
+  `CLIPPING_VIEWER_PASSWORDS`.
 
 ## Profile Scope File
 

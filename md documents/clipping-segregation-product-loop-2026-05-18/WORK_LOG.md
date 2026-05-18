@@ -1839,3 +1839,81 @@ contract and product-readiness reviews.
 ### Why The Loop Continues
 
 The live gate is stable, but Axis 1 is not complete without live viewer proof.
+
+## 2026-05-19 - Loop Cycle: Public Empty Demo Viewer Workaround
+
+### Objective Reviewed
+
+Otavio correctly rejected treating missing Render viewer passwords as a hard
+stop. The loop returned to the live requirement and looked for a safe workaround
+that proves the viewer/session/readonly/scoping path on Render without
+committing real secrets or exposing client data.
+
+### Render/MCP Findings
+
+The Render MCP works when called with the known service id:
+
+```text
+serviceId=srv-d7p2p5beo5us739f9k40
+autoDeploy=yes
+url=https://clipping-project.onrender.com
+```
+
+The available Render MCP tools can read service/deploy state, but no available
+tool in this session exposes a safe environment-variable setter for the
+existing service.
+
+### Action Taken
+
+Implemented a public empty-demo viewer workaround:
+
+```text
+password: demo-cliente
+role: viewer
+profile: demo_cliente
+```
+
+Safety constraints:
+
+- enabled only when real `CLIPPING_VIEWER_PASSWORDS` are absent;
+- disabled automatically if `demo_cliente` has any target keys;
+- can be disabled with `CLIPPING_DISABLE_PUBLIC_EMPTY_DEMO=1`;
+- does not mark `viewerAuthConfigured` true;
+- keeps `missingConfig=["CLIPPING_VIEWER_PASSWORDS"]` until real viewer secrets
+  are configured.
+
+This gives the live site a way to prove viewer login, session cookie, readonly
+shell, empty scoped payload, empty raw texts, scoped targets, and rejected
+viewer writes without exposing Flavio/Shakira/Rio/client material.
+
+### Tests
+
+Passed:
+
+```text
+6 passed in 0.87s
+```
+
+Covered:
+
+- healthz safe fields;
+- missing viewer-password config;
+- empty demo login without viewer password env;
+- empty demo disabled when real viewer passwords exist;
+- scoped payload/raw text contract;
+- viewer cannot widen live results or write admin actions.
+
+### Remaining Blocker
+
+This is a workaround, not full completion. Real production viewer checks for
+Flavio/Shakira/Rio still require `CLIPPING_VIEWER_PASSWORDS` on Render.
+
+### Next Objective From Docs
+
+Run the broader focused suite, push to `master`, wait for Render, then smoke
+the live `demo-cliente` login path end to end.
+
+### Why The Loop Continues
+
+The workaround creates a live verification path; it still has to deploy and be
+smoked on the actual Render site.

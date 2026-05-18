@@ -815,6 +815,7 @@ def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
         "authConfigured",
         "loginConfigured",
         "viewerAuthConfigured",
+        "demoViewerConfigured",
         "viewerProfilesConfigured",
         "missingConfig",
         "storage",
@@ -827,6 +828,7 @@ def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
     assert payload["authConfigured"] is True
     assert payload["loginConfigured"] is True
     assert payload["viewerAuthConfigured"] is True
+    assert payload["demoViewerConfigured"] is False
     assert payload["viewerProfilesConfigured"] is True
     assert payload["missingConfig"] == []
     assert payload["localWritesAllowed"] is True
@@ -848,8 +850,62 @@ def test_healthz_lists_missing_viewer_password_config(monkeypatch, tmp_path):
     payload = response.json()
     assert payload["loginConfigured"] is True
     assert payload["viewerAuthConfigured"] is False
+    assert payload["demoViewerConfigured"] is True
     assert payload["missingConfig"] == ["CLIPPING_VIEWER_PASSWORDS"]
     assert "test-password" not in json.dumps(payload, sort_keys=True)
+
+
+def test_empty_demo_viewer_login_works_without_viewer_password_env(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    monkeypatch.delenv("CLIPPING_VIEWER_PASSWORDS", raising=False)
+
+    with TestClient(app) as client:
+        login_response = client.post("/api/login", json={"password": "demo-cliente"})
+        payload_response = client.get("/assets/clipping-data.json")
+        raw_response = client.get("/assets/clipping-raw-texts.json")
+        targets_response = client.get("/api/targets")
+        write_response = client.post("/api/targets", json={"display_name": "Nao Pode"})
+
+    assert login_response.status_code == 200
+    assert login_response.json() == {"ok": True, "role": "viewer", "profile": "demo_cliente"}
+    assert payload_response.status_code == 200
+    payload = payload_response.json()
+    assert payload["meta"]["viewerRole"] == "viewer"
+    assert payload["meta"]["viewerProfile"] == "demo_cliente"
+    assert payload["targets"] == []
+    assert payload["stories"] == []
+    assert raw_response.status_code == 200
+    assert raw_response.json() == {}
+    assert targets_response.status_code == 200
+    assert targets_response.json()["targets"] == []
+    assert write_response.status_code == 401
+
+
+def test_empty_demo_password_disabled_when_real_viewer_passwords_exist(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+
+    with TestClient(app) as client:
+        response = client.post("/api/login", json={"password": "demo-cliente"})
+
+    assert response.status_code == 401
+
+
+def test_empty_demo_password_disabled_if_demo_profile_has_targets(monkeypatch, tmp_path):
+    profiles_path = tmp_path / "viewer_profiles.json"
+    profiles_path.write_text(
+        json.dumps({"profiles": {"demo_cliente": {"label": "Demo", "target_keys": ["flavio_valle"]}}}),
+        encoding="utf-8",
+    )
+    app, _ = load_test_app(monkeypatch, tmp_path, viewer_profiles_path=profiles_path)
+    monkeypatch.delenv("CLIPPING_VIEWER_PASSWORDS", raising=False)
+
+    with TestClient(app) as client:
+        login_response = client.post("/api/login", json={"password": "demo-cliente"})
+        health_response = client.get("/healthz")
+
+    assert login_response.status_code == 401
+    assert health_response.status_code == 200
+    assert health_response.json()["demoViewerConfigured"] is False
 
 
 def test_storage_current_files_are_runtime_mutable_only(monkeypatch, tmp_path):

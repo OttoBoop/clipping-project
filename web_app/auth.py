@@ -10,9 +10,13 @@ from typing import Any
 
 from fastapi import HTTPException, Request
 
+from .segmentation import viewer_profiles
+
 
 COOKIE_NAME = "clipping_admin"
 SESSION_SECONDS = 8 * 60 * 60
+PUBLIC_EMPTY_DEMO_PROFILE = "demo_cliente"
+PUBLIC_EMPTY_DEMO_PASSWORD = "demo-cliente"
 
 
 def _env_value(name: str) -> str:
@@ -27,8 +31,15 @@ def viewer_auth_configured() -> bool:
     return bool(viewer_passwords() and _env_value("CLIPPING_SESSION_SECRET"))
 
 
+def public_empty_demo_configured() -> bool:
+    return bool(public_empty_demo_passwords() and _env_value("CLIPPING_SESSION_SECRET"))
+
+
 def login_configured() -> bool:
-    return bool(_env_value("CLIPPING_SESSION_SECRET") and (_env_value("CLIPPING_ADMIN_PASSWORD") or viewer_passwords()))
+    return bool(
+        _env_value("CLIPPING_SESSION_SECRET")
+        and (_env_value("CLIPPING_ADMIN_PASSWORD") or viewer_passwords() or public_empty_demo_passwords())
+    )
 
 
 def missing_auth_config() -> list[str]:
@@ -131,10 +142,36 @@ def viewer_passwords() -> dict[str, str]:
     return result
 
 
+def _truthy_env(name: str) -> bool:
+    return _env_value(name).lower() in {"1", "true", "yes", "on"}
+
+
+def _profile_target_keys(profile: str) -> list[str]:
+    row = viewer_profiles().get(profile, {})
+    values = row.get("target_keys") if isinstance(row, dict) else []
+    return [str(value).strip() for value in values if str(value).strip()]
+
+
+def public_empty_demo_passwords() -> dict[str, str]:
+    if _truthy_env("CLIPPING_DISABLE_PUBLIC_EMPTY_DEMO"):
+        return {}
+    if viewer_passwords() and not _truthy_env("CLIPPING_ENABLE_PUBLIC_EMPTY_DEMO_WITH_REAL_VIEWERS"):
+        return {}
+    password = _env_value("CLIPPING_EMPTY_DEMO_PASSWORD") or PUBLIC_EMPTY_DEMO_PASSWORD
+    if not password:
+        return {}
+    if _profile_target_keys(PUBLIC_EMPTY_DEMO_PROFILE):
+        return {}
+    return {PUBLIC_EMPTY_DEMO_PROFILE: password}
+
+
 def login_identity(password: str) -> dict[str, str] | None:
     if check_password(password):
         return {"sub": "admin", "role": "admin", "profile": "admin"}
     for profile, expected in viewer_passwords().items():
+        if hmac.compare_digest(str(password or ""), expected):
+            return {"sub": profile, "role": "viewer", "profile": profile}
+    for profile, expected in public_empty_demo_passwords().items():
         if hmac.compare_digest(str(password or ""), expected):
             return {"sub": profile, "role": "viewer", "profile": profile}
     return None

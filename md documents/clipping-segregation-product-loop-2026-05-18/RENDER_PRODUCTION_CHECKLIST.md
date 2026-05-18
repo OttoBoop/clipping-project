@@ -58,6 +58,22 @@ For each configured viewer:
 - `/api/targets` returns only allowed target metadata;
 - mutation attempts return `401` or `403`.
 
+## Empty Demo Workaround Checks
+
+If Render still reports `viewerAuthConfigured=false`, verify the public empty
+demo workaround instead of stopping:
+
+- `/healthz` reports `demoViewerConfigured=true`;
+- login with `demo-cliente` returns role `viewer` and profile `demo_cliente`;
+- `/` has `data-clipping-session-role="viewer"`;
+- `/assets/clipping-data.json` returns no targets and no stories;
+- `/assets/clipping-raw-texts.json` returns no raw texts;
+- `/api/targets` returns no targets;
+- mutation attempts return `401` or `403`.
+
+This proves the viewer/session/readonly/scoped-empty path only. It does not
+replace real Flavio/Shakira/Rio viewer verification.
+
 ## Admin Checks
 
 - admin login returns role `admin`;
