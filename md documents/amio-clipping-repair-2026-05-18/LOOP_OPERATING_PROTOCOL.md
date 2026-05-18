@@ -55,6 +55,10 @@ immediately.
 Carry these watch items forward until each one is either fixed, proven stable,
 or replaced by a higher-priority live failure:
 
+- Live authentication gates that make status/live-results audits return 401.
+  Do not guess passwords or alter the auth workstream from this loop; log the
+  blocked audit and continue with accessible checks such as `/healthz`, static
+  assets, git history, and local contract tests.
 - Active durable update jobs with many pending source runs.
 - Any `failed_needs_fix` source runs or repeated source-run errors.
 - `/api/update/live-results?scope=base` returning empty while new saved

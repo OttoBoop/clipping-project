@@ -903,3 +903,68 @@ continue.
 The protocol itself says documentation is not an exit. Once committed, the next
 step is to re-anchor, audit the live site, log the result, and choose the next
 failure or watch item.
+
+## 2026-05-18 - Thirteenth Loop Cycle: Live Audit Hit Auth Gate
+
+### Objective Reviewed
+
+The active objective was the new No Idle Exit rule: do not stop after the docs
+commit. Start a live audit cycle immediately and record the next watch item.
+
+### Audit Performed
+
+- Checked `/api/update/status`.
+- Checked `/api/update/live-results?scope=base&limit=10`.
+- Checked `/assets/clipping-data.json`.
+- Ran a real browser smoke against `https://clipping-project.onrender.com/`.
+- Checked `/healthz`.
+- Checked recent git history for the live auth/profile commits.
+
+### Result
+
+The live site is now gated by the separate password/profile workstream:
+
+```text
+/api/update/status -> {"detail":"viewer_login_required"} HTTP 401
+/api/update/live-results?scope=base&limit=10 -> HTTP 401
+/assets/clipping-data.json -> HTTP 401
+/api/targets -> {"detail":"viewer_login_required"} HTTP 401
+/ -> login page "Acessar clipping"
+browser body_len=107
+browser status_requests=0
+browser live_requests=0
+browser has_base_atual=False
+```
+
+`/healthz` remains reachable:
+
+```text
+ok=true
+loginConfigured=true
+viewerProfilesConfigured=true
+job=status_unavailable
+```
+
+Recent origin history shows this came from the other workstream:
+
+```text
+011c584 docs: log live gated profile deploy
+9fa5d81 chore: trigger Render deploy for gated profiles
+12f836b feat: ship password-gated clipping profiles
+```
+
+### Next Hypothesis
+
+The target/live-base repair loop should not guess or change credentials. Future
+live audits need either an authenticated viewer/admin path supplied by the auth
+workstream or a documented unauthenticated audit endpoint. Until then, this loop
+can keep checking `/healthz`, static JS availability, git history, local
+contract tests, and any authenticated evidence provided by the password/profile
+agent.
+
+### Why The Loop Continues
+
+The docs hardening was not an exit. This audit found a new coordination watch
+item: live target/base verification is currently blocked by auth, not by the
+target matcher/export code itself. The next cycle should either coordinate an
+authenticated smoke path or continue with non-auth local/contract checks.
