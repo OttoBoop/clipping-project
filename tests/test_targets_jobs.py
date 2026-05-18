@@ -1335,7 +1335,14 @@ def test_process_candidates_uses_frozen_target_snapshot(monkeypatch, tmp_path):
         [candidate],
         options=ingest.IngestionOptions(
             target_keys=["ana_teste"],
-            target_snapshots=[Target(key="ana_teste", display_name="Ana Teste", keywords=["Ana Teste"])],
+            target_snapshots=[
+                {
+                    "key": "ana_teste",
+                    "display_name": "Ana Teste",
+                    "keywords": ["Ana Teste"],
+                    "primary": False,
+                }
+            ],
             date_from="2026-05-17",
             date_to="2026-05-17",
             db_path=str(db_file),
@@ -1344,6 +1351,61 @@ def test_process_candidates_uses_frozen_target_snapshot(monkeypatch, tmp_path):
 
     assert result.articles_inserted == 1
     assert result.mentions_inserted == 1
+    with sqlite3.connect(db_file) as conn:
+        rows = conn.execute("SELECT target_key, target_name, keyword_matched FROM mentions").fetchall()
+    assert rows == [("ana_teste", "Ana Teste", "Ana Teste")]
+
+
+def test_run_source_run_accepts_persisted_dict_target_snapshot(monkeypatch, tmp_path):
+    _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    from pipeline import ingest
+
+    spec = {
+        "preset": "custom",
+        "collector": "rss",
+        "target_keys": ["ana_teste"],
+        "target_snapshots": [
+            {
+                "key": "ana_teste",
+                "display_name": "Ana Teste",
+                "keywords": ["Ana Teste"],
+                "primary": False,
+            }
+        ],
+        "date_from": "2026-05-17",
+        "date_to": "2026-05-17",
+        "export": False,
+        "max_candidates": 10,
+        "max_process_seconds": 30,
+        "candidate_workers": 1,
+        "durable": True,
+    }
+    monkeypatch.setattr(jobs, "RSS_FEEDS", [{"source_name": "Fonte RSS", "url": "https://example.com/rss.xml"}])
+    jobs.create_job("dict-target-source-run", "update", spec, started_by="coworker")
+    jobs.ensure_source_runs("dict-target-source-run", spec, "ana_teste")
+
+    candidate = ingest.CandidateArticle(
+        title="Ana Teste confirma agenda cultural",
+        url="https://example.com/ana-teste-source-run",
+        source_name="Fonte RSS",
+        source_type="rss",
+        published_at="2026-05-17T12:00:00+00:00",
+        snippet="Ana Teste foi citada na programacao cultural.",
+        metadata={},
+    )
+    monkeypatch.setattr(jobs, "collect_source_run_candidates", lambda *_args: ([candidate], {}, True))
+
+    row = jobs.source_run_rows("dict-target-source-run")[0]
+    result = jobs.run_source_run(
+        "dict-target-source-run",
+        spec,
+        row,
+        target_label="Ana Teste",
+        cancel_event=threading.Event(),
+    )
+
+    assert result["articles_inserted"] == 1
+    assert jobs.source_run_rows("dict-target-source-run")[0]["status"] == "complete"
     with sqlite3.connect(db_file) as conn:
         rows = conn.execute("SELECT target_key, target_name, keyword_matched FROM mentions").fetchall()
     assert rows == [("ana_teste", "Ana Teste", "Ana Teste")]

@@ -550,3 +550,72 @@ separate agent/workstream.
   password-specific changes.
 - The segregation documentation folder remains separate; it was not merged into
   or used to replace this repair loop's long-term goals.
+
+## 2026-05-18 - Eighth Technical Loop: Frozen Target Snapshots Broke Source Runs
+
+### Problem Found
+
+The live site showed an active durable update repeatedly failing individual
+source runs with:
+
+```text
+'dict' object has no attribute 'key'
+```
+
+This was inside the correct long-term loop, not a password/profile issue:
+targets added or edited through the UI need to flow through durable jobs,
+candidate ingestion, SQLite mentions, live-results, export, and filters.
+
+### Cause
+
+Jobs correctly persist `target_snapshots` as JSON dictionaries so an active job
+keeps using the target names/keywords it started with. But `process_candidates`
+sent those dictionaries straight into `select_targets`, which still expected
+`Target` objects and read `target.key`.
+
+That meant the job-level snapshot fix could create the next failure: live
+source runs with frozen targets crashed before saving candidates.
+
+### Changes Made
+
+- Added normalization in `pipeline/ingest.py` so target dictionaries from
+  persisted job snapshots are converted back into `Target` objects before
+  selection and matching.
+- Kept `select_targets` tolerant of both real `Target` objects and JSON-style
+  target snapshots.
+- Hardened `web_app/jobs.py::target_to_snapshot` so it can safely receive a
+  dict or a `Target`.
+- Updated the frozen snapshot test to use a persisted dictionary, matching
+  the real durable-job contract.
+- Added a regression test that executes:
+  `job_source_runs -> run_source_run -> IngestionOptions.target_snapshots ->
+  process_candidates -> SQLite mentions`.
+
+### Verification
+
+Focused verification:
+
+```bash
+python -m py_compile pipeline/ingest.py web_app/jobs.py
+.venv_playwright/bin/pytest tests/test_targets_jobs.py::test_process_candidates_uses_frozen_target_snapshot tests/test_targets_jobs.py::test_run_source_run_accepts_persisted_dict_target_snapshot -q
+```
+
+Result: `2 passed in 0.51s`.
+
+Full target/job regression:
+
+```bash
+.venv_playwright/bin/pytest tests/test_targets_jobs.py -q
+```
+
+Result: `50 passed in 1.29s`.
+
+### Next Checks
+
+- Commit and push only the files in this target/live-base repair scope.
+- Verify the real Render site stops producing the repeated
+  `'dict' object has no attribute 'key'` source-run failure.
+- After the active job is no longer failing on source snapshots, recheck whether
+  published target counts still need a fresh export so secondary targets such
+  as `vorcaro` show article counts from actual article matches, not mixed-story
+  totals from a stale bundle.

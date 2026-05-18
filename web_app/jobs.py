@@ -551,16 +551,26 @@ def payload_list(payload: dict[str, Any], snake_key: str, camel_key: str) -> lis
     return value if isinstance(value, list) else []
 
 
+def target_field(target: Any, key: str, default: Any = "") -> Any:
+    if isinstance(target, dict):
+        return target.get(key, default)
+    return getattr(target, key, default)
+
+
 def target_to_snapshot(target: Any) -> dict[str, Any]:
     return {
-        "key": str(getattr(target, "key", "") or ""),
-        "label": str(getattr(target, "label", "") or ""),
-        "display_name": str(getattr(target, "display_name", "") or ""),
-        "keywords": [str(item) for item in (getattr(target, "keywords", None) or []) if str(item).strip()],
-        "exact_aliases": [str(item) for item in (getattr(target, "exact_aliases", None) or []) if str(item).strip()],
-        "className": str(getattr(target, "className", "") or ""),
-        "primary": bool(getattr(target, "primary", False)),
-        "priority": int(getattr(target, "priority", 2) or 2),
+        "key": str(target_field(target, "key", "") or ""),
+        "label": str(target_field(target, "label", "") or ""),
+        "display_name": str(target_field(target, "display_name", "") or ""),
+        "keywords": [str(item) for item in (target_field(target, "keywords", None) or []) if str(item).strip()],
+        "exact_aliases": [
+            str(item)
+            for item in (target_field(target, "exact_aliases", None) or target_field(target, "exactAliases", None) or [])
+            if str(item).strip()
+        ],
+        "className": str(target_field(target, "className", "") or target_field(target, "class_name", "") or ""),
+        "primary": bool(target_field(target, "primary", False)),
+        "priority": int(target_field(target, "priority", 2) or 2),
     }
 
 

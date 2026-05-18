@@ -37,7 +37,7 @@ from .collectors import (
     fetch_full_article_text,
 )
 from .database import ClippingDB
-from .matcher import CitationMatcher
+from .matcher import CitationMatcher, Target
 from .normalization import normalize_text
 from .settings import (
     BACKFILL_START_DATE,
@@ -268,11 +268,41 @@ def ordered_unique(values: list[str]) -> list[str]:
     return items
 
 
+def target_from_snapshot(row: dict[str, Any]) -> Target:
+    return Target(
+        key=str(row.get("key") or ""),
+        label=str(row.get("label") or row.get("display_name") or row.get("key") or ""),
+        display_name=str(row.get("display_name") or row.get("label") or row.get("key") or ""),
+        keywords=[str(item) for item in (row.get("keywords") or []) if str(item).strip()],
+        exact_aliases=[
+            str(item)
+            for item in (row.get("exact_aliases") or row.get("exactAliases") or [])
+            if str(item).strip()
+        ],
+        className=str(row.get("className") or row.get("class_name") or ""),
+        primary=bool(row.get("primary")),
+        priority=int(row.get("priority") or 2),
+    )
+
+
+def normalize_targets(targets: list[Any]) -> list:
+    normalized: list[Any] = []
+    for target in targets:
+        if isinstance(target, dict):
+            if str(target.get("key") or "").strip():
+                normalized.append(target_from_snapshot(target))
+            continue
+        if str(getattr(target, "key", "") or "").strip():
+            normalized.append(target)
+    return normalized
+
+
 def select_targets(targets: list, target_keys: list[str] | None) -> list:
+    normalized_targets = normalize_targets(targets)
     requested = ordered_unique(target_keys or [])
     if not requested:
-        return list(targets)
-    target_map = {str(target.key): target for target in targets}
+        return list(normalized_targets)
+    target_map = {str(target.key): target for target in normalized_targets}
     missing = [key for key in requested if key not in target_map]
     if missing:
         raise ValueError(f"unknown_target_keys:{','.join(missing)}")
