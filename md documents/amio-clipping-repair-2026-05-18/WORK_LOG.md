@@ -4163,3 +4163,48 @@ than stopping.
 
 This review did not reveal a fresh patch, but "no new patch" is not an exit.
 The loop continues into hosted watch and repeated connection checks.
+
+## 2026-05-18 - Seventy-Second Hosted Watch Cycle
+
+### Objective Reviewed
+
+After pushing the manual live-results fix and review logs, hosted verification
+must continue. A deploy or live smoke is a checkpoint; auth barriers must be
+answered and logged.
+
+### Audit Performed
+
+- Checked hosted `/healthz`.
+- Checked hosted `/api/update/status`.
+- Fetched hosted `/assets/clipping.js` and verified static dashboard markers.
+- Checked git state against `origin/master`.
+
+### Result
+
+Hosted state:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+/assets/clipping.js -> HTTP 200, last-modified Tue, 19 May 2026 21:55:35 GMT
+hosted JS -> targetDisplayNameError present
+hosted JS -> pollBaseLiveResults present and scheduled
+hosted JS -> targetActionsLocked/manageTargetsBlocked absent from rg checks
+git -> HEAD and origin/master at 9e3408d
+```
+
+Barrier answered: status/live-results remain viewer-auth gated without a session.
+The static asset timestamp indicates the hosted app has refreshed assets after
+the recent pushes, but direct backend live payload verification is still blocked
+by auth.
+
+### Next Hypothesis
+
+Continue with local contract checks or source review for connected target/filter
+behavior. Do not stop at healthy hosted static assets.
+
+### Why The Loop Continues
+
+The site is healthy and the hosted static JS is current, but the live authenticated
+Base atual payload cannot be inspected from this session. The loop remains
+useful through local contracts and source review.
