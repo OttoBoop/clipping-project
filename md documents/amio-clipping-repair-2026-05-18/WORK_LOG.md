@@ -4780,3 +4780,46 @@ management review.
 
 The rebase is verified locally, but this is another checkpoint. The loop still
 has live auth barriers and target/filter/base review work.
+
+## 2026-05-18 - Eighty-Seventh Target Management Browser Contract Cycle
+
+### Objective Reviewed
+
+The user-visible target management loop must keep working in the browser: inline
+errors, management during active updates, archive/restore, and live overlay
+filters.
+
+### Audit Performed
+
+- Ran focused Playwright/browser contracts:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_add_target_short_name_shows_inline_error_without_api_call \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_short_name_shows_inline_error_without_api_call \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_edit_stays_available_during_running_update \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_archive_restore_stay_available_during_running_update \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_target_outside_initial_targets_becomes_filterable \
+  -q
+```
+
+Result: `5 passed in 4.05s`.
+
+- Observed one local static-server `404` for
+  `/api/targets?include_archived=1`; the targeted browser fallback still passed.
+- Confirmed no worktree dirt remained after the test run.
+
+### Result
+
+The browser-level target management and live-overlay filter contracts are still
+green.
+
+### Next Hypothesis
+
+Commit this browser contract log, then continue with hosted watch or another
+source review.
+
+### Why The Loop Continues
+
+Browser contracts passing is a checkpoint, not a stop. The live hosted data
+payload is still auth-gated and must remain on the watch list.
