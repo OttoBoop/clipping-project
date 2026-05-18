@@ -2024,3 +2024,70 @@ missing target cannot be invented from the JSON without API/config data.
 The UI is more resilient to stale counts, but Shakira is still absent from the
 tracked static target rows and authenticated live data remains behind the
 viewer-login gate.
+
+## 2026-05-18 - Thirty-Fifth Technical Cycle: Static Target Rows Aligned
+
+### Objective Reviewed
+
+The static artifact watch item remained open after the runtime normalization:
+`assets/clipping-data.json` still omitted the active `shakira` target row, and
+legacy tests still accepted the old four-target assumption.
+
+### Audit Performed
+
+Applied a conservative static repair without regenerating the full snapshot:
+
+- added the active zero-count `shakira` target row from `data/targets.json`;
+- corrected target-row article counts to match article-level `targetKeys`
+  already present in the payload;
+- updated the historical comparison tests so they require static target rows to
+  match active target config;
+- changed the legacy "all targets have stories" assertion to apply only to
+  legacy `.bak` targets, allowing newly configured zero-count targets to remain
+  visible as filters;
+- added a target-count contract against story/article `targetKeys`.
+
+### Result
+
+Static target rows now read:
+
+```text
+flavio_valle: 436 stories / 674 articles
+pedro_duarte: 18 stories / 19 articles
+pedro_angelito: 4 stories / 6 articles
+bernardo_rubiao: 24 stories / 25 articles
+shakira: 0 stories / 0 articles
+```
+
+Focused checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_bak_comparison.py::TestTargets -q
+
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_bak_comparison.py -q
+```
+
+Results: `5 passed in 0.12s`; `11 passed in 0.14s`.
+
+Broader checkpoint:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_targets_jobs.py tests/test_admin_ui.py tests/test_export_mobile_snapshot_pages.py tests/test_bak_comparison.py \
+  -q
+```
+
+Result: `114 passed in 3.06s`.
+
+### Next Hypothesis
+
+Commit and publish the static target-row repair, then verify hosted
+`/assets/clipping-data.json` when accessible. If the asset remains auth-gated,
+verify the hosted JS and `/healthz`, then continue with local contracts.
+
+### Why The Loop Continues
+
+The static target rows are repaired locally, but production asset verification
+is still subject to the live viewer-login gate and deploy timing.

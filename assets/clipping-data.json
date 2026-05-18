@@ -23,14 +23,14 @@
       "label": "Flávio Valle",
       "primary": true,
       "storyCount": 436,
-      "articleCount": 766
+      "articleCount": 674
     },
     {
       "key": "pedro_duarte",
       "label": "Pedro Duarte",
       "primary": false,
       "storyCount": 18,
-      "articleCount": 91
+      "articleCount": 19
     },
     {
       "key": "pedro_angelito",
@@ -44,7 +44,14 @@
       "label": "Bernardo Rubião",
       "primary": false,
       "storyCount": 24,
-      "articleCount": 91
+      "articleCount": 25
+    },
+    {
+      "key": "shakira",
+      "label": "Shakira",
+      "primary": false,
+      "storyCount": 0,
+      "articleCount": 0
     }
   ],
   "defaultTargets": [

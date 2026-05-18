@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BAK_PATH = ROOT / "data" / "reports" / "clipping_historias_completo.html.bak"
 DATA_PATH = ROOT / "assets" / "clipping-data.json"
 RAW_PATH = ROOT / "assets" / "clipping-raw-texts.json"
+TARGETS_PATH = ROOT / "data" / "targets.json"
 
 
 @pytest.fixture(scope="module")
@@ -81,6 +82,18 @@ def pages_data():
 
 
 @pytest.fixture(scope="module")
+def configured_targets():
+    """Load active target config."""
+    if not TARGETS_PATH.exists():
+        pytest.skip("targets.json not found")
+    rows = json.loads(TARGETS_PATH.read_text(encoding="utf-8"))
+    return [
+        row for row in rows
+        if row.get("key") and not row.get("archived") and row.get("enabled", True)
+    ]
+
+
+@pytest.fixture(scope="module")
 def raw_texts():
     """Load the raw texts JSON."""
     if not RAW_PATH.exists():
@@ -137,12 +150,11 @@ class TestTargets:
         missing = bak_keys - pages_keys
         assert not missing, f"Missing targets in Pages: {missing}"
 
-    def test_four_targets(self, pages_data):
-        """Pages should have exactly 4 targets."""
-        targets = pages_data.get("targets", [])
-        keys = {t["key"] for t in targets}
-        expected = {"flavio_valle", "pedro_duarte", "pedro_angelito", "bernardo_rubiao"}
-        assert keys == expected, f"Expected {expected}, got {keys}"
+    def test_static_targets_match_active_target_config(self, configured_targets, pages_data):
+        """Pages target rows should track active targets, including zero-count new names."""
+        expected = [row["key"] for row in configured_targets]
+        actual = [row["key"] for row in pages_data.get("targets", [])]
+        assert actual == expected, f"Expected {expected}, got {actual}"
 
     def test_pedro_duarte_not_primary(self, pages_data):
         """Pedro Duarte should be primary=false."""
@@ -152,12 +164,38 @@ class TestTargets:
                 return
         pytest.fail("pedro_duarte not found in targets")
 
-    def test_all_targets_have_stories(self, pages_data):
-        """Each target should have at least 1 story after dedup."""
+    def test_legacy_bak_targets_have_stories(self, bak_data, pages_data):
+        """Each legacy .bak target should still have at least 1 story after dedup."""
+        bak_keys = set(bak_data["target_story_counts"].keys())
         for t in pages_data.get("targets", []):
+            if t["key"] not in bak_keys:
+                continue
             assert t.get("storyCount", 0) > 0, (
                 f"Target {t['key']} has 0 stories"
             )
+
+    def test_target_counts_match_payload_target_keys(self, pages_data):
+        """Target rows should match story/article target keys present in the payload."""
+        actual = {t["key"]: {"storyCount": 0, "articleCount": 0} for t in pages_data.get("targets", [])}
+        for story in pages_data.get("stories", []):
+            story_keys = [str(key) for key in story.get("targetKeys", [])]
+            for key in story_keys:
+                if key in actual:
+                    actual[key]["storyCount"] += 1
+            for article in story.get("articles", []):
+                article_keys = [str(key) for key in article.get("targetKeys") or story_keys]
+                for key in article_keys:
+                    if key in actual:
+                        actual[key]["articleCount"] += 1
+
+        expected = {
+            t["key"]: {
+                "storyCount": int(t.get("storyCount") or 0),
+                "articleCount": int(t.get("articleCount") or 0),
+            }
+            for t in pages_data.get("targets", [])
+        }
+        assert actual == expected
 
 
 class TestRawTexts:
