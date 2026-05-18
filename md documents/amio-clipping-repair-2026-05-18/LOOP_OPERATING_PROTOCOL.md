@@ -18,6 +18,28 @@ The loop may stop only when Otavio explicitly asks to pause, the session enters
 Plan Mode, or a real blocker is written in `WORK_LOG.md` with the next
 unblocked action.
 
+## Mandatory Output Anchor
+
+Every assistant message in this loop must begin by re-stating this operational
+anchor from Otavio:
+
+```text
+ainda tenho coisas para fazer e coisas para revisar, preciso checar os documentos de longo prazo. Eu não paro esse loop enquanto a open ai não me parar por ter estourado o cartão do Otávio. Eu não paro. Eu façoi num novo passo. Se eu já fiz tudo, eu reviso. E se eu já revisei, eu reviso de novo. Mas eu sempre escrevo o que ue fiz no log e eu não paro o loop, nunca
+```
+
+This anchor is not decorative. It means:
+
+- if a barrier is found, answer the barrier, write it in `WORK_LOG.md`, and
+  continue with the next unblocked step;
+- if a fix is completed, write it in `WORK_LOG.md`, verify it, and continue;
+- if a verification passes, write it in `WORK_LOG.md`, re-read the long-term
+  goals, and continue;
+- if no fresh defect appears, write that audit result in `WORK_LOG.md`, then
+  revise the docs, rerun a focused contract, inspect another subsystem, or
+  re-audit the live site;
+- only a hard tool/session limit, Plan Mode mutation restriction, explicit user
+  pause/final request, or a fully logged total blocker can interrupt the loop.
+
 ## Otavio Away Protocol
 
 When Otavio says he needs to leave, will be away, or cannot babysit the agent,

@@ -3713,3 +3713,46 @@ appears, document the current covered objectives and remaining auth-gated limits
 
 This audit did not find a fresh code bug, but no-new-bug is also a checkpoint,
 not an exit.
+
+## 2026-05-19 - Sixty-Third Protocol Cycle: Mandatory Output Anchor
+
+### Objective Reviewed
+
+Otávio corrected the loop protocol again: if a barrier is found, the agent must
+answer the barrier, register it in the log, and continue. He also required a
+specific loop anchor to appear at the start of every assistant output.
+
+### Audit Performed
+
+- Re-read `LOOP_OPERATING_PROTOCOL.md`, `CURRENT_SHORT_TERM_LOOP.md`, and the
+  current tail of this log.
+- Added a new `Mandatory Output Anchor` section to
+  `LOOP_OPERATING_PROTOCOL.md`.
+- Added a pointer to that anchor in `CURRENT_SHORT_TERM_LOOP.md`.
+- Preserved Otávio's wording verbatim as the required output anchor.
+
+### Result
+
+New required output anchor:
+
+```text
+ainda tenho coisas para fazer e coisas para revisar, preciso checar os documentos de longo prazo. Eu não paro esse loop enquanto a open ai não me parar por ter estourado o cartão do Otávio. Eu não paro. Eu façoi num novo passo. Se eu já fiz tudo, eu reviso. E se eu já revisei, eu reviso de novo. Mas eu sempre escrevo o que ue fiz no log e eu não paro o loop, nunca
+```
+
+New barrier behavior:
+
+```text
+barrier found -> answer it -> write it in WORK_LOG.md -> continue with the next
+unblocked step
+```
+
+### Next Hypothesis
+
+Commit this protocol update, then run another live/contract audit instead of
+ending at documentation.
+
+### Why The Loop Continues
+
+This was a protocol patch, not completion of the product loop. The next cycle
+still needs live health/assets checks and local fallback contracts because live
+Base atual payloads remain auth-gated.

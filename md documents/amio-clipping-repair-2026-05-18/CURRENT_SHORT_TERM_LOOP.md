@@ -89,6 +89,11 @@ The durable update job, live-results overlay, published dashboard, target
 filters, and export counts remain active watch items until they are stable over
 repeated cycles or superseded by a higher-priority live failure.
 
+Every output in this loop must start with the Mandatory Output Anchor in
+`LOOP_OPERATING_PROTOCOL.md`. If a barrier appears, the agent must answer it,
+write it to `WORK_LOG.md`, and continue with another useful step instead of
+ending the turn.
+
 ## User Away Rule
 
 If Otavio says he is leaving, busy, away, eating, or unable to babysit the
