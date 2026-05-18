@@ -4322,3 +4322,64 @@ remain gated.
 
 Resolving the git barrier is a checkpoint. The clipping product loop still has
 live auth gates and repeated target/filter/base audits to perform.
+
+## 2026-05-18 - Seventy-Sixth Publication State Repair Cycle
+
+### Objective Reviewed
+
+Base atual should show newly saved items immediately, but should not claim an
+item is already published in the panel when the action only saved it and did not
+publish/export usable artifacts.
+
+### Audit Performed
+
+- During publication-state review, found that a manual story created with
+  `export: false` still appeared as `publicationState: "published"`.
+- Root cause: `latest_successful_publish_time()` treated every succeeded manual
+  job as a publish cutoff, and `latest_publish_time()` treated empty
+  `artifacts_uploaded` events as publish events.
+- Patched `web_app/jobs.py` so succeeded jobs count as publish cutoffs only when
+  they are export jobs or their spec has `export: true`.
+- Added `latest_publish_event_time()` so `artifacts_uploaded` counts only when
+  the payload has uploaded items/count; `export_complete` and
+  `incremental_publish_complete` remain publish signals.
+- Updated `tests/test_admin_ui.py` to assert manual story live-results with
+  `export: false` stays `publicationState: "saved"`.
+- Ran focused publication/live tests:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_manual_story_insert_creates_unique_story_graph \
+  tests/test_targets_jobs.py::test_article_saved_events_drive_live_results_and_totals \
+  tests/test_targets_jobs.py::test_base_live_results_return_recent_saved_articles_after_export_job \
+  -q
+```
+
+First run exposed the bug (`published` vs `saved`); after the patch, result:
+`3 passed in 0.51s`.
+
+- Ran broader admin/jobs regression:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py tests/test_targets_jobs.py -q
+```
+
+Result: `91 passed in 3.56s`.
+
+- Restored generated `pipeline/__pycache__` dirt after tests.
+
+### Result
+
+Manual saved articles still appear in Base atual via live-results, but the UI no
+longer mislabels a non-exported manual save as already published.
+
+### Next Hypothesis
+
+Commit and push the publication-state fix, then return to hosted watch and
+target/filter review.
+
+### Why The Loop Continues
+
+This closes another live Base atual correctness bug, but it is still one layer
+of the loop. Push, verify, log, and continue.

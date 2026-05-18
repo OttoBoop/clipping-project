@@ -1242,6 +1242,7 @@ def test_manual_story_insert_creates_unique_story_graph(monkeypatch, tmp_path):
     assert live_payload["count"] == 1
     assert live_payload["items"][0]["title"] == "Flavio Valle anuncia agenda de fiscalizacao"
     assert live_payload["items"][0]["targetKeys"] == ["flavio_valle"]
+    assert live_payload["items"][0]["publicationState"] == "saved"
     assert db_counts(db_file) == {
         "articles": 1,
         "mentions": 1,

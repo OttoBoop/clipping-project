@@ -2171,36 +2171,56 @@ def event_target_keys(payload: dict[str, Any]) -> list[str]:
 
 def latest_successful_publish_time() -> str:
     with connect(db_path()) as conn:
-        row = conn.execute(
+        rows = conn.execute(
             """
-            SELECT COALESCE(finished_at, started_at, '') AS published_at
+            SELECT *
             FROM jobs
             WHERE status = 'succeeded' AND kind IN ('update', 'export', 'manual')
             ORDER BY COALESCE(finished_at, started_at, '') DESC
-            LIMIT 1
+            LIMIT 50
             """
-        ).fetchone()
-    return str(row["published_at"] or "") if row else ""
+        ).fetchall()
+    for row in rows:
+        data = dict(row)
+        kind = str(data.get("kind") or "")
+        spec = job_spec(data)
+        if kind == "export" or bool(spec.get("export")):
+            return str(data.get("finished_at") or data.get("started_at") or "")
+    return ""
 
 
-def latest_publish_time(job_id: str = "") -> str:
-    latest = latest_successful_publish_time()
+def latest_publish_event_time(job_id: str = "") -> str:
     params: tuple[Any, ...] = ()
     job_filter = ""
     if job_id:
         job_filter = "AND job_id = ?"
         params = (job_id,)
     with connect(db_path()) as conn:
-        row = conn.execute(
+        rows = conn.execute(
             f"""
-            SELECT MAX(created_at) AS published_at
+            SELECT created_at, event, payload_json
             FROM job_events
             WHERE event IN ('export_complete', 'incremental_publish_complete', 'artifacts_uploaded')
               {job_filter}
+            ORDER BY created_at DESC
+            LIMIT 100
             """,
             params,
-        ).fetchone()
-    event_time = str(row["published_at"] or "") if row else ""
+        ).fetchall()
+    for row in rows:
+        event = str(row["event"] or "")
+        if event == "artifacts_uploaded":
+            payload = safe_json_dict(row["payload_json"])
+            items = payload.get("items") if isinstance(payload.get("items"), list) else []
+            if int(payload.get("count") or len(items)) <= 0:
+                continue
+        return str(row["created_at"] or "")
+    return ""
+
+
+def latest_publish_time(job_id: str = "") -> str:
+    latest = latest_successful_publish_time()
+    event_time = latest_publish_event_time(job_id)
     if event_time and (not latest or event_time > latest):
         return event_time
     return latest
