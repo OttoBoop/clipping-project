@@ -1862,3 +1862,101 @@ verification.
 One frontend fix is live, but the core live data endpoints cannot yet be
 verified without viewer auth. The loop must keep proving local contracts and
 watching the remaining static/export mismatch.
+
+## 2026-05-18 - Thirty-Second Contract Cycle: Target Loop Connection Recheck
+
+### Objective Reviewed
+
+The central long-term objective is not "the button saves"; it is the full loop:
+target mutation, frozen update snapshot, backfill/sync, live-results overlay,
+and export/filter metadata all have to agree.
+
+### Audit Performed
+
+Reviewed tests and code for:
+
+- target mutations while an update is active;
+- `target_snapshots` frozen into update specs;
+- `record_target_sync(...)` backfilling existing saved articles;
+- Base atual live-results returning newly saved or backfilled articles.
+
+Then ran the focused contract set:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_target_mutations_remain_available_while_update_is_active \
+  tests/test_targets_jobs.py::test_update_spec_freezes_target_snapshot_for_active_job \
+  tests/test_targets_jobs.py::test_target_sync_backfills_new_target_into_base_live_results \
+  tests/test_targets_jobs.py::test_base_live_results_return_recent_saved_articles_after_export_job \
+  -q
+```
+
+### Result
+
+Result: `4 passed in 0.50s`.
+
+The local contract confirms:
+
+```text
+target create/update/restore are not blocked by an active update
+active update jobs keep frozen target snapshots
+new target sync can backfill existing saved articles
+Base atual local live-results sees saved/backfilled target articles before full export
+```
+
+### Next Hypothesis
+
+Inspect bounded parallelism and event emission next: the loop still needs to
+prove that candidate processing can run in parallel without corrupting dedupe or
+SQLite writes, and that `article_saved` events are emitted immediately.
+
+### Why The Loop Continues
+
+The main local connection is healthy, but production live-results/status remain
+auth-gated and the static artifact mismatch remains unresolved.
+
+## 2026-05-18 - Thirty-Third Contract Cycle: Bounded Candidate Parallelism
+
+### Objective Reviewed
+
+The plan calls for controlled candidate parallelism: fetch/match work may run
+in parallel with a small limit, but SQLite writes must stay serialized and
+`article_saved` should emit immediately after each save.
+
+### Audit Performed
+
+Inspected `pipeline/ingest.py` and the tracked test coverage for
+`candidate_workers`, prefetching, serialized DB writes, and `article_saved`
+progress events.
+
+Ran:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_targets_jobs.py::test_process_candidates_prefetches_articles_with_serial_db_writes \
+  -q
+```
+
+### Result
+
+Result: `1 passed in 0.21s`.
+
+The focused test verifies:
+
+```text
+candidate_workers=2 causes concurrent fetch activity
+SQLite insert calls happen only on the main thread
+3 saved candidates emit 3 article_saved events
+dedupe/write counts remain coherent
+```
+
+### Next Hypothesis
+
+Re-run the broader target job suite if more code changes land. Otherwise,
+return to live/static audit: the next real unresolved issue is still the
+tracked `assets/clipping-data.json` mismatch versus `data/targets.json`.
+
+### Why The Loop Continues
+
+Parallelism is covered locally, but the static artifact mismatch and
+auth-gated live Base atual verification are still open.
