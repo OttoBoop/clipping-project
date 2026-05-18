@@ -25,7 +25,7 @@ Health:
 loginConfigured=true
 viewerProfilesConfigured=true
 viewerAuthConfigured=false
-missingConfig=["CLIPPING_VIEWER_PASSWORDS"] after next deploy
+missingConfig=["CLIPPING_VIEWER_PASSWORDS"]
 ```
 
 Meaning:

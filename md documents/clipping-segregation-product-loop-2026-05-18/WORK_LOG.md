@@ -1710,3 +1710,48 @@ for the next loop cycle.
 ### Why The Loop Continues
 
 The blocker becoming clearer is not the blocker being resolved.
+
+## 2026-05-19 - Live Verification: Missing Config Diagnostic Deployed
+
+### Objective Reviewed
+
+Verify the previous code change on the real Render site before continuing.
+
+### Render Audit
+
+Polled `/healthz` after pushing `fix: expose missing auth config safely`.
+
+Production flipped at:
+
+```text
+12:43:56 UTC
+```
+
+Live result:
+
+```text
+GET /assets/clipping-data.json -> 401
+GET /healthz -> loginConfigured=true
+GET /healthz -> viewerAuthConfigured=false
+GET /healthz -> missingConfig=["CLIPPING_VIEWER_PASSWORDS"]
+```
+
+### Result
+
+The live site now diagnoses the exact remaining auth configuration blocker
+without exposing secret values.
+
+### Remaining Blocker
+
+`CLIPPING_VIEWER_PASSWORDS` still has to be configured on Render before live
+viewer profile testing can complete.
+
+### Next Objective From Docs
+
+Return to `ACTIVE_NEXT_ACTION.md` and `SYSTEM_REVIEW_STATUS_2026-05-19.md`.
+The next live viewer checklist remains blocked, so continue with unblocked
+contract/status reviews until production credentials exist.
+
+### Why The Loop Continues
+
+The diagnostic is live, but viewer profiles are still not live-verifiable.
