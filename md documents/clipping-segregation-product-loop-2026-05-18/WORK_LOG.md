@@ -1166,3 +1166,95 @@ production yet.
 Do not call the first segregation sprint fully production-complete until
 `CLIPPING_VIEWER_PASSWORDS` is configured on Render and at least one viewer
 profile is checked end to end.
+
+## 2026-05-19 - Loop Cycle: Re-Anchor On Product Docs And Env Contract
+
+### Objective Reviewed
+
+Re-read the product-loop docs instead of continuing from memory:
+
+- `LONG_TERM_GOALS.md`
+- `DEPENDENCY_MAP.md`
+- `CURRENT_SHORT_TERM_LOOP.md`
+- `ACTIVE_NEXT_ACTION.md`
+- `SYSTEM_REVIEW_CHECKLIST.md`
+- `RENDER_PRODUCTION_CHECKLIST.md`
+- this `WORK_LOG.md`
+
+Active axis remains Axis 1: functional password-gated segregation on the
+current FastAPI/Render app. The live logged-out gate is not enough to close the
+axis because viewer profiles still must be proven on production.
+
+### Render Audit
+
+Live URL:
+
+```text
+https://clipping-project.onrender.com/
+```
+
+Observed:
+
+```text
+GET /                                                        200 login page
+GET /index.html                                              404
+GET /assets/clipping-data.json                               401 viewer_login_required
+GET /assets/clipping-raw-texts.json                          401 viewer_login_required
+GET /api/update/status                                       401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240            401 viewer_login_required
+GET /api/targets                                             401 viewer_login_required
+GET /api/classifications                                     401 viewer_login_required
+GET /api/csrf                                                401 viewer_login_required
+POST /api/login wrong password                               401 invalid_password
+POST /api/login viewer-shakira                               401 invalid_password
+```
+
+Live JS contains the expected auth/profile markers:
+
+```text
+initialSessionRole
+ensureCsrfToken
+applyViewerControls
+```
+
+Live `/healthz` still reports:
+
+```text
+loginConfigured=true
+viewerProfilesConfigured=true
+viewerAuthConfigured=false
+```
+
+### Action Taken
+
+The deployment docs already required `CLIPPING_VIEWER_PASSWORDS`, but the
+Render blueprint did not declare it. Added `CLIPPING_VIEWER_PASSWORDS` as a
+`sync: false` environment variable in `render.yaml` so the production contract
+matches the code and checklist without committing any secret.
+
+Added `LOOP_OPERATING_PROTOCOL.md` to this product-loop folder and updated
+`ACTIVE_NEXT_ACTION.md` so future cycles must re-read the `.md` authority files
+and continue after checkpoints.
+
+### Remaining Blocker
+
+This does not create the secret value in Render by itself. Production should
+not be called complete until the Render environment contains
+`CLIPPING_VIEWER_PASSWORDS` and a real viewer profile is smoked end to end.
+
+### Next Objective From Docs
+
+After push/deploy verification, return to the docs and continue with the next
+unblocked proof:
+
+1. verify the logged-out gate survived the deploy;
+2. check whether `/healthz` changed `viewerAuthConfigured`;
+3. if still false, run local authenticated contract tests and keep the blocker
+   explicit;
+4. continue into scoped payload/raw-text/no-fake-UI review instead of stopping.
+
+### Why The Loop Continues
+
+The docs explicitly say a deploy, a live `401`, or a single smoke is not a stop
+condition. This cycle improved the Render contract but did not prove live
+viewer scoping.

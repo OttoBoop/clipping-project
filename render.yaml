@@ -14,6 +14,8 @@ services:
         sync: false
       - key: CLIPPING_SESSION_SECRET
         sync: false
+      - key: CLIPPING_VIEWER_PASSWORDS
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
