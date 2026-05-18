@@ -3553,3 +3553,62 @@ local contract work if deploy remains behind.
 
 One user-facing error fix is live, but the hidden blocker cleanup is still
 pending on the hosted bundle.
+
+## 2026-05-19 - Sixtieth Static Guard Cycle: Inline Validation Bundle Contract
+
+### Objective Reviewed
+
+Inline short-name validation now has browser tests, but export/static bundle
+generation also needs a direct guard so future edits do not drop
+`targetDisplayNameError`, `novalidate`, or accidentally restore the old
+management blocker.
+
+### Audit Performed
+
+- Added a static dashboard JS/index HTML test for inline target-name validation.
+- Strengthened the no-lock JS test to assert `manageTargetsBlocked` does not
+  return to the dashboard bundle.
+- Ran static and functional focused checks.
+
+### Result
+
+New/strengthened static checks:
+
+```text
+tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_has_inline_target_name_validation
+tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_does_not_lock_target_management_during_updates
+```
+
+Focused checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_does_not_lock_target_management_during_updates \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_has_inline_target_name_validation \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  -q
+```
+
+Result: `3 passed in 0.09s`.
+
+Related functional checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_has_inline_target_name_validation \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_add_target_short_name_shows_inline_error_without_api_call \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_short_name_shows_inline_error_without_api_call \
+  -q
+```
+
+Result: `3 passed in 2.49s`.
+
+### Next Hypothesis
+
+Commit the static guard, push, then continue live watch for the hosted removal
+of `manageTargetsBlocked`.
+
+### Why The Loop Continues
+
+Static contracts are stronger, but the hosted bundle still needs to catch up to
+the hidden-copy cleanup.

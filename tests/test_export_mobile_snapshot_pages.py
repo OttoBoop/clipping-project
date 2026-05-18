@@ -185,9 +185,22 @@ def test_dashboard_javascript_does_not_lock_target_management_during_updates():
         dashboard_js.index("function selectedRunTargetKeys")
     ]
 
+    assert "manageTargetsBlocked" not in dashboard_js
     assert "targetActionsLocked" not in management_body
     assert "Aguarde a atualização terminar" not in management_body
     assert "aria-disabled" not in management_body
+
+
+def test_dashboard_javascript_has_inline_target_name_validation():
+    dashboard_js = (PROJECT_ROOT / "assets" / "clipping.js").read_text(encoding="utf-8")
+    index_html = (PROJECT_ROOT / "index.html").read_text(encoding="utf-8")
+
+    assert "function targetDisplayNameError" in dashboard_js
+    assert "Informe um nome de exibicao com pelo menos 3 caracteres." in dashboard_js
+    assert "Digite um nome de exibicao com 3 caracteres ou mais." in dashboard_js
+    assert '<form id="addTargetForm" class="add-target-form" novalidate>' in index_html
+    assert 'class="manage-target-form" data-manage-target-key="' in dashboard_js
+    assert '" novalidate>' in dashboard_js
 
 
 def test_static_export_marks_bundle_to_skip_api_polling(tmp_path):
