@@ -863,3 +863,43 @@ The durable job is still running with hundreds of pending source runs. Continue
 watching it until it either completes, finds a new source-specific failure, or
 publishes another saved article that should appear through the now-restored
 live-results polling path.
+
+## 2026-05-18 - Twelfth Loop Hardening: No Idle Exit Protocol
+
+### Objective Reviewed
+
+Otavio explicitly corrected the agent behavior: the loop cannot stop after a
+short burst of work, a plan file, a local smoke, or a single successful fix.
+The active long-term objective is now promoted to an operating rule: every
+success must trigger another review cycle.
+
+### Audit Performed
+
+- Re-read `LONG_TERM_GOALS.md`.
+- Re-read `CURRENT_SHORT_TERM_LOOP.md`.
+- Re-read the tail of `WORK_LOG.md`, including the hosted dashboard and live
+  connection audits.
+- Checked the main worktree status and confirmed unrelated inherited dirt still
+  exists outside this loop.
+
+### Result
+
+- Created `LOOP_OPERATING_PROTOCOL.md`.
+- Added the **No Idle Exit** goal to `LONG_TERM_GOALS.md`.
+- Updated `CURRENT_SHORT_TERM_LOOP.md` so tests, commits, pushes, deploys, and
+  one live smoke are checkpoints rather than stop conditions.
+- Defined a 30-45 minute cycle, live audit checklist, watch queue, log format,
+  dirty-worktree rule, and Plan Mode rule.
+
+### Next Hypothesis
+
+After this docs commit, the loop should run at least one live audit cycle using
+the new protocol. The first watch item remains the active durable update job and
+whether live-results/base keeps reflecting new saved articles while source runs
+continue.
+
+### Why The Loop Continues
+
+The protocol itself says documentation is not an exit. Once committed, the next
+step is to re-anchor, audit the live site, log the result, and choose the next
+failure or watch item.

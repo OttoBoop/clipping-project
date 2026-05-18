@@ -66,8 +66,28 @@ Stop only if:
   long-term goals;
 - another agent's active claim makes the edit unsafe;
 - tests reveal a broader architecture break that needs a new short-term loop.
+- the session is in Plan Mode, where mutation is prohibited.
 
 If blocked, write the block in `WORK_LOG.md` and keep all unblocked work moving.
+
+## No Idle Exit
+
+This loop does not end when:
+
+- focused tests pass;
+- a commit is created;
+- a push succeeds;
+- Render deploys;
+- one live smoke passes;
+- a single target/filter/base path looks repaired.
+
+Each of those is a checkpoint. After a checkpoint, follow
+`LOOP_OPERATING_PROTOCOL.md`: re-read goals, audit the live site, update
+`WORK_LOG.md`, choose the next failure or watch item, and continue.
+
+The durable update job, live-results overlay, published dashboard, target
+filters, and export counts remain active watch items until they are stable over
+repeated cycles or superseded by a higher-priority live failure.
 
 ## Debug Discipline
 

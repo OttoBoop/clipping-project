@@ -66,6 +66,13 @@ These are the instructions that define the loop. Keep them visible.
    pycache, screenshots, or unrelated files. Commit small, path-limited units
    and record what was intentionally included.
 
+9. **No success is an exit by itself.**
+   Passing tests, pushed commits, a completed deploy, or one live smoke are
+   checkpoints, not stop conditions. After every success, re-read the goals,
+   audit the live site, update the log, and choose the next failure or watch
+   item. The loop should stop only for an explicit pause, Plan Mode, or a real
+   blocker recorded with the next unblocked action.
+
 ## Recurring Failure Classes To Avoid
 
 - UI says a target exists, but backend config or ingestion does not use it.
@@ -75,6 +82,8 @@ These are the instructions that define the loop. Keep them visible.
 - An agent starts coding before writing the loop memory and log.
 - An agent treats local success, pending deploy, or pushed code as completion
   without verifying the user-visible behavior.
+- An agent treats user-visible success as the end of the loop instead of using
+  it as the trigger for the next audit cycle.
 
 ## Short-Term Loop Rule
 
@@ -90,3 +99,10 @@ name:
 
 If a short-term loop discovers a new long-term concern, append it here or record
 it in `WORK_LOG.md` with a clear "promote to long-term" note.
+
+## Operating Protocol
+
+Use `LOOP_OPERATING_PROTOCOL.md` as the active rulebook for multi-hour work.
+That document defines the No Idle Exit rule, the 30-45 minute cycle, the watch
+queue, and the dirty-worktree behavior. If it conflicts with a casual impulse
+to stop after a good result, the protocol wins.
