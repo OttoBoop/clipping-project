@@ -99,6 +99,8 @@ Continue the production loop. Current priority from the docs:
    sample exist; title-level labels exist; next Rio step is source-anchor and
    dimension refinement before any production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
+   demo/prospect strategy now exists; next packaging step is defining included
+   update frequency and delivery format;
 6. review costs, password rotation, and operations;
 7. then re-read the docs and choose the next weak axis.
 

@@ -141,6 +141,7 @@ Before selling the first real client:
 Remaining before first paid client:
 
 - create a dedicated demo/client profile that does not reuse Flavio/Shakira;
+  strategy documented in `DEMO_PROFILE_STRATEGY.md`;
 - define update frequency and included targets in writing;
 - test the admin/operator target-update path with operator credentials;
 - write password rotation and offboarding instructions;

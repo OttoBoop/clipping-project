@@ -3616,6 +3616,89 @@ credentials are available.
 
 ### Push Evidence
 
+The title-level labels reached `master`:
+
+```text
+git push origin HEAD:master
+5e30cae..90113ca  HEAD -> master
+commit=90113ca docs: label cleaned Rio economic sample
+```
+
+Render accepted the commit:
+
+```text
+deploy=dep-d86e5bb7uimc738v5v3g
+commit=90113ca docs: label cleaned Rio economic sample
+status=build_in_progress
+previous live=5e30cae feat: add Rio title exclusion filters
+```
+
+Production privacy smoke while deploy builds:
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=20 -> 401 viewer_login_required
+```
+
+### Next Objective From Docs
+
+Re-read the long-term docs and choose the next weak axis. Current candidate
+axes: source-anchor/dimension refinement for Rio, sellable demo packaging, or
+Render authenticated viewer proof if credentials become available.
+
+## 2026-05-19 - Loop Cycle: Demo Profile Strategy
+
+### Objective Reviewed
+
+After Rio methodology and live segregation proof, the docs pointed back to
+Axis 2: a sellable demo must not reuse Flavio/Shakira credentials, static
+exports, or unsafe shared data.
+
+### Action Taken
+
+Added:
+
+```text
+DEMO_PROFILE_STRATEGY.md
+```
+
+Updated:
+
+```text
+FIRST_SELLABLE_PACKAGE.md
+DEMO_SCRIPT_AND_BUYER_ASSUMPTIONS.md
+ACTIVE_NEXT_ACTION.md
+```
+
+### Decision
+
+Use three demo modes:
+
+```text
+Option A: empty demo_cliente privacy proof
+Option B: operator screen-share for real content without sharing credentials
+Option C: dedicated prospect profile with generated Render password and rotation
+```
+
+Do not give external buyers Flavio/Shakira credentials. Do not present static
+exports as private client access.
+
+### Barrier Status
+
+No technical blocker. A serious hands-on buyer demo still needs a named
+prospect profile/password and an offboarding note before access is shared.
+
+### Why The Loop Continues
+
+The demo strategy reduces sales risk, but the package still needs included
+update frequency, delivery format, and continued Render live verification.
+
+### Push Evidence
+
 The query-file implementation and revised sample reached `master`:
 
 ```text

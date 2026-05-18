@@ -53,6 +53,9 @@ claiming it is a full enterprise monitoring platform.
 - Use a profile with no cross-client leakage.
 - For external buyers, create or choose a dedicated demo/client profile rather
   than exposing Flavio or Shakira credentials.
+- Follow `DEMO_PROFILE_STRATEGY.md`: empty demo for privacy proof, operator
+  screen-share for real content, or a rotated prospect profile for serious
+  hands-on access.
 - Confirm logged-out JSON returns `401`.
 - Confirm the profile view hides operator controls.
 - Confirm the raw-text payload is scoped.
