@@ -3349,3 +3349,46 @@ bundle after deploy and continue the Base atual/live-results audit.
 
 This closes a pre-API error UX hole, but the hosted site still needs to serve
 the new validation code and Base atual remains auth-gated.
+
+## 2026-05-19 - Fifty-Sixth Live Watch: Inline Validation Deploy Pending
+
+### Objective Reviewed
+
+After pushing inline short-name validation, the hosted bundle needed to be
+checked before considering the user-facing error path live.
+
+### Audit Performed
+
+- Pushed `f4864b9 fix: show inline target name validation`.
+- Checked hosted `/assets/clipping.js` with cache-busting query.
+- Checked hosted root page and `/healthz`.
+- Confirmed local/remotes aligned at `f4864b9`.
+- Waited another short deploy window and rechecked hosted JS.
+
+### Result
+
+Hosted `/healthz` remains healthy and job idle, but hosted JS still does not
+contain:
+
+```text
+targetDisplayNameError
+Informe um nome de exibicao
+```
+
+It still contains the earlier live-filter fix:
+
+```text
+if (activeTargetKeys.size) activeTargetKeys.add(key);
+```
+
+So Render has not yet served the inline validation bundle during this check.
+
+### Next Hypothesis
+
+Keep watching the hosted JS for `targetDisplayNameError`. While waiting, run
+another local/live-results contract pass instead of exiting.
+
+### Why The Loop Continues
+
+The fix is pushed but not live. A pending deploy is a watch item, and local
+contracts can still verify the Base atual/live-results loop.
