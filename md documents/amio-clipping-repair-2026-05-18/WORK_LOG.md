@@ -6005,3 +6005,96 @@ Continue with another slice: dashboard runtime state or hosted auth/live watch.
 
 Source review without a new bug is still useful, but it is not an exit. The
 next slice may still uncover another target/filter/Base atual mismatch.
+
+## 2026-05-18 - One Hundred Sixteenth Live Publication State Repair
+
+### Objective Reviewed
+
+The Live Base loop requires saved-but-not-exported items to be marked `saved`
+and exported/published items to be marked `published`. While reviewing dashboard
+runtime state, I found a likely stale-state edge.
+
+### Audit Performed
+
+- Reviewed `mergeLiveResultsIntoPayload()` in `assets/clipping.js` and
+  `tools/pages_assets/clipping.js`.
+- Added
+  `tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_publication_state_update_rerenders_existing_article`.
+- The test simulates:
+  1. Base starts empty.
+  2. First live base poll returns an article with `publicationState: "saved"`.
+  3. A later live base poll returns the same article with
+     `publicationState: "published"`.
+  4. The UI must replace `Salvo agora` with `Publicado no painel`.
+
+### Result
+
+Red/green proof:
+
+```text
+new test before patch -> failed waiting for "Publicado no painel"
+patch -> mergeLiveResultsIntoPayload updates live-created existing story/article
+         labels and isLiveResult when publicationState changes
+focused rerun -> 4 passed in 7.74s
+```
+
+Focused rerun:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_publication_state_update_rerenders_existing_article \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_target_outside_initial_targets_becomes_filterable \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_target_row_only_change_rerenders_filters \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  -q
+```
+
+Restored generated `pipeline/__pycache__` after the run. Updated the coverage
+checkpoint in `CURRENT_SHORT_TERM_LOOP.md`.
+
+### Next Hypothesis
+
+Commit the JS/test/docs patch, push/rebase if needed, then check hosted asset
+deployment and continue.
+
+### Why The Loop Continues
+
+This repairs another live Base atual state mismatch. It is still a checkpoint:
+the hosted asset must deploy, and the loop should continue reviewing the next
+connection.
+
+## 2026-05-18 - One Hundred Seventeenth Push Barrier On Publication State Fix
+
+### Objective Reviewed
+
+The live publication-state fix committed locally, but push hit another remote
+advance. The loop rule requires logging the barrier and continuing.
+
+### Audit Performed
+
+- Committed `e0ca313 fix: update live publication state labels`.
+- Push to `origin/master` was rejected as non-fast-forward.
+- Inspected `origin/master`.
+
+### Result
+
+Barrier answered: remote advanced with Rio v2 documentation commits:
+
+```text
+9d45a6f docs: log Rio v2 review push
+42c788c docs: add Rio economic v2 dry-run review
+```
+
+The latest remote commit touches only
+`md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md`, so it
+does not overlap the publication-state JS/test/docs fix.
+
+### Next Hypothesis
+
+Amend this barrier entry into the local fix commit, rebase over `origin/master`,
+push again, then verify the hosted JS marker.
+
+### Why The Loop Continues
+
+The git race is administrative and does not reduce the need to deploy and watch
+the Base atual publication-state correction.

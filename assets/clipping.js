@@ -1630,13 +1630,17 @@
       if (!storyId) return;
       var storyKey = String(storyId);
       var targetKeys = (item.targetKeys || []).map(String).filter(Boolean);
+      var itemPublished = item.publicationState === "published";
+      var itemLive = !itemPublished;
+      var storySummaryLabel = itemPublished ? "Publicado no painel" : "Salvo nesta rodada";
+      var articleSummaryLabel = itemPublished ? "Publicado no painel" : "Salvo agora";
       var story = storiesById[storyKey];
       if (!story) {
         story = {
           id: "st-" + storyId,
           storyIdInt: storyId,
           title: item.title || "Notícia salva nesta rodada",
-          summaryLabel: "Salvo nesta rodada",
+          summaryLabel: storySummaryLabel,
           summaryText: liveSummary(item),
           temperature: 34,
           createdAt: item.savedAt || item.publishedAt || "",
@@ -1648,11 +1652,20 @@
           aiCount: 0,
           rawCount: 0,
           articles: [],
-          isLiveResult: item.publicationState !== "published",
+          isLiveResult: itemLive,
         };
         storiesById[storyKey] = story;
         payload.stories.unshift(story);
         changed = true;
+      } else if (story.isLiveResult !== undefined || story.summaryLabel === "Salvo nesta rodada" || story.summaryLabel === "Publicado no painel") {
+        if (story.isLiveResult !== itemLive) {
+          story.isLiveResult = itemLive;
+          changed = true;
+        }
+        if (story.summaryLabel !== storySummaryLabel) {
+          story.summaryLabel = storySummaryLabel;
+          changed = true;
+        }
       }
       if (!Array.isArray(story.targetKeys)) story.targetKeys = [];
       if (!Array.isArray(story.articles)) story.articles = [];
@@ -1677,12 +1690,12 @@
           publishedAt: item.publishedAt || item.savedAt || "",
           publishedDisplay: formatDate(item.publishedAt || item.savedAt || ""),
           targetKeys: targetKeys,
-          summaryLabel: item.publicationState === "published" ? "Publicado no painel" : "Salvo agora",
+          summaryLabel: articleSummaryLabel,
           summaryPreview: liveSummary(item),
           rawTextKey: "",
           summarySource: "raw",
           classifications: [],
-          isLiveResult: item.publicationState !== "published",
+          isLiveResult: itemLive,
         });
         changed = true;
       } else {
@@ -1692,6 +1705,16 @@
             changed = true;
           }
         });
+        if (existingArticle.isLiveResult !== undefined || existingArticle.summaryLabel === "Salvo agora" || existingArticle.summaryLabel === "Publicado no painel") {
+          if (existingArticle.isLiveResult !== itemLive) {
+            existingArticle.isLiveResult = itemLive;
+            changed = true;
+          }
+          if (existingArticle.summaryLabel !== articleSummaryLabel) {
+            existingArticle.summaryLabel = articleSummaryLabel;
+            changed = true;
+          }
+        }
       }
       story.articleCount = story.articles.length;
       story.rawCount = story.articleCount - Number(story.aiCount || 0);

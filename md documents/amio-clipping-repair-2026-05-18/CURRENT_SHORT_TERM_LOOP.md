@@ -158,6 +158,8 @@ Covered by code and tests:
   live-results without waiting for a full export.
 - Manual stories saved with `export: false` remain `publicationState: "saved"`
   instead of being mislabeled as already published.
+- Live overlay items that later become published now update existing article and
+  story labels from saved/live state to `Publicado no painel`.
 - Existing duplicate articles retagged for a new secondary target emit
   `article_saved` with `publicationState: "saved"`, so Base atual can surface
   the newly connected target immediately.

@@ -670,6 +670,101 @@ class TestFunctionalSanity:
         assert "1 história" in text
         assert active
 
+    def test_live_results_publication_state_update_rerenders_existing_article(self, browser_ctx, local_server):
+        """A live saved article should stop looking unpublished after export catches up."""
+        page = browser_ctx.new_page()
+        base_calls = {"count": 0}
+        empty_payload = {
+            "meta": {
+                "pageTitle": "Clipping Teste",
+                "generatedAt": "2026-05-19T12:00:00+00:00",
+                "totalStories": 0,
+                "totalArticles": 0,
+                "totalAi": 0,
+                "totalRaw": 0,
+            },
+            "targets": [
+                {"key": "flavio_valle", "label": "Flávio Valle", "primary": True, "storyCount": 0, "articleCount": 0}
+            ],
+            "defaultTargets": ["flavio_valle"],
+            "stories": [],
+        }
+
+        def clipping_data(route):
+            route.fulfill(status=200, content_type="application/json", body=json.dumps(empty_payload, ensure_ascii=False))
+
+        def targets(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        "targets": [
+                            {"key": "flavio_valle", "label": "Flávio Valle", "primary": True},
+                        ],
+                        "primaryKeys": ["flavio_valle"],
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        def update_status(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps({"current": {"status": "idle"}, "recent": []}),
+            )
+
+        def live_results(route):
+            if "scope=base" not in route.request.url:
+                route.fulfill(status=200, content_type="application/json", body=json.dumps({"items": []}))
+                return
+            base_calls["count"] += 1
+            publication_state = "saved" if base_calls["count"] == 1 else "published"
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        "items": [
+                            {
+                                "articleId": 99003,
+                                "storyId": 99003,
+                                "title": "Projeto Zeta publicado depois",
+                                "url": "https://example.com/projeto-zeta-publicado",
+                                "sourceName": "Fonte Teste",
+                                "publishedAt": "2026-05-19T12:00:00+00:00",
+                                "savedAt": "2026-05-19T12:03:00+00:00",
+                                "snippet": "Projeto Zeta mudou de salvo para publicado.",
+                                "summary": "Projeto Zeta mudou de salvo para publicado.",
+                                "publicationState": publication_state,
+                                "targetKeys": ["flavio_valle"],
+                                "targetLabels": {"flavio_valle": "Flávio Valle"},
+                            }
+                        ],
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        page.route("**/assets/clipping-data.json", clipping_data)
+        page.route("**/api/targets**", targets)
+        page.route("**/api/update/status", update_status)
+        page.route("**/api/update/live-results**", live_results)
+
+        try:
+            page.goto(f"{local_server}/index.html", wait_until="domcontentloaded")
+            page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)
+            page.wait_for_selector("#flatStack .article-card:has-text('Projeto Zeta publicado depois')", timeout=10000)
+            page.wait_for_selector("#flatStack .article-card:has-text('Salvo agora')", timeout=10000)
+            page.wait_for_selector("#flatStack .article-card:has-text('Publicado no painel')", timeout=8000)
+            still_saved = page.locator("#flatStack .article-card:has-text('Salvo agora')").count()
+        finally:
+            page.close()
+
+        assert base_calls["count"] >= 2
+        assert still_saved == 0
+
     def test_manage_target_edit_stays_available_during_running_update(self, browser_ctx, local_server):
         """A running update should not block editing names for future/base sync."""
         page = browser_ctx.new_page()
