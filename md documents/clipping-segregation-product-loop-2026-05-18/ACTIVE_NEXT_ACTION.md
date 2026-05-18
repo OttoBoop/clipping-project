@@ -95,8 +95,8 @@ Continue the production loop. Current priority from the docs:
 3. continue target-management review for admin/operator workflows;
 4. continue the `RIO_ECONOMIC_VALIDATION_PLAN.md` path: offline report artifact
    exists; live Google News smoke now works with redirect resolution skipped;
-   next Rio step is reviewing/labelling the live sample and expanding to a
-   30-row sample without writing production DB/assets/targets;
+   a 32-row live sample exists; next Rio step is revising weak queries and/or
+   adding a custom query-file mode before another sample;
 5. convert the live proof into a sellable demo script without exposing secrets;
 6. review costs, password rotation, and operations;
 7. then re-read the docs and choose the next weak axis.

@@ -3199,3 +3199,122 @@ ddcd558 docs: log collector rebase barrier
 
 This WORK_LOG update was stashed, rebased onto `ddcd558`, and reapplied without
 conflict before being prepared for a docs-only commit.
+
+### Docs Push Evidence
+
+The deployment-observation log was committed and pushed:
+
+```text
+commit=1d8eea3 docs: log Rio workaround deploy observation
+git push origin HEAD:master -> success
+```
+
+Render accepted that docs commit:
+
+```text
+deploy=dep-d86dvg21dpfc73a26png
+commit=1d8eea3 docs: log Rio workaround deploy observation
+status=queued
+```
+
+### Latest Logged-Out Production Smoke
+
+While Render was still deploying queued commits, production still enforced the
+privacy gate:
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET /api/update/status -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+```
+
+### Next Objective From Docs
+
+`ACTIVE_NEXT_ACTION.md` now points to expanding the Rio live sample toward 30
+review rows without writing production DB/assets/targets, while Render polling
+continues in parallel.
+
+## 2026-05-19 - Loop Cycle: Rio 32-Row Live Sample
+
+### Objective Reviewed
+
+The Rio validation plan required a reviewable sample of at least 30 candidate
+articles before adding any `rio_economico` target row or production ingestion.
+
+### Action Taken
+
+Ran a larger live Google News dry-run with redirect resolution skipped:
+
+```text
+tools/rio_economic_dry_run.py --date-from 2026-05-01 --date-to 2026-05-19 --max-queries 8 --limit-per-query 4 --request-timeout 5 --resolve-timeout 0 --collection-timeout 70
+```
+
+Generated artifacts:
+
+```text
+data/reports/rio_economic_dry_run_20260518T220725Z.json
+data/reports/rio_economic_dry_run_20260518T220725Z.csv
+data/reports/rio_economic_dry_run_20260518T220725Z.md
+```
+
+Artifact metadata:
+
+```text
+row_count=32
+query_count=8
+request_timeout=5
+resolve_timeout=0
+collection_timeout=70
+redirect_resolution_skipped=true
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+Dimension counts:
+
+```text
+tourism_events=8
+commerce_services=8
+jobs_income=4
+construction_real_estate=4
+budget_finance=8
+```
+
+Added title-level triage notes:
+
+```text
+RIO_ECONOMIC_SAMPLE_REVIEW_20260518T220725Z.md
+```
+
+### Early Findings
+
+Jobs and budget queries look more promising. Broad construction terms are weak.
+Commerce and tourism queries have useful city signal but also pull state,
+nearby-city, federal, or generic items.
+
+### Barrier Status
+
+The 30-row sample threshold is met for review purposes. It is not yet clean
+enough to add a production target row.
+
+### Why The Loop Continues
+
+The next Rio step is query revision or query-file support, while the production
+segregation loop still needs Render polling and viewer-profile proof when
+credentials are available.
+
+### Rebase After 32-Row Sample
+
+`origin/master` advanced while the 32-row sample was being logged. The sample
+artifacts and review note were stashed path-limited, rebased, and reapplied
+without conflict.
+
+```text
+origin/master -> e2e3ba2 docs: log clipping auth barrier review
+git rebase origin/master -> success
+git stash pop -> success
+```
