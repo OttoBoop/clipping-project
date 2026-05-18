@@ -28,6 +28,34 @@ def test_selected_queries_avoid_single_broad_rio_economia_query():
     assert any("orcamento" in query for query in queries)
 
 
+def test_load_query_specs_uses_json_file(tmp_path):
+    queries_path = tmp_path / "queries.json"
+    queries_path.write_text(
+        json.dumps(
+            {
+                "queries": [
+                    {
+                        "dimension": "budget_finance",
+                        "query": '"Prefeitura do Rio" ISS',
+                        "why_candidate": "municipal revenue signal",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    specs = rio_economic_dry_run.load_query_specs(queries_path)
+
+    assert specs == [
+        rio_economic_dry_run.RioEconomicQuery(
+            "budget_finance",
+            '"Prefeitura do Rio" ISS',
+            "municipal revenue signal",
+        )
+    ]
+
+
 def test_collect_rows_dedupes_urls_and_preserves_review_fields():
     calls: list[dict] = []
 
@@ -57,6 +85,29 @@ def test_collect_rows_dedupes_urls_and_preserves_review_fields():
     assert rows[0]["false_positive_reason"] == ""
 
 
+def test_collect_rows_accepts_custom_query_specs():
+    calls: list[dict] = []
+
+    def fake_collector(**kwargs):
+        calls.append(kwargs)
+        return [sample_article("https://example.com/iss", "ISS sobe")]
+
+    rows = rio_economic_dry_run.collect_rows(
+        query_specs=[
+            rio_economic_dry_run.RioEconomicQuery(
+                "budget_finance",
+                '"Prefeitura do Rio" ISS',
+                "municipal revenue signal",
+            )
+        ],
+        collector=fake_collector,
+    )
+
+    assert calls[0]["queries"] == ['"Prefeitura do Rio" ISS']
+    assert rows[0]["dimension"] == "budget_finance"
+    assert rows[0]["why_candidate"] == "municipal revenue signal"
+
+
 def test_write_reports_creates_json_csv_and_markdown(tmp_path):
     rows = [rio_economic_dry_run.article_to_row(rio_economic_dry_run.selected_queries(1)[0], sample_article("https://example.com/a"))]
     generated_at = datetime(2026, 5, 19, 12, 0, tzinfo=timezone.utc)
@@ -66,6 +117,7 @@ def test_write_reports_creates_json_csv_and_markdown(tmp_path):
         date_to="2026-05-19",
         limit_per_query=1,
         max_queries=1,
+        query_specs=[rio_economic_dry_run.selected_queries(1)[0]],
         generated_at=generated_at,
     )
 

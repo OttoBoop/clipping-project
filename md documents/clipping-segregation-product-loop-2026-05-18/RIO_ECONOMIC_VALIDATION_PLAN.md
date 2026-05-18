@@ -190,6 +190,29 @@ Early finding: jobs and budget queries are more promising than broad
 construction terms. Commerce/tourism terms need tighter city-of-Rio anchors and
 false-positive exclusions before any automated target/matcher row exists.
 
+Revised query-file evidence:
+
+```text
+data/reports/rio_economic_revised_queries_20260518.json
+data/reports/rio_economic_dry_run_20260518T221140Z.json
+row_count=29
+query_count=10
+queries_file=data/reports/rio_economic_revised_queries_20260518.json
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+Revised sample notes:
+
+```text
+RIO_ECONOMIC_REVISED_SAMPLE_REVIEW_20260518T221140Z.md
+```
+
+The revised set improved event/tourism, real-estate, licensing/works, and
+ambulante-commerce signals, but still needs negative terms and stronger source
+anchors before any production target row.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

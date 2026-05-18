@@ -3318,3 +3318,122 @@ origin/master -> e2e3ba2 docs: log clipping auth barrier review
 git rebase origin/master -> success
 git stash pop -> success
 ```
+
+### Push Evidence
+
+The 32-row sample review reached `master`:
+
+```text
+git push origin HEAD:master
+15fe6ad..072e406  HEAD -> master
+commit=072e406 docs: add Rio economic 32-row sample review
+```
+
+Render accepted the commit:
+
+```text
+deploy=dep-d86e0c0c5kbs73akmf4g
+commit=072e406 docs: add Rio economic 32-row sample review
+status=queued
+```
+
+Production privacy smoke while deploys continue:
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Next Objective From Docs
+
+Implement a `--queries-file` path for `tools/rio_economic_dry_run.py` so revised
+Rio query sets can be tested without editing code or creating a production
+target row.
+
+## 2026-05-19 - Loop Cycle: Rio Query File And Revised Sample
+
+### Objective Reviewed
+
+After the 32-row sample, the next Rio objective was to revise weak queries
+without editing code or adding a production target row.
+
+### Action Taken
+
+Updated:
+
+```text
+tools/rio_economic_dry_run.py
+tests/test_rio_economic_dry_run.py
+data/reports/rio_economic_revised_queries_20260518.json
+RIO_ECONOMIC_VALIDATION_PLAN.md
+ACTIVE_NEXT_ACTION.md
+RIO_ECONOMIC_REVISED_SAMPLE_REVIEW_20260518T221140Z.md
+```
+
+Changes:
+
+- added `--queries-file` support for JSON query specs;
+- added tests for loading custom query specs and running custom specs through
+  `collect_rows`;
+- created a revised 10-query Rio economic set;
+- ran the revised sample without writing production DB/assets/targets.
+
+### Evidence
+
+Commands passed:
+
+```text
+python -m py_compile tools/rio_economic_dry_run.py
+pytest tests/test_rio_economic_dry_run.py -q
+6 passed
+python -m json.tool data/reports/rio_economic_revised_queries_20260518.json
+```
+
+Revised dry-run command completed:
+
+```text
+tools/rio_economic_dry_run.py --queries-file data/reports/rio_economic_revised_queries_20260518.json --date-from 2026-05-01 --date-to 2026-05-19 --max-queries 10 --limit-per-query 3 --request-timeout 5 --resolve-timeout 0 --collection-timeout 80
+```
+
+Generated artifacts:
+
+```text
+data/reports/rio_economic_dry_run_20260518T221140Z.json
+data/reports/rio_economic_dry_run_20260518T221140Z.csv
+data/reports/rio_economic_dry_run_20260518T221140Z.md
+```
+
+Artifact metadata:
+
+```text
+row_count=29
+query_count=10
+queries_file=data/reports/rio_economic_revised_queries_20260518.json
+request_timeout=5
+resolve_timeout=0
+redirect_resolution_skipped=true
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+### Early Findings
+
+The revised set improved event/tourism, real-estate, licensing/works, and
+ambulante-commerce signals. It still pulls Rio das Ostras, Rio Grande,
+Porto Velho, Pernambuco/federal, and national tourism/jobs noise.
+
+### Barrier Status
+
+No production data contamination. The methodological blocker is now query
+cleanup, not tooling.
+
+### Why The Loop Continues
+
+The next Rio step is testing negative terms/source anchors or adding explicit
+title-level exclusion fields to the dry-run review before adding any production
+target row.

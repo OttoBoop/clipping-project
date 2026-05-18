@@ -1,0 +1,56 @@
+{
+  "created_at": "2026-05-18T22:14:00Z",
+  "source_review": "md documents/clipping-segregation-product-loop-2026-05-18/RIO_ECONOMIC_SAMPLE_REVIEW_20260518T220725Z.md",
+  "queries": [
+    {
+      "dimension": "tourism_events",
+      "query": "\"Rio de Janeiro\" \"ocupacao hoteleira\"",
+      "why_candidate": "more specific tourism demand signal than generic hotelaria"
+    },
+    {
+      "dimension": "tourism_events",
+      "query": "\"Rio de Janeiro\" \"impacto economico\" turismo",
+      "why_candidate": "tourism items with explicit economic angle"
+    },
+    {
+      "dimension": "commerce_services",
+      "query": "\"Prefeitura do Rio\" ambulantes comercio",
+      "why_candidate": "city enforcement/commerce organization signal"
+    },
+    {
+      "dimension": "commerce_services",
+      "query": "\"cidade do Rio\" comercio local",
+      "why_candidate": "local commerce signal with city anchor"
+    },
+    {
+      "dimension": "jobs_income",
+      "query": "\"Rio de Janeiro\" vagas emprego Prefeitura",
+      "why_candidate": "city jobs and public employment signal"
+    },
+    {
+      "dimension": "jobs_income",
+      "query": "\"Rio de Janeiro\" empregos turismo",
+      "why_candidate": "local labor signal tied to tourism economy"
+    },
+    {
+      "dimension": "construction_real_estate",
+      "query": "\"Prefeitura do Rio\" licenciamento obras",
+      "why_candidate": "municipal construction/permitting signal"
+    },
+    {
+      "dimension": "construction_real_estate",
+      "query": "\"cidade do Rio\" mercado imobiliario",
+      "why_candidate": "city-specific real estate activity"
+    },
+    {
+      "dimension": "budget_finance",
+      "query": "\"Prefeitura do Rio\" ISS",
+      "why_candidate": "municipal tax/revenue signal"
+    },
+    {
+      "dimension": "budget_finance",
+      "query": "\"cidade do Rio\" arrecadacao ISS",
+      "why_candidate": "city revenue signal with tax anchor"
+    }
+  ]
+}

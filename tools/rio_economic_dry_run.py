@@ -43,6 +43,25 @@ RIO_ECONOMIC_QUERIES: tuple[RioEconomicQuery, ...] = (
 )
 
 
+def _query_spec_from_mapping(row: dict[str, Any]) -> RioEconomicQuery:
+    dimension = str(row.get("dimension") or "").strip()
+    query = str(row.get("query") or "").strip()
+    why_candidate = str(row.get("why_candidate") or row.get("why") or "").strip()
+    if not dimension or not query:
+        raise ValueError("each Rio query spec must include non-empty dimension and query")
+    return RioEconomicQuery(dimension, query, why_candidate or "manual revised query")
+
+
+def load_query_specs(path: Path | None) -> list[RioEconomicQuery]:
+    if not path:
+        return list(RIO_ECONOMIC_QUERIES)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    rows = payload.get("queries") if isinstance(payload, dict) else payload
+    if not isinstance(rows, list):
+        raise ValueError("queries file must be a JSON list or an object with a queries list")
+    return [_query_spec_from_mapping(row) for row in rows if isinstance(row, dict)]
+
+
 def offline_fixture_collector(**kwargs: Any) -> list[CandidateArticle]:
     query = str((kwargs.get("queries") or ["rio"])[0])
     slug = (
@@ -70,8 +89,8 @@ def offline_fixture_collector(**kwargs: Any) -> list[CandidateArticle]:
     ]
 
 
-def selected_queries(max_queries: int = 0) -> list[RioEconomicQuery]:
-    queries = list(RIO_ECONOMIC_QUERIES)
+def selected_queries(max_queries: int = 0, query_specs: list[RioEconomicQuery] | None = None) -> list[RioEconomicQuery]:
+    queries = list(query_specs or RIO_ECONOMIC_QUERIES)
     if max_queries > 0:
         return queries[:max_queries]
     return queries
@@ -102,11 +121,12 @@ def collect_rows(
     request_timeout: int = 10,
     resolve_timeout: int = 0,
     collection_timeout: int = 6000,
+    query_specs: list[RioEconomicQuery] | None = None,
     collector: Callable[..., list[CandidateArticle]] = collect_google_news,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
-    for spec in selected_queries(max_queries):
+    for spec in selected_queries(max_queries, query_specs):
         articles = collector(
             queries=[spec.query],
             date_from=date_from,
@@ -204,9 +224,11 @@ def build_payload(
     request_timeout: int = 10,
     resolve_timeout: int = 0,
     collection_timeout: int = 6000,
+    query_specs: list[RioEconomicQuery] | None = None,
+    queries_file: str = "",
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    query_count = len(selected_queries(max_queries))
+    query_count = len(selected_queries(max_queries, query_specs))
     generated = (generated_at or datetime.now(timezone.utc)).isoformat()
     return {
         "meta": {
@@ -218,6 +240,7 @@ def build_payload(
             "resolve_timeout": resolve_timeout,
             "collection_timeout": collection_timeout,
             "redirect_resolution_skipped": resolve_timeout <= 0,
+            "queries_file": queries_file,
             "query_count": query_count,
             "row_count": len(rows),
             "timeout_policy": "dry_run_smoke_timeouts_are_allowed",
@@ -225,7 +248,7 @@ def build_payload(
             "writes_assets_payload": False,
             "writes_targets_json": False,
         },
-        "queries": [spec.__dict__ for spec in selected_queries(max_queries)],
+        "queries": [spec.__dict__ for spec in selected_queries(max_queries, query_specs)],
         "rows": rows,
     }
 
@@ -252,12 +275,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--resolve-timeout", type=int, default=0, help="Seconds for Google redirect resolution; 0 skips it for safe smoke runs.")
     parser.add_argument("--collection-timeout", type=int, default=6000)
     parser.add_argument("--output-dir", type=Path, default=REPORTS_DIR)
+    parser.add_argument("--queries-file", type=Path, default=None, help="JSON list/object of revised Rio query specs.")
     parser.add_argument("--offline-fixture", action="store_true", help="Generate review artifacts without network calls.")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    query_specs = load_query_specs(args.queries_file)
     rows = collect_rows(
         date_from=args.date_from,
         date_to=args.date_to,
@@ -266,6 +291,7 @@ def main(argv: list[str] | None = None) -> int:
         request_timeout=max(1, args.request_timeout),
         resolve_timeout=max(0, args.resolve_timeout),
         collection_timeout=max(1, args.collection_timeout),
+        query_specs=query_specs,
         collector=offline_fixture_collector if args.offline_fixture else collect_google_news,
     )
     payload = build_payload(
@@ -277,6 +303,8 @@ def main(argv: list[str] | None = None) -> int:
         request_timeout=max(1, args.request_timeout),
         resolve_timeout=max(0, args.resolve_timeout),
         collection_timeout=max(1, args.collection_timeout),
+        query_specs=query_specs,
+        queries_file=str(args.queries_file or ""),
     )
     if args.offline_fixture:
         payload["meta"]["offline_fixture"] = True
