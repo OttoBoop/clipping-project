@@ -4383,3 +4383,44 @@ target/filter review.
 
 This closes another live Base atual correctness bug, but it is still one layer
 of the loop. Push, verify, log, and continue.
+
+## 2026-05-18 - Seventy-Seventh Publication Fix Push And Checklist Cycle
+
+### Objective Reviewed
+
+The manual live-results fix and publication-state repair must be recorded in
+the connection checklist so future agents verify every confirmation path, not
+only ingestion.
+
+### Audit Performed
+
+- Pushed `e65c13c fix: keep unexported manual stories saved`.
+- Checked hosted `/healthz`.
+- Checked hosted `/api/update/live-results?scope=base&limit=5`.
+- Re-read `SYSTEM_CONNECTION_CHECKLIST.md`.
+- Updated the Live Base Loop checklist to include manual story confirmation and
+  saved-vs-published state.
+
+### Result
+
+Hosted state:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+```
+
+Barrier answered: the hosted live payload is still session-gated. The checklist
+now explicitly requires manual confirmations to emit `article_saved` and keeps
+saved-but-not-exported items from being mislabeled as published.
+
+### Next Hypothesis
+
+Commit this checklist/log update, then continue with another source or local
+contract review.
+
+### Why The Loop Continues
+
+The hosted service is healthy and the checklist is stronger, but direct live
+payload verification remains gated and the loop still has target/filter/base
+watch items.

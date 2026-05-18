@@ -46,6 +46,10 @@ targets, filters, saved news, base display, or updates.
   targets.
 - `/api/update/live-results?job_id=...` returns saved articles during a running
   job.
+- Manual story confirmation emits `article_saved` and appears in the same Base
+  atual live-results path as ingestion and target backfill.
+- A saved-but-not-exported item remains marked `saved`; only export or real
+  artifact publication should make it `published`.
 - The frontend merges live results into the in-memory payload without requiring
   a full export.
 - Base atual stats and filters update after live results merge.
