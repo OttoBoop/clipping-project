@@ -3503,3 +3503,53 @@ for inline validation and absence of `manageTargetsBlocked`.
 
 The local UI no longer carries the hidden blocker copy, but the hosted inline
 validation bundle still needs to deploy.
+
+## 2026-05-19 - Fifty-Ninth Live Watch: Inline Validation Live, Hidden Cleanup Pending
+
+### Objective Reviewed
+
+The inline target-name validation needed a hosted verification. The hidden
+`manageTargetsBlocked` cleanup was pushed afterward and also needs a live watch.
+
+### Audit Performed
+
+- Checked hosted `/assets/clipping.js?v=99c08ff`.
+- Checked `/healthz`.
+- Confirmed local/remotes aligned at `99c08ff`.
+- Ran focused inline validation and edit-availability browser contracts.
+- Waited another short window and rechecked hosted JS.
+
+### Result
+
+Hosted JS now contains inline validation:
+
+```text
+targetDisplayNameError
+Informe um nome de exibicao
+novalidate
+```
+
+Focused local contracts:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_add_target_short_name_shows_inline_error_without_api_call \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_short_name_shows_inline_error_without_api_call \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_edit_stays_available_during_running_update \
+  -q
+```
+
+Result: `3 passed in 2.90s`.
+
+Hosted JS still contains the now-removed local `manageTargetsBlocked` reference,
+so `99c08ff fix: remove hidden target blocker copy` has not fully deployed yet.
+
+### Next Hypothesis
+
+Keep watching for `manageTargetsBlocked` to disappear from hosted JS. Continue
+local contract work if deploy remains behind.
+
+### Why The Loop Continues
+
+One user-facing error fix is live, but the hidden blocker cleanup is still
+pending on the hosted bundle.
