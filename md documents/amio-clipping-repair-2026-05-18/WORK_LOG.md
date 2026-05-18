@@ -6098,3 +6098,50 @@ push again, then verify the hosted JS marker.
 
 The git race is administrative and does not reduce the need to deploy and watch
 the Base atual publication-state correction.
+
+## 2026-05-18 - One Hundred Eighteenth Publication State Post-Rebase Watch
+
+### Objective Reviewed
+
+After rebasing and pushing the publication-state fix, the loop needed a
+post-rebase test and hosted asset watch.
+
+### Audit Performed
+
+- Rebased and pushed the fix as
+  `deea6c4 fix: update live publication state labels`.
+- Confirmed `HEAD == origin/master == deea6c4`.
+- Reran:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_publication_state_update_rerenders_existing_article \
+  -q
+```
+
+- Checked hosted `/assets/clipping.js` for the new
+  `storySummaryLabel`/`articleSummaryLabel` markers.
+
+### Result
+
+Local post-rebase test passed:
+
+```text
+1 passed in 6.42s
+```
+
+Barrier answered: hosted JS was still stale immediately after push. It still
+showed the older inline `item.publicationState === "published" ? ...` expression
+and did not yet include `storySummaryLabel` or `articleSummaryLabel`.
+
+Restored generated `pipeline/__pycache__` after the test.
+
+### Next Hypothesis
+
+Commit this post-rebase/deploy-lag log, then re-check hosted JS later and keep
+reviewing local contracts while the deploy catches up.
+
+### Why The Loop Continues
+
+The local fix is verified and pushed, but hosted verification is pending due to
+deploy lag. That is a barrier to live confirmation only, not a reason to stop.
