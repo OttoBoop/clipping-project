@@ -1755,3 +1755,44 @@ contract/status reviews until production credentials exist.
 ### Why The Loop Continues
 
 The diagnostic is live, but viewer profiles are still not live-verifiable.
+
+## 2026-05-19 - Loop Cycle: Focused Regression After Healthz Change
+
+### Objective Reviewed
+
+After changing auth/health diagnostics, rerun the broader focused suite used by
+this product loop instead of trusting the two narrow tests.
+
+### Tests
+
+Command:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_targets_jobs.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result:
+
+```text
+100 passed in 3.08s
+```
+
+### Result
+
+The safe `missingConfig` health diagnostic did not break the focused auth,
+targets, jobs, or export regression set.
+
+### Remaining Blocker
+
+Live viewer profile proof remains blocked by missing
+`CLIPPING_VIEWER_PASSWORDS` on Render.
+
+### Next Objective From Docs
+
+Re-read `ACTIVE_NEXT_ACTION.md` and `SYSTEM_REVIEW_STATUS_2026-05-19.md`.
+Continue with live monitoring and unblocked docs/contracts; do not treat the
+green focused suite as completion.
+
+### Why The Loop Continues
+
+Tests passing is explicitly not a stop condition.
