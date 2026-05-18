@@ -3527,6 +3527,95 @@ segregation verified and continue toward a clean Rio review methodology.
 
 ### Push Evidence
 
+The title-exclusion filter reached `master`:
+
+```text
+git push origin HEAD:master
+9365da9..5e30cae  HEAD -> master
+commit=5e30cae feat: add Rio title exclusion filters
+```
+
+Render accepted the commit:
+
+```text
+deploy=dep-d86e4d0js32c739amqh0
+commit=5e30cae feat: add Rio title exclusion filters
+status=build_in_progress
+previous live=9365da9 feat: support revised Rio economic query files
+```
+
+Production privacy smoke while deploy builds:
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+```
+
+### Next Objective From Docs
+
+Continue with title-level manual labelling of the cleaner Rio sample and source
+anchor refinement before any `rio_economico` production target exists.
+
+## 2026-05-19 - Loop Cycle: Rio Title-Level Labels
+
+### Objective Reviewed
+
+The cleaner 26-row Rio sample needed provisional labels before deciding whether
+query quality is good enough for any production target consideration.
+
+### Action Taken
+
+Added:
+
+```text
+RIO_ECONOMIC_TITLE_LABELS_20260518T221521Z.md
+```
+
+Also updated the revised query file with `pernambucanos` as an exclusion after
+title review found a Pernambuco false positive that did not include the exact
+word `Pernambuco`.
+
+### Evidence
+
+Title-level tally:
+
+```text
+true_positive=18
+useful_unclear=4
+false_positive=3
+unclear=1
+```
+
+Useful or unclear title-level share:
+
+```text
+22/26
+```
+
+### Findings
+
+The methodology is now promising, especially for event/tourism impact,
+real-estate, licensing/works, ambulantes, and municipal jobs. Budget/revenue
+still mixes true municipal finance, economic-impact stories, and dimension
+mismatches.
+
+### Barrier Status
+
+Still no production target row. Labels are title-level only and need source/body
+review before ingestion.
+
+### Why The Loop Continues
+
+The next Rio step is source-anchor and dimension refinement. Production
+segregation still needs Render polling and authenticated viewer proof when
+credentials are available.
+
+### Push Evidence
+
 The query-file implementation and revised sample reached `master`:
 
 ```text

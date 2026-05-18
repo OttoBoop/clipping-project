@@ -49,7 +49,7 @@
       "dimension": "budget_finance",
       "query": "\"Prefeitura do Rio\" ISS",
       "why_candidate": "municipal tax/revenue signal",
-      "exclude_title_terms": ["Pernambuco"]
+      "exclude_title_terms": ["Pernambuco", "pernambucanos"]
     },
     {
       "dimension": "budget_finance",

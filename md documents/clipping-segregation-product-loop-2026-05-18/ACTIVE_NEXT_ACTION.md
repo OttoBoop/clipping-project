@@ -96,8 +96,8 @@ Continue the production loop. Current priority from the docs:
 4. continue the `RIO_ECONOMIC_VALIDATION_PLAN.md` path: offline report artifact
    exists; live Google News smoke now works with redirect resolution skipped;
    a 32-row live sample, 29-row revised sample, and 26-row title-exclusion
-   sample exist; next Rio step is human/manual labelling of the cleaner sample
-   and source-anchor refinement before any production target row;
+   sample exist; title-level labels exist; next Rio step is source-anchor and
+   dimension refinement before any production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
 6. review costs, password rotation, and operations;
 7. then re-read the docs and choose the next weak axis.

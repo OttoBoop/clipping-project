@@ -228,6 +228,20 @@ Pernambuco=0
 
 This is a cleaner review sample, but still not production ingestion approval.
 
+Title-level labels:
+
+```text
+RIO_ECONOMIC_TITLE_LABELS_20260518T221521Z.md
+true_positive=18
+useful_unclear=4
+false_positive=3
+unclear=1
+```
+
+The useful-or-unclear title-level share is promising, but the remaining false
+positives and dimension mismatches confirm that Rio still needs methodology
+cleanup before target-row creation.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?
