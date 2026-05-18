@@ -6145,3 +6145,46 @@ reviewing local contracts while the deploy catches up.
 
 The local fix is verified and pushed, but hosted verification is pending due to
 deploy lag. That is a barrier to live confirmation only, not a reason to stop.
+
+## 2026-05-18 - One Hundred Nineteenth Hosted Publication State Deploy Watch
+
+### Objective Reviewed
+
+After logging the publication-state deploy lag, the loop waited briefly and
+checked Render again.
+
+### Audit Performed
+
+- Waited briefly for the Render deploy/cache.
+- Checked hosted `/healthz`.
+- Checked hosted `/assets/clipping.js` for `storySummaryLabel`,
+  `articleSummaryLabel`, `existingArticle.isLiveResult`, and the previous live
+  target counter marker.
+- Checked hosted `/api/update/live-results?scope=base&limit=5`.
+
+### Result
+
+Small command barrier answered: the shell `printf` call with a format beginning
+with `---` produced a harmless option warning. The actual curl checks still ran.
+
+Hosted state:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+/assets/clipping.js -> still has var changed = ensureLiveTargetRows(data.items)
+/assets/clipping.js -> storySummaryLabel/articleSummaryLabel markers not present yet
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+```
+
+Barrier answered: hosted JS is still stale for the publication-state fix. The
+previous live target counter fix remains hosted.
+
+### Next Hypothesis
+
+Continue local review while waiting for hosted JS to advance, then check the
+asset again in a later cycle.
+
+### Why The Loop Continues
+
+Deploy lag blocks only live confirmation of the newest JS patch. Local tests
+are green and more source/checklist review remains available.
