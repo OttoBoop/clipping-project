@@ -2091,3 +2091,134 @@ verify the hosted JS and `/healthz`, then continue with local contracts.
 
 The static target rows are repaired locally, but production asset verification
 is still subject to the live viewer-login gate and deploy timing.
+
+## 2026-05-18 - Thirty-Sixth Live Cycle: Normalization JS Published, Data Asset Gated
+
+### Objective Reviewed
+
+After publishing `fix: normalize dashboard payload counts` and
+`fix: align static target rows`, the loop needed to prove what reached the
+hosted site and what remains blocked by auth.
+
+### Audit Performed
+
+- Checked `origin/master`.
+- Downloaded hosted `/assets/clipping.js`.
+- Searched hosted JS for `normalizePayloadCounts();`, target count recompute,
+  and the runtime target count assignment.
+- Checked hosted `/assets/clipping-data.json`.
+- Checked `/healthz`.
+
+### Result
+
+Hosted state:
+
+```text
+origin/master -> eb105474cdd94ed4b7f5500fda7fa63536006ca1
+/assets/clipping.js -> contains normalizePayloadCounts()
+/assets/clipping.js -> contains payload.meta.totalArticles = totalArticles
+/assets/clipping.js -> contains existing.storyCount = usage.storyCount
+/assets/clipping-data.json -> HTTP 401 {"detail":"viewer_login_required"}
+/healthz -> HTTP 200 ok=true job=idle missingConfig=["CLIPPING_VIEWER_PASSWORDS"]
+```
+
+The runtime JS fixes are live. The static data payload cannot be verified on the
+hosted site without viewer auth because the asset endpoint is intentionally
+gated.
+
+### Next Hypothesis
+
+Continue with local contracts and docs while the auth/password workstream owns
+`CLIPPING_VIEWER_PASSWORDS`. The next useful checks are full regression breadth
+and making sure no commit accidentally included generated pycache or unrelated
+main-worktree dirt.
+
+### Why The Loop Continues
+
+Hosted JS verification passed, but authenticated Base atual/status/data payload
+verification remains blocked by the viewer-login gate.
+
+## 2026-05-18 - Thirty-Seventh Regression Cycle: Full Suite Failures Repaired
+
+### Objective Reviewed
+
+The unattended protocol says a passing focused suite is not an exit. I ran the
+full tracked test suite to look for unrelated breakage and found two failures
+that the narrower target/export/admin loop had not exposed.
+
+### Audit Performed
+
+Ran:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest tests -q
+```
+
+First result:
+
+```text
+1 failed, 255 passed in 206.45s
+FAILED tests/test_f5_live_validation.py::test_wordpress_agendadopoder_returns_articles
+```
+
+Debug showed `Agenda do Poder` still had WordPress results, but the collector
+asked for `per_page=100` even when `per_site_limit=5`, making a slow site
+timeout under `request_timeout=15`.
+
+Patched `collect_wordpress_api(...)` to:
+
+- cap `per_page` to the requested site limit;
+- retry a slow non-HTTP failure once with a 30-second timeout.
+
+Added unit contracts for both behaviors.
+
+Second full-suite run then found a benchmark race:
+
+```text
+1 failed, 257 passed in 197.03s
+FAILED tests/test_pages_performance.py::TestPagesBenchmark::test_pages_step_by_step
+Initial shell has 1486 DOM nodes (expected <500)
+```
+
+The local server returned `assets/clipping-data.json` fast enough that the
+"shell only" measurement sometimes captured rendered data. Patched the
+Playwright benchmark to route and hold the JSON response until after the shell
+snapshot.
+
+### Result
+
+Focused checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_collectors_restore.py::test_wordpress_api_caps_page_size_to_requested_limit \
+  tests/test_collectors_restore.py::test_wordpress_api_retries_slow_sites_with_larger_timeout \
+  tests/test_f5_live_validation.py::test_wordpress_agendadopoder_returns_articles \
+  -q
+
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestPagesBenchmark::test_pages_step_by_step \
+  -q
+```
+
+Results: `3 passed in 0.19s`; `1 passed in 5.56s`.
+
+Final full-suite checkpoint:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest tests -q
+```
+
+Result: `258 passed in 189.27s`.
+
+Generated benchmark report and pycache changes were restored before staging.
+
+### Next Hypothesis
+
+Commit the collector/benchmark fixes, then verify hosted JS again and record the
+remaining blocker: authenticated live endpoints still require viewer config.
+
+### Why The Loop Continues
+
+The full suite now passes, but commits and live verification are checkpoints,
+not exits. Production status/live-results are still auth-gated.

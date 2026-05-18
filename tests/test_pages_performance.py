@@ -190,10 +190,27 @@ class TestPagesBenchmark:
         """Measure Pages version at each interaction step."""
         page = browser_ctx.new_page()
         snapshots = []
+        held_data_route = {}
+
+        def hold_data_response(route):
+            held_data_route["route"] = route
+
+        page.route("**/assets/clipping-data.json", hold_data_response)
 
         # 1. Navigate
         page.goto(f"{local_server}/index.html", wait_until="domcontentloaded")
+        page.wait_for_timeout(100)
         snapshots.append(snapshot_metrics(page, "DOM loaded (shell only)"))
+
+        if "route" in held_data_route:
+            held_data_route["route"].fulfill(
+                status=200,
+                content_type="application/json",
+                body=(ROOT / "assets" / "clipping-data.json").read_text(encoding="utf-8"),
+            )
+            page.unroute("**/assets/clipping-data.json", hold_data_response)
+        else:
+            page.unroute("**/assets/clipping-data.json", hold_data_response)
 
         # 2. Wait for data fetch + initial render
         page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)

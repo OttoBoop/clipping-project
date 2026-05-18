@@ -5,9 +5,11 @@ and collect_direct_scrape for generic site scraping (O Dia, R7, CONIB, etc.).
 There are NO separate collect_odia_site/collect_r7_site functions — those were
 invented in the simplified rewrite.
 """
+import json
 import py_compile
 import sys
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -42,6 +44,73 @@ def test_collectors_has_rss():
 def test_collectors_has_wordpress_api():
     from pipeline.collectors import collect_wordpress_api
     assert callable(collect_wordpress_api)
+
+
+def test_wordpress_api_caps_page_size_to_requested_limit(monkeypatch):
+    from pipeline import collectors
+
+    observed = {}
+
+    def fake_fetch_url(url, timeout=10):
+        observed["url"] = url
+        return url, json.dumps(
+            [
+                {
+                    "link": "https://example.com/noticia",
+                    "title": {"rendered": "Flavio Valle em pauta"},
+                    "excerpt": {"rendered": "Resumo"},
+                    "date_gmt": "2026-05-18T12:00:00",
+                }
+            ]
+        )
+
+    monkeypatch.setattr(collectors, "fetch_url", fake_fetch_url)
+
+    results = collectors.collect_wordpress_api(
+        "Flavio Valle",
+        source_name="Agenda do Poder",
+        base_url="https://example.com",
+        per_site_limit=5,
+        per_page=100,
+    )
+
+    params = parse_qs(urlparse(observed["url"]).query)
+    assert params["per_page"] == ["5"]
+    assert len(results) == 1
+
+
+def test_wordpress_api_retries_slow_sites_with_larger_timeout(monkeypatch):
+    from pipeline import collectors
+
+    timeouts = []
+
+    def fake_fetch_url(url, timeout=10):
+        timeouts.append(timeout)
+        if len(timeouts) == 1:
+            raise TimeoutError("slow wordpress")
+        return url, json.dumps(
+            [
+                {
+                    "link": "https://example.com/noticia",
+                    "title": {"rendered": "Flavio Valle em pauta"},
+                    "excerpt": {"rendered": "Resumo"},
+                    "date_gmt": "2026-05-18T12:00:00",
+                }
+            ]
+        )
+
+    monkeypatch.setattr(collectors, "fetch_url", fake_fetch_url)
+
+    results = collectors.collect_wordpress_api(
+        "Flavio Valle",
+        source_name="Agenda do Poder",
+        base_url="https://example.com",
+        per_site_limit=5,
+        request_timeout=8,
+    )
+
+    assert timeouts == [8, 30]
+    assert len(results) == 1
 
 
 def test_collectors_has_internal_site_search():

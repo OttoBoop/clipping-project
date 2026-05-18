@@ -773,10 +773,11 @@ def collect_wordpress_api(
         return []
 
     endpoint = f"{base}/wp-json/wp/v2/posts"
-    per_page = max(1, min(100, int(per_page or 100)))
+    site_limit = max(1, int(per_site_limit or 1))
+    per_page = max(1, min(100, site_limit, int(per_page or 100)))
     page_start = max(1, int(start_page or 1))
     if max_pages is None:
-        page_count = max(3, min(60, (max(1, per_site_limit) // per_page) + 10))
+        page_count = max(3, min(60, (site_limit // per_page) + 10))
     else:
         page_count = max(1, int(max_pages))
     page_end = page_start + page_count - 1
@@ -786,7 +787,7 @@ def collect_wordpress_api(
     accepted = 0
 
     for page in range(page_start, page_end + 1):
-        if accepted >= max(1, per_site_limit):
+        if accepted >= site_limit:
             break
         params: dict[str, str] = {
             "search": q,
@@ -810,9 +811,17 @@ def collect_wordpress_api(
                 raise
             break
         except Exception:
-            if raise_on_error:
-                raise
-            break
+            retry_timeout = max(int(request_timeout or 0), 30)
+            if retry_timeout <= int(request_timeout or 0):
+                if raise_on_error:
+                    raise
+                break
+            try:
+                _, body = fetch_url(url, timeout=retry_timeout)
+            except Exception:
+                if raise_on_error:
+                    raise
+                break
 
         try:
             payload = json.loads(body)
@@ -863,7 +872,7 @@ def collect_wordpress_api(
                 )
             )
             accepted += 1
-            if accepted >= max(1, per_site_limit):
+            if accepted >= site_limit:
                 break
 
         # Heuristic: when fewer than per_page are returned, we're at the end.
