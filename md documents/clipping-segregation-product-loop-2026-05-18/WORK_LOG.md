@@ -1492,3 +1492,61 @@ viewer-auth blocker active.
 
 The Rio review prevented a likely future pollution mistake, but it did not
 complete production viewer segregation.
+
+## 2026-05-19 - Loop Cycle: Sellable Package Readiness Gate
+
+### Objective Reviewed
+
+Returned to `FIRST_SELLABLE_PACKAGE.md`, `DEMO_SCRIPT_AND_BUYER_ASSUMPTIONS.md`,
+and `MARKET_RESEARCH_PLAN.md`.
+
+The market-research plan explicitly says not to research yet if production
+segregation is not verified, demo data leaks another profile, no clear demo
+profile exists, or viewer UI exposes operator controls.
+
+### Audit Performed
+
+Current evidence from prior cycles:
+
+```text
+Render logged-out gate: passed
+Render viewer login: blocked by viewerAuthConfigured=false
+Local viewer scoped payload/raw/API contracts: passed
+Local viewer readonly/no-fake-UI smoke: passed
+GitHub Pages static boundary: public, not private
+Rio economic profile: profile-only placeholder, no collection terms
+```
+
+### Decision
+
+Do not start broad buyer outreach or a live external demo yet. The package can
+be described internally, but external proof still depends on live Render viewer
+credentials.
+
+### Action Taken
+
+Updated `FIRST_SELLABLE_PACKAGE.md` with a current readiness gate:
+
+- allowed now: internal/local controlled demo, technical proof discussion,
+  continued planning;
+- not allowed yet: sending a live client password, pitching static exports as
+  private access, claiming production multi-client segregation complete, or
+  starting outreach that depends on live demo.
+
+### Remaining Blocker
+
+Same blocker: `CLIPPING_VIEWER_PASSWORDS` is still missing on Render.
+
+### Next Objective From Docs
+
+Re-read the docs and continue with one of the remaining unblocked items:
+
+1. live logged-out gate monitoring;
+2. local profile/raw/API regression checks;
+3. review operations/cost discipline so Otavio does not create an expensive
+   bespoke service by accident.
+
+### Why The Loop Continues
+
+The package readiness gate prevents overpromising, but the product loop still
+has not proven live viewer profiles.

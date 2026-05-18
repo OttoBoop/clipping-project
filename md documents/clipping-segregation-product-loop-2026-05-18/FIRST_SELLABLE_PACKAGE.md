@@ -17,6 +17,32 @@ people, terms, stories, articles, raw texts, live results, and relevant filters.
 The same backend can serve multiple clients, but each client gets a scoped
 password and a clean readonly view.
 
+## Current Readiness Status - 2026-05-19
+
+Not ready for an external buyer demo on the live Render site yet.
+
+Current live status:
+
+- logged-out users are blocked from private Render dashboard data;
+- static GitHub Pages is confirmed unsuitable as private access;
+- local viewer contracts pass for scoped payloads, raw texts, readonly UI, and
+  forbidden API widening;
+- Render still reports `viewerAuthConfigured=false`, so live viewer profiles
+  cannot be proven end to end.
+
+Allowed now:
+
+- internal/local controlled demo for Otavio using local viewer passwords;
+- technical proof discussion with screenshots or notes;
+- continued product/market planning.
+
+Not allowed yet:
+
+- sending a live client password;
+- pitching GitHub Pages/Wix/static exports as private access;
+- claiming production multi-client segregation is complete;
+- starting broad buyer outreach that depends on a live demo.
+
 ## Minimum Paid Offer
 
 Name: `Clipping privado monitorado`
