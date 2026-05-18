@@ -6116,3 +6116,72 @@ missing local viewer passwords.
 
 Publish this log evidence, then poll Render again. If newest deploy is still
 not live, continue the Rio body/source review planning step.
+
+## 2026-05-18 20:49 -03 - Loop Cycle: Render Still Behind Latest Smoke Log
+
+### Objective Reviewed
+
+After pushing `b9e557a`, Render must be watched until the newest commit is live.
+
+### Action Taken
+
+Polled Render.
+
+### Evidence
+
+```text
+dep-d86fi8ojhbcs73ef2qdg b9e557a docs: log live smoke on Rio v3 deploy -> queued
+dep-d86fhisrp5ls739coa7g 75d1f13 docs: log clipping remote follow-up -> update_in_progress
+dep-d86fgpf3jp8c73ai6mqg 30ec6c1 docs: log Rio v3 review push -> live
+```
+
+### Barrier Or Failure
+
+No deploy failure. Render is still behind latest `master`.
+
+### Next Objective From Docs
+
+Use deploy wait time for the next Rio gate: body/source review planning for the
+v3 sample.
+
+## 2026-05-18 20:50 -03 - Loop Cycle: Rio V3 Body Review Plan Check
+
+### Objective Reviewed
+
+Publish the body/source review plan without bundling unrelated work.
+
+### Action Taken
+
+Added:
+
+```text
+RIO_ECONOMIC_V3_BODY_SOURCE_REVIEW_PLAN.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+WORK_LOG.md
+```
+
+Then ran:
+
+```text
+git diff --check -- body/source review docs
+git status --short --branch
+```
+
+### Evidence
+
+`git diff --check` passed with no output. Status showed only the intended four
+product-loop docs.
+
+### Barrier Or Failure
+
+No blocker.
+
+### Next Objective From Docs
+
+Commit and push the body/source review plan path-limited.

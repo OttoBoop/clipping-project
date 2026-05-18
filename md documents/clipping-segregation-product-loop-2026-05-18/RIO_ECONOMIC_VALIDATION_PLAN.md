@@ -287,6 +287,15 @@ useful_or_unclear=32/33
 The v3 title-level sample is strong enough for body/source review, but still
 does not approve a production target row by itself.
 
+Body/source review plan:
+
+```text
+RIO_ECONOMIC_V3_BODY_SOURCE_REVIEW_PLAN.md
+first priority rows: v3 #15 and #27
+minimum gate: at least 20 body/source-reviewed rows, at least one per dimension,
+all known false positives mitigated, fresh production scoping proof
+```
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?
