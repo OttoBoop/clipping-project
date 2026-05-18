@@ -2589,3 +2589,81 @@ consistency.
 This closes one regression gap around the exact bad user-facing error, but it
 is still a checkpoint. The live deploy watch and end-to-end Base atual target
 loop remain active.
+
+## 2026-05-19 - Forty-Fourth Live Cycle: Deploy Caught Up, Auth Gate Confirmed
+
+### Objective Reviewed
+
+After pushing the frontend target validation guard, the protocol required a
+live audit instead of stopping at the commit. The active goals were Base atual
+copy/deploy verification, auth-gated live endpoint handling, and local contract
+fallback for target/filter/live-results behavior.
+
+### Audit Performed
+
+- Checked hosted `/healthz`.
+- Checked hosted `/api/update/status`,
+  `/api/update/live-results?scope=base&limit=5`, `/api/targets`, and
+  `/assets/clipping-data.json`.
+- Inspected hosted `/assets/clipping.js` for the target-save/restored copy.
+- Checked the public root HTML for the login gate.
+- Ran the local fallback contract group required when live endpoints are
+  auth-gated.
+
+### Result
+
+Live state at this checkpoint:
+
+```text
+/healthz -> HTTP 200
+viewerAuthConfigured -> true
+demoViewerConfigured -> false
+missingConfig -> []
+job -> idle
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+/api/targets -> HTTP 401 {"detail":"viewer_login_required"}
+/assets/clipping-data.json -> HTTP 401 {"detail":"viewer_login_required"}
+/ -> login page with title "Acessar clipping"
+```
+
+Hosted JS now contains the corrected copy:
+
+```text
+Nome extra salvo. Ele já vale para a Base atual e para próximas rodadas.
+Nome restaurado. Ele já vale para a Base atual e para próximas rodadas.
+```
+
+Fallback contract command:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_hosted_dashboard_enables_same_origin_api_polling \
+  tests/test_admin_ui.py::test_viewer_cannot_widen_live_results_or_write_admin_actions \
+  tests/test_admin_ui.py::test_live_results_endpoint_returns_saved_articles_before_export \
+  tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter \
+  tests/test_admin_ui.py::test_targets_api_short_name_error_explains_field_and_fix \
+  tests/test_targets_jobs.py::test_update_spec_freezes_target_snapshot_for_active_job \
+  tests/test_targets_jobs.py::test_process_candidates_prefetches_articles_with_serial_db_writes \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_normalizes_initial_payload_counts_before_render \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_target_success_copy_mentions_base_atual \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_add_target_shows_structured_validation_error_from_api \
+  tests/test_bak_comparison.py::TestTargets \
+  -q
+```
+
+Result: `15 passed in 3.08s`.
+
+### Next Hypothesis
+
+The hosted app is correctly auth-gated and serving the updated JS, so the next
+useful loop is to search for adjacent target connection gaps that tests do not
+yet cover: management edit errors, restore/archive UI messaging, or live-results
+merge/filter behavior after a newly saved secondary-target article arrives.
+
+### Why The Loop Continues
+
+Deploy caught up and fallback contracts pass, but that is still only a
+checkpoint. The user asked for repeated review of the whole target -> ingestion
+-> SQLite -> live-results -> export -> filter loop, so the next cycle should
+search for unguarded edges.
