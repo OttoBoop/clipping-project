@@ -1289,3 +1289,55 @@ durable run.
 Thirteen passing contracts are a stronger checkpoint, not an exit. Live
 authenticated verification remains unresolved, and the source/job durability
 path still deserves focused review.
+
+## 2026-05-18 - Twentieth Unattended Cycle: Durable Sources And False Positives
+
+### Objective Reviewed
+
+The previous cycle identified durable source runs and secondary-target
+false-positive cleanup as the next likely failure areas. The goal was to prove
+those contracts locally while live authenticated verification remains blocked.
+
+### Audit Performed
+
+- Ran focused durable-source tests for WordPress/internal search pagination and
+  resumable source rows.
+- Ran focused cleanup/backfill tests for misleading snippets, boilerplate,
+  related links, late incidental mentions, and saved-text preference.
+- Avoided the full suite because focused tests covered the current hypothesis.
+
+### Result
+
+Focused command:
+
+```bash
+.venv_playwright/bin/pytest \
+  tests/test_targets_jobs.py::test_durable_wordpress_units_use_secondary_target_query_not_flavio_site_variants \
+  tests/test_targets_jobs.py::test_durable_wordpress_source_runs_use_small_api_pages \
+  tests/test_targets_jobs.py::test_durable_internal_search_source_runs_use_one_page \
+  tests/test_targets_jobs.py::test_reset_resumable_source_runs_requeues_failed_and_interrupted_rows \
+  tests/test_targets_jobs.py::test_export_job_cleans_secondary_false_matches_before_snapshot \
+  tests/test_targets_jobs.py::test_backfill_missing_target_mentions_retags_existing_secondary_story \
+  tests/test_targets_jobs.py::test_backfill_ignores_full_text_noise_and_cleanup_removes_false_match \
+  tests/test_targets_jobs.py::test_cleanup_removes_secondary_target_only_in_late_incidental_preview \
+  tests/test_targets_jobs.py::test_cleanup_prefers_saved_text_over_misleading_secondary_snippet \
+  tests/test_targets_jobs.py::test_process_candidates_skips_secondary_target_only_in_page_boilerplate \
+  tests/test_targets_jobs.py::test_process_candidates_skips_secondary_target_only_in_related_snippet \
+  tests/test_targets_jobs.py::test_process_candidates_skips_secondary_target_only_as_late_incidental_mention \
+  tests/test_targets_jobs.py::test_process_candidates_prefers_fetched_text_over_misleading_secondary_snippet \
+  -q
+```
+
+Result: `13 passed in 0.24s`.
+
+### Next Hypothesis
+
+The next checkpoint can run the full tracked target/job suite. That is still
+small enough for this loop and will catch integration mistakes across the
+target/job contracts already sampled in focused chunks.
+
+### Why The Loop Continues
+
+The targeted durability/cleanup path passed. That narrows the risk but does not
+resolve the authenticated live audit or prove the whole target/job file after
+recent auth/profile changes.
