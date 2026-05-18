@@ -6225,3 +6225,45 @@ state markers.
 
 Browser functional sanity passing reduces risk, but hosted deployment of the
 new JS still needs confirmation.
+
+## 2026-05-18 - One Hundred Twenty First Hosted Publication State Verification
+
+### Objective Reviewed
+
+The previous hosted watch showed deploy lag for the publication-state JS patch.
+The loop rechecked the hosted asset after the browser regression checkpoint.
+
+### Audit Performed
+
+- Checked hosted `/healthz`.
+- Checked hosted `/assets/clipping.js` for publication-state markers.
+- Checked hosted `/api/update/live-results?scope=base&limit=5`.
+- Confirmed local worktree and `origin/master`.
+
+### Result
+
+Hosted state:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+/assets/clipping.js -> storySummaryLabel present
+/assets/clipping.js -> articleSummaryLabel present
+/assets/clipping.js -> existingArticle.isLiveResult update present
+/assets/clipping.js -> var changed = ensureLiveTargetRows(data.items) still present
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+HEAD == origin/master == a503ed3 docs: log browser functional regression
+```
+
+The publication-state JS fix is now deployed. Barrier answered: direct data
+payload inspection remains viewer-auth gated without a session.
+
+### Next Hypothesis
+
+Commit this hosted verification log, then continue with local contracts/source
+review because the data auth gate is specific and already documented.
+
+### Why The Loop Continues
+
+Hosted JS verification closes the deploy-lag watch for this patch, but it does
+not close the broader loop. The live data payload is still not inspectable
+without auth, and further review may still find edge cases.
