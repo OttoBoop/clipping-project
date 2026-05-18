@@ -812,7 +812,7 @@
       if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
       pendingArchiveKey = "";
       editingTargetKey = "";
-      setMessage(manageTargetsMessage, targetMutationMessage("Nome restaurado e disponível para próximas rodadas.", data), "ok");
+      setMessage(manageTargetsMessage, targetMutationMessage("Nome restaurado. Ele já vale para a Base atual e para próximas rodadas.", data), "ok");
       await reloadTargetsAfterManagement(key, { select: true });
     } catch (error) {
       setMessage(manageTargetsMessage, friendlyError(error, "Não foi possível restaurar este nome."), "error");
@@ -2187,7 +2187,7 @@
         var resp = await apiPost("/api/targets", body);
         var data = await resp.json().catch(function () { return {}; });
         if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
-        setMessage(addTargetMessage, targetMutationMessage("Nome extra salvo e disponível para a próxima rodada.", data), "ok");
+        setMessage(addTargetMessage, targetMutationMessage("Nome extra salvo. Ele já vale para a Base atual e para próximas rodadas.", data), "ok");
         addTargetForm.reset();
         await refreshTargets();
         if (data && data.key) {

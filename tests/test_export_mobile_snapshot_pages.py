@@ -158,6 +158,14 @@ def test_dashboard_javascript_normalizes_initial_payload_counts_before_render():
     assert "normalizePayloadCounts();" in load_body
 
 
+def test_dashboard_javascript_target_success_copy_mentions_base_atual():
+    dashboard_js = (PROJECT_ROOT / "assets" / "clipping.js").read_text(encoding="utf-8")
+
+    assert "Nome extra salvo. Ele já vale para a Base atual e para próximas rodadas." in dashboard_js
+    assert "Nome restaurado. Ele já vale para a Base atual e para próximas rodadas." in dashboard_js
+    assert "Nome extra salvo e disponível para a próxima rodada." not in dashboard_js
+
+
 def test_static_export_marks_bundle_to_skip_api_polling(tmp_path):
     db_path = tmp_path / "clipping.db"
     seed_story_db(db_path)

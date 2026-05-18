@@ -2396,3 +2396,67 @@ user-visible or live-equivalent path.
 This closes one frontend-visible target-filter gap, but authenticated published
 Base atual verification remains blocked and the protocol requires another
 cycle after the commit.
+
+## 2026-05-19 - Forty-First Product Copy Cycle: Target Save Mentions Base Atual
+
+### Objective Reviewed
+
+The long-term goal says adding a monitored name must be a real product action,
+not a UI-only promise. I found the success message for adding a target still
+said the name was "disponível para a próxima rodada", even though the backend
+now runs `targetSync` and can backfill existing saved articles into Base atual
+immediately.
+
+### Audit Performed
+
+Inspected `targetMutationMessage(...)` and the add/restore target success copy
+in `assets/clipping.js` and `tools/pages_assets/clipping.js`.
+
+Patched the copy to say:
+
+```text
+Nome extra salvo. Ele já vale para a Base atual e para próximas rodadas.
+Nome restaurado. Ele já vale para a Base atual e para próximas rodadas.
+```
+
+Added a JS bundle contract to prevent the older "próxima rodada only" message
+from returning.
+
+### Result
+
+Focused check:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_target_success_copy_mentions_base_atual \
+  -q
+```
+
+Result: `2 passed in 0.08s`.
+
+Related product-path check:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter \
+  tests/test_admin_ui.py::test_targets_api_short_name_error_explains_field_and_fix \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_target_success_copy_mentions_base_atual \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_new_secondary_target_filter_is_visible_after_opening_outros \
+  -q
+```
+
+Result: `5 passed in 2.79s`.
+
+### Next Hypothesis
+
+Commit this copy guard, then check hosted JS after deploy. Continue searching
+for places where UI language implies a weaker or different behavior than the
+connected backend loop.
+
+### Why The Loop Continues
+
+The message now matches the Base atual/backfill behavior, but this is another
+checkpoint. Live authenticated endpoints are still gated, and the loop still
+needs repeated audits.
