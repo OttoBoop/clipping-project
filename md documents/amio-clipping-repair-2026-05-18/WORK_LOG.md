@@ -4078,3 +4078,52 @@ look for another saved-news path that writes SQLite without emitting
 The code is pushed and the hosted service is healthy, but direct Base atual
 payload inspection remains auth-gated. The barrier is logged, and local/source
 review remains available.
+
+## 2026-05-18 - Seventieth Export And Browser Regression Review Cycle
+
+### Objective Reviewed
+
+The manual live-results fix should not be treated as complete until adjacent
+target/filter/export/browser paths are reviewed. The long-term objective is
+still the connected loop, not one endpoint.
+
+### Audit Performed
+
+- Re-read the recent log and long-term goals.
+- Searched real article-save paths with `rg` and confirmed production saves are
+  covered by ingestion, target backfill/sync, and manual story insertion.
+- Reviewed `tools/export_mobile_snapshot.py` target-row/count/filter helpers.
+- Reviewed `assets/clipping.js` live-result merge, live target-row creation,
+  target count recomputation, and filter rendering.
+- Ran the broader focused suite:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py \
+  tests/test_targets_jobs.py \
+  tests/test_export_mobile_snapshot_pages.py \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  -q
+```
+
+Result: `121 passed in 13.28s`.
+
+- Restored generated `pipeline/__pycache__` dirt after the test run.
+
+### Result
+
+No new code patch was needed in this cycle. The broader local contracts still
+pass after `bfc44ca`, including admin APIs, jobs, export/mobile snapshot
+filters, and functional browser checks.
+
+### Next Hypothesis
+
+Commit this review log, then continue with hosted/deploy watch or another source
+audit. Since direct live payload inspection is auth-gated, use accessible
+health/assets checks and local contracts unless credentials appear.
+
+### Why The Loop Continues
+
+The broad regression is a checkpoint, not an exit. The hosted auth barrier
+remains, deploy watch remains, and the loop still needs periodic review of
+target/filter/export consistency.
