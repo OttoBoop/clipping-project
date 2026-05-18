@@ -2216,3 +2216,48 @@ market research/demo pricing loop
 
 Password operations reduce future mess, but they do not yet create a Rio
 indicator methodology or a sales-ready prospect profile.
+
+## 2026-05-19 - Loop Cycle: Cross-Loop Target Management Recheck
+
+### Objective Reviewed
+
+The other active loop pushed target-management changes after the viewer UI
+cleanup. Because target management is a known fake-UI risk, this loop rechecked
+the live viewer surface instead of assuming the new commits were harmless.
+
+### Render Audit
+
+Live commit checked:
+
+```text
+8e6aa18 fix: remove target management lock remnants
+```
+
+Evidence:
+
+```text
+/healthz -> viewerAuthConfigured=true, missingConfig=[]
+shakira /api/targets -> ["shakira"]
+shakira POST /api/targets -> 401
+shakira UI visible tabs -> ["base"]
+shakira UI filters -> ["shakira"]
+shakira UI secondary drawer -> absent
+shakira UI add/manage controls -> hidden
+shakira UI classification editors -> 0
+```
+
+### Remaining Blocker
+
+No viewer regression found. The top deploy queue later advanced with additional
+target-management test/docs commits that include the checked fix in their
+history.
+
+### Next Objective From Docs
+
+Continue with Rio economic methodology and a dedicated demo/prospect profile
+before broad buyer outreach.
+
+### Why The Loop Continues
+
+Cross-loop changes did not break viewer isolation, but the Rio and sales axes
+remain incomplete.
