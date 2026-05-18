@@ -251,6 +251,25 @@ source anchors required for broad jobs/tourism/economic-development queries
 production target row still blocked until a revised reviewed sample passes the gate
 ```
 
+V2 revised sample evidence:
+
+```text
+data/reports/rio_economic_revised_queries_v2_20260518.json
+data/reports/rio_economic_dry_run_20260518T234225Z.json
+row_count=33
+query_count=12
+municipal_finance and economic_development separated
+RIO_ECONOMIC_V2_SAMPLE_REVIEW_20260518T234225Z.md
+true_positive=27
+useful_unclear=2
+false_positive=4
+useful_or_unclear=29/33
+```
+
+The v2 sample is stronger, but it still needs v3 cleanup for Rio Grande
+ambulante false positives, national fiscal-analysis leakage, and generic
+official economic-development queries.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

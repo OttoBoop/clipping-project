@@ -5272,3 +5272,223 @@ not modified.
 ### Next Objective From Docs
 
 Commit and push this log evidence path-limited, then poll Render again.
+
+## 2026-05-18 20:15 -03 - Loop Cycle: Render Still Promoting Post-Rio Logs
+
+### Objective Reviewed
+
+The newest pushed log commit must not be assumed live until Render promotes it.
+
+### Action Taken
+
+Created and pushed:
+
+```text
+25b99cc docs: log Rio live smoke and deploy watch
+```
+
+Then polled Render.
+
+### Evidence
+
+```text
+dep-d86fb0rsuu8s73ddr5jg 25b99cc docs: log Rio live smoke and deploy watch -> queued
+dep-d86faabsuu8s73ddqrcg 53cd9eb docs: log Rio refinement push -> update_in_progress
+dep-d86f9qki5fes73e3ejlg 1ecebf9 docs: refine Rio economic source dimensions -> live
+```
+
+### Barrier Or Failure
+
+No deploy failure. Current live `1ecebf9` has already passed logged-out smoke;
+newer docs/log commits are still moving through the queue.
+
+### Next Objective From Docs
+
+Use deploy wait time for the next Rio methodology item: create a revised query
+file that separates `municipal_finance` from `economic_development`, without
+adding any production target row.
+
+## 2026-05-18 20:18 -03 - Loop Cycle: Rio V2 Query File And Live Dry-Run
+
+### Objective Reviewed
+
+`ACTIVE_NEXT_ACTION.md` said the next Rio step was a revised dry-run query file
+and sample that separates `municipal_finance` from `economic_development`.
+
+### Action Taken
+
+Added:
+
+```text
+data/reports/rio_economic_revised_queries_v2_20260518.json
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+```
+
+Then ran:
+
+```text
+python -m json.tool data/reports/rio_economic_revised_queries_v2_20260518.json
+python tools/rio_economic_dry_run.py --queries-file data/reports/rio_economic_revised_queries_v2_20260518.json --limit-per-query 3 --request-timeout 5 --resolve-timeout 0 --collection-timeout 6000
+```
+
+### Evidence
+
+JSON validation passed. Live dry-run returned:
+
+```text
+ok=true
+row_count=33
+json=data/reports/rio_economic_dry_run_20260518T234225Z.json
+csv=data/reports/rio_economic_dry_run_20260518T234225Z.csv
+markdown=data/reports/rio_economic_dry_run_20260518T234225Z.md
+```
+
+Expected safety flags are still part of the dry-run payload:
+
+```text
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+resolve_timeout=0
+```
+
+### Barrier Or Failure
+
+No dry-run blocker. The sample still needs review labels before any production
+target row is considered.
+
+### Next Objective From Docs
+
+Review the v2 sample titles, write a title-level review note, and keep polling
+Render for the latest deploy promotion.
+
+## 2026-05-18 20:23 -03 - Loop Cycle: Rio V2 Title Review Written
+
+### Objective Reviewed
+
+The v2 Rio sample needed review labels before any decision about production
+target creation.
+
+### Action Taken
+
+Reviewed the 33-row title sample and added:
+
+```text
+RIO_ECONOMIC_V2_SAMPLE_REVIEW_20260518T234225Z.md
+```
+
+Updated:
+
+```text
+RIO_ECONOMIC_VALIDATION_PLAN.md
+ACTIVE_NEXT_ACTION.md
+```
+
+### Evidence
+
+Title-level tally:
+
+```text
+true_positive=27
+useful_unclear=2
+false_positive=4
+unclear=0
+useful_or_unclear=29/33
+```
+
+Artifacts reviewed:
+
+```text
+data/reports/rio_economic_revised_queries_v2_20260518.json
+data/reports/rio_economic_dry_run_20260518T234225Z.json
+data/reports/rio_economic_dry_run_20260518T234225Z.csv
+data/reports/rio_economic_dry_run_20260518T234225Z.md
+```
+
+### Barrier Or Failure
+
+No review blocker. The sample is promising but still not production-approved:
+Rio Grande ambulante leakage, national fiscal-analysis leakage, and generic
+official economic-development query leakage still require v3 cleanup.
+
+### Next Objective From Docs
+
+Rebase on current remote, commit the v2 query/sample/review artifacts
+path-limited, push, then poll Render again.
+
+## 2026-05-18 20:24 -03 - Loop Cycle: Rebased Before Rio V2 Publish
+
+### Objective Reviewed
+
+The Rio v2 artifacts must be published on top of current `origin/master` while
+preserving the active repair loop.
+
+### Action Taken
+
+Ran:
+
+```text
+git pull --rebase --autostash origin master
+```
+
+### Evidence
+
+The remote advanced from `25b99cc` to:
+
+```text
+2d2734f docs: record current loop contract
+```
+
+Incoming files:
+
+```text
+md documents/clipping-segregation-product-loop-2026-05-18/CURRENT_SHORT_TERM_LOOP.md
+md documents/amio-clipping-repair-2026-05-18/WORK_LOG.md
+```
+
+Autostash reapplied the Rio v2 artifacts and docs cleanly.
+
+### Barrier Or Failure
+
+No conflict. The incoming `CURRENT_SHORT_TERM_LOOP.md` update belongs to this
+loop's contract and was preserved.
+
+### Next Objective From Docs
+
+Run diff/status checks, then commit and push the Rio v2 artifacts path-limited.
+
+## 2026-05-18 20:25 -03 - Loop Cycle: Rio V2 Artifact Pre-Commit Check
+
+### Objective Reviewed
+
+Before committing generated Rio v2 review artifacts, verify formatting and JSON
+validity and keep the path list explicit.
+
+### Action Taken
+
+Ran:
+
+```text
+git diff --check -- Rio v2 docs/artifacts
+python -m json.tool data/reports/rio_economic_revised_queries_v2_20260518.json
+python -m json.tool data/reports/rio_economic_dry_run_20260518T234225Z.json
+git status --short --branch
+```
+
+### Evidence
+
+`git diff --check` passed with no output. Both JSON files parsed successfully.
+Status showed only the intended Rio/product-loop docs and report artifacts.
+
+### Barrier Or Failure
+
+No blocker.
+
+### Next Objective From Docs
+
+Commit and push the Rio v2 query, sample, review, and log path-limited.

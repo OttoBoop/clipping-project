@@ -1,0 +1,76 @@
+{
+  "created_at": "2026-05-18T23:45:00Z",
+  "source_review": "md documents/clipping-segregation-product-loop-2026-05-18/RIO_ECONOMIC_SOURCE_DIMENSION_REFINEMENT.md",
+  "notes": "Second revised Rio economic dry-run query set. Keeps Rio out of production targets and separates municipal finance from economic development.",
+  "queries": [
+    {
+      "dimension": "tourism_events",
+      "query": "\"Rio de Janeiro\" \"ocupacao hoteleira\"",
+      "why_candidate": "city visitor-demand signal with hotel occupancy anchor",
+      "exclude_title_terms": ["Rio das Ostras", "Rio Grande"]
+    },
+    {
+      "dimension": "tourism_events",
+      "query": "\"Rio de Janeiro\" \"impacto economico\" turismo",
+      "why_candidate": "tourism stories with explicit economic impact language",
+      "exclude_title_terms": ["Rio Grande", "Rio das Ostras"]
+    },
+    {
+      "dimension": "commerce_services",
+      "query": "\"Prefeitura do Rio\" ambulantes comercio",
+      "why_candidate": "city commerce/order signal tied to municipal action"
+    },
+    {
+      "dimension": "commerce_services",
+      "query": "\"cidade do Rio\" comercio local",
+      "why_candidate": "local commerce signal with explicit city anchor",
+      "exclude_title_terms": ["Rio Grande"]
+    },
+    {
+      "dimension": "jobs_income",
+      "query": "\"Prefeitura do Rio\" \"vagas\" \"Trabalho e Renda\"",
+      "why_candidate": "city jobs signal anchored to municipal labor office",
+      "exclude_title_terms": ["Porto Velho", "portovelho"]
+    },
+    {
+      "dimension": "jobs_income",
+      "query": "\"Rio de Janeiro\" turismo empregos hotelaria",
+      "why_candidate": "tourism labor-market signal with hotel/tourism anchor",
+      "exclude_title_terms": ["Brasil", "nacional"]
+    },
+    {
+      "dimension": "construction_real_estate",
+      "query": "\"Prefeitura do Rio\" licenciamento obras",
+      "why_candidate": "municipal permitting and construction activity signal"
+    },
+    {
+      "dimension": "construction_real_estate",
+      "query": "\"cidade do Rio\" mercado imobiliario",
+      "why_candidate": "city-specific real-estate activity",
+      "exclude_title_terms": ["Rio Grande"]
+    },
+    {
+      "dimension": "municipal_finance",
+      "query": "\"Prefeitura do Rio\" ISS arrecadacao",
+      "why_candidate": "municipal tax and revenue signal",
+      "exclude_title_terms": ["Pernambuco", "pernambucanos"]
+    },
+    {
+      "dimension": "municipal_finance",
+      "query": "\"municipio do Rio\" arrecadacao ISS",
+      "why_candidate": "city revenue signal with municipal and ISS anchors",
+      "exclude_title_terms": ["Pernambuco", "pernambucanos"]
+    },
+    {
+      "dimension": "economic_development",
+      "query": "\"Invest.Rio\" \"Rio de Janeiro\" empresas",
+      "why_candidate": "city business-attraction and development signal"
+    },
+    {
+      "dimension": "economic_development",
+      "query": "\"Prefeitura do Rio\" \"desenvolvimento economico\"",
+      "why_candidate": "official city economic-development language",
+      "exclude_title_terms": ["estado do Rio"]
+    }
+  ]
+}
