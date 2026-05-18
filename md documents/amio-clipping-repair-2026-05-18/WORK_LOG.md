@@ -619,3 +619,45 @@ Result: `50 passed in 1.29s`.
   published target counts still need a fresh export so secondary targets such
   as `vorcaro` show article counts from actual article matches, not mixed-story
   totals from a stale bundle.
+
+### Live Verification After Push
+
+Commit pushed:
+
+```text
+34b2575 fix: normalize persisted target snapshots in ingestion
+```
+
+The Render site initially kept producing the old failure while the previous
+process was still active. After the service restarted on the new commit, the
+active job changed from repeated `failed_needs_fix` source runs to normal
+running/completing source runs.
+
+Observed live status after restart:
+
+```text
+status=running
+coverage=running
+sourceRunCounts={'complete': 51, 'running': 1, 'pending': 729}
+articles_inserted=19
+mentions_inserted=25
+stories_touched=25
+```
+
+Recent live events included `source_run_complete` for `Google News` and
+`article_saved` events instead of the repeated
+`'dict' object has no attribute 'key'` error.
+
+Observed `/api/update/live-results?scope=base&limit=10` after restart:
+
+```text
+articleId=648 targetKeys=['flavio_valle']
+articleId=22 targetKeys=['flavio_valle']
+articleId=647 targetKeys=['flavio_valle']
+articleId=642 targetKeys=['flavio_valle']
+articleId=641 targetKeys=['flavio_valle']
+```
+
+This confirms the repaired path on the real site:
+persisted target snapshot -> durable source run -> ingestion -> SQLite/live
+checkpoint -> Base atual API.
