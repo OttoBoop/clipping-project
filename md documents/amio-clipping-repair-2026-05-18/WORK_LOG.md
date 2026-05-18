@@ -4541,3 +4541,41 @@ Commit this audit log, then continue with hosted watch or another local contract
 The tracked static payload is consistent now, but the loop also has runtime
 target creation, live overlay, auth-gated hosted payloads, and future exports to
 keep reviewing.
+
+## 2026-05-18 - Eighty-First Hosted Asset Payload Barrier Cycle
+
+### Objective Reviewed
+
+Hosted assets and live payloads must be checked when possible, and auth barriers
+must be logged rather than used as a stop reason.
+
+### Audit Performed
+
+- Requested hosted `/assets/clipping-data.json`.
+- Requested hosted `/assets/clipping.js`.
+- Checked current git status.
+
+### Result
+
+Hosted state:
+
+```text
+/assets/clipping-data.json -> HTTP 401 {"detail":"viewer_login_required"}
+/assets/clipping.js -> HTTP 200, last-modified Tue, 19 May 2026 22:03:08 GMT
+hosted JS markers -> targetDisplayNameError present, pollBaseLiveResults present,
+publicationState handling present
+worktree -> clean
+```
+
+Barrier answered: the hosted data payload is still viewer-auth gated, so direct
+published JSON consistency cannot be inspected from this session. The hosted JS
+is accessible and has refreshed after the latest pushes.
+
+### Next Hypothesis
+
+Continue with local contracts/source audits while hosted data remains gated.
+
+### Why The Loop Continues
+
+Auth gating blocks only direct hosted data inspection. The loop still has useful
+local verification and code review paths.
