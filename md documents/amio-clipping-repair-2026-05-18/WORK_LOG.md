@@ -5333,3 +5333,54 @@ export/live contracts.
 Target API contracts are green, but a green focused set is a checkpoint. The
 hosted JS patch still needs verification and the end-to-end target/filter/Base
 atual/export path still needs recurring review.
+
+## 2026-05-18 - One Hundredth Hosted Patch Verification
+
+### Objective Reviewed
+
+The previous cycle logged Render deploy lag for the live target counter patch.
+The next required step was to re-check the hosted asset and then continue with
+unblocked contracts.
+
+### Audit Performed
+
+- Checked hosted `/assets/clipping.js`.
+- Checked hosted `/healthz`.
+- Checked hosted `/api/update/status`.
+- Checked hosted `/api/update/live-results?scope=base&limit=5`.
+- Checked hosted `/assets/clipping-data.json`.
+
+### Result
+
+Hosted JS now serves the live target counter repair:
+
+```text
+1536: if (!payload) return false;
+1622: var changed = ensureLiveTargetRows(data.items);
+```
+
+Hosted health remains good:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+```
+
+Barrier answered: data endpoints are still intentionally viewer-auth gated in
+this unauthenticated session:
+
+```text
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+/assets/clipping-data.json -> HTTP 401 {"detail":"viewer_login_required"}
+```
+
+### Next Hypothesis
+
+Commit this hosted verification log, then continue with local export/live
+contracts that do not require a viewer session.
+
+### Why The Loop Continues
+
+The patch being hosted is a checkpoint, not completion. The live data payload
+itself remains auth-gated, so the loop still needs local contract coverage and
+repeated review of export/filter consistency.
