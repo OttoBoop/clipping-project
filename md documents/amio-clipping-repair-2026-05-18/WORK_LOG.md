@@ -2460,3 +2460,59 @@ connected backend loop.
 The message now matches the Base atual/backfill behavior, but this is another
 checkpoint. Live authenticated endpoints are still gated, and the loop still
 needs repeated audits.
+
+## 2026-05-19 - Forty-Second Live Cycle: Copy Fix Pushed, Deploy Not Caught Up
+
+### Objective Reviewed
+
+After publishing the target-save copy fix, the loop returned to live audit. A
+parallel auth commit also landed: `fix: add safe empty demo viewer login`, so
+the auth boundary needed to be checked again rather than assuming the previous
+401 state.
+
+### Audit Performed
+
+- Confirmed `origin/master` points at the copy-fix commit.
+- Checked `/healthz`.
+- Downloaded hosted `/assets/clipping.js`.
+- Checked `/api/update/status` and `/api/update/live-results?scope=base&limit=5`.
+- Inspected the new auth commit and ran its local tests with the target-copy
+  contract.
+
+### Result
+
+Live state at this checkpoint:
+
+```text
+origin/master -> 97427f19bb648d85dee69510577727ec7a8a01a8
+/healthz -> HTTP 200, but no demoViewerConfigured field yet
+/assets/clipping.js -> still contains old "Nome extra salvo e disponível para a próxima rodada."
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+```
+
+That means Render had not yet served the latest auth/copy code during this
+check. Local expected-state tests pass:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_empty_demo_viewer_login_works_without_viewer_password_env \
+  tests/test_admin_ui.py::test_empty_demo_password_disabled_when_real_viewer_passwords_exist \
+  tests/test_admin_ui.py::test_empty_demo_password_disabled_if_demo_profile_has_targets \
+  tests/test_admin_ui.py::test_healthz_lists_missing_viewer_password_config \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_target_success_copy_mentions_base_atual \
+  -q
+```
+
+Result: `5 passed in 0.61s`.
+
+### Next Hypothesis
+
+Keep watching `/healthz` for `demoViewerConfigured` and hosted JS for the Base
+atual copy. Once deploy catches up, test whether demo login can safely access
+the empty viewer payload without widening access to real targets.
+
+### Why The Loop Continues
+
+The latest code is pushed and locally verified, but the hosted site had not yet
+picked it up. A pending deploy is a watch item, not an exit.
