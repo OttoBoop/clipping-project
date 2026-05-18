@@ -3121,3 +3121,65 @@ live asset check for removal of `targetActionsLocked` from the hosted bundle.
 
 The old lock path is being removed, but the hosted deploy and any remaining
 error-message compatibility paths still need another pass.
+
+## 2026-05-19 - Fifty-Second Error Contract Cycle: Management Operation Failures
+
+### Objective Reviewed
+
+The original complaint included bad failure responses, not just blocked target
+management. Create-target operation failures already had a structured test, but
+update/archive/restore failures needed the same coverage.
+
+### Audit Performed
+
+- Checked the hosted bundle after `8e6aa18`; it still served the old
+  target-management lock branches, so cleanup deploy remains pending.
+- Confirmed `/healthz` is healthy and `/api/update/status` is still auth-gated.
+- Added API tests for update, archive, and restore operation failures.
+- Verified each management operation returns `target_operation_failed`, the
+  correct human-facing action label, a `targets.json` suggestion, and a
+  structured `detail.cause`.
+
+### Result
+
+New test:
+
+```text
+tests/test_admin_ui.py::test_targets_api_management_operation_errors_are_structured
+```
+
+Focused checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_targets_api_operation_errors_are_structured \
+  tests/test_admin_ui.py::test_targets_api_management_operation_errors_are_structured \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_add_target_shows_structured_validation_error_from_api \
+  -q
+```
+
+Result: `3 passed in 2.75s`.
+
+Related API checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_targets_api_operation_errors_are_structured \
+  tests/test_admin_ui.py::test_targets_api_management_operation_errors_are_structured \
+  tests/test_admin_ui.py::test_targets_api_validation_errors_are_public_400s \
+  tests/test_admin_ui.py::test_targets_api_short_name_error_explains_field_and_fix \
+  tests/test_admin_ui.py::test_target_mutations_remain_available_while_update_is_active \
+  -q
+```
+
+Result: `5 passed in 0.59s`.
+
+### Next Hypothesis
+
+Commit the expanded operation-error contract, push, and continue watching the
+hosted bundle for removal of `targetActionsLocked`.
+
+### Why The Loop Continues
+
+Management operation failures now have better coverage, but the hosted cleanup
+deploy has not caught up and live payload inspection remains auth-gated.

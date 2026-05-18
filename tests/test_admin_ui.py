@@ -805,6 +805,50 @@ def test_targets_api_operation_errors_are_structured(monkeypatch, tmp_path):
     assert "RuntimeError" in payload["detail"]["cause"]
 
 
+def test_targets_api_management_operation_errors_are_structured(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+
+    def fail_update(_key, _payload):
+        raise RuntimeError("targets file is not writable")
+
+    def fail_archive(_key, _reason=""):
+        raise RuntimeError("targets file is not writable")
+
+    def fail_restore(_key):
+        raise RuntimeError("targets file is not writable")
+
+    monkeypatch.setattr(app_module, "update_secondary_target", fail_update)
+    monkeypatch.setattr(app_module, "archive_secondary_target", fail_archive)
+    monkeypatch.setattr(app_module, "restore_secondary_target", fail_restore)
+
+    with TestClient(app) as client:
+        csrf = login(client)
+        responses = [
+            client.patch("/api/targets/ana_teste", headers=csrf_header(csrf), json={"display_name": "Ana Nova"}),
+            client.post(
+                "/api/targets/ana_teste/archive",
+                headers=csrf_header(csrf),
+                json={"reason": "Duplicado."},
+            ),
+            client.post("/api/targets/ana_teste/restore", headers=csrf_header(csrf)),
+        ]
+
+    expected_messages = [
+        "Não foi possível atualizar este nome.",
+        "Não foi possível arquivar este nome.",
+        "Não foi possível restaurar este nome.",
+    ]
+    for response, message in zip(responses, expected_messages, strict=True):
+        assert response.status_code == 500
+        payload = response.json()
+        assert payload["error"] == "target_operation_failed"
+        assert payload["message"] == message
+        assert payload["detail"]["message"] == message
+        assert "targets.json" in payload["suggestion"]
+        assert "RuntimeError" in payload["detail"]["cause"]
+
+
 def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     with TestClient(app) as client:
