@@ -3392,3 +3392,58 @@ another local/live-results contract pass instead of exiting.
 
 The fix is pushed but not live. A pending deploy is a watch item, and local
 contracts can still verify the Base atual/live-results loop.
+
+## 2026-05-19 - Fifty-Seventh Base Atual Contract Cycle: Auth-Gated Live Fallback
+
+### Objective Reviewed
+
+Because hosted `/api/update/live-results` is still auth-gated, the protocol says
+to continue with local contracts that prove the same Base atual/live-results
+connection.
+
+### Audit Performed
+
+- Tried to run a live-results focused package; corrected two nonexistent test
+  names after locating the real contracts.
+- Ran API/job/browser contracts for `article_saved`, Base atual scope,
+  target-sync backfill, stale target filtering, and frontend live target
+  filterability.
+- Rechecked hosted `/api/update/live-results?scope=base&limit=5`.
+- Rechecked hosted JS for inline validation deployment.
+
+### Result
+
+Correct fallback package:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_live_results_endpoint_returns_saved_articles_before_export \
+  tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter \
+  tests/test_targets_jobs.py::test_article_saved_events_drive_live_results_and_totals \
+  tests/test_targets_jobs.py::test_base_live_results_return_recent_saved_articles_after_export_job \
+  tests/test_targets_jobs.py::test_target_sync_backfills_new_target_into_base_live_results \
+  tests/test_targets_jobs.py::test_live_results_do_not_resurrect_removed_target_from_stale_event \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_target_outside_initial_targets_becomes_filterable \
+  -q
+```
+
+Result: `7 passed in 2.23s`.
+
+Hosted `/api/update/live-results?scope=base&limit=5` remains:
+
+```text
+HTTP 401 {"detail":"viewer_login_required"}
+```
+
+Hosted JS still does not contain `targetDisplayNameError`, so the inline
+validation deploy remains pending.
+
+### Next Hypothesis
+
+Keep watching hosted JS for inline validation. If it continues lagging, run
+another local target/error contract pass and document it.
+
+### Why The Loop Continues
+
+Base atual/live-results contracts pass locally, but hosted payload inspection is
+auth-gated and the inline validation bundle is not live yet.
