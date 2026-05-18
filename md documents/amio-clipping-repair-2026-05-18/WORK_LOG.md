@@ -1169,3 +1169,58 @@ that can run without credentials.
 
 Adding self-tests is a checkpoint. The point of the self-tests is to force the
 next cycle, not to justify ending here.
+
+## 2026-05-18 - Eighteenth Unattended Cycle: Live Audit Harness Stale Under Auth Gate
+
+### Objective Reviewed
+
+The fixed unattended queue says to search for the next inconsistency after
+contracts pass. The next accessible area was live-audit tooling and regression
+harnesses that do not require credentials.
+
+### Audit Performed
+
+- Inspected current tests and tools for live-results, target counts, source
+  runs, export filters, and live-audit coverage.
+- Found inherited untracked files:
+  `tools/live_audit.py`, `tests/test_live_audit_script.py`, and
+  `tests/test_sprint_regression_harness.py`.
+- Ran `python tools/live_audit.py --base-url https://clipping-project.onrender.com`.
+- Compared local `index.html` marker with the live homepage.
+
+### Result
+
+The untracked live audit harness currently fails:
+
+```text
+FAIL: homepage asset marker is stale or missing: durable-source-ledger-20260506
+```
+
+Reason observed:
+
+```text
+local index.html marker = durable-source-ledger-20260506
+live / title = Acessar clipping
+live / has_login = True
+live / dashboard asset markers = []
+```
+
+This is not necessarily a target/live-base regression. It is a harness mismatch
+after the password/profile workstream changed `/` into a login page. The harness
+still assumes the public homepage is the dashboard shell and therefore fails
+before reaching `/api/targets` or `/api/update/status`.
+
+### Next Hypothesis
+
+Do not commit the inherited untracked harness files from this loop without a
+separate scope decision. A future authenticated live-audit task should either:
+
+- log in before checking dashboard assets and API contracts; or
+- intentionally audit the login page first, then use a supplied viewer/admin
+  session for dashboard and live-results checks.
+
+### Why The Loop Continues
+
+Finding a stale harness is a useful checkpoint, not an exit. The next available
+unblocked work is to keep checking tracked local contracts and document which
+live checks are blocked by auth versus genuinely failing.
