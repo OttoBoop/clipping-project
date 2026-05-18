@@ -4944,3 +4944,32 @@ static checks until Otávio or the auth-focused IA provides a valid session path
 The auth barrier is understood but still blocks only direct hosted payload
 inspection. Local contracts, static assets, source review, and docs remain
 available.
+
+## 2026-05-18 - Ninety-First Protocol And Commit Rule Reanchor
+
+### Objective Reviewed
+
+After many commits and rebase barriers, the loop should re-read its operating
+protocol and commit hygiene rules before the next patch or audit.
+
+### Audit Performed
+
+- Checked current loop worktree status and recent commit log.
+- Re-read `COMMIT_AND_DIRTY_WORKTREE_RULES.md`.
+- Re-read `LOOP_OPERATING_PROTOCOL.md`.
+
+### Result
+
+Current loop worktree is clean at `e2e3ba2`/`origin/master`. The protocol still
+requires No Idle Exit, auth-barrier fallback, path-limited staging, no `git add
+.` and repeated reanchor/audit/log cycles.
+
+### Next Hypothesis
+
+Commit this reanchor log, then continue with either hosted watch or another
+focused local contract.
+
+### Why The Loop Continues
+
+Re-reading the rules prevents drift, but it does not close the product loop.
+There are still auth-gated hosted payloads and watch items.
