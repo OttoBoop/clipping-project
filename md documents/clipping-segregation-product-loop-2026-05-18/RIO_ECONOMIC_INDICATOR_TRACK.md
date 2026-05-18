@@ -45,6 +45,18 @@ The safe current state is:
 viewer profile exists -> empty scoped view is allowed -> no collection terms yet
 ```
 
+First dry-run state, checked 2026-05-19:
+
+```text
+offline fixture review artifact exists
+live Google News review artifact exists with redirect resolution skipped
+no Rio data was written to clipping.db, assets/clipping-data.json, or targets.json
+```
+
+The first live smoke already showed one important risk: even `"cidade do Rio"`
+can return state/nearby-city material. Keep `state_not_city` as a first-class
+false-positive reason before any target row or automated indicator exists.
+
 ## Indicator Goal
 
 Capture signals about Rio's local economic agenda, not generic national economy

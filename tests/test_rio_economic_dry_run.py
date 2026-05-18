@@ -73,6 +73,8 @@ def test_write_reports_creates_json_csv_and_markdown(tmp_path):
 
     json_payload = json.loads((tmp_path / "rio_economic_dry_run_20260519T120000Z.json").read_text(encoding="utf-8"))
     assert json_payload["meta"]["timeout_policy"] == "dry_run_smoke_timeouts_are_allowed"
+    assert json_payload["meta"]["resolve_timeout"] == 0
+    assert json_payload["meta"]["redirect_resolution_skipped"] is True
     assert json_payload["meta"]["writes_production_db"] is False
     assert json_payload["meta"]["writes_assets_payload"] is False
     assert json_payload["meta"]["writes_targets_json"] is False

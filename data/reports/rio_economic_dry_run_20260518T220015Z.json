@@ -1,0 +1,84 @@
+{
+  "meta": {
+    "generated_at": "2026-05-18T22:00:15.012654+00:00",
+    "date_from": "2026-05-01",
+    "date_to": "2026-05-19",
+    "limit_per_query": 2,
+    "request_timeout": 5,
+    "resolve_timeout": 0,
+    "collection_timeout": 20,
+    "redirect_resolution_skipped": true,
+    "query_count": 2,
+    "row_count": 4,
+    "timeout_policy": "dry_run_smoke_timeouts_are_allowed",
+    "writes_production_db": false,
+    "writes_assets_payload": false,
+    "writes_targets_json": false
+  },
+  "queries": [
+    {
+      "dimension": "tourism_events",
+      "query": "\"Rio de Janeiro\" hotelaria",
+      "why_candidate": "hotel occupancy and visitor economy"
+    },
+    {
+      "dimension": "tourism_events",
+      "query": "\"cidade do Rio\" turismo",
+      "why_candidate": "city-specific tourism agenda"
+    }
+  ],
+  "rows": [
+    {
+      "query": "\"Rio de Janeiro\" hotelaria",
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Quais são os hotéis de luxo mais vendidos por agentes de viagens brasileiros? Confira - Panrotas",
+      "url": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxPNFNYcDFscjd2X0dBRC1BNHNJSU50YTNjWGJ6WDRnemhTS2VVVl9xZlJZeVZKcHpJNm1BY1dSZXAxYUZNLWhjNU5iRDZzeVNMRFA4bm5jRktLeWl6XzltazVQS0Y4YUlXRGZXWlFXYzhCLW9fSGpsdDN0VWhJaGRzclF3dDhvWDJjRmFJTDBVcDQ4OFRFanBwaW9WcGdMN1FmRUZ1MHBBTXdCWEFSN3hhSEtidnpmZlN5QzlTa2lDcWR1UEE5U0lRc0d5Smpzc1ZFSjBuNXBoR1BUSm1sMHNjY0xtbFJDTXdHejRKOGhQQQ?oc=5",
+      "published_at": "2026-05-11T16:30:00+00:00",
+      "why_candidate": "hotel occupancy and visitor economy",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Rio de Janeiro\" hotelaria",
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Lasai deixará Botafogo para inaugurar no Sofitel Rio de Janeiro Ipanema - CNN Brasil",
+      "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxObFp6Ry0tRHFDMkRTQlAwUkM0ZWx4bXdTREZYYVNfMmNXVzVrdXpkQmJ4MDV0XzN1VzlQQjl5WUNBbDRzbDh3TnBjWWh1alpKeEVlT1NCLU5qdXlJektrVXlaVG9lTmtOU2d2Y0ZZUmRFRW15RFdva0ttYkdCSE5LaDl3UVFnRGZUTnI0c2NmRVE3dV9sRHdZbFFRcUlST1hxZndYeHJCYTJsZTlRR0RqUDRIc2RaVTVHcHlhbndlcmk2enY3SVRTZFZDSFM?oc=5",
+      "published_at": "2026-05-12T20:06:54+00:00",
+      "why_candidate": "hotel occupancy and visitor economy",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"cidade do Rio\" turismo",
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Turismo na cidade é fortalecido por público com 60 anos ou mais - Prefeitura da Cidade do Rio de Janeiro",
+      "url": "https://news.google.com/rss/articles/CBMimgFBVV95cUxPTGJiOGstSlJPVE1iY0pKbkZoUkZRMmlURWhQZEdiTkVPWEhHZ2VPYkZTeGtMenVna1h4ZkNZWVNSX2hMZTRKVE1oekRrbl9ObWpuNHlUNkprYnJuZzhvN2VLZ3hjSndVMUV1SUpOZHRkQ0pWUUtBMmtOX0lxMFFwWGtlUnh5QnhnZldBdjZuM2hFQVZzOEdBdXpR?oc=5",
+      "published_at": "2026-05-12T19:07:11+00:00",
+      "why_candidate": "city-specific tourism agenda",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"cidade do Rio\" turismo",
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "5ª melhor cidade do Rio em qualidade de vida: a serra de 17°C onde nasceu o montanhismo brasileiro a 90 km da capital - Revista Oeste",
+      "url": "https://news.google.com/rss/articles/CBMi9gFBVV95cUxPUHpqdWVtSVBuZ3lteFBOLVFHYWpRYS14UFpsMEx4ZnEtdXg3UzA2VkhzQ1FfaGdPcUlaeXpCMnVzeDBjTDl0ZUZaampkLVE1TjFqeDZUSGlYZW56NVllaHJ2bi1oSmhmUVFGbndYS2NQc2wtaTF2UjcydGxSNmVFb3BrMnVacWxwaV9KUlpJMEk3MWd1RWc3YjZFV0VOT3FTRV9RcWVSUE96ekp3N3JxTjdlclo0alVSS1BjVklZSW9kcVB3Rm5DczBuZFctMDZDX1NpZ3N5YkhyaU9zeXRKbVhQWWdVNmYtVjVRV0tqQ3RoT1pQTUE?oc=5",
+      "published_at": "2026-05-07T07:00:00+00:00",
+      "why_candidate": "city-specific tourism agenda",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    }
+  ]
+}

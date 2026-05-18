@@ -36,6 +36,37 @@ def test_collectors_has_google_news():
     assert callable(collect_google_news)
 
 
+def test_google_news_can_skip_redirect_resolution(monkeypatch):
+    from pipeline import collectors
+
+    rss = """<?xml version="1.0" encoding="UTF-8"?>
+    <rss><channel><item>
+      <title>Rio hotelaria cresce</title>
+      <link>https://news.google.com/rss/articles/example-token?oc=5</link>
+      <pubDate>Tue, 19 May 2026 12:00:00 GMT</pubDate>
+      <description>Resumo</description>
+    </item></channel></rss>
+    """
+
+    monkeypatch.setattr(collectors, "fetch_url", lambda url, timeout=10: (url, rss))
+
+    def fail_resolve(*_args, **_kwargs):
+        raise AssertionError("redirect resolution should be skipped")
+
+    monkeypatch.setattr(collectors, "try_resolve_google_redirect", fail_resolve)
+
+    results = collectors.collect_google_news(
+        queries=['"Rio de Janeiro" hotelaria'],
+        limit_per_query=1,
+        resolve_timeout=0,
+    )
+
+    assert len(results) == 1
+    assert results[0].url.startswith("https://news.google.com/rss/articles/example-token")
+    assert results[0].metadata["force_full_fetch"] is True
+    assert results[0].metadata["redirect_resolution_skipped"] is True
+
+
 def test_collectors_has_rss():
     from pipeline.collectors import collect_rss
     assert callable(collect_rss)

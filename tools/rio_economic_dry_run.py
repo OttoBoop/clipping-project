@@ -100,7 +100,7 @@ def collect_rows(
     limit_per_query: int = 5,
     max_queries: int = 0,
     request_timeout: int = 10,
-    resolve_timeout: int = 6,
+    resolve_timeout: int = 0,
     collection_timeout: int = 6000,
     collector: Callable[..., list[CandidateArticle]] = collect_google_news,
 ) -> list[dict[str, Any]]:
@@ -201,6 +201,9 @@ def build_payload(
     date_to: str = "",
     limit_per_query: int = 5,
     max_queries: int = 0,
+    request_timeout: int = 10,
+    resolve_timeout: int = 0,
+    collection_timeout: int = 6000,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     query_count = len(selected_queries(max_queries))
@@ -211,6 +214,10 @@ def build_payload(
             "date_from": date_from,
             "date_to": date_to,
             "limit_per_query": limit_per_query,
+            "request_timeout": request_timeout,
+            "resolve_timeout": resolve_timeout,
+            "collection_timeout": collection_timeout,
+            "redirect_resolution_skipped": resolve_timeout <= 0,
             "query_count": query_count,
             "row_count": len(rows),
             "timeout_policy": "dry_run_smoke_timeouts_are_allowed",
@@ -242,7 +249,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--limit-per-query", type=int, default=5)
     parser.add_argument("--max-queries", type=int, default=0, help="Limit query count for a cheap smoke run.")
     parser.add_argument("--request-timeout", type=int, default=10)
-    parser.add_argument("--resolve-timeout", type=int, default=6)
+    parser.add_argument("--resolve-timeout", type=int, default=0, help="Seconds for Google redirect resolution; 0 skips it for safe smoke runs.")
     parser.add_argument("--collection-timeout", type=int, default=6000)
     parser.add_argument("--output-dir", type=Path, default=REPORTS_DIR)
     parser.add_argument("--offline-fixture", action="store_true", help="Generate review artifacts without network calls.")
@@ -257,7 +264,7 @@ def main(argv: list[str] | None = None) -> int:
         limit_per_query=max(1, args.limit_per_query),
         max_queries=max(0, args.max_queries),
         request_timeout=max(1, args.request_timeout),
-        resolve_timeout=max(1, args.resolve_timeout),
+        resolve_timeout=max(0, args.resolve_timeout),
         collection_timeout=max(1, args.collection_timeout),
         collector=offline_fixture_collector if args.offline_fixture else collect_google_news,
     )
@@ -267,6 +274,9 @@ def main(argv: list[str] | None = None) -> int:
         date_to=args.date_to,
         limit_per_query=max(1, args.limit_per_query),
         max_queries=max(0, args.max_queries),
+        request_timeout=max(1, args.request_timeout),
+        resolve_timeout=max(0, args.resolve_timeout),
+        collection_timeout=max(1, args.collection_timeout),
     )
     if args.offline_fixture:
         payload["meta"]["offline_fixture"] = True

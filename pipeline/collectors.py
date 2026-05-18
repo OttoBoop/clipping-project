@@ -294,7 +294,7 @@ def collect_google_news(
                         break
                 item.url = canonicalize_url(direct_link or item.url)
                 # If URL is still a google redirect, try to resolve it now.
-                if "news.google.com" in item.url:
+                if "news.google.com" in item.url and resolve_timeout > 0:
                     resolved = try_resolve_google_redirect(item.url, timeout=resolve_timeout)
                     if resolved and "news.google.com" not in resolved:
                         item.url = canonicalize_url(resolved)
@@ -304,6 +304,11 @@ def collect_google_news(
                         meta = dict(item.metadata or {})
                         meta["force_full_fetch"] = True
                         item.metadata = meta
+                elif "news.google.com" in item.url:
+                    meta = dict(item.metadata or {})
+                    meta["force_full_fetch"] = True
+                    meta["redirect_resolution_skipped"] = True
+                    item.metadata = meta
             filtered = [item for item in items if _within_window(item.published_at, date_from=date_from, date_to=date_to)]
             query_batches.append(filtered[: max(1, limit_per_query)])
             logging.info(f"Google News [{qi+1}/{len(query_list)}] '{query[:40]}': {len(filtered)} items")

@@ -2786,3 +2786,361 @@ git fetch origin -> success
 git rebase origin/master -> success
 HEAD after second rebase -> e36fb24 feat: add Rio economic dry-run report tool
 ```
+
+### Push Evidence
+
+The Rio dry-run commit was pushed to `master`:
+
+```text
+git push origin HEAD:master
+e445d9f..9abba1f  HEAD -> master
+```
+
+### Next Objective From Docs
+
+Check Render/deploy state, verify that the live privacy gate still holds, then
+re-read the long-term docs before selecting the next weak axis.
+
+## 2026-05-19 - Loop Cycle: Render Queue And Live Privacy Gate
+
+### Objective Reviewed
+
+After pushing the Rio dry-run commit, the loop must verify Render/deploy state
+and keep the live privacy gate under observation.
+
+### Render State
+
+Render accepted the pushed commit:
+
+```text
+commit=9abba1f feat: add Rio economic dry-run report tool
+deploy=dep-d86dq4f4fkgc73947350
+status=queued
+trigger=new_commit
+```
+
+At the same moment, an earlier deploy was still building and an older deploy was
+live:
+
+```text
+live commit=9e3408d docs: log explainable error filter review
+queued/building commits ahead of live: e445d9f, 9abba1f
+```
+
+### Live Evidence
+
+Current production privacy gate still holds:
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+```
+
+Local shell does not currently expose viewer/admin passwords, so authenticated
+viewer proof is a live-credential barrier for this subcycle. This is not a stop:
+logged-out proof is complete, Render state is observable, and the loop continues
+with deploy polling and unblocked audits.
+
+### Why The Loop Continues
+
+Queued deploy is not completion and lack of local secrets is not completion.
+The next actions are to keep polling Render, verify live health after deploy,
+and re-read long-term docs for the next weak axis.
+
+### Render Poll Update
+
+After rebasing the local log onto the newest `origin/master`, Render showed the
+deploy that contains the Rio commit plus later documentation commits:
+
+```text
+commit=f1e4652 docs: log clipping non-fast-forward barrier
+status=build_in_progress
+previous live=e445d9f docs: harden clipping output anchor
+```
+
+This means the Rio dry-run commit is no longer the tip, but it is in the live
+candidate history. The loop must verify the final live commit after Render
+finishes.
+
+## 2026-05-19 - Loop Cycle: Target Management No-Fake-UI Audit
+
+### Objective Reviewed
+
+The docs require target management to be either fully connected end to end or
+hidden from client viewers. While Render was still building, this was the next
+unblocked checklist item.
+
+### Code Read
+
+Reviewed:
+
+```text
+web_app/app.py target routes
+web_app/segmentation.py scoped target response helpers
+assets/clipping.js target refresh/add/edit/archive/restore paths
+assets/clipping.css viewer-readonly target management hiding
+tests/test_admin_ui.py target/viewer/classification tests
+```
+
+### Evidence
+
+The routes currently require server-side auth for target management:
+
+```text
+GET /api/targets -> require_viewer + scoped_targets_response
+POST /api/targets -> require_admin + require_csrf
+PATCH /api/targets/{target_key} -> require_admin + require_csrf
+POST /api/targets/{target_key}/archive -> require_admin + require_csrf
+POST /api/targets/{target_key}/restore -> require_admin + require_csrf
+```
+
+The viewer UI path hides non-base run tabs, add-target, and manage-target boxes
+through `applyViewerControls()` plus `body.viewer-readonly` CSS.
+
+Focused tests passed:
+
+```text
+pytest tests/test_admin_ui.py -k "target or viewer or classification" -q
+17 passed, 24 deselected
+```
+
+Generated `pipeline/__pycache__/` files from the test run were restored and are
+not part of the worktree.
+
+### Barrier Status
+
+No code gap was found in this read/test pass. The remaining limitation is live
+authenticated viewer proof, blocked locally by unavailable passwords in shell.
+
+### Why The Loop Continues
+
+This audit supports the no-fake-UI rule, but it does not close the whole loop.
+Render still needs final live verification, and the next long-term axes still
+include Rio real-source validation and sellable packaging.
+
+## 2026-05-19 - Loop Cycle: Additional Logged-Out Live Privacy Smoke
+
+### Objective Reviewed
+
+The Render production checklist requires logged-out users to be blocked from
+private dashboard data, raw text, classifications, and live-results APIs.
+
+### Evidence
+
+Production checks on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/update/live-results?target_key=shakira -> 401 viewer_login_required
+```
+
+### Barrier Status
+
+Authenticated viewer proof still needs credentials not available in the local
+shell. Render deploy for the newest master is still in progress, so these
+checks are a live privacy smoke, not final deploy completion.
+
+### Why The Loop Continues
+
+The logged-out gate remains healthy, but Render has not finished the newest
+deploy and the loop still needs the next docs-derived action.
+
+## 2026-05-19 - Loop Cycle: Rio Live Smoke Workaround
+
+### Objective Reviewed
+
+The Rio economic track had an unresolved live Google News runtime barrier. The
+loop needed a workaround that collects real candidate rows without writing to
+production DB, static assets, or target config.
+
+### Cause Hypothesis
+
+The likely hang point is Google redirect resolution. `fetch_url()` enforces a
+future timeout, but the underlying thread can remain alive after cancellation.
+For a Rio review smoke, resolving every redirect is not required; titles,
+queries, publication dates, and candidate URLs are enough for first-pass human
+labelling.
+
+### Action Taken
+
+Updated:
+
+```text
+pipeline/collectors.py
+tools/rio_economic_dry_run.py
+tests/test_collectors_restore.py
+tests/test_rio_economic_dry_run.py
+RIO_ECONOMIC_VALIDATION_PLAN.md
+RIO_ECONOMIC_INDICATOR_TRACK.md
+ACTIVE_NEXT_ACTION.md
+```
+
+Changes:
+
+- `collect_google_news(..., resolve_timeout=0)` now skips Google redirect
+  resolution and marks candidates with `redirect_resolution_skipped=true`;
+- Rio dry-run defaults `--resolve-timeout` to `0` for safe smoke runs;
+- report metadata records request/resolve/collection timeout settings;
+- tests cover the skip path and report metadata.
+
+### Evidence
+
+Commands passed:
+
+```text
+python -m py_compile tools/rio_economic_dry_run.py pipeline/collectors.py
+pytest tests/test_rio_economic_dry_run.py tests/test_collectors_restore.py -q
+27 passed
+```
+
+Live dry-run command completed:
+
+```text
+tools/rio_economic_dry_run.py --date-from 2026-05-01 --date-to 2026-05-19 --max-queries 2 --limit-per-query 2 --request-timeout 5 --resolve-timeout 0 --collection-timeout 20
+```
+
+Generated artifacts:
+
+```text
+data/reports/rio_economic_dry_run_20260518T220015Z.json
+data/reports/rio_economic_dry_run_20260518T220015Z.csv
+data/reports/rio_economic_dry_run_20260518T220015Z.md
+```
+
+Artifact metadata:
+
+```text
+row_count=4
+query_count=2
+request_timeout=5
+resolve_timeout=0
+collection_timeout=20
+redirect_resolution_skipped=true
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+Sample rows included tourism/hotelaria candidates from Google News. One row
+from `"cidade do Rio" turismo` appears to be about another municipality in the
+state, so it should be reviewed as `state_not_city` unless article content
+proves a city-of-Rio economic signal.
+
+### Barrier Status
+
+The live Google News dry-run barrier is answered for review-smoke purposes.
+Google redirect resolution itself remains a known runtime risk and should not
+block first-pass Rio methodology validation.
+
+### Why The Loop Continues
+
+The dry-run now collects real candidates safely, but the sample still needs
+manual labels, a 30-row review sample, and continued production segregation
+checks after Render deploys.
+
+## 2026-05-19 - Loop Cycle: Rebase Rio Workaround Onto Active Master
+
+### Objective Reviewed
+
+The other active loop pushed additional commits while the Rio workaround was
+being verified. The local Rio work had to be preserved and rebased without
+overwriting that work.
+
+### Action Taken
+
+Stashed only the Rio workaround files and live report artifacts, fetched
+`origin`, rebased onto current `origin/master`, and popped the stash.
+
+### Evidence
+
+```text
+origin/master before reapply -> 83eea61 docs: record manual live coverage
+git rebase origin/master -> success
+git stash pop -> success
+no conflicts
+```
+
+### Barrier Status
+
+Coordination barrier answered. The next step is a focused re-run of tests after
+the rebase, then a path-limited commit and push.
+
+### Why The Loop Continues
+
+Rebase is not completion. The loop proceeds to verification, commit, push,
+Render observation, and the next docs-derived action.
+
+### Verification After Rebase
+
+Commands passed after the rebase:
+
+```text
+python -m py_compile tools/rio_economic_dry_run.py pipeline/collectors.py
+pytest tests/test_rio_economic_dry_run.py tests/test_collectors_restore.py -q
+27 passed
+```
+
+Generated `pipeline/__pycache__/` bytecode was restored again before staging.
+
+### Render Poll During Rebase Cycle
+
+Render continued deploying commits from the other active loop while this Rio
+workaround was being prepared:
+
+```text
+queued=1442477 docs: log hosted payload auth barrier
+building=71b4a2b docs: log static target consistency audit
+live=35900a1 docs: log publication fix regression
+older Rio-containing deploy f1e4652 -> deactivated after newer commits
+```
+
+This is expected under active parallel work. The Rio commit is already in the
+history, but this new workaround still needs its own path-limited push and
+post-push Render observation.
+
+### Second Coordination Rebase
+
+`origin/master` advanced again before the workaround commit. The Rio workaround
+was stashed path-limited, rebased, and reapplied without conflict.
+
+```text
+origin/master -> 1442477 docs: log hosted payload auth barrier
+git rebase origin/master -> success
+git stash pop -> success
+```
+
+Post-rebase verification repeated:
+
+```text
+python -m py_compile tools/rio_economic_dry_run.py pipeline/collectors.py
+pytest tests/test_rio_economic_dry_run.py tests/test_collectors_restore.py -q
+27 passed
+```
+
+Generated bytecode was restored before staging.
+
+### Commit Prepared
+
+Path-limited commit created:
+
+```text
+100b920 feat: make Rio dry-run skip redirect resolution
+```
+
+`origin/master` advanced once more before push, so the commit was rebased again:
+
+```text
+git rebase origin/master -> success
+HEAD after rebase -> 409702a feat: make Rio dry-run skip redirect resolution
+```
+
+Push is still pending.

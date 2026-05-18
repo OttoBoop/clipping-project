@@ -143,13 +143,35 @@ Current implementation status:
 tools/rio_economic_dry_run.py exists
 offline fixture mode exists
 first offline fixture artifacts generated under data/reports/
-live Google News smoke is still a network/runtime barrier
+live Google News smoke works when redirect resolution is skipped
+Google redirect resolution remains a separate runtime/threading risk
+first live smoke artifacts generated under data/reports/
 ```
+
+First live smoke evidence:
+
+```text
+data/reports/rio_economic_dry_run_20260518T220015Z.json
+row_count=4
+query_count=2
+request_timeout=5
+resolve_timeout=0
+redirect_resolution_skipped=true
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+Initial methodology lesson: `"cidade do Rio" turismo` can still catch items
+about other municipalities in the state of Rio. Treat this as `state_not_city`
+unless the article has a concrete city-of-Rio economic signal.
 
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?
 - Which sources return local economic signal instead of generic Rio mentions?
+- Which terms need explicit city-of-Rio anchors or exclusions to avoid
+  state-level false positives?
 - Does the first sample look like a dashboard feed, a weekly brief, or a future
   score?
 - What is the collection cost per sample?
