@@ -1709,3 +1709,47 @@ DB without replacing the dataset.
 
 This fixes one live UI/counting bug, but it is a checkpoint. The stale static
 artifact watch item and authenticated production verification remain open.
+
+## 2026-05-18 - Twenty-Ninth Unattended Cycle: Runtime Fix Deploy Watch
+
+### Objective Reviewed
+
+After publishing `fix: recompute runtime target counts`, the loop returned to
+the live audit queue. The active objective is still target/filter/base behavior
+on the published site, not only local correctness.
+
+### Audit Performed
+
+- Confirmed `origin/master` points at `7b0b70f`.
+- Checked published `/healthz`.
+- Checked published `/api/update/status`.
+- Checked published `/api/update/live-results?scope=base&limit=5`.
+- Downloaded published `/assets/clipping.js` and searched for the runtime-count
+  patch.
+
+### Result
+
+Live state after the push:
+
+```text
+origin/master -> 7b0b70f76af6c7d4081c60ed22b4350c446a4cc5
+/healthz -> HTTP 200 ok=true job=idle missingConfig=["CLIPPING_VIEWER_PASSWORDS"]
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+/assets/clipping.js -> HTTP 200 but still contains Math.max(Number(existing.storyCount...))
+```
+
+This means the code fix is pushed, but the published JS had not yet picked it
+up at the time of this check. Authenticated live data remains blocked by the
+viewer-login gate and missing viewer password config.
+
+### Next Hypothesis
+
+Keep watching the published JS for the deployed runtime-count patch. While
+Render catches up, continue local/static contracts and avoid touching the
+auth/password workstream.
+
+### Why The Loop Continues
+
+A pushed fix is not a live proof. The deploy was still serving old JS, and the
+authenticated Base atual endpoints remain gated.
