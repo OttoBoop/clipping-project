@@ -5460,3 +5460,47 @@ Amend, rebase, push, then continue into ingestion/candidate snapshot contracts.
 
 This is an administrative git race with another loop. It does not resolve or
 invalidate the target/filter/Base atual objectives.
+
+## 2026-05-18 - One Hundred Third Ingestion Candidate Contract Recheck
+
+### Objective Reviewed
+
+After export/live contracts passed, the next checklist risk was earlier in the
+pipeline: selected targets must produce real queries, active jobs must use
+frozen target snapshots, duplicates must be retagged for new secondary targets,
+and bounded parallel processing must keep database writes serialized.
+
+### Audit Performed
+
+Ran focused ingestion/candidate contracts:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_targets_jobs.py::test_run_ingestion_builds_collection_queries_for_selected_target \
+  tests/test_targets_jobs.py::test_process_candidates_uses_frozen_target_snapshot \
+  tests/test_targets_jobs.py::test_run_source_run_accepts_persisted_dict_target_snapshot \
+  tests/test_targets_jobs.py::test_process_candidates_tags_duplicate_article_for_new_secondary_target \
+  tests/test_targets_jobs.py::test_process_candidates_prefetches_articles_with_serial_db_writes \
+  tests/test_targets_jobs.py::test_process_candidates_reports_candidate_progress_before_fetch_fail \
+  -q
+```
+
+### Result
+
+`6 passed in 0.58s`.
+
+Restored generated `pipeline/__pycache__` after the run and confirmed the
+worktree was clean before this log entry.
+
+### Next Hypothesis
+
+Commit this ingestion contract log, then review the auth/profile scoping changes
+that landed from the parallel loop so target management and data visibility do
+not contradict the clipping repair objectives.
+
+### Why The Loop Continues
+
+Candidate contracts passed, but the deployed product now includes viewer/admin
+scoping work from another loop. That can affect `/api/targets`,
+`/assets/clipping-data.json`, and live-results visibility, so it needs review
+against the long-term target/filter/Base atual goals.
