@@ -23,6 +23,28 @@ rio_economico
 The profile may start empty. Empty is safer than falling back to political or
 client data.
 
+## Current Implementation Audit
+
+Checked 2026-05-19:
+
+- `data/viewer_profiles.json` includes a `rio_economico` viewer profile scoped
+  to target key `rio_economico`.
+- `web_app/segmentation.py` includes the same default placeholder profile.
+- `data/targets.json` does not yet include a `rio_economico` target row.
+
+Decision: do not add a `rio_economico` row to `data/targets.json` yet.
+
+Reason: `pipeline.settings.get_active_targets()` automatically adds a target's
+label to its keywords. A placeholder target row would therefore become a real
+collector/matcher term before the economic methodology is validated. That would
+risk broad Rio/economy pollution, which this track explicitly exists to avoid.
+
+The safe current state is:
+
+```text
+viewer profile exists -> empty scoped view is allowed -> no collection terms yet
+```
+
 ## Indicator Goal
 
 Capture signals about Rio's local economic agenda, not generic national economy

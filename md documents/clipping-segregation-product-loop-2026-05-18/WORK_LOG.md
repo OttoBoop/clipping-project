@@ -1432,3 +1432,63 @@ Return to the docs and continue with:
 
 No-fake-UI and static-boundary evidence are useful checkpoints, but the product
 still lacks live viewer-profile proof on Render.
+
+## 2026-05-19 - Loop Cycle: Rio Economic Profile Isolation Review
+
+### Objective Reviewed
+
+Returned to `DEPENDENCY_MAP.md` and `RIO_ECONOMIC_INDICATOR_TRACK.md`. The
+next unblocked axis was not to build the indicator, but to verify that the Rio
+economic placeholder remains isolated and does not pollute Flavio/Shakira or
+start premature collection.
+
+### Audit Performed
+
+Read:
+
+- `RIO_ECONOMIC_INDICATOR_TRACK.md`
+- `data/viewer_profiles.json`
+- `data/targets.json`
+- `web_app/segmentation.py`
+- `pipeline/settings.py`
+
+Findings:
+
+```text
+viewer_profiles.json has profile rio_economico -> target_keys ["rio_economico"]
+web_app/segmentation.py has default profile rio_economico -> target_keys ["rio_economico"]
+data/targets.json does not contain rio_economico
+```
+
+`pipeline.settings.get_active_targets()` automatically adds a target label to
+the target's keywords if the label is missing. Therefore adding a
+`rio_economico` row to `data/targets.json` would create real search/matcher
+terms before methodology validation.
+
+### Decision
+
+Do not add a `rio_economico` target row yet. The current safe state is a
+profile-only placeholder that can render an empty scoped view without falling
+back to Flavio data.
+
+### Action Taken
+
+Updated `RIO_ECONOMIC_INDICATOR_TRACK.md` with the implementation audit and
+the explicit decision not to add a target row before production segregation and
+term validation.
+
+### Remaining Blocker
+
+The Rio profile still cannot be smoked on production because
+`CLIPPING_VIEWER_PASSWORDS` is not configured on Render.
+
+### Next Objective From Docs
+
+Re-read the product docs and continue with product packaging/market-research
+tracks that do not require Render viewer passwords, while keeping the live
+viewer-auth blocker active.
+
+### Why The Loop Continues
+
+The Rio review prevented a likely future pollution mistake, but it did not
+complete production viewer segregation.
