@@ -777,6 +777,7 @@ def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
         "loginConfigured",
         "viewerAuthConfigured",
         "viewerProfilesConfigured",
+        "missingConfig",
         "storage",
         "localWritesAllowed",
         "job",
@@ -788,6 +789,7 @@ def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
     assert payload["loginConfigured"] is True
     assert payload["viewerAuthConfigured"] is True
     assert payload["viewerProfilesConfigured"] is True
+    assert payload["missingConfig"] == []
     assert payload["localWritesAllowed"] is True
     assert set(payload["storage"]) == {"enabled", "bucket", "prefix", "localWritesAllowed"}
     assert payload["storage"]["enabled"] is False
@@ -796,6 +798,19 @@ def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
     assert "test-password" not in serialized
     assert "test-session-secret" not in serialized
     assert "SUPABASE_SERVICE_KEY" not in serialized
+
+
+def test_healthz_lists_missing_viewer_password_config(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    monkeypatch.delenv("CLIPPING_VIEWER_PASSWORDS", raising=False)
+    with TestClient(app) as client:
+        response = client.get("/healthz")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["loginConfigured"] is True
+    assert payload["viewerAuthConfigured"] is False
+    assert payload["missingConfig"] == ["CLIPPING_VIEWER_PASSWORDS"]
+    assert "test-password" not in json.dumps(payload, sort_keys=True)
 
 
 def test_storage_current_files_are_runtime_mutable_only(monkeypatch, tmp_path):

@@ -1652,3 +1652,61 @@ Continue the loop from `ACTIVE_NEXT_ACTION.md` and this status snapshot:
 
 A status snapshot improves continuity for future agents, but it is not live
 viewer proof.
+
+## 2026-05-19 - Loop Cycle: Safer Live Config Diagnostics
+
+### Objective Reviewed
+
+Returned to the active blocker in `SYSTEM_REVIEW_STATUS_2026-05-19.md`:
+production viewer testing is blocked by missing Render configuration. The live
+site should make this blocker explicit without exposing secret values.
+
+### Action Taken
+
+Added a safe `missingConfig` list to `/healthz`.
+
+Expected production shape after deploy:
+
+```json
+{
+  "loginConfigured": true,
+  "viewerAuthConfigured": false,
+  "viewerProfilesConfigured": true,
+  "missingConfig": ["CLIPPING_VIEWER_PASSWORDS"]
+}
+```
+
+The list contains environment variable names only, never secret values.
+
+### Tests
+
+Passed:
+
+```bash
+python -m py_compile web_app/app.py web_app/auth.py web_app/segmentation.py
+.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_healthz_exposes_safe_operational_fields \
+  tests/test_admin_ui.py::test_healthz_lists_missing_viewer_password_config \
+  -q
+```
+
+Result:
+
+```text
+2 passed in 0.55s
+```
+
+### Remaining Blocker
+
+This improves diagnosis only. It does not configure the missing Render secret
+or prove viewer scoping live.
+
+### Next Objective From Docs
+
+Push, wait for Render, confirm `/healthz` reports
+`missingConfig=["CLIPPING_VIEWER_PASSWORDS"]`, then return to the product docs
+for the next loop cycle.
+
+### Why The Loop Continues
+
+The blocker becoming clearer is not the blocker being resolved.

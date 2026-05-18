@@ -31,6 +31,17 @@ def login_configured() -> bool:
     return bool(_env_value("CLIPPING_SESSION_SECRET") and (_env_value("CLIPPING_ADMIN_PASSWORD") or viewer_passwords()))
 
 
+def missing_auth_config() -> list[str]:
+    missing: list[str] = []
+    if not _env_value("CLIPPING_SESSION_SECRET"):
+        missing.append("CLIPPING_SESSION_SECRET")
+    if not _env_value("CLIPPING_ADMIN_PASSWORD"):
+        missing.append("CLIPPING_ADMIN_PASSWORD")
+    if not viewer_passwords():
+        missing.append("CLIPPING_VIEWER_PASSWORDS")
+    return missing
+
+
 def _secret() -> bytes:
     value = _env_value("CLIPPING_SESSION_SECRET")
     if not value:
