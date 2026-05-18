@@ -4629,3 +4629,37 @@ audit.
 
 The guard reduces regression risk, but it is another checkpoint. The loop still
 has live auth gates and target/filter/base review items.
+
+## 2026-05-18 - Eighty-Third Job Totals Source Review Cycle
+
+### Objective Reviewed
+
+Base atual and update status must keep counters trustworthy while `article_saved`
+events feed live-results.
+
+### Audit Performed
+
+- Re-read git status and recent log.
+- Reviewed `job_progress`, `source_progress_totals`, `article_saved_totals`,
+  and `sync_live_progress_totals` in `web_app/jobs.py`.
+- Reviewed the existing focused test
+  `tests/test_targets_jobs.py::test_article_saved_events_drive_live_results_and_totals`.
+
+### Result
+
+No patch was selected in this cycle. The current implementation computes status
+totals from the maximum of stored job totals, latest source-progress totals, and
+`article_saved` deltas; `record_progress` syncs live totals after saved events.
+The focused test already verifies inserted/mention/story counters and saved
+live-results state.
+
+### Next Hypothesis
+
+Commit this source-review log, then continue with hosted watch or another
+target/filter path.
+
+### Why The Loop Continues
+
+Counters look covered locally, but this is a review checkpoint. The loop still
+has auth-gated hosted payloads and future runtime target changes to keep
+checking.
