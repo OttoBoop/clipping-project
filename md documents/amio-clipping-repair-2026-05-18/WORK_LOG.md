@@ -1130,3 +1130,42 @@ will make the unattended plan harder to misread as a single documentation task.
 The local fallback passed, but that is a checkpoint. The published live data
 audit remains blocked by authentication, and the protocol can still be made
 stronger by turning the operational simulations into explicit documented cases.
+
+## 2026-05-18 - Seventeenth Loop Hardening: Operational Self-Tests
+
+### Objective Reviewed
+
+The unattended protocol needs to be mechanically harder to misread. A future
+agent should be able to test its own impulse to stop after "auth blocked",
+"tests passed", "deploy verified", or "no bug visible".
+
+### Audit Performed
+
+- Re-read the new fixed unattended queue.
+- Re-read the latest auth-gated live fallback cycle.
+- Checked the user plan's operational tests:
+  auth gate, tests passing, deploy verified.
+
+### Result
+
+Added **Operational Self-Tests** to `LOOP_OPERATING_PROTOCOL.md`:
+
+- auth gate simulation;
+- tests passed simulation;
+- deploy verified simulation;
+- no fresh bug visible simulation;
+- dirty worktree simulation.
+
+Each self-test names the correct next step and the incorrect premature final.
+
+### Next Hypothesis
+
+Run a documentation grep to prove the self-tests are present, then continue the
+queue with another accessible audit. If live remains gated, the next useful
+area is local target/export consistency and any existing regression harnesses
+that can run without credentials.
+
+### Why The Loop Continues
+
+Adding self-tests is a checkpoint. The point of the self-tests is to force the
+next cycle, not to justify ending here.

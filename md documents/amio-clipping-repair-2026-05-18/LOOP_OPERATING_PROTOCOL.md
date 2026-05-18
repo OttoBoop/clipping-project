@@ -105,6 +105,42 @@ When no higher-priority defect is already selected, use this queue exactly:
 This queue is deliberately repetitive. Repetition is the mechanism that
 prevents context loss during multi-hour runs.
 
+## Operational Self-Tests
+
+Run these as mental or documented simulations whenever the loop feels "done".
+If the answer to any self-test is "send final now", the protocol failed.
+
+1. **Auth gate simulation.**
+   - Situation: `/api/update/status` and `/api/update/live-results` return 401.
+   - Correct next step: log the auth gate, check `/healthz` and static assets,
+     run local live-results/target/export contracts, then continue.
+   - Incorrect next step: final answer saying live verification is blocked.
+
+2. **Tests passed simulation.**
+   - Situation: focused tests pass.
+   - Correct next step: record the checkpoint, re-read goals, audit live or the
+     next accessible substitute, and search for the next inconsistency.
+   - Incorrect next step: final answer saying tests passed.
+
+3. **Deploy verified simulation.**
+   - Situation: Render deploy is live and one smoke passes.
+   - Correct next step: verify adjacent contracts such as export counts, target
+     filters, job status, and Base atual overlay, then continue.
+   - Incorrect next step: final answer saying deploy verified.
+
+4. **No fresh bug visible simulation.**
+   - Situation: the last audit finds no new failure.
+   - Correct next step: update `WORK_LOG.md`, promote or retire watch items,
+     run a focused regression or docs review, then continue.
+   - Incorrect next step: final answer saying everything looks fine.
+
+5. **Dirty worktree simulation.**
+   - Situation: the main worktree has unrelated inherited changes.
+   - Correct next step: use path-limited commits or a clean worktree from
+     `origin/master`; leave unrelated dirt alone.
+   - Incorrect next step: `git add .`, broad cleanup, or reverting other
+     agents' files.
+
 ## Checkpoint, Blocker, And Exit Meanings
 
 - **Checkpoint:** a test pass, commit, push, deploy, smoke, log entry, or
