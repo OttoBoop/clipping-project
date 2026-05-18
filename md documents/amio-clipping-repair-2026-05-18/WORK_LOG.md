@@ -661,3 +661,63 @@ articleId=641 targetKeys=['flavio_valle']
 This confirms the repaired path on the real site:
 persisted target snapshot -> durable source run -> ingestion -> SQLite/live
 checkpoint -> Base atual API.
+
+## 2026-05-18 - Ninth Technical Loop: Hosted Dashboard Was Marked Static
+
+### Problem Found
+
+A real browser smoke against `https://clipping-project.onrender.com/` loaded
+the dashboard but made no calls to `/api/update/live-results`. The HTML served
+at `/` included:
+
+```html
+data-clipping-api-url=""
+data-clipping-static="1"
+```
+
+That is correct for exported static bundles, but wrong for the FastAPI-hosted
+dashboard. In `assets/clipping.js`, `data-clipping-static="1"` makes
+`apiAvailable` false when `data-clipping-api-url` is empty, so the hosted site
+skips status polling, target refreshes, and the Base atual live overlay.
+
+### Cause
+
+`web_app/app.py::public_dashboard` returned `index.html` as a raw file. The
+export pipeline had correctly marked the generated file as static, but the app
+route did not clear that marker when serving the same HTML from a live
+same-origin API host.
+
+### Changes Made
+
+- Changed the `/` route to read `index.html`, replace
+  `data-clipping-static="1"` with `data-clipping-static="0"`, and return
+  `HTMLResponse`.
+- Added regression coverage proving the hosted dashboard clears the static
+  marker and therefore keeps same-origin API polling enabled.
+
+### Verification
+
+Focused unit:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py::test_hosted_dashboard_enables_same_origin_api_polling -q
+```
+
+Result: `1 passed`.
+
+Broader admin/export smoke:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result: `43 passed in 1.80s`.
+
+### Next Checks
+
+- Push this isolated fix from a clean worktree so unrelated local
+  password/segregation edits in `web_app/app.py` are not committed.
+- Verify the live `/` HTML has `data-clipping-static="0"`.
+- Verify a real browser call to the published site now requests
+  `/api/update/live-results?scope=base&limit=240` and renders live Base atual
+  items without using a local server.

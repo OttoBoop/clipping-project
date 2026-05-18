@@ -56,6 +56,27 @@ def login(client: TestClient) -> str:
     return csrf.json()["csrf"]
 
 
+def test_hosted_dashboard_enables_same_origin_api_polling(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+    index_path = tmp_path / "index.html"
+    index_path.write_text(
+        """
+        <!doctype html>
+        <main id="app" data-clipping-api-url="" data-clipping-static="1"></main>
+        """,
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(app_module, "ROOT", tmp_path)
+
+    with TestClient(app) as client:
+        response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'data-clipping-static="1"' not in response.text
+    assert 'data-clipping-static="0"' in response.text
+
+
 def db_counts(db_file):
     with sqlite3.connect(db_file) as conn:
         return {

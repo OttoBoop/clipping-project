@@ -6,7 +6,7 @@ from html import escape
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .auth import (
@@ -292,7 +292,9 @@ async def no_cache_for_dashboard_assets(request: Request, call_next):
 def public_dashboard() -> Response:
     index_path = ROOT / "index.html"
     if index_path.is_file():
-        return FileResponse(index_path)
+        html_doc = index_path.read_text(encoding="utf-8")
+        html_doc = html_doc.replace('data-clipping-static="1"', 'data-clipping-static="0"', 1)
+        return HTMLResponse(html_doc, status_code=200)
     return HTMLResponse("<h1>Clipping institucional</h1><p>Painel ainda nao gerado.</p>", status_code=200)
 
 
