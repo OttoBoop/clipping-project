@@ -4823,3 +4823,41 @@ source review.
 
 Browser contracts passing is a checkpoint, not a stop. The live hosted data
 payload is still auth-gated and must remain on the watch list.
+
+## 2026-05-18 - Eighty-Eighth Rio Log Rebase Barrier Cycle
+
+### Objective Reviewed
+
+Remote docs-only work from another loop must be integrated safely and logged,
+not overwritten or used as a stopping point.
+
+### Audit Performed
+
+- Push of `a16e6c1 docs: log target browser contract review` was rejected with
+  `non-fast-forward`.
+- Inspected remote commit
+  `1d8eea3 docs: log Rio workaround deploy observation`.
+- Confirmed it only touched
+  `md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md`.
+- Rebased the clipping browser-contract log over `origin/master`.
+- Pushed the rebased clipping log as `17995d1`.
+
+### Result
+
+Barrier answered and resolved:
+
+```text
+remote advanced: 1d8eea3 docs: log Rio workaround deploy observation
+resolution: git rebase origin/master, then push HEAD:master
+pushed: 17995d1 docs: log target browser contract review
+```
+
+### Next Hypothesis
+
+Commit this barrier log, then continue with hosted watch or another local
+contract.
+
+### Why The Loop Continues
+
+The git barrier is resolved, but the clipping loop still has auth-gated hosted
+payloads and repeated target/filter/base reviews to perform.
