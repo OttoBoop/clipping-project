@@ -771,3 +771,34 @@ Combined admin/export suite:
 ```
 
 Result: `44 passed in 1.80s`.
+
+### Live Verification After Push
+
+Commits pushed:
+
+```text
+91e7fb9 fix: enable live polling on hosted dashboard
+48ba5b8 fix: restore dashboard live polling runtime
+```
+
+Deploy checks:
+
+- `/` initially served `data-clipping-static="1"`.
+- after deploy, `/` no longer served the static-only marker for the hosted
+  dashboard, so same-origin API access was enabled;
+- `/assets/clipping.js` changed to the runtime-fixed bundle containing
+  `var originalTargetKeys = articleTargetKeys(article, story);`.
+
+Real browser smoke against `https://clipping-project.onrender.com/`:
+
+```text
+body_len=40908
+live_request_count=5
+status_request_count=3
+page_errors=[]
+console_errors=[]
+```
+
+The browser requested both `/api/update/status` and
+`/api/update/live-results...` from the published site and rendered the dashboard
+without the previous `originalTargetKeys is not defined` crash.
