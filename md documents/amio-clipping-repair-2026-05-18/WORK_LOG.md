@@ -5049,3 +5049,43 @@ Commit this barrier log, then continue with hosted/local clipping checks.
 
 The git barrier is resolved, but the clipping product loop still has live auth
 barriers and target/filter/Base atual watch items.
+
+## 2026-05-18 - Ninety-Fourth Hosted Rule-Reaffirmation Watch
+
+### Objective Reviewed
+
+After logging the rule reaffirmation and rebase barrier, the loop must return to
+hosted/live checks instead of treating documentation as completion.
+
+### Audit Performed
+
+- Checked hosted `/healthz`.
+- Checked hosted `/api/update/status`.
+- Fetched hosted `/assets/clipping.js`.
+- Checked git/worktree state.
+
+### Result
+
+Hosted state:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+/assets/clipping.js -> HTTP 200, last-modified Tue, 19 May 2026 22:22:48 GMT
+hosted JS -> targetDisplayNameError, pollBaseLiveResults, and publicationState
+             handling present
+worktree -> clean detached HEAD at e5dcc39 / origin/master
+```
+
+Barrier answered: status remains viewer-auth gated without a valid session. The
+hosted app is healthy and public JS is current.
+
+### Next Hypothesis
+
+Commit this hosted watch log, then run a local contract or source review for the
+target/filter/Base atual path.
+
+### Why The Loop Continues
+
+Hosted health is only a checkpoint, and direct status/live payloads remain
+auth-gated. Local contracts and source review remain available.
