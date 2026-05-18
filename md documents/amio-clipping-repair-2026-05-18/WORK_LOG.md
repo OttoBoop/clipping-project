@@ -3183,3 +3183,66 @@ hosted bundle for removal of `targetActionsLocked`.
 
 Management operation failures now have better coverage, but the hosted cleanup
 deploy has not caught up and live payload inspection remains auth-gated.
+
+## 2026-05-19 - Fifty-Third Live Watch: Target Lock Cleanup Deployed
+
+### Objective Reviewed
+
+After removing dead target-management lock code, the hosted bundle needed to be
+checked directly. A local test pass is not enough if the coworker-facing site is
+still serving the old blocker branches.
+
+### Audit Performed
+
+- Checked hosted `/assets/clipping.js?v=679e5f8`.
+- Checked hosted `/healthz`.
+- Confirmed local/remotes were aligned at `679e5f8`.
+- Ran a focused fallback group for management operation errors, no-lock JS, and
+  archive/restore UI behavior.
+- Waited another short deploy window and rechecked the hosted bundle.
+
+### Result
+
+Initial hosted check still showed the old `targetActionsLocked` branches. After
+the additional deploy window, hosted JS no longer contains `targetActionsLocked`
+or management `aria-disabled` branches. The only remaining
+"Aguarde a atualização terminar" string is the compatibility mapping inside
+`friendlyError()` for stale backend responses.
+
+Hosted JS now contains:
+
+```text
+if (!primary.length && other.length && !viewerIsAdmin()) {
+if (activeTargetKeys.size) activeTargetKeys.add(key);
+```
+
+and no longer contains:
+
+```text
+targetActionsLocked
+aria-disabled
+```
+
+Focused fallback:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_targets_api_management_operation_errors_are_structured \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_does_not_lock_target_management_during_updates \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_archive_restore_stay_available_during_running_update \
+  -q
+```
+
+Result: `3 passed in 1.85s`.
+
+### Next Hypothesis
+
+Commit this deploy proof, then continue with another loop over live-results/Base
+atual and error copy. If no new bug appears quickly, run another focused target
+suite and update the log rather than exiting.
+
+### Why The Loop Continues
+
+The cleanup is now live, but the protocol treats live verification as a
+checkpoint. The Base atual payload is still auth-gated, so local contracts and
+static asset audits remain useful.
