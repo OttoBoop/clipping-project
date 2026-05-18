@@ -3893,3 +3893,487 @@ previous live=072e406 docs: add Rio economic 32-row sample review
 
 Continue Rio cleanup by testing negative terms/source anchors or adding
 title-level exclusion metadata to the dry-run review path.
+
+## 2026-05-18 19:28 -03 - Loop Cycle: Reanchored After Remote Advance
+
+### Objective Reviewed
+
+The loop instruction says a barrier or external change is not a stopping point.
+Before choosing a new task, I rechecked the repo state and the active next
+action document.
+
+### Action Taken
+
+`git status --short --branch` showed the loop branch was clean and behind
+`origin/master` by one commit. I ran:
+
+```text
+git rebase origin/master
+```
+
+Result:
+
+```text
+Successfully rebased and updated refs/heads/atlas/segmentation-demo-workaround.
+## atlas/segmentation-demo-workaround...origin/master
+```
+
+### Evidence
+
+The branch is now aligned with `origin/master` and has no local dirty files at
+this checkpoint.
+
+### Barrier Or Failure
+
+No blocker. The remote had advanced with another loop/log commit, which was
+handled by rebasing rather than stopping.
+
+### Next Objective From Docs
+
+Return to the production verification axis: poll Render, smoke logged-out
+privacy gates, then write the evidence here and continue to the next weak item
+from `ACTIVE_NEXT_ACTION.md`.
+
+## 2026-05-18 19:32 -03 - Loop Cycle: Production Logged-Out Gate Smoke
+
+### Objective Reviewed
+
+`ACTIVE_NEXT_ACTION.md` says the current production priority is to keep the
+logged-out privacy gate verified on Render and keep polling deploy state after
+remote commits.
+
+### Render State
+
+`list_deploys` for `srv-d7p2p5beo5us739f9k40` showed:
+
+```text
+dep-d86e8gi1dpfc73a2bi20 db067a2 docs: log local live contract fallback -> build_in_progress
+dep-d86e7d8c5kbs73akq06g d0ebc1f docs: define V1 clipping delivery scope -> live
+```
+
+### Live Evidence
+
+While `db067a2` was still building, the current live service returned:
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out gate blocker found. This is still partial for the newest commit
+because Render had not yet promoted `db067a2` to live.
+
+### Next Objective From Docs
+
+Keep polling Render until the newest deploy finishes, then repeat the live
+logged-out smoke. After that, return to authenticated viewer proof or the next
+unblocked product axis if viewer credentials remain unavailable locally.
+
+## 2026-05-18 19:33 -03 - Loop Cycle: Render Deploy Still Updating
+
+### Objective Reviewed
+
+The previous entry left an explicit next step: poll Render until the newest
+deploy finishes, then re-smoke production.
+
+### Action Taken
+
+Polled Render deploys again for `srv-d7p2p5beo5us739f9k40`.
+
+### Evidence
+
+```text
+dep-d86e8gi1dpfc73a2bi20 db067a2 docs: log local live contract fallback -> update_in_progress
+dep-d86e7d8c5kbs73akq06g d0ebc1f docs: define V1 clipping delivery scope -> live
+```
+
+### Barrier Or Failure
+
+No blocker. The newest deploy is still updating, which means the loop should
+continue with an unblocked docs-derived axis while polling again later.
+
+### Next Objective From Docs
+
+While Render finishes, re-read the long-term/checklist docs and choose the next
+small verification item that does not need live viewer secrets.
+
+## 2026-05-18 19:36 -03 - Loop Cycle: Viewer Mutation Coverage Tightened
+
+### Objective Reviewed
+
+The system checklist requires mutating endpoints to reject non-admin viewers.
+Existing coverage proved viewer live-results scoping and one admin write
+rejection, but the target-management/admin surface is broader than one endpoint.
+
+### Action Taken
+
+Updated `tests/test_admin_ui.py` so
+`test_viewer_cannot_widen_live_results_or_write_admin_actions` now checks that
+a Shakira viewer cannot write through:
+
+```text
+POST /api/update/start
+POST /api/update/resume
+POST /api/update/cancel
+POST /api/export
+POST /api/targets
+PATCH /api/targets/{target_key}
+POST /api/targets/{target_key}/archive
+POST /api/targets/{target_key}/restore
+POST /api/categories
+POST /api/classifications
+POST /api/manual-story
+```
+
+Expected result for every write attempt is `401 admin_login_required`, and the
+temporary DB remains empty.
+
+### Evidence
+
+Verification attempt:
+
+```text
+pytest tests/test_admin_ui.py::test_viewer_cannot_widen_live_results_or_write_admin_actions -q
+-> /bin/bash: pytest: command not found
+
+python -m pytest tests/test_admin_ui.py::test_viewer_cannot_widen_live_results_or_write_admin_actions -q
+-> No module named pytest
+
+python import fastapi/starlette/httpx
+-> ModuleNotFoundError: No module named 'fastapi'
+
+python -m compileall -q web_app tests/test_admin_ui.py
+-> success
+```
+
+### Barrier Or Failure
+
+Local test execution is blocked by missing Python test/runtime dependencies in
+this shell (`pytest`, `pip`, and `fastapi`). The syntax check passed, but the
+focused behavioral test still needs a dependency-ready environment or CI/Render
+test runner.
+
+### Next Objective From Docs
+
+Because the dependency barrier does not block all work, continue the loop:
+rebase around the remote advance, poll Render, repeat live logged-out smoke
+after promotion, then commit the test/log change path-limited when the branch is
+aligned.
+
+## 2026-05-18 19:37 -03 - Loop Cycle: Rebased Around Active Remote Work
+
+### Objective Reviewed
+
+The loop must coordinate around the dirty/active workspace and not overwrite
+another AI's work.
+
+### Action Taken
+
+Ran:
+
+```text
+git pull --rebase --autostash origin master
+```
+
+### Evidence
+
+The remote advanced from `db067a2` to `b57de64`. The incoming commit touched:
+
+```text
+assets/clipping.js
+md documents/amio-clipping-repair-2026-05-18/WORK_LOG.md
+tests/test_pages_performance.py
+tools/pages_assets/clipping.js
+```
+
+Autostash reapplied this loop's local changes cleanly. Current dirty paths are
+limited to:
+
+```text
+md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md
+tests/test_admin_ui.py
+```
+
+### Barrier Or Failure
+
+No conflict. The other AI's clipping repair/performance work is now included in
+the base and was not edited by this loop.
+
+### Next Objective From Docs
+
+Poll Render for the newest deploy status, then re-smoke logged-out gates when
+the current deploy is live.
+
+## 2026-05-18 19:38 -03 - Loop Cycle: Render Saw New Repair Commit
+
+### Objective Reviewed
+
+Production remains the acceptance bar, and remote commits from the active repair
+loop must be tracked rather than ignored.
+
+### Action Taken
+
+Polled Render deploys for `srv-d7p2p5beo5us739f9k40`.
+
+### Evidence
+
+```text
+dep-d86eb23rjlhs73eba27g b57de64 fix: recompute live target filter counts -> update_in_progress
+dep-d86e8gi1dpfc73a2bi20 db067a2 docs: log local live contract fallback -> live
+dep-d86e7d8c5kbs73akq06g d0ebc1f docs: define V1 clipping delivery scope -> deactivated
+```
+
+### Barrier Or Failure
+
+No blocker. The live site is now at `db067a2`, while `b57de64` is still
+updating.
+
+### Next Objective From Docs
+
+Smoke the current live `db067a2` privacy gate now, then poll again for
+`b57de64` promotion.
+
+## 2026-05-18 19:39 -03 - Loop Cycle: Live Logged-Out Smoke On db067a2
+
+### Objective Reviewed
+
+`db067a2` had become the live Render deploy, so the production checklist called
+for repeating the logged-out privacy gate checks against the current live site.
+
+### Live Evidence
+
+URL checked: `https://clipping-project.onrender.com/`
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression found on the current live deploy. Authenticated
+viewer proof remains dependent on viewer credentials not present in this local
+shell.
+
+### Next Objective From Docs
+
+Keep polling the newer `b57de64` deploy, then repeat this smoke after promotion.
+Do not mark production complete from the `db067a2` smoke alone because a newer
+commit is already updating.
+
+## 2026-05-18 19:40 -03 - Loop Cycle: Rebased Around Live-Target Deploy Watch
+
+### Objective Reviewed
+
+The loop is sharing `master` with the clipping repair/live target work, so every
+publish must be based on current `origin/master`.
+
+### Action Taken
+
+Ran:
+
+```text
+git pull --rebase --autostash origin master
+```
+
+### Evidence
+
+The remote advanced from `b57de64` to `8412355`:
+
+```text
+8412355 docs: log live target deploy watch
+b57de64 fix: recompute live target filter counts
+db067a2 docs: log local live contract fallback
+```
+
+Autostash reapplied this loop's dirty files cleanly.
+
+### Barrier Or Failure
+
+No conflict. The incoming change only updated the other loop's repair work log.
+
+### Next Objective From Docs
+
+Finish the path-limited commit for viewer mutation coverage, push to `master`,
+then poll Render again and re-smoke the live gate after the deploy promotion.
+
+## 2026-05-18 19:41 -03 - Loop Cycle: Pre-Commit Checks For Viewer Mutation Coverage
+
+### Objective Reviewed
+
+Before publishing even a test-only hardening change, keep the commit scoped and
+record the local checks that were possible in this shell.
+
+### Action Taken
+
+Ran:
+
+```text
+git diff --check -- tests/test_admin_ui.py md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md
+python -m compileall -q tests/test_admin_ui.py web_app
+git status --short --branch
+```
+
+### Evidence
+
+`git diff --check` passed with no output. `compileall` passed with no output.
+Status remains limited to:
+
+```text
+M md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md
+M tests/test_admin_ui.py
+```
+
+### Barrier Or Failure
+
+The focused pytest still cannot run in this shell because `pytest`, `pip`, and
+`fastapi` are not installed. This was recorded above and does not block pushing
+the coverage improvement with the caveat.
+
+### Next Objective From Docs
+
+Commit and push the path-limited change, then monitor Render and production
+privacy gates.
+
+## 2026-05-18 19:42 -03 - Loop Cycle: Commit Rebased Before Push
+
+### Objective Reviewed
+
+Publishing to the live site means the local commit must sit on the current
+`origin/master`, not on a stale base.
+
+### Action Taken
+
+Created the path-limited commit:
+
+```text
+ebfb734 test: harden viewer admin write rejection
+```
+
+Then `origin/master` advanced again, so I ran:
+
+```text
+git pull --rebase origin master
+```
+
+### Evidence
+
+The rebase succeeded and replayed the commit as:
+
+```text
+c5b9c54 test: harden viewer admin write rejection
+54fed36 docs: log target api contract recheck
+8412355 docs: log live target deploy watch
+```
+
+Current branch state after rebase:
+
+```text
+atlas/segmentation-demo-workaround...origin/master [ahead 1]
+```
+
+### Barrier Or Failure
+
+No conflict. The remote had advanced with another target API/log recheck; this
+loop did not modify that work.
+
+### Next Objective From Docs
+
+Amend this log entry into the same path-limited commit, recheck status, push to
+`master`, then watch Render.
+
+## 2026-05-18 19:43 -03 - Loop Cycle: Push Rejected By Remote Race
+
+### Objective Reviewed
+
+The rule for barriers is to answer the barrier, log it, and continue.
+
+### Action Taken
+
+Attempted:
+
+```text
+git push origin HEAD:master
+```
+
+### Evidence
+
+GitHub rejected the push:
+
+```text
+! [rejected] HEAD -> master (non-fast-forward)
+error: failed to push some refs to 'https://github.com/OttoBoop/clipping-project.git'
+```
+
+### Barrier Or Failure
+
+Remote advanced again between rebase and push. This is a coordination race with
+the active loop, not a reason to stop.
+
+### Next Objective From Docs
+
+Amend this log entry, rebase on the newest `origin/master`, and retry the push.
+
+## 2026-05-18 19:44 -03 - Loop Cycle: Rebased After Push Rejection
+
+### Objective Reviewed
+
+After a push race, the next action is to integrate the remote tip and try
+again, not abandon the deploy path.
+
+### Action Taken
+
+Amended the push-rejection log into the commit, then ran:
+
+```text
+git pull --rebase origin master
+```
+
+### Evidence
+
+The rebase succeeded. The remote tip moved to:
+
+```text
+232a5ef docs: log hosted live target verification
+```
+
+The local commit replayed as:
+
+```text
+9d71d80 test: harden viewer admin write rejection
+```
+
+Current branch state:
+
+```text
+atlas/segmentation-demo-workaround...origin/master [ahead 1]
+```
+
+### Barrier Or Failure
+
+No conflict.
+
+### Next Objective From Docs
+
+Amend this entry into the same commit and retry `git push origin HEAD:master`.

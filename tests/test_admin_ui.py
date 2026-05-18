@@ -356,7 +356,7 @@ def test_dashboard_shell_marks_viewer_session_before_payload_load(monkeypatch, t
 
 
 def test_viewer_cannot_widen_live_results_or_write_admin_actions(monkeypatch, tmp_path):
-    app, _ = load_test_app(monkeypatch, tmp_path)
+    app, db_file = load_test_app(monkeypatch, tmp_path)
     app_module = importlib.import_module("web_app.app")
 
     def fake_live_results(*_args, **_kwargs):
@@ -376,13 +376,27 @@ def test_viewer_cannot_widen_live_results_or_write_admin_actions(monkeypatch, tm
         login_viewer(client, "viewer-shakira")
         all_results = client.get("/api/update/live-results")
         widened = client.get("/api/update/live-results?target_key=flavio_valle")
-        write_attempt = client.post("/api/update/start", json={"preset": "rapido"})
+        write_attempts = [
+            client.post("/api/update/start", json={"preset": "rapido"}),
+            client.post("/api/update/resume", json={"job_id": "job"}),
+            client.post("/api/update/cancel"),
+            client.post("/api/export"),
+            client.post("/api/targets", json={"display_name": "Ana Teste"}),
+            client.patch("/api/targets/ana_teste", json={"display_name": "Ana Nova"}),
+            client.post("/api/targets/ana_teste/archive", json={"reason": "Duplicado."}),
+            client.post("/api/targets/ana_teste/restore"),
+            client.post("/api/categories", json={"name": "Teste"}),
+            client.post("/api/classifications", json={"article_id": 1, "target_key": "shakira"}),
+            client.post("/api/manual-story", json=manual_story_payload(target_keys=["shakira"])),
+        ]
 
     assert all_results.status_code == 200
     assert [item["articleId"] for item in all_results.json()["items"]] == [2]
     assert widened.status_code == 200
     assert widened.json()["items"] == []
-    assert write_attempt.status_code == 401
+    assert [response.status_code for response in write_attempts] == [401] * len(write_attempts)
+    assert [response.json()["detail"] for response in write_attempts] == ["admin_login_required"] * len(write_attempts)
+    assert_empty_db(db_file)
 
 
 def test_admin_route_is_retired_and_status_requires_login(monkeypatch, tmp_path):
