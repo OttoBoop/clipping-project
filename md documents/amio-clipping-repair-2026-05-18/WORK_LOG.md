@@ -1224,3 +1224,68 @@ separate scope decision. A future authenticated live-audit task should either:
 Finding a stale harness is a useful checkpoint, not an exit. The next available
 unblocked work is to keep checking tracked local contracts and document which
 live checks are blocked by auth versus genuinely failing.
+
+## 2026-05-18 - Nineteenth Unattended Cycle: Expanded Target/Export Contracts
+
+### Objective Reviewed
+
+With live dashboard/API checks blocked by authentication, the next unblocked
+objective was to prove more of the tracked target/live-base/export contracts
+locally.
+
+### Audit Performed
+
+- Listed tracked tests covering target snapshots, live-results, export counts,
+  secondary filters, source runs, duplicate tagging, and backfill.
+- Chose a focused set instead of the full suite.
+- Left inherited untracked audit harness files and unrelated worktree dirt
+  untouched.
+
+### Result
+
+Focused command:
+
+```bash
+.venv_playwright/bin/pytest \
+  tests/test_targets_jobs.py::test_update_spec_freezes_target_snapshot_for_active_job \
+  tests/test_targets_jobs.py::test_article_saved_events_drive_live_results_and_totals \
+  tests/test_targets_jobs.py::test_base_live_results_return_recent_saved_articles_after_export_job \
+  tests/test_targets_jobs.py::test_target_sync_backfills_new_target_into_base_live_results \
+  tests/test_targets_jobs.py::test_live_results_do_not_resurrect_removed_target_from_stale_event \
+  tests/test_targets_jobs.py::test_run_ingestion_builds_collection_queries_for_selected_target \
+  tests/test_targets_jobs.py::test_process_candidates_uses_frozen_target_snapshot \
+  tests/test_targets_jobs.py::test_run_source_run_accepts_persisted_dict_target_snapshot \
+  tests/test_targets_jobs.py::test_process_candidates_tags_duplicate_article_for_new_secondary_target \
+  tests/test_export_mobile_snapshot_pages.py::test_active_targets_without_stories_stay_available_as_filters \
+  tests/test_export_mobile_snapshot_pages.py::test_secondary_target_stories_are_exported_with_filter \
+  tests/test_export_mobile_snapshot_pages.py::test_export_counts_articles_per_target_in_mixed_story \
+  tests/test_export_mobile_snapshot_pages.py::test_export_filters_secondary_targets_from_merged_story_records \
+  -q
+```
+
+Result: `13 passed in 0.56s`.
+
+This covers:
+
+- frozen target snapshots;
+- `article_saved` to live-results/totals;
+- base live-results after export;
+- target create/sync/backfill;
+- stale live event target filtering;
+- selected-target query construction;
+- persisted dict target snapshots in source runs;
+- duplicate article retagging for a new secondary target;
+- export filters and per-target article counts.
+
+### Next Hypothesis
+
+The next unblocked cycle should inspect the current source/job durability path
+and cleanup/backfill false-positive filters, because those are the next likely
+places where a target can appear connected locally but misbehave during a long
+durable run.
+
+### Why The Loop Continues
+
+Thirteen passing contracts are a stronger checkpoint, not an exit. Live
+authenticated verification remains unresolved, and the source/job durability
+path still deserves focused review.
