@@ -6267,3 +6267,76 @@ review because the data auth gate is specific and already documented.
 Hosted JS verification closes the deploy-lag watch for this patch, but it does
 not close the broader loop. The live data payload is still not inspectable
 without auth, and further review may still find edge cases.
+
+## 2026-05-18 - One Hundred Twenty Second Broad Focused Post-Fix Regression
+
+### Objective Reviewed
+
+After the publication-state patch was verified locally and hosted, the loop ran
+a broader focused regression across the key systems touched by this repair
+cycle.
+
+### Audit Performed
+
+Ran:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py \
+  tests/test_targets_jobs.py \
+  tests/test_export_mobile_snapshot_pages.py \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  -q
+```
+
+### Result
+
+`125 passed in 21.12s`.
+
+Restored generated `pipeline/__pycache__` after the run and confirmed the
+worktree was clean before this log entry.
+
+### Next Hypothesis
+
+Commit this regression log, then continue with another hosted or source-review
+cycle.
+
+### Why The Loop Continues
+
+This broad focused block is a strong checkpoint for the repair loop, but it is
+not a stop condition under the No Idle Exit rule.
+
+## 2026-05-18 - One Hundred Twenty Third Push Barrier On Broad Regression Log
+
+### Objective Reviewed
+
+The broad post-fix regression log committed locally, but another parallel docs
+push reached `origin/master` first.
+
+### Audit Performed
+
+- Committed `5ecf65e docs: log broad post-fix regression`.
+- Push was rejected as non-fast-forward.
+- Inspected `origin/master`.
+
+### Result
+
+Barrier answered: remote advanced with Rio v3 documentation:
+
+```text
+30ec6c1 docs: log Rio v3 review push
+5776ebd docs: add Rio economic v3 dry-run review
+```
+
+The latest remote commit touches only
+`md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md`.
+No overlap with the clipping repair log.
+
+### Next Hypothesis
+
+Amend this barrier entry into the local log commit, rebase over `origin/master`,
+push again, and continue the loop.
+
+### Why The Loop Continues
+
+The git race is parallel documentation noise, not a product blocker.
