@@ -3246,3 +3246,40 @@ suite and update the log rather than exiting.
 The cleanup is now live, but the protocol treats live verification as a
 checkpoint. The Base atual payload is still auth-gated, so local contracts and
 static asset audits remain useful.
+
+## 2026-05-19 - Fifty-Fourth Regression Cycle: Broad Target Loop Suite
+
+### Objective Reviewed
+
+After the cleanup deploy proof, the loop needed a broader regression checkpoint
+covering the target API, update jobs, export snapshot, and functional dashboard
+browser contracts together.
+
+### Audit Performed
+
+- Ran the focused broad suite after `0ad9ef5`.
+- Restored generated `pipeline/__pycache__` changes after the test run.
+
+### Result
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py \
+  tests/test_targets_jobs.py \
+  tests/test_export_mobile_snapshot_pages.py \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  -q
+```
+
+Result: `118 passed in 11.42s`.
+
+### Next Hypothesis
+
+Re-read the loop docs, check hosted health/assets once more, and then look for
+remaining weaker coverage around Base atual live overlay or user-facing error
+copy.
+
+### Why The Loop Continues
+
+The suite is green, but tests passing is a checkpoint. The protocol requires
+another live audit and another search pass.
