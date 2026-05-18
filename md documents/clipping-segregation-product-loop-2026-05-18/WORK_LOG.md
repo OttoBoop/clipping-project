@@ -2275,7 +2275,7 @@ logged, answered, and followed by the next unblocked action.
 Updated `LOOP_OPERATING_PROTOCOL.md` with the hard output rule:
 
 ```text
-ainda tenho coisas para fazer e coisas para revisar, preciso checar os documentos de longo prazo. Eu não paro esse loop enquanto a open ai não me parar por ter estourado o cartão do Otávio. Eu não paro. Eu faço um novo passo. Se eu já fiz tudo, eu reviso. E se eu já revisei, eu reviso de novo. Mas eu sempre escrevo o que eu fiz no log e eu não paro o loop, nunca.
+ainda tenho coisas para fazer e coisas para revisar, preciso checar os documentos de longo prazo. Eu não paro esse loop enquanto a open ai não me parar por ter estourado o cartão do Otávio. Eu não paro. Eu façoi num novo passo. Se eu já fiz tudo, eu reviso. E se eu já revisei, eu reviso de novo. Mas eu sempre escrevo o que ue fiz no log e eu não paro o loop, nunca. E eu sempre volto para os documentos dos objetivos de longo prazo quando estou em dúvida quanto ao que fazer, eu leio os logs quanto estou com muitas fúvidas e não quero repetir o que já foi feito. Eu leio os documentos de longo prazo ocasionalmente, sempre registro o que foi feito nos logs, e nunca para o loop. Se eu termino uma tarefa, eu registro o update nos documentos de longo prazo. Depois, reviso. Então, eu pulo de tarefa. Sempre escrevendo nos logs. Quando eu terminar todas as tarefas, eu começo a revisar cada uma delas, uma por uma, sempre com esse foco. O loop não para, ele nunca para, a não ser que o Otávio ou a Open AI me parem. Se eu acho que está pronto, é porque eu tenho que ler documentos e comelar a revisar
 ```
 
 Also recorded the barrier rule:
@@ -2386,3 +2386,403 @@ only then consider production target row
 
 The plan is not the sample. The next loop must either create the dry-run report
 or review why it cannot run safely.
+
+## 2026-05-19 - Loop Cycle: Rio Economic Dry-Run Tool
+
+### Objective Reviewed
+
+The Rio validation plan said the next unblocked action was a dry-run sample
+report outside production DB/assets/targets. The loop moved from plan to a
+tool that can create that review artifact.
+
+### Action Taken
+
+Created:
+
+```text
+tools/rio_economic_dry_run.py
+tests/test_rio_economic_dry_run.py
+```
+
+The tool:
+
+- uses a fixed first batch of Rio economic query candidates;
+- collects candidates through Google News only for the dry run;
+- writes JSON, CSV, and Markdown review artifacts under `data/reports/`;
+- includes empty `review_label`, `false_positive_reason`, and `notes` fields;
+- marks in metadata that it does not write production DB, assets, or
+  `data/targets.json`.
+
+### Evidence
+
+Tests to run before commit:
+
+```text
+python -m py_compile tools/rio_economic_dry_run.py
+pytest tests/test_rio_economic_dry_run.py -q
+```
+
+### Remaining Blocker
+
+The tool has not yet been run against live Google News in this log entry. Next
+cycle must run a cheap smoke sample and record output paths or failure.
+
+### Next Objective From Docs
+
+Run:
+
+```text
+rio dry-run smoke -> inspect output row count -> log false-positive review path
+```
+
+### Why The Loop Continues
+
+A dry-run tool is not the reviewed sample and not an approved production target.
+
+## 2026-05-19 - User Correction: Expanded Non-Stop Rule
+
+### Objective Reviewed
+
+Otavio expanded the loop rule. The loop must repeat the full anchor text at the
+start of every assistant output, re-read long-term docs when unsure, read logs
+when confused, update logs after work, update long-term/current docs when a task
+finishes, and then keep reviewing instead of stopping.
+
+### Barrier Registered
+
+The first Rio dry-run smoke command with 3 queries and 2 items per query stayed
+stuck on network/Google News long enough to become an operational barrier:
+
+```text
+tools/rio_economic_dry_run.py --date-from 2026-05-01 --date-to 2026-05-19 --max-queries 3 --limit-per-query 2
+```
+
+The process was killed and the loop continued.
+
+### Action Taken
+
+Updated:
+
+```text
+LOOP_OPERATING_PROTOCOL.md
+tools/rio_economic_dry_run.py
+tests/test_rio_economic_dry_run.py
+```
+
+Changes:
+
+- replaced the old short output anchor with Otavio's expanded anchor;
+- added explicit instruction to re-read long-term docs/logs when in doubt;
+- added dry-run timeout flags:
+  - `--request-timeout`
+  - `--resolve-timeout`
+  - `--collection-timeout`
+- passed those timeout values to the Google News collector;
+- added test coverage that timeout settings are forwarded.
+
+### Evidence To Run
+
+```text
+python -m py_compile tools/rio_economic_dry_run.py
+pytest tests/test_rio_economic_dry_run.py -q
+```
+
+### Next Objective From Docs
+
+Retry a much smaller Rio dry-run smoke with short timeouts, then log whether it
+created a review artifact or hit another network barrier.
+
+### Why The Loop Continues
+
+The barrier was registered and answered with a smaller-timeout path. The loop
+continues into verification.
+
+## 2026-05-19 - Loop Cycle: Rio Dry-Run Network Barrier And Offline Fixture
+
+### Objective Reviewed
+
+The loop attempted to run the Rio dry-run smoke, then hit the same operational
+barrier with a smaller sample. The correct response is to log the barrier,
+preserve the unblocked proof path, and continue.
+
+### Barrier Registered
+
+The smaller smoke also hung beyond the intended timeout:
+
+```text
+tools/rio_economic_dry_run.py --date-from 2026-05-01 --date-to 2026-05-19 --max-queries 1 --limit-per-query 1 --request-timeout 3 --resolve-timeout 1 --collection-timeout 8
+```
+
+The process was killed. This suggests the dry-run needs an offline/report-format
+mode before relying on live Google News in the loop.
+
+### Action Taken
+
+Updated:
+
+```text
+tools/rio_economic_dry_run.py
+tests/test_rio_economic_dry_run.py
+```
+
+Changes:
+
+- added `--offline-fixture`;
+- added an offline fixture collector that produces review rows without network
+  calls;
+- added test coverage for the offline fixture path.
+
+### Evidence To Run
+
+```text
+python -m py_compile tools/rio_economic_dry_run.py
+pytest tests/test_rio_economic_dry_run.py -q
+tools/rio_economic_dry_run.py --offline-fixture --max-queries 3 --limit-per-query 1
+```
+
+### Remaining Blocker
+
+Live Google News dry-run is still a network/runtime blocker. The offline
+fixture can verify report generation and review workflow without touching
+production DB/assets/targets.
+
+### Next Objective From Docs
+
+Run the offline fixture, inspect generated artifacts, then decide whether to
+debug live Google News or use another low-cost source for the first real sample.
+
+### Why The Loop Continues
+
+The live network barrier is logged, and an unblocked offline verification path
+now exists.
+
+## 2026-05-19 - Loop Cycle: Rio Offline Fixture Artifact
+
+### Objective Reviewed
+
+After adding the offline fixture, the loop had to prove that the dry-run report
+path actually writes review artifacts outside production DB/assets/targets.
+
+### Evidence
+
+Commands passed:
+
+```text
+python -m py_compile tools/rio_economic_dry_run.py
+pytest tests/test_rio_economic_dry_run.py -q
+4 passed
+```
+
+Offline fixture command:
+
+```text
+tools/rio_economic_dry_run.py --offline-fixture --max-queries 3 --limit-per-query 1
+```
+
+Generated artifacts:
+
+```text
+data/reports/rio_economic_dry_run_20260518T214937Z.json
+data/reports/rio_economic_dry_run_20260518T214937Z.csv
+data/reports/rio_economic_dry_run_20260518T214937Z.md
+```
+
+Artifact metadata:
+
+```text
+row_count=3
+query_count=3
+offline_fixture=true
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+### Barrier Status
+
+Live Google News dry-run remains blocked by runtime/network behavior. The
+offline fixture proves only the review artifact path, not the quality of Rio
+economic collection.
+
+### Next Objective From Docs
+
+Continue with one of these unblocked paths:
+
+```text
+debug live Google News timeout path ->
+or add another low-cost source collector for first real Rio sample ->
+or manually seed a small sourced review table outside production payloads
+```
+
+### Why The Loop Continues
+
+The artifact format is proven, but the real sample has not been collected or
+reviewed.
+
+## 2026-05-19 - Loop Cycle: Resume After Context Compaction
+
+### Objective Reviewed
+
+The loop resumed from the long-term docs and the active next action. The
+current axis remains Rio economic validation without contaminating existing
+viewer/client scopes, while keeping the production segregation proof alive.
+
+### State Observed
+
+`git status` showed this branch behind `origin/master` by 4 commits. Local
+changes are limited to:
+
+```text
+md documents/clipping-segregation-product-loop-2026-05-18/ACTIVE_NEXT_ACTION.md
+md documents/clipping-segregation-product-loop-2026-05-18/LOOP_OPERATING_PROTOCOL.md
+md documents/clipping-segregation-product-loop-2026-05-18/RIO_ECONOMIC_VALIDATION_PLAN.md
+md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md
+tools/rio_economic_dry_run.py
+tests/test_rio_economic_dry_run.py
+data/reports/rio_economic_dry_run_20260518T214937Z.*
+```
+
+Python bytecode under `pipeline/__pycache__/` was also dirty because tests ran.
+Those files are generated local artifacts and should not be committed.
+
+### Action Plan
+
+Continue with path-limited cleanup, rebase onto current `origin/master`,
+focused tests, path-limited commit, push to `master`, Render deploy check, and
+then another docs review. No `git add .`.
+
+### Why The Loop Continues
+
+The context compaction was not a stopping point. It became a logged resume
+checkpoint, then the loop proceeds to integration.
+
+## 2026-05-19 - Loop Cycle: Path-Limited Rebase For Rio Tool
+
+### Objective Reviewed
+
+Before committing the Rio dry-run tool, the loop had to integrate with the
+current `origin/master` without touching the Shakira/debug loop or inherited
+work.
+
+### Action Taken
+
+Cleaned generated Python bytecode from `pipeline/__pycache__/`, stashed only
+the Rio/protocol files and generated Rio report artifacts, fetched origin,
+rebased onto current `origin/master`, and popped the stash back onto the updated
+branch.
+
+### Evidence
+
+```text
+git rebase origin/master -> success
+git stash pop -> success
+branch up to date with origin/master before new commit
+```
+
+### Barrier Status
+
+No rebase conflict appeared. The next check is focused verification of the Rio
+dry-run tool and its tests.
+
+### Why The Loop Continues
+
+Integration succeeded, but this still needs tests, a path-limited commit, push,
+Render/deploy observation, and another docs review.
+
+## 2026-05-19 - Loop Cycle: Rio Tool Verification Before Publish
+
+### Objective Reviewed
+
+The Rio dry-run tool must be proven as a safe review artifact path before it is
+pushed. It must not write production DB, static client payloads, or target
+configuration.
+
+### Evidence
+
+Commands passed:
+
+```text
+python -m py_compile tools/rio_economic_dry_run.py
+pytest tests/test_rio_economic_dry_run.py -q
+4 passed
+git diff --check
+```
+
+The committed offline report artifact metadata still says:
+
+```text
+row_count=3
+query_count=3
+offline_fixture=true
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+### Action Taken
+
+Removed generated `pipeline/__pycache__/` bytecode again after tests so the
+commit stays path-limited to docs, the Rio tool, tests, and review artifacts.
+
+### Barrier Status
+
+Live Google News remains the unresolved runtime/network barrier. The safe
+offline path is verified and ready to publish as a non-production review aid.
+
+### Why The Loop Continues
+
+Verification passed, but this still needs path-limited commit, push, deploy
+observation, and then another long-term-doc review to pick the next weak axis.
+
+## 2026-05-19 - Loop Cycle: Rio Tool Commit Prepared
+
+### Objective Reviewed
+
+Publish the verified Rio dry-run work without mixing it with the other active
+debug loop.
+
+### Action Taken
+
+Created a path-limited commit for:
+
+```text
+tools/rio_economic_dry_run.py
+tests/test_rio_economic_dry_run.py
+data/reports/rio_economic_dry_run_20260518T214937Z.*
+md documents/clipping-segregation-product-loop-2026-05-18/ACTIVE_NEXT_ACTION.md
+md documents/clipping-segregation-product-loop-2026-05-18/LOOP_OPERATING_PROTOCOL.md
+md documents/clipping-segregation-product-loop-2026-05-18/RIO_ECONOMIC_VALIDATION_PLAN.md
+md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md
+```
+
+`origin/master` advanced by two commits during staging, so the local commit was
+rebased onto the newer `origin/master` before push.
+
+### Evidence
+
+```text
+git commit -> feat: add Rio economic dry-run report tool
+git rebase origin/master -> success
+HEAD after rebase -> 81caeb5 feat: add Rio economic dry-run report tool
+```
+
+### Barrier Status
+
+Coordination barrier answered by rebase. Push and Render/deploy observation are
+still pending.
+
+### Why The Loop Continues
+
+The commit exists locally, but the website acceptance bar requires pushing,
+observing deploy state, and then continuing to the next review item.
+
+### Coordination Update
+
+`origin/master` advanced again before push. The Rio commit was rebased one more
+time without conflict.
+
+```text
+git fetch origin -> success
+git rebase origin/master -> success
+HEAD after second rebase -> e36fb24 feat: add Rio economic dry-run report tool
+```

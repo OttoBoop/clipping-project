@@ -137,6 +137,15 @@ If a script is created, it must:
 - store output under `data/reports/` with a timestamp;
 - log sample size and query list in `WORK_LOG.md`.
 
+Current implementation status:
+
+```text
+tools/rio_economic_dry_run.py exists
+offline fixture mode exists
+first offline fixture artifacts generated under data/reports/
+live Google News smoke is still a network/runtime barrier
+```
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

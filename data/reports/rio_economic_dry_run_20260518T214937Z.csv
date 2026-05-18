@@ -1,0 +1,4 @@
+query,dimension,source,source_type,title,url,published_at,why_candidate,review_label,false_positive_reason,notes
+"""Rio de Janeiro"" hotelaria",tourism_events,Offline Fixture,offline_fixture,"Amostra offline para ""Rio de Janeiro"" hotelaria",https://example.com/rio-economic-dry-run/rio-de-janeiro-hotelaria,2026-05-19T12:00:00+00:00,hotel occupancy and visitor economy,,,
+"""cidade do Rio"" turismo",tourism_events,Offline Fixture,offline_fixture,"Amostra offline para ""cidade do Rio"" turismo",https://example.com/rio-economic-dry-run/cidade-do-rio-turismo,2026-05-19T12:00:00+00:00,city-specific tourism agenda,,,
+"""cidade do Rio"" comercio",commerce_services,Offline Fixture,offline_fixture,"Amostra offline para ""cidade do Rio"" comercio",https://example.com/rio-economic-dry-run/cidade-do-rio-comercio,2026-05-19T12:00:00+00:00,local commerce/services signal,,,

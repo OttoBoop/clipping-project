@@ -1,0 +1,73 @@
+{
+  "meta": {
+    "generated_at": "2026-05-18T21:49:37.920046+00:00",
+    "date_from": "",
+    "date_to": "",
+    "limit_per_query": 1,
+    "query_count": 3,
+    "row_count": 3,
+    "timeout_policy": "dry_run_smoke_timeouts_are_allowed",
+    "writes_production_db": false,
+    "writes_assets_payload": false,
+    "writes_targets_json": false,
+    "offline_fixture": true
+  },
+  "queries": [
+    {
+      "dimension": "tourism_events",
+      "query": "\"Rio de Janeiro\" hotelaria",
+      "why_candidate": "hotel occupancy and visitor economy"
+    },
+    {
+      "dimension": "tourism_events",
+      "query": "\"cidade do Rio\" turismo",
+      "why_candidate": "city-specific tourism agenda"
+    },
+    {
+      "dimension": "commerce_services",
+      "query": "\"cidade do Rio\" comercio",
+      "why_candidate": "local commerce/services signal"
+    }
+  ],
+  "rows": [
+    {
+      "query": "\"Rio de Janeiro\" hotelaria",
+      "dimension": "tourism_events",
+      "source": "Offline Fixture",
+      "source_type": "offline_fixture",
+      "title": "Amostra offline para \"Rio de Janeiro\" hotelaria",
+      "url": "https://example.com/rio-economic-dry-run/rio-de-janeiro-hotelaria",
+      "published_at": "2026-05-19T12:00:00+00:00",
+      "why_candidate": "hotel occupancy and visitor economy",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"cidade do Rio\" turismo",
+      "dimension": "tourism_events",
+      "source": "Offline Fixture",
+      "source_type": "offline_fixture",
+      "title": "Amostra offline para \"cidade do Rio\" turismo",
+      "url": "https://example.com/rio-economic-dry-run/cidade-do-rio-turismo",
+      "published_at": "2026-05-19T12:00:00+00:00",
+      "why_candidate": "city-specific tourism agenda",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"cidade do Rio\" comercio",
+      "dimension": "commerce_services",
+      "source": "Offline Fixture",
+      "source_type": "offline_fixture",
+      "title": "Amostra offline para \"cidade do Rio\" comercio",
+      "url": "https://example.com/rio-economic-dry-run/cidade-do-rio-comercio",
+      "published_at": "2026-05-19T12:00:00+00:00",
+      "why_candidate": "local commerce/services signal",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    }
+  ]
+}

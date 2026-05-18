@@ -93,8 +93,8 @@ Continue the production loop. Current priority from the docs:
 1. keep the logged-out privacy gate verified on Render;
 2. keep real viewer profile proof verified after deploys;
 3. continue target-management review for admin/operator workflows;
-4. execute the `RIO_ECONOMIC_VALIDATION_PLAN.md` dry-run path before adding a
-   `rio_economico` target row;
+4. continue the `RIO_ECONOMIC_VALIDATION_PLAN.md` path: offline report artifact
+   exists; live Google News smoke is still a network/runtime barrier;
 5. convert the live proof into a sellable demo script without exposing secrets;
 6. review costs, password rotation, and operations;
 7. then re-read the docs and choose the next weak axis.
