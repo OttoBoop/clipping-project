@@ -339,6 +339,84 @@ class TestFunctionalSanity:
         assert "0 histórias" in text
         assert active
 
+    def test_add_target_shows_structured_validation_error_from_api(self, browser_ctx, local_server):
+        """The add-target form should show API cause/suggestion, not a generic fallback."""
+        page = browser_ctx.new_page()
+
+        def csrf(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps({"csrf": "test-csrf"}),
+            )
+
+        def targets(route):
+            if route.request.method == "POST":
+                route.fulfill(
+                    status=400,
+                    content_type="application/json",
+                    body=json.dumps(
+                        {
+                            "error": "target_validation_error",
+                            "message": "Informe um nome de exibicao com pelo menos 3 caracteres.",
+                            "field": "display_name",
+                            "suggestion": "Digite um nome de exibicao com 3 caracteres ou mais.",
+                            "detail": {
+                                "code": "target_validation_error",
+                                "message": "Informe um nome de exibicao com pelo menos 3 caracteres.",
+                                "field": "display_name",
+                                "suggestion": "Digite um nome de exibicao com 3 caracteres ou mais.",
+                            },
+                        },
+                        ensure_ascii=False,
+                    ),
+                )
+                return
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        "targets": [
+                            {"key": "flavio_valle", "label": "Flávio Valle", "primary": True},
+                            {"key": "shakira", "label": "Shakira", "primary": False},
+                        ],
+                        "primaryKeys": ["flavio_valle"],
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        def update_status(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps({"current": {"status": "idle"}, "recent": []}),
+            )
+
+        def live_results(route):
+            route.fulfill(status=200, content_type="application/json", body=json.dumps({"items": []}))
+
+        page.route("**/api/csrf", csrf)
+        page.route("**/api/targets**", targets)
+        page.route("**/api/update/status", update_status)
+        page.route("**/api/update/live-results**", live_results)
+
+        try:
+            page.goto(f"{local_server}/index.html", wait_until="domcontentloaded")
+            page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)
+            page.locator("details.add-target-box").evaluate("el => { el.open = true; }")
+            page.fill('#addTargetForm input[name="display_name"]', "Ana Teste")
+            page.click('#addTargetForm button[type="submit"]')
+            page.wait_for_selector("#addTargetMessage.is-error", timeout=10000)
+            message = page.locator("#addTargetMessage").inner_text()
+        finally:
+            page.close()
+
+        assert "Informe um nome de exibicao com pelo menos 3 caracteres." in message
+        assert "Digite um nome de exibicao com 3 caracteres ou mais." in message
+        assert "Não foi possível salvar este nome." not in message
+
     def test_load_more_works(self, browser_ctx, local_server):
         """Load-more button should increase article count."""
         page = browser_ctx.new_page()

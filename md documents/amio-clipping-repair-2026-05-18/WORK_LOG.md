@@ -2516,3 +2516,76 @@ the empty viewer payload without widening access to real targets.
 
 The latest code is pushed and locally verified, but the hosted site had not yet
 picked it up. A pending deploy is a watch item, not an exit.
+
+## 2026-05-19 - Forty-Third Contract Cycle: Frontend Target Error Message
+
+### Objective Reviewed
+
+The long-term error contract says generic messages like "Nao foi possivel
+adicionar esse nome" are not acceptable. The API already had a structured
+short-name response, but the browser layer needed a regression guard proving
+that the form shows the backend's cause and correction instead of falling back
+to the generic copy Otavio called out.
+
+### Audit Performed
+
+- Re-read the loop docs and the latest log entry.
+- Inspected `assets/clipping.js` around `apiErrorMessage`, `friendlyError`, and
+  the `addTargetForm` submit handler.
+- Added a Playwright browser contract that routes `/api/targets` to a
+  structured validation error and verifies `#addTargetMessage`.
+- Ran focused API/frontend tests.
+
+### Result
+
+Added
+`tests/test_pages_performance.py::TestFunctionalSanity::test_add_target_shows_structured_validation_error_from_api`.
+The test proves the UI displays:
+
+```text
+Informe um nome de exibicao com pelo menos 3 caracteres.
+Digite um nome de exibicao com 3 caracteres ou mais.
+```
+
+and does not display:
+
+```text
+Não foi possível salvar este nome.
+```
+
+Focused checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_add_target_shows_structured_validation_error_from_api \
+  tests/test_admin_ui.py::test_targets_api_short_name_error_explains_field_and_fix \
+  -q
+```
+
+Result: `2 passed in 2.59s`.
+
+Related target/filter/export checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_target_success_copy_mentions_base_atual \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter \
+  tests/test_admin_ui.py::test_targets_api_short_name_error_explains_field_and_fix \
+  -q
+```
+
+Result: `9 passed in 6.91s`.
+
+### Next Hypothesis
+
+Commit this frontend error-message guard, then return to the live watch queue:
+healthz, hosted JS deployment, auth-gated endpoints, and target/filter/export
+consistency.
+
+### Why The Loop Continues
+
+This closes one regression gap around the exact bad user-facing error, but it
+is still a checkpoint. The live deploy watch and end-to-end Base atual target
+loop remain active.
