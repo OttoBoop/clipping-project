@@ -3756,3 +3756,63 @@ ending at documentation.
 This was a protocol patch, not completion of the product loop. The next cycle
 still needs live health/assets checks and local fallback contracts because live
 Base atual payloads remain auth-gated.
+
+## 2026-05-19 - Sixty-Fourth Live Barrier Cycle: Auth Gate Answered, Fallback Continued
+
+### Objective Reviewed
+
+The new barrier rule required the agent to answer the barrier, write it in the
+log, and continue. The active barrier is hosted live-data auth: the site is
+healthy, but live status/Base atual payloads are not accessible without a
+viewer/admin session.
+
+### Audit Performed
+
+- Checked hosted `/healthz`.
+- Checked hosted `/api/update/status`.
+- Checked hosted `/api/update/live-results?scope=base&limit=5`.
+- Checked hosted dashboard JS for inline validation, live-result target
+  promotion, and viewer-only filter promotion.
+- Ran local fallback contracts for Base atual/live-results/target sync and
+  inline validation.
+
+### Result
+
+Barrier answered:
+
+```text
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+```
+
+Accessible live state:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+hosted JS -> targetDisplayNameError, live-result target promotion, viewer-only
+filter promotion present
+```
+
+Fallback command:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_live_results_endpoint_returns_saved_articles_before_export \
+  tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter \
+  tests/test_targets_jobs.py::test_target_sync_backfills_new_target_into_base_live_results \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_target_outside_initial_targets_becomes_filterable \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_add_target_short_name_shows_inline_error_without_api_call \
+  -q
+```
+
+Result: `5 passed in 3.37s`.
+
+### Next Hypothesis
+
+Commit this barrier/fallback log, then continue with another source or docs
+review instead of stopping at the auth gate.
+
+### Why The Loop Continues
+
+The auth gate blocks direct hosted Base atual inspection, but it does not block
+local contracts, hosted asset checks, documentation, or source review.
