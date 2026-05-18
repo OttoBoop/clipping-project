@@ -4861,3 +4861,53 @@ contract.
 
 The git barrier is resolved, but the clipping loop still has auth-gated hosted
 payloads and repeated target/filter/base reviews to perform.
+
+## 2026-05-18 - Eighty-Ninth Worktree Isolation Audit
+
+### Objective Reviewed
+
+Commits must remain path-limited and avoid inherited dirty work. The clean
+worktree exists to keep this loop from mixing other agents' edits into clipping
+fixes.
+
+### Audit Performed
+
+- Checked current loop worktree status.
+- Checked main worktree status at
+  `/home/otavio/Documents/vscode/clipping-project`.
+- Listed active worktrees.
+
+### Result
+
+Current loop worktree:
+
+```text
+/tmp/clipping-loop-20260519-1 -> clean detached HEAD at 018e648
+```
+
+Main worktree remains inherited/dirty and behind origin:
+
+```text
+master...origin/master [behind 70]
+modified: README.md, assets/clipping-data.json, data/reports/performance_benchmark.md,
+          md documents/05-05-26-Iris-Shakira goals.md,
+          md documents/Who_Is_Doing_What-WRITE_WHAT_YOU'RE_DOING_HERE.md,
+          pipeline/__pycache__/*
+deleted: docs/LONG_TERM_GOALS_FOR_THE_CLIPPING_ONLINE_PROJECT.md, docs/PIPELINE.md
+untracked: data/clipping.db-shm, data/clipping.db-wal, old shakira screenshots,
+           moved docs, tests/test_live_audit_script.py,
+           tests/test_sprint_regression_harness.py, tools/live_audit.py
+```
+
+Active worktrees include this clipping loop, the main dirty worktree, and other
+parallel Rio/Q006/live-runner worktrees.
+
+### Next Hypothesis
+
+Keep using `/tmp/clipping-loop-20260519-1` for clipping commits. Do not stage or
+clean the inherited main worktree without explicit instruction.
+
+### Why The Loop Continues
+
+Worktree isolation is healthy, but this is process hygiene. Product review still
+continues.
