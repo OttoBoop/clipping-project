@@ -151,6 +151,10 @@ Covered by code and tests:
 - Dead target-management lock code was removed from backend and dashboard JS.
 - Live-results can promote a target returned by the live overlay into visible
   filters, so a saved article for a newly observed target is selectable.
+- Manual story creation emits `article_saved` and appears in Base atual via
+  live-results without waiting for a full export.
+- Manual stories saved with `export: false` remain `publicationState: "saved"`
+  instead of being mislabeled as already published.
 - Viewer-only filter scopes without primary targets are promoted into visible
   filter chips.
 - Static export keeps active targets with zero stories available as filters and

@@ -4468,3 +4468,32 @@ management UI contract review.
 The regression is green, but green tests are a checkpoint. The loop continues
 because live authenticated payload inspection remains blocked and repeated
 target/filter/base review is still useful.
+
+## 2026-05-18 - Seventy-Ninth Short-Term Coverage Update Cycle
+
+### Objective Reviewed
+
+When an objective is fixed, the loop must update the planning docs and then
+continue reviewing.
+
+### Audit Performed
+
+- Re-read `CURRENT_SHORT_TERM_LOOP.md` coverage checkpoint.
+- Added manual-story live-results coverage.
+- Added saved-vs-published coverage for manual stories with `export: false`.
+
+### Result
+
+The short-term loop now records that manual confirmation is part of the covered
+Base atual path, alongside ingestion, target sync, export filters, and browser
+filter behavior.
+
+### Next Hypothesis
+
+Commit this planning-doc update, then continue with another target/filter/base
+audit.
+
+### Why The Loop Continues
+
+Updating the plan prevents repeated work, but it does not replace continued
+review of the product loop.
