@@ -1647,3 +1647,65 @@ dataset, document the gap and keep the loop on local/live-accessible contracts.
 The protocol is stronger, but this is a checkpoint. The stale static artifact
 watch item still needs either a source-dataset decision or a focused contract
 that can safely fail before generated assets drift again.
+
+## 2026-05-18 - Twenty-Eighth Technical Cycle: Runtime Target Count Recompute
+
+### Objective Reviewed
+
+The long-term target/filter objective says the UI cannot show a target row that
+is disconnected from the payload beneath it. The previous static audit showed
+that stale `articleCount` values can survive in `assets/clipping-data.json`.
+
+### Audit Performed
+
+Used a clean worktree from `origin/master` because the main worktree has an
+inherited dirty `assets/clipping-data.json`. Inspected
+`mergeRuntimeTargetsIntoPayload(...)` in `assets/clipping.js` and
+`tools/pages_assets/clipping.js`.
+
+### Result
+
+Found and patched a concrete frontend bug: when runtime `/api/targets` data
+arrived, existing target rows kept stale counts with `Math.max(...)` instead of
+using counts recomputed from the actual story/article `targetKeys` in the
+payload. The dashboard now assigns:
+
+```text
+existing.storyCount = usage.storyCount
+existing.articleCount = usage.articleCount
+```
+
+Added a tracked test that guards this behavior:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_recomputes_runtime_target_counts_from_payload \
+  tests/test_export_mobile_snapshot_pages.py::test_active_targets_without_stories_stay_available_as_filters \
+  -q
+```
+
+Result: `3 passed in 0.12s`.
+
+Then ran the broader target/admin/export checkpoint from the same clean
+worktree:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_targets_jobs.py tests/test_admin_ui.py tests/test_export_mobile_snapshot_pages.py \
+  -q
+```
+
+Result: `101 passed in 3.38s`.
+
+### Next Hypothesis
+
+Publish this focused runtime-count fix, then return to the unattended queue.
+The tracked static snapshot still needs a separate decision because it omits
+the active `shakira` row and cannot be fully regenerated safely from the local
+DB without replacing the dataset.
+
+### Why The Loop Continues
+
+This fixes one live UI/counting bug, but it is a checkpoint. The stale static
+artifact watch item and authenticated production verification remain open.

@@ -129,6 +129,19 @@ def test_dashboard_javascript_preserves_original_target_keys_for_visible_article
     assert "targetKeys: visibleTargetKeys.length ? visibleTargetKeys : originalTargetKeys" in dashboard_js
 
 
+def test_dashboard_javascript_recomputes_runtime_target_counts_from_payload():
+    dashboard_js = (PROJECT_ROOT / "assets" / "clipping.js").read_text(encoding="utf-8")
+    body = dashboard_js[
+        dashboard_js.index("function mergeRuntimeTargetsIntoPayload") :
+        dashboard_js.index("function activeTargetKeysFrom")
+    ]
+
+    assert "existing.storyCount = usage.storyCount;" in body
+    assert "existing.articleCount = usage.articleCount;" in body
+    assert "Math.max(Number(existing.storyCount" not in body
+    assert "Math.max(Number(existing.articleCount" not in body
+
+
 def test_static_export_marks_bundle_to_skip_api_polling(tmp_path):
     db_path = tmp_path / "clipping.db"
     seed_story_db(db_path)

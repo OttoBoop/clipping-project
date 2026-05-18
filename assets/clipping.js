@@ -265,8 +265,8 @@
         existing.label = target.label || existing.label || key;
         existing.primary = Boolean(existing.primary || target.primary);
         existing.archived = false;
-        existing.storyCount = Math.max(Number(existing.storyCount || 0), usage.storyCount);
-        existing.articleCount = Math.max(Number(existing.articleCount || 0), usage.articleCount);
+        existing.storyCount = usage.storyCount;
+        existing.articleCount = usage.articleCount;
         return;
       }
       payload.targets.push({
