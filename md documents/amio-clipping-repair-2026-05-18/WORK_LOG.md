@@ -4237,3 +4237,49 @@ contract audit.
 
 This strengthens memory but does not finish the product loop. The next cycle
 must return to target/filter/Base atual behavior.
+
+## 2026-05-18 - Seventy-Fourth Parallel Ingestion Review Cycle
+
+### Objective Reviewed
+
+Parallel candidate processing must speed fetch/match without making SQLite
+writes unsafe or delaying `article_saved` events that feed Base atual.
+
+### Audit Performed
+
+- Reviewed `IngestionOptions.candidate_workers`.
+- Reviewed `process_candidates` prefetch scheduling with `ThreadPoolExecutor`.
+- Confirmed fetches can be prefetched in parallel while the candidate loop and
+  DB writes remain serial in the caller thread.
+- Reviewed `emit_article_saved` for both new saved articles and duplicate
+  articles retagged for a newly relevant target.
+- Ran focused parallel/snapshot/duplicate contracts:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_targets_jobs.py::test_process_candidates_prefetches_articles_with_serial_db_writes \
+  tests/test_targets_jobs.py::test_process_candidates_tags_duplicate_article_for_new_secondary_target \
+  tests/test_targets_jobs.py::test_process_candidates_uses_frozen_target_snapshot \
+  -q
+```
+
+Result: `3 passed in 0.40s`.
+
+- Restored generated `pipeline/__pycache__` dirt after the test run.
+
+### Result
+
+No patch was needed. The current contract proves bounded parallel fetch,
+serial DB writes, frozen target snapshots, duplicate retagging, and
+`article_saved` emission for the important ingestion paths.
+
+### Next Hypothesis
+
+Commit this review log, then continue with another loop item: either live auth
+watch, target management UI smoke, or docs/checklist review.
+
+### Why The Loop Continues
+
+The parallelism contract is reviewed and tested, but that is another checkpoint.
+The loop still has live auth barriers and repeated end-to-end target/filter/base
+checks to revisit.
