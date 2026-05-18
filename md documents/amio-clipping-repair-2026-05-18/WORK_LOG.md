@@ -5289,3 +5289,47 @@ target API contract set or checking hosted JS again later.
 The hosted patch is not verified live yet. Even after it appears live, the loop
 still needs repeated review across target API, update snapshot, live-results,
 export, and filter behavior.
+
+## 2026-05-18 - Ninety-Ninth Target API Contract Recheck
+
+### Objective Reviewed
+
+After the live target counter patch and deploy-lag barrier, the next unblocked
+loop item was to recheck the target-management contracts that caused the
+original user pain: generic errors, blocked target edits during updates, and
+sync/backfill into Base atual.
+
+### Audit Performed
+
+Ran focused target API and job snapshot contracts:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_targets_api_short_name_error_explains_field_and_fix \
+  tests/test_admin_ui.py::test_targets_api_operation_errors_are_structured \
+  tests/test_admin_ui.py::test_targets_api_management_operation_errors_are_structured \
+  tests/test_admin_ui.py::test_target_mutations_remain_available_while_update_is_active \
+  tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter \
+  tests/test_targets_jobs.py::test_update_spec_freezes_target_snapshot_for_active_job \
+  tests/test_targets_jobs.py::test_target_sync_backfills_new_target_into_base_live_results \
+  -q
+```
+
+### Result
+
+`7 passed in 0.65s`.
+
+Restored generated `pipeline/__pycache__` after the run and confirmed the
+worktree was clean before this log entry.
+
+### Next Hypothesis
+
+Commit this contract recheck log, then re-check hosted JS for the live target
+counter patch. If hosted is still stale/auth-gated, continue with local
+export/live contracts.
+
+### Why The Loop Continues
+
+Target API contracts are green, but a green focused set is a checkpoint. The
+hosted JS patch still needs verification and the end-to-end target/filter/Base
+atual/export path still needs recurring review.
