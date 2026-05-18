@@ -2261,3 +2261,128 @@ before broad buyer outreach.
 
 Cross-loop changes did not break viewer isolation, but the Rio and sales axes
 remain incomplete.
+
+## 2026-05-19 - User Correction: Do Not Stop On Next Step
+
+### Objective Reviewed
+
+Otavio corrected the loop again: if the assistant identifies a next step, the
+loop must not stop after reporting it. A barrier is not a stop condition; it is
+logged, answered, and followed by the next unblocked action.
+
+### Action Taken
+
+Updated `LOOP_OPERATING_PROTOCOL.md` with the hard output rule:
+
+```text
+ainda tenho coisas para fazer e coisas para revisar, preciso checar os documentos de longo prazo. Eu não paro esse loop enquanto a open ai não me parar por ter estourado o cartão do Otávio. Eu não paro. Eu faço um novo passo. Se eu já fiz tudo, eu reviso. E se eu já revisei, eu reviso de novo. Mas eu sempre escrevo o que eu fiz no log e eu não paro o loop, nunca.
+```
+
+Also recorded the barrier rule:
+
+```text
+identify barrier -> write it in WORK_LOG.md -> choose next unblocked action -> continue
+```
+
+### Evidence
+
+The repo was re-anchored by reading:
+
+```text
+LONG_TERM_GOALS.md
+DEPENDENCY_MAP.md
+CURRENT_SHORT_TERM_LOOP.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Remaining Blocker
+
+No blocker. The correction changes loop behavior and must guide all future
+outputs.
+
+### Next Objective From Docs
+
+Continue immediately into the next unblocked objectives:
+
+```text
+Rio economic methodology and target/source design ->
+dedicated demo/prospect profile strategy ->
+target-management/admin positive workflow review
+```
+
+### Why The Loop Continues
+
+The rule itself says the loop continues after logging this correction.
+
+## 2026-05-19 - Loop Cycle: Rio Economic Validation Plan
+
+### Objective Reviewed
+
+After re-reading the long-term goals and dependency map, the next unblocked
+Axis 3 task was to refine how `rio_economico` can gain real terms without
+polluting Flavio, Shakira, or future paid-client profiles.
+
+### Repo Audit
+
+Relevant implementation findings:
+
+```text
+data/viewer_profiles.json -> rio_economico profile exists
+data/targets.json -> rio_economico target row absent
+pipeline.settings.get_active_targets() -> target label is automatically added to keywords
+web_app.jobs.build_source_units() -> target keywords/query variants drive collectors
+web_app.db_admin.create_secondary_target() -> new targets become live data/targets.json rows
+```
+
+Conclusion: adding a placeholder target row would become a real collection and
+matching term. That remains unsafe.
+
+### Action Taken
+
+Created:
+
+```text
+RIO_ECONOMIC_VALIDATION_PLAN.md
+```
+
+Updated:
+
+```text
+RIO_ECONOMIC_INDICATOR_TRACK.md
+ACTIVE_NEXT_ACTION.md
+```
+
+The new plan defines:
+
+- hard boundary against adding `rio_economico` to `data/targets.json` yet;
+- first review-table schema;
+- safer query patterns by economic dimension;
+- false-positive labels;
+- minimum acceptance criteria before production collection;
+- dry-run script/report constraints.
+
+### Evidence
+
+This was a docs/methodology action based on code inspection, not a production
+data mutation. No targets, DB rows, assets, or Render env vars were changed.
+
+### Remaining Blocker
+
+No blocker. Next unblocked action is to build or run a dry-run sample report
+that does not write to the production DB or payloads.
+
+### Next Objective From Docs
+
+Continue with:
+
+```text
+Rio economic dry-run sample report ->
+review false positives ->
+only then consider production target row
+```
+
+### Why The Loop Continues
+
+The plan is not the sample. The next loop must either create the dry-run report
+or review why it cannot run safely.

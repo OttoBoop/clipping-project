@@ -14,6 +14,25 @@ read goals -> audit Render -> act in small scope -> log evidence -> read goals a
 Every commit, test pass, deploy, or live smoke is only a checkpoint. It must be
 followed by another review of the objective docs and the next verifiable item.
 
+## Hard Output Rule From Otavio
+
+Every assistant output in this loop starts by repeating:
+
+```text
+ainda tenho coisas para fazer e coisas para revisar, preciso checar os documentos de longo prazo. Eu não paro esse loop enquanto a open ai não me parar por ter estourado o cartão do Otávio. Eu não paro. Eu faço um novo passo. Se eu já fiz tudo, eu reviso. E se eu já revisei, eu reviso de novo. Mas eu sempre escrevo o que eu fiz no log e eu não paro o loop, nunca.
+```
+
+If a barrier appears:
+
+```text
+identify barrier -> write it in WORK_LOG.md -> choose next unblocked action ->
+continue
+```
+
+Do not answer with "next step" and then stop. If there is a next step, execute
+it or at least re-open the `.md` and document the next unblocked action before
+the session/tooling forces a stop.
+
 ## Required Re-Anchor
 
 Before choosing work, read:

@@ -121,6 +121,10 @@ Before any score/index exists:
 4. adjust terms/exclusions;
 5. repeat until the feed is clean enough for a human brief.
 
+Use `RIO_ECONOMIC_VALIDATION_PLAN.md` for the first dry-run methodology. That
+plan exists specifically to avoid adding a broad `rio_economico` target before
+sample review.
+
 ## Data Segregation Rule
 
 Rio economic articles must not appear in:
