@@ -1444,3 +1444,46 @@ remain blocked, distinguish "live blocked by auth" from "local contracts pass".
 
 A 99-test local checkpoint is strong but still not a live authenticated
 verification of Base atual/status/export filters on the published site.
+
+## 2026-05-18 - Twenty-Fourth Unattended Cycle: Accessible Live Boundary
+
+### Objective Reviewed
+
+The fixed unattended queue returned to accessible live checks after the combined
+local checkpoint. The goal was to separate live auth gating from publicly
+observable health/assets/deploy state.
+
+### Audit Performed
+
+- Checked `/healthz`.
+- Checked `/` response headers and login page.
+- Checked public `/assets/clipping.js` and `/assets/clipping.css`.
+- Checked `origin/master` head and recent commit history.
+
+### Result
+
+Accessible live checks:
+
+```text
+/healthz -> HTTP 200 ok=true loginConfigured=true viewerProfilesConfigured=true job=idle
+/ -> HTTP 200 title="Acessar clipping" has_login=True cache-control=no-cache/no-store
+/assets/clipping.js -> HTTP 200 size=100337
+/assets/clipping.css -> HTTP 200 size=29708
+origin/master -> e359d3fa5ba3641c85787df260ca0ef0a505262d
+```
+
+The previously watched durable job is no longer visible through `/healthz`;
+health reports `job=idle`. Authenticated API endpoints still require login, so
+this does not prove Base atual/status/live-results behind the gate.
+
+### Next Hypothesis
+
+Inspect recent documentation commits from the parallel auth/product loop and
+confirm they do not contradict this target/live-base unattended protocol. Then
+run another small tracked contract if needed.
+
+### Why The Loop Continues
+
+Public health/assets are stable, but authenticated live verification remains
+blocked and the recent git history shows parallel loop documentation that should
+be read for coordination risk.
