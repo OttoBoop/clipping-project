@@ -2222,3 +2222,47 @@ remaining blocker: authenticated live endpoints still require viewer config.
 
 The full suite now passes, but commits and live verification are checkpoints,
 not exits. Production status/live-results are still auth-gated.
+
+## 2026-05-18 - Thirty-Eighth Live Cycle: Post-Full-Suite Push Check
+
+### Objective Reviewed
+
+After publishing the WordPress collector and benchmark-race fixes, the loop
+returned to the live/audit queue instead of stopping at `258 passed`.
+
+### Audit Performed
+
+- Confirmed the clean worktree is clean.
+- Confirmed `origin/master` points at `6a314fb`.
+- Checked `/healthz`.
+- Downloaded hosted `/assets/clipping.js`.
+- Rechecked `/api/update/status` and `/api/update/live-results?scope=base&limit=5`.
+
+### Result
+
+Live/accessibility state:
+
+```text
+clean worktree -> no local changes
+origin/master -> 6a314fb19e4b28ec2889350f0f588a7295d46279
+/healthz -> HTTP 200 ok=true job=idle missingConfig=["CLIPPING_VIEWER_PASSWORDS"]
+/assets/clipping.js -> contains normalizePayloadCounts()
+/assets/clipping.js -> contains existing.storyCount = usage.storyCount
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+```
+
+The live frontend assets still have the target-count and payload-normalization
+fixes. The authenticated live API checks remain blocked by the viewer-login
+gate, not by a discovered 500/crash.
+
+### Next Hypothesis
+
+Record this checkpoint, then re-anchor against the long-term docs and main
+dirty worktree so the next agent/cycle knows what is fixed, what is pushed, and
+what remains blocked.
+
+### Why The Loop Continues
+
+The full suite and accessible live checks pass, but the authenticated Base atual
+verification remains impossible until the viewer password config exists.
