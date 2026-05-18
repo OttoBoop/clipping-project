@@ -3670,3 +3670,46 @@ searches for generic target/base error copy and stale UI-only target behavior.
 
 The latest user-facing error fix is live and tested, but the loop rule still
 requires another audit pass instead of stopping on a good checkpoint.
+
+## 2026-05-19 - Sixty-Second Audit Cycle: Generic Copy Search
+
+### Objective Reviewed
+
+After the inline validation and Base atual fixes were live, the next protocol
+step was a directed search for remaining generic copy or UI-only target paths.
+
+### Audit Performed
+
+- Searched dashboard JS, backend API, and tests for generic "Não foi possível",
+  stale "próxima rodada", target sync, Base atual, and live-results terms.
+- Searched for UI-only/fake/fallback target paths and verified the remaining
+  fallback functions are paired with runtime target refresh or local tests.
+- Checked hosted `/api/update/status` and `/assets/clipping-data.json`.
+- Confirmed local/remotes are aligned at `872a1a4`.
+
+### Result
+
+No new code bug found in this pass. Remaining generic-looking copies are either:
+
+- wrapped by `friendlyError(apiErrorMessage(...))`, so structured backend
+  details are shown when present;
+- outside the target-management complaint, such as raw text loading or update
+  start/cancel/resume;
+- compatibility mapping for stale backend responses.
+
+Hosted auth state remains:
+
+```text
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+/assets/clipping-data.json -> HTTP 401 {"detail":"viewer_login_required"}
+```
+
+### Next Hypothesis
+
+Keep the loop alive with another live health/assets check and, if no new issue
+appears, document the current covered objectives and remaining auth-gated limits.
+
+### Why The Loop Continues
+
+This audit did not find a fresh code bug, but no-new-bug is also a checkpoint,
+not an exit.
