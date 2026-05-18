@@ -19,29 +19,40 @@ password and a clean readonly view.
 
 ## Current Readiness Status - 2026-05-19
 
-Not ready for an external buyer demo on the live Render site yet.
+Ready for a controlled live demo by Otavio/operator, not yet for broad public
+buyer circulation.
 
 Current live status:
 
 - logged-out users are blocked from private Render dashboard data;
 - static GitHub Pages is confirmed unsuitable as private access;
-- local viewer contracts pass for scoped payloads, raw texts, readonly UI, and
-  forbidden API widening;
-- Render still reports `viewerAuthConfigured=false`, so live viewer profiles
-  cannot be proven end to end.
+- Render has real `CLIPPING_VIEWER_PASSWORDS` configured without committing
+  secrets;
+- live Flavio and Shakira viewer profiles return scoped targets/data;
+- live Rio economic profile exists as an empty isolated view;
+- direct live-results widening checks did not expose forbidden target data;
+- viewer UI hides update runner, target management, and classification editor
+  controls;
+- Shakira's single-target profile now shows a direct clean filter instead of a
+  secondary-target drawer.
 
 Allowed now:
 
-- internal/local controlled demo for Otavio using local viewer passwords;
+- controlled live demo by Otavio/operator using Render viewer credentials;
 - technical proof discussion with screenshots or notes;
-- continued product/market planning.
+- continued product/market planning;
+- limited buyer discovery conversations that do not share another client's data
+  or promise custom methodology.
 
 Not allowed yet:
 
-- sending a live client password;
+- sending a live client password broadly without an agreed demo profile and
+  rotation plan;
 - pitching GitHub Pages/Wix/static exports as private access;
-- claiming production multi-client segregation is complete;
-- starting broad buyer outreach that depends on a live demo.
+- claiming the Rio economic indicator exists as a finished product;
+- promising client self-service target creation;
+- claiming admin/operator workflows were fully live-tested with the operator
+  admin password in this loop.
 
 ## Minimum Paid Offer
 
@@ -118,10 +129,20 @@ Do not answer these from vibes. They need market research:
 
 Before selling the first real client:
 
-- production Render login is configured;
-- client profile returns scoped data on Render;
-- logged-out JSON returns `401` on Render;
-- direct API widening returns no forbidden data;
-- static exports are not presented as private access;
+- production Render login is configured; **done for viewer profiles**
+- client profile returns scoped data on Render; **done for Flavio/Shakira**
+- logged-out JSON returns `401` on Render; **done**
+- direct API widening returns no forbidden data; **done for checked targets**
+- static exports are not presented as private access; **documented**
+- client UI hides fake/admin-only actions; **done for checked viewer shells**
 - Otavio can update the client's target terms without code surgery;
 - WORK_LOG records the profile, tests, and known limitations.
+
+Remaining before first paid client:
+
+- create a dedicated demo/client profile that does not reuse Flavio/Shakira;
+- define update frequency and included targets in writing;
+- test the admin/operator target-update path with operator credentials;
+- write password rotation and offboarding instructions;
+- decide whether the first delivery is dashboard-only or dashboard plus manual
+  WhatsApp/PDF summary.

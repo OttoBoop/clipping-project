@@ -2107,3 +2107,63 @@ cost/password/operations review
 The viewer UI is cleaner, but this only resolves one no-fake-UI slice. The
 product still needs target-management review, Rio methodology, sellable
 packaging, and operations discipline.
+
+## 2026-05-19 - Loop Cycle: Sellable Package Status Recalibrated
+
+### Objective Reviewed
+
+After the live Render viewer proof and UI cleanup, the loop returned to Axis 2:
+product packaging. The old `FIRST_SELLABLE_PACKAGE.md` still said live Render
+viewer profiles could not be proven because `viewerAuthConfigured=false`.
+
+### Action Taken
+
+Updated:
+
+```text
+FIRST_SELLABLE_PACKAGE.md
+DEMO_SCRIPT_AND_BUYER_ASSUMPTIONS.md
+```
+
+Changes:
+
+- marked controlled live operator demo as allowed;
+- kept broad external password sharing blocked until a dedicated demo/client
+  profile and rotation plan exist;
+- recorded that Flavio/Shakira production scoping is proven;
+- recorded that Rio economic is live as an empty isolated profile, not a
+  finished indicator;
+- added demo guidance not to expose Flavio/Shakira credentials to external
+  buyers.
+
+### Evidence
+
+Based on the prior live checks in this log:
+
+```text
+viewerAuthConfigured=true
+Flavio scoped on Render
+Shakira scoped on Render
+Rio economic empty and isolated on Render
+viewer UI fake/admin controls hidden
+```
+
+### Remaining Blocker
+
+Before a paid-client demo, create a dedicated demo/client profile with safe
+sample data or a deliberately empty pitch path, and define password rotation.
+
+### Next Objective From Docs
+
+Continue to:
+
+```text
+target-management/admin workflow review ->
+Rio economic methodology and source/term design ->
+cost/password/operations runbook
+```
+
+### Why The Loop Continues
+
+The product story is less stale, but it is still not a full sales playbook or
+Rio methodology.

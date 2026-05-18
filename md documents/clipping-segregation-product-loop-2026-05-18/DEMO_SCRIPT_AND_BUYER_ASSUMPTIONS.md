@@ -51,10 +51,14 @@ claiming it is a full enterprise monitoring platform.
 ## Demo Preconditions
 
 - Use a profile with no cross-client leakage.
+- For external buyers, create or choose a dedicated demo/client profile rather
+  than exposing Flavio or Shakira credentials.
 - Confirm logged-out JSON returns `401`.
 - Confirm the profile view hides operator controls.
 - Confirm the raw-text payload is scoped.
 - Do not use a static export as the private demo.
+- Rotate any demo password after a real sales conversation if access should
+  expire.
 
 ## Questions To Ask After Demo
 
