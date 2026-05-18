@@ -3816,3 +3816,41 @@ review instead of stopping at the auth gate.
 
 The auth gate blocks direct hosted Base atual inspection, but it does not block
 local contracts, hosted asset checks, documentation, or source review.
+
+## 2026-05-19 - Sixty-Fifth Long-Term Memory Cycle: Promote Barrier Rule
+
+### Objective Reviewed
+
+The new barrier/output-anchor rule was written into the active protocol, but it
+also needs to live in `LONG_TERM_GOALS.md` because that file is the durable
+memory anchor future agents read when context degrades.
+
+### Audit Performed
+
+- Re-read `LONG_TERM_GOALS.md`.
+- Added Otávio's barrier instruction and mandatory anchor as source prompts.
+- Added a new long-term goal: barriers must be answered, logged, and followed
+  by another unblocked step.
+- Added a recurring failure class for stopping at auth/deploy/missing-password
+  barriers.
+
+### Result
+
+The long-term goals now explicitly require:
+
+```text
+barrier -> answer -> WORK_LOG.md -> next unblocked step
+```
+
+and point future agents to `LOOP_OPERATING_PROTOCOL.md` for the Mandatory
+Output Anchor.
+
+### Next Hypothesis
+
+Commit the long-term memory update, then continue with another live/source
+audit.
+
+### Why The Loop Continues
+
+This strengthens the durable memory, but it is still documentation. The product
+loop still needs repeated audits.

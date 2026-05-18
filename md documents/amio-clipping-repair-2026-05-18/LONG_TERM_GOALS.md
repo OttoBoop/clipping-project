@@ -23,6 +23,10 @@ These are the instructions that define the loop. Keep them visible.
 
 > "quando eu mandar \"implement plan\", é pra você tar opronto para escrever os dois documentos, e depois começar o loop."
 
+> "SE VOCÊ ENCONTROU UMA BARREIRA , VOCÊ REPSODNE ELE. VOCÊ REGISTRA NO LOG E CONTINUA. REPITA ISSO NO COMEÇO DE TODOS OS EUS OUTPUTS"
+
+> "ainda tenho coisas para fazer e coisas para revisar, preciso checar os documentos de longo prazo. Eu não paro esse loop enquanto a open ai não me parar por ter estourado o cartão do Otávio. Eu não paro. Eu façoi num novo passo. Se eu já fiz tudo, eu reviso. E se eu já revisei, eu reviso de novo. Mas eu sempre escrevo o que ue fiz no log e eu não paro o loop, nunca"
+
 ## Goals That Must Survive Every Short-Term Sprint
 
 1. **The system must be connected end to end.**
@@ -73,6 +77,15 @@ These are the instructions that define the loop. Keep them visible.
    item. The loop should stop only for an explicit pause, Plan Mode, or a real
    blocker recorded with the next unblocked action.
 
+10. **Barriers must be answered, logged, and followed by another step.**
+    A barrier is not an excuse to disappear. If auth, missing credentials,
+    deploy lag, conflicting work, external service failure, or a product
+    decision blocks one path, answer that barrier directly, write it in
+    `WORK_LOG.md`, and continue with the next unblocked audit, contract,
+    documentation, or source review. Every assistant output in this loop must
+    begin with the Mandatory Output Anchor defined in
+    `LOOP_OPERATING_PROTOCOL.md`.
+
 ## Recurring Failure Classes To Avoid
 
 - UI says a target exists, but backend config or ingestion does not use it.
@@ -84,6 +97,8 @@ These are the instructions that define the loop. Keep them visible.
   without verifying the user-visible behavior.
 - An agent treats user-visible success as the end of the loop instead of using
   it as the trigger for the next audit cycle.
+- An agent finds an auth gate, deploy lag, missing password, or other barrier
+  and stops instead of answering it, logging it, and continuing elsewhere.
 
 ## Short-Term Loop Rule
 
