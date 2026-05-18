@@ -4663,3 +4663,43 @@ target/filter path.
 Counters look covered locally, but this is a review checkpoint. The loop still
 has auth-gated hosted payloads and future runtime target changes to keep
 checking.
+
+## 2026-05-18 - Eighty-Fourth Hosted Watch After No-Export Guard
+
+### Objective Reviewed
+
+After new tests and logs, the hosted app should remain healthy, and auth-gated
+checks should be answered as barriers rather than stop conditions.
+
+### Audit Performed
+
+- Checked hosted `/healthz`.
+- Fetched hosted `/assets/clipping.js`.
+- Checked hosted `/api/update/status`.
+- Checked local git status.
+
+### Result
+
+Hosted state:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+/assets/clipping.js -> HTTP 200, last-modified Tue, 19 May 2026 22:06:16 GMT
+hosted JS -> targetDisplayNameError, pollBaseLiveResults, publicationState
+             handling present
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+worktree -> clean
+```
+
+Barrier answered: authenticated status remains gated. Accessible health and
+static JS checks remain healthy/current.
+
+### Next Hypothesis
+
+Commit this hosted watch log, then continue with local source review or a
+target-management contract check.
+
+### Why The Loop Continues
+
+Hosted health is good, but the direct status/live payload remains auth-gated.
+That means continue with accessible checks, not stop.
