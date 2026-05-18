@@ -802,3 +802,64 @@ console_errors=[]
 The browser requested both `/api/update/status` and
 `/api/update/live-results...` from the published site and rendered the dashboard
 without the previous `originalTargetKeys is not defined` crash.
+
+## 2026-05-18 - Eleventh Loop Audit: Current Live Connections Rechecked
+
+### Checks Run
+
+Live repository head:
+
+```text
+origin/master = 12febbd3fdfcb80382b0218b7a11203f196ae9f7
+```
+
+Live job status:
+
+```text
+job=5b567e5de54b
+status=running
+coverage=pending
+sourceRunCounts={'complete': 78, 'pending': 703}
+visible_failed=0
+```
+
+Live target/export consistency from `/assets/clipping-data.json`:
+
+```text
+stories=462
+articles=802
+flavio_valle meta=167/210 actual=167/210
+pedro_duarte meta=1/1 actual=1/1
+pedro_angelito meta=8/10 actual=8/10
+bernardo_rubiao meta=2/2 actual=2/2
+shakira meta=265/561 actual=265/561
+vorcaro meta=2/2 actual=2/2
+```
+
+Live UI smoke:
+
+```text
+body_len=40908
+live_request_count=5
+status_request_count=3
+page_errors=[]
+console_errors=[]
+```
+
+### Result
+
+The currently published loop is connected across:
+
+```text
+hosted dashboard -> status API -> live-results API -> SQLite/job events
+targets in export -> article targetKeys -> filter/count metadata
+```
+
+No active `failed_needs_fix` source runs were visible during this audit.
+
+### Remaining Watch Item
+
+The durable job is still running with hundreds of pending source runs. Continue
+watching it until it either completes, finds a new source-specific failure, or
+publishes another saved article that should appear through the now-restored
+live-results polling path.
