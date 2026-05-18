@@ -5731,3 +5731,131 @@ not require hosted credentials.
 Hosted health and current JS are checkpoints. The auth gate blocks only direct
 payload inspection, so the loop continues through local contracts and code
 review.
+
+## 2026-05-18 - One Hundred Ninth Duplicate Retag Live Event Contract
+
+### Objective Reviewed
+
+The long-term loop says saved/confirmed news must appear in Base atual as soon
+as it is found. That includes the important edge where an article already exists
+in SQLite but a new secondary target is added to it during ingestion.
+
+### Audit Performed
+
+- Reviewed `pipeline/ingest.py` around `emit_article_saved()` and the duplicate
+  article retag path.
+- Confirmed code emits `article_saved` after
+  `sync_existing_article_targets()`.
+- Strengthened
+  `tests/test_targets_jobs.py::test_process_candidates_tags_duplicate_article_for_new_secondary_target`
+  to assert the emitted `article_saved` payload.
+- Ran focused live/event contracts:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_targets_jobs.py::test_process_candidates_tags_duplicate_article_for_new_secondary_target \
+  tests/test_targets_jobs.py::test_article_saved_events_drive_live_results_and_totals \
+  tests/test_targets_jobs.py::test_update_without_export_keeps_base_live_result_saved \
+  tests/test_targets_jobs.py::test_target_sync_backfills_new_target_into_base_live_results \
+  -q
+```
+
+### Result
+
+`4 passed in 0.66s`.
+
+The duplicate-retag test now proves:
+
+- `article_saved` is emitted once;
+- `article_id` and `story_id` point at the existing saved story;
+- `target_keys` contains the new secondary target;
+- `articles_inserted_delta` is `0`;
+- `mentions_inserted_delta` and `stories_touched_delta` are `1`;
+- `publication_state` remains `saved`;
+- reason is `existing_article_target_updated`.
+
+Restored generated `pipeline/__pycache__` after the run.
+
+### Next Hypothesis
+
+Commit the contract hardening, then continue with another checklist review or
+hosted watch.
+
+### Why The Loop Continues
+
+This closes one more proof gap, but it is still a checkpoint. The loop keeps
+checking for disconnected target/filter/Base atual edges.
+
+## 2026-05-18 - One Hundred Tenth Push Barrier On Duplicate Retag Contract
+
+### Objective Reviewed
+
+The duplicate-retag live event contract was committed locally, but pushing hit a
+remote race. The basic rule says to answer the barrier, log it, and continue.
+
+### Audit Performed
+
+- Committed `2619360 test: assert duplicate retag live event`.
+- Push to `origin/master` was rejected as non-fast-forward.
+- Inspected `origin/master`.
+
+### Result
+
+Barrier answered: remote advanced with Rio/segmentation documentation commits:
+
+```text
+53cd9eb docs: log Rio refinement push
+1ecebf9 docs: refine Rio economic source dimensions
+```
+
+The latest remote commit touched only
+`md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md`, which
+does not overlap the duplicate-retag test/log commit.
+
+### Next Hypothesis
+
+Amend this barrier entry into the local commit, rebase onto `origin/master`,
+push again, then continue with another review cycle.
+
+### Why The Loop Continues
+
+This is another administrative git race with a parallel loop. It does not block
+the clipping repair work or complete the long-term target/filter/Base atual
+objectives.
+
+## 2026-05-18 - One Hundred Eleventh Second Push Race On Duplicate Retag Contract
+
+### Objective Reviewed
+
+After rebasing over the Rio refinement docs, the push raced another remote
+update. This is a barrier to answer and log, not a stop condition.
+
+### Audit Performed
+
+- Rebasing over `53cd9eb` succeeded.
+- Push failed with remote rejection:
+
+```text
+cannot lock ref 'refs/heads/master': is at 79facc0... but expected 53cd9eb...
+```
+
+- Fetched `origin/master`.
+- Inspected the new remote tip.
+
+### Result
+
+Barrier answered: remote advanced again to
+`79facc0 docs: log live privacy smoke after Rio push`, touching only
+`md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md`.
+
+No overlap with the clipping repair duplicate-retag test/log commit.
+
+### Next Hypothesis
+
+Amend this second race entry, rebase onto `origin/master`, push again, then
+continue the loop.
+
+### Why The Loop Continues
+
+The push race is operational noise from parallel work. The correct behavior is
+to keep path-limited commits and continue the target/filter/Base atual review.

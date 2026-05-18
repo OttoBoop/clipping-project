@@ -1605,6 +1605,7 @@ def test_process_candidates_tags_duplicate_article_for_new_secondary_target(monk
         snippet="Shakira aparece na programacao cultural.",
         metadata={},
     )
+    events: list[tuple[str, dict]] = []
 
     result = ingest.process_candidates(
         "Google News",
@@ -1616,11 +1617,22 @@ def test_process_candidates_tags_duplicate_article_for_new_secondary_target(monk
             date_to="2026-04-30",
             db_path=str(db_file),
         ),
+        progress_callback=lambda event, payload: events.append((event, payload)),
     )
 
     assert result.articles_inserted == 0
     assert result.mentions_inserted == 1
     assert result.stories_touched == 1
+    article_saved = [payload for event, payload in events if event == "article_saved"]
+    assert len(article_saved) == 1
+    assert article_saved[0]["article_id"] == article_id
+    assert article_saved[0]["story_id"] == story_id
+    assert article_saved[0]["target_keys"] == ["shakira"]
+    assert article_saved[0]["articles_inserted_delta"] == 0
+    assert article_saved[0]["mentions_inserted_delta"] == 1
+    assert article_saved[0]["stories_touched_delta"] == 1
+    assert article_saved[0]["publication_state"] == "saved"
+    assert article_saved[0]["reason"] == "existing_article_target_updated"
     with sqlite3.connect(db_file) as conn:
         mention_targets = {
             row[0]
