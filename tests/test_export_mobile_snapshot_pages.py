@@ -142,6 +142,18 @@ def test_dashboard_javascript_recomputes_runtime_target_counts_from_payload():
     assert "Math.max(Number(existing.articleCount" not in body
 
 
+def test_dashboard_javascript_promotes_viewer_filters_when_scope_has_no_primary():
+    dashboard_js = (PROJECT_ROOT / "assets" / "clipping.js").read_text(encoding="utf-8")
+    body = dashboard_js[
+        dashboard_js.index("function renderTargetButtons") :
+        dashboard_js.index("function renderStats")
+    ]
+
+    assert "if (!primary.length && other.length && !viewerIsAdmin())" in body
+    assert "primary = other.slice();" in body
+    assert "other = [];" in body
+
+
 def test_dashboard_javascript_normalizes_initial_payload_counts_before_render():
     dashboard_js = (PROJECT_ROOT / "assets" / "clipping.js").read_text(encoding="utf-8")
     load_body = dashboard_js[

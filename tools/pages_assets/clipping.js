@@ -508,6 +508,10 @@
       if (target.primary) primary.push(target);
       else other.push(target);
     });
+    if (!primary.length && other.length && !viewerIsAdmin()) {
+      primary = other.slice();
+      other = [];
+    }
     targetFilters.innerHTML = primary.map(chipHtml).join("");
     var outrosEl = document.getElementById("outrosFilters");
     if (other.length > 0) {
