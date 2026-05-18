@@ -546,6 +546,130 @@ class TestFunctionalSanity:
         assert "1 história" in text
         assert active
 
+    def test_live_results_target_row_only_change_rerenders_filters(self, browser_ctx, local_server):
+        """A live target row should redraw filters even when the article already exists."""
+        page = browser_ctx.new_page()
+        existing_payload = {
+            "meta": {
+                "pageTitle": "Clipping Teste",
+                "generatedAt": "2026-05-19T12:00:00+00:00",
+                "totalStories": 1,
+                "totalArticles": 1,
+                "totalAi": 0,
+                "totalRaw": 1,
+            },
+            "targets": [
+                {"key": "flavio_valle", "label": "Flávio Valle", "primary": True, "storyCount": 0, "articleCount": 0}
+            ],
+            "defaultTargets": ["flavio_valle"],
+            "stories": [
+                {
+                    "storyIdInt": 99002,
+                    "title": "Projeto Zeta ja estava salvo",
+                    "summaryLabel": "Texto bruto",
+                    "summaryText": "Projeto Zeta ja estava na base antes do filtro existir.",
+                    "temperature": 34,
+                    "firstPublishedAt": "2026-05-19T12:00:00+00:00",
+                    "lastPublishedAt": "2026-05-19T12:00:00+00:00",
+                    "articleCount": 1,
+                    "aiCount": 0,
+                    "rawCount": 1,
+                    "targetKeys": ["projeto_zeta"],
+                    "articles": [
+                        {
+                            "articleId": 99002,
+                            "title": "Projeto Zeta ja estava salvo",
+                            "url": "https://example.com/projeto-zeta-existente",
+                            "sourceName": "Fonte Teste",
+                            "sourceHost": "example.com",
+                            "publishedAt": "2026-05-19T12:00:00+00:00",
+                            "publishedDisplay": "19/05/2026 12:00 UTC",
+                            "targetKeys": ["projeto_zeta"],
+                            "summaryLabel": "Texto bruto",
+                            "summaryPreview": "Projeto Zeta ja estava na base antes do filtro existir.",
+                            "rawTextKey": "",
+                            "summarySource": "raw",
+                        }
+                    ],
+                }
+            ],
+        }
+
+        def clipping_data(route):
+            route.fulfill(status=200, content_type="application/json", body=json.dumps(existing_payload, ensure_ascii=False))
+
+        def targets(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        "targets": [
+                            {"key": "flavio_valle", "label": "Flávio Valle", "primary": True},
+                        ],
+                        "primaryKeys": ["flavio_valle"],
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        def update_status(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps({"current": {"status": "idle"}, "recent": []}),
+            )
+
+        def live_results(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        "items": [
+                            {
+                                "articleId": 99002,
+                                "storyId": 99002,
+                                "title": "Projeto Zeta ja estava salvo",
+                                "url": "https://example.com/projeto-zeta-existente",
+                                "sourceName": "Fonte Teste",
+                                "publishedAt": "2026-05-19T12:00:00+00:00",
+                                "savedAt": "2026-05-19T12:03:00+00:00",
+                                "snippet": "Projeto Zeta ja estava na base antes do filtro existir.",
+                                "summary": "Projeto Zeta ja estava na base antes do filtro existir.",
+                                "publicationState": "saved",
+                                "targetKeys": ["projeto_zeta"],
+                                "targetLabels": {"projeto_zeta": "Projeto Zeta"},
+                            }
+                        ],
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        page.route("**/assets/clipping-data.json", clipping_data)
+        page.route("**/api/targets**", targets)
+        page.route("**/api/update/status", update_status)
+        page.route("**/api/update/live-results**", live_results)
+
+        try:
+            page.goto(f"{local_server}/index.html", wait_until="domcontentloaded")
+            page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)
+            page.wait_for_selector("#outrosFilters", timeout=10000)
+            page.click("#outrosFilters summary")
+            projeto_zeta = page.locator('[data-filter-target="projeto_zeta"]').first
+            projeto_zeta.wait_for(state="visible", timeout=10000)
+            text = projeto_zeta.inner_text()
+            projeto_zeta.click()
+            page.wait_for_selector("#flatStack .article-card:has-text('Projeto Zeta ja estava salvo')", timeout=10000)
+            active = projeto_zeta.evaluate("el => el.classList.contains('active')")
+        finally:
+            page.close()
+
+        assert "Projeto Zeta" in text
+        assert "1 história" in text
+        assert active
+
     def test_manage_target_edit_stays_available_during_running_update(self, browser_ctx, local_server):
         """A running update should not block editing names for future/base sync."""
         page = browser_ctx.new_page()

@@ -1533,19 +1533,25 @@
   }
 
   function ensureLiveTargetRows(items) {
-    if (!payload) return;
+    if (!payload) return false;
     if (!Array.isArray(payload.targets)) payload.targets = [];
     var byKey = {};
     (payload.targets || []).forEach(function (target) {
       if (target && target.key) byKey[String(target.key)] = target;
     });
+    var changed = false;
     (items || []).forEach(function (item) {
       var labels = item.targetLabels || {};
       (item.targetKeys || []).forEach(function (key) {
         key = String(key || "").trim();
         if (!key) return;
-        labelsByKey[key] = labels[key] || labelsByKey[key] || key;
-        if (activeTargetKeys.size) activeTargetKeys.add(key);
+        var nextLabel = labels[key] || labelsByKey[key] || key;
+        if (labelsByKey[key] !== nextLabel) changed = true;
+        labelsByKey[key] = nextLabel;
+        if (activeTargetKeys.size && !activeTargetKeys.has(key)) {
+          activeTargetKeys.add(key);
+          changed = true;
+        }
         if (!byKey[key]) {
           byKey[key] = {
             key: key,
@@ -1556,9 +1562,14 @@
             articleCount: 0,
           };
           payload.targets.push(byKey[key]);
+          changed = true;
+        } else if (byKey[key].label !== labelsByKey[key]) {
+          byKey[key].label = labelsByKey[key];
+          changed = true;
         }
       });
     });
+    return changed;
   }
 
   function recomputeTargetCounts() {
@@ -1608,8 +1619,7 @@
     if (!payload || !Array.isArray(data && data.items) || !data.items.length) return false;
     if (!Array.isArray(payload.stories)) payload.stories = [];
     if (!payload.meta) payload.meta = {};
-    ensureLiveTargetRows(data.items);
-    var changed = false;
+    var changed = ensureLiveTargetRows(data.items);
     var storiesById = {};
     (payload.stories || []).forEach(function (story) {
       storiesById[String(story.storyIdInt || story.id || "")] = story;

@@ -5162,3 +5162,75 @@ Amend this barrier record into the local docs checkpoint, rebase onto
 The push barrier is administrative. The product loop still needs repeated
 review of hosted auth barriers, target/filter/Base atual contracts, export
 counts, and source/UI connections.
+
+## 2026-05-18 - Ninety-Seventh Live Target Row Counter Repair
+
+### Objective Reviewed
+
+The long-term loop says a target is only real when Base atual, live-results,
+filters, and counts agree. After re-reading the goals and checklist, I audited
+the hosted site and then reviewed the dashboard live overlay merge code.
+
+### Audit Performed
+
+- Checked hosted Render:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+GET /assets/clipping-data.json -> HTTP 401 {"detail":"viewer_login_required"}
+HEAD /assets/clipping-data.json -> HTTP 405 allow GET
+hosted /assets/clipping.js -> targetDisplayNameError, pollBaseLiveResults, and
+publicationState markers present; dead target-management lock markers absent
+```
+
+Barrier answered: hosted data payloads remain viewer-auth gated without a valid
+session. I continued with local browser contracts.
+
+- Reviewed `assets/clipping.js` and `tools/pages_assets/clipping.js`.
+- Found a concrete UI connection bug: `ensureLiveTargetRows()` could add or
+  relabel a target row from live-results without marking the payload as changed.
+  If the article/story already existed, `mergeLiveResultsIntoPayload()` skipped
+  recomputing target counts, so the filter could render with `0 histórias` even
+  though the article was filterable.
+- Added
+  `tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_target_row_only_change_rerenders_filters`.
+
+### Result
+
+Red/green proof:
+
+```text
+new test before patch -> failed: Projeto Zeta rendered with "0 histórias"
+patch -> ensureLiveTargetRows returns whether target rows/labels/active keys changed
+focused rerun -> 1 passed in 1.09s
+neighbor contracts -> 4 passed in 3.12s
+```
+
+Neighbor contracts run:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_target_outside_initial_targets_becomes_filterable \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_target_row_only_change_rerenders_filters \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_new_secondary_target_filter_is_visible_after_opening_outros \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  -q
+```
+
+Also restored generated `pipeline/__pycache__` dirt after tests. A wrong test
+nodeid was tried once for the export bundle check; that barrier was answered by
+searching the correct test name and rerunning the valid set.
+
+### Next Hypothesis
+
+Commit this small UI/live filter fix path-limited, push/rebase if needed, then
+continue with another checklist item instead of stopping.
+
+### Why The Loop Continues
+
+This fixed one silent counter mismatch in the live Base atual overlay. Hosted
+payload inspection is still auth-gated, and the broader loop still needs
+repeated review of target creation, update snapshots, export counts, and
+published/live consistency.
