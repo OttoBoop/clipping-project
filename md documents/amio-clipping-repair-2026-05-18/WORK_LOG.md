@@ -1341,3 +1341,36 @@ target/job contracts already sampled in focused chunks.
 The targeted durability/cleanup path passed. That narrows the risk but does not
 resolve the authenticated live audit or prove the whole target/job file after
 recent auth/profile changes.
+
+## 2026-05-18 - Twenty-First Unattended Cycle: Full Target/Job Regression
+
+### Objective Reviewed
+
+After multiple focused target/job contract chunks passed, the next useful
+checkpoint was the entire tracked target/job suite.
+
+### Audit Performed
+
+- Ran the full `tests/test_targets_jobs.py` file.
+- Kept the scope local because live status/live-results remain auth-gated.
+
+### Result
+
+Command:
+
+```bash
+.venv_playwright/bin/pytest tests/test_targets_jobs.py -q
+```
+
+Result: `50 passed in 1.03s`.
+
+### Next Hypothesis
+
+Run the tracked admin/export UI contract suite next. That will cover the
+auth/profile surface, hosted dashboard behavior, target APIs, live-results UI
+contracts, and export bundle behavior together.
+
+### Why The Loop Continues
+
+The core target/job suite passing is a checkpoint. It does not replace
+authenticated live verification and does not cover the admin/export UI surface.
