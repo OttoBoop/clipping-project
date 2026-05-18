@@ -1816,3 +1816,49 @@ fix has reached the published site.
 This locks one error path, but it is still a contract checkpoint. The deployed
 JS was stale on the previous audit, and authenticated live endpoints remain
 blocked by viewer login.
+
+## 2026-05-18 - Thirty-First Live Cycle: Runtime Count Fix Reached Hosted JS
+
+### Objective Reviewed
+
+The previous deploy watch found the hosted JS still serving the old runtime
+target-count merge. The live objective was to verify the pushed frontend fix was
+actually published, not just present in Git.
+
+### Audit Performed
+
+- Checked `origin/master`.
+- Downloaded `https://clipping-project.onrender.com/assets/clipping.js`.
+- Searched the hosted JS for the new assignment and the old `Math.max(...)`
+  count-preserving behavior.
+- Rechecked `/healthz`, `/api/update/status`, and
+  `/api/update/live-results?scope=base&limit=5`.
+
+### Result
+
+Live checkpoint:
+
+```text
+origin/master -> ec2a894dee161cbc00207c275cfcf10c3886c811
+/assets/clipping.js -> contains existing.storyCount = usage.storyCount
+/assets/clipping.js -> no longer contains Math.max(Number(existing.storyCount...)
+/healthz -> HTTP 200 ok=true job=idle missingConfig=["CLIPPING_VIEWER_PASSWORDS"]
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+```
+
+The runtime count fix is now live in the hosted JS. Authenticated status and
+Base atual live-results are still gated by viewer login and the missing Render
+viewer password config.
+
+### Next Hypothesis
+
+Continue with non-auth local contracts around target creation, target sync, and
+live-results overlay. Do not treat the hosted JS checkpoint as full Base atual
+verification.
+
+### Why The Loop Continues
+
+One frontend fix is live, but the core live data endpoints cannot yet be
+verified without viewer auth. The loop must keep proving local contracts and
+watching the remaining static/export mismatch.
