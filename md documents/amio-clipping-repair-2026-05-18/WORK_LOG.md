@@ -2735,3 +2735,73 @@ checking adjacent management flows and live Base atual behavior.
 This cycle found and fixed a real end-to-end gap, but it is still a checkpoint.
 The fix needs a disciplined commit, deployment watch, live asset verification,
 and another pass over target management/live-results edges.
+
+## 2026-05-19 - Forty-Sixth Live Watch: Live-Filter Fix Pushed, Deploy Pending
+
+### Objective Reviewed
+
+After fixing the live-results target filter gap, the protocol required a live
+asset check rather than treating the push as completion.
+
+### Audit Performed
+
+- Pushed `4ef2bc9 fix: show live-result targets in filters`.
+- Checked hosted `/healthz`.
+- Checked hosted `/api/update/status`.
+- Downloaded hosted `/assets/clipping.js` with and without a cache-busting query.
+- Confirmed `origin/master` and the clean worktree are aligned.
+- Inspected server-side live-results filtering to ensure the frontend promotion
+  of live target keys does not by itself widen viewer scope.
+
+### Result
+
+Live state:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+origin/master -> 4ef2bc9
+```
+
+Hosted JS at this checkpoint still does not include:
+
+```text
+if (activeTargetKeys.size) activeTargetKeys.add(key);
+```
+
+It does include the earlier Base atual copy, so Render is serving a version
+after the copy fix but before the live-filter fix. The code path remains covered
+locally:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_target_outside_initial_targets_becomes_filterable \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  -q
+```
+
+Result after rebase: `2 passed in 1.68s`.
+
+Scope check: `web_app.segmentation.scoped_live_results()` filters live result
+items to the session's allowed target keys, and
+`web_app.jobs.live_items_from_event_rows()` filters Base atual items to active
+target labels. The frontend patch promotes only target keys that the live
+endpoint already returned to that viewer.
+
+Parallel-work note: after this live check, `origin/master` advanced to
+`1356f6d fix: promote viewer filters without primary targets`, touching the same
+dashboard bundles for a different viewer-only filter case. The patch was
+inspected before this log commit so the next step can rebase cleanly rather than
+overwrite another loop.
+
+### Next Hypothesis
+
+Rebase this log over `1356f6d`, rerun the overlapping frontend/export guards,
+push the log, and keep watching the hosted JS for `activeTargetKeys.add(key)`.
+While waiting, continue searching management/edit/archive/restore flows for
+missing frontend contracts or confusing copy.
+
+### Why The Loop Continues
+
+The fix is pushed and locally verified, but the hosted asset has not caught up.
+That is explicitly a watch item, not an exit.
