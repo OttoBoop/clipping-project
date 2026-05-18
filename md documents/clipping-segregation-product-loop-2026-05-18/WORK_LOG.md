@@ -1550,3 +1550,53 @@ Re-read the docs and continue with one of the remaining unblocked items:
 
 The package readiness gate prevents overpromising, but the product loop still
 has not proven live viewer profiles.
+
+## 2026-05-19 - Loop Cycle: Operator Cost Discipline
+
+### Objective Reviewed
+
+Returned to `LONG_TERM_GOALS.md`, `DEPENDENCY_MAP.md`,
+`FIRST_SELLABLE_PACKAGE.md`, and `MARKET_RESEARCH_PLAN.md`.
+
+The long-term goal says the product should help fund AI/tooling instead of
+creating more manual work and cost. Existing docs had cost warnings but no
+single operating guardrail.
+
+### Audit Performed
+
+Searched the product-loop docs and code references for cost, tooling, operator
+burden, pricing, manual work, custom work, and maintenance.
+
+Finding:
+
+```text
+Cost discipline existed as scattered warnings, not as a dedicated checklist.
+```
+
+### Action Taken
+
+Added `OPERATOR_COST_DISCIPLINE.md` with V1 boundaries:
+
+- sell bounded monitoring first, not bespoke intelligence work;
+- keep profile/password, agreed targets, periodic updates, grouped stories,
+  scoped raw text, basic review, and occasional manual export in V1;
+- keep unlimited targets, realtime alerts, custom frontends/repos, daily AI
+  narrative reports, social/TV/radio/print monitoring, and Rio methodology work
+  out of the base price;
+- track update time, review time, number of targets, source complexity, AI/tool
+  usage, report time, and support burden before setting pricing.
+
+### Remaining Blocker
+
+The live product is still not externally demoable until Render has
+`CLIPPING_VIEWER_PASSWORDS` and a viewer profile is smoked end to end.
+
+### Next Objective From Docs
+
+Re-read the docs and continue with live gate monitoring plus any remaining
+system checklist gaps that do not require production viewer credentials.
+
+### Why The Loop Continues
+
+Cost discipline reduces product risk, but it does not complete Axis 1
+production segregation.
