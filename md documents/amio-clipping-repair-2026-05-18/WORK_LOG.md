@@ -4127,3 +4127,39 @@ health/assets checks and local contracts unless credentials appear.
 The broad regression is a checkpoint, not an exit. The hosted auth barrier
 remains, deploy watch remains, and the loop still needs periodic review of
 target/filter/export consistency.
+
+## 2026-05-18 - Seventy-First Explainable Error And Filter Source Review Cycle
+
+### Objective Reviewed
+
+Errors must explain cause and correction, and target filters must be connected
+to real target keys/counts rather than UI-only state.
+
+### Audit Performed
+
+- Searched frontend/backend error paths for generic "Não foi possível",
+  "Falha", `detail`, thrown errors, and target-specific structured errors.
+- Reviewed `assets/clipping.js` `apiErrorMessage` and `friendlyError`.
+- Reviewed polling functions for status/live-results/base overlay.
+- Reviewed export target-row, target-count, `defaultTargets`, and visibility
+  helpers in `tools/export_mobile_snapshot.py`.
+- Confirmed the current worktree was clean before this docs-only log update.
+
+### Result
+
+No new code patch was selected in this cycle. The main dashboard target flow now
+has structured error handling that surfaces message, suggestion, and cause; the
+target add/edit inline validation is already covered by browser tests. Export
+target rows include active targets even at zero count and recompute story/article
+counts from article-level target keys.
+
+### Next Hypothesis
+
+Continue deploy/live watch with accessible endpoints. If auth blocks direct
+payload inspection again, log it and run local contracts or source review rather
+than stopping.
+
+### Why The Loop Continues
+
+This review did not reveal a fresh patch, but "no new patch" is not an exit.
+The loop continues into hosted watch and repeated connection checks.
