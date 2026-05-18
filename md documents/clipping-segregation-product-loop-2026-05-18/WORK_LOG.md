@@ -5023,3 +5023,108 @@ No push blocker on this attempt.
 
 Commit this push evidence to the log, push it path-limited, then poll Render
 and run live privacy smoke when the relevant deploy is live.
+
+## 2026-05-18 20:08 -03 - Loop Cycle: Render Queue After Rio Push
+
+### Objective Reviewed
+
+After pushing `1ecebf9` and `53cd9eb`, Render must be polled; queued deploys do
+not count as live verification.
+
+### Action Taken
+
+Pushed:
+
+```text
+53cd9eb docs: log Rio refinement push
+```
+
+Then polled Render.
+
+### Evidence
+
+```text
+dep-d86faabsuu8s73ddqrcg 53cd9eb docs: log Rio refinement push -> queued
+dep-d86f9qki5fes73e3ejlg 1ecebf9 docs: refine Rio economic source dimensions -> build_in_progress
+dep-d86f9cm47okc739pfbog d93d617 docs: log broad clipping regression -> live
+dep-d86edea1dpfc73a2ebp0 d278b5e fix: count scoped raw articles consistently -> deactivated
+```
+
+### Barrier Or Failure
+
+No deploy failure. The live site is behind `master` while Render builds and
+queues the latest docs commits.
+
+### Next Objective From Docs
+
+Smoke the current live privacy gate on `d93d617`, then keep polling until the
+newest deploy promotes.
+
+## 2026-05-18 20:09 -03 - Loop Cycle: Live Logged-Out Smoke On d93d617
+
+### Objective Reviewed
+
+Render reported `d93d617` as live while `1ecebf9` and `53cd9eb` were still
+building/queued. The current live privacy gate still needed verification.
+
+### Live Evidence
+
+URL checked: `https://clipping-project.onrender.com/`
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression on the current live deploy. Authenticated
+viewer proof remains blocked locally by absent viewer passwords.
+
+### Next Objective From Docs
+
+Keep polling Render until `53cd9eb` or the newest remote commit promotes, then
+repeat the live privacy smoke.
+
+## 2026-05-18 20:10 -03 - Loop Cycle: Smoke Log Pre-Commit Check
+
+### Objective Reviewed
+
+Publish the live smoke evidence without bundling unrelated work.
+
+### Action Taken
+
+Ran:
+
+```text
+git status --short --branch
+git diff --check -- WORK_LOG.md
+```
+
+### Evidence
+
+Status showed only:
+
+```text
+M md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md
+```
+
+`git diff --check` passed with no output.
+
+### Barrier Or Failure
+
+No blocker.
+
+### Next Objective From Docs
+
+Commit and push this smoke log path-limited, then poll Render again.
