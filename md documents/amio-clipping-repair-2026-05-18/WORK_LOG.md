@@ -1544,3 +1544,65 @@ through the authenticated path.
 Reading the parallel docs prevents cross-loop mistakes, but it is still a
 checkpoint. Authenticated production verification remains blocked by missing
 viewer credentials.
+
+## 2026-05-18 - Twenty-Sixth Unattended Cycle: Local Static Artifact Consistency
+
+### Objective Reviewed
+
+The next unblocked target/live-base audit was static export consistency:
+compare tracked target config, tracked payload metadata, and export-builder
+output without mutating generated assets.
+
+### Audit Performed
+
+- Compared `data/targets.json` active keys to tracked `assets/clipping-data.json`
+  target rows.
+- Recomputed article/story counts from tracked `assets/clipping-data.json`
+  article-level `targetKeys`.
+- Built an export artifact in memory from `data/clipping.db` using
+  `tools.export_mobile_snapshot.build_snapshot_artifact(...)` without writing
+  files.
+
+### Result
+
+Tracked snapshot in `HEAD` is inconsistent with tracked target config/counts:
+
+```text
+HEAD config_keys ['flavio_valle', 'pedro_duarte', 'pedro_angelito', 'bernardo_rubiao', 'shakira']
+HEAD payload_keys ['flavio_valle', 'pedro_duarte', 'pedro_angelito', 'bernardo_rubiao']
+HEAD missing_in_payload ['shakira']
+HEAD stories=458 articles=697
+flavio_valle meta=436/766 actual=436/674 ok=False
+pedro_duarte meta=18/91 actual=18/19 ok=False
+pedro_angelito meta=4/6 actual=4/6 ok=True
+bernardo_rubiao meta=24/91 actual=24/25 ok=False
+```
+
+The export builder itself produced a consistent in-memory artifact from the
+current local DB:
+
+```text
+targets [('flavio_valle', 354, 591), ('pedro_duarte', 0, 0), ('pedro_angelito', 0, 0), ('bernardo_rubiao', 0, 0), ('shakira', 1, 1)]
+stories=355 articles=592
+all target meta counts matched article-level targetKeys
+```
+
+### Decision
+
+Do not regenerate or commit `assets/clipping-data.json` from the current local
+DB in this cycle. The local DB and tracked static snapshot do not represent the
+same dataset size, so blindly regenerating would replace hundreds of tracked
+articles. This needs a separate static-artifact regeneration decision.
+
+### Next Hypothesis
+
+The code path for export counts appears healthy; the tracked static artifact is
+stale/inconsistent. Future work should either regenerate the static snapshot
+from the intended production source or stop treating the tracked static payload
+as proof of current target/filter behavior.
+
+### Why The Loop Continues
+
+This found a real artifact watch item, but not a safe patch to apply blindly.
+The next cycle should keep contract tests and accessible live checks moving
+while this static regeneration decision remains open.
