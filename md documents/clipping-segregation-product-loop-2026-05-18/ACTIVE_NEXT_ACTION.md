@@ -30,6 +30,12 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Initial sourced market research notes.
 - Demo script and buyer assumptions.
 - Dirty worktree / commit-boundary review.
+- Product loop operating protocol.
+- Static boundary evidence.
+- Rio economic isolation decision.
+- Sellable package readiness gate.
+- Operator cost discipline guardrail.
+- System review status snapshot for 2026-05-19.
 
 ## Current Verification State
 
@@ -79,6 +85,8 @@ Continue the production loop. Current priority from the docs:
 If `viewerAuthConfigured=false` remains true after deploy, do not stop. Log the
 blocker and continue with the next unblocked review: deployed JS markers,
 logged-out API gates, render/env docs, and local authenticated contract tests.
+
+Use `SYSTEM_REVIEW_STATUS_2026-05-19.md` as the current proof/blocker snapshot.
 
 ## Do Not Do Next
 
