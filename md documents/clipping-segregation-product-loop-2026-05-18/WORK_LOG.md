@@ -1089,3 +1089,80 @@ Push `master`, wait for Render to deploy, then verify the live URL for:
 - admin login works if production env vars are present;
 - viewer login works only if `CLIPPING_VIEWER_PASSWORDS` is configured on
   Render.
+
+## 2026-05-19 - Live Render Verification After Push
+
+### Pushes
+
+Implementation commit pushed:
+
+```text
+12f836b feat: ship password-gated clipping profiles
+```
+
+Render did not immediately flip to the new code, so this loop pushed an empty
+trigger commit:
+
+```text
+9fa5d81 chore: trigger Render deploy for gated profiles
+```
+
+The live site switched to the new behavior during polling at approximately
+`2026-05-19 11:50:56 UTC`.
+
+### Live URL Checked
+
+```text
+https://clipping-project.onrender.com/
+```
+
+### Logged-Out Checks
+
+Passed:
+
+```text
+GET /                                                    200 login page
+GET /index.html                                          404
+GET /assets/clipping-data.json                           401 viewer_login_required
+GET /assets/clipping-raw-texts.json                      401 viewer_login_required
+GET /api/update/status                                   401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240        401 viewer_login_required
+GET /api/targets                                         401 viewer_login_required
+GET /api/classifications                                 401 viewer_login_required
+GET /api/csrf                                            401 viewer_login_required
+```
+
+The deployed `assets/clipping.js` contains the new auth/profile markers:
+
+```text
+initialSessionRole
+ensureCsrfToken
+applyViewerControls
+```
+
+### Healthz
+
+Live `/healthz` returned:
+
+```json
+{
+  "ok": true,
+  "dbExists": true,
+  "authConfigured": true,
+  "loginConfigured": true,
+  "viewerAuthConfigured": false,
+  "viewerProfilesConfigured": true
+}
+```
+
+### Result
+
+The server-side privacy gate is live for logged-out users. The remaining
+production blocker for client profile testing is environment configuration:
+Render does not yet have `CLIPPING_VIEWER_PASSWORDS`, so viewer logins for
+`flavio`, `shakira`, `rio_economico`, and `demo_cliente` cannot be proven on
+production yet.
+
+Do not call the first segregation sprint fully production-complete until
+`CLIPPING_VIEWER_PASSWORDS` is configured on Render and at least one viewer
+profile is checked end to end.
