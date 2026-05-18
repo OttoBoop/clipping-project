@@ -5537,3 +5537,323 @@ No push blocker.
 
 Push this log evidence, poll Render, and repeat live privacy smoke when the
 newest deploy promotes.
+
+## 2026-05-18 20:27 -03 - Loop Cycle: Render After Rio V2 Review Push
+
+### Objective Reviewed
+
+After pushing the Rio v2 review and log, Render must be checked again.
+
+### Action Taken
+
+Pushed:
+
+```text
+9d45a6f docs: log Rio v2 review push
+```
+
+Then polled Render.
+
+### Evidence
+
+```text
+dep-d86fdt3b2obc73d69110 9d45a6f docs: log Rio v2 review push -> queued
+dep-d86fcaki5fes73e3fo1g 2d2734f docs: log target config source review -> build_in_progress
+dep-d86fb0rsuu8s73ddr5jg 25b99cc docs: log Rio live smoke and deploy watch -> live
+dep-d86faabsuu8s73ddqrcg 53cd9eb docs: log Rio refinement push -> deactivated
+```
+
+### Barrier Or Failure
+
+No deploy failure. The current live commit is `25b99cc`; newer commits are not
+live yet.
+
+### Next Objective From Docs
+
+Run logged-out privacy smoke on `25b99cc`, then keep polling until the newest
+commit promotes.
+
+## 2026-05-18 20:28 -03 - Loop Cycle: Live Logged-Out Smoke On 25b99cc
+
+### Objective Reviewed
+
+Render reported `25b99cc` as live, so the live privacy gate needed another
+verification pass.
+
+### Live Evidence
+
+URL checked: `https://clipping-project.onrender.com/`
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof remains blocked by
+missing local viewer passwords.
+
+### Next Objective From Docs
+
+Re-read active docs, choose the next non-secret task while Render promotes
+newer commits, then poll Render again.
+
+## 2026-05-18 20:30 -03 - Loop Cycle: Docs Re-Read And Next Axis Chosen
+
+### Objective Reviewed
+
+Re-read:
+
+```text
+LONG_TERM_GOALS.md
+DEPENDENCY_MAP.md
+CURRENT_SHORT_TERM_LOOP.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Decision
+
+The current Render live gate is still passing logged-out checks, and
+authenticated proof remains blocked by local absence of viewer passwords. The
+next unblocked docs-derived item is Rio v3 query cleanup, because
+`ACTIVE_NEXT_ACTION.md` now says the v2 sample is promising but still requires
+cleanup before any production target row.
+
+### Barrier Or Failure
+
+Viewer-password proof remains blocked locally. That blocker is logged and does
+not stop the loop.
+
+### Next Objective From Docs
+
+Create a v3 Rio query file that mitigates v2 false positives, run a dry-run
+sample, and keep polling Render.
+
+## 2026-05-18 20:33 -03 - Loop Cycle: Rio V3 Query File And Dry-Run
+
+### Objective Reviewed
+
+The v2 review required a v3 cleanup before any production `rio_economico`
+target row.
+
+### Action Taken
+
+Added:
+
+```text
+data/reports/rio_economic_revised_queries_v3_20260518.json
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+```
+
+Then ran:
+
+```text
+python -m json.tool data/reports/rio_economic_revised_queries_v3_20260518.json
+python tools/rio_economic_dry_run.py --queries-file data/reports/rio_economic_revised_queries_v3_20260518.json --limit-per-query 3 --request-timeout 5 --resolve-timeout 0 --collection-timeout 6000
+```
+
+### Evidence
+
+JSON validation passed. Live dry-run returned:
+
+```text
+ok=true
+row_count=33
+json=data/reports/rio_economic_dry_run_20260518T234818Z.json
+csv=data/reports/rio_economic_dry_run_20260518T234818Z.csv
+markdown=data/reports/rio_economic_dry_run_20260518T234818Z.md
+resolve_timeout=0
+```
+
+### Barrier Or Failure
+
+No dry-run blocker. The v3 sample still needs title-level review before any
+production target row.
+
+### Next Objective From Docs
+
+Review v3 titles, compare against v2 false positives, and keep production
+segregation checks alive on Render.
+
+## 2026-05-18 20:38 -03 - Loop Cycle: Rio V3 Title Review Written
+
+### Objective Reviewed
+
+The v3 sample needed title-level labels and a decision about whether it is
+ready for production target creation.
+
+### Action Taken
+
+Reviewed the 33 v3 titles and added:
+
+```text
+RIO_ECONOMIC_V3_SAMPLE_REVIEW_20260518T234818Z.md
+```
+
+Updated:
+
+```text
+RIO_ECONOMIC_VALIDATION_PLAN.md
+ACTIVE_NEXT_ACTION.md
+```
+
+### Evidence
+
+Title-level tally:
+
+```text
+true_positive=31
+useful_unclear=1
+false_positive=1
+unclear=0
+useful_or_unclear=32/33
+```
+
+The v3 sample fixed the major v2 leakage classes: Rio Grande ambulante,
+TurisMall dimension mismatch, national IBS/federalism, and generic Mother's Day
+official story.
+
+### Barrier Or Failure
+
+Still not production approval. Remaining required steps:
+
+```text
+body/source review
+fresh production scoping proof after latest deploys
+first narrow production run design
+```
+
+### Next Objective From Docs
+
+Rebase on current remote, run checks, commit and push the v3 artifacts
+path-limited, then poll Render again.
+
+## 2026-05-18 20:39 -03 - Loop Cycle: Rebased Before Rio V3 Publish
+
+### Objective Reviewed
+
+The v3 Rio artifacts must be published on top of current `origin/master`.
+
+### Action Taken
+
+Ran:
+
+```text
+git pull --rebase --autostash origin master
+```
+
+### Evidence
+
+The remote advanced from `9d45a6f` to:
+
+```text
+6cc6b4d test: cover runtime target count recompute
+```
+
+Incoming files:
+
+```text
+assets/clipping.js
+tools/pages_assets/clipping.js
+tests/test_pages_performance.py
+md documents/clipping-segregation-product-loop-2026-05-18/CURRENT_SHORT_TERM_LOOP.md
+md documents/amio-clipping-repair-2026-05-18/WORK_LOG.md
+```
+
+Autostash reapplied Rio v3 artifacts cleanly.
+
+### Barrier Or Failure
+
+No conflict. Incoming JS/test work belongs to the active repair loop and was not
+modified by this loop.
+
+### Next Objective From Docs
+
+Run checks, commit and push the v3 artifacts path-limited.
+
+## 2026-05-18 20:40 -03 - Loop Cycle: Rio V3 Pre-Commit Check Hit Remote Advance
+
+### Objective Reviewed
+
+Validate v3 artifacts before commit and keep branch current.
+
+### Action Taken
+
+Ran:
+
+```text
+git diff --check -- Rio v3 docs/artifacts
+python -m json.tool data/reports/rio_economic_revised_queries_v3_20260518.json
+python -m json.tool data/reports/rio_economic_dry_run_20260518T234818Z.json
+git status --short --branch
+```
+
+### Evidence
+
+`git diff --check` passed with no output. Both JSON files parsed successfully.
+Status showed only intended Rio/product-loop artifacts, but also:
+
+```text
+atlas/segmentation-demo-workaround...origin/master [behind 1]
+```
+
+### Barrier Or Failure
+
+Remote advanced again before commit.
+
+### Next Objective From Docs
+
+Rebase with autostash, then commit and push the v3 artifacts path-limited.
+
+## 2026-05-18 20:41 -03 - Loop Cycle: Rebased To Hosted Publication Verification
+
+### Objective Reviewed
+
+The v3 artifacts must be published after integrating the active publication
+state fixes and logs.
+
+### Action Taken
+
+Ran:
+
+```text
+git pull --rebase --autostash origin master
+```
+
+### Evidence
+
+The remote advanced from `6cc6b4d` to:
+
+```text
+f194300 docs: log hosted publication state verification
+a503ed3 docs: log browser functional regression
+6cc6b4d docs: log publication state hosted watch
+```
+
+Autostash reapplied this loop's v3 artifacts cleanly. Current dirty paths are
+still limited to Rio/product-loop docs and report artifacts.
+
+### Barrier Or Failure
+
+No conflict.
+
+### Next Objective From Docs
+
+Commit and push the v3 artifacts path-limited.

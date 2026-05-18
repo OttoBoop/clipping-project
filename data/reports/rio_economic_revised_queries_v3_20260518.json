@@ -1,0 +1,76 @@
+{
+  "created_at": "2026-05-18T23:51:00Z",
+  "source_review": "md documents/clipping-segregation-product-loop-2026-05-18/RIO_ECONOMIC_V2_SAMPLE_REVIEW_20260518T234225Z.md",
+  "notes": "Third Rio economic dry-run query set. Mitigates v2 Rio Grande, national fiscal-analysis, and generic economic-development leakage.",
+  "queries": [
+    {
+      "dimension": "tourism_events",
+      "query": "\"Rio de Janeiro\" \"ocupacao hoteleira\"",
+      "why_candidate": "city visitor-demand signal with hotel occupancy anchor",
+      "exclude_title_terms": ["Rio das Ostras", "Rio Grande"]
+    },
+    {
+      "dimension": "tourism_events",
+      "query": "\"Rio de Janeiro\" \"impacto economico\" turismo",
+      "why_candidate": "tourism stories with explicit economic impact language",
+      "exclude_title_terms": ["Rio Grande", "Rio das Ostras"]
+    },
+    {
+      "dimension": "commerce_services",
+      "query": "\"Prefeitura do Rio\" ambulantes comercio",
+      "why_candidate": "city commerce/order signal tied to municipal action",
+      "exclude_title_terms": ["Rio Grande", "Festimar"]
+    },
+    {
+      "dimension": "commerce_services",
+      "query": "\"Prefeitura do Rio\" \"Mercado Popular da Uruguaiana\"",
+      "why_candidate": "city commerce hub signal with strong place anchor"
+    },
+    {
+      "dimension": "jobs_income",
+      "query": "\"Prefeitura do Rio\" \"vagas\" \"Trabalho e Renda\"",
+      "why_candidate": "city jobs signal anchored to municipal labor office",
+      "exclude_title_terms": ["Porto Velho", "portovelho"]
+    },
+    {
+      "dimension": "jobs_income",
+      "query": "\"Rio de Janeiro\" hotelaria vagas emprego",
+      "why_candidate": "hotel/tourism labor-market signal with explicit city anchor",
+      "exclude_title_terms": ["Brasil", "nacional", "corporativo"]
+    },
+    {
+      "dimension": "construction_real_estate",
+      "query": "\"Prefeitura do Rio\" licenciamento obras",
+      "why_candidate": "municipal permitting and construction activity signal"
+    },
+    {
+      "dimension": "construction_real_estate",
+      "query": "\"cidade do Rio\" mercado imobiliario",
+      "why_candidate": "city-specific real-estate activity",
+      "exclude_title_terms": ["Rio Grande"]
+    },
+    {
+      "dimension": "municipal_finance",
+      "query": "\"Prefeitura do Rio\" ISS arrecadacao",
+      "why_candidate": "municipal tax and revenue signal",
+      "exclude_title_terms": ["Pernambuco", "pernambucanos"]
+    },
+    {
+      "dimension": "municipal_finance",
+      "query": "\"Fazenda\" \"Camara do Rio\" arrecadacao",
+      "why_candidate": "municipal finance result with city legislative anchor",
+      "exclude_title_terms": ["IBS", "federalismo", "Comite gestor"]
+    },
+    {
+      "dimension": "economic_development",
+      "query": "\"Invest.Rio\" empresas investidores",
+      "why_candidate": "city business-attraction and investor signal"
+    },
+    {
+      "dimension": "economic_development",
+      "query": "\"Prefeitura do Rio\" \"impacto economico\"",
+      "why_candidate": "official city economic-impact language",
+      "exclude_title_terms": ["maes", "mães", "estado do Rio"]
+    }
+  ]
+}

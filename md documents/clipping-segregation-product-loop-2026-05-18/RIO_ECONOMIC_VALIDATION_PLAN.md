@@ -270,6 +270,23 @@ The v2 sample is stronger, but it still needs v3 cleanup for Rio Grande
 ambulante false positives, national fiscal-analysis leakage, and generic
 official economic-development queries.
 
+V3 revised sample evidence:
+
+```text
+data/reports/rio_economic_revised_queries_v3_20260518.json
+data/reports/rio_economic_dry_run_20260518T234818Z.json
+row_count=33
+query_count=12
+RIO_ECONOMIC_V3_SAMPLE_REVIEW_20260518T234818Z.md
+true_positive=31
+useful_unclear=1
+false_positive=1
+useful_or_unclear=32/33
+```
+
+The v3 title-level sample is strong enough for body/source review, but still
+does not approve a production target row by itself.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?
