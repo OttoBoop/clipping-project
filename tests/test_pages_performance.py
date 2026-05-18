@@ -630,7 +630,7 @@ class TestFunctionalSanity:
             page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)
             page.locator("#manageTargetsBox").evaluate("el => { el.open = true; }")
             page.wait_for_selector('[data-target-edit="ana_teste"]:not([disabled])', timeout=10000)
-            assert page.locator("#manageTargetsBlocked").is_hidden()
+            assert page.locator("#manageTargetsBlocked").count() == 0
             page.click('[data-target-edit="ana_teste"]')
             name_input = page.locator('[data-manage-target-key="ana_teste"] input[name="display_name"]')
             name_input.wait_for(state="visible", timeout=10000)

@@ -74,7 +74,6 @@
   const manageTargetsBox = document.getElementById("manageTargetsBox");
   const manageTargetsList = document.getElementById("manageTargetsList");
   const archivedTargetsList = document.getElementById("archivedTargetsList");
-  const manageTargetsBlocked = document.getElementById("manageTargetsBlocked");
   const manageTargetsMessage = document.getElementById("manageTargetsMessage");
   const primaryRunTargets = document.getElementById("primaryRunTargets");
   const secondaryRunTargets = document.getElementById("secondaryRunTargets");
@@ -742,7 +741,6 @@
 
   function renderManageTargets() {
     if (!manageTargetsList || !archivedTargetsList) return;
-    if (manageTargetsBlocked) manageTargetsBlocked.hidden = true;
     var active = managedTargets.filter(function (target) { return !target.primary && !target.archived; });
     var archived = managedTargets.filter(function (target) { return !target.primary && target.archived; });
     manageTargetsList.innerHTML = active.length

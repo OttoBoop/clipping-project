@@ -3447,3 +3447,59 @@ another local target/error contract pass and document it.
 
 Base atual/live-results contracts pass locally, but hosted payload inspection is
 auth-gated and the inline validation bundle is not live yet.
+
+## 2026-05-19 - Fifty-Eighth Cleanup Cycle: Remove Hidden Blocker Copy
+
+### Objective Reviewed
+
+The old target-management blocker text should not remain in the visible or
+hidden management UI after the lock behavior was removed. Hidden copy can still
+mislead future agents and tests.
+
+### Audit Performed
+
+- Searched for `manageTargetsBlocked` and the old "Aguarde a atualização
+  terminar para mudar os nomes acompanhados" string.
+- Removed the hidden warning element from `index.html`.
+- Removed the now-unused JS reference from both dashboard bundles.
+- Updated the browser test to assert the old blocker element is absent.
+
+### Result
+
+The old blocker text remains only in `friendlyError()` as compatibility for
+stale backend responses, not in the target management UI markup or control flow.
+
+Focused checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_edit_stays_available_during_running_update \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_short_name_shows_inline_error_without_api_call \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  -q
+```
+
+Result: `3 passed in 1.82s`.
+
+Related checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_does_not_lock_target_management_during_updates \
+  tests/test_admin_ui.py::test_targets_api_short_name_error_explains_field_and_fix \
+  -q
+```
+
+Result: `13 passed in 10.42s`.
+
+### Next Hypothesis
+
+Commit the hidden-copy cleanup, push, then continue watching the hosted bundle
+for inline validation and absence of `manageTargetsBlocked`.
+
+### Why The Loop Continues
+
+The local UI no longer carries the hidden blocker copy, but the hosted inline
+validation bundle still needs to deploy.
