@@ -1546,6 +1546,7 @@
         key = String(key || "").trim();
         if (!key) return;
         labelsByKey[key] = labels[key] || labelsByKey[key] || key;
+        if (activeTargetKeys.size) activeTargetKeys.add(key);
         if (!byKey[key]) {
           byKey[key] = {
             key: key,

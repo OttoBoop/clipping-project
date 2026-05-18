@@ -417,6 +417,81 @@ class TestFunctionalSanity:
         assert "Digite um nome de exibicao com 3 caracteres ou mais." in message
         assert "Não foi possível salvar este nome." not in message
 
+    def test_live_results_target_outside_initial_targets_becomes_filterable(self, browser_ctx, local_server):
+        """A live saved article should expose its target as a selectable filter."""
+        page = browser_ctx.new_page()
+
+        def targets(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        "targets": [
+                            {"key": "flavio_valle", "label": "Flávio Valle", "primary": True},
+                        ],
+                        "primaryKeys": ["flavio_valle"],
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        def update_status(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps({"current": {"status": "idle"}, "recent": []}),
+            )
+
+        def live_results(route):
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        "items": [
+                            {
+                                "articleId": 99001,
+                                "storyId": 99001,
+                                "title": "Projeto Zeta salvo na Base atual",
+                                "url": "https://example.com/projeto-zeta",
+                                "sourceName": "Fonte Teste",
+                                "publishedAt": "2026-05-19T12:00:00+00:00",
+                                "savedAt": "2026-05-19T12:03:00+00:00",
+                                "snippet": "Projeto Zeta entrou pelo overlay ao vivo.",
+                                "summary": "Projeto Zeta entrou pelo overlay ao vivo.",
+                                "publicationState": "saved",
+                                "targetKeys": ["projeto_zeta"],
+                                "targetLabels": {"projeto_zeta": "Projeto Zeta"},
+                            }
+                        ],
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        page.route("**/api/targets**", targets)
+        page.route("**/api/update/status", update_status)
+        page.route("**/api/update/live-results**", live_results)
+
+        try:
+            page.goto(f"{local_server}/index.html", wait_until="domcontentloaded")
+            page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)
+            page.wait_for_selector("#outrosFilters", timeout=10000)
+            page.click("#outrosFilters summary")
+            projeto_zeta = page.locator('[data-filter-target="projeto_zeta"]').first
+            projeto_zeta.wait_for(state="visible", timeout=10000)
+            text = projeto_zeta.inner_text()
+            projeto_zeta.click()
+            page.wait_for_selector("#flatStack .article-card:has-text('Projeto Zeta salvo na Base atual')", timeout=10000)
+            active = projeto_zeta.evaluate("el => el.classList.contains('active')")
+        finally:
+            page.close()
+
+        assert "Projeto Zeta" in text
+        assert "1 história" in text
+        assert active
+
     def test_load_more_works(self, browser_ctx, local_server):
         """Load-more button should increase article count."""
         page = browser_ctx.new_page()

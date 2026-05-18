@@ -2667,3 +2667,71 @@ Deploy caught up and fallback contracts pass, but that is still only a
 checkpoint. The user asked for repeated review of the whole target -> ingestion
 -> SQLite -> live-results -> export -> filter loop, so the next cycle should
 search for unguarded edges.
+
+## 2026-05-19 - Forty-Fifth Contract Cycle: Live-Only Target Filter Gap
+
+### Objective Reviewed
+
+The active long-term goal was the Base atual/live-results loop: when a saved
+article appears via live-results, its target must be visible and selectable in
+the frontend filter path. This matters for cases where the live overlay knows
+about a target before the initial `/api/targets` response or static snapshot has
+that target in the active frontend set.
+
+### Audit Performed
+
+- Inspected `mergeLiveResultsIntoPayload()` and `ensureLiveTargetRows()` in
+  both dashboard JS bundles.
+- Added a Playwright contract where `/api/targets` returns only the primary
+  target, but `/api/update/live-results` returns a saved article for a new
+  secondary target with `targetLabels`.
+- Ran the new test before the fix and observed it fail because `#outrosFilters`
+  never appeared.
+- Patched `ensureLiveTargetRows()` so live-result target keys are also promoted
+  into `activeTargetKeys` when that set is already scoped.
+
+### Result
+
+Found a real filter visibility bug. Before the patch, live-results could add a
+target row to `payload.targets` while `isPublicTarget()` still hid it because
+`activeTargetKeys` had been initialized from an older `/api/targets` response.
+After the patch, a live saved article for `projeto_zeta` creates a visible
+secondary target chip and the article is visible after selecting that filter.
+
+Focused check:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_live_results_target_outside_initial_targets_becomes_filterable \
+  -q
+```
+
+Result: `1 passed in 1.65s`.
+
+Related live/filter/export checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  tests/test_export_mobile_snapshot_pages.py::test_active_targets_without_stories_stay_available_as_filters \
+  tests/test_export_mobile_snapshot_pages.py::test_archived_targets_do_not_reappear_in_export_filters \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  tests/test_admin_ui.py::test_viewer_cannot_widen_live_results_or_write_admin_actions \
+  tests/test_admin_ui.py::test_live_results_endpoint_returns_saved_articles_before_export \
+  tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter \
+  -q
+```
+
+Result: `12 passed in 7.60s`.
+
+### Next Hypothesis
+
+Commit this live-filter fix, rebase over the parallel documentation commit
+`100be3c`, push, and then audit the hosted JS again. After that, continue
+checking adjacent management flows and live Base atual behavior.
+
+### Why The Loop Continues
+
+This cycle found and fixed a real end-to-end gap, but it is still a checkpoint.
+The fix needs a disciplined commit, deployment watch, live asset verification,
+and another pass over target management/live-results edges.
