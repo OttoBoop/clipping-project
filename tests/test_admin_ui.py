@@ -309,6 +309,61 @@ def test_dashboard_payload_and_raw_text_are_password_scoped(monkeypatch, tmp_pat
     assert raw.json() == {"article-20": "Texto Shakira"}
 
 
+def test_scoped_payload_counts_raw_articles_without_raw_text_key(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+    asset_dir = tmp_path / "assets"
+    asset_dir.mkdir(parents=True, exist_ok=True)
+    (asset_dir / "clipping-data.json").write_text(
+        json.dumps(
+            {
+                "meta": {
+                    "pageTitle": "Fixture",
+                    "generatedAt": "2026-05-18",
+                    "totalStories": 1,
+                    "totalArticles": 1,
+                    "totalAi": 0,
+                    "totalRaw": 1,
+                },
+                "targets": [{"key": "shakira", "label": "Shakira", "primary": False}],
+                "defaultTargets": ["shakira"],
+                "stories": [
+                    {
+                        "storyIdInt": 2,
+                        "title": "Shakira sem raw text separado",
+                        "targetKeys": ["shakira"],
+                        "articles": [
+                            {
+                                "articleId": 20,
+                                "title": "Shakira sem raw text separado",
+                                "targetKeys": ["shakira"],
+                                "rawTextKey": "",
+                                "summarySource": "raw",
+                            }
+                        ],
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (asset_dir / "clipping-raw-texts.json").write_text("{}", encoding="utf-8")
+    (asset_dir / "clipping.js").write_text("// fixture", encoding="utf-8")
+    monkeypatch.setattr(app_module, "ASSETS_DIR", asset_dir)
+
+    with TestClient(app) as client:
+        login_viewer(client, "viewer-shakira")
+        response = client.get("/assets/clipping-data.json")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["meta"]["totalArticles"] == 1
+    assert payload["meta"]["totalAi"] == 0
+    assert payload["meta"]["totalRaw"] == 1
+    assert payload["stories"][0]["rawCount"] == 1
+
+
 def test_viewer_profile_scope_can_come_from_reviewable_config_file(monkeypatch, tmp_path):
     profiles_path = tmp_path / "viewer_profiles.json"
     profiles_path.write_text(

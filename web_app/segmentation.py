@@ -216,7 +216,7 @@ def scoped_dashboard_payload(payload: dict[str, Any], session: dict[str, Any]) -
         story_copy["targetKeys"] = story_target_keys
         story_copy["articleCount"] = len(articles)
         story_copy["aiCount"] = sum(1 for article in articles if str(article.get("summarySource") or "").lower() == "ai")
-        story_copy["rawCount"] = sum(1 for article in articles if str(article.get("rawTextKey") or "").strip())
+        story_copy["rawCount"] = story_copy["articleCount"] - story_copy["aiCount"]
         stories.append(story_copy)
         total_articles += story_copy["articleCount"]
         total_ai += story_copy["aiCount"]

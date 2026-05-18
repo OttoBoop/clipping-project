@@ -5553,3 +5553,56 @@ connection checklist to look for a remaining untested edge.
 Scoping contracts passing means the parallel auth work is compatible with the
 current target management checks, but it does not prove every live Base atual
 edge. The loop continues into another checklist review.
+
+## 2026-05-18 - One Hundred Fifth Scoped Raw Counter Repair
+
+### Objective Reviewed
+
+While reviewing viewer scoping against the long-term requirement that Base atual
+stats and filters stay truthful, I compared `web_app/segmentation.py` with the
+dashboard/export count rules.
+
+### Audit Performed
+
+- Read `web_app/segmentation.py`.
+- Compared scoped payload raw counters against `assets/clipping.js`, where raw
+  count is `articleCount - aiCount`.
+- Added
+  `tests/test_admin_ui.py::test_scoped_payload_counts_raw_articles_without_raw_text_key`.
+
+### Result
+
+Found and fixed a real scoped-dashboard counter bug:
+
+```text
+before patch: viewer scoped payload counted rawCount only when rawTextKey existed
+expected: summarySource != "ai" counts as raw, even without separate raw text
+red test: totalRaw was 0 for a raw article with rawTextKey ""
+patch: story rawCount = articleCount - aiCount
+focused rerun: 5 passed in 0.56s
+```
+
+Focused rerun:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_scoped_payload_counts_raw_articles_without_raw_text_key \
+  tests/test_admin_ui.py::test_dashboard_payload_and_raw_text_are_password_scoped \
+  tests/test_admin_ui.py::test_viewer_profile_scope_can_come_from_reviewable_config_file \
+  tests/test_admin_ui.py::test_dashboard_shell_marks_viewer_session_before_payload_load \
+  tests/test_admin_ui.py::test_viewer_cannot_widen_live_results_or_write_admin_actions \
+  -q
+```
+
+Restored generated `pipeline/__pycache__` after tests.
+
+### Next Hypothesis
+
+Commit the scoped raw counter fix path-limited, push/rebase if needed, then
+continue with hosted verification and another checklist review.
+
+### Why The Loop Continues
+
+This repairs another counter mismatch, but it is still one edge in the larger
+target/filter/Base atual contract. Hosted deploy and live endpoint auth barriers
+remain active watch items.
