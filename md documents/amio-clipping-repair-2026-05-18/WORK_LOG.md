@@ -4703,3 +4703,42 @@ target-management contract check.
 
 Hosted health is good, but the direct status/live payload remains auth-gated.
 That means continue with accessible checks, not stop.
+
+## 2026-05-18 - Eighty-Fifth Non-Fast-Forward Barrier Cycle
+
+### Objective Reviewed
+
+Git concurrency remains part of the loop: remote work must be inspected and
+integrated without overwriting other agents or stopping.
+
+### Audit Performed
+
+- Push of `47ae02d docs: log hosted watch after no-export guard` was rejected
+  with `non-fast-forward`.
+- Inspected remote commit
+  `e7b5e92 feat: make Rio dry-run skip redirect resolution`.
+- Remote commit touched Rio economic dry-run reports/docs plus
+  `pipeline/collectors.py`, `tests/test_collectors_restore.py`,
+  `tests/test_rio_economic_dry_run.py`, and `tools/rio_economic_dry_run.py`.
+- Rebased the clipping hosted-watch log over `origin/master`.
+- Pushed the rebased log as `acce5d3`.
+
+### Result
+
+Barrier answered and resolved:
+
+```text
+remote advanced: e7b5e92 feat: make Rio dry-run skip redirect resolution
+resolution: git rebase origin/master, then push HEAD:master
+pushed: acce5d3 docs: log hosted watch after no-export guard
+```
+
+### Next Hypothesis
+
+Because the remote commit touched `pipeline/collectors.py`, run a small
+collector/ingestion-adjacent verification before returning to live watch.
+
+### Why The Loop Continues
+
+The git barrier is resolved, but remote collector changes can affect the
+clipping update loop. Verification remains useful.
