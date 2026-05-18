@@ -121,6 +121,14 @@ def test_export_bundle_uses_current_dashboard_javascript():
     assert export_mobile_snapshot.build_pages_javascript() == dashboard_js
 
 
+def test_dashboard_javascript_preserves_original_target_keys_for_visible_articles():
+    dashboard_js = (PROJECT_ROOT / "assets" / "clipping.js").read_text(encoding="utf-8")
+
+    assert "var originalTargetKeys = articleTargetKeys(article, story);" in dashboard_js
+    assert "var visibleTargetKeys = originalTargetKeys.slice();" in dashboard_js
+    assert "targetKeys: visibleTargetKeys.length ? visibleTargetKeys : originalTargetKeys" in dashboard_js
+
+
 def test_static_export_marks_bundle_to_skip_api_polling(tmp_path):
     db_path = tmp_path / "clipping.db"
     seed_story_db(db_path)

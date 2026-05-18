@@ -721,3 +721,53 @@ Result: `43 passed in 1.80s`.
 - Verify a real browser call to the published site now requests
   `/api/update/live-results?scope=base&limit=240` and renders live Base atual
   items without using a local server.
+
+## 2026-05-18 - Tenth Technical Loop: Dashboard JS Runtime Stopped Live Polling
+
+### Problem Found
+
+After the hosted dashboard marker changed to `data-clipping-static="0"`, a real
+browser smoke still did not call `/api/update/live-results`. Capturing page
+errors showed:
+
+```text
+originalTargetKeys is not defined
+```
+
+That runtime error happened during dashboard initialization, before status/base
+polling could start.
+
+### Cause
+
+`visibleArticles()` used `originalTargetKeys` as a fallback when selected
+filters hid all visible keys, but the variable was never declared. The intended
+source was the unfiltered result of `articleTargetKeys(article, story)`.
+
+### Changes Made
+
+- Declared `originalTargetKeys` in `visibleArticles()`.
+- Changed `visibleTargetKeys` to a copy of `originalTargetKeys` before applying
+  selected-target filtering.
+- Applied the same fix to `assets/clipping.js` and
+  `tools/pages_assets/clipping.js` so generated exports keep matching the app
+  bundle.
+- Added a regression assertion that the dashboard JS preserves original target
+  keys before filtering.
+
+### Verification
+
+Focused export/JS unit:
+
+```bash
+.venv_playwright/bin/pytest tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_preserves_original_target_keys_for_visible_articles -q
+```
+
+Result: `1 passed in 0.08s`.
+
+Combined admin/export suite:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result: `44 passed in 1.80s`.

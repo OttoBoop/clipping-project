@@ -422,7 +422,8 @@
     const articles = [];
     stories.forEach(function (story) {
       visibleArticlesForStory(story).forEach(function (article) {
-        var visibleTargetKeys = articleTargetKeys(article, story);
+        var originalTargetKeys = articleTargetKeys(article, story);
+        var visibleTargetKeys = originalTargetKeys.slice();
         if (!allPublicTargetsSelected()) {
           visibleTargetKeys = visibleTargetKeys.filter(function (key) { return selectedTargets.has(key); });
         }
