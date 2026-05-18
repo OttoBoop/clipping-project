@@ -5089,3 +5089,76 @@ target/filter/Base atual path.
 
 Hosted health is only a checkpoint, and direct status/live payloads remain
 auth-gated. Local contracts and source review remain available.
+
+## 2026-05-18 - Ninety-Fifth Local Base Atual Contract Fallback
+
+### Objective Reviewed
+
+Since hosted status/live-results remain auth-gated, the loop must continue with
+local contracts that prove the same target/filter/Base atual behavior.
+
+### Audit Performed
+
+- Ran focused local contracts for target creation/backfill, manual story live
+  base, update without export publication state, and target-sync backfill:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter \
+  tests/test_admin_ui.py::test_manual_story_insert_creates_unique_story_graph \
+  tests/test_targets_jobs.py::test_update_without_export_keeps_base_live_result_saved \
+  tests/test_targets_jobs.py::test_target_sync_backfills_new_target_into_base_live_results \
+  -q
+```
+
+Result: `4 passed in 0.60s`.
+
+- Restored generated `pipeline/__pycache__` dirt after tests.
+- Confirmed the loop worktree is clean.
+
+### Result
+
+The local authenticated/contract substitute for the auth-gated hosted payload is
+green.
+
+### Next Hypothesis
+
+Commit this fallback log, then continue with another source review or hosted
+watch.
+
+### Why The Loop Continues
+
+The fallback contracts passed, but tests passing is a checkpoint. The loop still
+has hosted auth barriers and repeated target/filter/Base atual review work.
+
+## 2026-05-18 - Ninety-Sixth Push Barrier Rebase Watch
+
+### Objective Reviewed
+
+The loop must treat a rejected push as a barrier to answer, log, resolve, and
+continue. It is not permission to stop after the local contract checkpoint.
+
+### Audit Performed
+
+- Tried to push `docs: log local live contract fallback` to `origin/master`.
+- Push was rejected as non-fast-forward.
+- Inspected `origin/master`.
+
+### Result
+
+Barrier answered: the remote advanced with
+`d0ebc1f docs: define V1 clipping delivery scope`, touching only
+`md documents/clipping-segregation-product-loop-2026-05-18/` files. This does
+not overlap the clipping repair log path, so the next safe step is rebase and
+push.
+
+### Next Hypothesis
+
+Amend this barrier record into the local docs checkpoint, rebase onto
+`origin/master`, push, and continue the clipping repair loop.
+
+### Why The Loop Continues
+
+The push barrier is administrative. The product loop still needs repeated
+review of hosted auth barriers, target/filter/Base atual contracts, export
+counts, and source/UI connections.
