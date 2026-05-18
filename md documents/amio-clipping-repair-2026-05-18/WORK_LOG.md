@@ -4497,3 +4497,47 @@ audit.
 
 Updating the plan prevents repeated work, but it does not replace continued
 review of the product loop.
+
+## 2026-05-18 - Eightieth Static Payload Target Consistency Audit
+
+### Objective Reviewed
+
+The original failure included a target that appeared visually but did not filter.
+The static payload must agree with active targets, story target keys, article
+target keys, and target counts.
+
+### Audit Performed
+
+- Parsed `data/targets.json` and `assets/clipping-data.json` as JSON.
+- Compared active target keys to payload target rows.
+- Compared story/article `targetKeys` to payload target rows.
+- Recomputed story/article counts per target from payload stories/articles and
+  compared them to `payload.targets[*].storyCount/articleCount`.
+
+### Result
+
+Static payload consistency snapshot:
+
+```text
+active_targets -> 5 ['flavio_valle', 'pedro_duarte', 'pedro_angelito', 'bernardo_rubiao', 'shakira']
+payload_targets -> 5 ['flavio_valle', 'pedro_duarte', 'pedro_angelito', 'bernardo_rubiao', 'shakira']
+active_missing_from_payload -> []
+payload_missing_from_active -> []
+story_keys_missing_from_payload_targets -> []
+article_keys_missing_from_payload_targets -> []
+count_mismatches -> [] total 0
+defaultTargets -> ['flavio_valle']
+meta -> totalStories 458, totalArticles 805, initialStoryCount 436, initialArticleCount 766
+```
+
+No static target/filter mismatch was found in the tracked payload.
+
+### Next Hypothesis
+
+Commit this audit log, then continue with hosted watch or another local contract.
+
+### Why The Loop Continues
+
+The tracked static payload is consistent now, but the loop also has runtime
+target creation, live overlay, auth-gated hosted payloads, and future exports to
+keep reviewing.
