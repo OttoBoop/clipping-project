@@ -319,6 +319,26 @@ class TestFunctionalSanity:
         page.close()
         assert outros is not None
 
+    def test_new_secondary_target_filter_is_visible_after_opening_outros(self, browser_ctx, local_server):
+        """New active secondary targets should be visible and selectable in the filter UI."""
+        page = browser_ctx.new_page()
+        page.goto(f"{local_server}/index.html", wait_until="networkidle")
+        page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)
+        page.click("#outrosFilters summary")
+        page.wait_for_timeout(200)
+        shakira = page.locator('[data-filter-target="shakira"]').first
+        text = shakira.inner_text()
+        visible = shakira.is_visible()
+        shakira.click()
+        page.wait_for_timeout(200)
+        active = shakira.evaluate("el => el.classList.contains('active')")
+        page.close()
+
+        assert visible
+        assert "Shakira" in text
+        assert "0 histórias" in text
+        assert active
+
     def test_load_more_works(self, browser_ctx, local_server):
         """Load-more button should increase article count."""
         page = browser_ctx.new_page()

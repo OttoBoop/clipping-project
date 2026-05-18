@@ -2334,3 +2334,65 @@ management after deploy.
 Otavio explicitly challenged the previous premature stop. The docs say
 checkpoint success is not an exit, and live authenticated Base atual
 verification is still blocked by viewer config rather than proven.
+
+## 2026-05-19 - Fortieth Contract Cycle: Frontend Filter Selectability
+
+### Objective Reviewed
+
+The system checklist says the frontend-visible filter must be selectable for a
+new target. Prior tests proved static target rows and export counts, but the
+browser path for a zero-count secondary target inside "Outros candidatos" was
+not explicitly guarded.
+
+### Audit Performed
+
+Ran a local browser smoke against `index.html`. It showed:
+
+```text
+Shakira filter exists in the DOM
+Shakira is hidden while #outrosFilters is closed
+Opening "Outros candidatos" makes Shakira visible
+Clicking Shakira marks the chip active
+```
+
+Added a Playwright-backed regression test:
+
+```text
+tests/test_pages_performance.py::TestFunctionalSanity::test_new_secondary_target_filter_is_visible_after_opening_outros
+```
+
+### Result
+
+Focused test:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_new_secondary_target_filter_is_visible_after_opening_outros \
+  -q
+```
+
+Result: `1 passed in 2.27s`.
+
+Related UI/export contracts:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  tests/test_bak_comparison.py::TestTargets \
+  tests/test_export_mobile_snapshot_pages.py::test_active_targets_without_stories_stay_available_as_filters \
+  -q
+```
+
+Result: `10 passed in 5.27s`.
+
+### Next Hypothesis
+
+Commit this frontend filter guard, then continue the loop by checking whether
+any other checklist step is only covered by API-level tests rather than a
+user-visible or live-equivalent path.
+
+### Why The Loop Continues
+
+This closes one frontend-visible target-filter gap, but authenticated published
+Base atual verification remains blocked and the protocol requires another
+cycle after the commit.
