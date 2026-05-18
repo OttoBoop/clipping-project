@@ -1374,3 +1374,39 @@ contracts, and export bundle behavior together.
 
 The core target/job suite passing is a checkpoint. It does not replace
 authenticated live verification and does not cover the admin/export UI surface.
+
+## 2026-05-18 - Twenty-Second Unattended Cycle: Admin And Export UI Contracts
+
+### Objective Reviewed
+
+The previous cycle covered target/job internals. The next useful unblocked
+surface was admin/export UI contracts, including auth/profile behavior that now
+controls access to the live site.
+
+### Audit Performed
+
+- Ran tracked admin UI tests.
+- Ran tracked export mobile snapshot/page tests.
+- Kept this local because the published site still requires login for API and
+  dashboard data checks.
+
+### Result
+
+Command:
+
+```bash
+.venv_playwright/bin/pytest tests/test_admin_ui.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result: `49 passed in 1.97s`.
+
+### Next Hypothesis
+
+Run a combined tracked checkpoint with target/jobs plus admin/export to catch
+cross-file regressions introduced by the recent unattended protocol and auth
+workstream changes.
+
+### Why The Loop Continues
+
+Admin/export passing is another checkpoint. A combined local checkpoint and the
+auth-gated live watch item remain.
