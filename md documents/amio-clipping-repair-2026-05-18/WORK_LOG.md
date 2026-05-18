@@ -5234,3 +5234,58 @@ This fixed one silent counter mismatch in the live Base atual overlay. Hosted
 payload inspection is still auth-gated, and the broader loop still needs
 repeated review of target creation, update snapshots, export counts, and
 published/live consistency.
+
+## 2026-05-18 - Ninety-Eighth Deploy Lag And Target Error Review
+
+### Objective Reviewed
+
+After pushing the live target counter repair, the loop must verify the hosted
+surface, log any barrier, and continue with the next unblocked checklist item.
+
+### Audit Performed
+
+- Pushed `b57de64 fix: recompute live target filter counts` to `origin/master`.
+- Confirmed local worktree was clean and `HEAD == origin/master == b57de64`.
+- Checked hosted `/healthz`: still HTTP 200 and `job: idle`.
+- Checked hosted `/assets/clipping.js` immediately after push and again after a
+  short wait.
+- Reviewed the target API error/sync path in `web_app/app.py` and
+  `web_app/jobs.py`.
+
+### Result
+
+Barrier answered: Render was still serving the old `ensureLiveTargetRows()`
+implementation after the wait:
+
+```text
+hosted JS still has: if (!payload) return;
+hosted JS still has: ensureLiveTargetRows(data.items); var changed = false;
+expected from b57de64: if (!payload) return false;
+expected from b57de64: var changed = ensureLiveTargetRows(data.items);
+```
+
+This is deploy/cache lag for the hosted verification of the patch. It does not
+block local contracts or source review.
+
+The target API review found the current intended structures still present:
+
+- validation failures return `target_validation_error` with `message`, `field`,
+  `suggestion`, and `detail`;
+- operation failures return `target_operation_failed` with cause and
+  suggestion;
+- create/update/restore call `target_mutation_response()` with `targetSync`;
+- archive does not pretend to backfill;
+- active updates add `activeJobNotice` explaining frozen job snapshots;
+- `record_target_sync()` emits `article_saved` events and uploads a live
+  checkpoint.
+
+### Next Hypothesis
+
+Commit this deploy-lag/source-review log, then continue by rerunning a focused
+target API contract set or checking hosted JS again later.
+
+### Why The Loop Continues
+
+The hosted patch is not verified live yet. Even after it appears live, the loop
+still needs repeated review across target API, update snapshot, live-results,
+export, and filter behavior.
