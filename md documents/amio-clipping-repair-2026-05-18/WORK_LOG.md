@@ -1024,3 +1024,40 @@ any target/live-base regression.
 Passing these focused tests is a checkpoint, not an exit. The unresolved live
 watch item is authenticated verification of status/live-results/Base atual on
 the published site.
+
+## 2026-05-18 - Fifteenth Loop Hardening: Unattended Mode
+
+### Objective Reviewed
+
+Otavio clarified the real failure: he needs to leave without babysitting the
+agent, and a 4-minute or 20-minute loop is still failure even if it produces
+commits. The protocol must say exactly what happens when the user is absent.
+
+### Audit Performed
+
+- Re-read `LOOP_OPERATING_PROTOCOL.md`.
+- Re-read `CURRENT_SHORT_TERM_LOOP.md`.
+- Re-read the recent auth-gated live audit and local contract cycle.
+- Confirmed the plan needs a stronger distinction between checkpoint, blocker,
+  and allowed exit.
+
+### Result
+
+- Added **Otavio Away Protocol** to `LOOP_OPERATING_PROTOCOL.md`.
+- Added a fixed unattended queue that repeats docs, live audit, auth fallback,
+  inconsistency search, log, commit, and restart.
+- Added explicit definitions for checkpoint, real blocker, and allowed exit.
+- Updated `CURRENT_SHORT_TERM_LOOP.md` with a user-away rule that forbids a
+  short final after one cycle.
+
+### Next Hypothesis
+
+The next cycle should test the protocol operationally: first with document
+greps proving the new unattended rules exist, then with the current auth-gated
+live/local-contract path. Passing those checks must lead to another cycle, not
+an immediate final.
+
+### Why The Loop Continues
+
+This hardening is itself a checkpoint. The next action is to verify, commit,
+push, then start the first unattended queue cycle under the new rule.

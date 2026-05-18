@@ -18,6 +18,41 @@ The loop may stop only when Otavio explicitly asks to pause, the session enters
 Plan Mode, or a real blocker is written in `WORK_LOG.md` with the next
 unblocked action.
 
+## Otavio Away Protocol
+
+When Otavio says he needs to leave, will be away, or cannot babysit the agent,
+the agent must switch into unattended loop behavior.
+
+Unattended loop behavior means:
+
+- do not send a final answer after one short cycle;
+- keep the turn open while there is any useful non-blocked work;
+- alternate between live audit, document review, focused tests, inconsistency
+  search, and `WORK_LOG.md` updates;
+- if one front is blocked, record the block and move to the next unblocked
+  queue item;
+- write "Why the loop continues" in every log entry.
+
+Forbidden endings while Otavio is away:
+
+- "tests passed" as a final stop;
+- "commit pushed" as a final stop;
+- "deploy verified" as a final stop;
+- "live auth blocked me" as a final stop when local contracts, health checks,
+  asset checks, docs, or handoff work remain available.
+
+Allowed endings while Otavio is away:
+
+- Otavio explicitly asks for pause, final, or handoff;
+- Plan Mode is active and mutation is prohibited;
+- every live and local queue item is blocked, and the block plus next required
+  human input is written in `WORK_LOG.md`;
+- the tool/session itself cannot continue.
+
+If a cycle finishes in less than 30 minutes, immediately start another cycle.
+Do not compensate by idling silently; do useful audit, documentation, or
+contract verification work.
+
 ## Standard Cycle
 
 Use 30-45 minute cycles. If a cycle finishes early, begin the next cycle
@@ -49,6 +84,37 @@ immediately.
    Run focused tests first, then live checks when applicable. Push real fixes,
    verify the published site, write the result in `WORK_LOG.md`, and return to
    step 1.
+
+## Fixed Unattended Queue
+
+When no higher-priority defect is already selected, use this queue exactly:
+
+1. Re-read `LONG_TERM_GOALS.md`, this protocol, and the tail of `WORK_LOG.md`.
+2. Audit `/api/update/status`, `/api/update/live-results`,
+   `/assets/clipping-data.json`, `/api/targets`, `/healthz`, and the hosted
+   dashboard.
+3. If live endpoints are blocked by auth, run the focused local contracts for
+   dashboard polling, viewer scoping, live-results, target backfill, and export
+   filters.
+4. Search for a new inconsistency in targets, filters, export, Base atual, job
+   events, source runs, or frontend runtime errors.
+5. Update `WORK_LOG.md` with the log format below.
+6. Commit/push the log if it records new evidence or decisions.
+7. Return to item 1.
+
+This queue is deliberately repetitive. Repetition is the mechanism that
+prevents context loss during multi-hour runs.
+
+## Checkpoint, Blocker, And Exit Meanings
+
+- **Checkpoint:** a test pass, commit, push, deploy, smoke, log entry, or
+  partial live verification. A checkpoint requires another cycle.
+- **Real blocker:** missing password/auth path, missing product decision,
+  permission failure, unsafe cross-agent conflict, or external service outage
+  that prevents all related verification paths.
+- **Allowed exit:** only an explicit pause/final request, Plan Mode, complete
+  exhaustion of unblocked queue items with a written blocker, or a hard
+  tool/session limit.
 
 ## Watch Queue
 

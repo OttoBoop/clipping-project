@@ -89,6 +89,28 @@ The durable update job, live-results overlay, published dashboard, target
 filters, and export counts remain active watch items until they are stable over
 repeated cycles or superseded by a higher-priority live failure.
 
+## User Away Rule
+
+If Otavio says he is leaving, busy, away, eating, or unable to babysit the
+agent, the short-term loop enters unattended mode from
+`LOOP_OPERATING_PROTOCOL.md`.
+
+In unattended mode:
+
+- do not send a final answer after one short cycle;
+- use the fixed unattended queue;
+- write `Why the loop continues` in `WORK_LOG.md`;
+- treat auth-gated live checks as a blocker for that specific check only, not
+  as a reason to stop all work;
+- if tests pass, start a new audit instead of ending.
+
+The minimum acceptable unattended behavior is repeated cycles of:
+
+```text
+re-read docs -> audit live or auth gate -> run focused contracts -> search next
+inconsistency -> update log -> continue
+```
+
 ## Debug Discipline
 
 Do not use the full test suite as the first debugging tool. It is too slow for
