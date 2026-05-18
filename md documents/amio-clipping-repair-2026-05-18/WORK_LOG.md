@@ -5011,3 +5011,41 @@ Commit this log entry, then continue the loop with another hosted/local audit.
 The rule is confirmed and logged, but that is not product completion. The next
 cycle must continue checking target/filter/Base atual behavior and auth-gated
 hosted payloads.
+
+## 2026-05-18 - Ninety-Third Demo Strategy Rebase Barrier Cycle
+
+### Objective Reviewed
+
+The barrier rule applies to remote branch movement: inspect, answer, rebase only
+if safe, log, and continue.
+
+### Audit Performed
+
+- Push of the rule reaffirmation commit was rejected with `non-fast-forward`.
+- Inspected `origin/master`.
+- Found the latest remote tip:
+  `40219d8 docs: add safe demo profile strategy`.
+- The remote stack also included Rio economic query/sample commits.
+- Latest remote commit touched only segregation/demo planning docs; earlier
+  remote commits touched Rio economic dry-run reports/tool/tests.
+- Rebased the clipping rule reaffirmation over `origin/master`.
+- Pushed the rebased reaffirmation as `0b7f2e5`.
+
+### Result
+
+Barrier answered and resolved:
+
+```text
+remote advanced: 40219d8 docs: add safe demo profile strategy
+resolution: git rebase origin/master, then push HEAD:master
+pushed: 0b7f2e5 docs: log clipping rule reaffirmation
+```
+
+### Next Hypothesis
+
+Commit this barrier log, then continue with hosted/local clipping checks.
+
+### Why The Loop Continues
+
+The git barrier is resolved, but the clipping product loop still has live auth
+barriers and target/filter/Base atual watch items.
