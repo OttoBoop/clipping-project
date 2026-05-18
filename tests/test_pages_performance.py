@@ -533,8 +533,8 @@ class TestFunctionalSanity:
                             "storiesTouched": 0,
                         },
                         "activeJobNotice": (
-                            "Nome salvo agora. A atualização em andamento continua com os nomes "
-                            "congelados no início; esta mudança vale para a base atual e para as próximas rodadas."
+                            "Alteração salva agora. A atualização em andamento continua com os nomes "
+                            "congelados no início; esta mudança vale para a Base atual e para as próximas rodadas."
                         ),
                     },
                     ensure_ascii=False,

@@ -695,7 +695,9 @@ def test_target_mutations_remain_available_while_update_is_active(monkeypatch, t
     assert [response.status_code for response in responses] == [200, 200, 200, 200]
     payloads = [response.json() for response in responses]
     assert all(payload["activeJob"]["status"] == "running" for payload in payloads)
+    assert all(payload["activeJobNotice"].startswith("Alteração salva agora.") for payload in payloads)
     assert all("continua com os nomes congelados" in payload["activeJobNotice"] for payload in payloads)
+    assert all("Base atual" in payload["activeJobNotice"] for payload in payloads)
     assert payloads[0]["targetSync"]["targetKey"] == "ana_teste"
     assert payloads[1]["targetSync"]["targetKey"] == "ana_teste"
     assert "targetSync" not in payloads[2]

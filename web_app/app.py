@@ -139,8 +139,8 @@ def target_mutation_notice() -> dict[str, Any]:
         return {}
     return {
         "activeJobNotice": (
-            "Nome salvo agora. A atualização em andamento continua com os nomes congelados no início; "
-            "esta mudança vale para a base atual e para as próximas rodadas."
+            "Alteração salva agora. A atualização em andamento continua com os nomes congelados no início; "
+            "esta mudança vale para a Base atual e para as próximas rodadas."
         ),
         "activeJob": {
             "id": str(status.get("id") or ""),

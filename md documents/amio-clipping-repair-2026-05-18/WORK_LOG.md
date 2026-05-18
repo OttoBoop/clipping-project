@@ -2865,3 +2865,65 @@ Commit this UI contract, push it, and return to the live watch for both
 This protects a second original complaint, but it is still a checkpoint. The
 hosted bundle and adjacent restore/archive/error flows still need repeated
 review.
+
+## 2026-05-19 - Forty-Eighth Copy Contract Cycle: Active Job Mutation Notice
+
+### Objective Reviewed
+
+The error/response goal is not only about failures. When target management is
+allowed during a running update, the success response must explain the snapshot
+behavior without using misleading wording for edit/archive/restore actions.
+
+### Audit Performed
+
+- Searched for `activeJobNotice` and the existing "Nome salvo agora" copy.
+- Confirmed that `target_mutation_notice()` is shared by create, update,
+  archive, and restore.
+- Replaced the action-specific-sounding "Nome salvo agora" with the neutral
+  "Alteração salva agora".
+- Standardized "Base atual" capitalization in the same notice.
+- Strengthened backend and browser tests to assert the clearer notice.
+
+### Result
+
+Changed the shared active-job notice to:
+
+```text
+Alteração salva agora. A atualização em andamento continua com os nomes
+congelados no início; esta mudança vale para a Base atual e para as próximas
+rodadas.
+```
+
+Focused checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_target_mutations_remain_available_while_update_is_active \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_edit_stays_available_during_running_update \
+  -q
+```
+
+Result: `2 passed in 2.29s`.
+
+Related checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_target_mutations_remain_available_while_update_is_active \
+  tests/test_admin_ui.py::test_targets_api_lists_archived_and_uploads_management_manifests \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  -q
+```
+
+Result: `10 passed in 8.06s`.
+
+### Next Hypothesis
+
+Commit the notice fix, push, then return to live asset verification and
+restore/archive frontend contracts.
+
+### Why The Loop Continues
+
+This improves one response path, but the loop still has hosted deploy watch and
+more management edges to audit.
