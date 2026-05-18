@@ -528,3 +528,25 @@ Combined loop checkpoint after bounded workers commit:
 ```
 
 Result: `114 passed in 3.18s`.
+
+## 2026-05-18 - Scope Correction: Remove Password/Segregation From This Loop
+
+### Error
+
+I incorrectly treated the staged password/profile segregation implementation as
+part of this repair loop. That violated the loop boundary: this folder owns
+target creation, target errors, filters, live base, export consistency, and
+bounded candidate processing. Password/profile segregation belongs to a
+separate agent/workstream.
+
+### Correction
+
+- Reverted the password/profile implementation commit and its segregation smoke
+  log commits from this branch.
+- Preserved the target/filter/live-base commits and the static export isolation
+  fix because they are part of the target repair loop.
+- Preserved the unrelated lightweight `recent_jobs(include_observability=False)`
+  status behavior instead of erasing inherited work while reverting the
+  password-specific changes.
+- The segregation documentation folder remains separate; it was not merged into
+  or used to replace this repair loop's long-term goals.

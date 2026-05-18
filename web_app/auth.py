@@ -23,18 +23,10 @@ def auth_configured() -> bool:
     return bool(_env_value("CLIPPING_ADMIN_PASSWORD") and _env_value("CLIPPING_SESSION_SECRET"))
 
 
-def viewer_auth_configured() -> bool:
-    return bool(viewer_passwords() and _env_value("CLIPPING_SESSION_SECRET"))
-
-
-def login_configured() -> bool:
-    return bool(_env_value("CLIPPING_SESSION_SECRET") and (_env_value("CLIPPING_ADMIN_PASSWORD") or viewer_passwords()))
-
-
 def _secret() -> bytes:
     value = _env_value("CLIPPING_SESSION_SECRET")
     if not value:
-        raise HTTPException(status_code=503, detail="login_auth_not_configured")
+        raise HTTPException(status_code=503, detail="admin_auth_not_configured")
     return value.encode("utf-8")
 
 
@@ -50,15 +42,10 @@ def _sign(payload: str) -> str:
     return _b64(hmac.new(_secret(), payload.encode("ascii"), hashlib.sha256).digest())
 
 
-def make_session(username: str = "admin", *, role: str = "admin", profile: str = "admin") -> str:
+def make_session(username: str = "admin") -> str:
     payload = _b64(
         json.dumps(
-            {
-                "sub": username,
-                "role": role,
-                "profile": profile,
-                "exp": int(time.time()) + SESSION_SECONDS,
-            },
+            {"sub": username, "exp": int(time.time()) + SESSION_SECONDS},
             separators=(",", ":"),
         ).encode("utf-8")
     )
@@ -66,7 +53,7 @@ def make_session(username: str = "admin", *, role: str = "admin", profile: str =
 
 
 def verify_session(token: str | None) -> dict[str, Any] | None:
-    if not token or "." not in token or not login_configured():
+    if not token or "." not in token or not auth_configured():
         return None
     payload, sig = token.split(".", 1)
     if not hmac.compare_digest(_sign(payload), sig):
@@ -85,65 +72,12 @@ def check_password(password: str) -> bool:
     return bool(expected) and hmac.compare_digest(password, expected)
 
 
-def viewer_passwords() -> dict[str, str]:
-    raw = _env_value("CLIPPING_VIEWER_PASSWORDS")
-    if not raw:
-        return {}
-    try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError:
-        parsed = None
-    if isinstance(parsed, dict):
-        result: dict[str, str] = {}
-        for profile, value in parsed.items():
-            key = str(profile or "").strip()
-            if not key:
-                continue
-            password = ""
-            if isinstance(value, str):
-                password = value.strip()
-            elif isinstance(value, dict):
-                password = str(value.get("password") or "").strip()
-            if password:
-                result[key] = password
-        return result
-
-    result: dict[str, str] = {}
-    for chunk in raw.split(";"):
-        if "=" not in chunk:
-            continue
-        profile, password = chunk.split("=", 1)
-        profile = profile.strip()
-        password = password.strip()
-        if profile and password:
-            result[profile] = password
-    return result
-
-
-def login_identity(password: str) -> dict[str, str] | None:
-    if check_password(password):
-        return {"sub": "admin", "role": "admin", "profile": "admin"}
-    for profile, expected in viewer_passwords().items():
-        if hmac.compare_digest(str(password or ""), expected):
-            return {"sub": profile, "role": "viewer", "profile": profile}
-    return None
-
-
 def require_admin(request: Request) -> dict[str, Any]:
     if not auth_configured():
         raise HTTPException(status_code=503, detail="admin_auth_not_configured")
     session = verify_session(request.cookies.get(COOKIE_NAME))
-    if not session or str(session.get("role") or "admin") != "admin":
-        raise HTTPException(status_code=401, detail="admin_login_required")
-    return session
-
-
-def require_viewer(request: Request) -> dict[str, Any]:
-    if not login_configured():
-        raise HTTPException(status_code=503, detail="login_auth_not_configured")
-    session = verify_session(request.cookies.get(COOKIE_NAME))
     if not session:
-        raise HTTPException(status_code=401, detail="viewer_login_required")
+        raise HTTPException(status_code=401, detail="admin_login_required")
     return session
 
 
