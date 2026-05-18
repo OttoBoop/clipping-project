@@ -2167,3 +2167,52 @@ cost/password/operations runbook
 
 The product story is less stale, but it is still not a full sales playbook or
 Rio methodology.
+
+## 2026-05-19 - Loop Cycle: Password Operations Runbook
+
+### Objective Reviewed
+
+The loop moved from live proof into operations discipline. A sellable product
+needs password rotation and demo-profile rules so access does not become
+informal, leaky, or expensive to manage.
+
+### Action Taken
+
+Updated `DEPLOYMENT_ENVIRONMENT.md` with:
+
+- current Render health state;
+- warning to update `CLIPPING_VIEWER_PASSWORDS` with merge semantics;
+- reminder that the public empty-demo fallback is disabled while real viewer
+  passwords exist;
+- viewer password rotation runbook;
+- rule not to give external buyers Flavio/Shakira credentials.
+
+### Evidence
+
+This is an operations documentation update based on earlier live checks:
+
+```text
+viewerAuthConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+```
+
+### Remaining Blocker
+
+No technical blocker. A dedicated prospect/demo profile still needs to be
+created before broad buyer conversations.
+
+### Next Objective From Docs
+
+Continue with:
+
+```text
+Rio economic methodology and target/source design ->
+target-management/admin workflow positive test ->
+market research/demo pricing loop
+```
+
+### Why The Loop Continues
+
+Password operations reduce future mess, but they do not yet create a Rio
+indicator methodology or a sales-ready prospect profile.

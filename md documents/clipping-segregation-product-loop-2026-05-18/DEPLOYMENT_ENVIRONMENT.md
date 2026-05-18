@@ -23,6 +23,22 @@ CLIPPING_VIEWER_PASSWORDS={"flavio":"...","shakira":"...","rio_economico":"...",
 flavio=...;shakira=...;rio_economico=...;demo_cliente=...
 ```
 
+## Current Render State - 2026-05-19
+
+The existing Render service has real viewer passwords configured via
+environment variable, not Git.
+
+Observed live health:
+
+```text
+viewerAuthConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+```
+
+Do not replace all Render environment variables to rotate one viewer password.
+Use merge/update behavior so unrelated storage/admin settings are preserved.
+
 ## Optional Environment Variables
 
 ```text
@@ -58,6 +74,11 @@ Safety rules:
   `CLIPPING_ENABLE_PUBLIC_EMPTY_DEMO_WITH_REAL_VIEWERS=1`;
 - it does not satisfy the production requirement for real
   `CLIPPING_VIEWER_PASSWORDS`.
+
+When real `CLIPPING_VIEWER_PASSWORDS` exists, the public empty-demo fallback is
+disabled by default. If `demo_cliente` is used for an actual sales demo, prefer
+setting it as a normal viewer password in `CLIPPING_VIEWER_PASSWORDS` and
+keeping its scope explicit in `data/viewer_profiles.json`.
 
 ## Profile Scope File
 
@@ -97,3 +118,32 @@ Expected local smoke:
 - viewer payload contains only allowed targets;
 - direct API widening attempts return empty scoped results;
 - admin writes require CSRF.
+
+## Viewer Password Rotation Runbook
+
+Use this whenever a demo ends, a buyer should lose access, or a password is
+shared too broadly:
+
+1. Generate a new random password outside Git.
+2. Update only `CLIPPING_VIEWER_PASSWORDS` in Render with merge semantics.
+3. Keep the profile key stable unless the client relationship is ending.
+4. Hit `/healthz` and confirm:
+
+```text
+viewerAuthConfigured=true
+missingConfig=[]
+```
+
+5. Log the profile rotated and smoke result in `WORK_LOG.md`, but never log the
+   password value.
+6. If offboarding a client, remove or empty that profile's target keys in
+   `data/viewer_profiles.json` before deleting the password.
+
+## Demo Profile Rule
+
+Do not give external buyers access to Flavio or Shakira profiles. For sales:
+
+- create a dedicated profile such as `demo_cliente` or a named prospect;
+- keep the target scope intentionally small;
+- rotate the password after the conversation;
+- do not expose GitHub Pages or static exports as private access.
