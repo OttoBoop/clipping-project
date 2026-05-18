@@ -142,6 +142,22 @@ def test_dashboard_javascript_recomputes_runtime_target_counts_from_payload():
     assert "Math.max(Number(existing.articleCount" not in body
 
 
+def test_dashboard_javascript_normalizes_initial_payload_counts_before_render():
+    dashboard_js = (PROJECT_ROOT / "assets" / "clipping.js").read_text(encoding="utf-8")
+    load_body = dashboard_js[
+        dashboard_js.index(".then(function (json) {") :
+        dashboard_js.index("document.title = (payload.meta")
+    ]
+
+    assert "function normalizePayloadCounts()" in dashboard_js
+    assert "payload.meta.totalArticles = totalArticles;" in dashboard_js
+    assert "recomputeTargetCounts();" in dashboard_js[
+        dashboard_js.index("function normalizePayloadCounts") :
+        dashboard_js.index("function mergeLiveResultsIntoPayload")
+    ]
+    assert "normalizePayloadCounts();" in load_body
+
+
 def test_static_export_marks_bundle_to_skip_api_polling(tmp_path):
     db_path = tmp_path / "clipping.db"
     seed_story_db(db_path)

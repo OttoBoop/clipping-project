@@ -1960,3 +1960,67 @@ tracked `assets/clipping-data.json` mismatch versus `data/targets.json`.
 
 Parallelism is covered locally, but the static artifact mismatch and
 auth-gated live Base atual verification are still open.
+
+## 2026-05-18 - Thirty-Fourth Technical Cycle: Initial Payload Count Normalization
+
+### Objective Reviewed
+
+The static artifact audit showed stale target rows and article totals in
+`assets/clipping-data.json`. The runtime target-count fix corrected counts when
+`/api/targets` refreshes, but the initial render could still trust stale
+payload metadata before live-results or target refresh completed.
+
+### Audit Performed
+
+Inspected the dashboard load path and found that `recomputeTargetCounts()` only
+ran after live-results merges. Added `normalizePayloadCounts()` to run
+immediately after the JSON payload loads and before the first render.
+
+### Result
+
+The dashboard now normalizes the loaded payload by:
+
+```text
+setting each story.articleCount to story.articles.length
+recounting story ai/raw totals from article summarySource
+setting meta totalStories/totalArticles/totalAi/totalRaw from visible payload data
+recomputing target story/article counts from story/article targetKeys
+```
+
+This is deliberately a runtime normalization, not a large generated-asset
+replacement from the local DB.
+
+Focused test:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_normalizes_initial_payload_counts_before_render \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_recomputes_runtime_target_counts_from_payload \
+  -q
+```
+
+Result: `3 passed in 0.09s`.
+
+Broader checkpoint:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_targets_jobs.py tests/test_admin_ui.py tests/test_export_mobile_snapshot_pages.py \
+  -q
+```
+
+Result: `103 passed in 3.04s`.
+
+### Next Hypothesis
+
+Commit and publish the runtime normalization, then verify hosted
+`/assets/clipping.js` contains `normalizePayloadCounts();`. The active target
+row mismatch for static-only bundles remains a separate watch item because a
+missing target cannot be invented from the JSON without API/config data.
+
+### Why The Loop Continues
+
+The UI is more resilient to stale counts, but Shakira is still absent from the
+tracked static target rows and authenticated live data remains behind the
+viewer-login gate.
