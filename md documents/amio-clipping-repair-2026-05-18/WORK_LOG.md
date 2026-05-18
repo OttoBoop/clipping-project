@@ -968,3 +968,59 @@ The docs hardening was not an exit. This audit found a new coordination watch
 item: live target/base verification is currently blocked by auth, not by the
 target matcher/export code itself. The next cycle should either coordinate an
 authenticated smoke path or continue with non-auth local/contract checks.
+
+## 2026-05-18 - Fourteenth Loop Cycle: Auth-Gated Local Contracts
+
+### Objective Reviewed
+
+Because the live site now requires viewer/admin login, the next unblocked path
+was to prove the local contracts that protect the target/live-base loop while
+leaving the separate password/profile workstream alone.
+
+### Audit Performed
+
+- Searched current tests and auth/profile code for dashboard polling,
+  live-results, viewer scoping, and target backfill coverage.
+- Confirmed the main worktree still has inherited unrelated dirt; no broad
+  staging was used.
+- Ran focused tests rather than the full suite.
+
+### Result
+
+Focused command:
+
+```bash
+.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_hosted_dashboard_enables_same_origin_api_polling \
+  tests/test_admin_ui.py::test_viewer_cannot_widen_live_results_or_write_admin_actions \
+  tests/test_admin_ui.py::test_live_results_endpoint_returns_saved_articles_before_export \
+  tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_preserves_original_target_keys_for_visible_articles \
+  tests/test_export_mobile_snapshot_pages.py::test_static_export_marks_bundle_to_skip_api_polling \
+  -q
+```
+
+Result: `6 passed in 0.59s`.
+
+These tests confirm locally that:
+
+- hosted dashboard HTML enables same-origin API polling;
+- viewers cannot widen live-results beyond their allowed targets;
+- `article_saved` events appear through live-results before export;
+- creating a target can backfill an existing article into live base and export
+  filters;
+- dashboard JS preserves target keys before filtering;
+- static exports still skip API polling.
+
+### Next Hypothesis
+
+The next loop should either receive/use an authenticated smoke path from the
+password/profile workstream or keep monitoring accessible live signals
+(`/healthz`, static assets, deploy history) while running focused contracts for
+any target/live-base regression.
+
+### Why The Loop Continues
+
+Passing these focused tests is a checkpoint, not an exit. The unresolved live
+watch item is authenticated verification of status/live-results/Base atual on
+the published site.
