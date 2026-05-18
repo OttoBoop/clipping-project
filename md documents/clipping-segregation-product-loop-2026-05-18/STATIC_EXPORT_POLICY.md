@@ -36,6 +36,20 @@ FastAPI login -> session role/profile -> server-scoped /assets/*.json ->
 server-scoped /api/* reads -> admin-only writes
 ```
 
+## Current Live Static Boundary
+
+Checked 2026-05-19:
+
+```text
+https://ottoboop.github.io/clipping-project/                              200
+https://ottoboop.github.io/clipping-project/assets/clipping-data.json      200
+https://ottoboop.github.io/clipping-project/assets/clipping-raw-texts.json 200
+```
+
+The GitHub Pages export still resolves and serves bundled JSON/raw payloads.
+That is acceptable only as a legacy/public/static snapshot. It must not be used
+as a private demo or client access surface.
+
 ## Acceptable Static Uses
 
 - Internal operator review.

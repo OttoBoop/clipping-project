@@ -1352,3 +1352,83 @@ Re-read the objective docs again and continue with the next unblocked review:
 
 The authenticated scoping tests passed, but the live site still cannot prove a
 viewer profile. Passing local contracts is a checkpoint, not completion.
+
+## 2026-05-19 - Loop Cycle: Viewer UI And Static Boundary Review
+
+### Objective Reviewed
+
+Re-read the next unblocked items from `SYSTEM_REVIEW_CHECKLIST.md` and
+`STATIC_EXPORT_POLICY.md`: verify viewer UI cleanliness/no-fake-UI behavior and
+confirm static exports are not treated as private client surfaces.
+
+### Local Viewer UI Smoke
+
+Started a local FastAPI server with explicit local viewer passwords and logged
+in as `shakira`.
+
+Observed browser state:
+
+```text
+login=200 role=viewer profile=shakira
+bodyClass=viewer-readonly
+app data role=viewer
+app data profile=shakira
+run tab "Rodar atualização" hidden/display none/visible false
+run tab "Progresso compartilhado" hidden/display none/visible false
+run tab "Base atual" visible true
+add-target box hidden/display none/visible false
+manage-targets box hidden/display none/visible false
+filter chips: Shakira only
+visible action buttons: none
+```
+
+Checked local scoped payloads for all configured viewer profiles:
+
+```text
+flavio        targets=['flavio_valle','pedro_duarte','pedro_angelito','bernardo_rubiao'] article_targets=['bernardo_rubiao','flavio_valle','pedro_angelito','pedro_duarte'] raw=662
+shakira       targets=[] article_targets=[] raw=0
+rio_economico targets=[] article_targets=[] raw=0
+demo_cliente  targets=[] article_targets=[] raw=0
+```
+
+The empty local Shakira/Rio/demo payloads reflect the current local static
+snapshot, not a production proof. The useful finding is that empty profiles do
+not fall back to Flavio data and viewer UI controls remain hidden.
+
+### Static Boundary Audit
+
+Checked GitHub Pages:
+
+```text
+https://ottoboop.github.io/clipping-project/                              200 bytes=10404
+https://ottoboop.github.io/clipping-project/assets/clipping-data.json      200 bytes=1417213
+https://ottoboop.github.io/clipping-project/assets/clipping-raw-texts.json 200 bytes=4565931
+```
+
+This confirms the static Pages bundle still serves bundled JSON/raw files. That
+is acceptable only as legacy/static/public review material. It must not be used
+as a paid private client demo or access path.
+
+### Action Taken
+
+Updated `STATIC_EXPORT_POLICY.md` with the live GitHub Pages boundary evidence.
+
+### Remaining Blocker
+
+Production viewer login remains blocked by
+`viewerAuthConfigured=false`/missing `CLIPPING_VIEWER_PASSWORDS` on Render.
+
+### Next Objective From Docs
+
+Return to the docs and continue with:
+
+1. live Render logged-out gate monitoring;
+2. local contract checks for profile/raw/API scoping when production viewer
+   credentials are unavailable;
+3. Rio economic profile methodology/isolation review as the next axis that can
+   be improved without production secrets.
+
+### Why The Loop Continues
+
+No-fake-UI and static-boundary evidence are useful checkpoints, but the product
+still lacks live viewer-profile proof on Render.
