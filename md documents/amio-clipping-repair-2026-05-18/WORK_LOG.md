@@ -4911,3 +4911,36 @@ clean the inherited main worktree without explicit instruction.
 
 Worktree isolation is healthy, but this is process hygiene. Product review still
 continues.
+
+## 2026-05-18 - Ninetieth Auth Barrier Source Review
+
+### Objective Reviewed
+
+Hosted live payload inspection is blocked by auth. The loop should understand
+the barrier without guessing passwords or taking over the auth workstream.
+
+### Audit Performed
+
+- Reviewed `web_app/auth.py` session/password logic.
+- Reviewed `web_app/segmentation.py` viewer profile scoping.
+- Searched tests and app code for `CLIPPING_VIEWER_PASSWORDS`,
+  `viewer_login_required`, demo viewer configuration, and session creation.
+
+### Result
+
+The hosted `viewer_login_required` barrier is expected from code when no valid
+`clipping_admin` session cookie is present. Health says viewer passwords and
+viewer profiles are configured, while public empty demo is disabled because real
+viewer auth is configured. This loop should not guess production passwords or
+change the auth workstream.
+
+### Next Hypothesis
+
+Continue using local authenticated contracts and hosted unauthenticated health/
+static checks until Otávio or the auth-focused IA provides a valid session path.
+
+### Why The Loop Continues
+
+The auth barrier is understood but still blocks only direct hosted payload
+inspection. Local contracts, static assets, source review, and docs remain
+available.
