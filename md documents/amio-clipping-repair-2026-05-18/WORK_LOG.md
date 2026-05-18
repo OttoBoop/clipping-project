@@ -2984,3 +2984,59 @@ for remaining target-management error paths.
 
 Create, edit, archive, and restore now have stronger UI/API contracts, but live
 auth-gated verification and remaining error-message paths still need review.
+
+## 2026-05-19 - Fiftieth Live/Regression Cycle: Hosted Bundle Caught Up
+
+### Objective Reviewed
+
+After the live-filter and management-flow commits, the protocol required a
+hosted asset audit plus a broader focused regression run across targets, jobs,
+export, and the functional dashboard browser checks.
+
+### Audit Performed
+
+- Checked hosted `/assets/clipping.js?v=512a948`.
+- Checked hosted `/healthz`.
+- Checked hosted `/api/update/status`.
+- Ran the focused regression group for the clipping repair loop.
+
+### Result
+
+Hosted JS now contains both recent frontend filter fixes:
+
+```text
+if (!primary.length && other.length && !viewerIsAdmin()) {
+if (activeTargetKeys.size) activeTargetKeys.add(key);
+```
+
+Live endpoints:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+/api/update/status -> HTTP 401 {"detail":"viewer_login_required"}
+```
+
+Focused regression:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py \
+  tests/test_targets_jobs.py \
+  tests/test_export_mobile_snapshot_pages.py \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  -q
+```
+
+Result: `116 passed in 11.52s`.
+
+### Next Hypothesis
+
+Continue with the unattended queue: inspect remaining error-message paths,
+target/export count consistency, and whether any live-results edge is still
+only protected locally because auth blocks direct hosted payload inspection.
+
+### Why The Loop Continues
+
+This is the strongest checkpoint in the current cycle, but it is still a
+checkpoint. Auth-gated live payloads, remaining UI error paths, and target count
+consistency still deserve another pass.
