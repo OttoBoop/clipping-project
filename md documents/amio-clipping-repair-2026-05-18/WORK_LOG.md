@@ -5859,3 +5859,40 @@ continue the loop.
 
 The push race is operational noise from parallel work. The correct behavior is
 to keep path-limited commits and continue the target/filter/Base atual review.
+
+## 2026-05-18 - One Hundred Twelfth Duplicate Retag Post-Rebase Verification
+
+### Objective Reviewed
+
+After resolving the second push race, the duplicate-retag live event contract
+needed a post-rebase smoke before moving on.
+
+### Audit Performed
+
+- Rebased and pushed the duplicate-retag contract as
+  `b062a0a test: assert duplicate retag live event`.
+- Confirmed `HEAD == origin/master == b062a0a`.
+- Reran:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_targets_jobs.py::test_process_candidates_tags_duplicate_article_for_new_secondary_target \
+  -q
+```
+
+### Result
+
+`1 passed in 0.45s`.
+
+Restored generated `pipeline/__pycache__` after the run and confirmed the
+worktree was clean before this log entry.
+
+### Next Hypothesis
+
+Commit this post-rebase verification log, then continue the loop with another
+hosted watch or checklist review.
+
+### Why The Loop Continues
+
+The rebase verification protects the latest test commit, but it remains a
+checkpoint. More target/filter/Base atual review remains useful.
