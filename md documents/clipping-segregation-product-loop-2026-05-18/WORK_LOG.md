@@ -5901,3 +5901,57 @@ No push blocker.
 ### Next Objective From Docs
 
 Push this log evidence, poll Render, and repeat live smoke after promotion.
+
+## 2026-05-18 20:43 -03 - Loop Cycle: Render Poll And Live Smoke On 6cc6b4d
+
+### Objective Reviewed
+
+After pushing `5776ebd` and `30ec6c1`, Render needed another poll and the
+current live commit needed privacy smoke.
+
+### Action Taken
+
+Pushed:
+
+```text
+30ec6c1 docs: log Rio v3 review push
+```
+
+Polled Render and then smoked the current live site.
+
+### Render Evidence
+
+```text
+dep-d86fgpf3jp8c73ai6mqg 30ec6c1 docs: log Rio v3 review push -> queued
+dep-d86fgccrp5ls739cnaag a503ed3 docs: log browser functional regression -> update_in_progress
+dep-d86ffpqddbjc739st330 6cc6b4d docs: log publication state hosted watch -> live
+```
+
+### Live Evidence
+
+URL checked: `https://clipping-project.onrender.com/`
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Latest pushed commits are still queued or
+updating.
+
+### Next Objective From Docs
+
+Publish this log path-limited, then keep polling Render until the newest commit
+promotes.
