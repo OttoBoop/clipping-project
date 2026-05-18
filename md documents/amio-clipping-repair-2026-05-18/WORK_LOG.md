@@ -4973,3 +4973,41 @@ focused local contract.
 
 Re-reading the rules prevents drift, but it does not close the product loop.
 There are still auth-gated hosted payloads and watch items.
+
+## 2026-05-18 - Ninety-Second Rule Reaffirmation Cycle
+
+### Objective Reviewed
+
+Otávio reaffirmed the updated basic rule: every output must start with the long
+anchor, every barrier must be answered and logged, every action must be logged,
+and the loop must return to long-term docs/logs whenever there is doubt instead
+of stopping.
+
+### Audit Performed
+
+- Checked current loop worktree status.
+- Re-read the tail of `WORK_LOG.md`.
+- Searched the active loop documents for the current Mandatory Output Anchor.
+
+### Result
+
+The current anchor is already present in:
+
+```text
+LONG_TERM_GOALS.md -> Current Mandatory Output Anchor
+LOOP_OPERATING_PROTOCOL.md -> Mandatory Output Anchor
+CURRENT_SHORT_TERM_LOOP.md -> points to the updated anchor
+```
+
+This entry records Otávio's reaffirmation so future compaction/handoff does not
+treat the rule as optional or old context.
+
+### Next Hypothesis
+
+Commit this log entry, then continue the loop with another hosted/local audit.
+
+### Why The Loop Continues
+
+The rule is confirmed and logged, but that is not product completion. The next
+cycle must continue checking target/filter/Base atual behavior and auth-gated
+hosted payloads.
