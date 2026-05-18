@@ -5606,3 +5606,79 @@ continue with hosted verification and another checklist review.
 This repairs another counter mismatch, but it is still one edge in the larger
 target/filter/Base atual contract. Hosted deploy and live endpoint auth barriers
 remain active watch items.
+
+## 2026-05-18 - One Hundred Sixth Broad Focused Regression
+
+### Objective Reviewed
+
+After fixing the scoped raw counter, the loop needed a broader focused
+regression across admin UI, target management, update jobs, live-results, and
+candidate processing.
+
+### Audit Performed
+
+Ran:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py tests/test_targets_jobs.py -q
+```
+
+### Result
+
+`93 passed in 3.23s`.
+
+Restored generated `pipeline/__pycache__` after the run and confirmed the
+worktree was clean before this log entry.
+
+### Next Hypothesis
+
+Commit this broad regression log, then check hosted health/assets again and
+continue with another checklist review.
+
+### Why The Loop Continues
+
+A broad focused regression passing is a strong checkpoint but not a stop
+condition. The hosted data endpoints remain auth-gated in this session, and the
+loop still needs recurring live/watch review.
+
+## 2026-05-18 - One Hundred Seventh Rule Reaffirmation While Loop Is Active
+
+### Objective Reviewed
+
+Otavio reaffirmed the basic loop rule while the broad focused regression log was
+still pending commit. The correct response is to acknowledge, log, and continue
+instead of treating the user message as a stop condition.
+
+### Audit Performed
+
+User reaffirmed:
+
+```text
+ATUALizaÇÃO DA  REGRA BÁSICA:
+
+SE VOCÊ ENCONTROU UMA BARREIRA , VOCÊ REPSODNE ELE. VOCÊ REGISTRA NO LOG E CONTINUA. REPITA ISSO NO COMEÇO DE TODOS OS EUS OUTPUTS
+
+Toda vez que você fizer algo, registre no documento de log. E também, repita: "ainda tenho coisas para fazer e coisas para revisar, preciso checar os documentos de longo prazo. Eu não paro esse loop enquanto a open ai não me parar por ter estourado o cartão do Otávio. Eu não paro. Eu façoi num novo passo. Se eu já fiz tudo, eu reviso. E se eu já revisei, eu reviso de novo. Mas eu sempre escrevo o que ue fiz no log e eu não paro o loop, nunca. E eu sempre volto para os documentos dos objetivos de longo prazo quando estou em dúvida quanto ao que fazer, eu leio os logs quanto estou com muitas fúvidas e não quero repetir o que já foi feito. Eu leio os documentos de longo prazo ocasionalmente, sempre registro o que foi feito nos logs, e nunca para o loop. Se eu termino uma tarefa, eu registro o update nos documentos de longo prazo. Depois, reviso. Então, eu pulo de tarefa. Sempre escrevendo nos logs. Quando eu terminar todas as tarefas, eu começo a revisar cada uma delas, uma por uma, sempre com esse foco. O loop não para, ele nunca para, a não ser que o Otávio ou a Open AI me parem. Se eu acho que está pronto, é porque eu tenho que ler documentos e comelar a revisar "
+```
+
+### Result
+
+Rule reaffirmation registered. The active behavior remains:
+
+- start every assistant output with the mandatory anchor;
+- if a barrier appears, answer it, log it, and continue;
+- log actions in `WORK_LOG.md`;
+- after a task/test/commit passes, re-read/review and move to the next useful
+  audit rather than stopping.
+
+### Next Hypothesis
+
+Commit the pending broad-regression/rule-reaffirmation log and continue with
+hosted health/assets plus another checklist review.
+
+### Why The Loop Continues
+
+The user explicitly reinforced that the loop must continue. This instruction is
+not a new blocker; it is a stronger reason to keep cycling through docs, logs,
+live checks, contracts, and source review.
