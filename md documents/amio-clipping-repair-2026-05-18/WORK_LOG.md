@@ -4030,3 +4030,51 @@ path instead of stopping.
 The manual-story live path is patched and locally verified, but this is only one
 saved-news confirmation path. The broader loop still needs repeated review of
 targets, filters, export counts, hosted auth gates, and dashboard polling.
+
+## 2026-05-18 - Sixty-Ninth Push And Hosted Auth Barrier Cycle
+
+### Objective Reviewed
+
+After the manual-story live-results fix passed locally, the loop rule says the
+push is a checkpoint and the next step is live audit plus another review, not a
+final answer.
+
+### Audit Performed
+
+- Fetched `origin/master` and inspected remote commit
+  `b94bc6c docs: log clipping post-rebase audit`.
+- Confirmed `origin/master` was already an ancestor of the local commit.
+- Pushed `bfc44ca fix: expose manual stories in live base loop` to `master`.
+- Checked hosted `/healthz`.
+- Checked hosted `/api/update/live-results?scope=base&limit=5`.
+- Confirmed the worktree was clean after the push.
+
+### Result
+
+Push checkpoint:
+
+```text
+b94bc6c..bfc44ca HEAD -> master
+```
+
+Hosted state:
+
+```text
+/healthz -> HTTP 200, job idle, viewerAuthConfigured true, missingConfig []
+/api/update/live-results?scope=base&limit=5 -> HTTP 401 {"detail":"viewer_login_required"}
+```
+
+Barrier answered: direct hosted live-results inspection still needs a viewer or
+admin session. This blocks that one live payload inspection, not the loop.
+
+### Next Hypothesis
+
+Continue with accessible checks and source review. The next useful audit is to
+look for another saved-news path that writes SQLite without emitting
+`article_saved`, or another filter/export path that can drift from target keys.
+
+### Why The Loop Continues
+
+The code is pushed and the hosted service is healthy, but direct Base atual
+payload inspection remains auth-gated. The barrier is logged, and local/source
+review remains available.
