@@ -2010,3 +2010,100 @@ polluting Flavio/Shakira.
 Axis 1 now has real production viewer proof, but the long-term product loop
 also requires no fake UI, target-management review, Rio methodology isolation,
 sellable packaging, and cost/operations review.
+
+## 2026-05-19 - Loop Cycle: Viewer UI Fake-Action Audit And Filter Cleanup
+
+### Objective Reviewed
+
+After live viewer scoping was proven, the loop returned to
+`SYSTEM_REVIEW_CHECKLIST.md` and checked the next weak Axis 1 item: client
+profiles must not see fake/admin-only actions, and scoped filters must stay
+visually clean.
+
+### Render Audit
+
+Playwright against `https://clipping-project.onrender.com/` with live viewer
+sessions showed:
+
+```text
+flavio -> visible tabs=['base']; add/manage/classification/run controls hidden
+shakira -> visible tabs=['base']; add/manage/classification/run controls hidden
+rio_economico -> visible tabs=['base']; add/manage/classification/run controls hidden
+```
+
+Issue found:
+
+```text
+shakira -> filter_keys=['shakira'] but shown under "Nomes secundários (1)"
+```
+
+This was scoped correctly but visually poor for a client-only profile.
+
+### Action Taken
+
+Committed:
+
+```text
+1356f6d fix: promote viewer filters without primary targets
+```
+
+Change:
+
+- if a non-admin/viewer scoped payload has targets but no primary target, show
+  those targets in the main filter row instead of hiding them under the
+  secondary-target drawer;
+- kept admin/static behavior with existing primary targets unchanged;
+- updated both `assets/clipping.js` and `tools/pages_assets/clipping.js`;
+- added a regression assertion to the export bundle tests.
+
+### Evidence
+
+Local targeted tests:
+
+```text
+5 passed
+```
+
+Covered:
+
+- current dashboard JS matches the export bundle JS;
+- viewer/no-primary filter promotion marker exists;
+- existing secondary-target drawer still works for mixed primary/secondary
+  payloads;
+- the other active loop's live-result target filter behavior still works;
+- the target validation message guard still works.
+
+Live proof after `1356f6d` deployed:
+
+```text
+shakira -> visibleTabs=['base']
+shakira -> filterKeys=['shakira']
+shakira -> filterLabels=['Shakira']
+shakira -> outros=''
+shakira -> addTargetHidden=true
+shakira -> manageTargetsHidden=true
+shakira -> classEditors=0
+```
+
+### Remaining Blocker
+
+No blocker for this UI cleanup. The newest deploy queue continued advancing
+with other commits after `1356f6d`; those commits include this fix in their
+history.
+
+### Next Objective From Docs
+
+Return to the dependency map:
+
+```text
+target-management/admin workflow review ->
+Rio economic target/methodology design without profile pollution ->
+sellable demo/package notes ->
+cost/password/operations review
+```
+
+### Why The Loop Continues
+
+The viewer UI is cleaner, but this only resolves one no-fake-UI slice. The
+product still needs target-management review, Rio methodology, sellable
+packaging, and operations discipline.

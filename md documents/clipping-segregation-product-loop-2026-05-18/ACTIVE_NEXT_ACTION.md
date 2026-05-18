@@ -71,6 +71,8 @@ shakira -> scoped to shakira
 rio_economico -> empty isolated profile, no Flavio/Shakira contamination
 forbidden live-results target_key checks -> absent
 viewer POST /api/targets -> 401
+viewer UI fake-action audit -> add/manage/classification/run controls hidden
+shakira viewer filter -> direct shakira chip, no secondary-target drawer
 ```
 
 Last non-live verification before deploy:
@@ -90,11 +92,12 @@ Continue the production loop. Current priority from the docs:
 
 1. keep the logged-out privacy gate verified on Render;
 2. keep real viewer profile proof verified after deploys;
-3. audit client UI for fake/admin-only actions in live viewer shells;
-4. review target management against the no-fake-UI rule;
-5. refine how `rio_economico` gets real targets without polluting person
+3. continue target-management review for admin/operator workflows;
+4. refine how `rio_economico` gets real targets without polluting person
    monitoring;
-6. then re-read the docs and choose the next weak axis.
+5. convert the live proof into a sellable demo script without exposing secrets;
+6. review costs, password rotation, and operations;
+7. then re-read the docs and choose the next weak axis.
 
 If `viewerAuthConfigured=false` returns, treat it as a regression and re-check
 Render env configuration. Do not rotate or publish viewer passwords in docs.

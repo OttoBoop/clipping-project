@@ -84,6 +84,10 @@ shakira forbidden target flavio_valle in live-results -> absent
 rio_economico login -> role=viewer profile=rio_economico
 rio_economico scoped targets/stories/articles/raw -> empty isolated profile
 viewer POST /api/targets -> 401
+viewer UI -> only Base atual tab visible
+viewer UI -> add/manage target controls hidden
+viewer UI -> classification editors absent
+shakira viewer filter -> direct Shakira chip, no secondary-target drawer
 ```
 
 Meaning:
@@ -93,6 +97,9 @@ Meaning:
 - Rio economic exists as a separate profile without polluting Flavio/Shakira;
 - raw-text payloads did not expose keys outside the scoped articles checked;
 - viewer profiles cannot use target-management writes.
+- visible viewer UI does not expose fake/admin-only target or classification
+  actions in the checked profiles.
+- single-target viewer profiles no longer look like secondary-target clutter.
 
 Remaining production gap:
 
