@@ -127,3 +127,50 @@ Use this order:
 5. Run the full suite only at loop checkpoints or before a larger commit.
 6. Log any slow suite run, the reason it was necessary, and whether it found a
    real regression or a transient/live-source issue.
+
+## Current Coverage Checkpoint - 2026-05-19
+
+This section records what the current loop has actually guarded so future agents
+do not redo the same shallow checks or forget the remaining limits.
+
+Covered by code and tests:
+
+- Short target names show inline actionable errors before CSRF/API calls in
+  both create and edit forms.
+- Structured `/api/targets` validation and operation failures are covered for
+  create, update, archive, and restore.
+- Target create/update/restore synchronize or check Base atual through
+  `targetSync`; archive does not pretend to backfill.
+- Target management remains available while an update is running, and success
+  copy explains the active job snapshot.
+- Dead target-management lock code was removed from backend and dashboard JS.
+- Live-results can promote a target returned by the live overlay into visible
+  filters, so a saved article for a newly observed target is selectable.
+- Viewer-only filter scopes without primary targets are promoted into visible
+  filter chips.
+- Static export keeps active targets with zero stories available as filters and
+  keeps dashboard JS synchronized with `tools/pages_assets/clipping.js`.
+- Broad focused regression after these changes passed:
+  `tests/test_admin_ui.py`, `tests/test_targets_jobs.py`,
+  `tests/test_export_mobile_snapshot_pages.py`, and
+  `tests/test_pages_performance.py::TestFunctionalSanity`.
+
+Hosted checks observed:
+
+- `/healthz` is healthy and reports `job: idle`.
+- `/api/update/status`, `/api/update/live-results`, `/api/targets`, and
+  `/assets/clipping-data.json` are auth-gated with `viewer_login_required`.
+- Hosted JS serves inline target-name validation, live-result target promotion,
+  and viewer-only filter promotion.
+- Hosted JS no longer serves `targetActionsLocked` or `manageTargetsBlocked`.
+
+Remaining limits:
+
+- Direct hosted Base atual payload inspection is still blocked by viewer auth in
+  this session; use local contracts unless a valid viewer/admin session is
+  provided.
+- Keep checking future changes against
+  `SYSTEM_CONNECTION_CHECKLIST.md`; a UI pass alone is not proof.
+- Do not treat this checkpoint as an exit. Re-read
+  `LOOP_OPERATING_PROTOCOL.md` and start another audit cycle if more time is
+  available.
