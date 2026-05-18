@@ -417,6 +417,60 @@ class TestFunctionalSanity:
         assert "Digite um nome de exibicao com 3 caracteres ou mais." in message
         assert "Não foi possível salvar este nome." not in message
 
+    def test_add_target_short_name_shows_inline_error_without_api_call(self, browser_ctx, local_server):
+        """Short names should get an inline actionable error before CSRF/API calls."""
+        page = browser_ctx.new_page()
+        calls = {"csrf": 0, "target_post": 0}
+
+        def csrf(route):
+            calls["csrf"] += 1
+            route.fulfill(status=200, content_type="application/json", body=json.dumps({"csrf": "test-csrf"}))
+
+        def targets(route):
+            if route.request.method == "POST":
+                calls["target_post"] += 1
+                route.fulfill(status=500, content_type="application/json", body=json.dumps({"error": "unexpected_call"}))
+                return
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        "targets": [
+                            {"key": "flavio_valle", "label": "Flávio Valle", "primary": True},
+                        ],
+                        "primaryKeys": ["flavio_valle"],
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        def update_status(route):
+            route.fulfill(status=200, content_type="application/json", body=json.dumps({"current": {"status": "idle"}, "recent": []}))
+
+        def live_results(route):
+            route.fulfill(status=200, content_type="application/json", body=json.dumps({"items": []}))
+
+        page.route("**/api/csrf", csrf)
+        page.route("**/api/targets**", targets)
+        page.route("**/api/update/status", update_status)
+        page.route("**/api/update/live-results**", live_results)
+
+        try:
+            page.goto(f"{local_server}/index.html", wait_until="domcontentloaded")
+            page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)
+            page.locator("details.add-target-box").evaluate("el => { el.open = true; }")
+            page.fill('#addTargetForm input[name="display_name"]', "ab")
+            page.click('#addTargetForm button[type="submit"]')
+            page.wait_for_selector("#addTargetMessage.is-error", timeout=10000)
+            message = page.locator("#addTargetMessage").inner_text()
+        finally:
+            page.close()
+
+        assert "Informe um nome de exibicao com pelo menos 3 caracteres." in message
+        assert "Digite um nome de exibicao com 3 caracteres ou mais." in message
+        assert calls == {"csrf": 0, "target_post": 0}
+
     def test_live_results_target_outside_initial_targets_becomes_filterable(self, browser_ctx, local_server):
         """A live saved article should expose its target as a selectable filter."""
         page = browser_ctx.new_page()
@@ -592,6 +646,64 @@ class TestFunctionalSanity:
         assert "A base atual foi conferida para esse nome." in message
         assert "continua com os nomes congelados" in message
         assert "Aguarde a atualização terminar" not in message
+
+    def test_manage_target_short_name_shows_inline_error_without_api_call(self, browser_ctx, local_server):
+        """Editing a target to a short name should fail inline before PATCH."""
+        page = browser_ctx.new_page()
+        calls = {"csrf": 0, "patch": 0}
+
+        def csrf(route):
+            calls["csrf"] += 1
+            route.fulfill(status=200, content_type="application/json", body=json.dumps({"csrf": "test-csrf"}))
+
+        def targets(route):
+            if route.request.method == "PATCH":
+                calls["patch"] += 1
+                route.fulfill(status=500, content_type="application/json", body=json.dumps({"error": "unexpected_call"}))
+                return
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        "targets": [
+                            {"key": "flavio_valle", "label": "Flávio Valle", "primary": True, "archived": False},
+                            {"key": "ana_teste", "label": "Ana Teste", "primary": False, "archived": False},
+                        ],
+                        "primaryKeys": ["flavio_valle"],
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+
+        def update_status(route):
+            route.fulfill(status=200, content_type="application/json", body=json.dumps({"current": {"status": "idle"}, "recent": []}))
+
+        def live_results(route):
+            route.fulfill(status=200, content_type="application/json", body=json.dumps({"items": []}))
+
+        page.route("**/api/csrf", csrf)
+        page.route("**/api/targets**", targets)
+        page.route("**/api/update/status", update_status)
+        page.route("**/api/update/live-results**", live_results)
+
+        try:
+            page.goto(f"{local_server}/index.html", wait_until="domcontentloaded")
+            page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)
+            page.locator("#manageTargetsBox").evaluate("el => { el.open = true; }")
+            page.wait_for_selector('[data-target-edit="ana_teste"]', timeout=10000)
+            page.click('[data-target-edit="ana_teste"]')
+            name_input = page.locator('[data-manage-target-key="ana_teste"] input[name="display_name"]')
+            name_input.fill("ab")
+            page.click('[data-manage-target-key="ana_teste"] button[type="submit"]')
+            page.wait_for_selector("#manageTargetsMessage.is-error", timeout=10000)
+            message = page.locator("#manageTargetsMessage").inner_text()
+        finally:
+            page.close()
+
+        assert "Informe um nome de exibicao com pelo menos 3 caracteres." in message
+        assert "Digite um nome de exibicao com 3 caracteres ou mais." in message
+        assert calls == {"csrf": 0, "patch": 0}
 
     def test_manage_target_archive_restore_stay_available_during_running_update(self, browser_ctx, local_server):
         """Archive/restore controls should stay usable while the active job uses its snapshot."""

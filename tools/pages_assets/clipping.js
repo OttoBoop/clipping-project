@@ -154,6 +154,12 @@
       .filter(Boolean);
   }
 
+  function targetDisplayNameError(value) {
+    var displayName = String(value || "").trim();
+    if (displayName.length >= 3) return "";
+    return "Informe um nome de exibicao com pelo menos 3 caracteres. Digite um nome de exibicao com 3 caracteres ou mais.";
+  }
+
   function parseMaybeJsonList(value) {
     if (Array.isArray(value)) return value;
     if (!value) return [];
@@ -678,7 +684,7 @@
 
   function managedTargetForm(target) {
     return (
-      '<form class="manage-target-form" data-manage-target-key="' + escapeHtml(target.key) + '">' +
+      '<form class="manage-target-form" data-manage-target-key="' + escapeHtml(target.key) + '" novalidate>' +
       '<label>Nome <input name="display_name" value="' + escapeHtml(target.label || target.key) + '" required minlength="3"></label>' +
       '<label>Termos relacionados <textarea name="keywords" rows="3">' + escapeHtml(visibleTargetKeywords(target).join(", ")) + "</textarea></label>" +
       '<label>Correspondências exatas <textarea name="exact_aliases" rows="3">' + escapeHtml((target.exact_aliases || []).join(", ")) + "</textarea></label>" +
@@ -2154,10 +2160,15 @@
   if (addTargetForm) {
     addTargetForm.addEventListener("submit", async function (event) {
       event.preventDefault();
+      var form = new FormData(addTargetForm);
+      var validationError = targetDisplayNameError(form.get("display_name"));
+      if (validationError) {
+        setMessage(addTargetMessage, validationError, "error");
+        return;
+      }
       setMessage(addTargetMessage, "Salvando...", "");
       var submit = addTargetForm.querySelector('button[type="submit"]');
       if (submit) submit.disabled = true;
-      var form = new FormData(addTargetForm);
       var body = {
         display_name: form.get("display_name"),
         keywords: splitList(form.get("keywords")),
@@ -2190,10 +2201,15 @@
     if (!targetForm) return;
     event.preventDefault();
     var key = targetForm.dataset.manageTargetKey || "";
+    var form = new FormData(targetForm);
+    var validationError = targetDisplayNameError(form.get("display_name"));
+    if (validationError) {
+      setMessage(manageTargetsMessage, validationError, "error");
+      return;
+    }
     var submit = targetForm.querySelector('button[type="submit"]');
     if (submit) submit.disabled = true;
     setMessage(manageTargetsMessage, "Salvando alterações...", "");
-    var form = new FormData(targetForm);
     var body = {
       display_name: form.get("display_name"),
       keywords: splitList(form.get("keywords")),

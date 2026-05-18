@@ -3283,3 +3283,69 @@ copy.
 
 The suite is green, but tests passing is a checkpoint. The protocol requires
 another live audit and another search pass.
+
+## 2026-05-19 - Fifty-Fifth Error UX Cycle: Inline Short-Name Validation
+
+### Objective Reviewed
+
+The "errors must explain what happened and what to do" goal applies before the
+request reaches the API too. The add/edit forms still had native `minlength`
+validation, which could block submit before the inline structured message had a
+chance to appear.
+
+### Audit Performed
+
+- Inspected the add-target form, generated management edit forms, and submit
+  handlers.
+- Added `novalidate` to the add and manage target forms.
+- Added shared frontend validation for display names shorter than three
+  characters.
+- Ensured short-name create/edit attempts show the same actionable inline
+  message and do not call CSRF or target mutation APIs.
+
+### Result
+
+Short names now show inline:
+
+```text
+Informe um nome de exibicao com pelo menos 3 caracteres. Digite um nome de
+exibicao com 3 caracteres ou mais.
+```
+
+Focused checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_add_target_short_name_shows_inline_error_without_api_call \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_short_name_shows_inline_error_without_api_call \
+  tests/test_admin_ui.py::test_targets_api_short_name_error_explains_field_and_fix \
+  -q
+```
+
+Result: `3 passed in 2.95s`.
+
+Related frontend checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  tests/test_admin_ui.py::test_targets_api_short_name_error_explains_field_and_fix \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  -q
+```
+
+Result: `12 passed in 9.45s`.
+
+Parallel-work note: `origin/master` advanced to
+`d7cbb6f docs: log cross-loop viewer recheck` during this cycle. It touches the
+segregation loop log only; rebase before pushing.
+
+### Next Hypothesis
+
+Commit and rebase this inline validation fix, push, then verify the hosted
+bundle after deploy and continue the Base atual/live-results audit.
+
+### Why The Loop Continues
+
+This closes a pre-API error UX hole, but the hosted site still needs to serve
+the new validation code and Base atual remains auth-gated.
