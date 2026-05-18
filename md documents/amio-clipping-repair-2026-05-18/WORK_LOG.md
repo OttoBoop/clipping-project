@@ -3040,3 +3040,84 @@ only protected locally because auth blocks direct hosted payload inspection.
 This is the strongest checkpoint in the current cycle, but it is still a
 checkpoint. Auth-gated live payloads, remaining UI error paths, and target count
 consistency still deserve another pass.
+
+## 2026-05-19 - Fifty-First Cleanup Cycle: Remove Dead Target Locks
+
+### Objective Reviewed
+
+The long-term goal says target management should not be globally blocked by an
+active update. The live UI behavior was already guarded, but stale dead code
+still contained the old "Aguarde a atualização terminar" target-management
+lock. That made future regressions easier.
+
+### Audit Performed
+
+- Checked static snapshot target counts with a JSON parser because `jq`, `node`,
+  and `ruby` are not installed in this environment.
+- Confirmed snapshot target counts match story/article target keys; no count
+  mismatch was found.
+- Searched for `target_mutations_blocked`, `ensure_target_mutations_allowed`,
+  `targetActionsLocked`, and the old target-management blocker copy.
+- Removed unused backend lock helpers.
+- Removed frontend dead branches that disabled edit/archive/restore/save
+  controls based on `targetActionsLocked()`.
+- Added a static dashboard JS guard so target management lock code does not
+  silently return.
+
+### Result
+
+Snapshot count audit returned no mismatches. Current tracked snapshot target
+rows:
+
+```text
+flavio_valle: 436 stories, 674 articles
+pedro_duarte: 18 stories, 19 articles
+pedro_angelito: 4 stories, 6 articles
+bernardo_rubiao: 24 stories, 25 articles
+shakira: 0 stories, 0 articles
+```
+
+The only remaining "Aguarde a atualização terminar" string in the dashboard JS
+is inside `friendlyError()` for compatibility with stale backend responses; it
+is no longer in the target management UI flow.
+
+Focused checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_edit_stays_available_during_running_update \
+  tests/test_pages_performance.py::TestFunctionalSanity::test_manage_target_archive_restore_stay_available_during_running_update \
+  tests/test_admin_ui.py::test_target_mutations_remain_available_while_update_is_active \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  -q
+```
+
+Result: `4 passed in 2.84s`.
+
+Related checks:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  tests/test_export_mobile_snapshot_pages.py::test_export_bundle_uses_current_dashboard_javascript \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_does_not_lock_target_management_during_updates \
+  tests/test_admin_ui.py::test_target_mutations_remain_available_while_update_is_active \
+  tests/test_admin_ui.py::test_targets_api_short_name_error_explains_field_and_fix \
+  -q
+```
+
+Result: `12 passed in 7.79s`.
+
+Parallel-work note: while this cleanup was in progress, `origin/master` advanced
+to `7bd349c docs: add viewer password operations runbook` through the
+segregation loop. It touches different docs; rebase before pushing.
+
+### Next Hypothesis
+
+Commit this cleanup, rebase over the parallel docs commits, push, then run a
+live asset check for removal of `targetActionsLocked` from the hosted bundle.
+
+### Why The Loop Continues
+
+The old lock path is being removed, but the hosted deploy and any remaining
+error-message compatibility paths still need another pass.

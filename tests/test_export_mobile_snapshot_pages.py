@@ -178,6 +178,18 @@ def test_dashboard_javascript_target_success_copy_mentions_base_atual():
     assert "Nome extra salvo e disponível para a próxima rodada." not in dashboard_js
 
 
+def test_dashboard_javascript_does_not_lock_target_management_during_updates():
+    dashboard_js = (PROJECT_ROOT / "assets" / "clipping.js").read_text(encoding="utf-8")
+    management_body = dashboard_js[
+        dashboard_js.index("function managedTargetForm") :
+        dashboard_js.index("function selectedRunTargetKeys")
+    ]
+
+    assert "targetActionsLocked" not in management_body
+    assert "Aguarde a atualização terminar" not in management_body
+    assert "aria-disabled" not in management_body
+
+
 def test_static_export_marks_bundle_to_skip_api_polling(tmp_path):
     db_path = tmp_path / "clipping.db"
     seed_story_db(db_path)

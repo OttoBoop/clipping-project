@@ -112,16 +112,6 @@ def create_secondary_target(payload: dict[str, Any]) -> dict[str, Any]:
     return helper(payload)
 
 
-def target_mutations_blocked() -> bool:
-    status = str(job_manager.current_status().get("status") or "")
-    return status in ACTIVE_TARGET_MUTATION_STATUSES
-
-
-def ensure_target_mutations_allowed() -> None:
-    if target_mutations_blocked():
-        raise HTTPException(status_code=409, detail="Aguarde a atualização terminar para mudar os nomes acompanhados.")
-
-
 def upload_targets_artifacts(kind: str, result: dict[str, Any], key: str) -> list[str]:
     if not artifact_store.enabled:
         return []

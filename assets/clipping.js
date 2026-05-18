@@ -664,10 +664,6 @@
       });
   }
 
-  function targetActionsLocked() {
-    return false;
-  }
-
   function visibleTargetKeywords(target) {
     var display = String(target.label || target.key || "");
     return (target.keywords || []).filter(function (item) {
@@ -680,15 +676,14 @@
     return cleaned.length ? cleaned.map(escapeHtml).join(", ") : '<span class="muted-inline">' + escapeHtml(emptyText) + "</span>";
   }
 
-  function managedTargetForm(target, locked) {
-    var disabled = locked ? " disabled" : "";
+  function managedTargetForm(target) {
     return (
       '<form class="manage-target-form" data-manage-target-key="' + escapeHtml(target.key) + '">' +
-      '<label>Nome <input name="display_name" value="' + escapeHtml(target.label || target.key) + '" required minlength="3"' + disabled + "></label>" +
-      '<label>Termos relacionados <textarea name="keywords" rows="3"' + disabled + ">" + escapeHtml(visibleTargetKeywords(target).join(", ")) + "</textarea></label>" +
-      '<label>Correspondências exatas <textarea name="exact_aliases" rows="3"' + disabled + ">" + escapeHtml((target.exact_aliases || []).join(", ")) + "</textarea></label>" +
+      '<label>Nome <input name="display_name" value="' + escapeHtml(target.label || target.key) + '" required minlength="3"></label>' +
+      '<label>Termos relacionados <textarea name="keywords" rows="3">' + escapeHtml(visibleTargetKeywords(target).join(", ")) + "</textarea></label>" +
+      '<label>Correspondências exatas <textarea name="exact_aliases" rows="3">' + escapeHtml((target.exact_aliases || []).join(", ")) + "</textarea></label>" +
       '<div class="manage-target-actions">' +
-      '<button type="submit" class="primary-action"' + disabled + ">Salvar</button>" +
+      '<button type="submit" class="primary-action">Salvar</button>' +
       '<button type="button" class="secondary-action" data-target-edit-cancel="' + escapeHtml(target.key) + '">Cancelar</button>' +
       "</div>" +
       "</form>"
@@ -697,9 +692,6 @@
 
   function managedTargetCard(target) {
     var key = escapeHtml(target.key);
-    var locked = targetActionsLocked();
-    var disabled = locked ? " disabled" : "";
-    var disabledAttr = locked ? ' aria-disabled="true"' : "";
     var archived = Boolean(target.archived);
     var classes = "manage-target-card" + (archived ? " is-archived" : "");
     var meta =
@@ -709,7 +701,7 @@
       "</dl>";
     var body = '<div class="manage-target-card-head"><div><strong>' + escapeHtml(target.label || target.key) + "</strong><small>" + escapeHtml(target.key) + "</small></div></div>";
     if (!archived && editingTargetKey === target.key) {
-      body += managedTargetForm(target, locked);
+      body += managedTargetForm(target);
     } else {
       body += meta;
       if (archived) {
@@ -719,7 +711,7 @@
           (target.archived_at ? " · " + escapeHtml(target.archived_at) : "") +
           "</p>" +
           '<div class="manage-target-actions">' +
-          '<button type="button" class="secondary-action" data-target-restore="' + key + '"' + disabled + disabledAttr + ">Restaurar</button>" +
+          '<button type="button" class="secondary-action" data-target-restore="' + key + '">Restaurar</button>' +
           "</div>";
       } else if (pendingArchiveKey === target.key) {
         body +=
@@ -727,15 +719,15 @@
           "<strong>Arquivar este nome?</strong>" +
           "<p>Este nome deixará de aparecer nas próximas atualizações e nos filtros do painel. As notícias antigas continuam preservadas internamente.</p>" +
           '<div class="manage-target-actions">' +
-          '<button type="button" class="danger-action" data-target-archive-confirm="' + key + '"' + disabled + disabledAttr + ">Arquivar nome</button>" +
+          '<button type="button" class="danger-action" data-target-archive-confirm="' + key + '">Arquivar nome</button>' +
           '<button type="button" class="secondary-action" data-target-archive-cancel="' + key + '">Cancelar</button>' +
           "</div>" +
           "</div>";
       } else {
         body +=
           '<div class="manage-target-actions">' +
-          '<button type="button" class="secondary-action" data-target-edit="' + key + '"' + disabled + disabledAttr + ">Editar</button>" +
-          '<button type="button" class="danger-action" data-target-archive-start="' + key + '"' + disabled + disabledAttr + ">Arquivar</button>" +
+          '<button type="button" class="secondary-action" data-target-edit="' + key + '">Editar</button>' +
+          '<button type="button" class="danger-action" data-target-archive-start="' + key + '">Arquivar</button>' +
           "</div>";
       }
     }
@@ -744,8 +736,7 @@
 
   function renderManageTargets() {
     if (!manageTargetsList || !archivedTargetsList) return;
-    var locked = targetActionsLocked();
-    if (manageTargetsBlocked) manageTargetsBlocked.hidden = !locked;
+    if (manageTargetsBlocked) manageTargetsBlocked.hidden = true;
     var active = managedTargets.filter(function (target) { return !target.primary && !target.archived; });
     var archived = managedTargets.filter(function (target) { return !target.primary && target.archived; });
     manageTargetsList.innerHTML = active.length
@@ -2001,10 +1992,6 @@
 
     const editTargetButton = event.target.closest("[data-target-edit]");
     if (editTargetButton) {
-      if (targetActionsLocked()) {
-        setMessage(manageTargetsMessage, "Aguarde a atualização terminar para mudar os nomes acompanhados.", "error");
-        return;
-      }
       editingTargetKey = editTargetButton.dataset.targetEdit || "";
       pendingArchiveKey = "";
       setMessage(manageTargetsMessage, "", "");
@@ -2021,10 +2008,6 @@
 
     const archiveStartButton = event.target.closest("[data-target-archive-start]");
     if (archiveStartButton) {
-      if (targetActionsLocked()) {
-        setMessage(manageTargetsMessage, "Aguarde a atualização terminar para mudar os nomes acompanhados.", "error");
-        return;
-      }
       pendingArchiveKey = archiveStartButton.dataset.targetArchiveStart || "";
       editingTargetKey = "";
       setMessage(manageTargetsMessage, "", "");
@@ -2041,10 +2024,6 @@
 
     const archiveConfirmButton = event.target.closest("[data-target-archive-confirm]");
     if (archiveConfirmButton) {
-      if (targetActionsLocked()) {
-        setMessage(manageTargetsMessage, "Aguarde a atualização terminar para mudar os nomes acompanhados.", "error");
-        return;
-      }
       archiveConfirmButton.disabled = true;
       archiveManagedTarget(archiveConfirmButton.dataset.targetArchiveConfirm || "");
       return;
@@ -2052,10 +2031,6 @@
 
     const restoreButton = event.target.closest("[data-target-restore]");
     if (restoreButton) {
-      if (targetActionsLocked()) {
-        setMessage(manageTargetsMessage, "Aguarde a atualização terminar para mudar os nomes acompanhados.", "error");
-        return;
-      }
       restoreButton.disabled = true;
       restoreManagedTarget(restoreButton.dataset.targetRestore || "");
       return;
@@ -2214,10 +2189,6 @@
     const targetForm = event.target.closest(".manage-target-form");
     if (!targetForm) return;
     event.preventDefault();
-    if (targetActionsLocked()) {
-      setMessage(manageTargetsMessage, "Aguarde a atualização terminar para mudar os nomes acompanhados.", "error");
-      return;
-    }
     var key = targetForm.dataset.manageTargetKey || "";
     var submit = targetForm.querySelector('button[type="submit"]');
     if (submit) submit.disabled = true;
