@@ -1061,3 +1061,72 @@ an immediate final.
 
 This hardening is itself a checkpoint. The next action is to verify, commit,
 push, then start the first unattended queue cycle under the new rule.
+
+## 2026-05-18 - Sixteenth Unattended Cycle: Live Auth Gate Plus Local Fallback
+
+### Objective Reviewed
+
+The new user-away protocol says an auth-gated live audit is not a reason to
+send a final answer. The active objective was to execute the fixed unattended
+queue after committing the protocol.
+
+### Audit Performed
+
+- Checked `/api/update/status`.
+- Checked `/api/update/live-results?scope=base&limit=10`.
+- Checked `/assets/clipping-data.json`.
+- Checked `/api/targets`.
+- Checked `/healthz`.
+- Checked the live `assets/clipping.js` for polling/runtime markers.
+- Ran a real browser smoke against the published login page.
+- Ran the focused local fallback contracts.
+
+### Result
+
+Live auth state remains gated:
+
+```text
+/api/update/status -> HTTP 401 viewer_login_required
+/api/update/live-results?scope=base&limit=10 -> HTTP 401 viewer_login_required
+/assets/clipping-data.json -> HTTP 401 viewer_login_required
+/api/targets -> HTTP 401 viewer_login_required
+/healthz -> HTTP 200 ok=true job=status_unavailable
+published browser body_len=107 has_login=True status_requests=0 live_requests=0 errors=[]
+```
+
+Live JS asset remains compatible with the target/live-base loop:
+
+```text
+apiAvailable=True
+originalTargetKeys=True
+/api/update/live-results?scope=base=True
+viewerIsAdmin=True
+```
+
+Focused local fallback:
+
+```bash
+.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py::test_hosted_dashboard_enables_same_origin_api_polling \
+  tests/test_admin_ui.py::test_viewer_cannot_widen_live_results_or_write_admin_actions \
+  tests/test_admin_ui.py::test_live_results_endpoint_returns_saved_articles_before_export \
+  tests/test_admin_ui.py::test_target_create_syncs_live_base_and_export_filter \
+  tests/test_export_mobile_snapshot_pages.py::test_dashboard_javascript_preserves_original_target_keys_for_visible_articles \
+  tests/test_export_mobile_snapshot_pages.py::test_static_export_marks_bundle_to_skip_api_polling \
+  -q
+```
+
+Result: `6 passed in 0.67s`.
+
+### Next Hypothesis
+
+The protocol still needs explicit operational self-tests written down: auth
+gate should lead to local contracts, tests passing should lead to a new audit,
+and deploy verified should lead to export/filter review. Writing those cases
+will make the unattended plan harder to misread as a single documentation task.
+
+### Why The Loop Continues
+
+The local fallback passed, but that is a checkpoint. The published live data
+audit remains blocked by authentication, and the protocol can still be made
+stronger by turning the operational simulations into explicit documented cases.
