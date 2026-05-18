@@ -4579,3 +4579,53 @@ Continue with local contracts/source audits while hosted data remains gated.
 
 Auth gating blocks only direct hosted data inspection. The loop still has useful
 local verification and code review paths.
+
+## 2026-05-18 - Eighty-Second Update No-Export Publication Guard Cycle
+
+### Objective Reviewed
+
+The saved-vs-published rule should apply to all update jobs, not only manual
+story creation.
+
+### Audit Performed
+
+- Added `tests/test_targets_jobs.py::test_update_without_export_keeps_base_live_result_saved`.
+- The test creates a succeeded update job with `export: false`, records an
+  `article_saved` event, and asserts Base atual live-results still returns
+  `publicationState: "saved"`.
+- Ran focused guard tests:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_targets_jobs.py::test_update_without_export_keeps_base_live_result_saved \
+  tests/test_admin_ui.py::test_manual_story_insert_creates_unique_story_graph \
+  -q
+```
+
+Result: `2 passed in 0.55s`.
+
+- Ran broader admin/jobs regression:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py tests/test_targets_jobs.py -q
+```
+
+Result: `92 passed in 3.08s`.
+
+- Restored generated `pipeline/__pycache__` dirt after tests.
+
+### Result
+
+The publication-state repair is now guarded for both manual no-export saves and
+update no-export saves.
+
+### Next Hypothesis
+
+Commit the test guard, push, then continue with hosted watch or another source
+audit.
+
+### Why The Loop Continues
+
+The guard reduces regression risk, but it is another checkpoint. The loop still
+has live auth gates and target/filter/base review items.

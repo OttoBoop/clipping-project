@@ -582,6 +582,80 @@ def test_base_live_results_return_recent_saved_articles_after_export_job(monkeyp
     assert live["items"][0]["targetKeys"] == ["shakira"]
 
 
+def test_update_without_export_keeps_base_live_result_saved(monkeypatch, tmp_path):
+    _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs.artifact_store, "enabled", False)
+    monkeypatch.setattr(jobs, "target_labels", lambda include_archived=False: {"shakira": "shakira"})
+    job_id = "shakira-update-no-export"
+    jobs.create_job(
+        job_id,
+        "update",
+        {
+            "preset": "custom",
+            "collector": "all",
+            "target_keys": ["shakira"],
+            "date_from": "2026-04-01",
+            "date_to": "2026-05-05",
+            "export": False,
+        },
+        started_by="coworker",
+    )
+    with ClippingDB(db_file) as db:
+        article_id = db.insert_article(
+            url="https://example.com/shakira-saved-no-export",
+            title="Shakira salva sem exportar painel",
+            source_name="Fonte Teste",
+            source_type="test",
+            published_at="2026-05-02T12:00:00+00:00",
+            snippet="Shakira aparece antes do export.",
+            full_text="Shakira aparece antes do export.",
+        )
+        assert article_id is not None
+        db.insert_mention(article_id, "shakira", "shakira", "shakira")
+        story_id = db.create_story(
+            title="Shakira salva sem exportar painel",
+            summary="Resumo sobre Shakira.",
+            temperature=34.0,
+            target_keys=["shakira"],
+        )
+        db.attach_article_to_story(story_id, article_id)
+
+    jobs.record_progress(
+        job_id,
+        "article_saved",
+        {
+            "article_id": article_id,
+            "story_id": story_id,
+            "url": "https://example.com/shakira-saved-no-export",
+            "title": "Shakira salva sem exportar painel",
+            "published_at": "2026-05-02T12:00:00+00:00",
+            "source_name": "Fonte Teste",
+            "source_type": "test",
+            "target_keys": ["shakira"],
+            "articles_inserted_delta": 1,
+            "mentions_inserted_delta": 1,
+            "stories_touched_delta": 1,
+            "publication_state": "saved",
+        },
+        target_key="shakira",
+        target_label="shakira",
+    )
+    jobs.update_job(
+        job_id,
+        status="succeeded",
+        finished_at="2026-05-18T22:10:00+00:00",
+        articles_inserted=1,
+        mentions_inserted=1,
+        stories_touched=1,
+    )
+
+    live = jobs.live_results_for_job(scope="base", target_key="shakira", limit=10)
+
+    assert live["count"] == 1
+    assert live["items"][0]["title"] == "Shakira salva sem exportar painel"
+    assert live["items"][0]["publicationState"] == "saved"
+
+
 def test_target_sync_backfills_new_target_into_base_live_results(monkeypatch, tmp_path):
     db_admin, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
     from pipeline import settings
