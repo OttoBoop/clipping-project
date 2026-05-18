@@ -4283,3 +4283,42 @@ watch, target management UI smoke, or docs/checklist review.
 The parallelism contract is reviewed and tested, but that is another checkpoint.
 The loop still has live auth barriers and repeated end-to-end target/filter/base
 checks to revisit.
+
+## 2026-05-18 - Seventy-Fifth Non-Fast-Forward Barrier Cycle
+
+### Objective Reviewed
+
+The barrier rule applies to git concurrency too: answer it, log it, resolve it
+safely, and continue instead of stopping after a rejected push.
+
+### Audit Performed
+
+- Push of `8742787 docs: log parallel ingestion review` was rejected with
+  `non-fast-forward`.
+- Inspected `origin/master`.
+- Found remote commit `9abba1f feat: add Rio economic dry-run report tool`.
+- Confirmed the remote work was in Rio economic/segregation files and reports,
+  with no direct conflict in the clipping code patch.
+- Rebasing over `origin/master` succeeded.
+- Pushed the rebased clipping log as `247e2b7`.
+
+### Result
+
+Barrier answered and resolved:
+
+```text
+remote advanced: 9abba1f feat: add Rio economic dry-run report tool
+resolution: git rebase origin/master, then push HEAD:master
+pushed: 247e2b7 docs: log parallel ingestion review
+```
+
+### Next Hypothesis
+
+Commit this barrier log, then return to the clipping loop: re-read goals, check
+hosted health/auth, and choose another local/source contract if live payloads
+remain gated.
+
+### Why The Loop Continues
+
+Resolving the git barrier is a checkpoint. The clipping product loop still has
+live auth gates and repeated target/filter/base audits to perform.
