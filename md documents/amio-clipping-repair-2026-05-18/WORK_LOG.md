@@ -1410,3 +1410,37 @@ workstream changes.
 
 Admin/export passing is another checkpoint. A combined local checkpoint and the
 auth-gated live watch item remain.
+
+## 2026-05-18 - Twenty-Third Unattended Cycle: Combined Local Checkpoint
+
+### Objective Reviewed
+
+After target/jobs and admin/export passed separately, the next useful
+checkpoint was running them together to catch cross-file regressions.
+
+### Audit Performed
+
+- Ran target/job tests.
+- Ran admin UI tests.
+- Ran export mobile snapshot/page tests.
+
+### Result
+
+Command:
+
+```bash
+.venv_playwright/bin/pytest tests/test_targets_jobs.py tests/test_admin_ui.py tests/test_export_mobile_snapshot_pages.py -q
+```
+
+Result: `99 passed in 2.84s`.
+
+### Next Hypothesis
+
+Return to the live-accessible queue items: `/healthz`, login page smoke, static
+asset availability, and git/deploy history. Since authenticated API checks
+remain blocked, distinguish "live blocked by auth" from "local contracts pass".
+
+### Why The Loop Continues
+
+A 99-test local checkpoint is strong but still not a live authenticated
+verification of Base atual/status/export filters on the published site.
