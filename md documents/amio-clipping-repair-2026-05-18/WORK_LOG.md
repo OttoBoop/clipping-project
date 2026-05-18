@@ -5960,3 +5960,48 @@ Amend this barrier entry into the local coverage refresh commit, rebase over
 
 Another parallel-doc git race does not change the clipping repair objective.
 The loop continues with disciplined path-limited commits.
+
+## 2026-05-18 - One Hundred Fifteenth Target Config Source Review
+
+### Objective Reviewed
+
+After refreshing the coverage checkpoint, the loop moved to target config source
+review: creation, normalization, `targets.json` writes, archive, and restore.
+
+### Audit Performed
+
+- Confirmed clean worktree at
+  `79aee9c docs: refresh clipping coverage checkpoint`.
+- Read `web_app/db_admin.py` target-management paths:
+  - `load_targets()`;
+  - `normalize_targets_file()`;
+  - `public_targets()`;
+  - `write_targets_atomic()`;
+  - `clean_target_payload()`;
+  - `create_secondary_target()`;
+  - `update_secondary_target()`;
+  - `archive_secondary_target()`;
+  - `restore_secondary_target()`.
+- Cross-checked test coverage locations in `tests/test_targets_jobs.py` and
+  `tests/test_admin_ui.py`.
+
+### Result
+
+No new code bug found in this source-review slice. The reviewed path still
+matches the intended contracts:
+
+- writes to `data/targets.json` are atomic;
+- primary targets remain locked;
+- secondary create/update ensures display name is part of keywords;
+- archived targets are hidden unless explicitly requested;
+- restore removes archive metadata;
+- validation failures remain explicit.
+
+### Next Hypothesis
+
+Continue with another slice: dashboard runtime state or hosted auth/live watch.
+
+### Why The Loop Continues
+
+Source review without a new bug is still useful, but it is not an exit. The
+next slice may still uncover another target/filter/Base atual mismatch.
