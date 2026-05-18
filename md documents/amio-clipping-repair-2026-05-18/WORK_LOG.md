@@ -4742,3 +4742,41 @@ collector/ingestion-adjacent verification before returning to live watch.
 
 The git barrier is resolved, but remote collector changes can affect the
 clipping update loop. Verification remains useful.
+
+## 2026-05-18 - Eighty-Sixth Collector Rebase Verification Cycle
+
+### Objective Reviewed
+
+Remote collector changes should be checked against the clipping ingestion loop
+before assuming the rebase is harmless.
+
+### Audit Performed
+
+- Ran collector restore tests plus two ingestion-adjacent target/job contracts:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_collectors_restore.py \
+  tests/test_targets_jobs.py::test_process_candidates_prefetches_articles_with_serial_db_writes \
+  tests/test_targets_jobs.py::test_process_candidates_reports_candidate_progress_before_fetch_fail \
+  -q
+```
+
+Result: `25 passed in 0.25s`.
+
+- Restored generated `pipeline/__pycache__` dirt after the test run.
+
+### Result
+
+The collector rebase did not break the small collector/ingestion contract set
+used by the clipping loop.
+
+### Next Hypothesis
+
+Commit this verification log, then continue with hosted watch or target
+management review.
+
+### Why The Loop Continues
+
+The rebase is verified locally, but this is another checkpoint. The loop still
+has live auth barriers and target/filter/base review work.
