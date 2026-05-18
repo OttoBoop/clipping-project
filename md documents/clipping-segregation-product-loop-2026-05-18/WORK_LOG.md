@@ -3144,3 +3144,58 @@ HEAD after rebase -> 409702a feat: make Rio dry-run skip redirect resolution
 ```
 
 Push is still pending.
+
+### Final Push Evidence
+
+A final short rebase was needed immediately before push. The workaround reached
+`master`:
+
+```text
+git fetch origin
+git rebase origin/master -> success
+git push origin HEAD:master
+afc187c..e7b5e92  HEAD -> master
+final pushed commit=e7b5e92 feat: make Rio dry-run skip redirect resolution
+```
+
+Render observed the pushed commit:
+
+```text
+deploy=dep-d86dum21dpfc73a26b60
+commit=e7b5e92 feat: make Rio dry-run skip redirect resolution
+status=queued
+previous live=71b4a2b docs: log static target consistency audit
+```
+
+### Next Objective From Docs
+
+Keep polling Render until this commit or a later commit reaches live, then run
+logged-out production privacy checks again and return to the long-term docs for
+the next weak axis.
+
+### Live Privacy Smoke While Rio Deploy Queued
+
+Production still enforces logged-out privacy while the Rio workaround deploy is
+queued:
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+```
+
+### Log Rebase After Push
+
+Two more documentation commits landed after the Rio workaround push:
+
+```text
+acce5d3 docs: log hosted watch after no-export guard
+ddcd558 docs: log collector rebase barrier
+```
+
+This WORK_LOG update was stashed, rebased onto `ddcd558`, and reapplied without
+conflict before being prepared for a docs-only commit.
