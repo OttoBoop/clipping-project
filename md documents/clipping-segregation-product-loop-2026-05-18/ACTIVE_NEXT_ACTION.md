@@ -102,6 +102,7 @@ Continue the production loop. Current priority from the docs:
    demo/prospect strategy now exists; next packaging step is defining included
    update frequency and delivery format; V1 pilot scope now exists;
 6. review costs, password rotation, and operations;
+   first-client onboarding/offboarding checklist now exists;
 7. then re-read the docs and choose the next weak axis.
 
 If `viewerAuthConfigured=false` returns, treat it as a regression and re-check

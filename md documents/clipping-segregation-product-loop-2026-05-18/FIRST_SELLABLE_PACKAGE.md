@@ -145,6 +145,7 @@ Remaining before first paid client:
 - define update frequency and included targets in writing; initial bounded
   pilot scope documented in `V1_DELIVERY_SCOPE.md`;
 - test the admin/operator target-update path with operator credentials;
-- write password rotation and offboarding instructions;
+- write password rotation and offboarding instructions; first-client checklist
+  documented in `FIRST_CLIENT_ONBOARDING_CHECKLIST.md`;
 - decide whether the first delivery is dashboard-only or dashboard plus manual
   WhatsApp/PDF summary.

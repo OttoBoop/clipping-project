@@ -3796,6 +3796,82 @@ git stash pop -> success
 
 ### Push Evidence
 
+The V1 delivery scope reached `master`:
+
+```text
+git push origin HEAD:master
+b184dd2..d0ebc1f  HEAD -> master
+commit=d0ebc1f docs: define V1 clipping delivery scope
+```
+
+Render accepted the commit:
+
+```text
+deploy=dep-d86e7d8c5kbs73akq06g
+commit=d0ebc1f docs: define V1 clipping delivery scope
+status=queued
+previous live=40219d8 docs: add safe demo profile strategy
+```
+
+Production privacy smoke while deploy queue moves:
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+```
+
+### Next Objective From Docs
+
+Review first-client onboarding/offboarding and password-rotation steps, then
+continue Render polling.
+
+## 2026-05-19 - Loop Cycle: First Client Onboarding Checklist
+
+### Objective Reviewed
+
+The sellable package still needed operational steps for creating, verifying,
+rotating, and removing client/demo access without leaking secrets or reusing
+private profiles.
+
+### Action Taken
+
+Added:
+
+```text
+FIRST_CLIENT_ONBOARDING_CHECKLIST.md
+```
+
+Updated:
+
+```text
+FIRST_SELLABLE_PACKAGE.md
+ACTIVE_NEXT_ACTION.md
+```
+
+### Decision
+
+Before any external access is shared, write down profile key, allowed targets,
+delivery format, pilot dates, password recipient, and offboarding condition.
+Then verify logged-out gates, scoped profile payload, raw texts, viewer write
+rejection, and hidden operator controls.
+
+### Barrier Status
+
+No technical blocker. Actual first-client onboarding still requires a real
+buyer/prospect and a password managed outside Git.
+
+### Why The Loop Continues
+
+The operational checklist is in place, but Render deploy still needs polling and
+the admin/operator target-update path remains untested with live operator
+credentials.
+
+### Push Evidence
+
 The query-file implementation and revised sample reached `master`:
 
 ```text
