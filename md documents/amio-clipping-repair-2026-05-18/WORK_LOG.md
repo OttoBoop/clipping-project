@@ -3612,3 +3612,61 @@ of `manageTargetsBlocked`.
 
 Static contracts are stronger, but the hosted bundle still needs to catch up to
 the hidden-copy cleanup.
+
+## 2026-05-19 - Sixty-First Live/Regression Cycle: Inline Validation Fully Live
+
+### Objective Reviewed
+
+The previous watch item was the hosted bundle: inline validation needed to be
+live, and `manageTargetsBlocked`/`targetActionsLocked` needed to be absent from
+the served JS.
+
+### Audit Performed
+
+- Checked hosted `/assets/clipping.js?v=ee358bd`.
+- Checked hosted `/healthz`.
+- Confirmed local/remotes aligned at `ee358bd`.
+- Ran the broad focused target loop regression suite again.
+
+### Result
+
+Hosted JS now contains:
+
+```text
+targetDisplayNameError
+novalidate
+if (activeTargetKeys.size) activeTargetKeys.add(key);
+```
+
+Hosted JS no longer contains:
+
+```text
+manageTargetsBlocked
+targetActionsLocked
+```
+
+Hosted `/healthz` remains healthy and idle.
+
+Regression:
+
+```bash
+/home/otavio/Documents/vscode/clipping-project/.venv_playwright/bin/pytest \
+  tests/test_admin_ui.py \
+  tests/test_targets_jobs.py \
+  tests/test_export_mobile_snapshot_pages.py \
+  tests/test_pages_performance.py::TestFunctionalSanity \
+  -q
+```
+
+Result: `121 passed in 13.17s`.
+
+### Next Hypothesis
+
+Re-read the docs again, then check whether any remaining original objective is
+only documented but not guarded. If no obvious gap appears, run targeted source
+searches for generic target/base error copy and stale UI-only target behavior.
+
+### Why The Loop Continues
+
+The latest user-facing error fix is live and tested, but the loop rule still
+requires another audit pass instead of stopping on a good checkpoint.
