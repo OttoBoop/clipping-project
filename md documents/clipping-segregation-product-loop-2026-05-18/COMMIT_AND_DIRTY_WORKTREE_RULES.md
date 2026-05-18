@@ -47,8 +47,23 @@ After the docs commit, probable boundaries are:
 - frontend role-based visibility;
 - tests and work-log updates.
 
+After the resumed 2026-05-18 loop, product-loop paths may also include:
+
+- `data/viewer_profiles.json`;
+- `web_app/segmentation.py`;
+- `assets/clipping.css`;
+- `assets/clipping.js`;
+- `tools/pages_assets/clipping.css`;
+- `tools/pages_assets/clipping.js`;
+- `tests/test_admin_ui.py`;
+- files inside `md documents/clipping-segregation-product-loop-2026-05-18/`.
+
 If a patch touches more than one boundary, write why in `WORK_LOG.md` before
 committing.
+
+Treat untracked inherited files, especially
+`tests/test_sprint_regression_harness.py`, as separate ownership questions. Do
+not add them just because this loop's tests touched one line there.
 
 ## Push Rule
 

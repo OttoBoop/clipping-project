@@ -7,9 +7,11 @@
   // API base URL. Empty string = same-origin unless this is a generated static bundle.
   const apiUrl = (app.dataset.clippingApiUrl || "").trim().replace(/\/$/, "");
   const staticBundle = app.dataset.clippingStatic === "1";
+  const initialSessionRole = (app.dataset.clippingSessionRole || "").trim();
   const apiAvailable = Boolean(apiUrl) || !staticBundle;
   let editorEnabled = apiAvailable;
   let csrfToken = "";
+  let csrfPromise = null;
   let categoriesCache = [];
 
   function apiFetch(path, init) {
@@ -17,12 +19,36 @@
     return fetch(apiUrl + path, Object.assign({ credentials: "same-origin" }, init || {}));
   }
 
-  function apiPost(path, body) {
+  function ensureCsrfToken() {
+    if (!apiAvailable) return Promise.reject(new Error("api_unavailable"));
+    if (csrfToken) return Promise.resolve(csrfToken);
+    if (!csrfPromise) {
+      csrfPromise = apiFetch("/api/csrf", { cache: "no-store" })
+        .then(function (resp) {
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          return resp.json();
+        })
+        .then(function (data) {
+          csrfToken = String((data && data.csrf) || "");
+          if (!csrfToken) throw new Error("csrf_unavailable");
+          return csrfToken;
+        })
+        .catch(function (error) {
+          csrfPromise = null;
+          throw error;
+        });
+    }
+    return csrfPromise;
+  }
+
+  async function apiPost(path, body) {
+    await ensureCsrfToken();
     var headers = { "Content-Type": "application/json" };
     if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
     return apiFetch(path, { method: "POST", headers: headers, body: JSON.stringify(body) });
   }
-  function apiPatch(path, body) {
+  async function apiPatch(path, body) {
+    await ensureCsrfToken();
     var headers = { "Content-Type": "application/json" };
     if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
     return apiFetch(path, { method: "PATCH", headers: headers, body: JSON.stringify(body) });
@@ -540,6 +566,7 @@
 
   function viewerIsAdmin() {
     if (!apiAvailable) return false;
+    if (initialSessionRole) return initialSessionRole === "admin";
     if (!payload || !payload.meta || !Object.prototype.hasOwnProperty.call(payload.meta, "viewerRole")) return true;
     return payload.meta.viewerRole === "admin";
   }
@@ -565,6 +592,8 @@
       if (manageTargetsBox) manageTargetsBox.hidden = false;
     }
   }
+
+  applyViewerControls();
 
   function renderRunTarget(target) {
     var id = "run-target-" + target.key;

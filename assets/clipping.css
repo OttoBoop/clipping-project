@@ -84,6 +84,13 @@ body::before {
   padding: 24px;
 }
 
+body.viewer-readonly [data-run-tab]:not([data-run-tab="base"]),
+body.viewer-readonly [data-tab-panel]:not([data-tab-panel="base"]),
+body.viewer-readonly .add-target-box,
+body.viewer-readonly .manage-targets-box {
+  display: none !important;
+}
+
 .runner-head {
   display: flex;
   justify-content: space-between;

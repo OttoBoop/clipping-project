@@ -1,0 +1,40 @@
+{
+  "profiles": {
+    "flavio": {
+      "label": "Flavio Valle",
+      "target_keys": [
+        "flavio_valle",
+        "pedro_duarte",
+        "pedro_angelito",
+        "bernardo_rubiao"
+      ],
+      "default_targets": [
+        "flavio_valle",
+        "pedro_angelito"
+      ]
+    },
+    "shakira": {
+      "label": "Show da Shakira",
+      "target_keys": [
+        "shakira"
+      ],
+      "default_targets": [
+        "shakira"
+      ]
+    },
+    "rio_economico": {
+      "label": "Rio Economico",
+      "target_keys": [
+        "rio_economico"
+      ],
+      "default_targets": [
+        "rio_economico"
+      ]
+    },
+    "demo_cliente": {
+      "label": "Cliente Demo",
+      "target_keys": [],
+      "default_targets": []
+    }
+  }
+}

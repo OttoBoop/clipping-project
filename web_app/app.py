@@ -6,17 +6,20 @@ from html import escape
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 
 from .auth import (
     COOKIE_NAME,
     auth_configured,
-    check_password,
     csrf_token,
+    login_configured,
+    login_identity,
     make_session,
     require_admin,
     require_csrf,
+    require_viewer,
+    verify_session,
+    viewer_auth_configured,
 )
 from .config import ASSETS_DIR, ROOT, db_path, local_writes_allowed
 from .db_admin import (
@@ -38,6 +41,15 @@ from .jobs import (
     recent_jobs,
     record_target_sync,
     run_export_snapshot,
+)
+from .segmentation import (
+    scoped_classifications,
+    scoped_dashboard_payload,
+    scoped_live_results,
+    scoped_raw_texts,
+    scoped_status_response,
+    scoped_targets_response,
+    viewer_profiles_configured,
 )
 from .storage_bridge import artifact_store
 from pipeline.database import ClippingDB
@@ -274,7 +286,6 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Clipping Project", docs_url=None, redoc_url=None, lifespan=lifespan)
-app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 
 
 @app.middleware("http")
@@ -288,13 +299,69 @@ async def no_cache_for_dashboard_assets(request: Request, call_next):
     return response
 
 
+def current_session(request: Request) -> dict[str, Any] | None:
+    return verify_session(request.cookies.get(COOKIE_NAME))
+
+
+def read_json_file(path) -> dict[str, Any]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def safe_asset_path(asset_path: str):
+    asset_file = (ASSETS_DIR / asset_path).resolve()
+    assets_root = ASSETS_DIR.resolve()
+    if asset_file != assets_root and assets_root not in asset_file.parents:
+        raise HTTPException(status_code=404, detail="asset_not_found")
+    if not asset_file.is_file():
+        raise HTTPException(status_code=404, detail="asset_not_found")
+    return asset_file
+
+
+def dashboard_html_for_session(index_path, session: dict[str, Any]) -> str:
+    html_doc = index_path.read_text(encoding="utf-8")
+    html_doc = html_doc.replace('data-clipping-static="1"', 'data-clipping-static="0"', 1)
+    role = str(session.get("role") or "admin")
+    profile = str(session.get("profile") or ("admin" if role == "admin" else ""))
+    html_doc = html_doc.replace(
+        'id="app"',
+        (
+            'id="app"'
+            f' data-clipping-session-role="{escape(role)}"'
+            f' data-clipping-session-profile="{escape(profile)}"'
+        ),
+        1,
+    )
+    if role != "admin":
+        html_doc = html_doc.replace("<body>", '<body class="viewer-readonly">', 1)
+    return html_doc
+
+
+@app.get("/assets/{asset_path:path}")
+def dashboard_asset(asset_path: str, request: Request) -> Response:
+    if asset_path == "clipping-data.json":
+        session = require_viewer(request)
+        payload = scoped_dashboard_payload(read_json_file(ASSETS_DIR / "clipping-data.json"), session)
+        return JSONResponse(payload)
+    if asset_path == "clipping-raw-texts.json":
+        session = require_viewer(request)
+        scoped_payload = scoped_dashboard_payload(read_json_file(ASSETS_DIR / "clipping-data.json"), session)
+        raw_payload = read_json_file(ASSETS_DIR / "clipping-raw-texts.json")
+        return JSONResponse(scoped_raw_texts(raw_payload, scoped_payload))
+    return FileResponse(safe_asset_path(asset_path))
+
+
 @app.get("/", response_class=HTMLResponse)
-def public_dashboard() -> Response:
+def public_dashboard(request: Request) -> Response:
+    session = current_session(request)
+    if not session:
+        return HTMLResponse(login_html(), status_code=200)
     index_path = ROOT / "index.html"
     if index_path.is_file():
-        html_doc = index_path.read_text(encoding="utf-8")
-        html_doc = html_doc.replace('data-clipping-static="1"', 'data-clipping-static="0"', 1)
-        return HTMLResponse(html_doc, status_code=200)
+        return HTMLResponse(dashboard_html_for_session(index_path, session), status_code=200)
     return HTMLResponse("<h1>Clipping institucional</h1><p>Painel ainda nao gerado.</p>", status_code=200)
 
 
@@ -305,13 +372,18 @@ def admin_page() -> RedirectResponse:
 
 @app.post("/api/login")
 async def login(request: Request) -> JSONResponse:
-    if not auth_configured():
-        raise HTTPException(status_code=503, detail="admin_auth_not_configured")
+    if not login_configured():
+        raise HTTPException(status_code=503, detail="login_auth_not_configured")
     payload = await read_json(request)
-    if not check_password(str(payload.get("password") or "")):
+    identity = login_identity(str(payload.get("password") or ""))
+    if not identity:
         raise HTTPException(status_code=401, detail="invalid_password")
-    session_token = make_session("admin")
-    response = JSONResponse({"ok": True})
+    session_token = make_session(
+        identity["sub"],
+        role=identity["role"],
+        profile=identity["profile"],
+    )
+    response = JSONResponse({"ok": True, "role": identity["role"], "profile": identity["profile"]})
     response.set_cookie(
         COOKIE_NAME,
         session_token,
@@ -325,7 +397,7 @@ async def login(request: Request) -> JSONResponse:
 
 @app.post("/api/logout")
 def logout(request: Request) -> JSONResponse:
-    require_admin(request)
+    require_viewer(request)
     require_csrf(request)
     response = JSONResponse({"ok": True})
     response.delete_cookie(COOKIE_NAME)
@@ -338,6 +410,9 @@ def healthz() -> dict[str, Any]:
         "ok": True,
         "dbExists": db_path().is_file(),
         "authConfigured": auth_configured(),
+        "loginConfigured": login_configured(),
+        "viewerAuthConfigured": viewer_auth_configured(),
+        "viewerProfilesConfigured": viewer_profiles_configured(),
         "storage": artifact_store.status(),
         "localWritesAllowed": local_writes_allowed(),
         "job": safe_current_status().get("status", "idle"),
@@ -346,12 +421,13 @@ def healthz() -> dict[str, Any]:
 
 
 @app.get("/api/update/status")
-def update_status() -> dict[str, Any]:
+def update_status(request: Request) -> dict[str, Any]:
+    session = require_viewer(request)
     try:
         recent = recent_jobs(include_observability=False)
     except Exception:
         recent = []
-    return {"current": safe_current_status(), "recent": recent}
+    return scoped_status_response({"current": safe_current_status(), "recent": recent}, session)
 
 
 def safe_current_status() -> dict[str, Any]:
@@ -365,15 +441,19 @@ def safe_current_status() -> dict[str, Any]:
 
 
 @app.get("/api/update/live-results")
-def update_live_results(job_id: str = "", target_key: str = "", scope: str = "", limit: int = 60) -> dict[str, Any]:
-    return live_results_for_job(job_id, target_key=target_key, scope=scope, limit=limit)
+def update_live_results(request: Request, job_id: str = "", target_key: str = "", scope: str = "", limit: int = 60) -> dict[str, Any]:
+    session = require_viewer(request)
+    data = live_results_for_job(job_id, target_key=target_key, scope=scope, limit=limit)
+    return scoped_live_results(data, session, requested_target_key=target_key)
 
 
 @app.post("/api/update/start")
 async def start_update(request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
     payload = await read_json(request)
     try:
-        job = job_manager.start_update(payload, started_by="coworker")
+        job = job_manager.start_update(payload, started_by="admin")
     except JobConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
@@ -385,9 +465,11 @@ async def start_update(request: Request) -> JSONResponse:
 
 @app.post("/api/update/resume")
 async def resume_update(request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
     payload = await read_json(request)
     try:
-        job = job_manager.resume_update(str(payload.get("job_id") or payload.get("jobId") or ""), started_by="coworker")
+        job = job_manager.resume_update(str(payload.get("job_id") or payload.get("jobId") or ""), started_by="admin")
     except JobConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except RuntimeError as exc:
@@ -396,7 +478,9 @@ async def resume_update(request: Request) -> JSONResponse:
 
 
 @app.post("/api/update/cancel")
-async def cancel_update() -> JSONResponse:
+async def cancel_update(request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
     try:
         cancel_helper = getattr(job_manager, "cancel_active", None) or getattr(job_manager, "cancel_update", None)
         if not cancel_helper:
@@ -409,8 +493,10 @@ async def cancel_update() -> JSONResponse:
 
 @app.post("/api/export")
 async def start_export(request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
     try:
-        job = job_manager.start_export(started_by="coworker")
+        job = job_manager.start_export(started_by="admin")
     except JobConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except RuntimeError as exc:
@@ -452,22 +538,26 @@ async def manual_story(request: Request) -> JSONResponse:
 @app.get("/api/csrf")
 def get_csrf(request: Request) -> dict[str, Any]:
     """Returns the CSRF token for the current session. 401 if not authed."""
-    require_admin(request)
+    require_viewer(request)
     return {"csrf": csrf_token(request.cookies.get(COOKIE_NAME))}
 
 
 @app.get("/api/categories")
-def list_classification_categories() -> dict[str, Any]:
+def list_classification_categories(request: Request) -> dict[str, Any]:
+    require_viewer(request)
     return {"categories": _classification_db().list_categories()}
 
 
 @app.get("/api/targets")
-def list_targets(include_archived: bool = False) -> dict[str, Any]:
-    return public_targets_response(include_archived=include_archived)
+def list_targets(request: Request, include_archived: bool = False) -> dict[str, Any]:
+    session = require_viewer(request)
+    return scoped_targets_response(public_targets_response(include_archived=include_archived), session)
 
 
 @app.post("/api/targets")
 async def add_target(request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
     payload = await read_json(request)
     try:
         result = create_secondary_target(payload)
@@ -481,6 +571,8 @@ async def add_target(request: Request) -> JSONResponse:
 
 @app.patch("/api/targets/{target_key}")
 async def update_target(target_key: str, request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
     payload = await read_json(request)
     try:
         result = update_secondary_target(target_key, payload)
@@ -494,6 +586,8 @@ async def update_target(target_key: str, request: Request) -> JSONResponse:
 
 @app.post("/api/targets/{target_key}/archive")
 async def archive_target(target_key: str, request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
     payload = await read_json(request)
     try:
         result = archive_secondary_target(target_key, str(payload.get("reason") or "Arquivado pela equipe."))
@@ -505,7 +599,9 @@ async def archive_target(target_key: str, request: Request) -> JSONResponse:
 
 
 @app.post("/api/targets/{target_key}/restore")
-def restore_target(target_key: str) -> JSONResponse:
+def restore_target(target_key: str, request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
     try:
         result = restore_secondary_target(target_key)
     except ValidationError as exc:
@@ -518,6 +614,8 @@ def restore_target(target_key: str) -> JSONResponse:
 
 @app.post("/api/categories")
 async def create_classification_category(request: Request) -> dict[str, Any]:
+    require_admin(request)
+    require_csrf(request)
     payload = await read_json(request)
     name = str(payload.get("name") or "").strip()
     if not name:
@@ -540,8 +638,10 @@ async def create_classification_category(request: Request) -> dict[str, Any]:
 
 
 @app.get("/api/classifications")
-def list_classifications_bulk() -> dict[str, Any]:
+def list_classifications_bulk(request: Request) -> dict[str, Any]:
+    session = require_viewer(request)
     rows = _classification_db().get_classifications_with_context(limit=100000)
+    rows = scoped_classifications(rows, session)
     return {
         "classifications": [
             {
@@ -559,6 +659,8 @@ def list_classifications_bulk() -> dict[str, Any]:
 
 @app.post("/api/classifications")
 async def upsert_classification(request: Request) -> dict[str, Any]:
+    require_admin(request)
+    require_csrf(request)
     payload = await read_json(request)
 
     try:
@@ -658,26 +760,26 @@ async def read_json(request: Request) -> dict[str, Any]:
 
 
 def login_html() -> str:
-    configured = auth_configured()
+    configured = login_configured()
     disabled = "" if configured else "disabled"
     status = (
-        "Entre para atualizar o clipping."
+        "Entre para acessar sua visao do clipping."
         if configured
-        else "Acesso administrativo ainda nao configurado no Render."
+        else "Acesso por senha ainda nao configurado no Render."
     )
     return f"""<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Atualizar clipping</title>
+  <title>Acessar clipping</title>
   <style>{ADMIN_CSS}</style>
 </head>
 <body class="admin-body">
   <main class="admin-shell login-shell">
     <section class="admin-card login-card">
       <p class="eyebrow">Clipping institucional</p>
-      <h1>Atualizar clipping</h1>
+      <h1>Acessar clipping</h1>
       <p>{escape(status)}</p>
       <label>Senha de acesso
         <input id="password" type="password" autocomplete="current-password" {disabled}>

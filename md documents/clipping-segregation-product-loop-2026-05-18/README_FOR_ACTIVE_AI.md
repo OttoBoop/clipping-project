@@ -2,17 +2,18 @@
 
 _Created 2026-05-18 by Atlas/Codex._
 
-If you are another AI agent already working in this repository, read this before
-touching login, dashboard payloads, target visibility, client views, or product
-segregation.
+If you are another AI agent already working in this repository, read this only
+if you were explicitly assigned to login, dashboard payload scoping, client
+views, or product segregation.
 
 ## Current Claim
 
 This loop owns the product-segregation planning and the first password-gated
 segregation implementation.
 
-It does **not** own the Shakira/debug loop, Ariadne audit, or old coordination
-history. Do not rewrite those docs to make this loop look cleaner.
+It does **not** own the Shakira/debug loop, Ariadne audit, target-repair loop,
+or old coordination history. If you are working on those loops, do not switch
+to password/login work because this file exists.
 
 ## Why This Loop Exists
 
@@ -40,6 +41,9 @@ the connection.
 - If you need to coordinate with this loop, append here or in `WORK_LOG.md`
   unless you can safely stage only your own hunk in the shared coordination
   file.
+- If you are not assigned to this loop, treat this folder as read-only context.
+  Do not move the Shakira/debug loop, target-repair loop, or performance loop
+  into password segregation.
 
 ## Files This Loop Owns
 
@@ -53,3 +57,11 @@ the connection.
 - `assets/clipping-data.json` was already dirty before this loop.
 - Shakira screenshots and Shakira docs are inherited from another loop.
 - Do not use `git add .`.
+
+## Known Coordination Failure
+
+An earlier pass implemented password/profile segregation and then it was
+reverted by `6fd0bac` because it had contaminated the target-repair loop. The
+correct recovery is not for every active agent to work on passwords. The correct
+recovery is for this product loop to own the password work separately, log each
+step in `WORK_LOG.md`, and leave other loops on their original goals.
