@@ -5128,3 +5128,147 @@ No blocker.
 ### Next Objective From Docs
 
 Commit and push this smoke log path-limited, then poll Render again.
+
+## 2026-05-18 20:11 -03 - Loop Cycle: Smoke Log Pushed And Rio Deploy Live
+
+### Objective Reviewed
+
+After logging the `d93d617` smoke, the evidence needed to reach `master`, and
+Render needed another poll.
+
+### Action Taken
+
+Created and pushed:
+
+```text
+79facc0 docs: log live privacy smoke after Rio push
+```
+
+Then polled Render.
+
+### Evidence
+
+```text
+dep-d86fb0rsuu8s73ddr5jg 79facc0 docs: log live privacy smoke after Rio push -> queued
+dep-d86faabsuu8s73ddqrcg 53cd9eb docs: log Rio refinement push -> build_in_progress
+dep-d86f9qki5fes73e3ejlg 1ecebf9 docs: refine Rio economic source dimensions -> live
+dep-d86f9cm47okc739pfbog d93d617 docs: log broad clipping regression -> deactivated
+```
+
+### Barrier Or Failure
+
+No deploy failure. The Rio refinement commit is live; the latest smoke-log
+commit is still queued.
+
+### Next Objective From Docs
+
+Run logged-out privacy smoke on live `1ecebf9`, then continue polling until the
+latest commit promotes.
+
+## 2026-05-18 20:12 -03 - Loop Cycle: Live Logged-Out Smoke On 1ecebf9
+
+### Objective Reviewed
+
+The Rio refinement commit `1ecebf9` had promoted to live, so the live privacy
+gate needed to be checked again.
+
+### Live Evidence
+
+URL checked: `https://clipping-project.onrender.com/`
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression found on the live Rio refinement commit.
+Authenticated viewer proof remains blocked locally by absent viewer passwords.
+
+### Next Objective From Docs
+
+Continue Render polling until the newest pushed commit is live, then repeat the
+smoke once more.
+
+## 2026-05-18 20:13 -03 - Loop Cycle: Render Queue Shows New Retag Test Commit
+
+### Objective Reviewed
+
+The deploy queue has to be tracked against the true remote tip, not just this
+loop's last pushed commit.
+
+### Action Taken
+
+Polled Render again after the `1ecebf9` smoke.
+
+### Evidence
+
+```text
+dep-d86fb0rsuu8s73ddr5jg b062a0a test: assert duplicate retag live event -> queued
+dep-d86faabsuu8s73ddqrcg 53cd9eb docs: log Rio refinement push -> build_in_progress
+dep-d86f9qki5fes73e3ejlg 1ecebf9 docs: refine Rio economic source dimensions -> live
+```
+
+### Barrier Or Failure
+
+No deploy failure. A newer remote commit exists, so this loop must sync before
+publishing the latest log evidence.
+
+### Next Objective From Docs
+
+Run `git pull --rebase --autostash origin master`, preserve this log, then keep
+watching Render and smoke live privacy gates.
+
+## 2026-05-18 20:14 -03 - Loop Cycle: Synced To Duplicate Retag Recheck
+
+### Objective Reviewed
+
+Before publishing this loop's latest log evidence, integrate the newest repair
+loop changes.
+
+### Action Taken
+
+Ran:
+
+```text
+git pull --rebase --autostash origin master
+```
+
+### Evidence
+
+The remote advanced from `79facc0` to:
+
+```text
+46b1f25 docs: log duplicate retag post-rebase check
+b062a0a test: assert duplicate retag live event
+79facc0 docs: log live privacy smoke after Rio push
+```
+
+Incoming files:
+
+```text
+md documents/amio-clipping-repair-2026-05-18/WORK_LOG.md
+tests/test_targets_jobs.py
+```
+
+Autostash reapplied this loop's `WORK_LOG.md` cleanly.
+
+### Barrier Or Failure
+
+No conflict. The duplicate-retag test is outside this loop's ownership and was
+not modified.
+
+### Next Objective From Docs
+
+Commit and push this log evidence path-limited, then poll Render again.
