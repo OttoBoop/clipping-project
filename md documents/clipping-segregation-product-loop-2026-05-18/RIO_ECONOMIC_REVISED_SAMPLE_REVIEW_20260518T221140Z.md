@@ -48,6 +48,27 @@ Test negative terms and stronger source anchors:
 "Diário do Rio" "mercado imobiliário"
 ```
 
+## Title Exclusion Follow-Up
+
+After adding `exclude_title_terms` to the revised query JSON, a filtered sample
+was generated:
+
+```text
+data/reports/rio_economic_dry_run_20260518T221521Z.json
+row_count=26
+queries_file=data/reports/rio_economic_revised_queries_20260518.json
+```
+
+The obvious title/source-string pollutants checked in that run were absent:
+
+```text
+Rio das Ostras=0
+Rio Grande=0
+Porto Velho=0
+portovelho=0
+Pernambuco=0
+```
+
 ## Product Decision
 
 Do not add `rio_economico` to `data/targets.json` yet. The methodology is now

@@ -38,6 +38,7 @@ def test_load_query_specs_uses_json_file(tmp_path):
                         "dimension": "budget_finance",
                         "query": '"Prefeitura do Rio" ISS',
                         "why_candidate": "municipal revenue signal",
+                        "exclude_title_terms": ["Pernambuco"],
                     }
                 ]
             }
@@ -52,6 +53,7 @@ def test_load_query_specs_uses_json_file(tmp_path):
             "budget_finance",
             '"Prefeitura do Rio" ISS',
             "municipal revenue signal",
+            ("Pernambuco",),
         )
     ]
 
@@ -106,6 +108,28 @@ def test_collect_rows_accepts_custom_query_specs():
     assert calls[0]["queries"] == ['"Prefeitura do Rio" ISS']
     assert rows[0]["dimension"] == "budget_finance"
     assert rows[0]["why_candidate"] == "municipal revenue signal"
+
+
+def test_collect_rows_applies_title_exclusions():
+    def fake_collector(**_kwargs):
+        return [
+            sample_article("https://example.com/rio", "Prefeitura do Rio amplia vagas"),
+            sample_article("https://example.com/porto-velho", "Porto Velho oferece vagas pelo Sine"),
+        ]
+
+    rows = rio_economic_dry_run.collect_rows(
+        query_specs=[
+            rio_economic_dry_run.RioEconomicQuery(
+                "jobs_income",
+                '"Rio de Janeiro" vagas emprego Prefeitura',
+                "city jobs signal",
+                ("Porto Velho",),
+            )
+        ],
+        collector=fake_collector,
+    )
+
+    assert [row["url"] for row in rows] == ["https://example.com/rio"]
 
 
 def test_write_reports_creates_json_csv_and_markdown(tmp_path):

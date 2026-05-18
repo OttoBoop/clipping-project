@@ -3437,3 +3437,114 @@ cleanup, not tooling.
 The next Rio step is testing negative terms/source anchors or adding explicit
 title-level exclusion fields to the dry-run review before adding any production
 target row.
+
+## 2026-05-19 - Loop Cycle: Rio Title Exclusion Filter
+
+### Objective Reviewed
+
+The revised sample still had obvious false positives. The next unblocked step
+was adding title-level exclusions to the query file/tool and proving the sample
+gets cleaner without touching production data.
+
+### Action Taken
+
+Updated:
+
+```text
+tools/rio_economic_dry_run.py
+tests/test_rio_economic_dry_run.py
+data/reports/rio_economic_revised_queries_20260518.json
+RIO_ECONOMIC_VALIDATION_PLAN.md
+ACTIVE_NEXT_ACTION.md
+RIO_ECONOMIC_REVISED_SAMPLE_REVIEW_20260518T221140Z.md
+```
+
+Changes:
+
+- added `exclude_title_terms` support to query specs;
+- filtered candidate rows whose titles contain configured exclusion terms;
+- added test coverage for title exclusions;
+- added known pollutants to the revised query file.
+
+### Evidence
+
+Commands passed:
+
+```text
+python -m py_compile tools/rio_economic_dry_run.py
+pytest tests/test_rio_economic_dry_run.py -q
+7 passed
+python -m json.tool data/reports/rio_economic_revised_queries_20260518.json
+```
+
+Filtered dry-run command completed:
+
+```text
+tools/rio_economic_dry_run.py --queries-file data/reports/rio_economic_revised_queries_20260518.json --date-from 2026-05-01 --date-to 2026-05-19 --max-queries 10 --limit-per-query 3 --request-timeout 5 --resolve-timeout 0 --collection-timeout 80
+```
+
+Generated final filtered artifacts:
+
+```text
+data/reports/rio_economic_dry_run_20260518T221521Z.json
+data/reports/rio_economic_dry_run_20260518T221521Z.csv
+data/reports/rio_economic_dry_run_20260518T221521Z.md
+```
+
+Artifact metadata:
+
+```text
+row_count=26
+query_count=10
+queries_file=data/reports/rio_economic_revised_queries_20260518.json
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+Pollutant check on filtered sample:
+
+```text
+Rio das Ostras=0
+Rio Grande=0
+Porto Velho=0
+portovelho=0
+Pernambuco=0
+```
+
+The intermediate `20260518T221436Z` artifacts were generated before adding the
+`portovelho` exclusion and then removed as superseded local artifacts.
+
+### Barrier Status
+
+The Rio methodology has cleaner review tooling now. It still needs manual
+labelling and source-anchor refinement before any production target row.
+
+### Why The Loop Continues
+
+This reduces known false positives, but the loop must keep production
+segregation verified and continue toward a clean Rio review methodology.
+
+### Push Evidence
+
+The query-file implementation and revised sample reached `master`:
+
+```text
+git push origin HEAD:master
+072e406..9365da9  HEAD -> master
+commit=9365da9 feat: support revised Rio economic query files
+```
+
+Render accepted the commit:
+
+```text
+deploy=dep-d86e2mm8bjmc73f40n3g
+commit=9365da9 feat: support revised Rio economic query files
+status=build_in_progress
+previous live=072e406 docs: add Rio economic 32-row sample review
+```
+
+### Next Objective From Docs
+
+Continue Rio cleanup by testing negative terms/source anchors or adding
+title-level exclusion metadata to the dry-run review path.

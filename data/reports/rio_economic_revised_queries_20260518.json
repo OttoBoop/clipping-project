@@ -5,7 +5,8 @@
     {
       "dimension": "tourism_events",
       "query": "\"Rio de Janeiro\" \"ocupacao hoteleira\"",
-      "why_candidate": "more specific tourism demand signal than generic hotelaria"
+      "why_candidate": "more specific tourism demand signal than generic hotelaria",
+      "exclude_title_terms": ["Rio das Ostras"]
     },
     {
       "dimension": "tourism_events",
@@ -20,12 +21,14 @@
     {
       "dimension": "commerce_services",
       "query": "\"cidade do Rio\" comercio local",
-      "why_candidate": "local commerce signal with city anchor"
+      "why_candidate": "local commerce signal with city anchor",
+      "exclude_title_terms": ["Rio Grande"]
     },
     {
       "dimension": "jobs_income",
       "query": "\"Rio de Janeiro\" vagas emprego Prefeitura",
-      "why_candidate": "city jobs and public employment signal"
+      "why_candidate": "city jobs and public employment signal",
+      "exclude_title_terms": ["Porto Velho", "portovelho"]
     },
     {
       "dimension": "jobs_income",
@@ -45,7 +48,8 @@
     {
       "dimension": "budget_finance",
       "query": "\"Prefeitura do Rio\" ISS",
-      "why_candidate": "municipal tax/revenue signal"
+      "why_candidate": "municipal tax/revenue signal",
+      "exclude_title_terms": ["Pernambuco"]
     },
     {
       "dimension": "budget_finance",

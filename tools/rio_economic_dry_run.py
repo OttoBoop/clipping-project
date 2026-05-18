@@ -25,6 +25,7 @@ class RioEconomicQuery:
     dimension: str
     query: str
     why_candidate: str
+    exclude_title_terms: tuple[str, ...] = ()
 
 
 RIO_ECONOMIC_QUERIES: tuple[RioEconomicQuery, ...] = (
@@ -47,9 +48,14 @@ def _query_spec_from_mapping(row: dict[str, Any]) -> RioEconomicQuery:
     dimension = str(row.get("dimension") or "").strip()
     query = str(row.get("query") or "").strip()
     why_candidate = str(row.get("why_candidate") or row.get("why") or "").strip()
+    exclude_title_terms = tuple(
+        str(item).strip()
+        for item in (row.get("exclude_title_terms") or row.get("exclude_terms") or [])
+        if str(item).strip()
+    )
     if not dimension or not query:
         raise ValueError("each Rio query spec must include non-empty dimension and query")
-    return RioEconomicQuery(dimension, query, why_candidate or "manual revised query")
+    return RioEconomicQuery(dimension, query, why_candidate or "manual revised query", exclude_title_terms)
 
 
 def load_query_specs(path: Path | None) -> list[RioEconomicQuery]:
@@ -112,6 +118,11 @@ def article_to_row(spec: RioEconomicQuery, article: CandidateArticle) -> dict[st
     }
 
 
+def title_excluded(spec: RioEconomicQuery, article: CandidateArticle) -> bool:
+    title = str(article.title or "").casefold()
+    return any(term.casefold() in title for term in spec.exclude_title_terms)
+
+
 def collect_rows(
     *,
     date_from: str = "",
@@ -137,6 +148,8 @@ def collect_rows(
             collection_timeout=collection_timeout,
         )
         for article in articles:
+            if title_excluded(spec, article):
+                continue
             url_key = str(article.url or "").strip()
             if url_key and url_key in seen_urls:
                 continue

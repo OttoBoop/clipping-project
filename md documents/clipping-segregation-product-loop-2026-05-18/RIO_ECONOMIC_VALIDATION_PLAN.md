@@ -213,6 +213,21 @@ The revised set improved event/tourism, real-estate, licensing/works, and
 ambulante-commerce signals, but still needs negative terms and stronger source
 anchors before any production target row.
 
+Title-exclusion follow-up:
+
+```text
+data/reports/rio_economic_dry_run_20260518T221521Z.json
+row_count=26
+exclude_title_terms active in data/reports/rio_economic_revised_queries_20260518.json
+Rio das Ostras=0
+Rio Grande=0
+Porto Velho=0
+portovelho=0
+Pernambuco=0
+```
+
+This is a cleaner review sample, but still not production ingestion approval.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?
