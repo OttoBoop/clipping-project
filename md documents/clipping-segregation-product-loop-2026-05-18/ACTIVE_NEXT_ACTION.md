@@ -96,8 +96,10 @@ Continue the production loop. Current priority from the docs:
 4. continue the `RIO_ECONOMIC_VALIDATION_PLAN.md` path: offline report artifact
    exists; live Google News smoke now works with redirect resolution skipped;
    a 32-row live sample, 29-row revised sample, and 26-row title-exclusion
-   sample exist; title-level labels exist; next Rio step is source-anchor and
-   dimension refinement before any production target row;
+   sample exist; title-level labels exist; source/dimension refinement now
+   exists; next Rio step is a revised dry-run query file/sample that separates
+   `municipal_finance` from `economic_development` before any production target
+   row;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; next packaging step is defining included
    update frequency and delivery format; V1 pilot scope now exists;

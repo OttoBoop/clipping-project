@@ -242,6 +242,15 @@ The useful-or-unclear title-level share is promising, but the remaining false
 positives and dimension mismatches confirm that Rio still needs methodology
 cleanup before target-row creation.
 
+Source/dimension refinement decision:
+
+```text
+RIO_ECONOMIC_SOURCE_DIMENSION_REFINEMENT.md
+budget_finance split into municipal_finance and economic_development before next sample
+source anchors required for broad jobs/tourism/economic-development queries
+production target row still blocked until a revised reviewed sample passes the gate
+```
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

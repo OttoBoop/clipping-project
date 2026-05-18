@@ -4410,3 +4410,583 @@ No push blocker after rebasing on `232a5ef`.
 
 Poll Render for the deploy created by `0294f4b`, continue logged-out production
 smokes, and then return to the next checklist item that does not need secrets.
+
+## 2026-05-18 19:47 -03 - Loop Cycle: Render Queue After Viewer Mutation Push
+
+### Objective Reviewed
+
+After pushing, the loop must verify Render state rather than assume the site is
+updated.
+
+### Action Taken
+
+Pushed an additional path-limited log commit:
+
+```text
+b204c47 docs: log viewer mutation hardening push
+```
+
+Then polled Render deploys.
+
+### Evidence
+
+```text
+dep-d86edea1dpfc73a2ebp0 b204c47 docs: log viewer mutation hardening push -> queued
+dep-d86ecg21dpfc73a2dp3g 232a5ef docs: log hosted live target verification -> build_in_progress
+dep-d86ec368bjmc73f46de0 8412355 docs: log live target deploy watch -> live
+dep-d86eb23rjlhs73eba27g b57de64 fix: recompute live target filter counts -> deactivated
+```
+
+### Barrier Or Failure
+
+No deployment blocker. The newest commits are queued/building, so production is
+temporarily behind `master`.
+
+### Next Objective From Docs
+
+Smoke the currently live `8412355` gate, then keep polling until `b204c47`
+finishes and smoke again.
+
+## 2026-05-18 19:48 -03 - Loop Cycle: Live Logged-Out Smoke On 8412355
+
+### Objective Reviewed
+
+Render reported `8412355` as live while newer deploys were still queued or
+building. The production checklist still requires the current live surface to
+be checked.
+
+### Live Evidence
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression found on the live deploy. The smoke still must
+be repeated after `b204c47` promotes.
+
+### Next Objective From Docs
+
+Keep polling Render. If deploy remains queued/building, use the waiting time to
+continue a non-secret checklist axis, then return to the deploy.
+
+## 2026-05-18 19:49 -03 - Loop Cycle: Render Queue Advanced Again
+
+### Objective Reviewed
+
+The deploy queue is moving under active multi-agent pushes, so the loop must
+observe the newest queued commit before assuming which commit Render will
+promote.
+
+### Action Taken
+
+Polled Render deploys again.
+
+### Evidence
+
+```text
+dep-d86edea1dpfc73a2ebp0 34f5689 docs: log export live consistency recheck -> queued
+dep-d86ecg21dpfc73a2dp3g 232a5ef docs: log hosted live target verification -> build_in_progress
+dep-d86ec368bjmc73f46de0 8412355 docs: log live target deploy watch -> live
+```
+
+### Barrier Or Failure
+
+No blocker. Another docs/log commit appears to have superseded the queued deploy
+entry after this loop pushed `b204c47`.
+
+### Next Objective From Docs
+
+Fetch/rebase to current `origin/master`, keep this loop's log changes
+path-limited, then continue Render polling and UI/admin checklist review.
+
+## 2026-05-18 19:50 -03 - Loop Cycle: Rebased To Ingestion Candidate Recheck
+
+### Objective Reviewed
+
+The active workspace keeps receiving repair-loop documentation updates. This
+loop must include them without editing or overwriting their files.
+
+### Action Taken
+
+Ran:
+
+```text
+git pull --rebase --autostash origin master
+```
+
+### Evidence
+
+The remote advanced from `b204c47` to `0a6b7b0`:
+
+```text
+0a6b7b0 docs: log ingestion candidate recheck
+34f5689 docs: log export live consistency recheck
+b204c47 docs: log viewer mutation hardening push
+0294f4b test: harden viewer admin write rejection
+```
+
+Autostash reapplied cleanly. Current dirty path is only this loop's
+`WORK_LOG.md`.
+
+### Barrier Or Failure
+
+No conflict. The incoming changes were confined to the other repair loop's
+`WORK_LOG.md`.
+
+### Next Objective From Docs
+
+Continue a non-secret checklist review while Render processes the deploy queue,
+then poll Render again.
+
+## 2026-05-18 19:52 -03 - Loop Cycle: Static Viewer UI/Admin Review
+
+### Objective Reviewed
+
+The "no fake UI" checklist requires client profiles not to see admin/operator
+controls unless those actions are intentionally offered and end-to-end safe.
+
+### Action Taken
+
+Reviewed `index.html`, `assets/clipping.css`, `assets/clipping.js`, and current
+test references for viewer/admin UI gating.
+
+### Evidence
+
+Static findings:
+
+```text
+web_app/app.py injects data-clipping-session-role/profile into #app.
+web_app/app.py adds body.viewer-readonly for non-admin sessions.
+assets/clipping.css hides non-base runner tabs, add-target box, and manage-targets box under body.viewer-readonly.
+assets/clipping.js applyViewerControls() sets editorEnabled=false for non-admin, activates the Base atual tab, hides add/manage controls, and hides non-base tabs.
+assets/clipping.js classificationEditorHtml() returns "" when editorEnabled is false.
+tests/test_admin_ui.py covers viewer-readonly shell markers.
+tests/test_admin_ui.py now covers viewer rejection for update/export/target/category/classification/manual-story writes.
+```
+
+### Barrier Or Failure
+
+No new fake-UI defect found in this static pass. This is not a substitute for
+authenticated live browser proof because viewer passwords are not present in
+this shell.
+
+### Next Objective From Docs
+
+Return to Render polling. After the newest deploy is live, re-smoke logged-out
+gates and record whether authenticated viewer proof remains blocked by secrets.
+
+## 2026-05-18 19:53 -03 - Loop Cycle: Render Queue Still Waiting
+
+### Objective Reviewed
+
+The newest deploy has not promoted yet, so the loop should keep observing and
+not treat queued/building as completion.
+
+### Action Taken
+
+Polled Render deploys again.
+
+### Evidence
+
+```text
+dep-d86edea1dpfc73a2ebp0 c33918d docs: log viewer scoping recheck -> queued
+dep-d86ecg21dpfc73a2dp3g 232a5ef docs: log hosted live target verification -> build_in_progress
+dep-d86ec368bjmc73f46de0 8412355 docs: log live target deploy watch -> live
+```
+
+### Barrier Or Failure
+
+No hard blocker, but the queue is still not caught up to `master`. Another
+remote log commit appears in the queued deploy slot.
+
+### Next Objective From Docs
+
+Sync to current `origin/master`, keep this loop's log entry, then continue with
+the next non-secret checklist item while waiting.
+
+## 2026-05-18 19:54 -03 - Loop Cycle: Synced To Viewer Scoping Recheck
+
+### Objective Reviewed
+
+Keep the local loop branch aligned with active `master` before additional docs
+or code changes.
+
+### Action Taken
+
+Ran:
+
+```text
+git pull --rebase --autostash origin master
+```
+
+### Evidence
+
+The remote advanced to:
+
+```text
+c33918d docs: log viewer scoping recheck
+0a6b7b0 docs: log ingestion candidate recheck
+34f5689 docs: log export live consistency recheck
+```
+
+Autostash reapplied this loop's `WORK_LOG.md` entry cleanly.
+
+### Barrier Or Failure
+
+No conflict. The incoming work was again confined to the other repair loop log.
+
+### Next Objective From Docs
+
+Re-read the next product/Rio axis documents and pick a non-secret refinement
+while Render is still queued.
+
+## 2026-05-18 19:57 -03 - Loop Cycle: Rio Dry-Run Environment Smoke
+
+### Objective Reviewed
+
+The Rio economic axis should progress through safe dry-run artifacts, not a
+production `rio_economico` target row.
+
+### Action Taken
+
+Read `RIO_ECONOMIC_VALIDATION_PLAN.md`, the 26-row title labels, and
+`data/reports/rio_economic_revised_queries_20260518.json`. Then ran an offline
+fixture smoke:
+
+```text
+python tools/rio_economic_dry_run.py --offline-fixture --max-queries 1 --limit-per-query 1 --output-dir data/reports
+```
+
+### Evidence
+
+The script returned:
+
+```text
+ok=true
+row_count=1
+json=data/reports/rio_economic_dry_run_20260518T224003Z.json
+csv=data/reports/rio_economic_dry_run_20260518T224003Z.csv
+markdown=data/reports/rio_economic_dry_run_20260518T224003Z.md
+```
+
+Because this was only an environment smoke and added no new methodology value,
+I removed those three generated artifacts and restored generated pycache files.
+Current dirty path returned to this loop's `WORK_LOG.md` only.
+
+### Barrier Or Failure
+
+No Rio dry-run script blocker in offline mode. Full local pytest remains blocked
+by missing dependencies, but this script path itself runs.
+
+### Next Objective From Docs
+
+Write the Rio source-anchor/dimension refinement decision before any production
+target row is considered.
+
+## 2026-05-18 19:59 -03 - Loop Cycle: Rio Source/Dimension Refinement Written
+
+### Objective Reviewed
+
+The Rio economic track needed methodology cleanup before any production target
+row, especially around dimension mismatch in the budget/ISS sample.
+
+### Action Taken
+
+Added:
+
+```text
+RIO_ECONOMIC_SOURCE_DIMENSION_REFINEMENT.md
+```
+
+Updated:
+
+```text
+RIO_ECONOMIC_VALIDATION_PLAN.md
+ACTIVE_NEXT_ACTION.md
+```
+
+### Decision
+
+The next Rio dry-run must split `budget_finance` into:
+
+```text
+municipal_finance
+economic_development
+```
+
+It must also use stronger source anchors for jobs, tourism, and development
+queries before any production `rio_economico` target row is created.
+
+### Barrier Or Failure
+
+No blocker. This is docs/methodology work only and deliberately does not mutate
+`data/targets.json`, SQLite, or public/private payloads.
+
+### Next Objective From Docs
+
+Run a docs/diff check, commit the Rio refinement plus this log path-limited,
+then return to Render polling.
+
+## 2026-05-18 20:01 -03 - Loop Cycle: Rule Reaffirmed And Remote Synced
+
+### Objective Reviewed
+
+Otavio reaffirmed the core loop rule: every barrier must be answered, logged,
+and followed by the next step; every output must begin with the long anchor; the
+loop must return to long-term docs, logs, and review instead of stopping.
+
+### Action Taken
+
+Before this entry, the Rio refinement docs were ready, but `origin/master`
+advanced. I ran:
+
+```text
+git pull --rebase --autostash origin master
+```
+
+### Evidence
+
+The remote advanced from `c33918d` to:
+
+```text
+d278b5e fix: count scoped raw articles consistently
+c33918d docs: log viewer scoping recheck
+```
+
+Incoming files:
+
+```text
+md documents/amio-clipping-repair-2026-05-18/WORK_LOG.md
+tests/test_admin_ui.py
+web_app/segmentation.py
+```
+
+Autostash reapplied the Rio/product-loop docs cleanly. Current dirty paths are:
+
+```text
+md documents/clipping-segregation-product-loop-2026-05-18/ACTIVE_NEXT_ACTION.md
+md documents/clipping-segregation-product-loop-2026-05-18/RIO_ECONOMIC_VALIDATION_PLAN.md
+md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md
+md documents/clipping-segregation-product-loop-2026-05-18/RIO_ECONOMIC_SOURCE_DIMENSION_REFINEMENT.md
+```
+
+### Barrier Or Failure
+
+No conflict. The remote change touched live scoping behavior and tests, which
+means the next production smoke after Render promotion is especially important.
+
+### Next Objective From Docs
+
+Commit and push the Rio refinement docs path-limited, then return to Render
+polling and production privacy verification.
+
+## 2026-05-18 20:02 -03 - Loop Cycle: Rio Docs Pre-Commit Check
+
+### Objective Reviewed
+
+Before committing the Rio refinement, keep the commit path-limited and verify
+the docs are clean enough to publish.
+
+### Action Taken
+
+Ran:
+
+```text
+git diff --check -- md documents/clipping-segregation-product-loop-2026-05-18/WORK_LOG.md md documents/clipping-segregation-product-loop-2026-05-18/ACTIVE_NEXT_ACTION.md md documents/clipping-segregation-product-loop-2026-05-18/RIO_ECONOMIC_VALIDATION_PLAN.md md documents/clipping-segregation-product-loop-2026-05-18/RIO_ECONOMIC_SOURCE_DIMENSION_REFINEMENT.md
+git diff --stat -- same paths
+git status --short --branch
+```
+
+### Evidence
+
+`git diff --check` passed with no output. The intended docs paths are the only
+dirty product-loop paths, plus the new Rio refinement doc:
+
+```text
+M ACTIVE_NEXT_ACTION.md
+M RIO_ECONOMIC_VALIDATION_PLAN.md
+M WORK_LOG.md
+?? RIO_ECONOMIC_SOURCE_DIMENSION_REFINEMENT.md
+```
+
+### Barrier Or Failure
+
+`git status` also showed the branch was `behind 1`, meaning another remote
+commit landed before this docs commit could be made.
+
+### Next Objective From Docs
+
+Rebase with autostash, then commit these docs path-limited and push.
+
+## 2026-05-18 20:03 -03 - Loop Cycle: Rebased To Broad Clipping Regression Log
+
+### Objective Reviewed
+
+The Rio refinement commit must sit on current `origin/master` and not overwrite
+the active clipping repair loop.
+
+### Action Taken
+
+Ran:
+
+```text
+git pull --rebase --autostash origin master
+```
+
+### Evidence
+
+The remote advanced from `d278b5e` to:
+
+```text
+d93d617 docs: log broad clipping regression
+d278b5e fix: count scoped raw articles consistently
+```
+
+The incoming change was confined to:
+
+```text
+md documents/amio-clipping-repair-2026-05-18/WORK_LOG.md
+```
+
+Autostash reapplied this loop's Rio docs cleanly.
+
+### Barrier Or Failure
+
+No conflict. The active repair loop continues separately.
+
+### Next Objective From Docs
+
+Commit and push the Rio refinement docs path-limited, then poll Render again.
+
+## 2026-05-18 20:04 -03 - Loop Cycle: Post-Rebase Rio Docs Check
+
+### Objective Reviewed
+
+After rebasing, verify that only the intended product-loop docs remain dirty
+before committing.
+
+### Action Taken
+
+Ran:
+
+```text
+git diff --check -- Rio/product loop docs
+git status --short --branch
+```
+
+### Evidence
+
+`git diff --check` passed with no output. Status shows only:
+
+```text
+M ACTIVE_NEXT_ACTION.md
+M RIO_ECONOMIC_VALIDATION_PLAN.md
+M WORK_LOG.md
+?? RIO_ECONOMIC_SOURCE_DIMENSION_REFINEMENT.md
+```
+
+### Barrier Or Failure
+
+No blocker.
+
+### Next Objective From Docs
+
+Commit and push the docs path-limited.
+
+## 2026-05-18 20:05 -03 - Loop Cycle: Rio Refinement Commit Created
+
+### Objective Reviewed
+
+The Rio source/dimension refinement needed a path-limited commit before Render
+and the next loop cycle.
+
+### Action Taken
+
+Created:
+
+```text
+2bd53f1 docs: refine Rio economic source dimensions
+```
+
+### Evidence
+
+Commit scope:
+
+```text
+ACTIVE_NEXT_ACTION.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+RIO_ECONOMIC_SOURCE_DIMENSION_REFINEMENT.md
+WORK_LOG.md
+```
+
+### Barrier Or Failure
+
+Immediately after the commit, `git status` showed:
+
+```text
+atlas/segmentation-demo-workaround...origin/master [ahead 1, behind 1]
+```
+
+Another remote commit landed before push.
+
+### Next Objective From Docs
+
+Amend this log entry into the Rio commit, rebase on current `origin/master`,
+then push to `master`.
+
+## 2026-05-18 20:06 -03 - Loop Cycle: Rio Commit Rebased Before Push
+
+### Objective Reviewed
+
+After the remote race, publish only after replaying the Rio docs commit on the
+current remote tip.
+
+### Action Taken
+
+Ran:
+
+```text
+git commit --amend --no-edit
+git pull --rebase origin master
+```
+
+### Evidence
+
+The remote tip moved to:
+
+```text
+bae8096 docs: log hosted watch after regression
+```
+
+The Rio docs commit replayed as:
+
+```text
+03cf8dc docs: refine Rio economic source dimensions
+```
+
+Current branch state:
+
+```text
+atlas/segmentation-demo-workaround...origin/master [ahead 1]
+```
+
+### Barrier Or Failure
+
+No conflict.
+
+### Next Objective From Docs
+
+Amend this entry into the same Rio docs commit and push to `master`.
