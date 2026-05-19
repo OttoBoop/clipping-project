@@ -2403,8 +2403,8 @@
 
 
   if (apiAvailable) {
-    // Categories are public. Always cache them so read-only users still see the
-    // taxonomy on hover/inspection (and admins land with the cache populated).
+    // Categories are session-scoped API data. Cache them for authenticated
+    // viewers/admins so display chips and editors use the same taxonomy.
     apiFetch("/api/categories", { cache: "no-store" })
       .then(function (r) { return r.ok ? r.json() : { categories: [] }; })
       .then(function (data) {
@@ -2412,8 +2412,8 @@
       })
       .catch(function () { /* leave categoriesCache empty */ });
 
-    // Live classifications overlay — public read, applies to every visitor so
-    // the static snapshot's classification chips stay current.
+    // Live classifications overlay: session-scoped read for authenticated
+    // viewers/admins so stale static chips do not widen a profile's scope.
     apiFetch("/api/classifications", { cache: "no-store" })
       .then(function (r) { return r.ok ? r.json() : { classifications: [] }; })
       .then(function (data) {

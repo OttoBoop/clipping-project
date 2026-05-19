@@ -38,6 +38,7 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Sellable package readiness gate.
 - Operator cost discipline guardrail.
 - System review status snapshot for 2026-05-19.
+- Target management no-fake-UI review snapshot for 2026-05-18.
 
 ## Current Verification State
 
@@ -94,7 +95,9 @@ Continue the production loop. Current priority from the docs:
 
 1. keep the logged-out privacy gate verified on Render;
 2. keep real viewer profile proof verified after deploys;
-3. continue target-management review for admin/operator workflows;
+3. keep target-management no-fake-UI review fresh; a 2026-05-18 code/docs
+   pass exists, but positive admin CSRF/target-management smoke on Render still
+   needs operator credentials;
 4. continue the `RIO_ECONOMIC_VALIDATION_PLAN.md` path: offline report artifact
    exists; live Google News smoke now works with redirect resolution skipped;
    a 32-row live sample, 29-row revised sample, and 26-row title-exclusion

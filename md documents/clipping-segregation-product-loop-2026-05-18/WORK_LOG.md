@@ -8294,3 +8294,149 @@ this shell by missing viewer passwords. Latest cluster artifact commit
 Commit/push this log entry path-limited, poll Render until `d57b361` is live,
 smoke production again, then combine date-quality and cluster gates or run fresh
 production scoping proof.
+
+## 2026-05-18 22:08 -03 - Loop Cycle: B67807d Live Smoke
+
+### Objective Reviewed
+
+Render promoted the quote-tracker deploy-smoke log commit. Verify the live
+site again before choosing the next weak objective from the long-term docs.
+
+### Action Taken
+
+Re-read the loop anchors:
+
+```text
+LONG_TERM_GOALS.md
+DEPENDENCY_MAP.md
+CURRENT_SHORT_TERM_LOOP.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_CHECKLIST.md
+RENDER_PRODUCTION_CHECKLIST.md
+WORK_LOG.md
+```
+
+Polled Render MCP:
+
+```text
+dep-d86gk2j7uimc73bedd00 b67807d docs: log quote tracker deploy smoke -> live
+dep-d86gikt7vvec73avk6hg b53b940 docs: add buyer quote validation tracker -> deactivated
+```
+
+Ran logged-out live smoke while `b67807d` was live.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof is still not
+possible from this shell without a configured viewer password. Render health
+still proves viewer auth and viewer profiles are configured, so the loop should
+continue with unblocked audits instead of stopping.
+
+### Next Objective From Docs
+
+Return to `ACTIVE_NEXT_ACTION.md` and `SYSTEM_REVIEW_CHECKLIST.md`; continue
+with target-management/admin workflow review, live-proof blockers, Rio gate
+dependencies, or sellable-package operations review without creating a new
+site/repo and without creating a production `rio_economico` target row.
+
+## 2026-05-18 22:09 -03 - Loop Cycle: Target Management No-Fake-UI Review
+
+### Objective Reviewed
+
+`ACTIVE_NEXT_ACTION.md` and `SYSTEM_REVIEW_CHECKLIST.md` point to the next weak
+Axis 1 item: target-management/admin workflow review against the no-fake-UI
+rule.
+
+### Action Taken
+
+Inspected:
+
+```text
+web_app/app.py
+web_app/segmentation.py
+assets/clipping.js
+tests/test_admin_ui.py
+tests/test_targets_jobs.py
+SYSTEM_REVIEW_STATUS_2026-05-19.md
+STATIC_EXPORT_POLICY.md
+LOOP_OPERATING_PROTOCOL.md
+```
+
+Created:
+
+```text
+TARGET_MANAGEMENT_NO_FAKE_UI_REVIEW_2026-05-18.md
+```
+
+Updated:
+
+```text
+assets/clipping.js
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-19.md
+WORK_LOG.md
+```
+
+The JS comments for categories/classifications were corrected from old
+"public read" wording to the current session-scoped contract.
+
+### Evidence
+
+Code/API review found:
+
+```text
+viewer shell -> body.viewer-readonly before payload load
+viewer UI -> run/add/manage/classification-editor controls hidden
+viewer writes -> require_admin -> 401 admin_login_required
+admin target create -> create_secondary_target -> record_target_sync
+admin target edit -> update_secondary_target -> record_target_sync(cleanup=True)
+admin target archive -> archive_secondary_target -> active filters hide row
+admin target restore -> restore_secondary_target -> record_target_sync
+admin writes -> require_csrf
+read APIs -> require_viewer and scoped payload/classification/live-results helpers
+```
+
+Existing local tests cover viewer write rejection, targets API scoping,
+target-management manifests, active-job mutation behavior, primary-target
+protection, and target creation syncing into live base/export filters.
+
+Verification run:
+
+```text
+python -m compileall web_app -> passed
+node --check assets/clipping.js -> blocked: node not found
+python -m pytest focused target/admin tests -> blocked: No module named pytest
+```
+
+### Barrier Or Failure
+
+Positive admin target-management smoke on Render remains blocked in this shell
+without the admin password/CSRF session. This is not a stop condition because
+the code/test/docs audit is unblocked and the logged-out live privacy gate was
+already rechecked on `b67807d`. JS syntax check is also blocked locally because
+Node is not installed; the JS change is comment-only.
+
+### Next Objective From Docs
+
+Run a path-limited commit/push for the target-management review and log, wait
+for Render, smoke live again, then re-read the docs and continue with the next
+weak axis: Rio production gate or sellable operations/prospect validation,
+without creating a new repo/site or a production `rio_economico` target row.

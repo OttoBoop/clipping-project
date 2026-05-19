@@ -100,6 +100,9 @@ Meaning:
 - visible viewer UI does not expose fake/admin-only target or classification
   actions in the checked profiles.
 - single-target viewer profiles no longer look like secondary-target clutter.
+- target-management no-fake-UI review now has a dedicated 2026-05-18 snapshot:
+  admin actions are connected in code/tests; viewer actions are hidden and
+  server-rejected.
 
 Remaining production gap:
 
@@ -149,7 +152,7 @@ Next cycle should not re-litigate the missing viewer secret unless `/healthz`
 regresses. Continue from the checklist items that remain weak:
 
 ```text
-client UI fake-action audit -> target management no-fake-UI review ->
-admin positive CSRF check with operator credentials when available ->
-Rio economic target/methodology review
+client UI fake-action audit -> admin positive CSRF/target-management smoke
+with operator credentials when available -> Rio economic target/methodology
+review
 ```
