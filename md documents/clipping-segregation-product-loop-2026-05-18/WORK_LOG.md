@@ -6842,3 +6842,98 @@ not completed buyer validation.
 
 Run diff checks, commit/push this buyer guide path-limited, poll Render, and
 smoke `946782f`/`3bec40e`/new log deploys when live.
+
+## 2026-05-18 21:25 -03 - Loop Cycle: Live 3bec40e Smoke And Rio Canonical Helper
+
+### Objective Reviewed
+
+Render changed live commit again. The Rio docs also still had a hard blocker:
+canonical source/date review for Google News rows before production.
+
+### Action Taken
+
+Polled Render, saw `3bec40e` live, and ran a logged-out smoke. Then inspected
+the collector and added a dry-run-only canonical review helper:
+
+```text
+tools/rio_economic_canonical_review.py
+```
+
+Ran:
+
+```text
+python -m compileall tools/rio_economic_canonical_review.py
+python tools/rio_economic_canonical_review.py data/reports/rio_economic_dry_run_20260519T000719Z.json --max-rows 3 --request-timeout 5
+```
+
+Generated:
+
+```text
+data/reports/rio_economic_canonical_review_20260519T002419Z.json
+data/reports/rio_economic_canonical_review_20260519T002419Z.csv
+data/reports/rio_economic_canonical_review_20260519T002419Z.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+RIO_ECONOMIC_V4_SAMPLE_REVIEW_20260519T000719Z.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Render poll:
+
+```text
+dep-d86fuvd6b1pc73detuug 58b864d docs: add buyer interview guide -> build_in_progress
+dep-d86ftfiddbjc739t5vjg 3bec40e docs: add political competitor research pass -> live
+dep-d86fs6n3jp8c73aiefn0 946782f docs: align demo script with V1 offer -> deactivated
+```
+
+Live logged-out smoke on `3bec40e`:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+Canonical review sample:
+
+```text
+rows_checked=3
+stores_article_body=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+row 1 canonical_date_missing
+row 2 same_day
+row 3 same_day
+```
+
+### Barrier Or Failure
+
+`python -m compileall` dirtied tracked `pipeline/__pycache__` files; they were
+restored before staging. Row 1 remains blocked for production because the
+canonical article did not expose a usable publication date.
+
+### Next Objective From Docs
+
+Run diff checks, commit/push the canonical helper and reports path-limited,
+poll Render for `58b864d` and the new commit, then repeat logged-out smoke when
+the live commit changes. Next Rio work is extending canonical review beyond the
+first three rows and adding duplicate clustering.

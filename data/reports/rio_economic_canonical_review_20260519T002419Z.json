@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "generated_at": "2026-05-19T00:24:19.133759+00:00",
+    "input_report": "data/reports/rio_economic_dry_run_20260519T000719Z.json",
+    "rows_checked": 3,
+    "request_timeout": 5,
+    "writes_production_db": false,
+    "writes_assets_payload": false,
+    "writes_targets_json": false,
+    "stores_article_body": false
+  },
+  "rows": [
+    {
+      "row": 1,
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "original_title": "Mais de 70% dos quartos de hotel do Rio estão reservados para o carnaval - Portal ABC do ABC",
+      "original_url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxNSUNQWlRiaFhIWlE1clBSTHdwSGhSQUtZUkkyZi0zel9rWDlDZVFTdVV0ZFhWbFBaU1h0YkMxeVlmOW5QMWNRdF8wd3lmWWt1RUgtSVZSLVVXa3JyLXI3MHFPU1BNdTZYaTc4SkM4eUd2OUFmU3A1SmNVZG9qZFFOTllqSUt1QThoY1R4ZmF0aUhjeW5ndDlFMlNVbmRTS3Z0UlE?oc=5",
+      "original_published_at": "2026-05-17T23:29:28+00:00",
+      "final_url": "https://www.abcdoabc.com.br/mais-de-70-dos-quartos-de-hotel-do-rio-estao-reservados-para-o-carnaval",
+      "canonical_title": "Mais de 70% dos quartos de hotel do Rio estão reservados para o carnaval",
+      "canonical_published_at": "",
+      "word_count": "309",
+      "status": "canonical_date_missing",
+      "error": ""
+    },
+    {
+      "row": 2,
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "original_title": "Efeito 'loba': ocupação hoteleira na Zona Sul atinge média de 80% dez dias antes do show de Shakira - O Globo",
+      "original_url": "https://news.google.com/rss/articles/CBMi7AFBVV95cUxNdVpyR25XcEwyLVBfNHhKUlhDY3VIWXRQMEd5OUxaZnRUMS1vU0xrRm5paFZpbnY0RDM3NkwtQVBDR0dpT0g1NXB1ZlNqd1RiYXM0SFpoX1NDcmJqUDFQSkpvVF9vU1laaEpyTGt1VDg1X3ROalpWejduRGZ4ZzBQb2tId0VPNHFJU2pMQ0gwS2tBSXhGLVFDOEYyYzFqUHpWX3g1aEVjSUx5cnNOYUJtdENNVUNmTjMxU3U3TVhSNHQwSTJoWTJKZnNqX2NPRjVTbFFFcC0taDd4VHdtR0trb0NvTkd3VVZ4Z3ZDRtIB-wFBVV95cUxOWGt5NzQ2c1lKa1NQRU50ZGhUWU90OUpaX2UtM1NEOFNQOVRyUkJqbjB6d211eXY3NTNpX2lIUkM0YVdXNktiMnd3aXdQM0tkT2Y2MFliUm1MSUxjYXVQSFhTam55VDlkLTZDTHVVV3lRYlB4MmFMd0dHSC1jblQzY3E4d0NqWGRXZU42bF9vdm10ZVd2UE5BVG0wTEVZOFFyNVByNnA5SXJCNlNUOXdiVFA4RlFja1dHNlE0T2NzdzVzSm1aS1JtTjFpQjlJSXFqcWZqeTdTMzNBUkFPWXJrc1YwZV90UzRZdmlzSm5HZ3ZmMTFjLXVnbVp1NA?oc=5",
+      "original_published_at": "2026-04-23T07:00:00+00:00",
+      "final_url": "https://oglobo.globo.com/rio/noticia/2026/04/23/efeito-loba-ocupacao-hoteleira-na-zona-sul-atinge-media-de-80percent-dez-dias-antes-do-show-de-shakira.ghtml",
+      "canonical_title": "Efeito",
+      "canonical_published_at": "2026-04-23T10:00:57.905000+00:00",
+      "word_count": "807",
+      "status": "same_day",
+      "error": ""
+    },
+    {
+      "row": 3,
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "original_title": "Ocupação hoteleira no carnaval supera 99% no Rio de Janeiro - Agência Brasil",
+      "original_url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQREZ3QVBYX1JHYmxPOW1CS3ZWV2Z0QU40QTFNSXR4RzJWSDdTdFNGMlNGVWdTVUR6RzVEMlo3NUFvMmVWRktId3htR0xubi1weE4xN016TUZnSzlDajItbmwzX1FKcUNnOFNUTEc1MUxDWHdQRG9oOXBVaDBPbHhwSHc4eWFXTWV0N25ROURXdEl6bHNxVUZ4cWNhZGJjZ1c4YTlSOUI5VjJVM1NXNkhSSEppazhDajg?oc=5",
+      "original_published_at": "2026-02-18T08:00:00+00:00",
+      "final_url": "https://agenciabrasil.ebc.com.br/economia/noticia/2026-02/ocupacao-hoteleira-no-carnaval-supera-99-no-rio-de-janeiro",
+      "canonical_title": "Ocupação hoteleira no carnaval supera 99% no Rio de Janeiro",
+      "canonical_published_at": "2026-02-18T20:27:00+00:00",
+      "word_count": "479",
+      "status": "same_day",
+      "error": ""
+    }
+  ]
+}

@@ -104,10 +104,25 @@ first production run must be narrow date-window only
 post-run proof that Flavio/Shakira/Rio payloads remain segregated
 ```
 
+Canonical source/date follow-up started:
+
+```text
+tools/rio_economic_canonical_review.py
+data/reports/rio_economic_canonical_review_20260519T002419Z.json
+rows_checked=3
+row 1 canonical_date_missing
+row 2 same_day
+row 3 same_day
+```
+
+Implication: row 1 remains blocked for production until the canonical date is
+confirmed manually or the source is excluded. Rows 2 and 3 passed same-day
+canonical checks in the sample.
+
 Next safe step:
 
 ```text
 poll Render for 48baf67
 run live logged-out privacy smoke when it is live
-consider adding a dry-run canonical URL/date review helper before any production Rio row
+extend canonical URL/date review beyond the first three rows
 ```

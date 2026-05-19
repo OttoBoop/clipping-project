@@ -340,6 +340,26 @@ Fazenda false positive from the sampled title set. Production is still blocked
 until canonical source/date checks, duplicate clustering, and fresh production
 segregation proof are handled.
 
+Canonical source/date helper evidence:
+
+```text
+tools/rio_economic_canonical_review.py
+data/reports/rio_economic_canonical_review_20260519T002419Z.json
+rows_checked=3
+stores_article_body=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+row 1 canonical_date_missing
+row 2 same_day
+row 3 same_day
+```
+
+This proves the canonical-review path can resolve and audit Google News rows
+without storing article bodies. It also confirms row 1 must remain blocked or
+manually reviewed because the canonical page did not expose a usable published
+date.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

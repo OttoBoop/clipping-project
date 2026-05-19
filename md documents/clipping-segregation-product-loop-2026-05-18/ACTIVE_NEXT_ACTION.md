@@ -103,9 +103,10 @@ Continue the production loop. Current priority from the docs:
    from `economic_development`; v3 query file/sample/review now exists with a
    strong title-level result; body/source review plan now exists; first
    body/source pass now reviewed 21 rows across all six dimensions; v4 query
-   file/sample/review now removed the known row 15/27 false positives; next Rio
-   step is canonical source/date checking, duplicate clustering, and fresh
-   production scoping proof before any production target row;
+   file/sample/review now removed the known row 15/27 false positives;
+   canonical review helper and first 3-row canonical sample now exist; next Rio
+   step is extending canonical source/date checking, duplicate clustering, and
+   fresh production scoping proof before any production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; V1 pilot scope and delivery-format
    decision now exist; demo script is now tied to the V1 offer without exposing
