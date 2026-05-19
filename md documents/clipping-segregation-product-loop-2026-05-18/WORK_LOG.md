@@ -7893,6 +7893,248 @@ surface.
 Commit/push this log entry with the previous live smoke log, keep polling
 Render, smoke latest live deploy, and do not add a Rio production target row.
 
+## 2026-05-18 22:08 -03 - Loop Cycle: 73f7131 Live Smoke
+
+### Objective Reviewed
+
+Render promoted the V1 pilot ledger commit. Verify the live service while newer
+log/prospect commits continue through the deploy queue.
+
+### Action Taken
+
+Polled Render MCP:
+
+```text
+dep-d86gfrgh6q6c73d0imi0 b247ca6 docs: log Rio scope recheck -> queued
+dep-d86geqv3jp8c73aiqca0 3edf699 docs: log prospect checklist deploy smoke -> build_in_progress
+dep-d86gd7ojhbcs73efkl60 73f7131 docs: add V1 pilot operating ledger -> live
+```
+
+Ran logged-out live smoke while `73f7131` was live.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof remains blocked in
+this shell by missing viewer passwords. Newer commits `3edf699` and `b247ca6`
+were not live yet.
+
+### Next Objective From Docs
+
+Keep this log in the working tree, poll Render until newer commits are live,
+smoke production again, then commit/push the batched live-smoke log to avoid
+creating a deploy-only loop for every single smoke check.
+
+## 2026-05-18 22:09 -03 - Loop Cycle: Render Queue Delay Review
+
+### Objective Reviewed
+
+Do not stop on a slow deploy. Inspect what can be inspected, log the barrier,
+and continue with non-secret, non-destructive checks.
+
+### Action Taken
+
+Waited 20 seconds and polled Render again. `3edf699` was still
+`build_in_progress` and `b247ca6` was still queued. Retrieved service metadata.
+
+### Evidence
+
+Render service metadata:
+
+```text
+service=srv-d7p2p5beo5us739f9k40
+name=clipping-project
+branch=master
+autoDeploy=yes
+buildCommand=pip install -r requirements.txt
+startCommand=uvicorn web_app.app:app --host 0.0.0.0 --port $PORT
+region=virginia
+plan=free
+cache.profile=no-cache
+maintenanceMode.enabled=false
+suspended=not_suspended
+```
+
+### Barrier Or Failure
+
+Render logs still cannot be fetched through MCP because the logs tool reports
+no workspace selected. The service is not suspended and auto-deploy remains on.
+The likely workaround is continued polling plus live smoke of whichever commit
+is live, without pushing extra log-only commits until the queue catches up.
+
+### Next Objective From Docs
+
+Keep polling Render without creating more deploy churn, smoke the latest live
+commit when it changes, then commit/push the batched log entry.
+
+## 2026-05-18 22:10 -03 - Loop Cycle: Buyer Quote Validation Tracker
+
+### Objective Reviewed
+
+Render deploy remained stuck on `3edf699` build with `b247ca6` queued. The loop
+continued with the next unblocked product item: buyer/quote validation without
+inventing final pricing.
+
+### Action Taken
+
+Added:
+
+```text
+BUYER_QUOTE_VALIDATION_TRACKER.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The tracker records:
+
+```text
+final_price_decided=false
+conversation record fields
+quote signal notes
+minimum validation rules before permanent price
+add-on boundary
+post-conversation update rules
+```
+
+Validation rule now requires:
+
+```text
+at least 3 buyer conversations
+at least 1 demo reaction
+at least 1 measured pilot/update run
+operator time estimate for two updates/week + weekly summary
+add-ons priced separately
+```
+
+### Barrier Or Failure
+
+No real buyer conversation is available in this shell, so no quote row was
+fabricated. Render deploy delay continues; logs remain unavailable through MCP
+because no workspace is selected for logs.
+
+### Next Objective From Docs
+
+Run diff/checks, keep the log/update batched, poll Render, smoke latest live
+commit when deploy advances, then push the batched docs/log changes.
+
+## 2026-05-18 22:12 -03 - Loop Cycle: 3edf699 Live Smoke
+
+### Objective Reviewed
+
+Render promoted the prospect-checklist log commit. Verify live privacy gate
+again before committing the batched local log and quote tracker.
+
+### Action Taken
+
+Polled Render MCP:
+
+```text
+dep-d86gfrgh6q6c73d0imi0 b247ca6 docs: log Rio scope recheck -> build_in_progress
+dep-d86geqv3jp8c73aiqca0 3edf699 docs: log prospect checklist deploy smoke -> live
+dep-d86gd7ojhbcs73efkl60 73f7131 docs: add V1 pilot operating ledger -> deactivated
+```
+
+Ran logged-out live smoke while `3edf699` was live.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof remains blocked in
+this shell by missing viewer passwords. `b247ca6` was still building.
+
+### Next Objective From Docs
+
+Poll Render until `b247ca6` is live, smoke production again, then commit/push
+the batched WORK_LOG and quote-tracker updates path-limited.
+
+## 2026-05-18 22:13 -03 - Loop Cycle: B247ca6 Live Smoke And Batch Ready
+
+### Objective Reviewed
+
+Render promoted the local Rio-scope recheck log commit. Verify the current live
+site and then push the batched local docs/log work.
+
+### Action Taken
+
+Polled Render MCP:
+
+```text
+dep-d86gfrgh6q6c73d0imi0 b247ca6 docs: log Rio scope recheck -> live
+dep-d86geqv3jp8c73aiqca0 3edf699 docs: log prospect checklist deploy smoke -> deactivated
+```
+
+Ran logged-out live smoke while `b247ca6` was live.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof remains blocked in
+this shell by missing viewer passwords.
+
+### Next Objective From Docs
+
+Run diff/checks, commit/push the batched WORK_LOG and quote-tracker updates
+path-limited, poll Render, smoke the new live commit, then re-read
+`ACTIVE_NEXT_ACTION.md` for the next weak axis.
+
 ## 2026-05-18 22:06 -03 - Loop Cycle: Prospect Checklist Push And 200c79f Live Smoke
 
 ### Objective Reviewed
