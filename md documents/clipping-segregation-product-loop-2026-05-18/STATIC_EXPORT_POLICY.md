@@ -50,6 +50,20 @@ The GitHub Pages export still resolves and serves bundled JSON/raw payloads.
 That is acceptable only as a legacy/public/static snapshot. It must not be used
 as a private demo or client access surface.
 
+Checked 2026-05-20 on Render/FastAPI:
+
+```text
+https://clipping-project.onrender.com/data/targets.json -> 404
+https://clipping-project.onrender.com/data/viewer_profiles.json -> 404
+https://clipping-project.onrender.com/data/reports/rio_economic_topic_report_20260519T142621Z.json -> 404
+https://clipping-project.onrender.com/clipping-data.json -> 404
+https://clipping-project.onrender.com/assets/clipping-data.json -> 401 viewer_login_required
+https://clipping-project.onrender.com/assets/clipping-raw-texts.json -> 401 viewer_login_required
+```
+
+See `STATIC_DATA_BOUNDARY_REVIEW_2026-05-20.md` and
+`tests/test_static_data_boundary.py`.
+
 ## Acceptable Static Uses
 
 - Internal operator review.

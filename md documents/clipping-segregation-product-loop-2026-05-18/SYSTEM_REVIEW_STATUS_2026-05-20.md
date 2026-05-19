@@ -98,6 +98,9 @@ Freshly proven after deploy:
   archives it;
 - the pilot ledger now has a checker that keeps template rows and guessed time
   from becoming pricing evidence.
+- Render static/data boundary probes return `404` for raw `data/` files and
+  the legacy root `clipping-data.json`, while scoped `/assets/*.json` still
+  returns `401` when logged out.
 
 ## Authenticated Production Proof
 
@@ -192,6 +195,8 @@ Safe sales posture:
   dedicated prospect profile exists;
 - do not share Flavio/Shakira/Rio/admin credentials;
 - do not use static exports as private access;
+- do not point clients at raw `data/` artifacts; Render currently returns 404
+  for those paths and the dashboard uses scoped `/assets` routes;
 - keep V1 bounded to the pilot scope documented in `V1_DELIVERY_SCOPE.md`.
 - run `tools/pilot_ledger_check.py` before treating operator-time rows as
   pricing evidence.

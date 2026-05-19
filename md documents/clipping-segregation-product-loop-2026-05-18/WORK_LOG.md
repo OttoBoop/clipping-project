@@ -12322,3 +12322,144 @@ next unblocked product/Rio/operations review.
 The pilot ledger guard is live, but the actual business evidence is still zero:
 no buyer row, no measured pilot row, no authenticated fresh proof, and no Rio
 manual approval.
+
+## 2026-05-19 13:47 -03 - Loop Cycle: Pilot Ledger Status Deploy Smoke
+
+### Objective Reviewed
+
+Verify the status/log deploy after `a8d47af` and return to the docs for the
+next unblocked item.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+ec52781 docs: refresh status after pilot ledger guard
+git push origin HEAD:master
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86u9ne7r5hc73cvm37g
+commit=ec52781f8c15440a76f4ad719007f6a896cdf4ed
+status=live
+finishedAt=2026-05-20T16:46:02.138147Z
+```
+
+### Evidence
+
+Live logged-out smoke on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+  job=succeeded
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+Positive authenticated viewer/admin proof remains blocked by missing
+credentials in this shell. The site is configured for viewer auth, but this
+session cannot prove profile-specific payloads without passwords.
+
+### Next Objective From Docs
+
+Re-open the docs. A likely next unblocked item is static/data boundary review:
+prove locally and, where possible, live that committed `data/` artifacts are
+not served as private client surfaces outside scoped FastAPI endpoints.
+
+### Why The Loop Continues
+
+The deploy smoke passed, but static boundary review, authenticated proof, buyer
+evidence, measured pilot rows, and Rio manual approvals are still unfinished.
+
+## 2026-05-19 13:50 -03 - Loop Cycle: Static Data Boundary Review
+
+### Objective Reviewed
+
+From `STATIC_EXPORT_POLICY.md` and the long-term segregation rule: private
+client access must not rely on raw static files or browser-only filtering.
+After the `/tmp` worktree recovery, I retried the static boundary live probes
+with exact approved curl commands.
+
+### Live Evidence
+
+Render direct raw-file probes:
+
+```text
+GET /data/targets.json -> 404 Not Found
+GET /data/viewer_profiles.json -> 404 Not Found
+GET /data/reports/rio_economic_topic_report_20260519T142621Z.json -> 404 Not Found
+GET /clipping-data.json -> 404 Not Found
+```
+
+Scoped/private routes still require login:
+
+```text
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+```
+
+### Action Taken
+
+Created/updated:
+
+```text
+tests/test_static_data_boundary.py
+STATIC_DATA_BOUNDARY_REVIEW_2026-05-20.md
+STATIC_EXPORT_POLICY.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+The new static test checks that:
+
+```text
+web_app/app.py has no app.mount("/data")
+web_app/app.py has no StaticFiles usage
+web_app/app.py has no @app.get("/data...") route
+index.html points dashboard payloads at assets/clipping-data.json and assets/clipping-raw-texts.json
+the assets handler special-cases clipping-data/raw-texts through require_viewer and scoped payload helpers
+```
+
+Checks run:
+
+```text
+python3 -B -m py_compile tests/test_static_data_boundary.py -> passed
+python3 -B -c "from tests import test_static_data_boundary as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+git diff --check -> passed
+```
+
+### Barrier Or Failure
+
+This does not prove authenticated profile scoping. It proves only that raw
+committed `data/` artifacts are not public Render surfaces and that the
+dashboard payload names go through scoped FastAPI routes.
+
+### Next Objective From Docs
+
+Run the static boundary test, commit/push, wait for Render, smoke production,
+then return to the docs.
+
+### Why The Loop Continues
+
+Static raw-file leakage is currently blocked, but authenticated positive proof,
+buyer evidence, measured pilot rows, and Rio manual approvals remain open.

@@ -42,6 +42,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Dirty worktree / commit-boundary review.
 - Product loop operating protocol.
 - Static boundary evidence.
+- Static data boundary review now proves Render does not serve raw `data/`
+  artifacts or legacy root JSON as the private product surface.
 - Rio economic isolation decision.
 - Sellable package readiness gate.
 - Operator cost discipline guardrail.
@@ -133,6 +135,8 @@ Continue the production loop. Current priority from the docs:
 2. keep real viewer profile proof verified after deploys;
    a non-secret authenticated smoke helper now exists, but running it still
    requires viewer/admin passwords outside this shell;
+   static data boundary review now also proves raw `data/` files are not the
+   public private-client surface;
 3. keep target-management no-fake-UI review fresh; a 2026-05-18 code/docs
    pass exists and logged-out live mutation calls now reject with
    `admin_login_required`, but positive admin CSRF/target-management smoke on
