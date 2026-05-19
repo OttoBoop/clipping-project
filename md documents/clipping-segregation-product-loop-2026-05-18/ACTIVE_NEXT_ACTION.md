@@ -73,6 +73,11 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
   `manual_approval_status_counts`.
 - Rio economic manual approval validation now blocks unknown approval statuses
   and approved-current-period promotions without source/date evidence.
+- Rio economic manual approval checker now validates the sidecar, generated
+  topic report, and operator queue counts together before any manual promotion
+  can be treated as real.
+- Rio economic operator template now documents the exact sidecar fields and
+  row-11 review shape without approving the row.
 - Rio economic manual review queue for the eight `not_reviewed` stories,
   keeping `approved_promotions=0`.
 - Rio-only read-only UI decision and first dashboard panel backed by scoped
@@ -180,6 +185,8 @@ Continue the production loop. Current priority from the docs:
    fake approval/publish/add controls; the report builder now rejects fake
    manual promotions and emits effective `indicator_policy_counts` so future
    approvals cannot be displayed as text without changing the effective count;
+   a dedicated checker now proves the manual sidecar rows match the report's
+   non-automatic rows and the operator queue's current-decision counts;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; V1 pilot scope and delivery-format
    decision now exist; demo script is now tied to the V1 offer without exposing
@@ -210,8 +217,9 @@ Continue the production loop. Current priority from the docs:
 If `viewerAuthConfigured=false` returns, treat it as a regression and re-check
 Render env configuration. Do not rotate or publish viewer passwords in docs.
 
-Use `SYSTEM_REVIEW_STATUS_2026-05-20.md` as the current proof/blocker snapshot;
-it now reflects live commit `ceb0179`.
+Use `SYSTEM_REVIEW_STATUS_2026-05-20.md` as the current proof/blocker snapshot.
+It will need a fresh live-commit refresh after the Rio manual approval checker
+deploy.
 
 ## Do Not Do Next
 

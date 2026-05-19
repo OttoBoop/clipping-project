@@ -12664,3 +12664,204 @@ guards.
 
 Buyer evidence is now guarded, but still absent. Authenticated proof and Rio
 manual approvals are still blocked by missing secrets or human review.
+
+## 2026-05-19 14:02 -03 - Loop Cycle: Buyer Guard Status Deploy Smoke
+
+### Objective Reviewed
+
+Verify the status/log deploy after the buyer quote evidence guard and continue.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+13489d5 docs: refresh status after buyer guard
+git push origin HEAD:master
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86ugr8js32c738suv7g
+commit=13489d52dfd676cdb24d5f8ba8e866a6afb27023
+status=live
+finishedAt=2026-05-20T17:01:02.538488Z
+```
+
+### Evidence
+
+Live logged-out smoke on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+  job=succeeded
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /data/targets.json -> 404 Not Found
+```
+
+### Barrier Or Failure
+
+Positive authenticated proof still requires credentials. Buyer evidence is
+guarded but still absent.
+
+### Next Objective From Docs
+
+Re-open the long-term docs and pick the next unblocked axis. Likely candidate:
+Rio manual approval operator artifact, because the UI is read-only and the
+report builder now rejects fake promotions, but a human-review record template
+can be made stricter without approving any row.
+
+### Why The Loop Continues
+
+This deploy is verified, but authenticated profile proof, real buyer evidence,
+measured pilot rows, and Rio manual approval are still open.
+
+## 2026-05-19 14:03 -03 - Loop Cycle: Rio Manual Approval Reanchor
+
+### Objective Reviewed
+
+Re-opened the required loop documents before selecting the next task:
+
+```text
+LONG_TERM_GOALS.md
+DEPENDENCY_MAP.md
+CURRENT_SHORT_TERM_LOOP.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_CHECKLIST.md
+RENDER_PRODUCTION_CHECKLIST.md
+WORK_LOG.md
+```
+
+The active unblocked axis is the Rio economic indicator review path, with the
+same no-fake-UI/no-fake-data rule: the report can preview methodology, but no
+manual approval may be counted or displayed as effective evidence without
+reviewer, source/date evidence, and a documented decision.
+
+### Action Taken
+
+Selected the next small implementation target: strengthen the manual-review
+sidecar/operator artifact and regression coverage without approving any story
+or creating a plain Rio target row.
+
+### Evidence
+
+Current worktree before this next implementation:
+
+```text
+HEAD detached
+WORK_LOG.md modified by the previous deploy-smoke log
+```
+
+### Barrier Or Failure
+
+Positive authenticated Render proof still requires credentials outside this
+shell. The workaround is to continue unblocked checks and guards that do not
+need secrets, then deploy and smoke logged-out/static boundaries again.
+
+### Next Objective From Docs
+
+Inspect the Rio manual approval sidecar, current topic report, existing Rio
+manual review docs, and tests; then add a guard/template that prevents fake
+manual approval drift.
+
+### Why The Loop Continues
+
+The docs explicitly say the Rio track is not complete until methodology,
+source/date review, manual approvals, and scoped production proof keep passing
+after deploys.
+
+## 2026-05-19 14:05 -03 - Loop Cycle: Rio Manual Approval Drift Guard
+
+### Objective Reviewed
+
+Continue the Rio economic methodology track without polluting the production
+target list or inventing manual approvals. The concrete risk is sidecar drift:
+an approval row, generated report, and operator queue could disagree while the
+UI still looks credible.
+
+### Action Taken
+
+Created/updated:
+
+```text
+tools/rio_economic_manual_approval_check.py
+tests/test_rio_economic_manual_approval_check.py
+RIO_ECONOMIC_MANUAL_APPROVAL_OPERATOR_TEMPLATE_2026-05-20.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+The new checker validates:
+
+```text
+sidecar rows match every non-automatic report story
+required sidecar keys exist
+approved_current_period requires reviewer, reviewed_at, rationale, URL, and date evidence
+topic-report manual_approval_status_counts match actual stories
+topic-report indicator_policy_counts match actual stories
+operator queue approved_promotions / rows_remaining_not_reviewed / target_row_approved match the report
+target_row_approved remains false
+writes_production_db/assets/targets remain false
+```
+
+The operator template records the exact sidecar fields and row 11 review shape,
+but keeps row 11 as `not_reviewed`.
+
+### Evidence
+
+Checks run:
+
+```text
+python3 -B -m py_compile tools/rio_economic_manual_approval_check.py tests/test_rio_economic_manual_approval_check.py -> passed
+python3 -B -c "from tests import test_rio_economic_manual_approval_check as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+python3 -B tools/rio_economic_manual_approval_check.py -> ok=true
+git diff --check -> passed
+```
+
+Current checker result:
+
+```text
+story_count=25
+sidecar_rows=[1, 5, 11, 15, 19, 22, 25, 26]
+reviewable_rows=[1, 5, 11, 15, 19, 22, 25, 26]
+manual_approval_status_counts:
+  not_required=17
+  not_reviewed=8
+indicator_policy_counts:
+  count_current_period=17
+  manual_review_before_counting=1
+  research_only=7
+approved_promotions=0
+rows_remaining_not_reviewed=8
+target_row_approved=false
+```
+
+### Barrier Or Failure
+
+No manual approval was made. The guard only prevents fake or inconsistent
+promotion evidence. Positive authenticated Render proof still requires
+credentials outside this shell.
+
+### Next Objective From Docs
+
+Commit/push this guard path-limited, wait for Render, smoke production, log
+the live result, then return to the long-term docs for the next weak axis.
+
+### Why The Loop Continues
+
+Rio manual approval drift is guarded locally, but it still must be deployed and
+the live privacy gate must be checked again. The Rio indicator is still not a
+production target row and still has zero approved manual promotions.

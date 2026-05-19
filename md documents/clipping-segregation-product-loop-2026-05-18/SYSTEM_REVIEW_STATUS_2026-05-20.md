@@ -94,6 +94,11 @@ Freshly proven after deploy:
 - Rio manual approvals now have a guarded status taxonomy and
   `approved_current_period` cannot regenerate a counted report without
   source/date evidence;
+- Rio manual approval artifacts now have a checker that validates the sidecar,
+  generated report counts, operator queue counts, and `target_row_approved`
+  boundary together before any manual promotion is treated as usable;
+- the Rio manual approval operator template now gives row 11 a review shape
+  without approving it;
 - the live JS now prefers `indicator_policy_counts` while falling back to the
   older date-quality counts.
 - the authenticated smoke helper now has an explicit opt-in admin mutation path
@@ -170,6 +175,23 @@ target_row_approved=false
   Rio panel path.
 - live `/assets/clipping.js` includes `indicator_policy_counts` and
   `story.indicator_policy || story.date_quality_policy`.
+- `tools/rio_economic_manual_approval_check.py` currently returns `ok=true`
+  for the sidecar/report/queue set:
+
+```text
+story_count=25
+sidecar_rows=[1, 5, 11, 15, 19, 22, 25, 26]
+manual_approval_status_counts:
+  not_required=17
+  not_reviewed=8
+indicator_policy_counts:
+  count_current_period=17
+  manual_review_before_counting=1
+  research_only=7
+approved_promotions=0
+rows_remaining_not_reviewed=8
+target_row_approved=false
+```
 
 Remaining Rio blockers:
 
@@ -275,4 +297,6 @@ Continue from the weakest unblocked items:
 5. continue Rio manual-approval/methodology work without target-row pollution.
 6. keep approval UI/actions hidden until approval writes are connected end to
    end.
+7. after the Rio manual approval checker deploys, refresh the live commit and
+   logged-out production smoke in this status snapshot.
 ```
