@@ -562,4 +562,41 @@ A implementação direta — endpoint `POST /api/change-password` que lê `old_p
 - Migrar Goal 5 pra `GOALS_ATINGIDOS.md` se Otávio confirmar.
 - Próximo Goal aberto: Goal 4 (regressão-zero) já tem mecanismo (cada major entry registra "baseline mantida"); Goals 2 e 3 essencialmente cumpridos (logout funcional, change-password endpoint + UI, senhas humanas em prod desde a rotação 12:35).
 
+---
+
+## 2026-05-19 20:25 — Goal 5 (display_name family) último buraco fechado: restore conflict guard
+
+**Goal endereçado:** Goal 5 (target mgmt completo com erros claros) + Goal 4 (regressão-zero)
+**Método executado:** mesma família dos fixes 11:50 (create) e 12:15 (update). `restore_secondary_target` agora itera outras rows ativas, compara normalizado+casefold no display_name, e levanta `ValidationError` com mensagem específica se conflitar. `target_validation_payload` ganhou branch pra suggestion específica.
+
+**Cenário fechado:** sequência (create X → archive X → create X' → restore X) que silenciosamente produzia 2 rows ativos homônimos. Antes do fix: passava porque dedup nas operações de create/update ignoravam arquivados, e restore não dedupava. Agora: restore checa contra outras rows ativas e bloqueia.
+
+**Por que esse método:**
+
+- ✅ **Consistência com create/update dedup**: mesmo padrão de comparação. Reduz surpresas pra futura IA lendo o código.
+- ✅ **Bloqueia restore, não desfaz nada**: archived stays archived se houver conflito. Reversível pelo admin (renomear o conflitante, depois restaurar).
+- ✅ **Mensagem específica vs genérica**: cita o label do conflitante exatamente igual ao padrão de create/update. Failure class "erro genérico" prevenida.
+
+**Métodos descartados:**
+
+- ❌ **Renomear o ativo automaticamente pra "Shakira (2)" e restaurar**: muda dado do usuário sem permissão. Pior UX.
+- ❌ **Forçar archive do conflitante pra fazer espaço**: destrutivo, perigoso.
+- ❌ **Permitir 2 rows com mesmo display_name e deduplicar na UI**: cai em "fake UI" failure class — fonte de verdade fica ambígua.
+
+**Critério de sucesso (parcial atingido):**
+
+- ✅ Pytest local: 87/87 nas suítes tocadas (`tests/test_targets_jobs.py` + `tests/test_admin_viewers.py` + `tests/test_auth_credentials.py`).
+- ✅ 2 testes novos: `test_restore_secondary_target_rejects_conflict_with_active_homonym` + `test_restore_secondary_target_allows_when_no_active_homonym`.
+- ✅ Commit `f4b42a2` pushed, deploy disparado.
+- ⏳ Falta: smoke em prod cobrindo o cenário (pronto em `/tmp/smoke_goal5_targets.sh`, dispara quando deploy live).
+
+**Status Goal 5 família display_name (completa):**
+
+- ✅ create_secondary_target rejeita duplicata (commit 7a589d5)
+- ✅ create_primary_target rejeita duplicata (commit 4efe9f3, mesmo padrão)
+- ✅ update_secondary_target rejeita rename pra duplicata, com skip-self (commit f41a028)
+- ✅ restore_secondary_target rejeita restore conflitando com ativo (commit f4b42a2 — agora)
+
+**Goal 5 pode migrar pra GOALS_ATINGIDOS quando Otávio confirmar visualmente em prod.**
+
 **Próxima sub-ação concreta:** atualizar SESSION_LOG, commitar docs, aguardar decisão do Otávio sobre próximo passo. Candidatos para enquanto ele revisa: começar storage migration (frente bloqueadora de Goals 1, 2-B, 3) OU mexer em casos-edge restantes do baseline (acentos diferentes, payload sem keywords, etc.).
