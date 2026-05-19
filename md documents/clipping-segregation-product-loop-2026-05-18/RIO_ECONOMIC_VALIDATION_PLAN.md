@@ -461,6 +461,39 @@ This is the first implementation of the safer topic-report path. It still does
 not approve a production target row; it shows that most v4 stories need
 canonical checks before current-period counting.
 
+Extended canonical/topic-report pass:
+
+```text
+tools/rio_economic_build_topic_report.py now uses cluster-member canonical evidence
+data/reports/rio_economic_canonical_review_20260519T013449Z.json
+rows_checked=20
+date_quality_eligible_rows=15
+same_day=14
+near_date=1
+canonical_date_missing=2
+date_mismatch=1
+fetch_error=2
+data/reports/rio_economic_topic_report_20260519T013645Z.json
+story_count=25
+article_count=31
+canonical_rows_checked=20
+count_current_period=11
+manual_review_before_counting=1
+research_only=4
+canonical_check_required=9
+target_row_approved=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+RIO_ECONOMIC_EXTENDED_CANONICAL_TOPIC_REPORT_20260519T013645Z.md
+```
+
+The topic report now records `date_quality_source_row` and
+`date_quality_evidence_rows` so duplicate clusters are not downgraded only
+because the representative source failed. The Mais Valia/Mais Valera cluster
+now counts from row 17 same-day evidence while preserving row 16's fetch error
+in `date_quality_evidence_statuses`.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

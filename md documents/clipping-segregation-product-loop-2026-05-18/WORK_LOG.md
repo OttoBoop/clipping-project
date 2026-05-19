@@ -9194,3 +9194,186 @@ the viewer/admin passwords are not available and should not be guessed.
 Commit/push the protocol cleanup that removes the stale `viewerAuthConfigured=false`
 blocker, wait for Render, smoke production again, then re-read the objective docs
 and choose the next weak axis.
+
+## 2026-05-18 22:36 -03 - Loop Cycle: Protocol Cleanup Commit, Deploy, And Smoke
+
+### Objective Reviewed
+
+Keep the loop protocol aligned with the real Render state: viewer auth is now
+configured, so the stale `viewerAuthConfigured=false` blocker should not keep
+misdirecting future agents.
+
+### Action Taken
+
+Ran:
+
+```text
+git diff --check -> passed
+git add LOOP_OPERATING_PROTOCOL.md WORK_LOG.md
+git commit -m "docs: refresh loop blocker status"
+git push origin HEAD:master
+```
+
+Then used Render deploy polling and logged-out live smoke against production.
+
+### Evidence
+
+```text
+commit: 94428e4ddd756e8f5385d0da5b2b466aa2248cb1
+Render deploy: dep-d86guqgk1i2s73d4n2e0
+Render status: live
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+Positive authenticated viewer/admin proof remains blocked in this shell because
+the passwords are not available. This is not a stop condition: the next cycle
+must return to the docs and choose another unblocked verifiable item.
+
+### Next Objective From Docs
+
+Re-open the long-term/current docs and recent log tail, then select the next
+weak axis. Candidate axes to verify from the docs include Rio topic validation,
+sellable package boundaries, no-fake-UI/admin controls, and market/customer
+packaging.
+
+## 2026-05-18 22:37 -03 - Loop Cycle: Re-anchor After Protocol Deploy
+
+### Objective Reviewed
+
+Re-read the required loop documents after the production smoke instead of
+stopping at a live deploy.
+
+### Action Taken
+
+Read:
+
+```text
+LONG_TERM_GOALS.md
+DEPENDENCY_MAP.md
+CURRENT_SHORT_TERM_LOOP.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_CHECKLIST.md
+RENDER_PRODUCTION_CHECKLIST.md
+WORK_LOG.md tail
+```
+
+### Evidence
+
+The docs still prioritize Axis 1 segregation, but the unblocked next weak axis
+is the Rio economic validation path: the first topic report exists, but the
+Rio production gate still blocks target-row creation until stronger date
+quality, cluster counting, source/body review, narrow first-run planning, and
+fresh live scoping proof exist.
+
+### Barrier Or Failure
+
+Fresh authenticated production scoping proof is still blocked by missing
+viewer/admin passwords in this shell. That does not block offline Rio validation
+work.
+
+### Next Objective From Docs
+
+Inspect the Rio validation/report artifacts and extend the canonical/date
+quality review without creating a production `rio_economico` target row or
+writing scoped client data into public payloads.
+
+## 2026-05-18 22:45 -03 - Loop Cycle: Rio Extended Canonical And Cluster-Aware Topic Report
+
+### Objective Reviewed
+
+Advance the Rio economic indicator only through isolated review artifacts, not
+through a production `rio_economico` target row that could pollute Flavio,
+Shakira, or future client surfaces.
+
+### Action Taken
+
+Ran an extended canonical review:
+
+```text
+python tools/rio_economic_canonical_review.py data/reports/rio_economic_dry_run_20260519T000719Z.json --max-rows 20 --request-timeout 5
+```
+
+Then found a topic-report bug: clustered stories used only the representative
+row's canonical status. Updated `tools/rio_economic_build_topic_report.py` so a
+story cluster records all canonical evidence rows and uses the strongest
+available member evidence (`same_day`, then `near_date`) before falling back to
+non-pass evidence.
+
+Generated the corrected topic report:
+
+```text
+python -B tools/rio_economic_build_topic_report.py data/reports/rio_economic_clustered_review_20260519T004653Z.json --canonical-report data/reports/rio_economic_canonical_review_20260519T013449Z.json
+```
+
+### Evidence
+
+Canonical review:
+
+```text
+data/reports/rio_economic_canonical_review_20260519T013449Z.json
+rows_checked=20
+date_quality_eligible_rows=15
+same_day=14
+near_date=1
+canonical_date_missing=2
+date_mismatch=1
+fetch_error=2
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+Corrected topic report:
+
+```text
+data/reports/rio_economic_topic_report_20260519T013645Z.json
+story_count=25
+article_count=31
+canonical_rows_checked=20
+count_current_period=11
+manual_review_before_counting=1
+research_only=4
+canonical_check_required=9
+target_row_approved=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+Focused direct test:
+
+```text
+rio_economic_build_topic_report direct tests passed
+rio topic report artifact assertions passed
+git diff --check -> passed
+```
+
+### Barrier Or Failure
+
+`pytest` is still unavailable in this shell from prior cycles, so the focused
+test was run by directly invoking the pytest-style test functions with
+`python -B`.
+
+Running the canonical review touched tracked `pipeline/__pycache__/*.pyc`
+files. They are generated runtime dirt and must not be staged or committed.
+
+### Next Objective From Docs
+
+Run diff/checks, commit the Rio report/code/doc updates path-limited, push to
+`master`, wait for Render, smoke production, then re-read the docs. The next
+Rio methodology step after this commit is remaining row 21-31 canonical review
+or a scoped Rio topic-report view, not a normal target row.

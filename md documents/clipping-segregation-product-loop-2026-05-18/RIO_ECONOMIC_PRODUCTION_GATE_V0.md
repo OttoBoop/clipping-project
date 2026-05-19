@@ -81,7 +81,8 @@ missing_url
 Current evidence:
 
 ```text
-10-row canonical pass: same_day=8, canonical_date_missing=1, date_mismatch=1
+20-row canonical pass: same_day=14, near_date=1, canonical_date_missing=2, date_mismatch=1, fetch_error=2
+date_quality_eligible_rows=15
 ```
 
 ## Gate 4 - Cluster Counting
@@ -98,9 +99,12 @@ Current evidence:
 ```text
 v4 cluster annotation: row_count=31, cluster_count=3, clustered_row_count=9
 topic report: article_count=31, story_count=25
+extended topic report: count_current_period=11, manual_review_before_counting=1, research_only=4, canonical_check_required=9
 ```
 
 Rows 4/30/31, 8/9/10, and 16/17/18 must not inflate story counts.
+The topic report must evaluate date-quality evidence across all rows in a
+reviewed cluster, not only the representative row; row 16/17/18 proves why.
 
 ## Gate 5 - Source/Body Review
 
@@ -140,6 +144,7 @@ RIO_ECONOMIC_INGESTION_ARCHITECTURE_DECISION.md
 plain data/targets.json target row is not safe enough for Rio economic monitoring
 preferred first production shape is scoped topic/query report before normal dashboard ingestion
 first topic-report artifact now exists and keeps target_row_approved=false
+extended topic-report artifact now uses cluster-member date evidence and still keeps target_row_approved=false
 ```
 
 ## Current Next Step
@@ -148,6 +153,7 @@ first topic-report artifact now exists and keeps target_row_approved=false
 do not add data/targets.json row yet
 wait for latest deploys to become live
 run fresh production scoping proof
+extend canonical checks to remaining rows 21-31 or build a scoped Rio topic-report view
 preserve the v4 query families/exclusions in a scoped topic pipeline, not a plain keyword target row
 then decide whether the Rio methodology is ready for an operator-approved narrow first run
 ```

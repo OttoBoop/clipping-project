@@ -17,6 +17,7 @@ if str(PROJECT_ROOT) not in sys.path:
 REPORTS_DIR = PROJECT_ROOT / "data" / "reports"
 CURRENT_PERIOD_STATUSES = {"same_day"}
 MANUAL_REVIEW_STATUSES = {"near_date"}
+PASS_STATUSES_BY_STRENGTH = ("same_day", "near_date")
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -66,6 +67,22 @@ def date_quality_policy(status: str) -> str:
     if status == "not_checked":
         return "canonical_check_required"
     return "research_only"
+
+
+def select_canonical_evidence(
+    member_rows: list[int],
+    canonical_rows: dict[int, dict[str, Any]],
+) -> tuple[int | None, dict[str, Any] | None, list[tuple[int, dict[str, Any]]]]:
+    evidence = [(row_number, canonical_rows[row_number]) for row_number in member_rows if row_number in canonical_rows]
+    if not evidence:
+        return None, None, []
+
+    for status in PASS_STATUSES_BY_STRENGTH:
+        for row_number, canonical in evidence:
+            if str(canonical.get("status") or "not_checked") == status:
+                return row_number, canonical, evidence
+
+    return evidence[0][0], evidence[0][1], evidence
 
 
 def build_stories(clustered_payload: dict[str, Any], canonical_payload: dict[str, Any] | None = None) -> list[dict[str, Any]]:
@@ -121,8 +138,13 @@ def build_stories(clustered_payload: dict[str, Any], canonical_payload: dict[str
             story["url"] = str(row.get("representative_url") or row.get("url") or "")
             story["published_at"] = str(row.get("published_at") or "")
 
-    for representative, story in grouped.items():
-        canonical = canonical_rows.get(representative)
+    for story in grouped.values():
+        canonical_row_number, canonical, evidence = select_canonical_evidence(story["member_rows"], canonical_rows)
+        story["date_quality_evidence_rows"] = [row_number for row_number, _canonical in evidence]
+        story["date_quality_evidence_statuses"] = {
+            str(row_number): str(row.get("status") or "not_checked") for row_number, row in evidence
+        }
+        story["date_quality_source_row"] = canonical_row_number or ""
         if canonical:
             status = str(canonical.get("status") or "not_checked")
             story["date_quality_status"] = status
@@ -199,6 +221,8 @@ def write_csv(path: Path, stories: list[dict[str, Any]]) -> None:
         "member_rows",
         "date_quality_status",
         "date_quality_policy",
+        "date_quality_source_row",
+        "date_quality_evidence_rows",
         "sources",
         "title",
         "url",
@@ -209,6 +233,9 @@ def write_csv(path: Path, stories: list[dict[str, Any]]) -> None:
         for story in stories:
             row = dict(story)
             row["member_rows"] = ", ".join(str(item) for item in story.get("member_rows", []))
+            row["date_quality_evidence_rows"] = ", ".join(
+                str(item) for item in story.get("date_quality_evidence_rows", [])
+            )
             row["sources"] = ", ".join(str(item) for item in story.get("sources", []))
             writer.writerow({key: row.get(key, "") for key in fieldnames})
 
@@ -236,8 +263,8 @@ def write_markdown(path: Path, payload: dict[str, Any]) -> None:
         *[f"{key}={value}" for key, value in meta["date_quality_policy_counts"].items()],
         "```",
         "",
-        "| Story Row | Articles | Policy | Date Status | Dimension | Sources | Title |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| Story Row | Articles | Policy | Date Status | Date Evidence Row | Dimension | Sources | Title |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for story in payload["stories"]:
         lines.append(
@@ -248,6 +275,7 @@ def write_markdown(path: Path, payload: dict[str, Any]) -> None:
                     md_cell(story.get("article_count")),
                     md_cell(story.get("date_quality_policy")),
                     md_cell(story.get("date_quality_status")),
+                    md_cell(story.get("date_quality_source_row")),
                     md_cell(story.get("primary_dimension")),
                     md_cell(story.get("sources")),
                     md_cell(story.get("title")),

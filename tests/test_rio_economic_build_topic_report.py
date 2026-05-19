@@ -44,9 +44,54 @@ def test_build_stories_collapses_duplicate_clusters_and_preserves_unchecked_rows
     assert stories[0]["article_count"] == 2
     assert stories[0]["member_rows"] == [1, 2]
     assert stories[0]["date_quality_policy"] == "count_current_period"
+    assert stories[0]["date_quality_source_row"] == 1
+    assert stories[0]["date_quality_evidence_rows"] == [1]
     assert stories[1]["article_count"] == 1
     assert stories[1]["date_quality_status"] == "not_checked"
     assert stories[1]["date_quality_policy"] == "canonical_check_required"
+
+
+def test_build_stories_uses_cluster_member_canonical_pass_when_representative_fails():
+    clustered = {
+        "rows": [
+            {
+                "title": "A",
+                "url": "https://example.com/a",
+                "dimension": "construction_real_estate",
+                "source": "Fonte A",
+                "cluster_key": "cluster_a",
+                "primary_dimension": "construction_real_estate",
+                "duplicate_of": "",
+            },
+            {
+                "title": "B",
+                "url": "https://example.com/b",
+                "dimension": "construction_real_estate",
+                "source": "Fonte B",
+                "cluster_key": "cluster_a",
+                "primary_dimension": "construction_real_estate",
+                "duplicate_of": "row:1",
+            },
+        ]
+    }
+    canonical = {
+        "rows": [
+            {"row": 1, "status": "fetch_error", "final_url": ""},
+            {"row": 2, "status": "same_day", "final_url": "https://example.com/b"},
+        ]
+    }
+
+    stories = topic_report.build_stories(clustered, canonical)
+
+    assert len(stories) == 1
+    assert stories[0]["date_quality_status"] == "same_day"
+    assert stories[0]["date_quality_policy"] == "count_current_period"
+    assert stories[0]["date_quality_source_row"] == 2
+    assert stories[0]["date_quality_evidence_rows"] == [1, 2]
+    assert stories[0]["date_quality_evidence_statuses"] == {
+        "1": "fetch_error",
+        "2": "same_day",
+    }
 
 
 def test_summarize_counts_story_article_dimension_and_date_policy():
