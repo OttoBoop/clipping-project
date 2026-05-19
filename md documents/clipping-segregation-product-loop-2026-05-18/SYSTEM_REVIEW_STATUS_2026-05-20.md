@@ -8,9 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-6ea7ed4 test: guard Rio panel against fake approval UI
-deploy dep-d86r90e7r5hc73ct6gbg -> live
-finishedAt=2026-05-20T13:20:01.755431Z
+ef5d8e1 feat: guard Rio manual approval counts
+deploy dep-d86sbu57vvec73b6dkfg -> live
+finishedAt=2026-05-20T14:35:00.001667Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -58,6 +58,10 @@ e846ee1 docs: add Render operations review
 c0750bc docs: tighten pilot operating ledger
 84d6483 docs: refresh target management rejection proof
 6ea7ed4 test: guard Rio panel against fake approval UI
+e6eef5c docs: refresh status after Rio UI guard
+d6104e6 tools: add authenticated Render smoke helper
+2ac51e3 docs: log authenticated smoke helper deploy
+ef5d8e1 feat: guard Rio manual approval counts
 ```
 
 Freshly proven after deploy:
@@ -79,6 +83,13 @@ Freshly proven after deploy:
   direct create/edit/archive/restore attempts;
 - the Rio UI static test now blocks fake approval/publish/add controls and
   target write calls in the Rio panel path.
+- authenticated Render smoke can now be repeated from an operator shell without
+  storing passwords in Git;
+- Rio manual approvals now have a guarded status taxonomy and
+  `approved_current_period` cannot regenerate a counted report without
+  source/date evidence;
+- the live JS now prefers `indicator_policy_counts` while falling back to the
+  older date-quality counts.
 
 ## Authenticated Production Proof
 
@@ -101,7 +112,7 @@ viewer/admin passwords are not available here
 ```
 
 Therefore this snapshot does not claim fresh positive viewer/admin browser
-proof after `6ea7ed4`. The fresh proof is logged-out production privacy plus
+proof after `ef5d8e1`. The fresh proof is logged-out production privacy plus
 deployed static/read-only Rio UI markers. Positive authenticated proof must be
 repeated by Otavio/operator or a session with the real viewer/admin passwords.
 
@@ -112,9 +123,26 @@ Current state:
 - no production `rio_economico` target row has been added;
 - latest topic report has `target_row_approved=false`;
 - manual approval sidecar exists and promotes no rows;
+- latest topic report with manual-approval guard:
+
+```text
+data/reports/rio_economic_topic_report_20260519T142621Z.json
+indicator_policy_counts:
+  count_current_period=17
+  manual_review_before_counting=1
+  research_only=7
+manual_approval_status_counts:
+  not_required=17
+  not_reviewed=8
+target_row_approved=false
+```
+
 - manual review queue exists for rows 1, 5, 11, 15, 19, 22, 25, and 26;
 - row 11 is the first candidate for human review because it is `near_date`;
 - `approved_promotions=0` and all eight non-automatic rows remain unpromoted;
+- `approved_current_period` now requires reviewer, reviewed_at, rationale,
+  canonical/source URL, and observed source date or date-trust evidence before
+  the report builder will emit a promoted effective indicator count;
 - `/api/reports/rio-economic-topic` is scoped to admin or `rio_economico`;
 - logged-out access returns `401`;
 - the UI panel is hidden by default and fetches the scoped endpoint only for
@@ -124,6 +152,8 @@ Current state:
 - the focused static test forbids `Adicionar`, `Aprovar`, `Publicar`,
   `<button`, `<form`, `apiPost(`, `apiPatch(`, and `/api/targets` inside the
   Rio panel path.
+- live `/assets/clipping.js` includes `indicator_policy_counts` and
+  `story.indicator_policy || story.date_quality_policy`.
 
 Remaining Rio blockers:
 
@@ -132,6 +162,7 @@ Remaining Rio blockers:
   regenerated before promotion;
 - approval writes do not exist end to end, so the Rio panel must remain
   read-only;
+- no manual approval has been made; the new guard only prevents fake promotion;
 - no ordinary target-row ingestion until `RIO_ECONOMIC_PRODUCTION_GATE_V0.md`
   passes.
 

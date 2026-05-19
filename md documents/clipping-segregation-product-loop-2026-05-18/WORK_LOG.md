@@ -11920,3 +11920,84 @@ review if they do not.
 
 This closes one fake-count failure mode, but it does not finish Rio methodology,
 authenticated profile proof, buyer evidence, pricing, or operations.
+
+## 2026-05-19 11:36 -03 - Loop Cycle: Rio Manual Approval Guard Live Deploy
+
+### Objective Reviewed
+
+Deploy the Rio manual approval guard, verify that the live privacy gate still
+holds, verify that the live JS contains the effective indicator count fallback,
+then update the status snapshot so the next loop does not anchor on stale
+`6ea7ed4` evidence.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+ef5d8e1 feat: guard Rio manual approval counts
+git push origin HEAD:master
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86sbu57vvec73b6dkfg
+commit=ef5d8e11329151ba6e57a7f19ef35ad76f0ff03e
+status=live
+finishedAt=2026-05-20T14:35:00.001667Z
+```
+
+### Evidence
+
+Live logged-out smoke on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+```
+
+Live asset proof:
+
+```text
+GET /assets/clipping.js -> downloaded
+rg indicator_policy_counts /tmp/live_clipping.js -> present
+rg "story.indicator_policy || story.date_quality_policy" /tmp/live_clipping.js -> present
+```
+
+Updated:
+
+```text
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+### Barrier Or Failure
+
+Positive authenticated viewer/admin proof is still blocked by missing
+passwords in this shell. The new smoke helper is available, but it still needs
+real operator-provided env vars outside Git.
+
+### Next Objective From Docs
+
+Commit/push the refreshed status snapshot, wait for Render, smoke again, then
+re-open the long-term docs. If credentials remain unavailable, continue with
+another unblocked product/Rio/operations review rather than stopping.
+
+### Why The Loop Continues
+
+The guard is live, but authenticated proof, buyer evidence, measured pilot
+cost, and real Rio manual approvals are still unfinished.
