@@ -103,6 +103,11 @@ Avoid in V1:
 - live alerts requiring constant monitoring;
 - high-frequency AI summaries for every article unless pricing covers it.
 
+Base/add-on boundary is documented in
+`V1_ADD_ON_MENU_AND_BOUNDARIES.md`; do not fold daily monitoring, adversaries,
+custom sources, Rio methodology, or recurring PDF/WhatsApp work into the base
+pilot without a paid add-on decision.
+
 ## First Demo Shape
 
 Use the existing app, not a landing page:

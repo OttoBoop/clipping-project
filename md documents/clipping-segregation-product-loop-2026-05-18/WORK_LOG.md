@@ -8931,3 +8931,140 @@ without passwords in this shell.
 
 Commit/push the topic-report implementation and generated artifacts
 path-limited, poll Render, smoke live again, then re-read the docs.
+
+## 2026-05-18 22:26 -03 - Loop Cycle: Rio Topic Report Commit And Push
+
+### Objective Reviewed
+
+Deploy the Rio topic-report tool, generated artifacts, docs, and log to the
+live branch so the next loop can continue from concrete evidence.
+
+### Action Taken
+
+Ran:
+
+```text
+git diff --check -> passed
+git add tools/rio_economic_build_topic_report.py tests/test_rio_economic_build_topic_report.py data/reports/rio_economic_topic_report_20260519T012024Z.* RIO_ECONOMIC_TOPIC_REPORT_20260519T012024Z.md ACTIVE_NEXT_ACTION.md RIO_ECONOMIC_PRODUCTION_GATE_V0.md RIO_ECONOMIC_VALIDATION_PLAN.md WORK_LOG.md
+git commit -m "tools: build Rio topic report"
+git push origin HEAD:master
+```
+
+### Evidence
+
+```text
+0500091 tools: build Rio topic report
+git push -> master updated from 99dce95 to 0500091
+```
+
+### Barrier Or Failure
+
+No git barrier. Commit was path-limited.
+
+### Next Objective From Docs
+
+Poll Render until `0500091` is live, run logged-out production smoke, then
+re-read the long-term docs and continue to the next weak axis.
+
+## 2026-05-18 22:27 -03 - Loop Cycle: V1 Add-On Boundary
+
+### Objective Reviewed
+
+`MARKET_RESEARCH_PLAN.md`,
+`MARKET_RESEARCH_POLITICAL_COMPETITOR_PASS_2026-05-18.md`,
+`FIRST_SELLABLE_PACKAGE.md`, `V1_DELIVERY_SCOPE.md`,
+`V1_DELIVERY_FORMAT_DECISION.md`, and `BUYER_INTERVIEW_GUIDE.md` all point to a
+commercial risk: competitors sell broad monitoring/intelligence, but V1 must
+stay narrow enough to fund the tool.
+
+### Action Taken
+
+Created:
+
+```text
+V1_ADD_ON_MENU_AND_BOUNDARIES.md
+```
+
+Updated:
+
+```text
+V1_DELIVERY_SCOPE.md
+FIRST_SELLABLE_PACKAGE.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The new doc separates the base pilot from add-ons:
+
+```text
+extra update run
+daily monitoring
+extra target/topic
+adversary monitoring
+custom source onboarding
+WhatsApp/PDF report
+human classification pass
+Rio economic topic report
+crisis alert mode
+```
+
+### Barrier Or Failure
+
+No buyer interview happened in this shell, so no price was invented and no
+tracker row was fabricated. One earlier file read used the wrong competitor
+research filename; the correct
+`MARKET_RESEARCH_POLITICAL_COMPETITOR_PASS_2026-05-18.md` was then read.
+
+### Next Objective From Docs
+
+Poll Render for `0500091`, smoke live when promoted, then commit/push this
+commercial boundary update path-limited or batch it with the next substantive
+loop update.
+
+## 2026-05-18 22:29 -03 - Loop Cycle: 0500091 Live Smoke
+
+### Objective Reviewed
+
+The Rio topic-report tool commit reached Render. Verify production privacy
+again before committing the commercial add-on boundary docs.
+
+### Action Taken
+
+Polled Render MCP:
+
+```text
+dep-d86grekvikkc73c30qrg 0500091 tools: build Rio topic report -> live
+dep-d86gp64vikkc73c2vh90 99dce95 docs: decide Rio topic ingestion shape -> deactivated
+```
+
+Ran logged-out live smoke.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated positive proof remains blocked
+without passwords in this shell.
+
+### Next Objective From Docs
+
+Run diff/checks, commit/push the V1 add-on boundary update path-limited, poll
+Render, smoke live again, then re-read the docs.

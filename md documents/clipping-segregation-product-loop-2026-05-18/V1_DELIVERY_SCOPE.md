@@ -80,6 +80,12 @@ Why this shape:
 - Rio economic methodology or topic dashboard;
 - custom source onboarding.
 
+Detailed boundary:
+
+```text
+V1_ADD_ON_MENU_AND_BOUNDARIES.md
+```
+
 ## Operator Metering
 
 During the pilot, log:

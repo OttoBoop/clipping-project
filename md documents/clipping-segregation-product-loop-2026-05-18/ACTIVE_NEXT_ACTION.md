@@ -42,6 +42,7 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Render env change safety runbook for password/profile operations.
 - Rio economic ingestion architecture decision: do not flatten Rio into a plain
   target row; preserve query families, exclusions, date quality, and clusters.
+- V1 add-on menu/boundaries for avoiding unlimited low-paid service scope.
 
 ## Current Verification State
 
@@ -131,7 +132,9 @@ Continue the production loop. Current priority from the docs:
    now exists; buyer interview guide now exists; next packaging step is live
    buyer/quote validation with a real prospect; dedicated prospect-profile
    setup checklist and buyer quote validation tracker now exist for serious
-   hands-on access and pricing evidence capture;
+   hands-on access and pricing evidence capture; V1 add-on menu now separates
+   base pilot from frequency, adversary, custom source, report-format,
+   classification, crisis, and Rio methodology add-ons;
 6. review costs, password rotation, and operations;
    first-client onboarding/offboarding checklist now exists; V1 pilot operating
    ledger now exists for measuring update time, weekly summary time, support,
