@@ -125,6 +125,24 @@ def create_primary_target(payload: dict[str, Any]) -> dict[str, Any]:
     return helper(payload)
 
 
+def promote_target_to_primary(key: str) -> dict[str, Any]:
+    from . import db_admin
+
+    helper = getattr(db_admin, "promote_target_to_primary", None)
+    if not helper:
+        raise ValidationError("Promocao de alvo ainda nao disponivel.")
+    return helper(key)
+
+
+def demote_target_to_secondary(key: str) -> dict[str, Any]:
+    from . import db_admin
+
+    helper = getattr(db_admin, "demote_target_to_secondary", None)
+    if not helper:
+        raise ValidationError("Rebaixamento de alvo ainda nao disponivel.")
+    return helper(key)
+
+
 def upload_targets_artifacts(kind: str, result: dict[str, Any], key: str) -> list[str]:
     if not artifact_store.enabled:
         return []
@@ -160,6 +178,14 @@ def target_validation_payload(exc: ValidationError) -> dict[str, Any]:
         suggestion = "Digite um nome de exibicao com 3 caracteres ou mais."
     elif "Já existe um nome cadastrado" in message:
         suggestion = "Escolha um nome diferente. Para mudar o existente, use Editar em vez de criar."
+    elif "ja e principal" in message:
+        field = "target_key"
+        suggestion = "Este nome ja consta como principal — nenhuma acao necessaria."
+    elif "ja e secundario" in message:
+        field = "target_key"
+        suggestion = "Este nome ja consta como secundario — nenhuma acao necessaria."
+    elif "antes de promover" in message or "antes de rebaixar" in message:
+        suggestion = "Restaure o nome arquivado antes de promover ou rebaixar."
     elif "desconhecido" in message:
         field = "target_key"
         suggestion = "Atualize a lista de nomes e tente de novo com um nome existente."
@@ -640,6 +666,34 @@ async def update_target(target_key: str, request: Request) -> JSONResponse:
         return target_operation_error_response("update", exc)
     key = str(result.get("key") or target_key)
     return target_mutation_response("targets-updated", result, key, sync_reason="target-updated", cleanup=True)
+
+
+@app.post("/api/targets/{target_key}/promote")
+async def promote_target(target_key: str, request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    try:
+        result = promote_target_to_primary(target_key)
+    except ValidationError as exc:
+        return target_validation_response(exc)
+    except Exception as exc:
+        return target_operation_error_response("update", exc)
+    key = str(result.get("key") or target_key)
+    return target_mutation_response("targets-promoted", result, key, sync_reason="target-promoted")
+
+
+@app.post("/api/targets/{target_key}/demote")
+async def demote_target(target_key: str, request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    try:
+        result = demote_target_to_secondary(target_key)
+    except ValidationError as exc:
+        return target_validation_response(exc)
+    except Exception as exc:
+        return target_operation_error_response("update", exc)
+    key = str(result.get("key") or target_key)
+    return target_mutation_response("targets-demoted", result, key, sync_reason="target-demoted")
 
 
 @app.post("/api/targets/{target_key}/archive")

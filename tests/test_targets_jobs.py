@@ -150,6 +150,118 @@ def test_create_primary_target_writes_primary_row_and_appears_in_primary_keys(mo
     assert by_key["maria_silva"]["primary"] is True
 
 
+def test_promote_secondary_target_to_primary_sets_flags(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "shakira", "label": "Shakira", "primary": False, "keywords": ["Shakira"]},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    promoted = db_admin.promote_target_to_primary("shakira")
+    assert promoted["primary"] is True
+    assert promoted["className"] == "primary"
+    stored = {row["key"]: row for row in json.loads(targets_path.read_text(encoding="utf-8"))}
+    assert stored["shakira"]["primary"] is True
+    assert stored["shakira"]["className"] == "primary"
+    assert "shakira" in db_admin.public_targets()["primaryKeys"]
+
+
+def test_promote_already_primary_target_raises(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "flavio_valle", "label": "Flavio Valle", "primary": True, "keywords": ["Flavio Valle"]},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    try:
+        db_admin.promote_target_to_primary("flavio_valle")
+    except db_admin.ValidationError as exc:
+        assert "ja e principal" in str(exc)
+    else:
+        raise AssertionError("promoting already-primary target should fail")
+
+
+def test_demote_primary_target_clears_flags(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "maria_silva", "label": "Maria Silva", "primary": True, "className": "primary", "keywords": ["Maria Silva"]},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    demoted = db_admin.demote_target_to_secondary("maria_silva")
+    assert demoted["primary"] is False
+    assert demoted["className"] == ""
+    stored = {row["key"]: row for row in json.loads(targets_path.read_text(encoding="utf-8"))}
+    assert stored["maria_silva"]["primary"] is False
+    assert stored["maria_silva"]["className"] == ""
+    public = db_admin.public_targets()
+    assert "maria_silva" not in public["primaryKeys"]
+
+
+def test_demote_protected_primary_target_is_blocked(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "flavio_valle", "label": "Flavio Valle", "primary": True, "keywords": ["Flavio Valle"]},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    try:
+        db_admin.demote_target_to_secondary("flavio_valle")
+    except db_admin.ValidationError as exc:
+        assert "principais" in str(exc)
+    else:
+        raise AssertionError("protected primary target must not be demotable")
+
+    # File state unchanged.
+    public = db_admin.public_targets()
+    assert "flavio_valle" in public["primaryKeys"]
+
+
+def test_demote_already_secondary_target_raises(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "shakira", "label": "Shakira", "primary": False, "keywords": ["Shakira"]},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    try:
+        db_admin.demote_target_to_secondary("shakira")
+    except db_admin.ValidationError as exc:
+        assert "ja e secundario" in str(exc)
+    else:
+        raise AssertionError("demoting already-secondary target should fail")
+
+
 def test_create_primary_target_rejects_duplicate_display_name_against_secondary(monkeypatch, tmp_path):
     db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
     targets_path = tmp_path / "targets.json"

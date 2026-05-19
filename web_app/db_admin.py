@@ -436,6 +436,37 @@ def create_primary_target(payload: dict[str, Any]) -> dict[str, Any]:
     return sanitize_target(target)
 
 
+def promote_target_to_primary(key: str) -> dict[str, Any]:
+    rows = normalize_targets(load_targets())
+    index = find_target_index(rows, key)
+    row = rows[index]
+    if bool(row.get("archived")):
+        raise ValidationError("Restaure o nome antes de promover.")
+    if bool(row.get("primary")):
+        raise ValidationError("Este nome ja e principal.")
+    row["primary"] = True
+    row["className"] = "primary"
+    write_targets_atomic(normalize_targets(rows))
+    return sanitize_target(row)
+
+
+def demote_target_to_secondary(key: str) -> dict[str, Any]:
+    rows = normalize_targets(load_targets())
+    index = find_target_index(rows, key)
+    row = rows[index]
+    normalized_key = str(row.get("key") or "").strip()
+    if normalized_key in PROTECTED_PRIMARY_KEYS:
+        raise ValidationError("Nomes principais nao podem ser editados por aqui.")
+    if bool(row.get("archived")):
+        raise ValidationError("Restaure o nome antes de rebaixar.")
+    if not bool(row.get("primary")):
+        raise ValidationError("Este nome ja e secundario.")
+    row["primary"] = False
+    row["className"] = ""
+    write_targets_atomic(normalize_targets(rows))
+    return sanitize_target(row)
+
+
 def update_secondary_target(key: str, payload: dict[str, Any]) -> dict[str, Any]:
     rows = normalize_targets(load_targets())
     index = find_target_index(rows, key)
