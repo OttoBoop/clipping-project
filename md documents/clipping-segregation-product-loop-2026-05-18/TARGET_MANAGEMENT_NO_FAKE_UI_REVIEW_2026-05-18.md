@@ -91,6 +91,20 @@ GET /assets/clipping-data.json -> 401 viewer_login_required
 GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
 ```
 
+Additional logged-out mutation checks after deploy `c0750bc`:
+
+```text
+POST /api/targets -> 401 admin_login_required
+PATCH /api/targets/loop_smoke_should_not_create -> 401 admin_login_required
+POST /api/targets/loop_smoke_should_not_create/archive -> 401 admin_login_required
+POST /api/targets/loop_smoke_should_not_create/restore -> 401 admin_login_required
+```
+
+These calls used a disposable key name but no authenticated session. They prove
+that logged-out users cannot create, edit, archive, or restore targets by
+calling the API directly. They do not replace the still-needed positive admin
+CSRF smoke.
+
 `/healthz` currently proves:
 
 ```text
@@ -105,6 +119,9 @@ missingConfig=[]
 
 - Positive admin target-management smoke on Render is still blocked in this
   shell because the admin password/CSRF session is not available here.
+- Admin-positive smoke must use a real admin session, fetch `/api/csrf`, then
+  prove both missing-CSRF rejection and successful CSRF-protected target
+  mutation against an approved disposable secondary target plus cleanup.
 - Positive authenticated viewer UI smoke on Render is also blocked without a
   viewer password, though earlier production proof in
   `SYSTEM_REVIEW_STATUS_2026-05-19.md` recorded viewer segregation when the
@@ -121,11 +138,16 @@ For viewer/client profiles, the same UI is intentionally hidden and server
 writes are rejected. This satisfies the no-fake-UI rule for the first sellable
 segregated product, subject to future positive admin smoke on Render.
 
+As of the latest live logged-out mutation smoke, the server-side rejection path
+also blocks direct target-management writes with `admin_login_required`.
+
 ## Next Review
 
 Return to `ACTIVE_NEXT_ACTION.md`. The next weak points are:
 
 - positive admin CSRF/target-management verification on Render when credentials
   are available;
+- preserve the rule that no disposable production target is created without an
+  explicit cleanup plan;
 - continued Rio economic production gate work without creating a target row;
 - sellable demo/operations validation with real buyer evidence.

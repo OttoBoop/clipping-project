@@ -45,6 +45,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - System review status snapshot for 2026-05-20 after Rio panel, operations,
   demo-readiness, buyer-tracker, and Rio manual-review-queue deploys.
 - Target management no-fake-UI review snapshot for 2026-05-18.
+- Target management live logged-out mutation smoke now proves direct create,
+  edit, archive, and restore calls return `admin_login_required`.
 - Render env change safety runbook for password/profile operations.
 - Render operations review snapshot for service metadata, live health gate, and
   password rotation/offboarding boundaries.
@@ -120,8 +122,9 @@ Continue the production loop. Current priority from the docs:
 1. keep the logged-out privacy gate verified on Render;
 2. keep real viewer profile proof verified after deploys;
 3. keep target-management no-fake-UI review fresh; a 2026-05-18 code/docs
-   pass exists, but positive admin CSRF/target-management smoke on Render still
-   needs operator credentials;
+   pass exists and logged-out live mutation calls now reject with
+   `admin_login_required`, but positive admin CSRF/target-management smoke on
+   Render still needs operator credentials;
 4. continue the `RIO_ECONOMIC_VALIDATION_PLAN.md` path: offline report artifact
    exists; live Google News smoke now works with redirect resolution skipped;
    a 32-row live sample, 29-row revised sample, and 26-row title-exclusion

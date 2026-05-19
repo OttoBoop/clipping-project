@@ -10995,3 +10995,153 @@ target-management/admin-CSRF blocker review or another no-fake-UI pass.
 
 The ledger is stricter, but there is still no measured pilot, no buyer quote,
 no authenticated live proof in this shell, and no Rio approval write path.
+
+## 2026-05-19 00:10 -03 - Loop Cycle: Pilot Ledger Deploy Smoke
+
+### Objective Reviewed
+
+Verify the pilot-ledger commit on the live Render app and record the production
+privacy gate before moving to the next objective.
+
+### Render Audit
+
+Render deploy:
+
+```text
+service=srv-d7p2p5beo5us739f9k40
+deploy=dep-d86i4sr7uimc73bf60l0
+commit=c0750bc227af9f08479e283878cb80c4fc27a32b
+message=docs: tighten pilot operating ledger
+status=live
+finishedAt=2026-05-20T02:56:09.927361Z
+```
+
+Live smoke:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+```
+
+### Action Taken
+
+Recorded deploy and smoke evidence in `WORK_LOG.md`.
+
+### Evidence
+
+The live app remains password-gated for logged-out users after the pilot-ledger
+deploy. The commit did not touch application code, but the Render acceptance
+bar was still checked.
+
+### Barrier Or Failure
+
+Authenticated viewer/admin proof remains blocked by missing credentials in
+this shell.
+
+### Next Objective From Docs
+
+Re-open the target-management/no-fake-UI review path and test whatever can be
+tested without credentials. If admin-positive CSRF proof remains blocked, log
+it and convert the next check into a precise operator checklist.
+
+### Why The Loop Continues
+
+The deploy passed, but target-management admin proof, authenticated profile
+proof, buyer evidence, and measured pilot work remain unresolved.
+
+## 2026-05-19 00:13 -03 - Loop Cycle: Target Management Live Rejection Review
+
+### Objective Reviewed
+
+Re-opened the no-fake-UI target-management path because it remains a key
+segregation/product risk: client-visible actions must be connected end to end
+or hidden, and direct API writes must not let a viewer or logged-out user
+create targets.
+
+### Render Audit
+
+Live deploy under test:
+
+```text
+commit=c0750bc227af9f08479e283878cb80c4fc27a32b
+deploy=dep-d86i4sr7uimc73bf60l0
+status=live
+```
+
+Logged-out direct mutation smoke:
+
+```text
+POST /api/targets -> 401 admin_login_required
+PATCH /api/targets/loop_smoke_should_not_create -> 401 admin_login_required
+POST /api/targets/loop_smoke_should_not_create/archive -> 401 admin_login_required
+POST /api/targets/loop_smoke_should_not_create/restore -> 401 admin_login_required
+```
+
+### Action Taken
+
+Read:
+
+```text
+TARGET_MANAGEMENT_NO_FAKE_UI_REVIEW_2026-05-18.md
+web_app/auth.py
+web_app/app.py
+tests/test_admin_ui.py
+tests/test_export_mobile_snapshot_pages.py
+```
+
+One `rg` command included a missing glob path (`tests/test_auth*.py`) and
+returned exit code 2 while still showing relevant matches. This was a shell
+query issue, not an application failure; the next searches used explicit files.
+
+Updated:
+
+```text
+TARGET_MANAGEMENT_NO_FAKE_UI_REVIEW_2026-05-18.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Static code read confirms target mutation routes call:
+
+```text
+require_admin(request)
+require_csrf(request)
+```
+
+for create, update, archive, and restore routes. Tests include viewer write
+rejection, CSRF rejection, and admin target create/manage behavior. The live
+logged-out mutation smoke adds production evidence that direct unauthenticated
+writes do not create targets.
+
+### Barrier Or Failure
+
+Positive admin CSRF/target-management proof is still blocked by missing admin
+credentials. No disposable production target was created because that requires
+an explicit operator-approved cleanup plan.
+
+### Next Objective From Docs
+
+Run docs checks, commit/push path-limited, wait for Render, smoke production,
+then re-read docs. The remaining unblocked paths are another Rio methodology
+review, buyer/pilot evidence reminders, or a targeted checklist refresh.
+
+### Why The Loop Continues
+
+This proves another rejection path, but it still does not produce authenticated
+admin proof, viewer proof, buyer evidence, measured operator cost, or Rio
+approval writes.
