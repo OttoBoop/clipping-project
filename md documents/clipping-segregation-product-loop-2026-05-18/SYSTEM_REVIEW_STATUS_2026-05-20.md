@@ -8,9 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-a8d47af tools: add pilot ledger pricing guard
-deploy dep-d86skqok1i2s73dbjhm0 -> live
-finishedAt=2026-05-20T14:53:06.627708Z
+ceb0179 tools: add buyer quote evidence guard
+deploy dep-d86uffsm0tmc73dk1gfg -> live
+finishedAt=2026-05-20T16:57:59.254255Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -65,6 +65,9 @@ d6104e6 tools: add authenticated Render smoke helper
 ef5d8e1 feat: guard Rio manual approval counts
 0f23ef6 tools: add admin disposable target smoke
 a8d47af tools: add pilot ledger pricing guard
+ec52781 docs: refresh status after pilot ledger guard
+575041b test: document static data boundary
+ceb0179 tools: add buyer quote evidence guard
 ```
 
 Freshly proven after deploy:
