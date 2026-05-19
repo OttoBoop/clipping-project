@@ -318,6 +318,38 @@ def set_viewer_password(profile: str, new_password: str) -> None:
     _write_credentials_file(data)
 
 
+def remove_viewer_password(profile: str) -> bool:
+    """Delete a viewer profile's password from the credentials file.
+
+    Returns True if a password was removed; False if no entry existed.
+    """
+    profile_key = str(profile or "").strip()
+    if not profile_key:
+        return False
+    data = _load_credentials_file() or {}
+    viewers = dict(data.get("viewer_passwords") or {})
+    if profile_key not in viewers:
+        return False
+    viewers.pop(profile_key, None)
+    data["viewer_passwords"] = viewers
+    if not data.get("admin_password"):
+        env_admin = _env_value("CLIPPING_ADMIN_PASSWORD")
+        if env_admin:
+            data["admin_password"] = _hash_password(env_admin)
+    _write_credentials_file(data)
+    return True
+
+
+def has_viewer_password(profile: str) -> bool:
+    """Return True when the given viewer profile has a stored password
+    (in the credentials file or fallback env var).
+    """
+    profile_key = str(profile or "").strip()
+    if not profile_key:
+        return False
+    return bool(viewer_passwords().get(profile_key))
+
+
 def login_identity(password: str) -> dict[str, str] | None:
     if check_password(password):
         return {"sub": "admin", "role": "admin", "profile": "admin"}

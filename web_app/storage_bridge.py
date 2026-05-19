@@ -20,6 +20,7 @@ RUNTIME_FILES = (
     ("data/clipping.db", lambda: db_path()),
     ("data/targets.json", lambda: DATA_DIR / "targets.json"),
     ("data/clipping_credentials.json", lambda: DATA_DIR / "clipping_credentials.json"),
+    ("data/viewer_profiles.json", lambda: DATA_DIR / "viewer_profiles.json"),
     ("assets/clipping-data.json", lambda: ASSETS_DIR / "clipping-data.json"),
     ("assets/clipping-raw-texts.json", lambda: ASSETS_DIR / "clipping-raw-texts.json"),
 )

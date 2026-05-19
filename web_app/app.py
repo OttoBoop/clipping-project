@@ -45,6 +45,8 @@ from .jobs import (
     run_export_snapshot,
 )
 from .segmentation import (
+    ViewerProfileError,
+    archive_viewer_profile,
     is_admin_session,
     scoped_classifications,
     scoped_dashboard_payload,
@@ -53,6 +55,8 @@ from .segmentation import (
     scoped_status_response,
     scoped_targets_response,
     session_profile_key,
+    set_viewer_profile,
+    viewer_profiles,
     viewer_profiles_configured,
 )
 from .storage_bridge import artifact_store
@@ -792,6 +796,207 @@ def restore_target(target_key: str, request: Request) -> JSONResponse:
         return target_operation_error_response("restore", exc)
     key = str(result.get("key") or target_key)
     return target_mutation_response("targets-restored", result, key, sync_reason="target-restored")
+
+
+def _viewer_profile_error_response(exc: ViewerProfileError) -> JSONResponse:
+    status = 404 if exc.code == "viewer_profile_not_found" else 400
+    payload: dict[str, Any] = {"error": exc.code, "message": exc.message}
+    if exc.field:
+        payload["field"] = exc.field
+    return JSONResponse(status_code=status, content=payload)
+
+
+def _viewer_listing() -> list[dict[str, Any]]:
+    from . import auth as auth_module
+
+    profiles = viewer_profiles()
+    rows: list[dict[str, Any]] = []
+    for profile_key in sorted(profiles.keys()):
+        info = profiles[profile_key] or {}
+        rows.append(
+            {
+                "profile": profile_key,
+                "label": str(info.get("label") or profile_key),
+                "target_keys": list(info.get("target_keys") or []),
+                "default_targets": list(info.get("default_targets") or []),
+                "has_password": auth_module.has_viewer_password(profile_key),
+            }
+        )
+    return rows
+
+
+def _validate_target_keys_for_viewer(target_keys: list[str]) -> ViewerProfileError | None:
+    try:
+        existing = {str(row.get("key") or "").strip() for row in load_targets()}
+    except Exception:
+        return None
+    missing = [key for key in target_keys if key and key not in existing]
+    if missing:
+        return ViewerProfileError(
+            "viewer_profile_invalid",
+            f'Targets desconhecidos: {", ".join(missing)}. Cadastre o target antes de atribuir ao cliente.',
+            field="target_keys",
+        )
+    return None
+
+
+@app.get("/api/admin/viewers")
+def list_admin_viewers(request: Request) -> dict[str, Any]:
+    require_admin(request)
+    return {"viewers": _viewer_listing()}
+
+
+@app.post("/api/admin/viewers")
+async def create_admin_viewer(request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    payload = await read_json(request)
+    profile = str(payload.get("profile") or "").strip()
+    label = str(payload.get("label") or "").strip()
+    target_keys = payload.get("target_keys") or []
+    default_targets = payload.get("default_targets")
+    password = str(payload.get("password") or "")
+
+    if not isinstance(target_keys, list):
+        return _viewer_profile_error_response(
+            ViewerProfileError("viewer_profile_invalid", "target_keys precisa ser lista.", field="target_keys")
+        )
+    if default_targets is not None and not isinstance(default_targets, list):
+        return _viewer_profile_error_response(
+            ViewerProfileError("viewer_profile_invalid", "default_targets precisa ser lista.", field="default_targets")
+        )
+    if not password:
+        return _viewer_profile_error_response(
+            ViewerProfileError("viewer_profile_invalid", "Senha inicial é obrigatória ao criar um cliente.", field="password")
+        )
+
+    bad_targets = _validate_target_keys_for_viewer([str(k) for k in target_keys])
+    if bad_targets:
+        return _viewer_profile_error_response(bad_targets)
+
+    try:
+        record = set_viewer_profile(profile, label, list(target_keys), default_targets, create=True)
+    except ViewerProfileError as exc:
+        return _viewer_profile_error_response(exc)
+
+    from . import auth as auth_module
+
+    try:
+        auth_module.set_viewer_password(profile, password)
+    except ValueError as exc:
+        archive_viewer_profile(profile)
+        return _viewer_profile_error_response(
+            ViewerProfileError("viewer_profile_invalid", str(exc), field="password")
+        )
+
+    if artifact_store.enabled:
+        try:
+            artifact_store.upload_current_artifacts(
+                manifest={"kind": "viewer-created", "profile": profile},
+                job_id=f"viewer-created-{profile}",
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
+    record["has_password"] = True
+    return JSONResponse({"ok": True, "viewer": record})
+
+
+@app.patch("/api/admin/viewers/{profile_key}")
+async def update_admin_viewer(profile_key: str, request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    payload = await read_json(request)
+    profiles = viewer_profiles()
+    existing = profiles.get(profile_key)
+    if not existing:
+        return _viewer_profile_error_response(
+            ViewerProfileError(
+                "viewer_profile_not_found",
+                f'Cliente "{profile_key}" não encontrado.',
+                field="profile",
+            )
+        )
+
+    label = str(payload.get("label") or existing.get("label") or profile_key).strip()
+    target_keys = payload.get("target_keys")
+    if target_keys is None:
+        target_keys = list(existing.get("target_keys") or [])
+    elif not isinstance(target_keys, list):
+        return _viewer_profile_error_response(
+            ViewerProfileError("viewer_profile_invalid", "target_keys precisa ser lista.", field="target_keys")
+        )
+    default_targets = payload.get("default_targets")
+    if default_targets is None:
+        default_targets = list(existing.get("default_targets") or [])
+    elif not isinstance(default_targets, list):
+        return _viewer_profile_error_response(
+            ViewerProfileError("viewer_profile_invalid", "default_targets precisa ser lista.", field="default_targets")
+        )
+
+    bad_targets = _validate_target_keys_for_viewer([str(k) for k in target_keys])
+    if bad_targets:
+        return _viewer_profile_error_response(bad_targets)
+
+    try:
+        record = set_viewer_profile(profile_key, label, list(target_keys), list(default_targets), create=False)
+    except ViewerProfileError as exc:
+        return _viewer_profile_error_response(exc)
+
+    password = payload.get("password")
+    if password is not None:
+        password_clean = str(password)
+        if not password_clean:
+            return _viewer_profile_error_response(
+                ViewerProfileError("viewer_profile_invalid", "Senha não pode ficar vazia.", field="password")
+            )
+        from . import auth as auth_module
+
+        try:
+            auth_module.set_viewer_password(profile_key, password_clean)
+        except ValueError as exc:
+            return _viewer_profile_error_response(
+                ViewerProfileError("viewer_profile_invalid", str(exc), field="password")
+            )
+
+    if artifact_store.enabled:
+        try:
+            artifact_store.upload_current_artifacts(
+                manifest={"kind": "viewer-updated", "profile": profile_key},
+                job_id=f"viewer-updated-{profile_key}",
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
+    from . import auth as auth_module
+
+    record["has_password"] = auth_module.has_viewer_password(profile_key)
+    return JSONResponse({"ok": True, "viewer": record})
+
+
+@app.post("/api/admin/viewers/{profile_key}/archive")
+def archive_admin_viewer(profile_key: str, request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    try:
+        removed = archive_viewer_profile(profile_key)
+    except ViewerProfileError as exc:
+        return _viewer_profile_error_response(exc)
+
+    from . import auth as auth_module
+
+    auth_module.remove_viewer_password(profile_key)
+
+    if artifact_store.enabled:
+        try:
+            artifact_store.upload_current_artifacts(
+                manifest={"kind": "viewer-archived", "profile": profile_key},
+                job_id=f"viewer-archived-{profile_key}",
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
+    return JSONResponse({"ok": True, "archived": removed["profile"], "viewer": removed})
 
 
 @app.post("/api/categories")

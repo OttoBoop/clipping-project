@@ -3,10 +3,30 @@ from __future__ import annotations
 import copy
 import json
 import os
+import re
+import tempfile
 from pathlib import Path
 from typing import Any
 
 from .config import DATA_DIR
+
+
+class ViewerProfileError(ValueError):
+    """Raised when a viewer profile mutation cannot be applied.
+
+    Carries a stable `code` (used by the API to map to a 400 payload),
+    a human-readable `message`, and an optional `field` pointing the
+    UI to the input that needs correcting.
+    """
+
+    def __init__(self, code: str, message: str, *, field: str | None = None) -> None:
+        super().__init__(message)
+        self.code = code
+        self.message = message
+        self.field = field
+
+
+PROFILE_KEY_RE = re.compile(r"^[a-z0-9][a-z0-9_]{1,31}$")
 
 
 DEFAULT_VIEWER_PROFILES: dict[str, dict[str, Any]] = {
@@ -114,10 +134,143 @@ def viewer_profiles_configured() -> bool:
 
 
 def viewer_profiles() -> dict[str, dict[str, Any]]:
-    profiles = copy.deepcopy(DEFAULT_VIEWER_PROFILES)
-    profiles.update(_file_profiles())
+    file_profiles = _file_profiles()
+    if file_profiles:
+        # When the admin has written profiles to the file, it becomes the
+        # source of truth — archiving works by removing keys, which would
+        # be defeated if defaults kept resurrecting them.
+        profiles = file_profiles
+    else:
+        profiles = copy.deepcopy(DEFAULT_VIEWER_PROFILES)
     profiles.update(_env_profiles())
     return profiles
+
+
+def _write_profiles_file(profiles: dict[str, dict[str, Any]]) -> None:
+    path = _profiles_file_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"profiles": profiles}
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp_name, path)
+    finally:
+        if os.path.exists(tmp_name):
+            os.unlink(tmp_name)
+
+
+def _cleaned_target_keys(values: Any) -> list[str]:
+    if not isinstance(values, (list, tuple)):
+        return []
+    cleaned: list[str] = []
+    seen: set[str] = set()
+    for item in values:
+        key = str(item or "").strip()
+        if key and key not in seen:
+            cleaned.append(key)
+            seen.add(key)
+    return cleaned
+
+
+def _ensure_writable_profiles() -> dict[str, dict[str, Any]]:
+    """Return a mutable copy of the current profile set, materialising
+    defaults if the file is empty so subsequent writes do not implicitly
+    drop them on disk.
+    """
+    file_profiles = _file_profiles()
+    if file_profiles:
+        return copy.deepcopy(file_profiles)
+    return copy.deepcopy(DEFAULT_VIEWER_PROFILES)
+
+
+def set_viewer_profile(
+    profile_key: str,
+    label: str,
+    target_keys: list[str],
+    default_targets: list[str] | None = None,
+    *,
+    create: bool = False,
+) -> dict[str, Any]:
+    """Create or update a viewer profile entry on disk.
+
+    Validates the profile key (lowercase letters, digits, underscore; 2–32
+    chars) and the target list, then writes the full profile map atomically.
+    Raises ViewerProfileError with a stable code so the API layer can map it
+    to a structured 400 response.
+    """
+    key = str(profile_key or "").strip().lower()
+    if not key:
+        raise ViewerProfileError("viewer_profile_invalid", "Identificador do cliente é obrigatório.", field="profile")
+    if not PROFILE_KEY_RE.match(key):
+        raise ViewerProfileError(
+            "viewer_profile_invalid",
+            "Use só letras minúsculas, números e _ (2 a 32 caracteres) — sem espaços.",
+            field="profile",
+        )
+
+    label_clean = str(label or "").strip()
+    if len(label_clean) < 2:
+        raise ViewerProfileError("viewer_profile_invalid", "Nome do cliente precisa de pelo menos 2 caracteres.", field="label")
+
+    target_clean = _cleaned_target_keys(target_keys)
+    default_clean = _cleaned_target_keys(default_targets if default_targets is not None else target_clean)
+    if default_clean and not all(item in target_clean for item in default_clean):
+        raise ViewerProfileError(
+            "viewer_profile_invalid",
+            "Targets padrão precisam estar contidos na lista de targets visíveis.",
+            field="default_targets",
+        )
+
+    profiles = _ensure_writable_profiles()
+    exists = key in profiles
+    if create and exists:
+        raise ViewerProfileError(
+            "viewer_profile_conflict",
+            f'Já existe um cliente com identificador "{key}". Use editar ou escolha outro identificador.',
+            field="profile",
+        )
+    if not create and not exists:
+        raise ViewerProfileError(
+            "viewer_profile_not_found",
+            f'Cliente "{key}" não encontrado. Crie o cliente antes de editar.',
+            field="profile",
+        )
+
+    profiles[key] = {
+        "label": label_clean,
+        "target_keys": target_clean,
+        "default_targets": default_clean or list(target_clean),
+    }
+    _write_profiles_file(profiles)
+    return {"profile": key, **profiles[key]}
+
+
+def archive_viewer_profile(profile_key: str) -> dict[str, Any]:
+    """Remove a viewer profile from the on-disk profile file.
+
+    Raises ViewerProfileError if the profile is missing or is the admin
+    pseudo-profile (which is not a viewer).
+    """
+    key = str(profile_key or "").strip().lower()
+    if not key:
+        raise ViewerProfileError("viewer_profile_invalid", "Identificador do cliente é obrigatório.", field="profile")
+    if key == "admin":
+        raise ViewerProfileError("viewer_profile_invalid", "O perfil admin não pode ser arquivado.", field="profile")
+
+    profiles = _ensure_writable_profiles()
+    if key not in profiles:
+        raise ViewerProfileError(
+            "viewer_profile_not_found",
+            f'Cliente "{key}" não encontrado.',
+            field="profile",
+        )
+    removed = profiles.pop(key)
+    _write_profiles_file(profiles)
+    return {"profile": key, **removed}
 
 
 def is_admin_session(session: dict[str, Any] | None) -> bool:

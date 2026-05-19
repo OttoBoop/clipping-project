@@ -1095,6 +1095,7 @@ def test_storage_current_files_are_runtime_mutable_only(monkeypatch, tmp_path):
         "data/clipping.db",
         "data/targets.json",
         "data/clipping_credentials.json",
+        "data/viewer_profiles.json",
         "assets/clipping-data.json",
         "assets/clipping-raw-texts.json",
     ]
