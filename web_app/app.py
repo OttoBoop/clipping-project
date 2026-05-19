@@ -514,6 +514,14 @@ async def change_password(request: Request) -> JSONResponse:
                 "suggestion": "Use uma senha com 3 caracteres ou mais.",
             },
         )
+    if artifact_store.enabled:
+        try:
+            artifact_store.upload_current_artifacts(
+                manifest={"kind": "credentials-changed", "role": role, "profile": profile},
+                job_id=f"credentials-{role}-{profile or 'admin'}",
+            )
+        except Exception:  # noqa: BLE001
+            pass
     new_session = make_session(profile or "admin", role=role, profile=profile or "admin")
     response = JSONResponse({"ok": True, "role": role, "profile": profile})
     response.set_cookie(
