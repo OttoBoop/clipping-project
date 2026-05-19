@@ -130,6 +130,19 @@ Do not answer these from vibes. They need market research:
   seeing topic movement?
 - What update frequency is enough to charge while staying sustainable?
 
+2026-05-20 market refresh:
+
+```text
+MARKET_RESEARCH_REFRESH_2026-05-20.md
+```
+
+Current implication: the base offer should remain a narrow 30-day pilot with
+private scoped dashboard, up to 5 people/terms, 2 operator-run updates per week,
+and one short weekly summary. Political competitors and broad platforms make
+adversary monitoring, crisis alerts, 24/7, TV/radio, WhatsApp realtime, custom
+reports, BI/valuation, and Rio economic methodology look like add-ons, not base
+scope.
+
 ## V1 Acceptance Criteria
 
 Before selling the first real client:

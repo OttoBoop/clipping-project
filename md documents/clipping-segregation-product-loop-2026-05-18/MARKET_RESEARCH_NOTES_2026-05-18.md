@@ -95,3 +95,18 @@ Rede Clipping
 Main implication: keep V1 narrow and affordable. Broader competitor claims
 around crisis alerts, adversary monitoring, social/media intelligence, BI,
 valuation, and daily briefings should be add-ons or later tiers.
+
+## 2026-05-20 Refresh
+
+A current refresh now exists:
+
+```text
+MARKET_RESEARCH_REFRESH_2026-05-20.md
+```
+
+It checked MonitoraBR, Elege.AI, Knewin, Buzzmonitor, Zeeng, and Cortex. The
+main update is that political-specific competitors and broad enterprise/social
+platforms both reinforce the same packaging boundary: keep V1 narrow, private,
+operated, and scoped; treat adversary monitoring, crisis alerts, 24/7,
+TV/radio, WhatsApp realtime, BI/valuation, and Rio methodology as add-ons or
+later tiers.

@@ -8,9 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-c879432 tools: harden authenticated Render smoke
-deploy dep-d86uvl57vvec73b8i5jg -> live
-finishedAt=2026-05-20T17:33:18.551061Z
+e7826f3 tools: guard viewer profile scopes
+deploy dep-d86v3bmq1p3s73f8k07g -> live
+finishedAt=2026-05-20T17:41:32.342287Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -76,6 +76,7 @@ ceb0179 tools: add buyer quote evidence guard
 6c90470 tools: guard Rio manual approval artifacts
 153cff7 docs: log Rio approval guard deploy
 c879432 tools: harden authenticated Render smoke
+e7826f3 tools: guard viewer profile scopes
 ```
 
 Freshly proven after deploy:
@@ -125,7 +126,7 @@ Freshly proven after deploy:
   guessed demo reactions from becoming pricing evidence.
 - Render static/data boundary probes still return `404` for raw `data/` files
   and the legacy root `clipping-data.json`, while scoped `/assets/*.json`
-  still returns `401` when logged out after `c879432`.
+  still returns `401` when logged out after `e7826f3`.
 
 ## Authenticated Production Proof
 
@@ -263,6 +264,15 @@ measured_pilot_run_count=0
 final_price_decided=false
 ```
 
+Current market research refresh:
+
+```text
+MARKET_RESEARCH_REFRESH_2026-05-20.md
+checked: MonitoraBR, Elege.AI, Knewin, Buzzmonitor, Zeeng, Cortex
+decision: no final price
+packaging implication: V1 base remains narrow; realtime/adversary/crisis/TV-radio/WhatsApp/BI/Rio stay add-ons or later tiers
+```
+
 Current viewer profile scope check:
 
 ```text
@@ -327,5 +337,5 @@ Continue from the weakest unblocked items:
 6. keep approval UI/actions hidden until approval writes are connected end to
    end.
 7. re-open the long-term docs and choose the next weak unblocked item after
-   this live `c879432` smoke.
+   this live `e7826f3` smoke.
 ```

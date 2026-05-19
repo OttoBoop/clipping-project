@@ -13282,3 +13282,160 @@ wait for Render, smoke production, then re-open the long-term docs.
 The non-secret scope file is now guarded, but live authenticated proof,
 buyer/pilot evidence, target-management positive admin mutation proof, and real
 Rio manual approvals remain open.
+
+## 2026-05-19 14:38 -03 - Loop Cycle: Viewer Profile Guard Live Deploy
+
+### Objective Reviewed
+
+Deploy the viewer-profile scope guard and verify the live Render privacy/static
+boundary after the commit.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+e7826f3 tools: guard viewer profile scopes
+git push origin HEAD:master
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86v3bmq1p3s73f8k07g
+commit=e7826f33206decfcc309ed41a3e1cd17f6bbce20
+status=live
+finishedAt=2026-05-20T17:41:32.342287Z
+```
+
+Updated local docs after live smoke:
+
+```text
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+This status/log update should be committed with the next path-limited loop
+change unless a status-only coordination commit becomes necessary.
+
+### Evidence
+
+Live logged-out smoke on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+  job=succeeded
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /data/targets.json -> 404 Not Found
+GET /data/viewer_profiles.json -> 404 Not Found
+GET /data/reports/rio_economic_topic_report_20260519T142621Z.json -> 404 Not Found
+GET /clipping-data.json -> 404 Not Found
+```
+
+### Barrier Or Failure
+
+Fresh positive authenticated profile proof remains blocked by absent
+viewer/admin passwords in this shell.
+
+### Next Objective From Docs
+
+Re-open the long-term docs and continue with the next weak unblocked item.
+Passing logged-out smoke is evidence, not a stop condition.
+
+### Why The Loop Continues
+
+The profile scope guard is deployed and the logged-out boundary still passes,
+but authenticated profile proof, real buyer/pilot evidence, admin mutation
+proof, and Rio manual approvals remain open.
+
+## 2026-05-19 14:38 -03 - Loop Cycle: Market Research Refresh
+
+### Objective Reviewed
+
+Axis 2/4 still require packaging and market evidence, but the existing docs
+forbid setting final price from desk research. The useful task is a current
+source refresh that sharpens V1 base/add-on boundaries without inventing buyer
+rows or final pricing.
+
+### Action Taken
+
+Browsed current public pages and created/updated:
+
+```text
+MARKET_RESEARCH_REFRESH_2026-05-20.md
+MARKET_RESEARCH_NOTES_2026-05-18.md
+FIRST_SELLABLE_PACKAGE.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+Sources checked:
+
+```text
+https://monitorabr.com.br/
+https://elege.ai/
+https://www.knewin.com/clipping-ads/
+https://use.buzzmonitor.com.br/dashboards/
+https://conteudo.buzzmonitor.com.br/social-listening
+https://zeeng.com.br/
+https://www.cortex-intelligence.com/brand/tendencias-na-midia
+```
+
+### Evidence
+
+Current public-source findings:
+
+```text
+MonitoraBR: political-specific monitoring, social, competitors, crisis/opportunity alerts, automatic news clipping, customized plans
+Elege.AI: TV/radio/social/news 24/7, WhatsApp realtime notifications, sentiment, demo/trial funnel
+Knewin: broad clipping across channels, 1M+ sources claim, sentiment, valuation, alerts, reports
+Buzzmonitor: social/listening dashboards, AI insights, public starting price shown as R$ 1.590/month on dashboard page
+Zeeng: news clipping, real-time dashboard, benchmarking/competitor framing
+Cortex Brand: topic monitoring, realtime alerts, crisis/trend detection, 8 media types, 70+ indicators
+```
+
+Packaging implication recorded:
+
+```text
+base = private dashboard, up to 5 terms, 2 updates/week, weekly short summary
+add-ons/later = adversary monitoring, crisis alerts, 24/7, TV/radio, WhatsApp realtime, custom BI/PDF, valuation, Rio methodology
+```
+
+### Barrier Or Failure
+
+No buyer conversation happened, no quote row was added, and no final price was
+set. Desk research remains positioning evidence only.
+
+During file review, two guessed filenames were wrong:
+
+```text
+INITIAL_MARKET_RESEARCH_NOTES.md -> actual MARKET_RESEARCH_NOTES_2026-05-18.md
+POLITICAL_COMMUNICATIONS_COMPETITOR_PASS_2026-05-18.md -> actual MARKET_RESEARCH_POLITICAL_COMPETITOR_PASS_2026-05-18.md
+```
+
+This is logged to avoid future wasted reads.
+
+### Next Objective From Docs
+
+Run/check docs, commit/push the market refresh together with pending live-smoke
+status updates, wait for Render, smoke production, then return to the docs.
+
+### Why The Loop Continues
+
+Market evidence now supports the V1 boundary, but it does not create real buyer
+validation, measured operator cost, or fresh authenticated profile proof.

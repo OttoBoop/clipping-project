@@ -43,6 +43,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Market research plan.
 - Initial sourced market research notes.
 - Political/communications competitor pass.
+- 2026-05-20 market research refresh linking current political and enterprise
+  monitoring competitors back to the V1 base/add-on boundary.
 - Buyer interview guide.
 - Demo script and buyer assumptions.
 - Dirty worktree / commit-boundary review.
@@ -214,7 +216,10 @@ Continue the production loop. Current priority from the docs:
    methodology preview; buyer quote tracker now records zero real
    conversations and the minimum fields required before any quote row counts;
    a validation helper now checks real dated buyer rows, demo-reaction markers,
-   and pilot ledger counts before final price can be treated as decided;
+   and pilot ledger counts before final price can be treated as decided; a
+   2026-05-20 market refresh now confirms competitors sell broader political,
+   social, realtime, TV/radio, crisis, and BI features that should stay outside
+   the base pilot unless priced as add-ons;
 6. review costs, password rotation, and operations;
    first-client onboarding/offboarding checklist now exists; V1 pilot operating
    ledger now exists for measuring update time, weekly summary time, support,
@@ -230,7 +235,7 @@ If `viewerAuthConfigured=false` returns, treat it as a regression and re-check
 Render env configuration. Do not rotate or publish viewer passwords in docs.
 
 Use `SYSTEM_REVIEW_STATUS_2026-05-20.md` as the current proof/blocker snapshot;
-it now reflects live commit `c879432`.
+it now reflects live commit `e7826f3`.
 
 ## Do Not Do Next
 
