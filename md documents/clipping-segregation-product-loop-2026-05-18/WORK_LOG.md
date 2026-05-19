@@ -6610,3 +6610,77 @@ repeatable from this shell without viewer passwords.
 Commit/push this log entry path-limited, poll Render for `40a0a02` and
 `2c7dde8`, then repeat smoke if the live commit changes. If deploy wait
 continues, re-read product docs and tie the demo script to the V1 offer.
+
+## 2026-05-18 21:15 -03 - Loop Cycle: Live 40a0a02 Smoke And V1 Demo Script Alignment
+
+### Objective Reviewed
+
+Render changed live commit again and the product docs pointed to the next
+unblocked packaging item: tie the demo script to the bounded V1 offer.
+
+### Action Taken
+
+Polled Render, saw `40a0a02` live, and ran a logged-out smoke. Then read:
+
+```text
+DEMO_SCRIPT_AND_BUYER_ASSUMPTIONS.md
+DEMO_PROFILE_STRATEGY.md
+MARKET_RESEARCH_PLAN.md
+V1_DELIVERY_FORMAT_DECISION.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+DEMO_SCRIPT_AND_BUYER_ASSUMPTIONS.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Render poll:
+
+```text
+dep-d86fr8oh6q6c73d05on0 f96d4e8 docs: log delivery format deploy smoke -> queued
+dep-d86fqo2ddbjc739t4aog 2c7dde8 docs: define V1 delivery format -> update_in_progress
+dep-d86fpr4rp5ls739ctpcg 40a0a02 docs: log Rio v4 deploy smoke -> live
+```
+
+Live logged-out smoke on `40a0a02`:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+Demo-script decision:
+
+```text
+V1 demo now states 30-day pilot, private dashboard, two operator-run updates per
+week, one lightweight weekly summary, and explicit non-promises: no realtime
+alerts, no unlimited terms, no custom site, no long political report in base.
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof still requires
+viewer passwords unavailable in this shell.
+
+### Next Objective From Docs
+
+Run diff checks, commit/push this docs update path-limited, poll Render for
+`2c7dde8`/`f96d4e8`/new log deploys, and repeat live smoke on every new live
+commit.
