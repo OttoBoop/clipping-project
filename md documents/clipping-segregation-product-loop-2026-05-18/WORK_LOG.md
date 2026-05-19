@@ -7040,3 +7040,53 @@ inside the Rio dry-run script.
 Run diff checks, commit/push the duplicate-cluster review path-limited, poll
 Render, smoke `68c8fcf` or the new docs commit when live, then decide whether
 to add optional cluster fields to the dry-run report format.
+
+## 2026-05-18 21:30 -03 - Loop Cycle: Live 68c8fcf Smoke
+
+### Objective Reviewed
+
+The canonical helper commit became live on Render. Run the standard logged-out
+privacy gate before moving to the next Rio/product item.
+
+### Action Taken
+
+Polled Render and saw:
+
+```text
+dep-d86g2ngjhbcs73efdns0 cc43f1c docs: add Rio v4 duplicate cluster review -> queued
+dep-d86g1pf3jp8c73aii1m0 d664cb7 docs: log buyer guide deploy smoke -> update_in_progress
+dep-d86g16ok1i2s73d47ur0 68c8fcf tools: add Rio canonical review helper -> live
+```
+
+Ran logged-out live smoke on `68c8fcf`.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated profile proof remains blocked
+without viewer passwords in this shell.
+
+### Next Objective From Docs
+
+Commit/push this log entry path-limited, poll Render for `d664cb7` and
+`cc43f1c`, then smoke the newest live deploy. After that, re-read
+`ACTIVE_NEXT_ACTION.md` and continue with Rio cluster fields or product
+operations.
