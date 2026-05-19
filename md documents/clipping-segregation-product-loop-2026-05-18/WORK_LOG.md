@@ -7559,3 +7559,59 @@ production Rio ingestion.
 Run diff/checks, commit/push path-limited, poll Render for queued deploys,
 smoke production when the latest commit is live, then combine date-quality and
 cluster gates or run fresh production scoping proof.
+
+## 2026-05-18 21:56 -03 - Loop Cycle: Cluster Artifact Push And 990ada0 Live Smoke
+
+### Objective Reviewed
+
+After creating the cluster annotation artifact, continue the production loop:
+push the path-limited artifact, poll Render, smoke the current live service, and
+do not treat queued deploys as completion.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+d57b361 tools: add Rio cluster annotation report
+git push origin HEAD:master -> master updated from 990ada0 to d57b361
+```
+
+Polled Render MCP:
+
+```text
+dep-d86gbcojs32c738k6he0 d57b361 tools: add Rio cluster annotation report -> build_in_progress
+dep-d86g9tl6b1pc73df5lm0 990ada0 docs: log date policy deploy smoke -> live
+```
+
+Ran logged-out live smoke while `990ada0` was live.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof remains blocked in
+this shell by missing viewer passwords. Latest cluster artifact commit
+`d57b361` was still building at this check.
+
+### Next Objective From Docs
+
+Commit/push this log entry path-limited, poll Render until `d57b361` is live,
+smoke production again, then combine date-quality and cluster gates or run fresh
+production scoping proof.
