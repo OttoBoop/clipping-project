@@ -8440,3 +8440,152 @@ Run a path-limited commit/push for the target-management review and log, wait
 for Render, smoke live again, then re-read the docs and continue with the next
 weak axis: Rio production gate or sellable operations/prospect validation,
 without creating a new repo/site or a production `rio_economico` target row.
+
+## 2026-05-18 22:10 -03 - Loop Cycle: Target Review Commit And Push
+
+### Objective Reviewed
+
+Path-limited commit rules and Render production loop require pushing the review
+work to `master`, then verifying the live site after Render deploys it.
+
+### Action Taken
+
+Ran:
+
+```text
+git diff --check -> passed
+git add assets/clipping.js ACTIVE_NEXT_ACTION.md SYSTEM_REVIEW_STATUS_2026-05-19.md WORK_LOG.md TARGET_MANAGEMENT_NO_FAKE_UI_REVIEW_2026-05-18.md
+git commit -m "docs: review target management no-fake-ui"
+git push origin HEAD:master
+```
+
+### Evidence
+
+```text
+83eaecb docs: review target management no-fake-ui
+git push -> master updated from b67807d to 83eaecb
+```
+
+### Barrier Or Failure
+
+No git barrier. This commit intentionally used path-limited staging and did
+not use `git add .`.
+
+### Next Objective From Docs
+
+Poll Render until `83eaecb` is live, run logged-out production smoke, log the
+result, then re-read the docs for the next weak axis.
+
+## 2026-05-18 22:11 -03 - Loop Cycle: Render Env Safety Runbook
+
+### Objective Reviewed
+
+`LOOP_OPERATING_PROTOCOL.md` and `ACTIVE_NEXT_ACTION.md` still list deploy,
+password rotation, costs, and maintenance as live product concerns. The
+existing docs said to use merge semantics, but did not provide a dedicated
+runbook for safe Render env changes through MCP.
+
+### Action Taken
+
+While Render was still building `83eaecb`, reviewed:
+
+```text
+DEPLOYMENT_ENVIRONMENT.md
+FIRST_CLIENT_ONBOARDING_CHECKLIST.md
+PROSPECT_PROFILE_SETUP_CHECKLIST.md
+OPERATOR_COST_DISCIPLINE.md
+V1_PILOT_OPERATING_LEDGER.md
+BUYER_QUOTE_VALIDATION_TRACKER.md
+```
+
+Created:
+
+```text
+RENDER_ENV_CHANGE_SAFETY_RUNBOOK.md
+```
+
+Updated:
+
+```text
+DEPLOYMENT_ENVIRONMENT.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The new runbook defines:
+
+```text
+replace=false for Render env changes
+change only the intended env vars
+never print full CLIPPING_VIEWER_PASSWORDS
+never log passwords/session/storage secrets
+pre-change logged-out smoke
+post-change /healthz and scoped-profile smoke
+offboarding old-password failure proof
+emergency rollback without guessing secrets
+```
+
+### Barrier Or Failure
+
+No live env var was changed. The loop is documenting the operational guardrail
+because changing secrets without Otavio present would be risky and unnecessary.
+One attempted file read had a typo in the tracker path; the correct
+`BUYER_QUOTE_VALIDATION_TRACKER.md` was then read.
+
+### Next Objective From Docs
+
+Keep polling Render for `83eaecb`, smoke live when it is promoted, then commit
+and push this env-safety/log update path-limited or batch it with the next
+substantive loop update.
+
+## 2026-05-18 22:12 -03 - Loop Cycle: 83eaecb Live Smoke
+
+### Objective Reviewed
+
+The target-management no-fake-UI review commit reached Render. Verify the live
+site before continuing to the next objective.
+
+### Action Taken
+
+Polled Render MCP:
+
+```text
+dep-d86gmh4vikkc73c2tr2g 83eaecb docs: review target management no-fake-ui -> live
+dep-d86gk2j7uimc73bedd00 b67807d docs: log quote tracker deploy smoke -> deactivated
+```
+
+Ran logged-out live smoke and fetched the deployed JS comments that changed in
+the commit.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /assets/clipping.js -> contains "session-scoped API data" and no old "public read" wording in the checked lines
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer/admin positive proof is
+still blocked in this shell by missing passwords, but the live health check
+continues to prove viewer auth and profiles are configured.
+
+### Next Objective From Docs
+
+Commit/push the env-safety runbook and log path-limited, wait for Render, smoke
+again, then return to the docs and continue with Rio production gate or
+sellable-operations validation.

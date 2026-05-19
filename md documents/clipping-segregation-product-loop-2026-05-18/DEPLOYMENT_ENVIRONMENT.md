@@ -38,6 +38,7 @@ missingConfig=[]
 
 Do not replace all Render environment variables to rotate one viewer password.
 Use merge/update behavior so unrelated storage/admin settings are preserved.
+See `RENDER_ENV_CHANGE_SAFETY_RUNBOOK.md` before changing any live env var.
 
 ## Optional Environment Variables
 
@@ -126,6 +127,8 @@ shared too broadly:
 
 1. Generate a new random password outside Git.
 2. Update only `CLIPPING_VIEWER_PASSWORDS` in Render with merge semantics.
+   Follow `RENDER_ENV_CHANGE_SAFETY_RUNBOOK.md`; never use full-env replace for
+   a single password rotation.
 3. Keep the profile key stable unless the client relationship is ending.
 4. Hit `/healthz` and confirm:
 

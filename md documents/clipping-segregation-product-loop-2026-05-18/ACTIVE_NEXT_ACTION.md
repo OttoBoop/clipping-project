@@ -39,6 +39,7 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Operator cost discipline guardrail.
 - System review status snapshot for 2026-05-19.
 - Target management no-fake-UI review snapshot for 2026-05-18.
+- Render env change safety runbook for password/profile operations.
 
 ## Current Verification State
 
@@ -128,7 +129,9 @@ Continue the production loop. Current priority from the docs:
 6. review costs, password rotation, and operations;
    first-client onboarding/offboarding checklist now exists; V1 pilot operating
    ledger now exists for measuring update time, weekly summary time, support,
-   false positives, missed items, and scope creep before final pricing;
+   false positives, missed items, and scope creep before final pricing; Render
+   env change safety runbook now exists for password/profile operations without
+   full-env replacement or secret leakage;
 7. then re-read the docs and choose the next weak axis.
 
 If `viewerAuthConfigured=false` returns, treat it as a regression and re-check
