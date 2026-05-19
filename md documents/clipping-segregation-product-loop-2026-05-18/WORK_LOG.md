@@ -13439,3 +13439,96 @@ status updates, wait for Render, smoke production, then return to the docs.
 
 Market evidence now supports the V1 boundary, but it does not create real buyer
 validation, measured operator cost, or fresh authenticated profile proof.
+
+## 2026-05-19 14:50 -03 - Loop Cycle: Market Refresh Live Deploy Smoke
+
+### Objective Reviewed
+
+Re-opened the long-term goals, dependency map, current short-term loop, active
+next action, system review checklist, Render production checklist, system
+status, and the bottom of this log. The active axis remains production
+segregation proof first, with market/package docs treated as supporting product
+evidence rather than a stopping point.
+
+### Action Taken
+
+Checked Render deploy for the latest pushed commit:
+
+```text
+commit=9c681e9804b5d5e7ec6b89f33745e99cb67658ed
+message=docs: refresh market positioning
+deploy=dep-d86v8k57vvec73b8pq90
+status=live
+finishedAt=2026-05-20T17:53:03.721142Z
+```
+
+Ran local guard checks again and then ran the logged-out production smoke on
+`https://clipping-project.onrender.com/`.
+
+### Evidence
+
+Local guard checks:
+
+```text
+python3 -B tools/buyer_quote_tracker_check.py -> ok=true, real_buyer_conversation_count=0, hands_on_demo_reaction_count=0, measured_pilot_run_count=0, final_price_decided=false
+python3 -B tools/pilot_ledger_check.py -> ok=true, measured_pilot_run_count=0, measured_weekly_summary_count=0, measured_support_issue_count=0, minimum_sustainable_monthly_price_decided=false
+python3 -B tools/viewer_profiles_check.py -> ok=true, profile_count=4, target_count=5, topic_only_keys_present_as_targets=[]
+python3 -B tools/rio_economic_manual_approval_check.py -> ok=true, sidecar_rows=[1, 5, 11, 15, 19, 22, 25, 26], approved_promotions=0, target_row_approved=false
+python3 -B tests/test_rio_economic_ui_static.py -> passed
+git diff --check -> passed
+```
+
+Live logged-out smoke:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+  job=succeeded
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /data/targets.json -> 404 Not Found
+GET /data/viewer_profiles.json -> 404 Not Found
+GET /data/reports/rio_economic_topic_report_20260519T142621Z.json -> 404 Not Found
+GET /clipping-data.json -> 404 Not Found
+```
+
+Authenticated smoke:
+
+```text
+python3 -B tools/authenticated_render_smoke.py -> expected failure
+[FAIL] viewer passwords configured for smoke: set CLIPPING_SMOKE_VIEWER_PASSWORDS outside Git
+[FAIL] admin password configured for smoke: set CLIPPING_SMOKE_ADMIN_PASSWORD outside Git
+```
+
+### Barrier Or Failure
+
+Fresh positive authenticated Flavio/Shakira/Rio/admin proof remains blocked
+because this shell still does not have the outside-Git smoke credentials. The
+block is limited: logged-out privacy, static raw-data denial, non-secret profile
+scope, buyer/pilot no-fabrication, and Rio manual-approval guards are still
+checkable and were checked.
+
+### Next Objective From Docs
+
+Re-open the `.md` documents again and pick the next weak unblocked item. Current
+candidate weak axes are authenticated proof when credentials exist, target
+management positive admin mutation proof when explicitly approved, and
+packaging/cost docs that do not require inventing buyer or pilot rows.
+
+### Why The Loop Continues
+
+The market refresh deploy is live and logged-out privacy still passes, but the
+system still lacks fresh authenticated production proof in this shell, real
+buyer quote rows, measured pilot operation rows, and real Rio manual approvals.

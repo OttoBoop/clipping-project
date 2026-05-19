@@ -8,9 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-e7826f3 tools: guard viewer profile scopes
-deploy dep-d86v3bmq1p3s73f8k07g -> live
-finishedAt=2026-05-20T17:41:32.342287Z
+9c681e9 docs: refresh market positioning
+deploy dep-d86v8k57vvec73b8pq90 -> live
+finishedAt=2026-05-20T17:53:03.721142Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -77,6 +77,7 @@ ceb0179 tools: add buyer quote evidence guard
 153cff7 docs: log Rio approval guard deploy
 c879432 tools: harden authenticated Render smoke
 e7826f3 tools: guard viewer profile scopes
+9c681e9 docs: refresh market positioning
 ```
 
 Freshly proven after deploy:
@@ -126,7 +127,9 @@ Freshly proven after deploy:
   guessed demo reactions from becoming pricing evidence.
 - Render static/data boundary probes still return `404` for raw `data/` files
   and the legacy root `clipping-data.json`, while scoped `/assets/*.json`
-  still returns `401` when logged out after `e7826f3`.
+  still returns `401` when logged out after `9c681e9`.
+- the 2026-05-20 market refresh is live as documentation/packaging evidence,
+  not as a final pricing decision.
 
 ## Authenticated Production Proof
 
@@ -312,6 +315,9 @@ Password operations:
 - this shell currently has no `CLIPPING_SMOKE_VIEWER_PASSWORDS` or
   `CLIPPING_SMOKE_ADMIN_PASSWORD`, so the authenticated smoke correctly fails
   before making live authenticated requests;
+- `python3 -B tools/authenticated_render_smoke.py` was re-run after the
+  `9c681e9` live deploy and failed only on missing outside-Git smoke
+  credentials;
 - no real buyer quote/interview row exists in
   `BUYER_QUOTE_VALIDATION_TRACKER.md`;
 - no measured pilot/update run exists in `V1_PILOT_OPERATING_LEDGER.md`;
@@ -337,5 +343,5 @@ Continue from the weakest unblocked items:
 6. keep approval UI/actions hidden until approval writes are connected end to
    end.
 7. re-open the long-term docs and choose the next weak unblocked item after
-   this live `e7826f3` smoke.
+   this live `9c681e9` smoke.
 ```
