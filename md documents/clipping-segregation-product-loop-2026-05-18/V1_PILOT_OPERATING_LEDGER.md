@@ -21,6 +21,17 @@ derive a final monthly price from guesses, desk research, or a demo script.
 Pricing needs at least one real update/QA/summary cycle measured here plus
 buyer signal in `BUYER_QUOTE_VALIDATION_TRACKER.md`.
 
+Validation helper:
+
+```text
+tools/pilot_ledger_check.py
+```
+
+Run it before using this ledger as pricing evidence. Template rows such as
+`YYYY-MM-DD` and `YYYY-WW` do not count. If
+`minimum_sustainable_monthly_price_decided=true`, the helper requires at least
+one real `update_run` row and one real weekly summary row.
+
 ## First Valid Measurement Requirements
 
 The first ledger row only counts if it records real operator work with:

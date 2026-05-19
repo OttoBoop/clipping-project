@@ -12110,3 +12110,129 @@ with another unblocked review rather than stopping.
 
 The target-management positive proof is now better specified, but it still has
 to be run by an operator with real credentials and explicit mutation approval.
+
+## 2026-05-19 11:48 -03 - Loop Cycle: Admin Disposable Smoke Helper Live Deploy
+
+### Objective Reviewed
+
+Deploy the admin disposable target smoke helper and prove the logged-out
+production privacy gate still holds.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+0f23ef6 tools: add admin disposable target smoke
+git push origin HEAD:master
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86shgb7uimc73blaqk0
+commit=0f23ef69d77d13205d082796890b4f1be83d2c2a
+status=live
+finishedAt=2026-05-20T14:47:30.809639Z
+```
+
+### Evidence
+
+Live logged-out smoke on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+The successful admin mutation path was not run on production because this shell
+still does not have the admin password and because the mutation flag requires
+explicit operator approval. The helper code and test now make that future proof
+repeatable without committing secrets.
+
+### Next Objective From Docs
+
+Re-open the long-term docs and choose the next unblocked weak axis. Current
+likely axis: product/pilot metering and buyer evidence, because the login/Rio
+paths are now blocked mainly by credentials or human approvals.
+
+### Why The Loop Continues
+
+The helper deploy passed, but authenticated positive proof, real buyer
+validation, measured pilot cost, and real Rio manual approvals remain
+unfinished.
+
+## 2026-05-19 11:54 -03 - Loop Cycle: Pilot Ledger No-Fake-Pricing Guard
+
+### Objective Reviewed
+
+Re-opened the product/pilot docs after the admin smoke helper deploy. The next
+unblocked weak axis is pricing discipline: the docs say no final price should
+be set until real buyer evidence and measured operator work exist.
+
+### Action Taken
+
+Created/updated:
+
+```text
+tools/pilot_ledger_check.py
+tests/test_pilot_ledger_check.py
+V1_PILOT_OPERATING_LEDGER.md
+BUYER_QUOTE_VALIDATION_TRACKER.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+The checker:
+
+```text
+parses the Current Measurement State block
+ignores template rows like YYYY-MM-DD and YYYY-WW
+counts real update_run rows
+counts real weekly summary rows
+counts support rows
+fails if declared counts do not match real rows
+fails if minimum_sustainable_monthly_price_decided=true before at least one real update_run and one real weekly summary
+```
+
+### Evidence
+
+Checks run:
+
+```text
+python3 -B -m py_compile tools/pilot_ledger_check.py tests/test_pilot_ledger_check.py -> passed
+python3 -B -c "from tests import test_pilot_ledger_check as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+python3 -B tools/pilot_ledger_check.py -> ok=true, measured_pilot_run_count=0, measured_weekly_summary_count=0, measured_support_issue_count=0
+git diff --check -> passed
+```
+
+### Barrier Or Failure
+
+No real pilot row was created and no price was chosen. This is deliberate: the
+product still has zero measured pilot runs and zero buyer quote rows.
+
+### Next Objective From Docs
+
+Run the checks, commit/push, wait for Render, smoke production, then re-open
+the docs and continue.
+
+### Why The Loop Continues
+
+The guard prevents fake pricing evidence, but it does not create real buyer
+conversations, measured pilot work, authenticated proof, or Rio manual
+approvals.

@@ -59,6 +59,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - V1 add-on menu/boundaries for avoiding unlimited low-paid service scope.
 - V1 pilot operating ledger now explicitly records zero measured runs and
   blocks final price until real operator-time and buyer evidence exist.
+- V1 pilot ledger validation helper now prevents template rows or guessed time
+  from counting as pricing evidence.
 - Scoped Rio economic topic-report endpoint at `/api/reports/rio-economic-topic`
   with Rio/admin-only access and no target-row creation.
 - Rio economic manual approval policy v0 for `near_date` and research-only
@@ -190,7 +192,8 @@ Continue the production loop. Current priority from the docs:
    first-client onboarding/offboarding checklist now exists; V1 pilot operating
    ledger now exists for measuring update time, weekly summary time, support,
    false positives, missed items, and scope creep before final pricing, and now
-   explicitly records that no measured pilot run exists yet; Render
+   explicitly records that no measured pilot run exists yet; a validation
+   helper now checks that ledger counts match real rows before pricing; Render
    env change safety runbook now exists for password/profile operations without
    full-env replacement or secret leakage; Render operations review now records
    the live service branch/auto-deploy facts and non-secret rotation checklist;

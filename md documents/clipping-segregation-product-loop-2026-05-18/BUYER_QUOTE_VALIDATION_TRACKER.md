@@ -86,6 +86,15 @@ operator time estimate for two updates/week + weekly summary
 clear list of add-ons that must be priced separately
 ```
 
+Before treating `measured_pilot_run_count` as real, run:
+
+```text
+python3 -B tools/pilot_ledger_check.py
+```
+
+This prevents the template ledger rows or guessed operator time from becoming
+fake pricing evidence.
+
 ## Add-On Boundary
 
 Treat these as add-ons unless the quote clearly covers them:
