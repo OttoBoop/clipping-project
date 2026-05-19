@@ -60,9 +60,12 @@ GET /api/csrf returns a token
 POST /api/targets without CSRF returns 403
 ```
 
-By default the script does **not** create a target in production. A successful
-CSRF-protected admin mutation still needs an explicit disposable-target cleanup
-plan and operator approval before running.
+By default the script does **not** create a target in production. With explicit
+operator approval, `--allow-admin-mutation` creates a disposable secondary
+target named `Atlas Teste Smoke <timestamp>` and immediately archives it. That
+name intentionally matches the backend synthetic-target auto-archive marker.
+Do not use this flag casually; it writes to production target artifacts even
+though the target should remain archived.
 
 ## Run
 
@@ -76,6 +79,13 @@ Optional:
 python3 tools/authenticated_render_smoke.py --base-url https://clipping-project.onrender.com
 ```
 
+Admin mutation proof, only after operator approval:
+
+```text
+CLIPPING_SMOKE_ALLOW_ADMIN_MUTATION=1 python3 tools/authenticated_render_smoke.py
+python3 tools/authenticated_render_smoke.py --allow-admin-mutation
+```
+
 ## Evidence To Record
 
 After running, copy only non-secret evidence into `WORK_LOG.md`:
@@ -86,6 +96,7 @@ forbidden targets checked
 status for clipping-data/raw-texts/targets/live-results/Rio endpoint
 admin CSRF token present=true, but not the token value
 viewer write rejection status
+if --allow-admin-mutation was used: disposable target key and archived=true
 any failure or blocker
 ```
 

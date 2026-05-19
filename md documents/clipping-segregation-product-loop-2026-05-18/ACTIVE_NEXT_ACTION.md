@@ -32,6 +32,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Render production checklist.
 - Authenticated Render smoke runbook/script for repeating viewer/admin proof
   when passwords are available outside Git.
+- Authenticated Render smoke script now has an explicit opt-in disposable admin
+  mutation path using an auto-archived `Atlas Teste Smoke <timestamp>` target.
 - Market research plan.
 - Initial sourced market research notes.
 - Political/communications competitor pass.
@@ -132,7 +134,8 @@ Continue the production loop. Current priority from the docs:
 3. keep target-management no-fake-UI review fresh; a 2026-05-18 code/docs
    pass exists and logged-out live mutation calls now reject with
    `admin_login_required`, but positive admin CSRF/target-management smoke on
-   Render still needs operator credentials;
+   Render still needs operator credentials and explicit mutation approval; the
+   helper now has a disposable auto-archived target path for that proof;
 4. continue the `RIO_ECONOMIC_VALIDATION_PLAN.md` path: offline report artifact
    exists; live Google News smoke now works with redirect resolution skipped;
    a 32-row live sample, 29-row revised sample, and 26-row title-exclusion

@@ -120,14 +120,16 @@ missingConfig=[]
 - Positive admin target-management smoke on Render is still blocked in this
   shell because the admin password/CSRF session is not available here.
 - Admin-positive smoke must use a real admin session, fetch `/api/csrf`, then
-  prove both missing-CSRF rejection and successful CSRF-protected target
-  mutation against an approved disposable secondary target plus cleanup.
+  prove both missing-CSRF rejection and, only with explicit operator approval,
+  successful CSRF-protected target mutation against an `Atlas Teste Smoke
+  <timestamp>` disposable secondary target that remains archived.
 - Positive authenticated viewer UI smoke on Render is also blocked without a
   viewer password, though earlier production proof in
   `SYSTEM_REVIEW_STATUS_2026-05-19.md` recorded viewer segregation when the
   secret was available.
 - No production target should be created just to test this loop unless Otavio
-  intentionally approves a disposable secondary target and cleanup plan.
+  intentionally approves the disposable smoke flag in
+  `tools/authenticated_render_smoke.py`.
 
 ## Decision
 
@@ -146,8 +148,8 @@ also blocks direct target-management writes with `admin_login_required`.
 Return to `ACTIVE_NEXT_ACTION.md`. The next weak points are:
 
 - positive admin CSRF/target-management verification on Render when credentials
-  are available;
-- preserve the rule that no disposable production target is created without an
-  explicit cleanup plan;
+  and explicit mutation approval are available;
+- preserve the rule that the disposable production target path creates only an
+  `Atlas Teste Smoke <timestamp>` row and immediately archives it;
 - continued Rio economic production gate work without creating a target row;
 - sellable demo/operations validation with real buyer evidence.

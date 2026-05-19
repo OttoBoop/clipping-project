@@ -12001,3 +12001,112 @@ another unblocked product/Rio/operations review rather than stopping.
 
 The guard is live, but authenticated proof, buyer evidence, measured pilot
 cost, and real Rio manual approvals are still unfinished.
+
+## 2026-05-19 11:41 -03 - Loop Cycle: Status Snapshot Deploy And Admin Mutation Smoke Plan
+
+### Objective Reviewed
+
+Verify the status-snapshot deploy, then re-open the target-management no-fake
+UI review. The remaining admin proof gap was not just missing credentials: the
+authenticated smoke helper also needed an explicit, bounded mutation cleanup
+path before anyone should run successful target creation on production.
+
+### Render Audit
+
+Committed and pushed:
+
+```text
+d7bad43 docs: refresh status after Rio approval guard
+git push origin HEAD:master
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86see3tqb8s73dhkq8g
+commit=d7bad43714dc3f32613433bcafbdd84edc312998
+status=live
+finishedAt=2026-05-20T14:39:27.212187Z
+```
+
+Live logged-out smoke:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+```
+
+### Action Taken
+
+Updated:
+
+```text
+tools/authenticated_render_smoke.py
+tests/test_authenticated_render_smoke.py
+AUTHENTICATED_RENDER_SMOKE_RUNBOOK.md
+RENDER_PRODUCTION_CHECKLIST.md
+TARGET_MANAGEMENT_NO_FAKE_UI_REVIEW_2026-05-18.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+The helper still skips successful production target writes by default. If an
+operator sets `--allow-admin-mutation` or
+`CLIPPING_SMOKE_ALLOW_ADMIN_MUTATION=1`, it now:
+
+```text
+logs in as admin
+fetches CSRF
+proves POST /api/targets without CSRF returns 403
+creates only an Atlas Teste Smoke <timestamp> disposable target with CSRF
+expects the generated key to start with atlas_teste_smoke
+archives that same key immediately
+records archived=true without printing secrets
+```
+
+### Evidence
+
+The backend already treats `Atlas Teste` / `atlas_teste` targets as synthetic
+test targets and auto-archives them. This makes the explicit mutation path
+bounded enough for a future operator-run smoke, while keeping it opt-in.
+
+Checks run:
+
+```text
+python3 -B -m py_compile tools/authenticated_render_smoke.py tests/test_authenticated_render_smoke.py -> passed
+python3 -B -c "from tests import test_authenticated_render_smoke as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+python3 -B tools/authenticated_render_smoke.py --help -> passed
+python3 -B tools/authenticated_render_smoke.py -> expected failure without env
+git diff --check -> passed
+```
+
+### Barrier Or Failure
+
+The successful admin mutation was not run here because the admin password is
+not available in this shell and because production writes require explicit
+operator approval. This change prepares the safe path; it does not claim the
+positive Render proof has happened.
+
+### Next Objective From Docs
+
+Run local helper tests, commit/push, wait for Render, smoke logged-out privacy
+again, then return to the docs. If credentials remain unavailable, continue
+with another unblocked review rather than stopping.
+
+### Why The Loop Continues
+
+The target-management positive proof is now better specified, but it still has
+to be run by an operator with real credentials and explicit mutation approval.

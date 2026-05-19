@@ -15,6 +15,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from http.cookiejar import CookieJar
 from typing import Any
 
@@ -156,6 +157,11 @@ def result(name: str, ok: bool, detail: str) -> CheckResult:
     return CheckResult(name, ok, detail)
 
 
+def disposable_target_name(now: datetime | None = None) -> str:
+    stamp = (now or datetime.now(timezone.utc)).strftime("%Y%m%d%H%M%S")
+    return f"Atlas Teste Smoke {stamp}"
+
+
 def check_viewer(base_url: str, profile: str, password: str, forbidden_targets: list[str]) -> list[CheckResult]:
     client = SmokeClient(base_url)
     checks: list[CheckResult] = []
@@ -208,7 +214,41 @@ def check_admin(base_url: str, password: str, allow_mutation: bool) -> list[Chec
     checks.append(result("admin mutation without csrf rejected", status == 403, f"status={status} detail={detail}"))
 
     if allow_mutation:
-        checks.append(result("admin mutation with csrf", False, "not implemented deliberately; create an approved disposable-target cleanup plan first"))
+        if not token:
+            checks.append(result("admin mutation with csrf", False, "skipped because csrf token was not available"))
+            return checks
+        display_name = disposable_target_name()
+        status, create_payload, _raw = client.request(
+            "POST",
+            "/api/targets",
+            {"display_name": display_name, "keywords": [display_name]},
+            headers={"X-CSRF-Token": token},
+        )
+        target_key = create_payload.get("key") if isinstance(create_payload, dict) else ""
+        archived = bool(create_payload.get("archived")) if isinstance(create_payload, dict) else False
+        create_ok = status == 200 and str(target_key).startswith("atlas_teste_smoke")
+        checks.append(
+            result(
+                "admin mutation with csrf creates disposable target",
+                create_ok,
+                f"status={status} key={target_key} archived={archived}",
+            )
+        )
+        if create_ok:
+            status, archive_payload, _raw = client.request(
+                "POST",
+                f"/api/targets/{urllib.parse.quote(str(target_key))}/archive",
+                {"reason": "Authenticated Render smoke cleanup."},
+                headers={"X-CSRF-Token": token},
+            )
+            archived = bool(archive_payload.get("archived")) if isinstance(archive_payload, dict) else False
+            checks.append(
+                result(
+                    "admin mutation cleanup archive",
+                    status == 200 and archived,
+                    f"status={status} key={target_key} archived={archived}",
+                )
+            )
     else:
         checks.append(result("admin mutation with csrf", True, "skipped by default to avoid production target writes"))
     return checks

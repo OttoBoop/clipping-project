@@ -98,7 +98,10 @@ replace real Flavio/Shakira/Rio viewer verification.
 
 The authenticated smoke helper checks admin login, CSRF-token presence, and
 missing-CSRF rejection. It intentionally skips successful production target
-mutation unless an approved disposable-target cleanup plan exists.
+mutation unless `--allow-admin-mutation` or
+`CLIPPING_SMOKE_ALLOW_ADMIN_MUTATION=1` is set. When enabled, it creates only an
+`Atlas Teste Smoke <timestamp>` disposable secondary target and immediately
+archives it; record the key and `archived=true` in the log, never secrets.
 
 ## Static Export Boundary
 
