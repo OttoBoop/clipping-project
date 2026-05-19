@@ -182,6 +182,8 @@ def target_validation_payload(exc: ValidationError) -> dict[str, Any]:
         suggestion = "Digite um nome de exibicao com 3 caracteres ou mais."
     elif "Já existe um nome cadastrado" in message:
         suggestion = "Escolha um nome diferente. Para mudar o existente, use Editar em vez de criar."
+    elif "Já existe um nome ativo cadastrado" in message:
+        suggestion = "Arquive ou renomeie o nome ativo conflitante antes de restaurar este."
     elif "ja e principal" in message:
         field = "target_key"
         suggestion = "Este nome ja consta como principal — nenhuma acao necessaria."

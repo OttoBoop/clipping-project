@@ -397,6 +397,71 @@ def test_update_archive_and_restore_secondary_target(monkeypatch, tmp_path):
     assert "instituto_aurora" in {row["key"] for row in db_admin.public_targets()["targets"]}
 
 
+def test_restore_secondary_target_rejects_conflict_with_active_homonym(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "flavio_valle", "label": "Flavio Valle", "keywords": ["Flavio Valle"]},
+                {
+                    "key": "shakira",
+                    "label": "Shakira",
+                    "display_name": "Shakira",
+                    "archived": True,
+                    "archived_at": "2026-05-19T17:00:00+00:00",
+                    "keywords": ["Shakira"],
+                },
+                {
+                    "key": "shakira_2",
+                    "label": "Shakira",
+                    "display_name": "Shakira",
+                    "archived": False,
+                    "keywords": ["Shakira"],
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    try:
+        db_admin.restore_secondary_target("shakira")
+    except db_admin.ValidationError as exc:
+        assert "Já existe um nome ativo" in str(exc)
+    else:
+        raise AssertionError("Expected ValidationError when restoring would create a homonym pair.")
+
+    rows = {row["key"]: row for row in json.loads(targets_path.read_text(encoding="utf-8"))}
+    assert rows["shakira"]["archived"] is True, "archived target must stay archived when restore is blocked"
+
+
+def test_restore_secondary_target_allows_when_no_active_homonym(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "flavio_valle", "label": "Flavio Valle", "keywords": ["Flavio Valle"]},
+                {
+                    "key": "shakira",
+                    "label": "Shakira",
+                    "display_name": "Shakira",
+                    "archived": True,
+                    "archived_at": "2026-05-19T17:00:00+00:00",
+                    "keywords": ["Shakira"],
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    restored = db_admin.restore_secondary_target("shakira")
+    assert restored["archived"] is False
+    assert restored["key"] == "shakira"
+
+
 def test_primary_targets_cannot_be_managed_as_secondary(monkeypatch, tmp_path):
     db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
     targets_path = tmp_path / "targets.json"

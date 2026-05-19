@@ -521,6 +521,19 @@ def restore_secondary_target(key: str) -> dict[str, Any]:
     if is_synthetic_test_target(row):
         raise ValidationError("Alvos de teste nao podem ser restaurados.")
     if bool(row.get("archived")):
+        restored_name = normalize_text(row.get("display_name") or row.get("label") or "")
+        restored_name_folded = restored_name.casefold()
+        for other_idx, other in enumerate(rows):
+            if other_idx == index:
+                continue
+            if bool(other.get("archived")):
+                continue
+            other_name = normalize_text(other.get("display_name") or other.get("label") or "")
+            if other_name.casefold() == restored_name_folded:
+                raise ValidationError(
+                    f"Já existe um nome ativo cadastrado como '{other.get('label') or other_name}'. "
+                    "Arquive ou renomeie esse nome antes de restaurar."
+                )
         row["archived"] = False
         row.pop("archived_at", None)
         row.pop("archive_reason", None)
