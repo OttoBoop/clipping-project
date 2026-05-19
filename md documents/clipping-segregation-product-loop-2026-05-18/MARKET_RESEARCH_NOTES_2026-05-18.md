@@ -71,7 +71,7 @@ These are hypotheses, not recommendations:
   `MARKET_RESEARCH_POLITICAL_COMPETITOR_PASS_2026-05-18.md`.**
 - Gather 5-8 quote-based competitors and note their feature claims.
 - Interview one press advisor or political staffer about current workflow and
-  willingness to pay.
+  willingness to pay. Interview script now exists in `BUYER_INTERVIEW_GUIDE.md`.
 - Update `FIRST_SELLABLE_PACKAGE.md` only after this broader pass.
 
 ## Second Pass Status

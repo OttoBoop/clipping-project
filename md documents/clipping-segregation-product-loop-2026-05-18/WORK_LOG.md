@@ -6763,3 +6763,82 @@ pricing; buyer interviews or quote validation are still required.
 
 Run diff checks, commit/push the market pass path-limited, poll Render, and
 repeat live smoke when `f96d4e8`/`946782f` or the new market commit becomes live.
+
+## 2026-05-18 21:21 -03 - Loop Cycle: Live F96d4e8 Smoke And Buyer Interview Guide
+
+### Objective Reviewed
+
+Render changed live commit again, and the market docs still required buyer
+interview validation before any permanent pricing decision.
+
+### Action Taken
+
+Polled Render, saw `f96d4e8` live, and ran a logged-out smoke. Then created a
+buyer interview guide for the V1 political clipping pilot.
+
+Added:
+
+```text
+BUYER_INTERVIEW_GUIDE.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+MARKET_RESEARCH_NOTES_2026-05-18.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Render poll:
+
+```text
+dep-d86ftfiddbjc739t5vjg 3bec40e docs: add political competitor research pass -> queued
+dep-d86fs6n3jp8c73aiefn0 946782f docs: align demo script with V1 offer -> update_in_progress
+dep-d86fr8oh6q6c73d05on0 f96d4e8 docs: log delivery format deploy smoke -> live
+```
+
+Live logged-out smoke on `f96d4e8`:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+Interview guide covers:
+
+```text
+current clipping workflow
+reader/buyer role
+pain points and noise
+preferred delivery format
+minimum useful frequency
+target count
+adversary/topic needs
+trust signals
+pricing validation without setting a final price
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Buyer interview content is a research guide,
+not completed buyer validation.
+
+### Next Objective From Docs
+
+Run diff checks, commit/push this buyer guide path-limited, poll Render, and
+smoke `946782f`/`3bec40e`/new log deploys when live.
