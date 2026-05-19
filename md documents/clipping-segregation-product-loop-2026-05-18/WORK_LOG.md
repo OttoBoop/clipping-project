@@ -12865,3 +12865,95 @@ the live result, then return to the long-term docs for the next weak axis.
 Rio manual approval drift is guarded locally, but it still must be deployed and
 the live privacy gate must be checked again. The Rio indicator is still not a
 production target row and still has zero approved manual promotions.
+
+## 2026-05-19 14:14 -03 - Loop Cycle: Rio Manual Approval Guard Live Deploy
+
+### Objective Reviewed
+
+Deploy the Rio manual approval drift guard to the live Render app and verify
+that the logged-out/static privacy boundary still holds after the code/docs
+change.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+6c90470 tools: guard Rio manual approval artifacts
+git push origin HEAD:master
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86ulqrtqb8s73djh4s0
+commit=6c904702bbcc3be2a9c27b7f8ed631ca391a4261
+status=live
+finishedAt=2026-05-20T17:11:46.323819Z
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Live logged-out smoke on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+  job=succeeded
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /data/targets.json -> 404 Not Found
+GET /data/viewer_profiles.json -> 404 Not Found
+GET /data/reports/rio_economic_topic_report_20260519T142621Z.json -> 404 Not Found
+GET /clipping-data.json -> 404 Not Found
+```
+
+Local guard still passed before the deploy:
+
+```text
+python3 -B tools/rio_economic_manual_approval_check.py -> ok=true
+sidecar_rows=[1, 5, 11, 15, 19, 22, 25, 26]
+manual_approval_status_counts: not_required=17, not_reviewed=8
+indicator_policy_counts: count_current_period=17, manual_review_before_counting=1, research_only=7
+target_row_approved=false
+```
+
+### Barrier Or Failure
+
+Positive authenticated viewer/admin proof still requires real passwords outside
+this shell. A first `curl` attempt for the live-results URL omitted shell
+quoting around `&`; it produced no useful output, so the URL was rerun quoted
+and returned `401 viewer_login_required`. Future curl probes with query strings
+should quote the full URL.
+
+### Next Objective From Docs
+
+Commit/push this refreshed status/log snapshot, wait for Render, smoke again,
+then re-open the long-term docs. Current weak axes remain authenticated proof,
+real buyer evidence, measured pilot rows, Rio manual approvals, and
+operations/password safety.
+
+### Why The Loop Continues
+
+The Rio guard is now live, but it does not finish the product loop. There are
+still unproven authenticated profile paths, no real buyer rows, no measured
+pilot rows, and no manual Rio approval.

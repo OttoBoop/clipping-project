@@ -8,9 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-ceb0179 tools: add buyer quote evidence guard
-deploy dep-d86uffsm0tmc73dk1gfg -> live
-finishedAt=2026-05-20T16:57:59.254255Z
+6c90470 tools: guard Rio manual approval artifacts
+deploy dep-d86ulqrtqb8s73djh4s0 -> live
+finishedAt=2026-05-20T17:11:46.323819Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -33,6 +33,10 @@ GET /api/classifications -> 401 viewer_login_required
 GET /api/csrf -> 401 viewer_login_required
 GET /api/update/status -> 401 viewer_login_required
 GET /api/categories -> 401 viewer_login_required
+GET /data/targets.json -> 404 Not Found
+GET /data/viewer_profiles.json -> 404 Not Found
+GET /data/reports/rio_economic_topic_report_20260519T142621Z.json -> 404 Not Found
+GET /clipping-data.json -> 404 Not Found
 ```
 
 Meaning:
@@ -68,6 +72,8 @@ a8d47af tools: add pilot ledger pricing guard
 ec52781 docs: refresh status after pilot ledger guard
 575041b test: document static data boundary
 ceb0179 tools: add buyer quote evidence guard
+13489d5 docs: refresh status after buyer guard
+6c90470 tools: guard Rio manual approval artifacts
 ```
 
 Freshly proven after deploy:
@@ -108,9 +114,9 @@ Freshly proven after deploy:
   from becoming pricing evidence.
 - the buyer quote tracker now has a checker that keeps template rows and
   guessed demo reactions from becoming pricing evidence.
-- Render static/data boundary probes return `404` for raw `data/` files and
-  the legacy root `clipping-data.json`, while scoped `/assets/*.json` still
-  returns `401` when logged out.
+- Render static/data boundary probes still return `404` for raw `data/` files
+  and the legacy root `clipping-data.json`, while scoped `/assets/*.json`
+  still returns `401` when logged out after `6c90470`.
 
 ## Authenticated Production Proof
 
@@ -297,6 +303,6 @@ Continue from the weakest unblocked items:
 5. continue Rio manual-approval/methodology work without target-row pollution.
 6. keep approval UI/actions hidden until approval writes are connected end to
    end.
-7. after the Rio manual approval checker deploys, refresh the live commit and
-   logged-out production smoke in this status snapshot.
+7. re-open the long-term docs and choose the next weak unblocked item after
+   this live `6c90470` smoke.
 ```
