@@ -7138,3 +7138,51 @@ from this shell by missing viewer passwords.
 Commit/push this log entry path-limited, poll Render for `cc43f1c` and
 `3ded606`, then smoke the newest live deploy. If deploy wait continues, re-read
 `ACTIVE_NEXT_ACTION.md` and continue with optional Rio cluster fields.
+
+## 2026-05-18 21:32 -03 - Loop Cycle: Live Cc43f1c Smoke
+
+### Objective Reviewed
+
+Render promoted the Rio duplicate-cluster review commit. Run the standard
+logged-out privacy gate.
+
+### Action Taken
+
+Polled Render and saw:
+
+```text
+dep-d86g3pf3jp8c73aij550 4ae7ce9 docs: log duplicate review deploy smoke -> queued
+dep-d86g39iddbjc739t9ihg 3ded606 docs: log canonical helper deploy smoke -> build_in_progress
+dep-d86g2ngjhbcs73efdns0 cc43f1c docs: add Rio v4 duplicate cluster review -> live
+```
+
+Ran logged-out live smoke on `cc43f1c`.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof remains blocked in
+this shell by missing viewer passwords.
+
+### Next Objective From Docs
+
+Commit/push this log entry path-limited, poll Render for `3ded606` and
+`4ae7ce9`, and continue with the next docs-derived item.
