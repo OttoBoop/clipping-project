@@ -6185,3 +6185,81 @@ No blocker.
 ### Next Objective From Docs
 
 Commit and push the body/source review plan path-limited.
+
+## 2026-05-18 20:51 -03 - Loop Cycle: Rio Body Review Gate Pushed And Render Polled
+
+### Objective Reviewed
+
+After adding the body/source review gate, push it and verify Render state.
+
+### Action Taken
+
+Created and pushed:
+
+```text
+d5d6f99 docs: add Rio v3 body review gate
+```
+
+Then polled Render.
+
+### Evidence
+
+```text
+dep-d86fjq4rp5ls739cpm9g d5d6f99 docs: add Rio v3 body review gate -> queued
+dep-d86fi8ojhbcs73ef2qdg b9e557a docs: log live smoke on Rio v3 deploy -> update_in_progress
+dep-d86fhisrp5ls739coa7g 75d1f13 docs: log clipping remote follow-up -> live
+dep-d86fgpf3jp8c73ai6mqg 30ec6c1 docs: log Rio v3 review push -> deactivated
+```
+
+### Barrier Or Failure
+
+No deploy failure. The live site is now `75d1f13`.
+
+### Next Objective From Docs
+
+Run logged-out privacy smoke on `75d1f13`, then keep polling.
+
+## 2026-05-18 21:00 -03 - Loop Cycle: Live Logged-Out Smoke On 75d1f13
+
+### Objective Reviewed
+
+The loop docs still require Render as the acceptance bar. After Render reported
+`75d1f13` live, verify the logged-out privacy gate again before moving to the
+next Rio/product item.
+
+### Action Taken
+
+Ran a logged-out smoke against:
+
+```text
+https://clipping-project.onrender.com/
+```
+
+### Evidence
+
+```text
+GET /healthz -> 200
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+Authenticated viewer proof is still blocked locally because this shell does not
+have viewer/admin passwords. This is not a reason to stop: the unblocked proof
+is logged and the loop continues with deploy polling and non-secret Rio/product
+checks.
+
+### Next Objective From Docs
+
+Commit and push this log entry path-limited, poll Render again, then re-read the
+long-term docs to choose the next unblocked item.
