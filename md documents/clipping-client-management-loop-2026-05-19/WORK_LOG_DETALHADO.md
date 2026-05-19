@@ -349,3 +349,43 @@ Final: `">Arquivar</button>';` — abre string com `"` (double quote), termina c
 **Pytest:** 87/87 nas suítes tocadas. Commit `f4b42a2`. Deploy disparado.
 
 ---
+
+### 2026-05-19 20:35–20:40 — Bug real achado pelo smoke: CSRF cache não invalidado após change-password
+
+**Contexto:** [WORK_LOG_MAJOR.md](WORK_LOG_MAJOR.md) entrada 20:35 — eu havia escrito `tools/password_change_smoke.py` pra cobertura de Goal 2.
+
+**Ação primeira:** rodar o smoke em prod. Passos 1-4 OK (login, csrf, wrong-old rejected, valid-change 200). Passo 5 falhou: `POST /api/logout` retornou **403** em vez de 200.
+
+**Diagnóstico:**
+
+- `/api/logout` exige `require_csrf`.
+- CSRF é derivado da sessão: `csrf = HMAC(secret, "csrf:" + session_token)` em `auth.py:csrf_token()`.
+- `/api/change-password` (`app.py:468`) emite **nova sessão** após sucesso (linha 525-534) pra manter usuário logado.
+- Cliente (smoke e UI) continuava usando o CSRF gerado contra a sessão ANTIGA. Quando o backend computa o CSRF esperado contra a sessão NOVA, eles não batem → 403.
+
+**Impacto:**
+
+- **Smoke:** trivial — refetch CSRF entre change-password e próxima POST.
+- **UI em prod:** sério. Usuário troca a senha pelo modal, vê "Senha trocada", fecha modal. Próxima ação (logout, rodar atualização, qualquer POST) dá 403 sem explicação. UX confusa.
+
+**Fix (1 linha no JS):**
+
+```js
+// após resp.ok do change-password:
+csrfToken = "";
+csrfPromise = null;
+```
+
+Isso força `ensureCsrfToken()` no próximo `apiPost` a refetchar contra a sessão nova.
+
+**Smoke pós-fix:** 9/9 em prod (script atualizado em `tools/password_change_smoke.py`).
+
+**Commit:** `6a929c2`. Pushed. Deploy disparado.
+
+**Interpretação:**
+
+- ✅ **Valor real de smoke automatizado**: esse bug nunca apareceria em pytest local (não há sessão real + CSRF + cookie + change-password chained). Só rodando contra o backend de prod com fluxo realista.
+- ✅ **Goal 4 (regressão-zero) prova-se ativo**: cada smoke novo escrito vira sentinela contra regressão futura.
+- ⚠️ **Padrão a vigiar pra futura IA**: qualquer endpoint que emita nova sessão (login, change-password, futuro rotate-session?) precisa invalidar cache de CSRF cliente-side. Documentar como recurring failure class se voltar a acontecer.
+
+---
