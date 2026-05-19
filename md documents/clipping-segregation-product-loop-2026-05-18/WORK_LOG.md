@@ -6937,3 +6937,51 @@ Run diff checks, commit/push the canonical helper and reports path-limited,
 poll Render for `58b864d` and the new commit, then repeat logged-out smoke when
 the live commit changes. Next Rio work is extending canonical review beyond the
 first three rows and adding duplicate clustering.
+
+## 2026-05-18 21:27 -03 - Loop Cycle: Live 58b864d Smoke
+
+### Objective Reviewed
+
+After publishing the canonical helper, keep Render as the acceptance bar and
+smoke the newest live deploy.
+
+### Action Taken
+
+Polled Render and saw:
+
+```text
+dep-d86g16ok1i2s73d47ur0 68c8fcf tools: add Rio canonical review helper -> build_in_progress
+dep-d86fuvd6b1pc73detuug 58b864d docs: add buyer interview guide -> live
+```
+
+Ran logged-out live smoke on `58b864d`.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated profile smoke is still blocked
+from this shell by missing viewer passwords.
+
+### Next Objective From Docs
+
+Commit/push this log entry path-limited, poll Render until `68c8fcf` becomes
+live, smoke it, then continue with Rio duplicate clustering or extended
+canonical review.
