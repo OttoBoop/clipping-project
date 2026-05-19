@@ -6684,3 +6684,82 @@ viewer passwords unavailable in this shell.
 Run diff checks, commit/push this docs update path-limited, poll Render for
 `2c7dde8`/`f96d4e8`/new log deploys, and repeat live smoke on every new live
 commit.
+
+## 2026-05-18 21:16 -03 - Loop Cycle: Live 2c7dde8 Smoke And Market Competitor Pass
+
+### Objective Reviewed
+
+Render changed live commit again, and the market-research docs still had an
+open next pass: Brazilian political communication agencies and adjacent
+clipping/monitoring competitors.
+
+### Action Taken
+
+Polled Render, saw `2c7dde8` live, and ran a logged-out smoke. Then ran a web
+desk-research pass for political clipping/monitoring competitors and added:
+
+```text
+MARKET_RESEARCH_POLITICAL_COMPETITOR_PASS_2026-05-18.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+MARKET_RESEARCH_NOTES_2026-05-18.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Render poll:
+
+```text
+dep-d86fs6n3jp8c73aiefn0 946782f docs: align demo script with V1 offer -> queued
+dep-d86fr8oh6q6c73d05on0 f96d4e8 docs: log delivery format deploy smoke -> update_in_progress
+dep-d86fqo2ddbjc739t4aog 2c7dde8 docs: define V1 delivery format -> live
+```
+
+Live logged-out smoke on `2c7dde8`:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+Market pass captured direct/adjacent competitors:
+
+```text
+Political Brain
+MonitoraBR
+Conectare Politica
+Values Comunicacao
+Grupo Comunica
+Lux Jornal
+Simpling
+iClipping
+Notitia Comunicacao
+Rede Clipping
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Market research still does not set final
+pricing; buyer interviews or quote validation are still required.
+
+### Next Objective From Docs
+
+Run diff checks, commit/push the market pass path-limited, poll Render, and
+repeat live smoke when `f96d4e8`/`946782f` or the new market commit becomes live.

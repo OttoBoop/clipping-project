@@ -28,6 +28,7 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Render production checklist.
 - Market research plan.
 - Initial sourced market research notes.
+- Political/communications competitor pass.
 - Demo script and buyer assumptions.
 - Dirty worktree / commit-boundary review.
 - Product loop operating protocol.
@@ -107,9 +108,9 @@ Continue the production loop. Current priority from the docs:
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; V1 pilot scope and delivery-format
    decision now exist; demo script is now tied to the V1 offer without exposing
-   secrets or promising custom work; next packaging step is buyer/research
-   validation or a dedicated prospect-profile checklist when there is a real
-   prospect;
+   secrets or promising custom work; political competitor desk-research pass
+   now exists; next packaging step is buyer interview/quote validation or a
+   dedicated prospect-profile checklist when there is a real prospect;
 6. review costs, password rotation, and operations;
    first-client onboarding/offboarding checklist now exists;
 7. then re-read the docs and choose the next weak axis.

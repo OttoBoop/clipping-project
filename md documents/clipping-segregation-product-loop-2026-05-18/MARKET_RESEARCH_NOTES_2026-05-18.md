@@ -67,8 +67,31 @@ These are hypotheses, not recommendations:
 ## Next Research Pass
 
 - Search specifically for Brazilian political communication agencies offering
-  clipping to vereadores/deputados.
+  clipping to vereadores/deputados. **Second pass started in
+  `MARKET_RESEARCH_POLITICAL_COMPETITOR_PASS_2026-05-18.md`.**
 - Gather 5-8 quote-based competitors and note their feature claims.
 - Interview one press advisor or political staffer about current workflow and
   willingness to pay.
 - Update `FIRST_SELLABLE_PACKAGE.md` only after this broader pass.
+
+## Second Pass Status
+
+The political/communications competitor pass found direct or adjacent evidence
+for:
+
+```text
+Political Brain
+MonitoraBR
+Conectare Politica
+Values Comunicacao
+Grupo Comunica
+Lux Jornal
+Simpling
+iClipping
+Notitia Comunicacao
+Rede Clipping
+```
+
+Main implication: keep V1 narrow and affordable. Broader competitor claims
+around crisis alerts, adversary monitoring, social/media intelligence, BI,
+valuation, and daily briefings should be add-ons or later tiers.
