@@ -11145,3 +11145,177 @@ review, buyer/pilot evidence reminders, or a targeted checklist refresh.
 This proves another rejection path, but it still does not produce authenticated
 admin proof, viewer proof, buyer evidence, measured operator cost, or Rio
 approval writes.
+
+## 2026-05-19 00:17 -03 - Loop Cycle: Target Management Review Deploy Smoke
+
+### Objective Reviewed
+
+Verify the target-management rejection-proof docs on live Render and repeat the
+same production privacy/mutation smoke after deploy.
+
+### Render Audit
+
+Render deploy:
+
+```text
+service=srv-d7p2p5beo5us739f9k40
+deploy=dep-d86i710k1i2s73d5au8g
+commit=84d648336d81656e5347a9e5d039ff60d8be69e1
+message=docs: refresh target management rejection proof
+status=live
+finishedAt=2026-05-20T03:01:45.053725Z
+```
+
+Live logged-out smoke:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+```
+
+Live logged-out mutation smoke:
+
+```text
+POST /api/targets -> 401 admin_login_required
+PATCH /api/targets/loop_smoke_should_not_create -> 401 admin_login_required
+POST /api/targets/loop_smoke_should_not_create/archive -> 401 admin_login_required
+POST /api/targets/loop_smoke_should_not_create/restore -> 401 admin_login_required
+```
+
+### Action Taken
+
+Recorded the deploy and smoke evidence in `WORK_LOG.md`.
+
+### Evidence
+
+The live app still blocks private reads for logged-out users and blocks direct
+target-management writes without an admin session.
+
+### Barrier Or Failure
+
+Positive admin CSRF/target-management proof remains blocked by missing admin
+credentials. No disposable production target was created.
+
+### Next Objective From Docs
+
+Re-read the `.md` files. Remaining unblocked paths include Rio methodology
+review, buyer/pilot no-fabrication maintenance, or another checklist/status
+refresh; blocked paths must stay logged and not stop the loop.
+
+### Why The Loop Continues
+
+This closes another deployed rejection proof, but not authenticated admin/viewer
+proof, real buyer evidence, measured pilot work, or Rio approval writes.
+
+## 2026-05-19 00:20 -03 - Loop Cycle: Rio UI No-Fake-Approval Review
+
+### Objective Reviewed
+
+Re-read the Rio UI decision because the manual review queue now exists. The
+risk is that a future agent may add visible approval/publish controls before
+the approval write path exists end to end.
+
+### Render Audit
+
+Live deploy under test:
+
+```text
+commit=84d648336d81656e5347a9e5d039ff60d8be69e1
+deploy=dep-d86i710k1i2s73d5au8g
+```
+
+Live asset checks:
+
+```text
+/assets/clipping.js includes viewerCanSeeRioReport()
+/assets/clipping.js includes apiFetch("/api/reports/rio-economic-topic")
+/assets/clipping.js hides rioEconomicReportPanel when viewerCanSeeRioReport() is false
+/assets/clipping.css includes .rio-report-panel and .rio-report-item
+GET / as logged-out shows login shell; rioEconomicReportPanel markup is absent
+```
+
+The logged-out `/` search for `rioEconomicReportPanel`, `rioEconomicReportList`,
+`Aprovar`, `Publicar`, and `Adicionar` returned no matches. That is expected
+because logged-out users receive only the login shell.
+
+### Action Taken
+
+Read:
+
+```text
+RIO_ECONOMIC_UI_DECISION_V0.md
+index.html
+assets/clipping.js
+assets/clipping.css
+tests/test_rio_economic_ui_static.py
+web_app/app.py
+```
+
+The first patch attempt failed because the `ACTIVE_NEXT_ACTION.md` context did
+not match exactly. No file changed from that failed patch; the edit was split
+into smaller patches.
+
+Updated:
+
+```text
+tests/test_rio_economic_ui_static.py
+RIO_ECONOMIC_UI_DECISION_V0.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The static test now asserts:
+
+```text
+rioEconomicReportPanel contains no Adicionar/Aprovar/Publicar/<button/<form
+Rio JS section contains no apiPost(
+Rio JS section contains no apiPatch(
+Rio JS section contains no /api/targets
+```
+
+This keeps the Rio panel read-only until a real approval write path exists:
+
+```text
+UI -> API -> sidecar/report update -> validation artifact -> scoped report
+```
+
+Checks run:
+
+```text
+python3 -m pytest tests/test_rio_economic_ui_static.py -> failed: No module named pytest
+git diff --check -> passed
+direct python execution of tests/test_rio_economic_ui_static.py test_* functions -> all 3 passed
+```
+
+### Barrier Or Failure
+
+Positive authenticated Rio/admin view on Render still requires credentials not
+available in this shell. The review used static/local checks plus logged-out
+live asset and endpoint checks. Full pytest remains unavailable in this shell.
+
+### Next Objective From Docs
+
+Run focused static checks, commit/push path-limited, wait for Render, smoke
+production, then re-read docs. Remaining unblocked paths include another Rio
+methodology/checklist update or buyer/pilot evidence maintenance.
+
+### Why The Loop Continues
+
+The UI is better guarded against fake approval controls, but approval writes,
+authenticated profile proof, buyer evidence, and measured pilot work are still
+not complete.

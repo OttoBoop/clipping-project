@@ -65,6 +65,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
   keeping `approved_promotions=0`.
 - Rio-only read-only UI decision and first dashboard panel backed by scoped
   `/api/reports/rio-economic-topic`.
+- Rio UI no-fake-approval static test now forbids approval/publish/add
+  controls and target-write calls in the Rio panel path.
 
 ## Current Verification State
 
@@ -157,7 +159,8 @@ Continue the production loop. Current priority from the docs:
    `/api/reports/rio-economic-topic`, and any real manual approvals recorded in
    the sidecar before promotion; a manual review queue now exists and says row
    11 is the first candidate while all eight non-automatic rows remain
-   unpromoted;
+   unpromoted; the Rio UI remains read-only and the static test now blocks
+   fake approval/publish/add controls;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; V1 pilot scope and delivery-format
    decision now exist; demo script is now tied to the V1 offer without exposing

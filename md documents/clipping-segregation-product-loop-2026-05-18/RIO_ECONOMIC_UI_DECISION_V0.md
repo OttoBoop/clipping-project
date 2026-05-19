@@ -76,6 +76,23 @@ Required checks:
   available in the shell, but the backend endpoint already rejects non-Rio
   viewers server-side.
 
+Latest live/static evidence:
+
+```text
+deploy=dep-d86i710k1i2s73d5au8g
+commit=84d6483
+GET /api/reports/rio-economic-topic logged-out -> 401 viewer_login_required
+live /assets/clipping.js includes viewerCanSeeRioReport()
+live /assets/clipping.js fetches /api/reports/rio-economic-topic
+live /assets/clipping.css includes .rio-report-panel and .rio-report-item
+logged-out / page shows login shell and no rioEconomicReportPanel markup
+```
+
+Static test coverage now also asserts that the `rioEconomicReportPanel` section
+contains no `Adicionar`, `Aprovar`, `Publicar`, `<button`, or `<form`, and that
+the Rio JS section does not call `apiPost`, `apiPatch`, or `/api/targets`.
+This prevents the manual-review queue from turning into fake approval UI.
+
 ## Future Work
 
 Only add manual approval controls after the approval write path exists end to
