@@ -431,6 +431,14 @@ RIO_ECONOMIC_CLUSTERED_REVIEW_20260519T004653Z.md
 The cluster review proves at least nine article rows should collapse into three
 stories before dashboard counts or weekly summaries.
 
+Production gate:
+
+```text
+RIO_ECONOMIC_PRODUCTION_GATE_V0.md
+production rio_economico target row approved=false
+requires live scoping proof + query quality + date quality + cluster counting + source/body review + narrow first-run plan
+```
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

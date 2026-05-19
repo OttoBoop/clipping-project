@@ -110,8 +110,10 @@ Continue the production loop. Current priority from the docs:
    eight same-day rows, one missing canonical date, and one date mismatch; next
    Rio date-quality policy now exists and the canonical helper now records
    status counts; a cluster-annotated v4 review now exists with 3 clusters and
-   9 clustered rows; next Rio step is combining date-quality and cluster gates,
-   then fresh production scoping proof before any production target row;
+   9 clustered rows; Rio production gate v0 now blocks target-row creation
+   until live scoping proof, date-quality, cluster counting, source/body review,
+   and narrow first-run planning are all satisfied; next Rio step is fresh
+   production scoping proof before any production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; V1 pilot scope and delivery-format
    decision now exist; demo script is now tied to the V1 offer without exposing

@@ -7560,6 +7560,65 @@ Run diff/checks, commit/push path-limited, poll Render for queued deploys,
 smoke production when the latest commit is live, then combine date-quality and
 cluster gates or run fresh production scoping proof.
 
+## 2026-05-18 21:58 -03 - Loop Cycle: Rio Production Gate V0
+
+### Objective Reviewed
+
+Render was still building queued cluster-report commits. The next docs-derived
+Rio item was to combine date-quality and cluster gates so no agent jumps from
+review artifacts directly into `data/targets.json`.
+
+### Action Taken
+
+Added:
+
+```text
+RIO_ECONOMIC_PRODUCTION_GATE_V0.md
+```
+
+Updated:
+
+```text
+RIO_ECONOMIC_VALIDATION_PLAN.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The production gate records:
+
+```text
+production rio_economico target row approved=false
+requires live scoping proof
+requires query quality
+requires date quality
+requires cluster counting
+requires source/body review
+requires narrow first-run plan
+```
+
+Current evidence summarized in the gate:
+
+```text
+v4 sample row_count=31
+title-level false_positive=0
+10-row canonical pass same_day=8 canonical_date_missing=1 date_mismatch=1
+cluster annotation row_count=31 cluster_count=3 clustered_row_count=9
+```
+
+### Barrier Or Failure
+
+Rio remains blocked from production target-row creation. This is intentional:
+the methodology still needs fresh production scoping proof and operator approval
+for a narrow first run.
+
+### Next Objective From Docs
+
+Run diff/checks, commit/push path-limited, poll Render until queued commits are
+live, smoke production, then run fresh production scoping proof or continue
+packaging/operations review from `ACTIVE_NEXT_ACTION.md`.
+
 ## 2026-05-18 21:56 -03 - Loop Cycle: Cluster Artifact Push And 990ada0 Live Smoke
 
 ### Objective Reviewed
