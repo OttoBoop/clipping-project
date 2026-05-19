@@ -40,6 +40,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Authenticated Render smoke script now supports a local credentials file
   outside Git and fails partial proof when the expected viewer profile set is
   incomplete.
+- Authenticated Render smoke now checks viewer/admin shell markers and the
+  viewer-readonly CSS/JS markers that hide fake/admin-only controls.
 - Market research plan.
 - Initial sourced market research notes.
 - Political/communications competitor pass.
@@ -239,7 +241,7 @@ If `viewerAuthConfigured=false` returns, treat it as a regression and re-check
 Render env configuration. Do not rotate or publish viewer passwords in docs.
 
 Use `SYSTEM_REVIEW_STATUS_2026-05-20.md` as the current proof/blocker snapshot;
-it now reflects live commit `9c681e9`.
+it now reflects live commit `72ea188`.
 
 ## Do Not Do Next
 

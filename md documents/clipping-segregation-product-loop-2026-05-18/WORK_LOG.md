@@ -13610,3 +13610,138 @@ then re-open the `.md` files and continue to the next weak unblocked axis.
 The logged-out proof is now repeatable, but this still does not produce fresh
 authenticated profile proof, admin positive mutation proof, real buyer
 evidence, measured pilot cost, or Rio manual approvals.
+
+## 2026-05-19 18:46 -03 - Loop Cycle: Logged-Out Smoke Helper Live Deploy
+
+### Objective Reviewed
+
+The helper commit needed the same live acceptance surface as code changes. A
+tool that only works locally is not enough for this loop; Render remains the
+bar.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+72ea188 tools: add logged-out Render smoke
+```
+
+Waited for Render:
+
+```text
+deploy=dep-d872m85ckfvc73ekfej0
+commit=72ea188665c9f7bec4a8796876f8728394fcf47d
+status=live
+finishedAt=2026-05-20T21:45:55.553146Z
+```
+
+Ran the new helper against the live site.
+
+### Evidence
+
+```text
+python3 -B tools/logged_out_render_smoke.py -> ok=true
+```
+
+The helper checked:
+
+```text
+GET /healthz -> 200 configured viewer auth/profile state
+GET / -> 200 login markers present
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /data/targets.json -> 404 Not Found
+GET /data/viewer_profiles.json -> 404 Not Found
+GET /data/reports/rio_economic_topic_report_20260519T142621Z.json -> 404 Not Found
+GET /clipping-data.json -> 404 Not Found
+```
+
+### Barrier Or Failure
+
+No live logged-out failure. Authenticated proof still remains blocked by absent
+outside-Git passwords in this shell.
+
+### Next Objective From Docs
+
+Re-open the long-term docs and select the next weak unblocked item. Candidate
+paths remain: authenticated proof only if credentials appear, admin mutation
+only with explicit permission/credentials, or more non-secret guardrails for
+sellable packaging/Rio/cost evidence without inventing human data.
+
+### Why The Loop Continues
+
+The helper is live and working, but it does not prove logged-in scoping,
+operator mutations, real buyer demand, measured costs, or Rio manual
+approvals.
+
+## 2026-05-19 18:47 -03 - Loop Cycle: Authenticated Smoke UI Guard
+
+### Objective Reviewed
+
+Re-opened the long-term goals, dependency map, active next action, system
+checklist, and current log after the logged-out helper deploy. The next
+unblocked weakness was authenticated proof quality: when passwords are
+available, `tools/authenticated_render_smoke.py` should not only prove scoped
+APIs, it should also catch fake/admin-only UI regressions in the viewer shell.
+
+### Action Taken
+
+Updated:
+
+```text
+tools/authenticated_render_smoke.py
+tests/test_authenticated_render_smoke.py
+AUTHENTICATED_RENDER_SMOKE_RUNBOOK.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+The authenticated helper now checks:
+
+```text
+viewer GET / -> data-clipping-session-role="viewer"
+viewer GET / -> data-clipping-session-profile="<profile>"
+viewer GET / -> <body class="viewer-readonly">
+viewer GET /assets/clipping.css -> viewer-readonly add/manage target hide markers
+viewer GET /assets/clipping.js -> applyViewerControls hide markers
+admin GET / -> data-clipping-session-role="admin"
+admin GET / -> no viewer-readonly shell marker
+```
+
+### Evidence
+
+Local checks:
+
+```text
+python3 -B -m py_compile tools/authenticated_render_smoke.py tests/test_authenticated_render_smoke.py -> passed
+python3 -B tests/test_authenticated_render_smoke.py -> passed
+python3 -B -c "from tests import test_authenticated_render_smoke as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+python3 -B tools/authenticated_render_smoke.py -> expected failure on missing smoke credentials only
+```
+
+### Barrier Or Failure
+
+No implementation failure after the direct-run import/sys.path guard. The
+authenticated live proof itself remains blocked because this shell still lacks
+`CLIPPING_SMOKE_VIEWER_PASSWORDS` and `CLIPPING_SMOKE_ADMIN_PASSWORD`.
+
+### Next Objective From Docs
+
+Run `git diff --check`, commit/push the smoke-hardening and pending live-smoke
+status docs path-limited, wait for Render, run the logged-out Render helper, and
+then re-open the docs for the next weak unblocked item.
+
+### Why The Loop Continues
+
+The next credentialed run will be stronger, but no fresh authenticated
+production proof exists in this shell yet, and real buyer, pilot-cost, and Rio
+manual approval evidence remain absent.

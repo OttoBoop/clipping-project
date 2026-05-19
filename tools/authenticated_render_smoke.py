@@ -33,6 +33,26 @@ DEFAULT_FORBIDDEN_TARGETS = {
 }
 
 
+VIEWER_SHELL_MARKERS = (
+    'data-clipping-session-role="viewer"',
+    '<body class="viewer-readonly">',
+)
+
+VIEWER_CSS_MARKERS = (
+    "body.viewer-readonly .add-target-box",
+    "body.viewer-readonly .manage-targets-box",
+    "display: none !important",
+)
+
+VIEWER_JS_MARKERS = (
+    "function applyViewerControls",
+    "document.body.classList.toggle(\"viewer-readonly\", !isAdmin)",
+    "addTargetForm.closest(\"details\").hidden = true",
+    "manageTargetsBox.hidden = true",
+    "viewerCanSeeRioReport()",
+)
+
+
 @dataclass
 class CheckResult:
     name: str
@@ -125,6 +145,10 @@ def text_contains_any(value: Any, needles: list[str]) -> list[str]:
     return [needle for needle in needles if needle and needle in text]
 
 
+def missing_markers(text: str, markers: list[str] | tuple[str, ...]) -> list[str]:
+    return [marker for marker in markers if marker not in text]
+
+
 def parse_expected_profiles(raw: str) -> list[str]:
     profiles = [profile.strip() for profile in raw.split(",") if profile.strip()]
     return profiles or list(DEFAULT_EXPECTED_VIEWER_PROFILES)
@@ -211,6 +235,26 @@ def check_viewer(base_url: str, profile: str, password: str, forbidden_targets: 
     actual_profile = body.get("profile") if isinstance(body, dict) else ""
     checks.append(result(f"{profile} login", status == 200 and actual_profile == profile, f"status={status} profile={actual_profile}"))
 
+    status, _body, raw_html = client.request("GET", "/")
+    shell_markers = (*VIEWER_SHELL_MARKERS, f'data-clipping-session-profile="{profile}"')
+    shell_missing = missing_markers(raw_html, shell_markers)
+    admin_marker_seen = 'data-clipping-session-role="admin"' in raw_html
+    checks.append(
+        result(
+            f"{profile} viewer readonly shell",
+            status == 200 and not shell_missing and not admin_marker_seen,
+            f"status={status} missing={shell_missing} admin_marker_seen={admin_marker_seen}",
+        )
+    )
+
+    status, _body, raw_css = client.request("GET", "/assets/clipping.css")
+    css_missing = missing_markers(raw_css, VIEWER_CSS_MARKERS)
+    checks.append(result(f"{profile} viewer readonly css", status == 200 and not css_missing, f"status={status} missing={css_missing}"))
+
+    status, _body, raw_js = client.request("GET", "/assets/clipping.js")
+    js_missing = missing_markers(raw_js, VIEWER_JS_MARKERS)
+    checks.append(result(f"{profile} viewer control js", status == 200 and not js_missing, f"status={status} missing={js_missing}"))
+
     status, data_payload, _raw = client.request("GET", "/assets/clipping-data.json")
     payload_keys = payload_target_keys(data_payload)
     leaked = sorted(payload_keys.intersection(forbidden_targets))
@@ -270,6 +314,17 @@ def check_admin(base_url: str, password: str, allow_mutation: bool) -> list[Chec
     status, body, _raw = client.request("POST", "/api/login", {"password": password})
     role = body.get("role") if isinstance(body, dict) else ""
     checks.append(result("admin login", status == 200 and role == "admin", f"status={status} role={role}"))
+
+    status, _body, raw_html = client.request("GET", "/")
+    admin_marker_seen = 'data-clipping-session-role="admin"' in raw_html
+    viewer_readonly_seen = "viewer-readonly" in raw_html
+    checks.append(
+        result(
+            "admin shell",
+            status == 200 and admin_marker_seen and not viewer_readonly_seen,
+            f"status={status} admin_marker_seen={admin_marker_seen} viewer_readonly_seen={viewer_readonly_seen}",
+        )
+    )
 
     status, csrf_payload, _raw = client.request("GET", "/api/csrf")
     token = csrf_payload.get("csrf") if isinstance(csrf_payload, dict) else ""

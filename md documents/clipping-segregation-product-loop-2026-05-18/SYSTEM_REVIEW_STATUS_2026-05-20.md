@@ -8,9 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-9c681e9 docs: refresh market positioning
-deploy dep-d86v8k57vvec73b8pq90 -> live
-finishedAt=2026-05-20T17:53:03.721142Z
+72ea188 tools: add logged-out Render smoke
+deploy dep-d872m85ckfvc73ekfej0 -> live
+finishedAt=2026-05-20T21:45:55.553146Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -78,6 +78,8 @@ ceb0179 tools: add buyer quote evidence guard
 c879432 tools: harden authenticated Render smoke
 e7826f3 tools: guard viewer profile scopes
 9c681e9 docs: refresh market positioning
+daa55a8 docs: log market refresh deploy smoke
+72ea188 tools: add logged-out Render smoke
 ```
 
 Freshly proven after deploy:
@@ -105,6 +107,9 @@ Freshly proven after deploy:
   outside-repo secret file and requires the expected viewer profile set by
   default, so a one-profile run does not masquerade as complete production
   proof;
+- authenticated Render smoke now checks viewer shell, admin shell, and
+  viewer-readonly CSS/JS markers so an operator credential run can catch fake
+  UI/action regressions as well as API scoping regressions;
 - viewer profile scope now has a static checker that compares
   `data/viewer_profiles.json` to `data/targets.json` and keeps `rio_economico`
   as a topic-only scope key rather than a production target row;
@@ -322,8 +327,11 @@ Password operations:
 - `python3 -B tools/authenticated_render_smoke.py` was re-run after the
   `9c681e9` live deploy and failed only on missing outside-Git smoke
   credentials;
+- `python3 -B tools/authenticated_render_smoke.py` was re-run after adding the
+  viewer/admin shell marker checks and still failed only on missing outside-Git
+  smoke credentials;
 - `python3 -B tools/logged_out_render_smoke.py` passed against the live Render
-  site after the `daa55a8` deploy;
+  site after the `72ea188` deploy;
 - no real buyer quote/interview row exists in
   `BUYER_QUOTE_VALIDATION_TRACKER.md`;
 - no measured pilot/update run exists in `V1_PILOT_OPERATING_LEDGER.md`;
@@ -349,5 +357,5 @@ Continue from the weakest unblocked items:
 6. keep approval UI/actions hidden until approval writes are connected end to
    end.
 7. re-open the long-term docs and choose the next weak unblocked item after
-   this live `9c681e9` smoke.
+   this live `72ea188` smoke.
 ```

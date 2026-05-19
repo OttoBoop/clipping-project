@@ -72,6 +72,9 @@ For each viewer profile provided:
 
 ```text
 POST /api/login returns role=viewer and expected profile
+GET / returns data-clipping-session-role="viewer", expected profile, and viewer-readonly body class
+GET /assets/clipping.css contains viewer-readonly hide selectors for add/manage target controls
+GET /assets/clipping.js contains applyViewerControls markers that hide viewer-only fake/admin actions
 GET /assets/clipping-data.json returns no forbidden target keys
 GET /assets/clipping-raw-texts.json contains no forbidden target markers
 GET /api/targets returns no forbidden target keys
@@ -84,6 +87,7 @@ For admin, when `CLIPPING_SMOKE_ADMIN_PASSWORD` is provided:
 
 ```text
 POST /api/login returns role=admin
+GET / returns data-clipping-session-role="admin" without viewer-readonly shell
 GET /api/csrf returns a token
 POST /api/targets without CSRF returns 403
 ```
@@ -129,6 +133,7 @@ profiles checked
 expected profiles present
 forbidden targets checked
 status for clipping-data/raw-texts/targets/live-results/Rio endpoint
+viewer shell/CSS/JS control checks
 admin CSRF token present=true, but not the token value
 viewer write rejection status
 if --allow-admin-mutation was used: disposable target key and archived=true
