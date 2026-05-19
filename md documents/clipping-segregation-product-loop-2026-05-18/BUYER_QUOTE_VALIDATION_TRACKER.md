@@ -11,10 +11,49 @@ Do not record private phone numbers, passwords, or sensitive political strategy.
 
 ```text
 final_price_decided=false
+real_buyer_conversation_count=0
+hands_on_demo_reaction_count=0
+measured_pilot_run_count=0
 ```
 
 Reason: the product still needs buyer interviews plus operator-time data from a
 pilot before a sustainable price can be set.
+
+## Current Readiness - 2026-05-20
+
+The product is ready for a controlled operator demo, but the tracker must remain
+empty until a real buyer/prospect conversation happens.
+
+Use:
+
+```text
+SELLABLE_DEMO_READINESS_REVIEW_2026-05-18.md
+DEMO_SCRIPT_AND_BUYER_ASSUMPTIONS.md
+V1_DELIVERY_SCOPE.md
+V1_ADD_ON_MENU_AND_BOUNDARIES.md
+```
+
+Current no-fabrication rule:
+
+```text
+do not create a buyer row from assumptions
+do not set a final price from desk research
+do not record private contact details
+do not turn an add-on request into base scope after one conversation
+```
+
+First valid row requires at least:
+
+```text
+real person or office type spoken to
+current clipping process
+pain stated in their words
+desired frequency
+preferred delivery format
+quote signal or refusal
+operator risk notes
+follow-up action
+```
 
 ## Conversation Record Template
 
