@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -19,6 +20,7 @@ from typing import Any
 
 
 DEFAULT_BASE_URL = "https://clipping-project.onrender.com"
+TRANSIENT_STATUSES = {502, 503, 504}
 
 
 @dataclass(frozen=True)
@@ -214,17 +216,55 @@ def check_endpoint(client: SmokeClient, expected: ExpectedEndpoint) -> CheckResu
     return result(f"{expected.method} {expected.path}", ok, detail)
 
 
-def run_smoke(base_url: str, endpoints: tuple[ExpectedEndpoint, ...] = DEFAULT_ENDPOINTS) -> list[CheckResult]:
+def wait_for_preflight_health(
+    client: SmokeClient,
+    retries: int,
+    retry_delay_seconds: float,
+) -> CheckResult | None:
+    for attempt in range(max(0, retries) + 1):
+        response = client.get("/healthz")
+        if response.status not in TRANSIENT_STATUSES:
+            return None
+        if attempt < retries:
+            print(
+                f"[WAIT] preflight /healthz: status={response.status}; "
+                f"retrying in {retry_delay_seconds:g}s ({attempt + 1}/{retries})"
+            )
+            if retry_delay_seconds > 0:
+                time.sleep(retry_delay_seconds)
+    return result(
+        "preflight /healthz",
+        False,
+        f"status={response.status} remained transient after retries={retries}",
+    )
+
+
+def run_smoke(
+    base_url: str,
+    endpoints: tuple[ExpectedEndpoint, ...] = DEFAULT_ENDPOINTS,
+    *,
+    preflight_retries: int = 3,
+    retry_delay_seconds: float = 5.0,
+) -> list[CheckResult]:
     client = SmokeClient(base_url)
+    preflight_failure = wait_for_preflight_health(client, preflight_retries, retry_delay_seconds)
+    if preflight_failure:
+        return [preflight_failure]
     return [check_endpoint(client, endpoint) for endpoint in endpoints]
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Logged-out Render privacy/static-boundary smoke.")
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
+    parser.add_argument("--preflight-retries", type=int, default=3)
+    parser.add_argument("--retry-delay-seconds", type=float, default=5.0)
     args = parser.parse_args()
 
-    checks = run_smoke(args.base_url)
+    checks = run_smoke(
+        args.base_url,
+        preflight_retries=args.preflight_retries,
+        retry_delay_seconds=args.retry_delay_seconds,
+    )
     failed = [check for check in checks if not check.ok]
     print(json.dumps({"ok": not failed, "failed": [check.name for check in failed]}, ensure_ascii=False, indent=2))
     return 1 if failed else 0

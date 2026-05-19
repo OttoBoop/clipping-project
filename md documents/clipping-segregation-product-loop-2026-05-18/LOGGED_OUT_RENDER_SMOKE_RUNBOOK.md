@@ -15,6 +15,7 @@ Optional:
 
 ```bash
 python3 -B tools/logged_out_render_smoke.py --base-url https://clipping-project.onrender.com
+python3 -B tools/logged_out_render_smoke.py --preflight-retries 3 --retry-delay-seconds 5
 ```
 
 ## What It Proves
@@ -76,3 +77,12 @@ Git. Never paste passwords, cookies, or CSRF tokens into this file or
 In sandboxed Codex shells, the first run may fail with DNS/network restriction.
 If that happens, rerun with the approved escaped command rather than falling
 back to unlogged manual curl-only evidence.
+
+## Post-Deploy 503 Window
+
+The helper runs a `/healthz` preflight before the full endpoint sweep. If
+Render is still serving transient `502`, `503`, or `504` responses immediately
+after deploy, the helper waits and retries before declaring the smoke failed.
+If `/healthz` stays transient after the configured retries, the helper fails
+fast with `preflight /healthz` instead of printing a misleading wall of
+endpoint failures.

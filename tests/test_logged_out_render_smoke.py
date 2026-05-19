@@ -29,6 +29,24 @@ class FakeClient:
         return smoke.HttpResponse(status=status, body=body, raw=raw, content_type=content_type)
 
 
+class SequenceClient:
+    def __init__(self, responses):
+        self.responses = responses
+        self.seen = []
+
+    def request(self, method, path, body=None):
+        self.seen.append((method, path, body))
+        rows = self.responses[(method, path)]
+        if len(rows) > 1:
+            status, body, raw, content_type = rows.pop(0)
+        else:
+            status, body, raw, content_type = rows[0]
+        return smoke.HttpResponse(status=status, body=body, raw=raw, content_type=content_type)
+
+    def get(self, path):
+        return self.request("GET", path)
+
+
 def test_default_logged_out_smoke_passes_expected_boundary():
     responses = {
         (endpoint.method, endpoint.path): (
@@ -187,6 +205,77 @@ def test_absent_marker_seen_is_a_failure():
 
     assert check.ok is False
     assert "forbidden_markers" in check.detail
+
+
+def test_preflight_retries_transient_health_before_smoke(monkeypatch=None):
+    endpoint = smoke.ExpectedEndpoint("/healthz", 200)
+    client = SequenceClient(
+        {
+            ("GET", "/healthz"): [
+                (503, "Service Unavailable", "Service Unavailable", "text/plain"),
+                (
+                    200,
+                    {
+                        "loginConfigured": True,
+                        "viewerAuthConfigured": True,
+                        "viewerProfilesConfigured": True,
+                        "demoViewerConfigured": False,
+                        "missingConfig": [],
+                    },
+                    "{}",
+                    "application/json",
+                ),
+            ]
+        }
+    )
+
+    original_client = smoke.SmokeClient
+    smoke.SmokeClient = lambda _base_url: client
+    try:
+        with redirect_stdout(io.StringIO()):
+            checks = smoke.run_smoke(
+                "https://example.test",
+                endpoints=(endpoint,),
+                preflight_retries=1,
+                retry_delay_seconds=0,
+            )
+    finally:
+        smoke.SmokeClient = original_client
+
+    assert all(check.ok for check in checks)
+    assert client.seen == [
+        ("GET", "/healthz", None),
+        ("GET", "/healthz", None),
+        ("GET", "/healthz", None),
+    ]
+
+
+def test_preflight_fails_fast_when_health_stays_transient():
+    client = SequenceClient(
+        {
+            ("GET", "/healthz"): [
+                (503, "Service Unavailable", "Service Unavailable", "text/plain"),
+            ]
+        }
+    )
+
+    original_client = smoke.SmokeClient
+    smoke.SmokeClient = lambda _base_url: client
+    try:
+        with redirect_stdout(io.StringIO()):
+            checks = smoke.run_smoke(
+                "https://example.test",
+                endpoints=(smoke.ExpectedEndpoint("/assets/clipping-data.json", 401),),
+                preflight_retries=1,
+                retry_delay_seconds=0,
+            )
+    finally:
+        smoke.SmokeClient = original_client
+
+    assert len(checks) == 1
+    assert checks[0].ok is False
+    assert checks[0].name == "preflight /healthz"
+    assert client.seen == [("GET", "/healthz", None), ("GET", "/healthz", None)]
 
 
 if __name__ == "__main__":

@@ -14027,3 +14027,147 @@ the logged-out helper, log the live deploy, then re-open the docs.
 Bad-login behavior is now repeatable in the non-secret smoke, but positive
 authenticated scoping, admin CSRF-positive mutation, buyer validation, measured
 pilot cost, and Rio manual approval evidence remain incomplete.
+
+## 2026-05-19 19:34 -03 - Loop Cycle: Bad Login Smoke Live Deploy
+
+### Objective Reviewed
+
+The bad-login privacy check needed live Render proof. A local pass and push were
+not enough.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+4ea981c tools: check bad login privacy
+```
+
+Waited for Render:
+
+```text
+deploy=dep-d8735c6q1p3s73a46cqg
+commit=4ea981cf9e00409202a6e5c3645263997a02999b
+status=live
+finishedAt=2026-05-20T22:17:54.775165Z
+```
+
+Ran:
+
+```text
+python3 -B tools/logged_out_render_smoke.py
+```
+
+### Evidence
+
+The first helper run immediately after the live deploy failed with 503 across
+most endpoints:
+
+```text
+GET /healthz -> 503
+GET / -> 503
+POST /api/login -> 503
+most private payload/API/mutation probes -> 503
+POST /api/classifications -> 401 admin_login_required
+```
+
+Follow-up curl checks recovered:
+
+```text
+curl /healthz -> 200
+curl / -> 200 login page
+```
+
+Retry passed:
+
+```text
+python3 -B tools/logged_out_render_smoke.py -> ok=true
+POST /api/login -> 401 invalid_password
+all private payload reads -> 401
+raw data/legacy JSON -> 404
+all logged-out mutation probes -> 401 admin_login_required
+```
+
+### Barrier Or Failure
+
+There was a transient post-deploy 503 window. It resolved without code changes,
+but it is now logged as a live operations behavior to watch. If repeated, the
+helper should grow retry/backoff rather than treating a first 503 burst as
+final product failure.
+
+### Next Objective From Docs
+
+Re-open the `.md` files. A likely unblocked next item is adding retry/backoff to
+the logged-out smoke helper so transient deploy windows are reported clearly
+without hiding real regressions.
+
+### Why The Loop Continues
+
+The bad-login privacy proof is live after retry, but the helper itself exposed
+a resilience gap, and the authenticated/buyer/pilot/Rio manual proof gaps still
+remain.
+
+## 2026-05-19 19:36 -03 - Loop Cycle: Logged-Out Smoke Preflight Retry
+
+### Objective Reviewed
+
+The previous live deploy exposed a transient post-deploy 503 window. The next
+unblocked item was to make the smoke helper distinguish a temporary Render
+health window from a stable product regression without hiding real outages.
+
+### Action Taken
+
+Updated:
+
+```text
+tools/logged_out_render_smoke.py
+tests/test_logged_out_render_smoke.py
+LOGGED_OUT_RENDER_SMOKE_RUNBOOK.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+The helper now:
+
+```text
+runs /healthz preflight before the full smoke
+retries transient 502/503/504 health responses
+accepts --preflight-retries
+accepts --retry-delay-seconds
+fails fast with preflight /healthz if health never recovers
+```
+
+### Evidence
+
+Local checks:
+
+```text
+python3 -B -m py_compile tools/logged_out_render_smoke.py tests/test_logged_out_render_smoke.py -> passed
+python3 -B tests/test_logged_out_render_smoke.py -> passed
+python3 -B -c "from tests import test_logged_out_render_smoke as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+git diff --check -> passed
+```
+
+Live check before commit:
+
+```text
+python3 -B tools/logged_out_render_smoke.py --preflight-retries 1 --retry-delay-seconds 0 -> ok=true
+```
+
+### Barrier Or Failure
+
+No current live failure after retry logic. The previous 503 event remains
+logged as transient deploy behavior. If future deploys keep returning 5xx after
+preflight retries, treat that as a real live blocker.
+
+### Next Objective From Docs
+
+Commit/push the preflight retry helper path-limited, wait for Render, rerun the
+logged-out helper, log the deploy, then re-open the docs.
+
+### Why The Loop Continues
+
+The smoke helper is more resilient, but it still does not create authenticated
+viewer proof, admin CSRF-positive proof, buyer evidence, measured costs, or Rio
+manual approvals.

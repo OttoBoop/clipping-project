@@ -72,6 +72,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
   management/category/classification mutations with `admin_login_required`.
 - Logged-out Render smoke helper now also checks bad-login rejection without
   profile/config marker leakage.
+- Logged-out Render smoke helper now has `/healthz` preflight retry/backoff for
+  transient post-deploy `502/503/504` windows.
 - Rio economic ingestion architecture decision: do not flatten Rio into a plain
   target row; preserve query families, exclusions, date quality, and clusters.
 - V1 add-on menu/boundaries for avoiding unlimited low-paid service scope.
@@ -247,7 +249,7 @@ If `viewerAuthConfigured=false` returns, treat it as a regression and re-check
 Render env configuration. Do not rotate or publish viewer passwords in docs.
 
 Use `SYSTEM_REVIEW_STATUS_2026-05-20.md` as the current proof/blocker snapshot;
-it now reflects live commit `4f77770`.
+it now reflects live commit `4ea981c`.
 
 ## Do Not Do Next
 
