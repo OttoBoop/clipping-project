@@ -439,6 +439,28 @@ production rio_economico target row approved=false
 requires live scoping proof + query quality + date quality + cluster counting + source/body review + narrow first-run plan
 ```
 
+Topic-report consolidation:
+
+```text
+tools/rio_economic_build_topic_report.py
+data/reports/rio_economic_topic_report_20260519T012024Z.json
+story_count=25
+article_count=31
+canonical_rows_checked=10
+count_current_period=6
+research_only=2
+canonical_check_required=17
+target_row_approved=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+RIO_ECONOMIC_TOPIC_REPORT_20260519T012024Z.md
+```
+
+This is the first implementation of the safer topic-report path. It still does
+not approve a production target row; it shows that most v4 stories need
+canonical checks before current-period counting.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

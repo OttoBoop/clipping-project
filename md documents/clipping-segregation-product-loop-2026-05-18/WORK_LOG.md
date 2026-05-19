@@ -8738,3 +8738,196 @@ without credentials in this shell.
 Run diff/checks, commit/push the Rio architecture decision and this log
 path-limited, wait for Render, smoke live again, then continue reviewing the
 next long-term axis.
+
+## 2026-05-18 22:16 -03 - Loop Cycle: Rio Architecture Commit And Push
+
+### Objective Reviewed
+
+Commit and deploy the Rio ingestion architecture decision so future loops do
+not flatten Rio economic monitoring into an unsafe broad target row.
+
+### Action Taken
+
+Ran:
+
+```text
+git diff --check -> passed
+rg data/targets.json data/viewer_profiles.json assets/clipping-data.json assets/clipping-raw-texts.json -> rio_economico only present in viewer_profiles.json
+git add ACTIVE_NEXT_ACTION.md RIO_ECONOMIC_INDICATOR_TRACK.md RIO_ECONOMIC_PRODUCTION_GATE_V0.md WORK_LOG.md RIO_ECONOMIC_INGESTION_ARCHITECTURE_DECISION.md
+git commit -m "docs: decide Rio topic ingestion shape"
+git push origin HEAD:master
+```
+
+### Evidence
+
+```text
+99dce95 docs: decide Rio topic ingestion shape
+git push -> master updated from 2a72fe0 to 99dce95
+data/targets.json -> no rio_economico target row
+assets/clipping-data.json -> no rio_economico target row
+assets/clipping-raw-texts.json -> no rio_economico target key
+data/viewer_profiles.json -> rio_economico profile scope only
+```
+
+### Barrier Or Failure
+
+No git barrier. Rio production target remains intentionally blocked.
+
+### Next Objective From Docs
+
+Poll Render until `99dce95` is live, smoke production, then re-read the docs
+for the next weak axis.
+
+## 2026-05-18 22:17 -03 - Loop Cycle: Rio Topic Report Implementation
+
+### Objective Reviewed
+
+After the Rio ingestion architecture decision, the next safe technical step is
+a scoped topic report that combines dry-run cluster review and canonical
+date-quality evidence without writing production DB/assets/targets.
+
+### Action Taken
+
+Inspected current artifact shapes:
+
+```text
+data/reports/rio_economic_clustered_review_20260519T004653Z.json
+data/reports/rio_economic_canonical_review_20260519T003852Z.json
+data/reports/rio_economic_dry_run_20260519T000719Z.json
+tools/rio_economic_apply_cluster_annotations.py
+tools/rio_economic_canonical_review.py
+```
+
+Created:
+
+```text
+tools/rio_economic_build_topic_report.py
+tests/test_rio_economic_build_topic_report.py
+```
+
+### Evidence
+
+The new tool is designed to produce:
+
+```text
+story_count after duplicate cluster collapse
+article_count before collapse
+date_quality_status per representative story
+date_quality_policy=count_current_period|manual_review_before_counting|canonical_check_required|research_only
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+target_row_approved=false
+```
+
+It preserves the Rio topic/report path and does not create a production
+`rio_economico` target row.
+
+### Barrier Or Failure
+
+`pytest` remains unavailable in this shell, but compile/direct function smoke
+and real artifact generation ran successfully.
+
+### Next Objective From Docs
+
+Document the topic-report result, commit/push path-limited, and continue Render
+smoke.
+
+## 2026-05-18 22:20 -03 - Loop Cycle: Rio Topic Report Artifact
+
+### Objective Reviewed
+
+Verify the new Rio topic-report tool and generate a review artifact that stays
+outside production DB/assets/targets.
+
+### Action Taken
+
+Ran:
+
+```text
+python -m compileall tools/rio_economic_build_topic_report.py tests/test_rio_economic_build_topic_report.py -> passed
+direct function smoke -> passed
+python tools/rio_economic_build_topic_report.py data/reports/rio_economic_clustered_review_20260519T004653Z.json --canonical-report data/reports/rio_economic_canonical_review_20260519T003852Z.json -> passed
+python -m pytest tests/test_rio_economic_build_topic_report.py -> blocked: No module named pytest
+```
+
+Generated:
+
+```text
+data/reports/rio_economic_topic_report_20260519T012024Z.json
+data/reports/rio_economic_topic_report_20260519T012024Z.csv
+data/reports/rio_economic_topic_report_20260519T012024Z.md
+RIO_ECONOMIC_TOPIC_REPORT_20260519T012024Z.md
+```
+
+### Evidence
+
+```text
+story_count=25
+article_count=31
+canonical_rows_checked=10
+target_row_approved=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+date_quality_policy_counts:
+  count_current_period=6
+  research_only=2
+  canonical_check_required=17
+```
+
+### Barrier Or Failure
+
+`pytest` remains unavailable. The direct smoke and real artifact generation are
+the workaround for this loop.
+
+### Next Objective From Docs
+
+Run diff/checks, commit/push the topic-report tool/artifacts/docs path-limited,
+poll Render for `99dce95` and the new commit, smoke live, then continue.
+
+## 2026-05-18 22:25 -03 - Loop Cycle: 99dce95 Live Smoke
+
+### Objective Reviewed
+
+The Rio ingestion architecture decision reached Render. Verify the live privacy
+gate before pushing the topic-report implementation.
+
+### Action Taken
+
+Polled Render MCP:
+
+```text
+dep-d86gp64vikkc73c2vh90 99dce95 docs: decide Rio topic ingestion shape -> live
+dep-d86gnqcvikkc73c2un90 2a72fe0 docs: add Render env safety runbook -> deactivated
+```
+
+Ran logged-out live smoke.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated positive proof remains blocked
+without passwords in this shell.
+
+### Next Objective From Docs
+
+Commit/push the topic-report implementation and generated artifacts
+path-limited, poll Render, smoke live again, then re-read the docs.

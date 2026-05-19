@@ -120,8 +120,10 @@ Continue the production loop. Current priority from the docs:
    until live scoping proof, date-quality, cluster counting, source/body review,
    and narrow first-run planning are all satisfied; Rio ingestion architecture
    decision now blocks plain target-row implementation and prefers scoped
-   topic/query reporting first; next Rio step is fresh production scoping proof
-   and/or a scoped Rio topic report before any production target row;
+   topic/query reporting first; first topic-report artifact now collapses 31
+   articles into 25 stories and marks only 6 stories as current-period countable
+   from the first 10 canonical checks; next Rio step is fresh production scoping
+   proof and/or extended canonical review before any production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; V1 pilot scope and delivery-format
    decision now exist; demo script is now tied to the V1 offer without exposing

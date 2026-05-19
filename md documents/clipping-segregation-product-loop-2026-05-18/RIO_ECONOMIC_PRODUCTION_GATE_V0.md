@@ -97,6 +97,7 @@ Current evidence:
 
 ```text
 v4 cluster annotation: row_count=31, cluster_count=3, clustered_row_count=9
+topic report: article_count=31, story_count=25
 ```
 
 Rows 4/30/31, 8/9/10, and 16/17/18 must not inflate story counts.
@@ -138,6 +139,7 @@ Architecture decision:
 RIO_ECONOMIC_INGESTION_ARCHITECTURE_DECISION.md
 plain data/targets.json target row is not safe enough for Rio economic monitoring
 preferred first production shape is scoped topic/query report before normal dashboard ingestion
+first topic-report artifact now exists and keeps target_row_approved=false
 ```
 
 ## Current Next Step
