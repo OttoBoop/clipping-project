@@ -289,3 +289,39 @@ Push em `origin/master` ✅. Deploy disparado via Render API às 20:19 (HTTP 202
 - ⚠️ Smoke em prod ainda não rodou — deploy em andamento. Vou testar via curl assim que terminar.
 - ⚠️ `restore` de viewer arquivado não existe (decisão consciente — archive limpa senha; pra trazer de volta, admin recria).
 - ⚠️ Renomear `profile_key` não é suportado (re-key implícito quebraria sessões e file references). Por enquanto: arquivar e criar novo.
+
+---
+
+## 2026-05-19 20:35 — Goal 5 backend contract 11/11 em prod + restore guard live
+
+**Goal endereçado:** Goal 5 (target mgmt completo com erros claros)
+
+**O que foi feito desde a última entrada:**
+
+1. `fix(targets): block restore that would create active display_name homonym` (`f4b42a2`) — fecha o último buraco da família display_name (create/update já cobertos; restore era o que faltava).
+2. `tools/admin_viewers_smoke.py` (`209e25c`) — portado do `/tmp` pra repo pra ser reusável. Goal 1 smoke 9/9 ainda passa após o pipeline de deploys.
+3. `tools/targets_mgmt_smoke.py` — smoke novo de Goal 5: cria secondary/primary, promove, demove, conflito de duplicata, conflito de restore, demote protected. 11/11 OK em prod 20:35.
+4. MAJOR atualizado com entrada 20:25 (restore guard) e 20:35 (Goal 5 smoke).
+
+**Status atualizado dos 5 Goals:**
+
+| Goal | Código em prod | Smoke automatizado | Visual em prod por Otávio |
+|---|---|---|---|
+| 1 — admin viewers UI | ✅ | ✅ (9/9) | ✅ migrado pra GOALS_ATINGIDOS |
+| 2 — logout + change-password | ✅ | n/a (UI-only) | ⏳ pendente |
+| 3 — senhas humanas | ✅ | parcial via Goal 1 | ⏳ pendente |
+| 4 — regressão-zero | meta contínua | 369/369 pytest + 2 smokes prod | meta — não migra |
+| 5 — target mgmt completo | ✅ | ✅ (11/11) | ⏳ pendente |
+
+**Pra revisar (ordem cronológica decrescente — mais novo primeiro):**
+
+1. Ler [MANTRA.md](MANTRA.md) — Goal 1 já saiu da lista
+2. Ler [GOALS_ATINGIDOS.md](GOALS_ATINGIDOS.md) — entrada Goal 1 com 9-step evidence
+3. Rodar smoke local (opcional): `CLIPPING_ADMIN_PASSWORD=clipping-admin-2026 python tools/admin_viewers_smoke.py` e `python tools/targets_mgmt_smoke.py`
+4. **Testar no browser as 3 frentes que dependem de você:**
+   - Goal 2: clicar "Sair" no header (deve voltar pra tela de login + cookie removido); clicar "Trocar senha", digitar errado (deve dar mensagem específica), digitar certo (deve trocar + permanecer logado).
+   - Goal 3: confirmar que as 5 senhas humanas (clipping-admin-2026, flavio-gabinete-2026, etc.) funcionam.
+   - Goal 5: abrir a área de "Gerenciar nomes secundários", testar criar duplicado, promover um, demover, arquivar/restaurar. Confirmar mensagens específicas.
+   - Goal 1: abrir nova seção "Clientes (viewers)", criar um cliente teste, logar como ele em outra aba/janela anônima.
+
+**Se algum dos 4 acima falhar visualmente, é regressão a registrar.** Comando: `gh issue create` ou só me reportar no chat.

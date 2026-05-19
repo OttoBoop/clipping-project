@@ -599,4 +599,45 @@ A implementação direta — endpoint `POST /api/change-password` que lê `old_p
 
 **Goal 5 pode migrar pra GOALS_ATINGIDOS quando Otávio confirmar visualmente em prod.**
 
+---
+
+## 2026-05-19 20:35 — Goal 5 smoke prod completo (11/11): backend contract validado
+
+**Goal endereçado:** Goal 5 (target mgmt completo) — verificação automatizada do contrato de API
+**Método executado:** smoke estendido em prod (`tools/targets_mgmt_smoke.py`) que cobre 4 ops + 3 caminhos de erro estruturado + 1 cenário de conflito multi-passo (criar → arquivar → recriar → tentar restaurar).
+
+**Resultado:** 11/11 etapas OK em `clipping-project.onrender.com` às 20:35 (deploy `1ee2b82` live, restore guard ativo). Mensagens:
+
+| Caminho | HTTP | Mensagem (literal de prod) |
+|---|---|---|
+| create secondary happy | 200 | (key gerado) |
+| display_name duplicado | 400 | "Já existe um nome cadastrado como 'Smoke Sec X'. Escolha um nome diferente ou edite o existente." |
+| promote secondary→primary | 200 | (transição ok) |
+| re-promote primário | 400 | "Este nome ja e principal." |
+| demote primary→secondary | 200 | (transição ok) |
+| demote protected (flavio_valle) | 400 | "Nomes principais nao podem ser editados por aqui." |
+| create primary direto | 200 | (key gerado) |
+| archive primário | 200 | (archived) |
+| recria homônimo + tenta restaurar arquivado | 400 | "Já existe um nome ativo cadastrado como 'Smoke Sec X'. Arquive ou renomeie esse nome antes de restaurar." |
+
+**Por que esse método (e não outro):**
+
+- ✅ **API contract first**: Goal 5 critério inclui "mensagens específicas". Smoke verifica que o backend devolve mensagens literais corretas — que é o que a UI consome via `apiErrorMessage`. UI rendering depende de browser (que não tenho).
+- ✅ **Cobre todos os caminhos de erro do MAJOR 12:18 design**: idempotente-com-erro (re-promote), guarded (protected demote), conflitante (restore após recriar). Cada um cita o nome conflitante ou explica a restrição.
+- ✅ **Cleanup parcial automatizado**: cada smoke roda com tag timestamp única; targets criados são arquivados ao fim (não deletados — design intencional). Acumulam, mas não interferem em produto.
+
+**Limitação consciente:**
+
+- ⏳ **Browser render dos erros NÃO é coberto pelo smoke**. Mensagens chegam ao backend corretas; `apiErrorMessage` foi auditado por code-read e parsea tanto `payload.message` quanto `payload.suggestion` corretamente. Mas se algum CSS/script bug suprimisse a `.form-message`, esse smoke não pegaria.
+- ⏳ **Goal 5 NÃO migra pra GOALS_ATINGIDOS ainda**: o critério literal cita "Otávio abre cliente, testa as 4 operações". Sem confirmação visual, não declaro vitória unilateralmente — mantra rule 3 ("decisões táticas são minhas, mas reconheço ambiguidade estratégica").
+
+**Próxima sub-ação concreta:** aguardar Otávio rodar o fluxo no browser. Se confirmar, migro Goal 5. Se reportar algum bug, abro nova frente.
+
+**Smoke targets deixados em prod (arquivados, invisíveis a viewers):**
+
+- `smoke_pri_1779233614`, `smoke_sec_1779233614` (primeira corrida)
+- `smoke_pri_1779233709`, `smoke_sec_1779233709`, `smoke_sec_1779233709_2` (segunda corrida)
+
+Vão acumular se o smoke for re-rodado. Eventual cleanup via `archive_known_test_targets` se virar problema (atualmente reage só a marker "atlas_teste").
+
 **Próxima sub-ação concreta:** atualizar SESSION_LOG, commitar docs, aguardar decisão do Otávio sobre próximo passo. Candidatos para enquanto ele revisa: começar storage migration (frente bloqueadora de Goals 1, 2-B, 3) OU mexer em casos-edge restantes do baseline (acentos diferentes, payload sem keywords, etc.).
