@@ -7843,6 +7843,56 @@ Run diff/checks, commit/push path-limited, poll Render until queued deploys are
 live, smoke production again, then continue with live scoping proof, buyer/quote
 validation, or operations review.
 
+## 2026-05-18 22:07 -03 - Loop Cycle: Local Rio Scope Recheck During Render Wait
+
+### Objective Reviewed
+
+Render logs were not available through MCP because the Render logs tool reported
+no workspace selected. The deploy list still worked, so the loop continued with
+an unblocked local Rio scoping check from `RIO_ECONOMIC_PRODUCTION_GATE_V0.md`.
+
+### Action Taken
+
+Checked:
+
+```text
+data/viewer_profiles.json
+data/targets.json
+assets/clipping-data.json
+assets/clipping-raw-texts.json
+```
+
+### Evidence
+
+Local profile state:
+
+```text
+rio_economico profile exists
+rio_economico target scope=["rio_economico"]
+demo_cliente target scope=[]
+```
+
+Search result:
+
+```text
+data/targets.json -> no rio_economico target row found
+data/viewer_profiles.json -> rio_economico appears only as viewer profile/scope
+assets/clipping-data.json -> no rio_economico target row found
+assets/clipping-raw-texts.json -> contains incidental Portuguese word "economico" in a Flavio raw text, not a rio_economico target key
+```
+
+### Barrier Or Failure
+
+Render log retrieval through MCP is blocked by missing workspace selection; this
+is not a stop condition because deploy list, live smoke, and local repo checks
+still work. Static `assets/` remain not-private and are not the paid-client
+surface.
+
+### Next Objective From Docs
+
+Commit/push this log entry with the previous live smoke log, keep polling
+Render, smoke latest live deploy, and do not add a Rio production target row.
+
 ## 2026-05-18 22:06 -03 - Loop Cycle: Prospect Checklist Push And 200c79f Live Smoke
 
 ### Objective Reviewed
