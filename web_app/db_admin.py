@@ -395,6 +395,17 @@ def update_secondary_target(key: str, payload: dict[str, Any]) -> dict[str, Any]
     if bool(row.get("archived")):
         raise ValidationError("Restaure o nome antes de editar.")
     cleaned = clean_target_payload(payload, row)
+
+    new_name_folded = cleaned["display_name"].casefold()
+    for other_index, other in enumerate(rows):
+        if other_index == index or bool(other.get("archived")):
+            continue
+        existing_name = normalize_text(other.get("display_name") or other.get("label") or "")
+        if existing_name.casefold() == new_name_folded:
+            raise ValidationError(
+                f"Já existe um nome cadastrado como '{other.get('label') or existing_name}'. Escolha um nome diferente ou edite o existente."
+            )
+
     row["label"] = cleaned["display_name"]
     row["display_name"] = cleaned["display_name"]
     row["className"] = ""

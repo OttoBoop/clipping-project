@@ -123,6 +123,51 @@ def test_create_secondary_target_rejects_duplicate_display_name(monkeypatch, tmp
     assert stored[0]["key"] == "shakira"
 
 
+def test_update_secondary_target_rejects_renaming_to_existing_display_name(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "shakira", "label": "Shakira", "display_name": "Shakira", "keywords": ["Shakira"]},
+                {"key": "vorcaro", "label": "Vorcaro", "display_name": "Vorcaro", "keywords": ["Vorcaro"]},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    try:
+        db_admin.update_secondary_target("vorcaro", {"display_name": "Shakira"})
+    except db_admin.ValidationError as exc:
+        assert "Já existe um nome cadastrado" in str(exc)
+        assert "Shakira" in str(exc)
+    else:
+        raise AssertionError("rename to existing display_name should be rejected")
+
+    stored = json.loads(targets_path.read_text(encoding="utf-8"))
+    by_key = {row["key"]: row for row in stored}
+    assert by_key["vorcaro"]["display_name"] == "Vorcaro", "original row must not have been mutated"
+
+
+def test_update_secondary_target_allows_rename_to_own_current_name(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "shakira", "label": "Shakira", "display_name": "Shakira", "keywords": ["Shakira"]},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    updated = db_admin.update_secondary_target("shakira", {"display_name": "Shakira", "keywords": ["Shakira", "Shak"]})
+    assert updated["display_name"] == "Shakira"
+    assert "Shak" in updated["keywords"]
+
+
 def test_create_secondary_target_allows_duplicate_against_archived_row(monkeypatch, tmp_path):
     db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
     targets_path = tmp_path / "targets.json"
