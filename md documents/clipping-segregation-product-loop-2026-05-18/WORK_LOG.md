@@ -10330,3 +10330,112 @@ still requires credentials.
 Run docs checks, commit/push path-limited, wait for Render, smoke production,
 then re-read docs and continue. Likely next unblocked item is either buyer quote
 tracker readiness or another system review/status refresh.
+
+## 2026-05-18 23:40 -03 - Loop Cycle: Sellable Demo Readiness Deploy And Smoke
+
+### Objective Reviewed
+
+Deploy the sellable demo readiness review and confirm the live privacy gate did
+not regress.
+
+### Action Taken
+
+Committed and pushed path-limited:
+
+```text
+3c20936 docs: add sellable demo readiness review
+```
+
+Waited for Render deploy:
+
+```text
+dep-d86hob67r5hc73cnrq3g -> live
+```
+
+Ran logged-out production smoke.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No deploy barrier. Positive authenticated demo proof still needs a real
+profile password; no buyer quote was invented.
+
+### Next Objective From Docs
+
+Re-read long-term docs. Next likely unblocked item is a system review/status
+refresh or buyer quote tracker readiness review that does not fabricate buyer
+data.
+
+## 2026-05-18 23:44 -03 - Loop Cycle: System Review Status Refresh
+
+### Objective Reviewed
+
+Refresh the system review snapshot after the Rio manual sidecar, Rio read-only
+UI, Render operations review, and sellable demo readiness deploys.
+
+### Action Taken
+
+Created:
+
+```text
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The new snapshot records:
+
+```text
+latest live commit checked: 3c20936
+latest live deploy checked: dep-d86hob67r5hc73cnrq3g
+logged-out private endpoints -> 401 viewer_login_required
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+```
+
+It explicitly separates:
+
+```text
+fresh proof: logged-out Render privacy and deployed static asset markers
+prior proof: positive Flavio/Shakira/Rio viewer scoping from 2026-05-19 snapshot
+current blocker: no viewer/admin passwords in this shell for fresh positive browser proof
+```
+
+### Barrier Or Failure
+
+No docs barrier. One `rg` proof command was initially misquoted with shell
+backticks; it did not change files and the safe-quoted rerun passed. This
+status update does not replace the need for future authenticated Render proof
+when credentials are available.
+
+### Next Objective From Docs
+
+Run checks, commit/push this status refresh and latest log path-limited, wait
+for Render, smoke production, then re-read docs again.
