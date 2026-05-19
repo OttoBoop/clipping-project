@@ -8,6 +8,7 @@
   const apiUrl = (app.dataset.clippingApiUrl || "").trim().replace(/\/$/, "");
   const staticBundle = app.dataset.clippingStatic === "1";
   const initialSessionRole = (app.dataset.clippingSessionRole || "").trim();
+  const initialSessionProfile = (app.dataset.clippingSessionProfile || "").trim();
   const apiAvailable = Boolean(apiUrl) || !staticBundle;
   let editorEnabled = apiAvailable;
   let csrfToken = "";
@@ -104,6 +105,15 @@
   const baseArticlesStat = document.getElementById("baseArticlesStat");
   const baseRawStat = document.getElementById("baseRawStat");
   const baseUpdatedText = document.getElementById("baseUpdatedText");
+  const rioEconomicReportPanel = document.getElementById("rioEconomicReportPanel");
+  const rioEconomicReportMessage = document.getElementById("rioEconomicReportMessage");
+  const rioEconomicStoryCount = document.getElementById("rioEconomicStoryCount");
+  const rioEconomicArticleCount = document.getElementById("rioEconomicArticleCount");
+  const rioEconomicCurrentCount = document.getElementById("rioEconomicCurrentCount");
+  const rioEconomicManualCount = document.getElementById("rioEconomicManualCount");
+  const rioEconomicManualStatus = document.getElementById("rioEconomicManualStatus");
+  const rioEconomicTargetGate = document.getElementById("rioEconomicTargetGate");
+  const rioEconomicReportList = document.getElementById("rioEconomicReportList");
   const LAZY_BATCH = 50;
   const ACTIVE_RUN_MESSAGE = "Já existe uma atualização em andamento. Acompanhe em Progresso compartilhado.";
 
@@ -580,6 +590,16 @@
     return payload.meta.viewerRole === "admin";
   }
 
+  function sessionProfile() {
+    if (initialSessionProfile) return initialSessionProfile;
+    if (payload && payload.meta && payload.meta.viewerProfile) return String(payload.meta.viewerProfile);
+    return "";
+  }
+
+  function viewerCanSeeRioReport() {
+    return apiAvailable && (viewerIsAdmin() || sessionProfile() === "rio_economico");
+  }
+
   function applyViewerControls() {
     var isAdmin = viewerIsAdmin();
     editorEnabled = isAdmin && !(payload && payload.meta && payload.meta.editorEnabled === false);
@@ -603,6 +623,105 @@
   }
 
   applyViewerControls();
+
+  function rioPolicyLabel(value) {
+    var labels = {
+      count_current_period: "conta no período",
+      manual_review_before_counting: "revisão antes de contar",
+      research_only: "somente pesquisa",
+    };
+    return labels[value] || String(value || "sem política");
+  }
+
+  function rioStatusCountsText(counts) {
+    counts = counts || {};
+    var labels = {
+      not_required: "sem revisão",
+      not_reviewed: "não revisado",
+      approved_current_period: "aprovado",
+      rejected_research_only: "rejeitado",
+    };
+    var parts = Object.keys(counts).sort().map(function (key) {
+      return (labels[key] || key) + ": " + counts[key];
+    });
+    return parts.length ? parts.join(" · ") : "Sem status manual.";
+  }
+
+  function renderRioEconomicStory(story) {
+    var title = escapeHtml(story.title || "Sem título");
+    var url = story.canonical_url || story.url || "";
+    var titleHtml = url ? '<a href="' + escapeHtml(url) + '" target="_blank" rel="noreferrer">' + title + "</a>" : title;
+    var dimensions = Array.isArray(story.dimensions) ? story.dimensions.join(", ") : String(story.primary_dimension || "");
+    var manual = story.manual_approval_status && story.manual_approval_status !== "not_required"
+      ? " · " + story.manual_approval_status
+      : "";
+    return (
+      '<article class="rio-report-item">' +
+      '<div><strong>' + titleHtml + "</strong>" +
+      '<span>' + escapeHtml(rioPolicyLabel(story.indicator_policy || story.date_quality_policy)) + manual + "</span></div>" +
+      '<div class="chips">' +
+      '<span class="chip">' + escapeHtml(String(story.article_count || 1)) + " matéria(s)</span>" +
+      (dimensions ? '<span class="chip">' + escapeHtml(dimensions) + "</span>" : "") +
+      "</div>" +
+      "</article>"
+    );
+  }
+
+  function renderRioEconomicReport(report) {
+    var meta = report && report.meta ? report.meta : {};
+    var policyCounts = meta.indicator_policy_counts || meta.date_quality_policy_counts || {};
+    if (rioEconomicStoryCount) rioEconomicStoryCount.textContent = String(meta.story_count || 0);
+    if (rioEconomicArticleCount) rioEconomicArticleCount.textContent = String(meta.article_count || 0);
+    if (rioEconomicCurrentCount) rioEconomicCurrentCount.textContent = String(policyCounts.count_current_period || 0);
+    if (rioEconomicManualCount) rioEconomicManualCount.textContent = String(policyCounts.manual_review_before_counting || 0);
+    if (rioEconomicManualStatus) {
+      rioEconomicManualStatus.textContent = rioStatusCountsText(meta.manual_approval_status_counts);
+    }
+    if (rioEconomicTargetGate) {
+      rioEconomicTargetGate.textContent = meta.target_row_approved
+        ? "Target de produção aprovado"
+        : "Target de produção bloqueado";
+    }
+    if (rioEconomicReportMessage) {
+      rioEconomicReportMessage.textContent = meta.reportFile
+        ? "Artefato atual: " + meta.reportFile
+        : "Relatório econômico disponível.";
+    }
+    if (rioEconomicReportList) {
+      var stories = Array.isArray(report && report.stories) ? report.stories.slice(0, 8) : [];
+      rioEconomicReportList.innerHTML = stories.length
+        ? stories.map(renderRioEconomicStory).join("")
+        : '<p class="filter-note">Nenhuma história econômica disponível.</p>';
+    }
+  }
+
+  function loadRioEconomicReport() {
+    if (!rioEconomicReportPanel) return Promise.resolve();
+    if (!viewerCanSeeRioReport()) {
+      rioEconomicReportPanel.hidden = true;
+      return Promise.resolve();
+    }
+    rioEconomicReportPanel.hidden = false;
+    if (rioEconomicReportMessage) rioEconomicReportMessage.textContent = "Carregando recorte econômico...";
+    return apiFetch("/api/reports/rio-economic-topic", { cache: "no-store" })
+      .then(function (resp) {
+        return resp.json().catch(function () { return {}; }).then(function (data) {
+          if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
+          return data;
+        });
+      })
+      .then(renderRioEconomicReport)
+      .catch(function (error) {
+        if (!viewerCanSeeRioReport()) {
+          rioEconomicReportPanel.hidden = true;
+          return;
+        }
+        if (rioEconomicReportMessage) {
+          rioEconomicReportMessage.textContent = friendlyError(error, "Não foi possível carregar o relatório econômico.");
+        }
+        if (rioEconomicReportList) rioEconomicReportList.innerHTML = "";
+      });
+  }
 
   function renderRunTarget(target) {
     var id = "run-target-" + target.key;
@@ -2403,8 +2522,8 @@
 
 
   if (apiAvailable) {
-    // Categories are public. Always cache them so read-only users still see the
-    // taxonomy on hover/inspection (and admins land with the cache populated).
+    // Categories are session-scoped API data. Cache them for authenticated
+    // viewers/admins so display chips and editors use the same taxonomy.
     apiFetch("/api/categories", { cache: "no-store" })
       .then(function (r) { return r.ok ? r.json() : { categories: [] }; })
       .then(function (data) {
@@ -2412,8 +2531,8 @@
       })
       .catch(function () { /* leave categoriesCache empty */ });
 
-    // Live classifications overlay — public read, applies to every visitor so
-    // the static snapshot's classification chips stay current.
+    // Live classifications overlay: session-scoped read for authenticated
+    // viewers/admins so stale static chips do not widen a profile's scope.
     apiFetch("/api/classifications", { cache: "no-store" })
       .then(function (r) { return r.ok ? r.json() : { classifications: [] }; })
       .then(function (data) {
@@ -2473,6 +2592,7 @@
         loadingState.hidden = true;
       }
       applyState();
+      loadRioEconomicReport();
       if (apiAvailable) {
         refreshTargets();
         if (viewerIsAdmin()) pollStatus();
