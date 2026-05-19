@@ -6263,3 +6263,80 @@ checks.
 
 Commit and push this log entry path-limited, poll Render again, then re-read the
 long-term docs to choose the next unblocked item.
+
+## 2026-05-18 21:05 -03 - Loop Cycle: Rio V3 Body/Source Review Pass
+
+### Objective Reviewed
+
+After pushing the live-smoke log, the docs pointed to the next unblocked Rio
+gate: body/source review for the v3 sample, while Render deploys the newest log
+commit.
+
+### Action Taken
+
+Polled Render and re-read the loop docs:
+
+```text
+LONG_TERM_GOALS.md
+DEPENDENCY_MAP.md
+CURRENT_SHORT_TERM_LOOP.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_CHECKLIST.md
+RIO_ECONOMIC_V3_BODY_SOURCE_REVIEW_PLAN.md
+RIO_ECONOMIC_V3_SAMPLE_REVIEW_20260518T234818Z.md
+```
+
+Then checked external source/body evidence for the priority Rio rows and
+representative rows across all dimensions, and added:
+
+```text
+RIO_ECONOMIC_V3_BODY_SOURCE_REVIEW_20260518.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+RIO_ECONOMIC_V3_BODY_SOURCE_REVIEW_PLAN.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Render poll after `595ce78` push:
+
+```text
+dep-d86fl5addbjc739t0mig 595ce78 docs: log live smoke on clipping follow-up deploy -> build_in_progress
+dep-d86fjq4rp5ls739cpm9g d5d6f99 docs: add Rio v3 body review gate -> live
+```
+
+Body/source review result:
+
+```text
+rows_reviewed=21
+dimensions_covered=6/6
+body_true_positive=16
+body_useful_unclear=1
+body_false_positive=2
+body_duplicate=2
+production_target_row_approved=false
+```
+
+### Barrier Or Failure
+
+Not a production approval. The review found:
+
+```text
+row 15 generic hotel jobs false positive
+row 27 state-government Fazenda false positive
+row 1 Google News/source date mismatch risk
+duplicate Shakira and Mercado Popular story clusters
+fresh authenticated viewer proof still blocked by missing passwords in shell
+```
+
+### Next Objective From Docs
+
+Run diff checks, commit/push this Rio review path-limited, poll Render, then
+continue with the next unblocked item: query/source mitigation for Rio v4 or
+fresh live privacy smoke if the new deploy becomes live first.

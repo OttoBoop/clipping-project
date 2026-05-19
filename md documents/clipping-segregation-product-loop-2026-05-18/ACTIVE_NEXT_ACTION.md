@@ -99,9 +99,10 @@ Continue the production loop. Current priority from the docs:
    sample exist; title-level labels exist; source/dimension refinement now
    exists; a v2 revised query file/sample now separates `municipal_finance`
    from `economic_development`; v3 query file/sample/review now exists with a
-   strong title-level result; body/source review plan now exists; next Rio step
-   is doing that body/source review plus fresh production scoping proof before
-   any production target row;
+   strong title-level result; body/source review plan now exists; first
+   body/source pass now reviewed 21 rows across all six dimensions; next Rio
+   step is applying the row 15/27/date/duplicate mitigations plus fresh
+   production scoping proof before any production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; next packaging step is defining included
    update frequency and delivery format; V1 pilot scope now exists;

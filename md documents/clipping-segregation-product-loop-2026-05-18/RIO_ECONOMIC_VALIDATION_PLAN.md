@@ -95,6 +95,8 @@ Use these reasons consistently:
 - `crime_no_commerce_signal`: public safety story without commerce/tourism or
   local business impact;
 - `ambiguous_rio`: Rio as name/brand/person, not city context;
+- `source_date_mismatch`: Google News/source date does not match the canonical
+  article body/date well enough for production use;
 - `too_generic`: query matched a broad word without useful local content.
 
 ## Minimum Acceptance Before Adding A Target
@@ -294,6 +296,28 @@ RIO_ECONOMIC_V3_BODY_SOURCE_REVIEW_PLAN.md
 first priority rows: v3 #15 and #27
 minimum gate: at least 20 body/source-reviewed rows, at least one per dimension,
 all known false positives mitigated, fresh production scoping proof
+```
+
+First body/source review pass:
+
+```text
+RIO_ECONOMIC_V3_BODY_SOURCE_REVIEW_20260518.md
+rows_reviewed=21
+dimensions_covered=6/6
+body_true_positive=16
+body_useful_unclear=1
+body_false_positive=2
+body_duplicate=2
+production_target_row_approved=false
+```
+
+Main body/source findings:
+
+```text
+row 15 hotel-jobs ambiguity needs Rio/title/body/source anchor mitigation
+row 27 state-government Fazenda leakage needs exclusions
+row 1 exposed Google News recency/source mismatch risk
+Shakira and Mercado Popular stories need clustering before dashboard use
 ```
 
 ## First Review Questions For The Loop

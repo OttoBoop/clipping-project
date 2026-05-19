@@ -73,6 +73,29 @@ national_macro_only
 event_no_economic_signal
 duplicate_story
 paywall_or_unreadable
+source_date_mismatch
+```
+
+## First Review Pass Status
+
+The first body/source pass exists:
+
+```text
+RIO_ECONOMIC_V3_BODY_SOURCE_REVIEW_20260518.md
+rows_reviewed=21
+dimensions_covered=6/6
+production_target_row_approved=false
+```
+
+It satisfies the row-count part of the promotion gate, but not the full
+promotion gate. Remaining blockers:
+
+```text
+row 15 generic hotel-jobs false positive mitigation
+row 27 state-government Fazenda false positive mitigation
+Google News canonical date/source sanity check
+story clustering for duplicate Shakira and Mercado Popular items
+fresh production scoping proof before any production run
 ```
 
 ## Promotion Gate
