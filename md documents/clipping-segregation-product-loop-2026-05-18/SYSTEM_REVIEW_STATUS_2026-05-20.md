@@ -8,9 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-153cff7 docs: log Rio approval guard deploy
-deploy dep-d86uqakvikkc73cbtajg -> live
-finishedAt=2026-05-20T17:24:48.328224Z
+c879432 tools: harden authenticated Render smoke
+deploy dep-d86uvl57vvec73b8i5jg -> live
+finishedAt=2026-05-20T17:33:18.551061Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -75,6 +75,7 @@ ceb0179 tools: add buyer quote evidence guard
 13489d5 docs: refresh status after buyer guard
 6c90470 tools: guard Rio manual approval artifacts
 153cff7 docs: log Rio approval guard deploy
+c879432 tools: harden authenticated Render smoke
 ```
 
 Freshly proven after deploy:
@@ -102,6 +103,9 @@ Freshly proven after deploy:
   outside-repo secret file and requires the expected viewer profile set by
   default, so a one-profile run does not masquerade as complete production
   proof;
+- viewer profile scope now has a static checker that compares
+  `data/viewer_profiles.json` to `data/targets.json` and keeps `rio_economico`
+  as a topic-only scope key rather than a production target row;
 - Rio manual approvals now have a guarded status taxonomy and
   `approved_current_period` cannot regenerate a counted report without
   source/date evidence;
@@ -121,7 +125,7 @@ Freshly proven after deploy:
   guessed demo reactions from becoming pricing evidence.
 - Render static/data boundary probes still return `404` for raw `data/` files
   and the legacy root `clipping-data.json`, while scoped `/assets/*.json`
-  still returns `401` when logged out after `153cff7`.
+  still returns `401` when logged out after `c879432`.
 
 ## Authenticated Production Proof
 
@@ -259,6 +263,17 @@ measured_pilot_run_count=0
 final_price_decided=false
 ```
 
+Current viewer profile scope check:
+
+```text
+ok=true
+profile_count=4
+target_count=5
+demo_cliente target_count=0
+rio_economico target_keys=[rio_economico]
+topic_only_keys_present_as_targets=[]
+```
+
 ## Operations State
 
 Render facts:
@@ -312,5 +327,5 @@ Continue from the weakest unblocked items:
 6. keep approval UI/actions hidden until approval writes are connected end to
    end.
 7. re-open the long-term docs and choose the next weak unblocked item after
-   this live `153cff7` smoke.
+   this live `c879432` smoke.
 ```

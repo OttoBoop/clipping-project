@@ -19,6 +19,9 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - CSRF on admin mutations.
 - Viewer readonly shell before payload load.
 - Reviewable profile scope file at `data/viewer_profiles.json`.
+- Viewer profile scope checker now validates `data/viewer_profiles.json`
+  against `data/targets.json`, keeping `rio_economico` topic-only and
+  `demo_cliente` empty.
 - Static export policy: static bundles are not the private paid-client surface.
 - Deployment/env memory for Render/local setup.
 - Playwright browser smoke for logged-out, Flavio viewer, Shakira viewer, and
@@ -150,6 +153,9 @@ Continue the production loop. Current priority from the docs:
    mistaken for full proof;
    static data boundary review now also proves raw `data/` files are not the
    public private-client surface;
+   a profile-scope checker now also proves the non-secret scope file does not
+   reference unknown ordinary targets and does not accidentally add Rio as a
+   production target row;
 3. keep target-management no-fake-UI review fresh; a 2026-05-18 code/docs
    pass exists and logged-out live mutation calls now reject with
    `admin_login_required`, but positive admin CSRF/target-management smoke on
@@ -224,7 +230,7 @@ If `viewerAuthConfigured=false` returns, treat it as a regression and re-check
 Render env configuration. Do not rotate or publish viewer passwords in docs.
 
 Use `SYSTEM_REVIEW_STATUS_2026-05-20.md` as the current proof/blocker snapshot;
-it now reflects live commit `153cff7`.
+it now reflects live commit `c879432`.
 
 ## Do Not Do Next
 

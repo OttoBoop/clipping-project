@@ -13124,3 +13124,161 @@ the next unblocked product/operations guard instead of stopping.
 The helper is stronger, but no real authenticated viewer/admin Render proof has
 run yet. The loop must still return to the docs after deploy and keep working
 on the remaining gaps.
+
+## 2026-05-19 14:30 -03 - Loop Cycle: Authenticated Smoke Hardening Live Deploy
+
+### Objective Reviewed
+
+Deploy the stricter authenticated-smoke helper and verify the live logged-out
+privacy/static boundary remains intact.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+c879432 tools: harden authenticated Render smoke
+git push origin HEAD:master
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86uvl57vvec73b8i5jg
+commit=c8794320c748051c789a2128b978a6b10be44032
+status=live
+finishedAt=2026-05-20T17:33:18.551061Z
+```
+
+Updated local docs after live smoke:
+
+```text
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+This status/log update should be committed with the next path-limited loop
+change unless a status-only commit is needed for coordination.
+
+### Evidence
+
+Live logged-out smoke on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+  job=succeeded
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /data/targets.json -> 404 Not Found
+GET /data/viewer_profiles.json -> 404 Not Found
+GET /data/reports/rio_economic_topic_report_20260519T142621Z.json -> 404 Not Found
+GET /clipping-data.json -> 404 Not Found
+```
+
+### Barrier Or Failure
+
+No credentials were available, so the stricter authenticated helper itself was
+not run against live profile passwords. That remains a real proof gap.
+
+### Next Objective From Docs
+
+Re-open the required docs and choose the next unblocked item. Do not stop on
+the clean logged-out smoke; it is only evidence for the current checkpoint.
+
+### Why The Loop Continues
+
+The live privacy gate still passes and the smoke helper is stricter, but the
+product still lacks fresh authenticated proof, real buyer data, measured pilot
+time, and actual Rio manual approvals.
+
+## 2026-05-19 14:34 -03 - Loop Cycle: Viewer Profile Scope Guard
+
+### Objective Reviewed
+
+Axis 1 still depends on server-side profile scopes. The non-secret
+`data/viewer_profiles.json` file must remain reviewable and must not silently
+create broad/fake product surfaces, especially by turning `rio_economico` into
+a plain production target row.
+
+### Action Taken
+
+Created/updated:
+
+```text
+tools/viewer_profiles_check.py
+tests/test_viewer_profiles_check.py
+VIEWER_PROFILE_SCOPE_REVIEW_2026-05-20.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+The checker validates:
+
+```text
+required profiles exist: flavio, shakira, rio_economico, demo_cliente
+admin is not defined as a viewer profile
+default_targets stay inside target_keys
+ordinary target_keys exist in data/targets.json
+rio_economico is allowed only as a topic-only profile key
+rio_economico is not present as a production target row
+demo_cliente remains the only empty-scope profile
+```
+
+### Evidence
+
+Checks run:
+
+```text
+python3 -B -m py_compile tools/viewer_profiles_check.py tests/test_viewer_profiles_check.py -> passed
+python3 -B -c "from tests import test_viewer_profiles_check as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+python3 -B tools/viewer_profiles_check.py -> ok=true
+git diff --check -> passed
+```
+
+Current checker result:
+
+```text
+profile_count=4
+target_count=5
+flavio target_count=4 default_count=2
+shakira target_count=1 default_count=1
+rio_economico target_keys=[rio_economico]
+demo_cliente target_count=0
+topic_only_keys_present_as_targets=[]
+```
+
+### Barrier Or Failure
+
+This guard does not prove a live authenticated login because no passwords are
+available in this shell. It only proves the reviewable profile-scope file has
+not drifted into an unsafe shape.
+
+The Render env tooling check found that `update_environment_variables` is
+available after tool discovery, so the existing env-change runbook is not a
+fake tool claim. No env var was changed because no operator secret/value was
+provided.
+
+### Next Objective From Docs
+
+Commit/push this profile-scope guard together with the pending live-smoke log,
+wait for Render, smoke production, then re-open the long-term docs.
+
+### Why The Loop Continues
+
+The non-secret scope file is now guarded, but live authenticated proof,
+buyer/pilot evidence, target-management positive admin mutation proof, and real
+Rio manual approvals remain open.
