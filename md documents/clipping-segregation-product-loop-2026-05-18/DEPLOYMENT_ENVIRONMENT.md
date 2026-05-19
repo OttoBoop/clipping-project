@@ -39,6 +39,8 @@ missingConfig=[]
 Do not replace all Render environment variables to rotate one viewer password.
 Use merge/update behavior so unrelated storage/admin settings are preserved.
 See `RENDER_ENV_CHANGE_SAFETY_RUNBOOK.md` before changing any live env var.
+See `RENDER_OPERATIONS_REVIEW_2026-05-18.md` for the current non-secret
+service metadata, auto-deploy facts, and rotation/offboarding checklist.
 
 ## Optional Environment Variables
 

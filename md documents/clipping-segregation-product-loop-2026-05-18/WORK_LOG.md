@@ -10087,3 +10087,137 @@ logged-out gate, static assets delivery, and scoped endpoint rejection.
 
 Commit/push the Rio read-only UI paths only, wait for Render, run production
 smoke, log evidence, re-read docs, then continue to the next weak axis.
+
+## 2026-05-18 23:20 -03 - Loop Cycle: Rio Read-only UI Deploy And Smoke
+
+### Objective Reviewed
+
+Deploy the Rio read-only report panel and verify the production privacy gate did
+not regress.
+
+### Action Taken
+
+Committed and pushed path-limited:
+
+```text
+287aa5a web: add scoped Rio economic report panel
+```
+
+Waited for Render deploy:
+
+```text
+dep-d86hjn0js32c738kqqeg -> live
+```
+
+Ran logged-out smoke and asset marker checks against
+`https://clipping-project.onrender.com/`.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /index.html -> 404
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /assets/clipping.js -> contains rioEconomicReportPanel,
+viewerCanSeeRioReport, and /api/reports/rio-economic-topic
+GET /assets/clipping.css -> contains rio-report-panel, rio-report-item,
+and rio-report-status
+```
+
+### Barrier Or Failure
+
+Positive Rio/admin UI proof in a browser is still blocked by lack of
+viewer/admin credentials and no local Playwright/browser package. Logged-out
+production and static asset checks prove no public report leak.
+
+### Next Objective From Docs
+
+Re-read long-term docs. Likely next weak axis is either operations/password
+rotation review or sellable demo/prospect packaging, while keeping live
+segregation proofs fresh.
+
+## 2026-05-18 23:26 -03 - Loop Cycle: Render Operations Review
+
+### Objective Reviewed
+
+Review costs, password rotation, operations, and live deploy behavior without
+changing or exposing production secrets.
+
+### Render Audit
+
+Render service metadata checked for `srv-d7p2p5beo5us739f9k40`:
+
+```text
+url=https://clipping-project.onrender.com
+repo=https://github.com/OttoBoop/clipping-project
+branch=master
+autoDeploy=yes
+autoDeployTrigger=commit
+runtime=python
+buildCommand=pip install -r requirements.txt
+startCommand=uvicorn web_app.app:app --host 0.0.0.0 --port $PORT
+region=virginia
+instances=1
+maintenanceMode=false
+```
+
+Tool discovery confirmed Render MCP exposes:
+
+```text
+update_environment_variables(..., replace=false)
+```
+
+No environment variables were changed.
+
+### Action Taken
+
+Created:
+
+```text
+RENDER_OPERATIONS_REVIEW_2026-05-18.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+DEPLOYMENT_ENVIRONMENT.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The operations review records:
+
+```text
+push to master is live-production because autoDeploy=yes
+viewerAuthConfigured=true and missingConfig=[] are the current health gate
+CLIPPING_VIEWER_PASSWORDS changes must use replace=false
+password values must not enter docs/logs/git/chat
+demo/prospect access requires pre-share scoped payload/raw/live-results proof
+old password failure proof is required for offboarding/rotation
+```
+
+### Barrier Or Failure
+
+Authenticated viewer/admin proof and actual password rotation remain blocked
+without operator-provided secrets. This is intentional: the loop must not invent
+or rotate live credentials by itself.
+
+### Next Objective From Docs
+
+Run checks, commit/push the operations review plus the prior deploy log
+path-limited, wait for Render, smoke production, then re-read docs and continue
+to sellable demo/prospect packaging or another weak checklist item.

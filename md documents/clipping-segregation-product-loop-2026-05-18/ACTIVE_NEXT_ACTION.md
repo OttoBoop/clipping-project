@@ -40,6 +40,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - System review status snapshot for 2026-05-19.
 - Target management no-fake-UI review snapshot for 2026-05-18.
 - Render env change safety runbook for password/profile operations.
+- Render operations review snapshot for service metadata, live health gate, and
+  password rotation/offboarding boundaries.
 - Rio economic ingestion architecture decision: do not flatten Rio into a plain
   target row; preserve query families, exclusions, date quality, and clusters.
 - V1 add-on menu/boundaries for avoiding unlimited low-paid service scope.
@@ -156,7 +158,8 @@ Continue the production loop. Current priority from the docs:
    ledger now exists for measuring update time, weekly summary time, support,
    false positives, missed items, and scope creep before final pricing; Render
    env change safety runbook now exists for password/profile operations without
-   full-env replacement or secret leakage;
+   full-env replacement or secret leakage; Render operations review now records
+   the live service branch/auto-deploy facts and non-secret rotation checklist;
 7. then re-read the docs and choose the next weak axis.
 
 If `viewerAuthConfigured=false` returns, treat it as a regression and re-check
