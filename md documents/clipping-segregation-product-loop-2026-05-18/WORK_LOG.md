@@ -7619,6 +7619,62 @@ Run diff/checks, commit/push path-limited, poll Render until queued commits are
 live, smoke production, then run fresh production scoping proof or continue
 packaging/operations review from `ACTIVE_NEXT_ACTION.md`.
 
+## 2026-05-18 21:59 -03 - Loop Cycle: Production Gate Push And D57b361 Live Smoke
+
+### Objective Reviewed
+
+Continue the production loop after adding the Rio production gate: push to
+`master`, poll Render, and verify the current live service before moving on.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+200c79f docs: add Rio production gate
+git push origin HEAD:master -> master updated from 6a83ed3 to 200c79f
+```
+
+Polled Render MCP:
+
+```text
+dep-d86gceoh6q6c73d0gq7g 200c79f docs: add Rio production gate -> queued
+dep-d86gbrd6b1pc73df6qc0 6a83ed3 docs: log cluster artifact deploy smoke -> build_in_progress/update_in_progress
+dep-d86gbcojs32c738k6he0 d57b361 tools: add Rio cluster annotation report -> live
+```
+
+Ran logged-out live smoke while `d57b361` was live.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof remains blocked in
+this shell by missing viewer passwords. Deploys `6a83ed3` and `200c79f` were
+not live yet.
+
+### Next Objective From Docs
+
+Commit/push this log entry path-limited, poll Render until `6a83ed3` and
+`200c79f` are live, smoke production again, then run fresh production scoping
+proof or continue packaging/operations review from `ACTIVE_NEXT_ACTION.md`.
+
 ## 2026-05-18 21:56 -03 - Loop Cycle: Cluster Artifact Push And 990ada0 Live Smoke
 
 ### Objective Reviewed
