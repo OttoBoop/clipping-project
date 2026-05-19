@@ -517,4 +517,49 @@ A implementação direta — endpoint `POST /api/change-password` que lê `old_p
 
 **Goal 5 ESTÁ PRONTO PRA MIGRAR PRA `GOALS_ATINGIDOS.md`** assim que o Otávio (a) autorize push + deploy, (b) confirme manualmente em prod que as 4 operações funcionam no browser.
 
+---
+
+## 2026-05-19 20:18 — Goal 1: admin gerencia clientes via UI (backend + UI completos)
+
+**Goal endereçado:** Goal 1 (Onboarding administrativo via UI) — também destrava parte do Goal 3 (admin define senha humana ao criar)
+**Método executado:** 4 endpoints novos (`GET/POST/PATCH /api/admin/viewers`, `POST /api/admin/viewers/{profile}/archive`) + funções `set_viewer_profile`/`archive_viewer_profile` em `segmentation.py` escrevendo atomicamente em `data/viewer_profiles.json` + adição desse arquivo ao `RUNTIME_FILES` do `storage_bridge.py` + UI nova "Clientes (viewers)" em `index.html`/`clipping.js`/`clipping.css`.
+
+**Por que esse método (e não outro):**
+
+- ✅ **Arquivo único (`viewer_profiles.json`)** como fonte de verdade, persistido via Supabase backup. Não usei SQLite — 4-10 clientes não justifica migration. Não usei env var — exatamente o anti-padrão que o Goal 1 ataca.
+- ✅ **File replaces defaults quando não-vazio**: a função `viewer_profiles()` agora pula a merge com `DEFAULT_VIEWER_PROFILES` se o arquivo tem qualquer perfil. Sem isso, arquivar não funcionaria (defaults ressuscitavam o perfil). DEFAULTS ficam como fallback pra fresh install.
+- ✅ **Erros estruturados com `ViewerProfileError(code, message, field)`** mapeando 400/404 → JSON `{error, message, field}`. Mesmo contrato do create_secondary_target. Failure class "erro genérico" prevenida.
+- ✅ **Validação anti-fake-UI**: a UI manda lista de checkboxes que vêm do `/api/targets` real (não input livre). E o backend valida `target_keys` contra `load_targets()` antes de gravar — se admin tentar atribuir `xyz` que não existe, o erro vai com `field: target_keys` e cita o nome desconhecido.
+- ✅ **Senha hashada na criação**: o POST chama `set_viewer_password(profile, password_plain)` que aplica pbkdf2-sha256 com 310k rounds (mesmo padrão do change-password). Senha plaintext nunca toca o disco.
+- ✅ **Archive limpa os dois files**: remove do `viewer_profiles.json` E do `clipping_credentials.json`. Sem isso, viewer arquivado ainda conseguiria logar.
+- ✅ **UI admin-only via `initialSessionRole`** lida do dataset attribute. Sem `/api/me` extra — reusa o que já existe.
+
+**Métodos descartados:**
+
+- ❌ **SQLite com migration**: overkill pra 4-10 clientes.
+- ❌ **Mexer no Render Dashboard pra criar cliente**: literalmente o failure case do Goal 1.
+- ❌ **`PATCH /api/admin/viewers/{profile}` que aceita "archived: true"**: mistura semânticas; endpoint `/archive` separado é mais claro pra UI e pra audit log.
+- ❌ **Endpoint `/api/admin/viewers/{profile}/restore`**: arquivar é destrutivo (remove senha). Restore exigiria storage separado. Fora de escopo desta iteração.
+- ❌ **Permitir editar `profile` (rename)**: re-key implícito quebraria `viewer_profiles.json` + `clipping_credentials.json` + sessões existentes. Pra mudar profile_key, admin arquiva e cria novo.
+
+**Critério de sucesso (parcial atingido):**
+
+- ✅ 369/369 pytest passed (12 testes novos pra os endpoints).
+- ✅ Commits 81bd1bd (backend) + d3af727 (UI) pushed, deploy disparado (HTTP 202).
+- ⏳ **Falta**: smoke manual em prod — criar viewer novo, logar como ele, editar, arquivar, confirmar que login pós-archive falha.
+
+**Status do Goal 1 (resumo):**
+
+- ✅ Backend: 4 endpoints com erros estruturados + persistência atômica + Supabase backup
+- ✅ UI: lista de viewers + form de criação + dialog de edição + ação de arquivar
+- ✅ Validação cruzada: target_keys precisa existir em targets.json; profile_key obriga `[a-z0-9_]{2,32}`
+- ✅ Senhas inicial-definida-pelo-admin (Goal 3 — senha humana ao criar) cumprida
+- ⏳ Smoke em prod (deploy em andamento)
+
+**Próximas frentes** (depois do smoke):
+
+- Migrar Goal 1 pra `GOALS_ATINGIDOS.md` se smoke verde.
+- Migrar Goal 5 pra `GOALS_ATINGIDOS.md` se Otávio confirmar.
+- Próximo Goal aberto: Goal 4 (regressão-zero) já tem mecanismo (cada major entry registra "baseline mantida"); Goals 2 e 3 essencialmente cumpridos (logout funcional, change-password endpoint + UI, senhas humanas em prod desde a rotação 12:35).
+
 **Próxima sub-ação concreta:** atualizar SESSION_LOG, commitar docs, aguardar decisão do Otávio sobre próximo passo. Candidatos para enquanto ele revisa: começar storage migration (frente bloqueadora de Goals 1, 2-B, 3) OU mexer em casos-edge restantes do baseline (acentos diferentes, payload sem keywords, etc.).

@@ -253,3 +253,39 @@ Companheiros:
 - ⚠️ **Goal 1 não tem UI ainda**: admin gerencia clientes só via curl/API (ou via mexer no arquivo de credenciais à mão)
 - ⚠️ **PROTECTED_PRIMARY_KEYS duplicado JS↔Python**: pequena duplicação que pode confundir IA futura — endpoint `/api/me` ou injeção via data attr resolveria
 - ⚠️ **Senhas em texto puro no `data/clipping_credentials.json`**: backup em Supabase é encrypted-at-rest no bucket, mas o arquivo local não tem hashing (igual estado atual com env vars). Adicionar bcrypt é trabalho futuro
+
+---
+
+## 2026-05-19 20:18 — Goal 1 entregue (backend + UI), deploy em curso
+
+**Goal endereçado:** Goal 1 (Onboarding administrativo via UI) — também fecha o "Goal 3" (admin define senha humana ao criar cliente), já que a criação usa o input plaintext do admin e pbkdf2-sha256 antes de gravar.
+
+**O que foi feito:**
+
+- Backend: `set_viewer_profile`, `archive_viewer_profile`, `ViewerProfileError` em `web_app/segmentation.py`. `remove_viewer_password`/`has_viewer_password` em `web_app/auth.py`. Endpoints `GET/POST/PATCH /api/admin/viewers` + `POST /api/admin/viewers/{profile}/archive` em `web_app/app.py`, todos admin-only + csrf, com erros estruturados (`viewer_profile_invalid` / `viewer_profile_conflict` / `viewer_profile_not_found`).
+- Persistência: `viewer_profiles.json` adicionado ao `RUNTIME_FILES` em `web_app/storage_bridge.py` — sobrevive a redeploy do Render via Supabase backup.
+- UI: nova seção `<details class="manage-viewers-box">` em `index.html` (admin-only via `initialSessionRole`), com lista de clientes + form de criação + dialog de edição + ação de arquivar. JS bind em `assets/clipping.js`, CSS coerente com tokens existentes.
+- Testes: `tests/test_admin_viewers.py` com 12 casos (happy, invalid key, duplicate, unknown target, update, password change, archive, 404, admin-pseudo, viewer não-pode).
+- Resultado: 369/369 pytest passed.
+
+**Commits novos (além dos antigos no log):**
+
+- `fd4184b` restaura docs do loop (perdidos no cherry-pick rebase)
+- `81bd1bd` feat(viewers): endpoints admin /api/admin/viewers
+- `d3af727` feat(ui): admin section gerenciar clientes
+
+Push em `origin/master` ✅. Deploy disparado via Render API às 20:19 (HTTP 202).
+
+**Pra revisar:**
+
+1. Abrir `clipping-project.onrender.com` como admin (senha `clipping-admin-2026`)
+2. Expandir aba "Atualizar" → procurar a nova seção `Clientes (viewers)` no fim
+3. Tentar criar um cliente teste (ex: profile=`teste`, label=`Teste`, password=`teste-2026`, target_keys=[shakira])
+4. Deslogar, logar com `teste-2026`, conferir que profile aparece e só vê o target liberado
+5. Voltar como admin, arquivar o teste, confirmar 401 no login antigo
+
+**Riscos pendentes:**
+
+- ⚠️ Smoke em prod ainda não rodou — deploy em andamento. Vou testar via curl assim que terminar.
+- ⚠️ `restore` de viewer arquivado não existe (decisão consciente — archive limpa senha; pra trazer de volta, admin recria).
+- ⚠️ Renomear `profile_key` não é suportado (re-key implícito quebraria sessões e file references). Por enquanto: arquivar e criar novo.
