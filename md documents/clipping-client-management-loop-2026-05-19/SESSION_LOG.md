@@ -325,3 +325,36 @@ Push em `origin/master` ✅. Deploy disparado via Render API às 20:19 (HTTP 202
    - Goal 1: abrir nova seção "Clientes (viewers)", criar um cliente teste, logar como ele em outra aba/janela anônima.
 
 **Se algum dos 4 acima falhar visualmente, é regressão a registrar.** Comando: `gh issue create` ou só me reportar no chat.
+
+---
+
+## 2026-05-19 20:40 — Bug real achado pelo smoke + UI fix em prod
+
+**Goal endereçado:** Goal 2 (change-password) + Goal 4 (regressão-zero — smoke pegou o que pytest não pegaria).
+
+**O que foi feito:**
+
+- `tools/password_change_smoke.py` — smoke novo cobrindo o ciclo de trocar senha (wrong-old → valid → logout → relogin com nova → revert → confirmar original).
+- Bug achado em prod: depois de `/api/change-password`, o backend emite **nova sessão**. O CSRF token, que é HMAC contra a sessão, fica inválido. JS continuava cacheando o CSRF antigo, então a próxima ação (logout, rodar atualização, qualquer POST) dava 403 em prod sem explicação na UI.
+- Fix em `assets/clipping.js` (1 linha): após resp.ok de change-password, `csrfToken = ""; csrfPromise = null;`. Próximo `apiPost` refetcha CSRF.
+- Smoke pós-fix: **9/9 verde** em prod. Documentado em DET 20:35-20:40 e MAJOR.
+
+**Por que isso importa:**
+
+- Este é exatamente o tipo de bug que pytest sozinho não pega (precisa cookie + CSRF + sessão real + change-password chained). Goal 4 (regressão-zero) prova-se ativo: cada smoke escrito agora vira sentinela permanente.
+- A failure class "endpoint que rotaciona sessão precisa invalidar CSRF cliente-side" é agora documentada. Pra próxima IA: se houver endpoint novo emitindo nova sessão, espelhar esse pattern.
+
+**Commits da sessão pós-compactação (cronológico):**
+
+1. `fd4184b` — docs(ccm-loop): restore loop docs lost during cherry-pick rebase
+2. `81bd1bd` — feat(viewers): admin endpoints to manage viewer profiles via API
+3. `d3af727` — feat(ui): admin section to create, edit, archive viewer clients
+4. `6e25236` — docs(ccm-loop): record Goal 1 delivery
+5. `8fbbd86` — docs(ccm-loop): migrate Goal 1 to GOALS_ATINGIDOS with prod smoke evidence
+6. `f4b42a2` — fix(targets): block restore that would create active display_name homonym
+7. `1ee2b82` — docs(ccm-loop): backfill DET with post-compaction work
+8. `27654a6` — docs(ccm-loop): MAJOR entry for restore_secondary_target homonym guard
+9. `209e25c` — tools: admin_viewers_smoke for Goal 1 end-to-end check
+10. `98356ca` — tools+docs: Goal 5 smoke (11/11 prod) + MAJOR/SESSION_LOG updates
+11. `6a929c2` — fix(ui)+tools: invalidate csrf cache after change-password + smoke
+12. `f2a9923` — docs(ccm-loop): DET entry for the CSRF-cache bug
