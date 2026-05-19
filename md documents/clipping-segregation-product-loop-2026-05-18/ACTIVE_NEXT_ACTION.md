@@ -108,7 +108,8 @@ Continue the production loop. Current priority from the docs:
    duplicate cluster review now exists; the dry-run format now has optional
    manual cluster fields; a 10-row canonical source/date pass now exists with
    eight same-day rows, one missing canonical date, and one date mismatch; next
-   Rio step is running a cluster-annotated sample/date-quality policy and fresh
+   Rio date-quality policy now exists and the canonical helper now records
+   status counts; next Rio step is running a cluster-annotated sample and fresh
    production scoping proof before any production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; V1 pilot scope and delivery-format

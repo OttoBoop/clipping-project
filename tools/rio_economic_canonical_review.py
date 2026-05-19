@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -16,6 +17,7 @@ from pipeline.collectors import fetch_full_article_text
 
 
 REPORTS_DIR = PROJECT_ROOT / "data" / "reports"
+DATE_QUALITY_PASS_STATUSES = ("same_day", "near_date")
 
 
 def parse_dt(value: str) -> datetime | None:
@@ -97,6 +99,15 @@ def review_rows(rows: list[dict[str, Any]], *, max_rows: int, request_timeout: i
     return reviewed
 
 
+def summarize_statuses(rows: list[dict[str, Any]]) -> dict[str, int]:
+    counts = Counter(str(row.get("status") or "unknown") for row in rows)
+    return {status: counts[status] for status in sorted(counts)}
+
+
+def indicator_eligible_count(rows: list[dict[str, Any]]) -> int:
+    return sum(1 for row in rows if row.get("status") in DATE_QUALITY_PASS_STATUSES)
+
+
 def output_prefix(now: datetime | None = None) -> str:
     stamp = (now or datetime.now(timezone.utc)).strftime("%Y%m%dT%H%M%SZ")
     return f"rio_economic_canonical_review_{stamp}"
@@ -134,6 +145,8 @@ def md_cell(value: Any) -> str:
 
 def write_markdown(path: Path, payload: dict[str, Any]) -> None:
     rows = payload["rows"]
+    status_counts = payload["meta"].get("status_counts") or {}
+    status_summary = ", ".join(f"{key}={value}" for key, value in sorted(status_counts.items())) or "none"
     lines = [
         "# Rio Economic Canonical Review",
         "",
@@ -141,6 +154,8 @@ def write_markdown(path: Path, payload: dict[str, Any]) -> None:
         f"Input report: `{payload['meta']['input_report']}`",
         f"Rows checked: `{payload['meta']['rows_checked']}`",
         f"Request timeout: `{payload['meta']['request_timeout']}`",
+        f"Date-quality eligible rows: `{payload['meta'].get('date_quality_eligible_rows', 0)}`",
+        f"Status counts: `{status_summary}`",
         "",
         "| Row | Dimension | Status | Original Published | Canonical Published | Source | Title |",
         "| --- | --- | --- | --- | --- | --- | --- |",
@@ -206,6 +221,9 @@ def main(argv: list[str] | None = None) -> int:
             "writes_assets_payload": False,
             "writes_targets_json": False,
             "stores_article_body": False,
+            "date_quality_pass_statuses": list(DATE_QUALITY_PASS_STATUSES),
+            "date_quality_eligible_rows": indicator_eligible_count(rows),
+            "status_counts": summarize_statuses(rows),
         },
         "rows": rows,
     }

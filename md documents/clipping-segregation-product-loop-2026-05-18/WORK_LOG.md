@@ -7364,3 +7364,69 @@ Compileall and an offline dry-run smoke passed after that writer fix.
 Commit/push the canonical review artifacts path-limited, poll Render for
 `a2c9e0c`, smoke production when live, then continue with cluster annotations
 or date-quality policy before any `rio_economico` target row.
+
+## 2026-05-18 21:46 -03 - Loop Cycle: Date Quality Policy
+
+### Objective Reviewed
+
+Render was still building the latest docs/review commit, so the loop continued
+from the Rio canonical finding: row 5 showed a stale/recirculated Google News
+date and needs an objective current-period counting policy.
+
+### Action Taken
+
+Added:
+
+```text
+RIO_ECONOMIC_DATE_QUALITY_POLICY.md
+tests/test_rio_economic_canonical_review.py
+```
+
+Updated:
+
+```text
+tools/rio_economic_canonical_review.py
+RIO_ECONOMIC_VALIDATION_PLAN.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+The canonical helper now records:
+
+```text
+date_quality_pass_statuses
+date_quality_eligible_rows
+status_counts
+```
+
+### Evidence
+
+Policy rule recorded:
+
+```text
+same_day -> may count
+near_date -> manual review before counting
+date_mismatch/canonical_date_missing/original_date_missing/unresolved_google_url/fetch_error/missing_url -> research-only until manual approval
+```
+
+Local checks:
+
+```text
+python -m pytest tests/test_rio_economic_canonical_review.py -> failed: No module named pytest
+python -m compileall tools/rio_economic_canonical_review.py tests/test_rio_economic_canonical_review.py -> passed
+direct Python date-quality assertion smoke -> passed
+```
+
+### Barrier Or Failure
+
+Local pytest is still unavailable in this shell. Focused canonical unit tests
+were added for future CI/local environments, and the next workaround is
+compileall plus a direct Python assertion smoke. Compileall dirtied tracked
+`pipeline/__pycache__/*.pyc`; those generated artifacts were restored
+path-limited before commit scope review.
+
+### Next Objective From Docs
+
+Commit/push path-limited, poll Render for `b8b3b01` and the new commit, smoke
+production when live, then continue with cluster-annotated Rio sample or fresh
+production scoping proof.

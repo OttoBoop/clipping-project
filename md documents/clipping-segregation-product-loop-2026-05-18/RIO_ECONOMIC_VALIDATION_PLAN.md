@@ -406,6 +406,16 @@ RIO_ECONOMIC_CANONICAL_REVIEW_20260519T003852Z.md
 Rows with `date_mismatch` or `canonical_date_missing` must not count toward a
 current-period indicator without manual approval.
 
+Date quality policy:
+
+```text
+RIO_ECONOMIC_DATE_QUALITY_POLICY.md
+tools/rio_economic_canonical_review.py records status_counts and date_quality_eligible_rows for future reports
+same_day rows may count
+near_date rows require manual review
+date_mismatch/canonical_date_missing rows are research-only until manual approval
+```
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?
