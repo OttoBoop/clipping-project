@@ -9682,3 +9682,115 @@ requires credentials.
 
 Run diff/checks, commit/push this endpoint path-limited, wait for Render, smoke
 logged-out `/api/reports/rio-economic-topic`, then re-read docs.
+
+## 2026-05-18 23:08 -03 - Loop Cycle: Scoped Rio Endpoint Deploy And Live Smoke
+
+### Objective Reviewed
+
+Deploy the scoped Rio topic-report endpoint and prove it does not expose Rio
+data to logged-out users on Render.
+
+### Action Taken
+
+Committed and pushed path-limited:
+
+```text
+85138f8 web: scope Rio topic report endpoint
+```
+
+Waited for Render deploy:
+
+```text
+dep-d86h9osm0tmc73dbp5lg -> live
+```
+
+Ran logged-out smoke against `https://clipping-project.onrender.com/`.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+Positive Shakira/Rio/admin live proof remains blocked without credentials in
+this shell. Local TestClient is also blocked by missing `fastapi`, but Render
+accepted the deploy and logged-out privacy proof passed.
+
+### Next Objective From Docs
+
+Re-read the objective docs. Current likely next Rio item is manual approval
+policy for the one `near_date` story and seven research-only stories before any
+operator-facing indicator claim.
+
+## 2026-05-18 23:12 -03 - Loop Cycle: Rio Manual Approval Policy V0
+
+### Objective Reviewed
+
+Prevent the Rio economic report from becoming a fake indicator by counting
+stories whose canonical date/source evidence is weak.
+
+### Action Taken
+
+Inspected the complete Rio topic report for non-automatic-count stories and
+created:
+
+```text
+RIO_ECONOMIC_MANUAL_APPROVAL_POLICY_V0.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+RIO_ECONOMIC_PRODUCTION_GATE_V0.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+WORK_LOG.md
+```
+
+### Evidence
+
+From `data/reports/rio_economic_topic_report_20260519T014505Z.json`:
+
+```text
+automatic count_current_period=17
+manual_review_before_counting=1
+research_only=7
+```
+
+Rows outside automatic count:
+
+```text
+row 1 canonical_date_missing
+row 5 date_mismatch
+row 11 near_date
+row 15 fetch_error
+row 19 canonical_date_missing
+row 22 fetch_error
+row 25 canonical_date_missing
+row 26 canonical_date_missing
+```
+
+### Barrier Or Failure
+
+No code barrier. This is a policy/doc guardrail. It still needs a future
+sidecar approval file or explicit `manual_approval_status` field before an
+operator can promote rows in UI.
+
+### Next Objective From Docs
+
+Run checks, commit/push this policy with the prior live-smoke log, wait for
+Render, smoke production, then re-read docs.

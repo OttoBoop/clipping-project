@@ -524,6 +524,22 @@ the complete topic report), but it does not approve production ingestion.
 Manual-approval policy and scoped Rio topic rendering still need review before
 any user-facing economic indicator.
 
+Manual approval policy:
+
+```text
+RIO_ECONOMIC_MANUAL_APPROVAL_POLICY_V0.md
+same_day -> automatic current-period count
+near_date -> manual_review_before_counting
+research-only statuses -> do not count unless human evidence is logged
+automatic count=17
+manual review=1
+research_only=7
+```
+
+The v4 report may discuss 25 reviewed stories, but the indicator count must not
+claim more than 17 current-period stories until a sidecar approval file or
+explicit manual status field promotes additional rows.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

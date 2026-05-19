@@ -150,6 +150,7 @@ first topic-report artifact now exists and keeps target_row_approved=false
 extended topic-report artifact now uses cluster-member date evidence and still keeps target_row_approved=false
 full v4 topic-report artifact has canonical_rows_checked=31 and still keeps target_row_approved=false
 scoped endpoint /api/reports/rio-economic-topic exists for admin/rio_economico only
+manual approval policy v0 says only same_day auto-counts; near_date/research-only need logged human evidence
 ```
 
 ## Current Next Step
@@ -160,6 +161,7 @@ wait for latest deploys to become live
 run fresh production scoping proof
 define manual approval for near_date/research-only rows or build a scoped Rio topic-report view
 verify /api/reports/rio-economic-topic on Render after deploy
+add manual_approval_status or a sidecar approval file before any UI promotion
 preserve the v4 query families/exclusions in a scoped topic pipeline, not a plain keyword target row
 then decide whether the Rio methodology is ready for an operator-approved narrow first run
 ```
