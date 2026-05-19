@@ -6439,3 +6439,61 @@ fresh authenticated viewer proof or accepted password blocker
 
 Run diff checks, commit/push the v4 query/sample/review path-limited, poll
 Render, and if the latest deploy is live run logged-out privacy smoke again.
+
+## 2026-05-18 21:10 -03 - Loop Cycle: V4 Review Pushed And Live 48baf67 Smoked
+
+### Objective Reviewed
+
+After generating the v4 dry-run review, publish it to `master`, poll Render,
+and verify the live logged-out privacy gate as soon as a new deploy is live.
+
+### Action Taken
+
+Created and pushed:
+
+```text
+da54b6c docs: add Rio economic v4 dry-run review
+```
+
+Polled Render, then ran logged-out smoke on the live site while `da54b6c` was
+still building and `48baf67` was live.
+
+### Evidence
+
+Render poll:
+
+```text
+dep-d86fp6b7uimc73bdubo0 da54b6c docs: add Rio economic v4 dry-run review -> build_in_progress
+dep-d86fnd0k1i2s73d43mo0 48baf67 docs: add Rio v3 body source review -> live
+dep-d86fl5addbjc739t0mig 595ce78 docs: log live smoke on clipping follow-up deploy -> deactivated
+```
+
+Live logged-out smoke on `48baf67`:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+Authenticated viewer proof remains blocked in this shell by missing passwords.
+This did not block logged-out privacy proof or Rio dry-run methodology work.
+
+### Next Objective From Docs
+
+Commit/push this log entry path-limited, poll Render until `da54b6c` resolves,
+then smoke the newest live deploy. If deploy wait continues, re-read the docs
+and choose the next unblocked product/operations item.
