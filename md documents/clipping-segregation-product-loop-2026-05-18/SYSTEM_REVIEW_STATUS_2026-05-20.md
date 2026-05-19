@@ -8,9 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-6c90470 tools: guard Rio manual approval artifacts
-deploy dep-d86ulqrtqb8s73djh4s0 -> live
-finishedAt=2026-05-20T17:11:46.323819Z
+153cff7 docs: log Rio approval guard deploy
+deploy dep-d86uqakvikkc73cbtajg -> live
+finishedAt=2026-05-20T17:24:48.328224Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -74,6 +74,7 @@ ec52781 docs: refresh status after pilot ledger guard
 ceb0179 tools: add buyer quote evidence guard
 13489d5 docs: refresh status after buyer guard
 6c90470 tools: guard Rio manual approval artifacts
+153cff7 docs: log Rio approval guard deploy
 ```
 
 Freshly proven after deploy:
@@ -97,6 +98,10 @@ Freshly proven after deploy:
   target write calls in the Rio panel path.
 - authenticated Render smoke can now be repeated from an operator shell without
   storing passwords in Git;
+- authenticated Render smoke now accepts `--credentials-file` for a local
+  outside-repo secret file and requires the expected viewer profile set by
+  default, so a one-profile run does not masquerade as complete production
+  proof;
 - Rio manual approvals now have a guarded status taxonomy and
   `approved_current_period` cannot regenerate a counted report without
   source/date evidence;
@@ -116,7 +121,7 @@ Freshly proven after deploy:
   guessed demo reactions from becoming pricing evidence.
 - Render static/data boundary probes still return `404` for raw `data/` files
   and the legacy root `clipping-data.json`, while scoped `/assets/*.json`
-  still returns `401` when logged out after `6c90470`.
+  still returns `401` when logged out after `153cff7`.
 
 ## Authenticated Production Proof
 
@@ -279,6 +284,9 @@ Password operations:
 - positive admin CSRF/target-management smoke on Render still needs operator
   credentials and explicit approval before using the disposable mutation flag;
 - positive viewer proof after latest deploys still needs viewer credentials;
+- this shell currently has no `CLIPPING_SMOKE_VIEWER_PASSWORDS` or
+  `CLIPPING_SMOKE_ADMIN_PASSWORD`, so the authenticated smoke correctly fails
+  before making live authenticated requests;
 - no real buyer quote/interview row exists in
   `BUYER_QUOTE_VALIDATION_TRACKER.md`;
 - no measured pilot/update run exists in `V1_PILOT_OPERATING_LEDGER.md`;
@@ -304,5 +312,5 @@ Continue from the weakest unblocked items:
 6. keep approval UI/actions hidden until approval writes are connected end to
    end.
 7. re-open the long-term docs and choose the next weak unblocked item after
-   this live `6c90470` smoke.
+   this live `153cff7` smoke.
 ```

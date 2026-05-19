@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import tempfile
 from datetime import datetime, timezone
+from pathlib import Path
 
 from tools import authenticated_render_smoke as smoke
 
@@ -50,3 +52,43 @@ def test_check_admin_can_run_disposable_mutation_with_cleanup():
         "/api/targets",
         "/api/targets/atlas_teste_smoke_20260519144000/archive",
     ]
+
+
+def test_parse_expected_profiles_defaults_to_full_viewer_set():
+    assert smoke.parse_expected_profiles("") == ["flavio", "shakira", "rio_economico"]
+    assert smoke.parse_expected_profiles("flavio, shakira") == ["flavio", "shakira"]
+
+
+def test_expected_viewer_profiles_fail_when_smoke_is_partial():
+    checks = smoke.check_expected_viewer_profiles(
+        {"flavio": "secret"},
+        ["flavio", "shakira", "rio_economico"],
+    )
+
+    assert len(checks) == 1
+    assert checks[0].ok is False
+    assert "missing=['shakira', 'rio_economico']" in checks[0].detail
+
+
+def test_credentials_file_reads_only_smoke_keys():
+    with tempfile.TemporaryDirectory() as tmp:
+        credentials = Path(tmp) / "smoke.env"
+        credentials.write_text(
+            "\n".join(
+                [
+                    "# local smoke credentials",
+                    "CLIPPING_SMOKE_VIEWER_PASSWORDS='flavio=one;shakira=two'",
+                    'export CLIPPING_SMOKE_ADMIN_PASSWORD="admin-secret"',
+                    "UNRELATED_SECRET=should-not-load",
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        values = smoke.read_credentials_file(credentials)
+
+    assert values == {
+        "CLIPPING_SMOKE_ADMIN_PASSWORD": "admin-secret",
+        "CLIPPING_SMOKE_VIEWER_PASSWORDS": "flavio=one;shakira=two",
+    }

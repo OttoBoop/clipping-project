@@ -38,6 +38,34 @@ Optional forbidden-target override:
 CLIPPING_SMOKE_FORBIDDEN_TARGETS='{"shakira":["flavio_valle","rio_economico"]}'
 ```
 
+Optional expected viewer profile override:
+
+```text
+CLIPPING_SMOKE_EXPECTED_VIEWER_PROFILES=flavio,shakira,rio_economico
+```
+
+By default the smoke expects `flavio`, `shakira`, and `rio_economico`. This
+prevents a partial one-profile run from being mistaken for a complete
+segregation proof.
+
+Optional local credentials file outside Git:
+
+```text
+/tmp/clipping-render-smoke.env
+```
+
+Example shape:
+
+```text
+CLIPPING_SMOKE_BASE_URL=https://clipping-project.onrender.com
+CLIPPING_SMOKE_VIEWER_PASSWORDS='flavio=...;shakira=...;rio_economico=...'
+CLIPPING_SMOKE_ADMIN_PASSWORD='...'
+```
+
+Do not put this file inside the repo. If a local file is used, pass it with
+`--credentials-file`; environment variables with the same names still override
+the file for that run.
+
 ## Default Checks
 
 For each viewer profile provided:
@@ -79,6 +107,12 @@ Optional:
 python3 tools/authenticated_render_smoke.py --base-url https://clipping-project.onrender.com
 ```
 
+With a local credentials file:
+
+```text
+python3 tools/authenticated_render_smoke.py --credentials-file /tmp/clipping-render-smoke.env
+```
+
 Admin mutation proof, only after operator approval:
 
 ```text
@@ -92,6 +126,7 @@ After running, copy only non-secret evidence into `WORK_LOG.md`:
 
 ```text
 profiles checked
+expected profiles present
 forbidden targets checked
 status for clipping-data/raw-texts/targets/live-results/Rio endpoint
 admin CSRF token present=true, but not the token value

@@ -17,10 +17,12 @@ import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from http.cookiejar import CookieJar
+from pathlib import Path
 from typing import Any
 
 
 DEFAULT_BASE_URL = "https://clipping-project.onrender.com"
+DEFAULT_EXPECTED_VIEWER_PROFILES = ("flavio", "shakira", "rio_economico")
 
 
 DEFAULT_FORBIDDEN_TARGETS = {
@@ -123,6 +125,46 @@ def text_contains_any(value: Any, needles: list[str]) -> list[str]:
     return [needle for needle in needles if needle and needle in text]
 
 
+def parse_expected_profiles(raw: str) -> list[str]:
+    profiles = [profile.strip() for profile in raw.split(",") if profile.strip()]
+    return profiles or list(DEFAULT_EXPECTED_VIEWER_PROFILES)
+
+
+def parse_secret_file_line(line: str) -> tuple[str, str] | None:
+    stripped = line.strip()
+    if not stripped or stripped.startswith("#"):
+        return None
+    if stripped.startswith("export "):
+        stripped = stripped.removeprefix("export ").strip()
+    if "=" not in stripped:
+        return None
+    key, value = stripped.split("=", 1)
+    key = key.strip()
+    value = value.strip().strip('"').strip("'")
+    if not key:
+        return None
+    return key, value
+
+
+def read_credentials_file(path: Path | None) -> dict[str, str]:
+    if path is None:
+        return {}
+    values: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        parsed = parse_secret_file_line(line)
+        if parsed:
+            key, value = parsed
+            if key.startswith("CLIPPING_SMOKE_"):
+                values[key] = value
+    return values
+
+
+def smoke_env(credentials_file: Path | None = None) -> dict[str, str]:
+    values = read_credentials_file(credentials_file)
+    values.update({key: value for key, value in os.environ.items() if key.startswith("CLIPPING_SMOKE_")})
+    return values
+
+
 def target_keys_from_targets_payload(payload: Any) -> set[str]:
     if not isinstance(payload, dict):
         return set()
@@ -198,6 +240,30 @@ def check_viewer(base_url: str, profile: str, password: str, forbidden_targets: 
     return checks
 
 
+def check_expected_viewer_profiles(
+    viewer_passwords: dict[str, str],
+    expected_profiles: list[str],
+) -> list[CheckResult]:
+    if not viewer_passwords:
+        return [result("viewer passwords configured for smoke", False, "set CLIPPING_SMOKE_VIEWER_PASSWORDS outside Git")]
+    missing = [profile for profile in expected_profiles if profile not in viewer_passwords]
+    if missing:
+        return [
+            result(
+                "expected viewer profiles configured",
+                False,
+                f"missing={missing} configured={sorted(viewer_passwords)}",
+            )
+        ]
+    return [
+        result(
+            "expected viewer profiles configured",
+            True,
+            f"configured={sorted(viewer_passwords)} expected={expected_profiles}",
+        )
+    ]
+
+
 def check_admin(base_url: str, password: str, allow_mutation: bool) -> list[CheckResult]:
     client = SmokeClient(base_url)
     checks: list[CheckResult] = []
@@ -256,22 +322,31 @@ def check_admin(base_url: str, password: str, allow_mutation: bool) -> list[Chec
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Authenticated smoke for Render profile segregation.")
-    parser.add_argument("--base-url", default=os.environ.get("CLIPPING_SMOKE_BASE_URL", DEFAULT_BASE_URL))
-    parser.add_argument("--allow-admin-mutation", action="store_true", default=os.environ.get("CLIPPING_SMOKE_ALLOW_ADMIN_MUTATION") == "1")
+    parser.add_argument("--base-url", default=None)
+    parser.add_argument("--credentials-file", type=Path, default=None)
+    parser.add_argument("--expected-viewer-profiles", default=None)
+    parser.add_argument("--allow-admin-mutation", action="store_true", default=False)
     args = parser.parse_args()
 
-    viewer_passwords = parse_profile_passwords(os.environ.get("CLIPPING_SMOKE_VIEWER_PASSWORDS", ""))
-    admin_password = os.environ.get("CLIPPING_SMOKE_ADMIN_PASSWORD", "").strip()
-    forbidden_targets = parse_forbidden_targets(os.environ.get("CLIPPING_SMOKE_FORBIDDEN_TARGETS", ""))
+    env = smoke_env(args.credentials_file)
+    base_url = args.base_url or env.get("CLIPPING_SMOKE_BASE_URL") or DEFAULT_BASE_URL
+    expected_profiles = parse_expected_profiles(
+        args.expected_viewer_profiles
+        or env.get("CLIPPING_SMOKE_EXPECTED_VIEWER_PROFILES", "")
+        or ",".join(DEFAULT_EXPECTED_VIEWER_PROFILES)
+    )
+    allow_mutation = args.allow_admin_mutation or env.get("CLIPPING_SMOKE_ALLOW_ADMIN_MUTATION") == "1"
+    viewer_passwords = parse_profile_passwords(env.get("CLIPPING_SMOKE_VIEWER_PASSWORDS", ""))
+    admin_password = env.get("CLIPPING_SMOKE_ADMIN_PASSWORD", "").strip()
+    forbidden_targets = parse_forbidden_targets(env.get("CLIPPING_SMOKE_FORBIDDEN_TARGETS", ""))
 
     all_checks: list[CheckResult] = []
-    if not viewer_passwords:
-        all_checks.append(result("viewer passwords configured for smoke", False, "set CLIPPING_SMOKE_VIEWER_PASSWORDS outside Git"))
+    all_checks.extend(check_expected_viewer_profiles(viewer_passwords, expected_profiles))
     for profile, password in sorted(viewer_passwords.items()):
-        all_checks.extend(check_viewer(args.base_url, profile, password, forbidden_targets.get(profile, [])))
+        all_checks.extend(check_viewer(base_url, profile, password, forbidden_targets.get(profile, [])))
 
     if admin_password:
-        all_checks.extend(check_admin(args.base_url, admin_password, args.allow_admin_mutation))
+        all_checks.extend(check_admin(base_url, admin_password, allow_mutation))
     else:
         all_checks.append(result("admin password configured for smoke", False, "set CLIPPING_SMOKE_ADMIN_PASSWORD outside Git"))
 

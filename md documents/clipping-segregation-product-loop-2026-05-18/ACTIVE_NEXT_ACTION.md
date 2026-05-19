@@ -34,6 +34,9 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
   when passwords are available outside Git.
 - Authenticated Render smoke script now has an explicit opt-in disposable admin
   mutation path using an auto-archived `Atlas Teste Smoke <timestamp>` target.
+- Authenticated Render smoke script now supports a local credentials file
+  outside Git and fails partial proof when the expected viewer profile set is
+  incomplete.
 - Market research plan.
 - Initial sourced market research notes.
 - Political/communications competitor pass.
@@ -141,7 +144,10 @@ Continue the production loop. Current priority from the docs:
 1. keep the logged-out privacy gate verified on Render;
 2. keep real viewer profile proof verified after deploys;
    a non-secret authenticated smoke helper now exists, but running it still
-   requires viewer/admin passwords outside this shell;
+   requires viewer/admin passwords outside this shell; it now supports
+   `--credentials-file /tmp/clipping-render-smoke.env` and defaults to
+   expecting `flavio`, `shakira`, and `rio_economico` so partial runs are not
+   mistaken for full proof;
    static data boundary review now also proves raw `data/` files are not the
    public private-client surface;
 3. keep target-management no-fake-UI review fresh; a 2026-05-18 code/docs
@@ -218,7 +224,7 @@ If `viewerAuthConfigured=false` returns, treat it as a regression and re-check
 Render env configuration. Do not rotate or publish viewer passwords in docs.
 
 Use `SYSTEM_REVIEW_STATUS_2026-05-20.md` as the current proof/blocker snapshot;
-it now reflects live commit `6c90470`.
+it now reflects live commit `153cff7`.
 
 ## Do Not Do Next
 

@@ -12957,3 +12957,170 @@ operations/password safety.
 The Rio guard is now live, but it does not finish the product loop. There are
 still unproven authenticated profile paths, no real buyer rows, no measured
 pilot rows, and no manual Rio approval.
+
+## 2026-05-19 14:22 -03 - Loop Cycle: Rio Guard Status Deploy Smoke
+
+### Objective Reviewed
+
+Verify the status/log commit after the Rio manual approval guard deploy and
+continue back to the long-term objective queue.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+153cff7 docs: log Rio approval guard deploy
+git push origin HEAD:master
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86uqakvikkc73cbtajg
+commit=153cff79fc85ffa029c1d661d3de358efc147897
+status=live
+finishedAt=2026-05-20T17:24:48.328224Z
+```
+
+Updated local docs after live smoke:
+
+```text
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+This update is intentionally recorded before the next task and can be committed
+with the next path-limited loop change, avoiding an infinite deploy-log-only
+chain.
+
+### Evidence
+
+Live logged-out smoke on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+  job=succeeded
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /data/targets.json -> 404 Not Found
+GET /data/viewer_profiles.json -> 404 Not Found
+GET /data/reports/rio_economic_topic_report_20260519T142621Z.json -> 404 Not Found
+GET /clipping-data.json -> 404 Not Found
+```
+
+### Barrier Or Failure
+
+The positive authenticated profile proof remains unavailable without the real
+passwords. This is still recorded as a live-proof gap, not treated as
+completion.
+
+### Next Objective From Docs
+
+Re-open the required long-term docs and choose the next weak unblocked item
+from the queue: likely operations/password safety, authenticated proof
+workarounds, buyer/pilot evidence, or additional Rio methodology guardrails.
+
+### Why The Loop Continues
+
+The latest live smoke is clean, but the loop is not finished. Passing smoke
+only creates evidence for the log; it does not remove the remaining product,
+buyer, operator-cost, and authenticated-proof gaps.
+
+## 2026-05-19 14:26 -03 - Loop Cycle: Authenticated Smoke Workaround Hardening
+
+### Objective Reviewed
+
+The docs still rank fresh authenticated production proof as the weakest Axis 1
+gap. This shell does not have viewer/admin passwords, so the loop must not stop
+there; it should reduce the chance that the next operator-assisted smoke is
+partial, unsafe, or falsely treated as complete.
+
+### Action Taken
+
+Checked for local smoke credentials without printing values:
+
+```text
+CLIPPING_SMOKE_VIEWER_PASSWORDS=false
+CLIPPING_SMOKE_ADMIN_PASSWORD=false
+CLIPPING_SMOKE_FORBIDDEN_TARGETS=false
+CLIPPING_SMOKE_BASE_URL=false
+CLIPPING_SMOKE_ALLOW_ADMIN_MUTATION=false
+```
+
+Updated:
+
+```text
+tools/authenticated_render_smoke.py
+tests/test_authenticated_render_smoke.py
+AUTHENTICATED_RENDER_SMOKE_RUNBOOK.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+New behavior:
+
+```text
+--credentials-file can read a local outside-repo smoke env file
+CLIPPING_SMOKE_* keys only are loaded from that file
+environment variables override the file
+default expected viewer profiles are flavio, shakira, rio_economico
+partial viewer-password sets fail before being treated as complete proof
+```
+
+### Evidence
+
+Checks run:
+
+```text
+python3 -B -m py_compile tools/authenticated_render_smoke.py tests/test_authenticated_render_smoke.py -> passed
+python3 -B -c "from tests import test_authenticated_render_smoke as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+python3 -B tools/authenticated_render_smoke.py --help -> shows --credentials-file and --expected-viewer-profiles
+python3 -B tools/authenticated_render_smoke.py -> expected failure without credentials
+git diff --check -> passed
+```
+
+Expected no-credential failure:
+
+```text
+[FAIL] viewer passwords configured for smoke: set CLIPPING_SMOKE_VIEWER_PASSWORDS outside Git
+[FAIL] admin password configured for smoke: set CLIPPING_SMOKE_ADMIN_PASSWORD outside Git
+ok=false
+```
+
+### Barrier Or Failure
+
+The first direct test run failed because one new test used pytest's `tmp_path`
+fixture, but this shell is using direct Python test calls and does not have
+pytest available. The test was changed to use `tempfile.TemporaryDirectory()`
+from the standard library. This is logged as a pattern to avoid while pytest is
+absent.
+
+Authenticated production proof remains blocked by absent passwords, but the
+operator path is now stricter and safer.
+
+### Next Objective From Docs
+
+Commit/push this authenticated-smoke workaround, wait for Render, smoke logged
+out again, then re-open the docs. If credentials remain absent, continue to
+the next unblocked product/operations guard instead of stopping.
+
+### Why The Loop Continues
+
+The helper is stronger, but no real authenticated viewer/admin Render proof has
+run yet. The loop must still return to the docs after deploy and keep working
+on the remaining gaps.
