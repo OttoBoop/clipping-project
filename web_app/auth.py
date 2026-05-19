@@ -27,6 +27,43 @@ def _env_value(name: str) -> str:
     return os.environ.get(name, "").strip()
 
 
+PASSWORD_HASH_PREFIX = "pbkdf2_sha256$"
+PASSWORD_HASH_ROUNDS = 310_000
+
+
+def _hash_password(plain: str) -> str:
+    """Hash a password for storage in clipping_credentials.json.
+
+    Returns a string like `pbkdf2_sha256$<rounds>$<salt_b64>$<hash_b64>`.
+    The implementation uses hashlib.pbkdf2_hmac with SHA-256 — stdlib only,
+    no new dependency — and a per-password 16-byte random salt.
+    """
+    salt = os.urandom(16)
+    digest = hashlib.pbkdf2_hmac("sha256", plain.encode("utf-8"), salt, PASSWORD_HASH_ROUNDS)
+    return f"{PASSWORD_HASH_PREFIX}{PASSWORD_HASH_ROUNDS}${base64.urlsafe_b64encode(salt).decode('ascii').rstrip('=')}${base64.urlsafe_b64encode(digest).decode('ascii').rstrip('=')}"
+
+
+def _verify_password(plain: str, stored: str) -> bool:
+    """Compare a plaintext password against a stored value.
+
+    Accepts both hashed values (with `pbkdf2_sha256$...` prefix) and bare
+    plaintext (for backward compatibility with env-var-defined passwords).
+    """
+    if not stored:
+        return False
+    if stored.startswith(PASSWORD_HASH_PREFIX):
+        try:
+            _, rounds_s, salt_b64, hash_b64 = stored.split("$", 3)
+            rounds = int(rounds_s)
+            salt = base64.urlsafe_b64decode(salt_b64 + "=" * (-len(salt_b64) % 4))
+            expected = base64.urlsafe_b64decode(hash_b64 + "=" * (-len(hash_b64) % 4))
+        except (ValueError, hashlib.UnsupportedAlgorithm if hasattr(hashlib, "UnsupportedAlgorithm") else Exception):
+            return False
+        candidate = hashlib.pbkdf2_hmac("sha256", plain.encode("utf-8"), salt, rounds)
+        return hmac.compare_digest(candidate, expected)
+    return hmac.compare_digest(plain, stored)
+
+
 def _load_credentials_file() -> dict[str, Any] | None:
     """Return parsed credentials JSON, or None if missing/corrupt.
 
@@ -177,7 +214,7 @@ def verify_session(token: str | None) -> dict[str, Any] | None:
 
 def check_password(password: str) -> bool:
     expected = _file_admin_password() or _env_value("CLIPPING_ADMIN_PASSWORD")
-    return bool(expected) and hmac.compare_digest(password, expected)
+    return _verify_password(password, expected)
 
 
 def viewer_passwords() -> dict[str, str]:
@@ -254,8 +291,8 @@ def set_admin_password(new_password: str) -> None:
     if not data.get("viewer_passwords"):
         env_viewers = viewer_passwords()
         if env_viewers:
-            data["viewer_passwords"] = env_viewers
-    data["admin_password"] = cleaned
+            data["viewer_passwords"] = {p: _hash_password(v) for p, v in env_viewers.items()}
+    data["admin_password"] = _hash_password(cleaned)
     _write_credentials_file(data)
 
 
@@ -270,13 +307,14 @@ def set_viewer_password(profile: str, new_password: str) -> None:
     data = _load_credentials_file() or {}
     viewers = dict(data.get("viewer_passwords") or {})
     if not viewers:
-        viewers = dict(viewer_passwords())
-    viewers[profile_key] = cleaned
+        env_viewers = viewer_passwords()
+        viewers = {p: _hash_password(v) for p, v in env_viewers.items()}
+    viewers[profile_key] = _hash_password(cleaned)
     data["viewer_passwords"] = viewers
     if not data.get("admin_password"):
         env_admin = _env_value("CLIPPING_ADMIN_PASSWORD")
         if env_admin:
-            data["admin_password"] = env_admin
+            data["admin_password"] = _hash_password(env_admin)
     _write_credentials_file(data)
 
 
@@ -284,10 +322,10 @@ def login_identity(password: str) -> dict[str, str] | None:
     if check_password(password):
         return {"sub": "admin", "role": "admin", "profile": "admin"}
     for profile, expected in viewer_passwords().items():
-        if hmac.compare_digest(str(password or ""), expected):
+        if _verify_password(str(password or ""), expected):
             return {"sub": profile, "role": "viewer", "profile": profile}
     for profile, expected in public_empty_demo_passwords().items():
-        if hmac.compare_digest(str(password or ""), expected):
+        if _verify_password(str(password or ""), expected):
             return {"sub": profile, "role": "viewer", "profile": profile}
     return None
 

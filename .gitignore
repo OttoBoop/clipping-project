@@ -8,3 +8,4 @@ __pycache__/
 *.pyc
 .venv/
 .venv_playwright/
+data/clipping_credentials.json
