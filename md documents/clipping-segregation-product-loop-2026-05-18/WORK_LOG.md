@@ -11685,3 +11685,68 @@ logged-out live smoke, then another docs review.
 The helper reduces a blocker into a repeatable operator action, but the live
 authenticated proof still has to be run with real credentials, and the Rio,
 buyer, pricing, and operations tracks still need review.
+
+## 2026-05-19 11:24 -03 - Loop Cycle: Authenticated Smoke Helper Live Deploy
+
+### Objective Reviewed
+
+Push the authenticated smoke workaround to the live Render-backed project and
+verify that the production privacy gate did not regress.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+d6104e6 tools: add authenticated Render smoke helper
+git push origin HEAD:master
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86s6qd7vvec73b697b0
+commit=d6104e655ed8c438c7f8837c479ef9505365c895
+status=live
+finishedAt=2026-05-20T14:23:18.613943Z
+```
+
+### Evidence
+
+Live logged-out smoke on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+Authenticated viewer/admin Render proof remains blocked in this shell because
+no real passwords are available here. The new helper/runbook now defines the
+non-secret path for the operator to run that proof without leaking credentials.
+
+### Next Objective From Docs
+
+Re-open the docs and continue to the next unblocked weak axis. Likely next
+targets: Rio manual approval methodology, buyer/pilot evidence maintenance, or
+another checklist review that does not require secret credentials.
+
+### Why The Loop Continues
+
+The live deploy and logged-out smoke are evidence, not completion. Positive
+viewer/admin proof, Rio manual approval, buyer evidence, pricing evidence, and
+operations review remain open.
