@@ -357,6 +357,17 @@ def create_secondary_target(payload: dict[str, Any]) -> dict[str, Any]:
     cleaned = clean_target_payload(payload)
 
     rows = normalize_targets(load_targets())
+
+    new_name_folded = cleaned["display_name"].casefold()
+    for row in rows:
+        if bool(row.get("archived")):
+            continue
+        existing_name = normalize_text(row.get("display_name") or row.get("label") or "")
+        if existing_name.casefold() == new_name_folded:
+            raise ValidationError(
+                f"Já existe um nome cadastrado como '{row.get('label') or existing_name}'. Escolha um nome diferente ou edite o existente."
+            )
+
     existing_keys = {str(row.get("key") or "").strip() for row in rows}
     key = unique_target_slug(cleaned["display_name"], existing_keys)
     target = {

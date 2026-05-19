@@ -149,6 +149,8 @@ def target_validation_payload(exc: ValidationError) -> dict[str, Any]:
     suggestion = "Revise o nome e tente novamente."
     if "pelo menos 3 caracteres" in message:
         suggestion = "Digite um nome de exibicao com 3 caracteres ou mais."
+    elif "Já existe um nome cadastrado" in message:
+        suggestion = "Escolha um nome diferente. Para mudar o existente, use Editar em vez de criar."
     elif "desconhecido" in message:
         field = "target_key"
         suggestion = "Atualize a lista de nomes e tente de novo com um nome existente."

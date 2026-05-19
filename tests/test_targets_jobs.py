@@ -54,26 +54,26 @@ def test_create_secondary_target_writes_sanitized_non_primary_target_atomically(
 
     created = db_admin.create_secondary_target(
         {
-            "display_name": "Ana Maria",
-            "keywords": ["Ana Maria", "  ", "Secretaria Ana Maria"],
-            "aliases": ["A. Maria", "A. Maria"],
+            "display_name": "Marina Costa",
+            "keywords": ["Marina Costa", "  ", "Secretaria Marina Costa"],
+            "aliases": ["M. Costa", "M. Costa"],
             "primary": True,
             "className": "primary",
         }
     )
 
     assert created == {
-        "key": "ana_maria_2",
-        "label": "Ana Maria",
-        "display_name": "Ana Maria",
+        "key": "marina_costa",
+        "label": "Marina Costa",
+        "display_name": "Marina Costa",
         "className": "",
         "primary": False,
         "archived": False,
-        "keywords": ["Ana Maria", "Secretaria Ana Maria"],
-        "exact_aliases": ["A. Maria"],
+        "keywords": ["Marina Costa", "Secretaria Marina Costa"],
+        "exact_aliases": ["M. Costa"],
     }
     stored = json.loads(targets_path.read_text(encoding="utf-8"))
-    assert stored[-1]["key"] == "ana_maria_2"
+    assert stored[-1]["key"] == "marina_costa"
     assert stored[-1]["primary"] is False
     assert stored[-1]["className"] == ""
 
@@ -82,7 +82,71 @@ def test_create_secondary_target_writes_sanitized_non_primary_target_atomically(
     by_key = {row["key"]: row for row in public["targets"]}
     assert by_key["flavio_valle"]["primary"] is True
     assert by_key["ana_maria"]["primary"] is False
-    assert by_key["ana_maria_2"]["primary"] is False
+    assert by_key["marina_costa"]["primary"] is False
+
+
+def test_create_secondary_target_rejects_duplicate_display_name(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "shakira",
+                    "label": "Shakira",
+                    "display_name": "Shakira",
+                    "primary": False,
+                    "keywords": ["Shakira"],
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    for payload in (
+        {"display_name": "Shakira"},
+        {"display_name": "shakira"},
+        {"display_name": "  Shakira  "},
+        {"display_name": "SHAKIRA"},
+    ):
+        try:
+            db_admin.create_secondary_target(payload)
+        except db_admin.ValidationError as exc:
+            assert "Já existe um nome cadastrado" in str(exc)
+            assert "Shakira" in str(exc)
+        else:
+            raise AssertionError(f"duplicate display_name {payload!r} should have been rejected")
+
+    stored = json.loads(targets_path.read_text(encoding="utf-8"))
+    assert len(stored) == 1, "no extra row should have been written"
+    assert stored[0]["key"] == "shakira"
+
+
+def test_create_secondary_target_allows_duplicate_against_archived_row(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "shakira",
+                    "label": "Shakira",
+                    "display_name": "Shakira",
+                    "primary": False,
+                    "archived": True,
+                    "keywords": ["Shakira"],
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    created = db_admin.create_secondary_target({"display_name": "Shakira"})
+    assert created["display_name"] == "Shakira"
+    assert created["archived"] is False
+    assert created["key"] != "shakira"
 
 
 def test_update_archive_and_restore_secondary_target(monkeypatch, tmp_path):
