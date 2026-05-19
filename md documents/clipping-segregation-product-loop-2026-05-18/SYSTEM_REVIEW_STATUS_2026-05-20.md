@@ -8,9 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-118cb8e docs: add Rio manual review queue
-deploy dep-d86i0f3tqb8s73dbfsb0 -> live
-finishedAt=2026-05-20T02:47:05.309534Z
+6ea7ed4 test: guard Rio panel against fake approval UI
+deploy dep-d86r90e7r5hc73ct6gbg -> live
+finishedAt=2026-05-20T13:20:01.755431Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -54,6 +54,10 @@ e846ee1 docs: add Render operations review
 9906b21 docs: refresh system review status
 6c5f10a docs: clarify buyer quote tracker readiness
 118cb8e docs: add Rio manual review queue
+8203c1a docs: refresh live system status
+c0750bc docs: tighten pilot operating ledger
+84d6483 docs: refresh target management rejection proof
+6ea7ed4 test: guard Rio panel against fake approval UI
 ```
 
 Freshly proven after deploy:
@@ -71,6 +75,10 @@ Freshly proven after deploy:
   hands-on demo reactions, zero measured pilot runs, and no final price;
 - Rio manual review now has a queue for the eight `not_reviewed` stories, with
   row 11 as the first review candidate and `approved_promotions=0`.
+- target-management logged-out mutation calls return `admin_login_required` for
+  direct create/edit/archive/restore attempts;
+- the Rio UI static test now blocks fake approval/publish/add controls and
+  target write calls in the Rio panel path.
 
 ## Authenticated Production Proof
 
@@ -93,8 +101,8 @@ viewer/admin passwords are not available here
 ```
 
 Therefore this snapshot does not claim fresh positive viewer/admin browser
-proof after `118cb8e`. The fresh proof is logged-out production privacy plus
-the deployed docs/methodology updates. Positive authenticated proof must be
+proof after `6ea7ed4`. The fresh proof is logged-out production privacy plus
+deployed static/read-only Rio UI markers. Positive authenticated proof must be
 repeated by Otavio/operator or a session with the real viewer/admin passwords.
 
 ## Rio Economic Track
@@ -113,6 +121,9 @@ Current state:
   admin or `rio_economico`;
 - the panel is read-only and has no approval, target creation, update, or
   publish controls.
+- the focused static test forbids `Adicionar`, `Aprovar`, `Publicar`,
+  `<button`, `<form`, `apiPost(`, `apiPatch(`, and `/api/targets` inside the
+  Rio panel path.
 
 Remaining Rio blockers:
 
@@ -177,6 +188,9 @@ Password operations:
 - local toolchain in this shell lacks `pytest`, `fastapi`, `node`, and
   Playwright, so recent code checks used static/direct assertions plus Render
   deploy smoke.
+- the current sandbox required escalation for git metadata writes, GitHub push,
+  and Render curl checks after DNS/network restriction failures; the barriers
+  were logged and worked around.
 
 ## Next Review
 

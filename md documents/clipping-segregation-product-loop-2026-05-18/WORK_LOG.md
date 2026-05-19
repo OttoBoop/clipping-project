@@ -11319,3 +11319,162 @@ methodology/checklist update or buyer/pilot evidence maintenance.
 The UI is better guarded against fake approval controls, but approval writes,
 authenticated profile proof, buyer evidence, and measured pilot work are still
 not complete.
+
+## 2026-05-19 10:24 -03 - Loop Cycle: Rio No-Fake-Approval Deploy Smoke
+
+### Objective Reviewed
+
+Publish the Rio no-fake-approval guard and prove on the live Render surface
+that the privacy gate remains active and the deployed assets still keep the Rio
+panel read-only.
+
+### Render Audit
+
+Render deploy:
+
+```text
+service=srv-d7p2p5beo5us739f9k40
+deploy=dep-d86r90e7r5hc73ct6gbg
+commit=6ea7ed48923ac65e44f845b2d2c238d6a426b2ea
+message=test: guard Rio panel against fake approval UI
+status=live
+finishedAt=2026-05-20T13:20:01.755431Z
+```
+
+Live logged-out smoke:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+```
+
+Live asset evidence:
+
+```text
+/assets/clipping.js includes viewerCanSeeRioReport()
+/assets/clipping.js includes apiFetch("/api/reports/rio-economic-topic")
+/assets/clipping.js hides rioEconomicReportPanel when viewerCanSeeRioReport() is false
+/assets/clipping.css includes .rio-report-panel, .rio-report-status, and .rio-report-item
+Rio JS section between function rioPolicyLabel and function renderRunTarget:
+  apiPost(: false
+  apiPatch(: false
+  /api/targets: false
+```
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+6ea7ed4 test: guard Rio panel against fake approval UI
+git push origin HEAD:master
+```
+
+### Evidence
+
+The deployed Rio panel path remains read-only. The logged-out app still serves
+only the login shell and private endpoints still return `viewer_login_required`.
+
+### Barrier Or Failure
+
+Sandbox barriers encountered and handled:
+
+```text
+git add/commit first attempt -> failed: index.lock read-only filesystem
+retry with escalated permission -> commit succeeded
+git push first attempt -> failed: could not resolve github.com
+retry with escalated permission -> push succeeded
+Render curl first attempt -> failed: could not resolve clipping-project.onrender.com
+retry with escalated permission -> live smoke succeeded
+```
+
+`pytest` is still unavailable in this shell, so the focused Rio UI tests were
+executed directly with Python before the commit and all three functions passed.
+
+Positive authenticated Rio/admin proof still requires credentials that are not
+available in this shell.
+
+### Next Objective From Docs
+
+Re-open the objective docs and select the next weak item. Current unblocked
+candidates are system status refresh, Rio methodology/manual approval review,
+or buyer/pilot evidence maintenance without fabricating data.
+
+### Why The Loop Continues
+
+This deploy proves the read-only guard and logged-out privacy gate, but it does
+not complete authenticated viewer/admin proof, approval writes, real buyer
+evidence, or measured pilot work.
+
+## 2026-05-19 10:28 -03 - Loop Cycle: Refresh System Status After Rio UI Guard
+
+### Objective Reviewed
+
+After re-reading the required docs, `ACTIVE_NEXT_ACTION.md` still said the
+current proof snapshot reflected live commit `118cb8e`, while Render was live
+on `6ea7ed4`. This was stale status memory and needed correction before the
+next objective.
+
+### Render Audit
+
+Used the just-recorded live evidence:
+
+```text
+deploy=dep-d86r90e7r5hc73ct6gbg
+commit=6ea7ed48923ac65e44f845b2d2c238d6a426b2ea
+status=live
+logged-out private endpoints -> 401 viewer_login_required
+Rio JS read-only section -> no apiPost/apiPatch/api/targets
+```
+
+### Action Taken
+
+Updated:
+
+```text
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The status snapshot now records:
+
+```text
+latest live commit=6ea7ed4
+deploy=dep-d86r90e7r5hc73ct6gbg
+target-management logged-out mutation proof exists
+Rio no-fake-approval static guard exists
+current shell still lacks positive viewer/admin credentials
+```
+
+### Barrier Or Failure
+
+No new app blocker. The system status remains a snapshot; it must be refreshed
+again after future deploys instead of treated as automatically current.
+
+### Next Objective From Docs
+
+Run checks, commit/push this status refresh path-limited, wait for Render,
+smoke production, then re-read docs. The next weak unblocked item is likely Rio
+manual-approval methodology or buyer/pilot evidence maintenance.
+
+### Why The Loop Continues
+
+The status snapshot is fresher, but it does not resolve authenticated proof,
+approval writes, buyer evidence, measured pilot cost, or a finished Rio
+indicator.
