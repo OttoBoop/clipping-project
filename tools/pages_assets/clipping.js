@@ -131,6 +131,12 @@
             setChangePasswordMessage(msg, "error");
             return;
           }
+          // change-password issues a fresh session cookie, so the old CSRF
+          // token (derived from the old session) no longer validates.
+          // Clear the cache so the next apiPost re-fetches against the
+          // new session.
+          csrfToken = "";
+          csrfPromise = null;
           setChangePasswordMessage("Senha trocada. Use a nova no próximo login.", "ok");
           window.setTimeout(closeDialog, 1500);
         } catch (error) {
