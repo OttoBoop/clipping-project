@@ -540,6 +540,20 @@ The v4 report may discuss 25 reviewed stories, but the indicator count must not
 claim more than 17 current-period stories until a sidecar approval file or
 explicit manual status field promotes additional rows.
 
+Manual approval sidecar/status implementation:
+
+```text
+data/reports/rio_economic_manual_approvals_v0.json
+tools/rio_economic_build_topic_report.py --manual-approvals
+data/reports/rio_economic_topic_report_20260519T020159Z.json
+manual_approval_status_counts:
+not_required=17
+not_reviewed=8
+```
+
+The sidecar currently promotes nothing. It only makes the eight non-automatic
+stories explicit and reviewable.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

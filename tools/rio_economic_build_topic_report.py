@@ -27,6 +27,45 @@ def load_json(path: Path) -> dict[str, Any]:
     return payload
 
 
+def approval_rows_by_story(manual_approvals_payload: dict[str, Any] | None) -> dict[int, dict[str, Any]]:
+    if not manual_approvals_payload:
+        return {}
+    rows = manual_approvals_payload.get("approvals") or []
+    approvals: dict[int, dict[str, Any]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        try:
+            story_row = int(row.get("representative_row") or row.get("story_row") or 0)
+        except (TypeError, ValueError):
+            continue
+        if story_row > 0:
+            approvals[story_row] = row
+    return approvals
+
+
+def default_manual_approval_status(story: dict[str, Any]) -> str:
+    if story.get("date_quality_policy") == "count_current_period":
+        return "not_required"
+    return "not_reviewed"
+
+
+def apply_manual_approvals(stories: list[dict[str, Any]], manual_approvals_payload: dict[str, Any] | None) -> None:
+    approvals = approval_rows_by_story(manual_approvals_payload)
+    for story in stories:
+        try:
+            story_row = int(story.get("representative_row") or 0)
+        except (TypeError, ValueError):
+            story_row = 0
+        approval = approvals.get(story_row, {})
+        status = str(approval.get("manual_approval_status") or default_manual_approval_status(story)).strip()
+        story["manual_approval_status"] = status
+        story["manual_approval_decision"] = str(approval.get("decision") or "")
+        story["manual_approval_reviewer"] = str(approval.get("reviewer") or "")
+        story["manual_approval_reviewed_at"] = str(approval.get("reviewed_at") or "")
+        story["manual_approval_rationale"] = str(approval.get("rationale") or "")
+
+
 def row_number_from_duplicate(value: Any) -> int | None:
     raw = str(value or "").strip()
     if not raw.startswith("row:"):
@@ -192,6 +231,7 @@ def build_stories(clustered_payload: dict[str, Any], canonical_payload: dict[str
 def summarize(stories: list[dict[str, Any]], source_meta: dict[str, Any] | None = None) -> dict[str, Any]:
     status_counts = Counter(str(story.get("date_quality_status") or "unknown") for story in stories)
     policy_counts = Counter(str(story.get("date_quality_policy") or "unknown") for story in stories)
+    manual_approval_counts = Counter(str(story.get("manual_approval_status") or "unknown") for story in stories)
     dimension_counts = Counter()
     for story in stories:
         primary = str(story.get("primary_dimension") or "").strip()
@@ -203,6 +243,7 @@ def summarize(stories: list[dict[str, Any]], source_meta: dict[str, Any] | None 
         "article_count": article_count,
         "date_quality_status_counts": dict(sorted(status_counts.items())),
         "date_quality_policy_counts": dict(sorted(policy_counts.items())),
+        "manual_approval_status_counts": dict(sorted(manual_approval_counts.items())),
         "primary_dimension_story_counts": dict(sorted(dimension_counts.items())),
         "source_row_count": (source_meta or {}).get("row_count"),
         "source_cluster_count": (source_meta or {}).get("cluster_count"),
@@ -210,11 +251,17 @@ def summarize(stories: list[dict[str, Any]], source_meta: dict[str, Any] | None 
     }
 
 
-def build_payload(clustered_report: Path, canonical_reports: list[Path] | None = None) -> dict[str, Any]:
+def build_payload(
+    clustered_report: Path,
+    canonical_reports: list[Path] | None = None,
+    manual_approvals: Path | None = None,
+) -> dict[str, Any]:
     clustered_payload = load_json(clustered_report)
     canonical_payloads = [load_json(path) for path in canonical_reports or []]
     canonical_payload = merge_canonical_payloads(canonical_payloads) if canonical_payloads else None
+    manual_approvals_payload = load_json(manual_approvals) if manual_approvals else None
     stories = build_stories(clustered_payload, canonical_payload)
+    apply_manual_approvals(stories, manual_approvals_payload)
     source_meta = clustered_payload.get("meta") if isinstance(clustered_payload.get("meta"), dict) else {}
     canonical_meta = canonical_payload.get("meta") if canonical_payload and isinstance(canonical_payload.get("meta"), dict) else {}
     generated_at = datetime.now(timezone.utc)
@@ -224,6 +271,7 @@ def build_payload(clustered_report: Path, canonical_reports: list[Path] | None =
             "clustered_report": str(clustered_report),
             "canonical_reports": [str(path) for path in canonical_reports or []],
             "canonical_report": str(canonical_reports[0]) if canonical_reports and len(canonical_reports) == 1 else "",
+            "manual_approvals": str(manual_approvals) if manual_approvals else "",
             "writes_production_db": False,
             "writes_assets_payload": False,
             "writes_targets_json": False,
@@ -255,6 +303,7 @@ def write_csv(path: Path, stories: list[dict[str, Any]]) -> None:
         "date_quality_policy",
         "date_quality_source_row",
         "date_quality_evidence_rows",
+        "manual_approval_status",
         "sources",
         "title",
         "url",
@@ -295,8 +344,14 @@ def write_markdown(path: Path, payload: dict[str, Any]) -> None:
         *[f"{key}={value}" for key, value in meta["date_quality_policy_counts"].items()],
         "```",
         "",
-        "| Story Row | Articles | Policy | Date Status | Date Evidence Row | Dimension | Sources | Title |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "Manual approval status counts:",
+        "",
+        "```text",
+        *[f"{key}={value}" for key, value in meta["manual_approval_status_counts"].items()],
+        "```",
+        "",
+        "| Story Row | Articles | Policy | Date Status | Manual Approval | Date Evidence Row | Dimension | Sources | Title |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for story in payload["stories"]:
         lines.append(
@@ -307,6 +362,7 @@ def write_markdown(path: Path, payload: dict[str, Any]) -> None:
                     md_cell(story.get("article_count")),
                     md_cell(story.get("date_quality_policy")),
                     md_cell(story.get("date_quality_status")),
+                    md_cell(story.get("manual_approval_status")),
                     md_cell(story.get("date_quality_source_row")),
                     md_cell(story.get("primary_dimension")),
                     md_cell(story.get("sources")),
@@ -336,13 +392,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("clustered_report", type=Path)
     parser.add_argument("--canonical-report", type=Path, action="append", default=[])
+    parser.add_argument("--manual-approvals", type=Path, default=None)
     parser.add_argument("--output-dir", type=Path, default=REPORTS_DIR)
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    payload = build_payload(args.clustered_report, args.canonical_report)
+    payload = build_payload(args.clustered_report, args.canonical_report, args.manual_approvals)
     paths = write_reports(payload, args.output_dir)
     print(
         json.dumps(

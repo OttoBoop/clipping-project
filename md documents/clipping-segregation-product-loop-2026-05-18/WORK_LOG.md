@@ -9794,3 +9794,170 @@ operator can promote rows in UI.
 
 Run checks, commit/push this policy with the prior live-smoke log, wait for
 Render, smoke production, then re-read docs.
+
+## 2026-05-18 23:15 -03 - Loop Cycle: Manual Approval Policy Deploy And Smoke
+
+### Objective Reviewed
+
+Deploy the Rio manual approval policy and verify the live app/privacy gates did
+not regress.
+
+### Action Taken
+
+Committed and pushed path-limited:
+
+```text
+2e10a57 docs: define Rio manual approval policy
+```
+
+Waited for Render deploy:
+
+```text
+dep-d86hbssvikkc73c38g40 -> live
+```
+
+Ran logged-out smoke against production.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+Positive authenticated proof still requires credentials. Local pycache remains
+dirty and uncommitted.
+
+### Next Objective From Docs
+
+Re-read docs and choose the next unblocked item. The likely next Rio step is an
+approval sidecar/status field so manual promotion cannot happen only in chat.
+
+## 2026-05-18 23:20 -03 - Loop Cycle: Rio Manual Approval Sidecar
+
+### Objective Reviewed
+
+Make manual promotion auditable in data, not just policy prose or chat.
+
+### Action Taken
+
+Updated `tools/rio_economic_build_topic_report.py` to accept:
+
+```text
+--manual-approvals
+```
+
+Added:
+
+```text
+data/reports/rio_economic_manual_approvals_v0.json
+```
+
+Regenerated:
+
+```text
+data/reports/rio_economic_topic_report_20260519T020159Z.json
+data/reports/rio_economic_topic_report_20260519T020159Z.csv
+data/reports/rio_economic_topic_report_20260519T020159Z.md
+```
+
+Updated docs:
+
+```text
+RIO_ECONOMIC_MANUAL_APPROVAL_SIDECAR_REPORT_20260519T020159Z.md
+RIO_ECONOMIC_MANUAL_APPROVAL_POLICY_V0.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+RIO_ECONOMIC_PRODUCTION_GATE_V0.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Focused direct tests:
+
+```text
+rio manual approval direct tests passed
+```
+
+Regenerated report:
+
+```text
+story_count=25
+article_count=31
+canonical_rows_checked=31
+count_current_period=17
+manual_review_before_counting=1
+research_only=7
+manual_approval_status_counts:
+not_required=17
+not_reviewed=8
+target_row_approved=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+### Barrier Or Failure
+
+No manual rows were promoted. The sidecar is a scaffold and evidence trail, not
+a production approval.
+
+### Next Objective From Docs
+
+Run checks, commit/push path-limited, wait for Render, smoke production, then
+re-read docs.
+
+## 2026-05-18 23:05 -03 - Resume Cycle: Reanchor Before Sidecar Deploy
+
+### Objective Reviewed
+
+Resumed the loop after context compaction and re-read the required long-term
+documents before deciding the next action.
+
+### Action Taken
+
+Read:
+
+```text
+LONG_TERM_GOALS.md
+DEPENDENCY_MAP.md
+CURRENT_SHORT_TERM_LOOP.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_CHECKLIST.md
+RENDER_PRODUCTION_CHECKLIST.md
+WORK_LOG.md
+```
+
+Confirmed the current unblocked next action remains the already-prepared Rio
+manual approval sidecar commit, followed by push, Render deploy, live smoke,
+and another docs review.
+
+### Evidence
+
+`git status --short` shows only the intended Rio sidecar/report/docs paths plus
+unrelated tracked `pipeline/__pycache__/*.pyc` dirt that must remain unstaged.
+
+### Barrier Or Failure
+
+The shell clock reported `2026-05-18 23:05 -0300`, while this file already has
+later `23:12`, `23:15`, and `23:20` entries from the pre-compaction cycle.
+This timestamp inconsistency is logged instead of rewriting prior history.
+
+### Next Objective From Docs
+
+Commit the sidecar paths only, push to `master`, wait for Render, run
+logged-out production smoke, log the evidence, then re-read docs and continue
+to the next weak axis.

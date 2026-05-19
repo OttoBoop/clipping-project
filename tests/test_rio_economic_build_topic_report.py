@@ -149,3 +149,39 @@ def test_merge_canonical_payloads_combines_rows_and_rows_checked():
     assert merged["meta"]["rows_checked"] == 3
     assert [row["row"] for row in merged["rows"]] == [1, 2, 3]
     assert [row["status"] for row in merged["rows"]] == ["same_day", "same_day", "near_date"]
+
+
+def test_apply_manual_approvals_marks_required_and_not_reviewed_rows():
+    stories = [
+        {
+            "representative_row": 1,
+            "date_quality_policy": "count_current_period",
+        },
+        {
+            "representative_row": 2,
+            "date_quality_policy": "manual_review_before_counting",
+        },
+        {
+            "representative_row": 3,
+            "date_quality_policy": "research_only",
+        },
+    ]
+    approvals = {
+        "approvals": [
+            {
+                "representative_row": 2,
+                "manual_approval_status": "approved_count_current_period",
+                "decision": "count_current_period",
+                "reviewer": "operator",
+                "reviewed_at": "2026-05-19T00:00:00Z",
+                "rationale": "source date accepted",
+            }
+        ]
+    }
+
+    topic_report.apply_manual_approvals(stories, approvals)
+
+    assert stories[0]["manual_approval_status"] == "not_required"
+    assert stories[1]["manual_approval_status"] == "approved_count_current_period"
+    assert stories[1]["manual_approval_decision"] == "count_current_period"
+    assert stories[2]["manual_approval_status"] == "not_reviewed"

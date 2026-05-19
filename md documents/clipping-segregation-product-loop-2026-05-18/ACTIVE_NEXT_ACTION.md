@@ -47,6 +47,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
   with Rio/admin-only access and no target-row creation.
 - Rio economic manual approval policy v0 for `near_date` and research-only
   stories before any indicator count or chart.
+- Rio economic manual approval sidecar and regenerated topic report with
+  `manual_approval_status_counts`.
 
 ## Current Verification State
 
@@ -134,8 +136,9 @@ Continue the production loop. Current priority from the docs:
    stories, 1 manual-review story, 7 research-only stories, and no remaining
    canonical-check-required stories for the v4 sample; next Rio step is fresh
    production scoping proof, live positive proof for
-   `/api/reports/rio-economic-topic`, a manual-approval sidecar/status field,
-   and a Rio-only UI decision before any production target row;
+   `/api/reports/rio-economic-topic`, any real manual approvals recorded in the
+   sidecar before promotion, and a Rio-only UI decision before any production
+   target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; V1 pilot scope and delivery-format
    decision now exist; demo script is now tied to the V1 offer without exposing

@@ -71,5 +71,15 @@ For a paid client or public-facing Rio indicator:
 
 ## Next Implementation Step
 
-Add an explicit `manual_approval_status` field to future Rio topic reports or a
-sidecar approval file before any UI lets an operator promote rows.
+Implemented sidecar/status scaffold:
+
+```text
+data/reports/rio_economic_manual_approvals_v0.json
+data/reports/rio_economic_topic_report_20260519T020159Z.json
+manual_approval_status_counts:
+not_required=17
+not_reviewed=8
+```
+
+Next implementation step: if an operator promotes a row, update the sidecar with
+reviewer, reviewed_at, decision, and rationale before regenerating the report.
