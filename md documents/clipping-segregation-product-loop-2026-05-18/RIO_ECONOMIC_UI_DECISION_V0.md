@@ -58,8 +58,8 @@ Render only aggregate counts and the first report stories:
 
 - total stories;
 - total articles;
-- current-period count;
-- manual-review count;
+- effective current-period count from `indicator_policy_counts` when present;
+- manual-review count from `indicator_policy_counts` when present;
 - manual approval status counts;
 - production target gate;
 - story title, date-quality policy, manual status, dimensions, and source link.
@@ -92,6 +92,12 @@ Static test coverage now also asserts that the `rioEconomicReportPanel` section
 contains no `Adicionar`, `Aprovar`, `Publicar`, `<button`, or `<form`, and that
 the Rio JS section does not call `apiPost`, `apiPatch`, or `/api/targets`.
 This prevents the manual-review queue from turning into fake approval UI.
+
+The panel now prefers `indicator_policy_counts` and per-story
+`indicator_policy` when the topic report provides them, while falling back to
+the older date-quality fields for existing reports. This keeps future manual
+approvals from being displayed as mere text labels without changing the
+effective Rio count.
 
 ## Future Work
 

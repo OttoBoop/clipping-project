@@ -11750,3 +11750,173 @@ another checklist review that does not require secret credentials.
 The live deploy and logged-out smoke are evidence, not completion. Positive
 viewer/admin proof, Rio manual approval, buyer evidence, pricing evidence, and
 operations review remain open.
+
+## 2026-05-19 11:27 -03 - Loop Cycle: Deploy Log Commit And Re-anchor To Rio Manual Approval
+
+### Objective Reviewed
+
+Finish the deploy verification for the log-only commit, then return to the
+long-term docs and choose the next unblocked weak axis.
+
+### Action Taken
+
+Committed and pushed the live-deploy evidence from the authenticated smoke
+helper cycle:
+
+```text
+2ac51e3 docs: log authenticated smoke helper deploy
+git push origin HEAD:master
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86s89b7uimc73bl3ea0
+commit=2ac51e3318cca9cbe11398edcbd209a05386aff2
+status=live
+finishedAt=2026-05-20T14:26:38.276723Z
+```
+
+### Evidence
+
+Live logged-out smoke on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+```
+
+Re-read Rio/product docs:
+
+```text
+RIO_ECONOMIC_VALIDATION_PLAN.md
+RIO_ECONOMIC_MANUAL_REVIEW_QUEUE_2026-05-18.md
+RIO_ECONOMIC_MANUAL_APPROVAL_POLICY_V0.md
+RIO_ECONOMIC_UI_DECISION_V0.md
+RIO_ECONOMIC_PRODUCTION_GATE_V0.md
+V1_PILOT_OPERATING_LEDGER.md
+BUYER_QUOTE_VALIDATION_TRACKER.md
+```
+
+### Barrier Or Failure
+
+Authenticated viewer/admin proof is still blocked by missing passwords in this
+shell, so the loop moved to the next unblocked Rio methodology task.
+
+### Next Objective From Docs
+
+Prevent Rio manual approvals from becoming fake indicator changes. A future
+sidecar edit must not promote a story into the current-period count unless
+source/date evidence exists and the generated report exposes the effective
+indicator policy.
+
+## 2026-05-19 11:32 -03 - Loop Cycle: Rio Manual Approval No-Fake-Count Guard
+
+### Objective Reviewed
+
+The Rio docs say row 11 may only count after manual review and that the UI must
+not expose fake approval controls. The next hidden risk was subtler: a sidecar
+could record a loose approval status that appears in UI text without a guarded
+effective indicator count.
+
+### Action Taken
+
+Updated:
+
+```text
+tools/rio_economic_build_topic_report.py
+tests/test_rio_economic_build_topic_report.py
+tests/test_rio_economic_ui_static.py
+assets/clipping.js
+data/reports/rio_economic_manual_approvals_v0.json
+RIO_ECONOMIC_MANUAL_APPROVAL_POLICY_V0.md
+RIO_ECONOMIC_UI_DECISION_V0.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+RIO_ECONOMIC_PRODUCTION_GATE_V0.md
+RIO_ECONOMIC_MANUAL_REVIEW_QUEUE_2026-05-18.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+The report builder now:
+
+```text
+accepts only not_required, not_reviewed, approved_current_period, rejected_research_only
+rejects approved_current_period without reviewer/reviewed_at/rationale
+rejects approved_current_period without source/canonical URL evidence
+rejects approved_current_period without observed source date or date-trust evidence
+emits indicator_policy per story
+emits indicator_policy_counts in report meta
+```
+
+The Rio UI now prefers `indicator_policy_counts` and per-story
+`indicator_policy`, while falling back to date-quality fields for older reports.
+
+### Evidence
+
+Checks run:
+
+```text
+python3 -B -m py_compile tools/rio_economic_build_topic_report.py -> passed
+python3 -B -c "from tests import test_rio_economic_build_topic_report as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+python3 -B -c "from tests import test_rio_economic_ui_static as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+git diff --check -> passed
+```
+
+Regenerated the Rio topic report:
+
+```text
+data/reports/rio_economic_topic_report_20260519T142621Z.json
+data/reports/rio_economic_topic_report_20260519T142621Z.csv
+data/reports/rio_economic_topic_report_20260519T142621Z.md
+story_count=25
+article_count=31
+canonical_rows_checked=31
+date_quality_policy_counts:
+  count_current_period=17
+  manual_review_before_counting=1
+  research_only=7
+indicator_policy_counts:
+  count_current_period=17
+  manual_review_before_counting=1
+  research_only=7
+manual_approval_status_counts:
+  not_required=17
+  not_reviewed=8
+target_row_approved=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+### Barrier Or Failure
+
+No manual approval was made, and no row was promoted. Row 11 remains
+`manual_review_before_counting`; the other seven non-automatic rows remain
+research-only/not-reviewed. This is deliberate because the operator has not
+recorded human source/date evidence.
+
+### Next Objective From Docs
+
+Commit/push this guard, wait for Render, run live smoke again, then re-open the
+docs. After that, continue with either fresh positive authenticated proof if
+credentials become available, or another unblocked Rio/product operations
+review if they do not.
+
+### Why The Loop Continues
+
+This closes one fake-count failure mode, but it does not finish Rio methodology,
+authenticated profile proof, buyer evidence, pricing, or operations.

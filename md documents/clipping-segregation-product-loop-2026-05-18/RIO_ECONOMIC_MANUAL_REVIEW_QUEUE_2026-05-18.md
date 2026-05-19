@@ -7,6 +7,7 @@ not automatically countable in:
 
 ```text
 data/reports/rio_economic_topic_report_20260519T020159Z.json
+data/reports/rio_economic_topic_report_20260519T142621Z.json
 data/reports/rio_economic_manual_approvals_v0.json
 ```
 
@@ -26,6 +27,10 @@ research_only=7
 manual_approval_status_counts:
   not_required=17
   not_reviewed=8
+indicator_policy_counts:
+  count_current_period=17
+  manual_review_before_counting=1
+  research_only=7
 target_row_approved=false
 writes_production_db=false
 writes_assets_payload=false
@@ -53,6 +58,10 @@ rationale
 
 - Do not edit generated report output alone to promote a row.
 - Do not add a production `rio_economico` target row because this queue exists.
+- Use only `approved_current_period` or `rejected_research_only` for reviewed
+  manual statuses; `approved_current_period` must include reviewer,
+  reviewed_at, rationale, canonical/source URL, and observed source date or a
+  date-trust reason in the sidecar before regenerating the report.
 
 ## Queue
 

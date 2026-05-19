@@ -18,6 +18,12 @@ REPORTS_DIR = PROJECT_ROOT / "data" / "reports"
 CURRENT_PERIOD_STATUSES = {"same_day"}
 MANUAL_REVIEW_STATUSES = {"near_date"}
 PASS_STATUSES_BY_STRENGTH = ("same_day", "near_date")
+MANUAL_APPROVAL_STATUSES = {
+    "not_required",
+    "not_reviewed",
+    "approved_current_period",
+    "rejected_research_only",
+}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -50,6 +56,68 @@ def default_manual_approval_status(story: dict[str, Any]) -> str:
     return "not_reviewed"
 
 
+def clean_text(value: Any) -> str:
+    return str(value or "").strip()
+
+
+def manual_approval_evidence_url(approval: dict[str, Any]) -> str:
+    return clean_text(
+        approval.get("canonical_url")
+        or approval.get("source_url")
+        or approval.get("observed_source_url")
+    )
+
+
+def manual_approval_date_evidence(approval: dict[str, Any]) -> str:
+    return clean_text(
+        approval.get("observed_source_date")
+        or approval.get("date_trust_reason")
+        or approval.get("source_date_note")
+    )
+
+
+def validate_manual_approval(story: dict[str, Any], approval: dict[str, Any], status: str) -> None:
+    if status not in MANUAL_APPROVAL_STATUSES:
+        story_row = story.get("representative_row")
+        raise ValueError(f"unknown manual approval status for story row {story_row}: {status}")
+
+    if status in {"not_required", "not_reviewed"}:
+        return
+
+    story_row = story.get("representative_row")
+    missing = [
+        field
+        for field in ("reviewer", "reviewed_at", "rationale")
+        if not clean_text(approval.get(field))
+    ]
+    if missing:
+        raise ValueError(f"manual approval for story row {story_row} is missing: {', '.join(missing)}")
+
+    decision = clean_text(approval.get("decision"))
+    if status == "approved_current_period":
+        if decision != "count_current_period":
+            raise ValueError(
+                f"manual approval for story row {story_row} must use decision=count_current_period"
+            )
+        if not manual_approval_evidence_url(approval):
+            raise ValueError(f"manual approval for story row {story_row} is missing source/canonical URL evidence")
+        if not manual_approval_date_evidence(approval):
+            raise ValueError(f"manual approval for story row {story_row} is missing observed date evidence")
+        if story.get("date_quality_policy") == "count_current_period":
+            raise ValueError(f"manual approval for story row {story_row} is unnecessary for automatic rows")
+
+    if status == "rejected_research_only" and decision != "keep_research_only":
+        raise ValueError(f"manual rejection for story row {story_row} must use decision=keep_research_only")
+
+
+def effective_indicator_policy(story: dict[str, Any], status: str) -> str:
+    if status == "approved_current_period":
+        return "count_current_period"
+    if status == "rejected_research_only":
+        return "research_only"
+    return str(story.get("date_quality_policy") or "unknown")
+
+
 def apply_manual_approvals(stories: list[dict[str, Any]], manual_approvals_payload: dict[str, Any] | None) -> None:
     approvals = approval_rows_by_story(manual_approvals_payload)
     for story in stories:
@@ -58,12 +126,17 @@ def apply_manual_approvals(stories: list[dict[str, Any]], manual_approvals_paylo
         except (TypeError, ValueError):
             story_row = 0
         approval = approvals.get(story_row, {})
-        status = str(approval.get("manual_approval_status") or default_manual_approval_status(story)).strip()
+        status = clean_text(approval.get("manual_approval_status") or default_manual_approval_status(story))
+        validate_manual_approval(story, approval, status)
         story["manual_approval_status"] = status
-        story["manual_approval_decision"] = str(approval.get("decision") or "")
-        story["manual_approval_reviewer"] = str(approval.get("reviewer") or "")
-        story["manual_approval_reviewed_at"] = str(approval.get("reviewed_at") or "")
-        story["manual_approval_rationale"] = str(approval.get("rationale") or "")
+        story["manual_approval_decision"] = clean_text(approval.get("decision"))
+        story["manual_approval_reviewer"] = clean_text(approval.get("reviewer"))
+        story["manual_approval_reviewed_at"] = clean_text(approval.get("reviewed_at"))
+        story["manual_approval_rationale"] = clean_text(approval.get("rationale"))
+        story["manual_approval_source_url"] = manual_approval_evidence_url(approval)
+        story["manual_approval_observed_source_date"] = clean_text(approval.get("observed_source_date"))
+        story["manual_approval_date_trust_reason"] = clean_text(approval.get("date_trust_reason"))
+        story["indicator_policy"] = effective_indicator_policy(story, status)
 
 
 def row_number_from_duplicate(value: Any) -> int | None:
@@ -231,6 +304,10 @@ def build_stories(clustered_payload: dict[str, Any], canonical_payload: dict[str
 def summarize(stories: list[dict[str, Any]], source_meta: dict[str, Any] | None = None) -> dict[str, Any]:
     status_counts = Counter(str(story.get("date_quality_status") or "unknown") for story in stories)
     policy_counts = Counter(str(story.get("date_quality_policy") or "unknown") for story in stories)
+    indicator_policy_counts = Counter(
+        str(story.get("indicator_policy") or story.get("date_quality_policy") or "unknown")
+        for story in stories
+    )
     manual_approval_counts = Counter(str(story.get("manual_approval_status") or "unknown") for story in stories)
     dimension_counts = Counter()
     for story in stories:
@@ -243,6 +320,7 @@ def summarize(stories: list[dict[str, Any]], source_meta: dict[str, Any] | None 
         "article_count": article_count,
         "date_quality_status_counts": dict(sorted(status_counts.items())),
         "date_quality_policy_counts": dict(sorted(policy_counts.items())),
+        "indicator_policy_counts": dict(sorted(indicator_policy_counts.items())),
         "manual_approval_status_counts": dict(sorted(manual_approval_counts.items())),
         "primary_dimension_story_counts": dict(sorted(dimension_counts.items())),
         "source_row_count": (source_meta or {}).get("row_count"),
@@ -301,6 +379,7 @@ def write_csv(path: Path, stories: list[dict[str, Any]]) -> None:
         "member_rows",
         "date_quality_status",
         "date_quality_policy",
+        "indicator_policy",
         "date_quality_source_row",
         "date_quality_evidence_rows",
         "manual_approval_status",
@@ -344,14 +423,20 @@ def write_markdown(path: Path, payload: dict[str, Any]) -> None:
         *[f"{key}={value}" for key, value in meta["date_quality_policy_counts"].items()],
         "```",
         "",
+        "Effective indicator policy counts:",
+        "",
+        "```text",
+        *[f"{key}={value}" for key, value in meta["indicator_policy_counts"].items()],
+        "```",
+        "",
         "Manual approval status counts:",
         "",
         "```text",
         *[f"{key}={value}" for key, value in meta["manual_approval_status_counts"].items()],
         "```",
         "",
-        "| Story Row | Articles | Policy | Date Status | Manual Approval | Date Evidence Row | Dimension | Sources | Title |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Story Row | Articles | Date Policy | Indicator Policy | Date Status | Manual Approval | Date Evidence Row | Dimension | Sources | Title |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for story in payload["stories"]:
         lines.append(
@@ -361,6 +446,7 @@ def write_markdown(path: Path, payload: dict[str, Any]) -> None:
                     md_cell(story.get("representative_row")),
                     md_cell(story.get("article_count")),
                     md_cell(story.get("date_quality_policy")),
+                    md_cell(story.get("indicator_policy")),
                     md_cell(story.get("date_quality_status")),
                     md_cell(story.get("manual_approval_status")),
                     md_cell(story.get("date_quality_source_row")),

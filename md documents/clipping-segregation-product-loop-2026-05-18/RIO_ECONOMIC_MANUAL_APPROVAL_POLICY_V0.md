@@ -40,6 +40,42 @@ short rationale
 The approval note must live in a committed review artifact or an operator log.
 It must not live only in chat.
 
+## Status Taxonomy And Validation
+
+Manual approval statuses are intentionally narrow:
+
+```text
+not_required
+not_reviewed
+approved_current_period
+rejected_research_only
+```
+
+`approved_current_period` is valid only with:
+
+```text
+decision=count_current_period
+reviewer
+reviewed_at
+canonical_url or source_url
+observed_source_date or date_trust_reason
+rationale
+```
+
+`rejected_research_only` is valid only with:
+
+```text
+decision=keep_research_only
+reviewer
+reviewed_at
+rationale
+```
+
+`tools/rio_economic_build_topic_report.py` now rejects unknown manual status
+values and blocks any approved-current-period promotion that lacks source/date
+evidence. This prevents a future sidecar edit from silently turning a
+not-reviewed Rio row into a counted indicator point.
+
 ## V4 Rows Requiring Manual Or Research Treatment
 
 From:
@@ -82,4 +118,5 @@ not_reviewed=8
 ```
 
 Next implementation step: if an operator promotes a row, update the sidecar with
-reviewer, reviewed_at, decision, and rationale before regenerating the report.
+reviewer, reviewed_at, decision, canonical/source URL, observed source date or
+date-trust reason, and rationale before regenerating the report.

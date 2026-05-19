@@ -120,6 +120,10 @@ def test_summarize_counts_story_article_dimension_and_date_policy():
         "count_current_period": 1,
         "research_only": 1,
     }
+    assert summary["indicator_policy_counts"] == {
+        "count_current_period": 1,
+        "research_only": 1,
+    }
     assert summary["primary_dimension_story_counts"] == {
         "jobs_income": 1,
         "tourism_events": 1,
@@ -170,10 +174,12 @@ def test_apply_manual_approvals_marks_required_and_not_reviewed_rows():
         "approvals": [
             {
                 "representative_row": 2,
-                "manual_approval_status": "approved_count_current_period",
+                "manual_approval_status": "approved_current_period",
                 "decision": "count_current_period",
                 "reviewer": "operator",
                 "reviewed_at": "2026-05-19T00:00:00Z",
+                "canonical_url": "https://example.com/source",
+                "observed_source_date": "2026-05-19",
                 "rationale": "source date accepted",
             }
         ]
@@ -182,6 +188,37 @@ def test_apply_manual_approvals_marks_required_and_not_reviewed_rows():
     topic_report.apply_manual_approvals(stories, approvals)
 
     assert stories[0]["manual_approval_status"] == "not_required"
-    assert stories[1]["manual_approval_status"] == "approved_count_current_period"
+    assert stories[0]["indicator_policy"] == "count_current_period"
+    assert stories[1]["manual_approval_status"] == "approved_current_period"
     assert stories[1]["manual_approval_decision"] == "count_current_period"
+    assert stories[1]["indicator_policy"] == "count_current_period"
     assert stories[2]["manual_approval_status"] == "not_reviewed"
+    assert stories[2]["indicator_policy"] == "research_only"
+
+
+def test_apply_manual_approvals_rejects_fake_promotion_without_evidence():
+    stories = [
+        {
+            "representative_row": 11,
+            "date_quality_policy": "manual_review_before_counting",
+        },
+    ]
+    approvals = {
+        "approvals": [
+            {
+                "representative_row": 11,
+                "manual_approval_status": "approved_current_period",
+                "decision": "count_current_period",
+                "reviewer": "operator",
+                "reviewed_at": "2026-05-19T00:00:00Z",
+                "rationale": "looks fine",
+            }
+        ]
+    }
+
+    try:
+        topic_report.apply_manual_approvals(stories, approvals)
+    except ValueError as exc:
+        assert "source/canonical URL evidence" in str(exc)
+    else:
+        raise AssertionError("missing manual evidence should block promotion")

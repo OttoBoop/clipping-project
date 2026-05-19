@@ -582,6 +582,26 @@ This gives the Rio profile a separate view without contaminating Flavio/Shakira
 filters or creating a fake approval UI. It still does not approve production
 ingestion or target-row creation.
 
+Manual approval validation guard:
+
+```text
+tools/rio_economic_build_topic_report.py rejects unknown manual approval statuses
+approved_current_period requires reviewer, reviewed_at, rationale, source/canonical URL, and observed date/date-trust evidence
+data/reports/rio_economic_topic_report_20260519T142621Z.json
+indicator_policy_counts:
+count_current_period=17
+manual_review_before_counting=1
+research_only=7
+target_row_approved=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+This keeps manual approvals from becoming a fake count change: future approved
+rows must alter the effective `indicator_policy` only after source/date
+evidence exists in the sidecar.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

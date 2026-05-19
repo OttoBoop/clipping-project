@@ -154,6 +154,8 @@ manual approval policy v0 says only same_day auto-counts; near_date/research-onl
 manual approval sidecar exists with not_required=17 and not_reviewed=8; it promotes no rows
 manual review queue exists with approved_promotions=0 and rows_remaining_not_reviewed=8
 Rio-only UI decision v0 exposes only a read-only panel backed by the scoped endpoint
+manual approval validation now rejects unknown approval statuses and blocks approved_current_period without source/date evidence
+latest topic report has indicator_policy_counts equal to the date-quality policy counts because approved_promotions=0
 ```
 
 ## Current Next Step

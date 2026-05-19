@@ -658,7 +658,7 @@
     return (
       '<article class="rio-report-item">' +
       '<div><strong>' + titleHtml + "</strong>" +
-      '<span>' + escapeHtml(rioPolicyLabel(story.date_quality_policy)) + manual + "</span></div>" +
+      '<span>' + escapeHtml(rioPolicyLabel(story.indicator_policy || story.date_quality_policy)) + manual + "</span></div>" +
       '<div class="chips">' +
       '<span class="chip">' + escapeHtml(String(story.article_count || 1)) + " matéria(s)</span>" +
       (dimensions ? '<span class="chip">' + escapeHtml(dimensions) + "</span>" : "") +
@@ -669,7 +669,7 @@
 
   function renderRioEconomicReport(report) {
     var meta = report && report.meta ? report.meta : {};
-    var policyCounts = meta.date_quality_policy_counts || {};
+    var policyCounts = meta.indicator_policy_counts || meta.date_quality_policy_counts || {};
     if (rioEconomicStoryCount) rioEconomicStoryCount.textContent = String(meta.story_count || 0);
     if (rioEconomicArticleCount) rioEconomicArticleCount.textContent = String(meta.article_count || 0);
     if (rioEconomicCurrentCount) rioEconomicCurrentCount.textContent = String(policyCounts.count_current_period || 0);
