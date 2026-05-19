@@ -7090,3 +7090,51 @@ Commit/push this log entry path-limited, poll Render for `d664cb7` and
 `cc43f1c`, then smoke the newest live deploy. After that, re-read
 `ACTIVE_NEXT_ACTION.md` and continue with Rio cluster fields or product
 operations.
+
+## 2026-05-18 21:31 -03 - Loop Cycle: Live D664cb7 Smoke
+
+### Objective Reviewed
+
+Render changed live commit again. Run the standard logged-out privacy gate.
+
+### Action Taken
+
+Polled Render and saw:
+
+```text
+dep-d86g39iddbjc739t9ihg 3ded606 docs: log canonical helper deploy smoke -> queued
+dep-d86g2ngjhbcs73efdns0 cc43f1c docs: add Rio v4 duplicate cluster review -> build_in_progress
+dep-d86g1pf3jp8c73aii1m0 d664cb7 docs: log buyer guide deploy smoke -> live
+```
+
+Ran logged-out live smoke on `d664cb7`.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof remains blocked
+from this shell by missing viewer passwords.
+
+### Next Objective From Docs
+
+Commit/push this log entry path-limited, poll Render for `cc43f1c` and
+`3ded606`, then smoke the newest live deploy. If deploy wait continues, re-read
+`ACTIVE_NEXT_ACTION.md` and continue with optional Rio cluster fields.
