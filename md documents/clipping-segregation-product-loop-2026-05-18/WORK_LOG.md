@@ -10858,3 +10858,140 @@ ledger or target-management no-fake-UI/admin-CSRF blocker review.
 
 The snapshot is fresher, but it does not create authenticated proof, approval
 writes, buyer evidence, measured pilot cost, or a finished Rio indicator.
+
+## 2026-05-19 00:05 -03 - Loop Cycle: System Status Deploy Smoke
+
+### Objective Reviewed
+
+Verify the docs/status refresh deployment on the live Render app and record the
+privacy gate result before choosing the next weak axis.
+
+### Render Audit
+
+Render deploy:
+
+```text
+service=srv-d7p2p5beo5us739f9k40
+deploy=dep-d86i2p67r5hc73co1610
+commit=8203c1a3c1079b9d806adf304928e417a41ba658
+message=docs: refresh live system status
+status=live
+finishedAt=2026-05-20T02:52:23.561179Z
+```
+
+Live smoke:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+```
+
+### Action Taken
+
+Recorded deploy and smoke evidence in `WORK_LOG.md`.
+
+### Evidence
+
+The live site remains password-gated for logged-out users after the status
+refresh deploy. The latest uncommitted log entry documents the current deploy
+state; the formal system status snapshot intentionally remains a snapshot, not
+an infinitely self-updating deploy pointer.
+
+### Barrier Or Failure
+
+Authenticated viewer/admin proof remains blocked by missing credentials in
+this shell.
+
+### Next Objective From Docs
+
+Re-open docs and choose the next weak item. The current unblocked candidates
+are pilot operating/cost ledger readiness, target-management no-fake-UI/admin
+CSRF blocker review, or further Rio methodology review without promotions.
+
+### Why The Loop Continues
+
+Another logged-out smoke passed, but buyer evidence, measured operator cost,
+authenticated proof, and Rio approval writes remain unresolved.
+
+## 2026-05-19 00:08 -03 - Loop Cycle: Pilot Operating Ledger Readiness
+
+### Objective Reviewed
+
+Re-read product/cost docs after the latest Render smoke. The weakest unblocked
+cost item was that `V1_PILOT_OPERATING_LEDGER.md` had a ledger template but did
+not explicitly state that no real measured pilot run exists yet.
+
+### Render Audit
+
+Used the previous entry's live smoke for deploy `dep-d86i2p67r5hc73co1610`:
+
+```text
+GET /healthz -> 200
+GET / -> 200 login page
+private endpoints -> 401 viewer_login_required
+```
+
+### Action Taken
+
+Read:
+
+```text
+V1_PILOT_OPERATING_LEDGER.md
+OPERATOR_COST_DISCIPLINE.md
+V1_DELIVERY_SCOPE.md
+FIRST_SELLABLE_PACKAGE.md
+BUYER_QUOTE_VALIDATION_TRACKER.md
+```
+
+Updated:
+
+```text
+V1_PILOT_OPERATING_LEDGER.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The pilot ledger now records:
+
+```text
+measured_pilot_run_count=0
+measured_weekly_summary_count=0
+measured_support_issue_count=0
+minimum_sustainable_monthly_price_decided=false
+```
+
+It also defines the minimum fields for the first valid operator-time row and
+blocks filling `minimum sustainable monthly price` until at least one measured
+run, one measured weekly summary, buyer quote signal, and intact base/add-on
+boundary exist.
+
+### Barrier Or Failure
+
+No real pilot/update run exists in this shell. No price or fake operator-time
+row was fabricated.
+
+### Next Objective From Docs
+
+Run docs checks, commit/push path-limited with the current log entries, wait
+for Render, smoke production, then re-read docs. Likely next unblocked item is
+target-management/admin-CSRF blocker review or another no-fake-UI pass.
+
+### Why The Loop Continues
+
+The ledger is stricter, but there is still no measured pilot, no buyer quote,
+no authenticated live proof in this shell, and no Rio approval write path.

@@ -7,6 +7,39 @@ whether the service funds the tool instead of becoming unpaid manual work.
 
 Do not put passwords, private buyer phone numbers, or secrets in this file.
 
+## Current Measurement State
+
+```text
+measured_pilot_run_count=0
+measured_weekly_summary_count=0
+measured_support_issue_count=0
+minimum_sustainable_monthly_price_decided=false
+```
+
+Reason: no real pilot/update run has been recorded in this repo yet. Do not
+derive a final monthly price from guesses, desk research, or a demo script.
+Pricing needs at least one real update/QA/summary cycle measured here plus
+buyer signal in `BUYER_QUOTE_VALIDATION_TRACKER.md`.
+
+## First Valid Measurement Requirements
+
+The first ledger row only counts if it records real operator work with:
+
+```text
+real profile or prospect profile
+actual action performed
+start/end or total minutes
+targets checked
+useful stories found
+false positives or missed items noticed
+AI/tool cost note, even if none
+support issue, even if none
+follow-up decision
+```
+
+If the run is only a technical smoke test, mark it as `qa` and do not use it as
+pricing evidence for the paid pilot.
+
 ## Pilot Header
 
 ```text
@@ -49,6 +82,15 @@ should this client renew:
 what must be priced separately:
 ```
 
+Do not fill `minimum sustainable monthly price` until:
+
+```text
+measured_pilot_run_count >= 1
+measured_weekly_summary_count >= 1
+buyer quote signal exists
+base/add-on boundary stayed intact during the run
+```
+
 ## Stop/Adjust Triggers
 
 Escalate pricing, reduce scope, or stop the pilot if:
@@ -72,4 +114,5 @@ V1_DELIVERY_FORMAT_DECISION.md
 OPERATOR_COST_DISCIPLINE.md
 FIRST_CLIENT_ONBOARDING_CHECKLIST.md
 DEMO_PROFILE_STRATEGY.md
+BUYER_QUOTE_VALIDATION_TRACKER.md
 ```
