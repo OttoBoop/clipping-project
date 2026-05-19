@@ -388,6 +388,24 @@ duplicate_of
 These fields are manual-review scaffolding only. They do not write to the
 production database, scoped assets payload, or `data/targets.json`.
 
+Extended canonical source/date review:
+
+```text
+data/reports/rio_economic_canonical_review_20260519T003852Z.json
+rows_checked=10
+same_day=8
+canonical_date_missing=1
+date_mismatch=1
+stores_article_body=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+RIO_ECONOMIC_CANONICAL_REVIEW_20260519T003852Z.md
+```
+
+Rows with `date_mismatch` or `canonical_date_missing` must not count toward a
+current-period indicator without manual approval.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

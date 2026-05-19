@@ -7277,3 +7277,90 @@ shell, so compile/offline-script checks are the current workaround.
 Commit/push this path-limited change, poll Render until the new commit is live,
 smoke production again, then continue with extended canonical source/date
 checking or a cluster-annotated sample.
+
+## 2026-05-18 21:42 -03 - Loop Cycle: Push Cluster Fields And Extend Canonical Review
+
+### Objective Reviewed
+
+After the Rio cluster-field change passed compile/offline checks, the loop
+continued from `ACTIVE_NEXT_ACTION.md`: push to `master`, wait for Render, and
+use deploy time to extend canonical source/date checking.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+a2c9e0c tools: add Rio cluster review fields
+git push origin HEAD:master -> master updated from 6d5d3b9 to a2c9e0c
+```
+
+Polled Render MCP:
+
+```text
+dep-d86g6fernols73ftbnjg a2c9e0c tools: add Rio cluster review fields -> build_in_progress
+dep-d86g3pf3jp8c73aij550 6d5d3b docs: log cluster review deploy smoke -> live
+```
+
+Ran:
+
+```text
+python tools/rio_economic_canonical_review.py data/reports/rio_economic_dry_run_20260519T000719Z.json --max-rows 10 --request-timeout 5
+```
+
+Added:
+
+```text
+data/reports/rio_economic_canonical_review_20260519T003852Z.json
+data/reports/rio_economic_canonical_review_20260519T003852Z.csv
+data/reports/rio_economic_canonical_review_20260519T003852Z.md
+RIO_ECONOMIC_CANONICAL_REVIEW_20260519T003852Z.md
+```
+
+Updated:
+
+```text
+RIO_ECONOMIC_VALIDATION_PLAN.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Canonical review result:
+
+```text
+rows_checked=10
+same_day=8
+canonical_date_missing=1
+date_mismatch=1
+stores_article_body=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+Blocking rows:
+
+```text
+row 1 canonical_date_missing
+row 5 date_mismatch: Google News date 2026-05-03, canonical page date 2025-04-08
+```
+
+### Barrier Or Failure
+
+The canonical helper still dirties tracked `pipeline/__pycache__/*.pyc` through
+imports; those generated files were restored path-limited. Row 5 proves that
+Google News recency can be stale/recirculated and needs a date-quality gate
+before any Rio current-period indicator.
+
+`git diff --check` also caught CRLF/trailing-whitespace noise in the generated
+CSV. The generated CSV was normalized and both Rio CSV writers now use LF line
+endings via `lineterminator="\n"` so the next reports do not repeat this.
+Compileall and an offline dry-run smoke passed after that writer fix.
+
+### Next Objective From Docs
+
+Commit/push the canonical review artifacts path-limited, poll Render for
+`a2c9e0c`, smoke production when live, then continue with cluster annotations
+or date-quality policy before any `rio_economico` target row.
