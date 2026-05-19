@@ -40,6 +40,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - System review status snapshot for 2026-05-19.
 - Target management no-fake-UI review snapshot for 2026-05-18.
 - Render env change safety runbook for password/profile operations.
+- Rio economic ingestion architecture decision: do not flatten Rio into a plain
+  target row; preserve query families, exclusions, date quality, and clusters.
 
 ## Current Verification State
 
@@ -116,8 +118,10 @@ Continue the production loop. Current priority from the docs:
    status counts; a cluster-annotated v4 review now exists with 3 clusters and
    9 clustered rows; Rio production gate v0 now blocks target-row creation
    until live scoping proof, date-quality, cluster counting, source/body review,
-   and narrow first-run planning are all satisfied; next Rio step is fresh
-   production scoping proof before any production target row;
+   and narrow first-run planning are all satisfied; Rio ingestion architecture
+   decision now blocks plain target-row implementation and prefers scoped
+   topic/query reporting first; next Rio step is fresh production scoping proof
+   and/or a scoped Rio topic report before any production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; V1 pilot scope and delivery-format
    decision now exist; demo script is now tied to the V1 offer without exposing

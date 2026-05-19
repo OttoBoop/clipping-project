@@ -132,11 +132,20 @@ check raw texts for cross-profile leakage
 log collection cost and operator time
 ```
 
+Architecture decision:
+
+```text
+RIO_ECONOMIC_INGESTION_ARCHITECTURE_DECISION.md
+plain data/targets.json target row is not safe enough for Rio economic monitoring
+preferred first production shape is scoped topic/query report before normal dashboard ingestion
+```
+
 ## Current Next Step
 
 ```text
 do not add data/targets.json row yet
 wait for latest deploys to become live
 run fresh production scoping proof
+preserve the v4 query families/exclusions in a scoped topic pipeline, not a plain keyword target row
 then decide whether the Rio methodology is ready for an operator-approved narrow first run
 ```

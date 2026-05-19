@@ -39,6 +39,16 @@ label to its keywords. A placeholder target row would therefore become a real
 collector/matcher term before the economic methodology is validated. That would
 risk broad Rio/economy pollution, which this track explicitly exists to avoid.
 
+Current architecture decision:
+
+```text
+RIO_ECONOMIC_INGESTION_ARCHITECTURE_DECISION.md
+```
+
+Rio economic monitoring should preserve query families, exclusions, date
+quality, and cluster policy before any normal dashboard ingestion. A plain
+target row is not the first safe implementation.
+
 The safe current state is:
 
 ```text

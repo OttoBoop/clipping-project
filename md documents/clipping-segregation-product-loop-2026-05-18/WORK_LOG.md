@@ -8589,3 +8589,152 @@ continues to prove viewer auth and profiles are configured.
 Commit/push the env-safety runbook and log path-limited, wait for Render, smoke
 again, then return to the docs and continue with Rio production gate or
 sellable-operations validation.
+
+## 2026-05-18 22:13 -03 - Loop Cycle: Env Safety Commit And Push
+
+### Objective Reviewed
+
+Deploy the Render env safety runbook and log to the same live branch, preserving
+the direct-website workflow.
+
+### Action Taken
+
+Ran:
+
+```text
+git diff --check -> passed
+git add ACTIVE_NEXT_ACTION.md DEPLOYMENT_ENVIRONMENT.md WORK_LOG.md RENDER_ENV_CHANGE_SAFETY_RUNBOOK.md
+git commit -m "docs: add Render env safety runbook"
+git push origin HEAD:master
+```
+
+### Evidence
+
+```text
+2a72fe0 docs: add Render env safety runbook
+git push -> master updated from 83eaecb to 2a72fe0
+```
+
+### Barrier Or Failure
+
+No git barrier. The commit was path-limited and did not include secrets.
+
+### Next Objective From Docs
+
+Poll Render until `2a72fe0` is live, smoke production, then continue with the
+next docs-derived weak point instead of stopping.
+
+## 2026-05-18 22:14 -03 - Loop Cycle: Rio Ingestion Architecture Decision
+
+### Objective Reviewed
+
+`RIO_ECONOMIC_PRODUCTION_GATE_V0.md` and `RIO_ECONOMIC_VALIDATION_PLAN.md`
+still block a production `rio_economico` target row. The next weak Rio axis is
+the first-run shape: how to preserve v4 query families, exclusions, date
+quality, and duplicate clusters without polluting the shared clipping backend.
+
+### Action Taken
+
+Reviewed:
+
+```text
+RIO_ECONOMIC_PRODUCTION_GATE_V0.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+RIO_ECONOMIC_INDICATOR_TRACK.md
+RIO_ECONOMIC_DATE_QUALITY_POLICY.md
+RIO_ECONOMIC_CLUSTERED_REVIEW_20260519T004653Z.md
+RIO_ECONOMIC_CANONICAL_REVIEW_20260519T003852Z.md
+RIO_ECONOMIC_V4_SAMPLE_REVIEW_20260519T000719Z.md
+data/reports/rio_economic_revised_queries_v4_20260518.json
+RIO_ECONOMIC_V3_BODY_SOURCE_REVIEW_20260518.md
+```
+
+Created:
+
+```text
+RIO_ECONOMIC_INGESTION_ARCHITECTURE_DECISION.md
+```
+
+Updated:
+
+```text
+RIO_ECONOMIC_PRODUCTION_GATE_V0.md
+RIO_ECONOMIC_INDICATOR_TRACK.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Decision recorded:
+
+```text
+do not implement Rio economic monitoring as a plain data/targets.json target row
+plain target rows do not preserve dimension/exclusion/date-quality/cluster policy
+preferred next implementation is scoped Rio topic/query report before normal dashboard ingestion
+production rio_economico target row approved=false
+```
+
+The v4 query file has 12 query families across tourism/events,
+commerce/services, jobs/income, construction/real estate, municipal finance,
+and economic development. Flattening those into one keyword target would lose
+the review structure that made the sample usable.
+
+### Barrier Or Failure
+
+No Rio production row was created. This is intentional. Creating it now would
+violate the gate and could pollute Flavio/Shakira/client surfaces.
+
+### Next Objective From Docs
+
+Keep polling Render for `2a72fe0`, smoke live when promoted, then commit/push
+this Rio architecture decision path-limited. Next Rio technical work should be
+a scoped topic/query report or data-model support for topic projects, not a
+plain target row.
+
+## 2026-05-18 22:15 -03 - Loop Cycle: 2a72fe0 Live Smoke
+
+### Objective Reviewed
+
+The Render env safety runbook commit reached Render. Verify the live privacy
+gate again before pushing the Rio architecture decision.
+
+### Action Taken
+
+Polled Render MCP:
+
+```text
+dep-d86gnqcvikkc73c2un90 2a72fe0 docs: add Render env safety runbook -> live
+dep-d86gmh4vikkc73c2tr2g 83eaecb docs: review target management no-fake-ui -> deactivated
+```
+
+Ran logged-out live smoke.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Positive viewer/admin proof remains blocked
+without credentials in this shell.
+
+### Next Objective From Docs
+
+Run diff/checks, commit/push the Rio architecture decision and this log
+path-limited, wait for Render, smoke live again, then continue reviewing the
+next long-term axis.
