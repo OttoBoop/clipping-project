@@ -12463,3 +12463,131 @@ then return to the docs.
 
 Static raw-file leakage is currently blocked, but authenticated positive proof,
 buyer evidence, measured pilot rows, and Rio manual approvals remain open.
+
+## 2026-05-19 13:54 -03 - Loop Cycle: Static Data Boundary Live Deploy
+
+### Objective Reviewed
+
+Deploy the static data boundary review/test and verify that the live Render app
+still blocks raw data surfaces and scoped private payloads.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+575041b test: document static data boundary
+git push origin HEAD:master
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86ucm6rnols738613p0
+commit=575041ba29e5a8a40196512e2302cabbbe489a6b
+status=live
+finishedAt=2026-05-20T16:52:25.579281Z
+```
+
+### Evidence
+
+Live logged-out smoke on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+  job=succeeded
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+```
+
+Live static boundary probes:
+
+```text
+GET /data/targets.json -> 404 Not Found
+GET /data/viewer_profiles.json -> 404 Not Found
+GET /data/reports/rio_economic_topic_report_20260519T142621Z.json -> 404 Not Found
+GET /clipping-data.json -> 404 Not Found
+```
+
+### Barrier Or Failure
+
+This still does not replace authenticated profile proof. The live evidence only
+proves logged-out and raw static boundaries.
+
+### Next Objective From Docs
+
+Re-open the long-term docs. The next unblocked tracks are buyer/pilot evidence
+quality, Rio manual approval process, and operations/password safety; fresh
+authenticated proof still requires credentials.
+
+### Why The Loop Continues
+
+Static boundary is documented and live, but buyer evidence, measured pilot
+rows, Rio manual approvals, and authenticated viewer/admin proof remain open.
+
+## 2026-05-19 13:58 -03 - Loop Cycle: Buyer Quote No-Fake-Pricing Guard
+
+### Objective Reviewed
+
+After static data boundary proof, re-opened the product packaging and buyer
+tracker docs. The remaining product-risk mirror of the pilot ledger is buyer
+quote evidence: the tracker must not allow template rows or guessed demo
+reactions to justify final pricing.
+
+### Action Taken
+
+Created/updated:
+
+```text
+tools/buyer_quote_tracker_check.py
+tests/test_buyer_quote_tracker_check.py
+BUYER_QUOTE_VALIDATION_TRACKER.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+The checker:
+
+```text
+parses final_price_decided, real_buyer_conversation_count, hands_on_demo_reaction_count, measured_pilot_run_count
+ignores template rows like YYYY-MM-DD
+counts real buyer rows only from concrete dates
+counts demo reactions only when a real row includes hands_on_demo or screen_share_demo
+cross-checks measured_pilot_run_count against tools/pilot_ledger_check.py
+fails final_price_decided=true unless buyer/demo/pilot evidence exists
+```
+
+### Evidence
+
+Checks run:
+
+```text
+python3 -B -m py_compile tools/buyer_quote_tracker_check.py tests/test_buyer_quote_tracker_check.py -> passed
+python3 -B -c "from tests import test_buyer_quote_tracker_check as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+python3 -B tools/buyer_quote_tracker_check.py -> ok=true, real_buyer_conversation_count=0, hands_on_demo_reaction_count=0, measured_pilot_run_count=0
+git diff --check -> passed
+```
+
+### Barrier Or Failure
+
+No buyer row was created, no demo reaction was invented, and no final price was
+chosen. Current valid evidence remains zero.
+
+### Next Objective From Docs
+
+Run checks, commit/push, wait for Render, smoke production, then return to the
+docs.
+
+### Why The Loop Continues
+
+The tracker now has a guard, but real buyer conversations and measured pilot
+work still do not exist.

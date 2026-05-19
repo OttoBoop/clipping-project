@@ -63,6 +63,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
   blocks final price until real operator-time and buyer evidence exist.
 - V1 pilot ledger validation helper now prevents template rows or guessed time
   from counting as pricing evidence.
+- Buyer quote tracker validation helper now prevents template rows or guessed
+  demo reactions from counting as pricing evidence.
 - Scoped Rio economic topic-report endpoint at `/api/reports/rio-economic-topic`
   with Rio/admin-only access and no target-row creation.
 - Rio economic manual approval policy v0 for `near_date` and research-only
@@ -192,6 +194,8 @@ Continue the production loop. Current priority from the docs:
    needs dedicated profile/setup/offboarding, and Rio is only a read-only
    methodology preview; buyer quote tracker now records zero real
    conversations and the minimum fields required before any quote row counts;
+   a validation helper now checks real dated buyer rows, demo-reaction markers,
+   and pilot ledger counts before final price can be treated as decided;
 6. review costs, password rotation, and operations;
    first-client onboarding/offboarding checklist now exists; V1 pilot operating
    ledger now exists for measuring update time, weekly summary time, support,

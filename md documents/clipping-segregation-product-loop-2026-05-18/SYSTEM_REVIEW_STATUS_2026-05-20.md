@@ -98,6 +98,8 @@ Freshly proven after deploy:
   archives it;
 - the pilot ledger now has a checker that keeps template rows and guessed time
   from becoming pricing evidence.
+- the buyer quote tracker now has a checker that keeps template rows and
+  guessed demo reactions from becoming pricing evidence.
 - Render static/data boundary probes return `404` for raw `data/` files and
   the legacy root `clipping-data.json`, while scoped `/assets/*.json` still
   returns `401` when logged out.
@@ -209,6 +211,16 @@ measured_pilot_run_count=0
 measured_weekly_summary_count=0
 measured_support_issue_count=0
 minimum_sustainable_monthly_price_decided=false
+```
+
+Current buyer quote tracker check:
+
+```text
+ok=true
+real_buyer_conversation_count=0
+hands_on_demo_reaction_count=0
+measured_pilot_run_count=0
+final_price_decided=false
 ```
 
 ## Operations State

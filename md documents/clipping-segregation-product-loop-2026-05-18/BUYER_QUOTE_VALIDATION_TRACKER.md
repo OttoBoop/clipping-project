@@ -95,6 +95,16 @@ python3 -B tools/pilot_ledger_check.py
 This prevents the template ledger rows or guessed operator time from becoming
 fake pricing evidence.
 
+Before changing `final_price_decided`, also run:
+
+```text
+python3 -B tools/buyer_quote_tracker_check.py
+```
+
+Rows only count as real buyer conversations when the first cell is a concrete
+date like `2026-05-20`, not the template `YYYY-MM-DD`. Hands-on demo reactions
+only count when the row text includes `hands_on_demo` or `screen_share_demo`.
+
 ## Add-On Boundary
 
 Treat these as add-ons unless the quote clearly covers them:
