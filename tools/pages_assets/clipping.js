@@ -54,6 +54,95 @@
     if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
     return apiFetch(path, { method: "PATCH", headers: headers, body: JSON.stringify(body) });
   }
+
+  (function setupSessionBar() {
+    var bar = document.getElementById("sessionBar");
+    var profileLabel = document.getElementById("sessionProfileLabel");
+    var roleTag = document.getElementById("sessionRoleTag");
+    var logoutButton = document.getElementById("logoutButton");
+    var changePasswordButton = document.getElementById("changePasswordButton");
+    var changePasswordDialog = document.getElementById("changePasswordDialog");
+    var changePasswordForm = document.getElementById("changePasswordForm");
+    var changePasswordMessage = document.getElementById("changePasswordMessage");
+    var changePasswordCancel = document.getElementById("changePasswordCancel");
+    if (!bar || !profileLabel || !logoutButton) return;
+    var profile = initialSessionProfile;
+    var role = initialSessionRole;
+    if (!profile && !role) return;
+    profileLabel.textContent = profile || (role === "admin" ? "admin" : "visualizador");
+    if (roleTag && role && role !== "viewer") {
+      roleTag.textContent = role;
+      roleTag.hidden = false;
+    }
+    bar.hidden = false;
+    logoutButton.addEventListener("click", async function () {
+      logoutButton.disabled = true;
+      var originalLabel = logoutButton.textContent;
+      logoutButton.textContent = "Saindo...";
+      try {
+        var resp = await apiPost("/api/logout", {});
+        if (!resp.ok) {
+          var data = await resp.json().catch(function () { return {}; });
+          throw new Error(data && data.message ? data.message : "HTTP " + resp.status);
+        }
+        window.location.href = "/";
+      } catch (error) {
+        console.error("[clipping] logout failed", error);
+        logoutButton.disabled = false;
+        logoutButton.textContent = originalLabel;
+        window.alert("Não foi possível sair agora. Tente novamente.");
+      }
+    });
+    if (changePasswordButton && changePasswordDialog && changePasswordForm) {
+      function setChangePasswordMessage(text, kind) {
+        if (!changePasswordMessage) return;
+        changePasswordMessage.textContent = text || "";
+        changePasswordMessage.classList.remove("is-error", "is-ok");
+        if (kind === "error") changePasswordMessage.classList.add("is-error");
+        if (kind === "ok") changePasswordMessage.classList.add("is-ok");
+      }
+      function closeDialog() {
+        setChangePasswordMessage("", "");
+        changePasswordForm.reset();
+        if (typeof changePasswordDialog.close === "function") changePasswordDialog.close();
+        else changePasswordDialog.removeAttribute("open");
+      }
+      changePasswordButton.addEventListener("click", function () {
+        setChangePasswordMessage("", "");
+        if (typeof changePasswordDialog.showModal === "function") changePasswordDialog.showModal();
+        else changePasswordDialog.setAttribute("open", "");
+      });
+      if (changePasswordCancel) changePasswordCancel.addEventListener("click", closeDialog);
+      changePasswordForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        var formData = new FormData(changePasswordForm);
+        var body = {
+          old_password: String(formData.get("old_password") || ""),
+          new_password: String(formData.get("new_password") || ""),
+        };
+        setChangePasswordMessage("Salvando...", "");
+        var submitButton = changePasswordForm.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        try {
+          var resp = await apiPost("/api/change-password", body);
+          var data = await resp.json().catch(function () { return {}; });
+          if (!resp.ok) {
+            var msg = (data && (data.message || data.suggestion)) || ("HTTP " + resp.status);
+            setChangePasswordMessage(msg, "error");
+            return;
+          }
+          setChangePasswordMessage("Senha trocada. Use a nova no próximo login.", "ok");
+          window.setTimeout(closeDialog, 1500);
+        } catch (error) {
+          console.error("[clipping] change-password failed", error);
+          setChangePasswordMessage("Não foi possível trocar a senha agora. Tente novamente.", "error");
+        } finally {
+          if (submitButton) submitButton.disabled = false;
+        }
+      });
+    }
+  })();
+
   const storyStack = document.getElementById("storyStack");
   const flatStack = document.getElementById("flatStack");
   const targetFilters = document.getElementById("targetFilters");

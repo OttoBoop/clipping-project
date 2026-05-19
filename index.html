@@ -14,6 +14,32 @@
     data-clipping-raw-url="assets/clipping-raw-texts.json"
     data-clipping-api-url=""
   >
+    <header class="session-bar" id="sessionBar" hidden>
+      <span class="session-info">
+        Logado como <strong id="sessionProfileLabel">…</strong>
+        <span class="session-role-tag" id="sessionRoleTag" hidden></span>
+      </span>
+      <button type="button" class="session-secondary" id="changePasswordButton">Trocar senha</button>
+      <button type="button" class="session-logout" id="logoutButton">Sair</button>
+    </header>
+
+    <dialog class="password-dialog" id="changePasswordDialog">
+      <form id="changePasswordForm" method="dialog">
+        <h2>Trocar senha</h2>
+        <label>Senha atual
+          <input type="password" name="old_password" autocomplete="current-password" required minlength="3">
+        </label>
+        <label>Nova senha
+          <input type="password" name="new_password" autocomplete="new-password" required minlength="3">
+        </label>
+        <p class="form-message" id="changePasswordMessage" role="status"></p>
+        <div class="password-dialog-actions">
+          <button type="button" class="secondary-action" id="changePasswordCancel">Cancelar</button>
+          <button type="submit" class="primary-action">Salvar nova senha</button>
+        </div>
+      </form>
+    </dialog>
+
     <section class="runner-shell" aria-label="Atualização do clipping">
       <div class="runner-tabs" role="tablist" aria-label="Ações do clipping">
         <button type="button" class="runner-tab active" data-run-tab="run" role="tab" aria-selected="true">Rodar atualização</button>
