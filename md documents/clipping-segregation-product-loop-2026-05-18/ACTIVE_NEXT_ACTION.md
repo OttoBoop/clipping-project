@@ -122,7 +122,9 @@ Continue the production loop. Current priority from the docs:
    buyer/quote validation or a dedicated prospect-profile checklist when there
    is a real prospect;
 6. review costs, password rotation, and operations;
-   first-client onboarding/offboarding checklist now exists;
+   first-client onboarding/offboarding checklist now exists; V1 pilot operating
+   ledger now exists for measuring update time, weekly summary time, support,
+   false positives, missed items, and scope creep before final pricing;
 7. then re-read the docs and choose the next weak axis.
 
 If `viewerAuthConfigured=false` returns, treat it as a regression and re-check

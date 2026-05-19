@@ -7675,6 +7675,123 @@ Commit/push this log entry path-limited, poll Render until `6a83ed3` and
 `200c79f` are live, smoke production again, then run fresh production scoping
 proof or continue packaging/operations review from `ACTIVE_NEXT_ACTION.md`.
 
+## 2026-05-18 22:00 -03 - Loop Cycle: 6a83ed3 Live Smoke
+
+### Objective Reviewed
+
+Render promoted another queued commit. Verify the live service before choosing
+the next docs-derived item.
+
+### Action Taken
+
+Polled Render MCP:
+
+```text
+dep-d86gd7ojhbcs73efkl60 bb9eeb3 docs: log Rio gate deploy smoke -> queued
+dep-d86gceoh6q6c73d0gq7g 200c79f docs: add Rio production gate -> build_in_progress
+dep-d86gbrd6b1pc73df6qc0 6a83ed3 docs: log cluster artifact deploy smoke -> live
+```
+
+Ran logged-out live smoke while `6a83ed3` was live.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof remains blocked in
+this shell by missing viewer passwords. Deploys `200c79f` and `bb9eeb3` were
+not live yet.
+
+### Next Objective From Docs
+
+Commit/push this log entry path-limited, poll Render until `200c79f` and
+`bb9eeb3` are live, smoke production again, then run fresh production scoping
+proof or continue packaging/operations review from `ACTIVE_NEXT_ACTION.md`.
+
+## 2026-05-18 22:02 -03 - Loop Cycle: V1 Pilot Operating Ledger
+
+### Objective Reviewed
+
+Render was still deploying queued commits. The loop re-read operations and
+cost docs because `ACTIVE_NEXT_ACTION.md` still lists costs, password rotation,
+and operations as a weak axis.
+
+### Action Taken
+
+Read:
+
+```text
+FIRST_CLIENT_ONBOARDING_CHECKLIST.md
+OPERATOR_COST_DISCIPLINE.md
+DEMO_PROFILE_STRATEGY.md
+DEPLOYMENT_ENVIRONMENT.md
+V1_DELIVERY_FORMAT_DECISION.md
+```
+
+One attempted read used the wrong filename:
+
+```text
+FIRST_CLIENT_ONBOARDING_OFFBOARDING_CHECKLIST.md -> file not found
+actual file: FIRST_CLIENT_ONBOARDING_CHECKLIST.md
+```
+
+Added:
+
+```text
+V1_PILOT_OPERATING_LEDGER.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The new ledger records:
+
+```text
+minutes per update
+minutes per weekly summary
+targets checked
+useful stories
+false positives
+missed items
+AI/tool cost notes
+support/password issues
+scope creep risk
+minimum sustainable monthly price
+```
+
+### Barrier Or Failure
+
+No blocker. The wrong filename was a local doc lookup mistake and is logged so
+future agents use `FIRST_CLIENT_ONBOARDING_CHECKLIST.md`.
+
+### Next Objective From Docs
+
+Run diff/checks, commit/push path-limited, poll Render until queued deploys are
+live, smoke production again, then continue with production scoping proof or
+buyer/prospect packaging validation.
+
 ## 2026-05-18 21:56 -03 - Loop Cycle: Cluster Artifact Push And 990ada0 Live Smoke
 
 ### Objective Reviewed
