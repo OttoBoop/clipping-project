@@ -58,10 +58,18 @@ def load_rows(path: Path) -> list[dict[str, Any]]:
     return [row for row in rows if isinstance(row, dict)]
 
 
-def review_rows(rows: list[dict[str, Any]], *, max_rows: int, request_timeout: int) -> list[dict[str, Any]]:
-    selected = rows[:max_rows] if max_rows > 0 else rows
+def review_rows(
+    rows: list[dict[str, Any]],
+    *,
+    max_rows: int,
+    request_timeout: int,
+    start_row: int = 1,
+) -> list[dict[str, Any]]:
+    start_index = max(0, start_row - 1)
+    remaining = rows[start_index:]
+    selected = remaining[:max_rows] if max_rows > 0 else remaining
     reviewed: list[dict[str, Any]] = []
-    for index, row in enumerate(selected, 1):
+    for index, row in enumerate(selected, start_index + 1):
         url = str(row.get("url") or "").strip()
         original_published = str(row.get("published_at") or "").strip()
         result = {
@@ -197,6 +205,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("input_report", type=Path, help="Rio economic dry-run JSON report.")
     parser.add_argument("--max-rows", type=int, default=10)
+    parser.add_argument("--start-row", type=int, default=1)
     parser.add_argument("--request-timeout", type=int, default=8)
     parser.add_argument("--output-dir", type=Path, default=REPORTS_DIR)
     return parser.parse_args(argv)
@@ -209,12 +218,15 @@ def main(argv: list[str] | None = None) -> int:
         source_rows,
         max_rows=max(0, args.max_rows),
         request_timeout=max(1, args.request_timeout),
+        start_row=max(1, args.start_row),
     )
     generated_at = datetime.now(timezone.utc)
     payload = {
         "meta": {
             "generated_at": generated_at.isoformat(),
             "input_report": str(args.input_report),
+            "source_rows_total": len(source_rows),
+            "start_row": max(1, args.start_row),
             "rows_checked": len(rows),
             "request_timeout": max(1, args.request_timeout),
             "writes_production_db": False,

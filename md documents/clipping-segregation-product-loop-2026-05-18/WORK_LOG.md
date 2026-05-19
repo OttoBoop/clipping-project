@@ -9377,3 +9377,182 @@ Run diff/checks, commit the Rio report/code/doc updates path-limited, push to
 `master`, wait for Render, smoke production, then re-read the docs. The next
 Rio methodology step after this commit is remaining row 21-31 canonical review
 or a scoped Rio topic-report view, not a normal target row.
+
+## 2026-05-18 22:47 -03 - Loop Cycle: Rio Extended Report Commit, Deploy, And Smoke
+
+### Objective Reviewed
+
+Deploy the Rio extended canonical/topic-report change to the live Render app
+while preserving the production segregation gate.
+
+### Action Taken
+
+Committed and pushed path-limited:
+
+```text
+714d6a2 tools: extend Rio topic date-quality report
+```
+
+Waited for Render deploy:
+
+```text
+dep-d86h35ok1i2s73d4pe5g -> live
+```
+
+Ran logged-out smoke against `https://clipping-project.onrender.com/`.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+Positive viewer/admin production proof remains blocked without credentials in
+this shell. Generated `pipeline/__pycache__/*.pyc` files are still dirty and
+must remain uncommitted.
+
+### Next Objective From Docs
+
+Re-read the required docs and select the next unblocked item. Current likely
+choices are remaining Rio row 21-31 canonical review, a scoped Rio topic-report
+view, operations/password rotation review, or buyer-package validation.
+
+## 2026-05-18 22:50 -03 - Loop Cycle: Re-anchor To Remaining Rio Canonical Rows
+
+### Objective Reviewed
+
+The required docs still put Axis 1 production segregation first, while the
+unblocked Rio track says the topic report has 9 stories still requiring
+canonical checks.
+
+### Action Taken
+
+Re-read:
+
+```text
+LONG_TERM_GOALS.md
+DEPENDENCY_MAP.md
+CURRENT_SHORT_TERM_LOOP.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_CHECKLIST.md
+RENDER_PRODUCTION_CHECKLIST.md
+WORK_LOG.md tail
+```
+
+### Evidence
+
+`ACTIVE_NEXT_ACTION.md` now names remaining row 21-31 canonical review and/or a
+scoped Rio topic-report view as the next Rio step before any production target
+row. Positive authenticated production proof is still blocked by missing
+passwords, so the unblocked next item is the remaining canonical review.
+
+### Barrier Or Failure
+
+The existing canonical tool can only review the first N rows, and the topic
+report accepts one canonical report. Re-running all 31 rows would repeat known
+fetches and waste time/cost.
+
+### Next Objective From Docs
+
+Add narrowly scoped support for canonical `--start-row` and multi-canonical
+topic-report inputs, run rows 21-31, build a complete 31-row topic report, log
+the evidence, then deploy and smoke again.
+
+## 2026-05-18 22:55 -03 - Loop Cycle: Rio Full Canonical Topic Report
+
+### Objective Reviewed
+
+Complete the remaining Rio v4 canonical review without re-fetching rows 1-20
+and without creating a production target row.
+
+### Action Taken
+
+Updated:
+
+```text
+tools/rio_economic_canonical_review.py
+tools/rio_economic_build_topic_report.py
+tests/test_rio_economic_canonical_review.py
+tests/test_rio_economic_build_topic_report.py
+```
+
+Added `--start-row` to the canonical tool and multi-`--canonical-report` support
+to the topic-report builder.
+
+Ran:
+
+```text
+python -B tools/rio_economic_canonical_review.py data/reports/rio_economic_dry_run_20260519T000719Z.json --start-row 21 --max-rows 11 --request-timeout 5
+python -B tools/rio_economic_build_topic_report.py data/reports/rio_economic_clustered_review_20260519T004653Z.json --canonical-report data/reports/rio_economic_canonical_review_20260519T013449Z.json --canonical-report data/reports/rio_economic_canonical_review_20260519T014441Z.json
+```
+
+### Evidence
+
+Focused direct tests:
+
+```text
+rio canonical/topic direct tests passed
+rio full canonical/topic artifact assertions passed
+git diff --check -> passed
+```
+
+Rows 21-31 canonical review:
+
+```text
+data/reports/rio_economic_canonical_review_20260519T014441Z.json
+rows_checked=11
+start_row=21
+source_rows_total=31
+date_quality_eligible_rows=8
+same_day=8
+canonical_date_missing=2
+fetch_error=1
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+Complete topic report:
+
+```text
+data/reports/rio_economic_topic_report_20260519T014505Z.json
+story_count=25
+article_count=31
+canonical_rows_checked=31
+count_current_period=17
+manual_review_before_counting=1
+research_only=7
+target_row_approved=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+### Barrier Or Failure
+
+Seven stories remain research-only and one story requires manual review before
+counting. The Rio track is still not approved for production target-row
+ingestion.
+
+Generated `pipeline/__pycache__/*.pyc` files remain dirty and must not be
+staged.
+
+### Next Objective From Docs
+
+Run diff/checks, commit/push path-limited, wait for Render, smoke production,
+then re-read docs. The next Rio step after this is manual-approval policy or a
+scoped Rio topic-report view, not more v4 canonical review.

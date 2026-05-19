@@ -494,6 +494,36 @@ because the representative source failed. The Mais Valia/Mais Valera cluster
 now counts from row 17 same-day evidence while preserving row 16's fetch error
 in `date_quality_evidence_statuses`.
 
+Full canonical/topic-report pass:
+
+```text
+tools/rio_economic_canonical_review.py now supports --start-row
+tools/rio_economic_build_topic_report.py now accepts multiple --canonical-report values
+data/reports/rio_economic_canonical_review_20260519T014441Z.json
+rows_checked=11
+start_row=21
+same_day=8
+canonical_date_missing=2
+fetch_error=1
+data/reports/rio_economic_topic_report_20260519T014505Z.json
+story_count=25
+article_count=31
+canonical_rows_checked=31
+count_current_period=17
+manual_review_before_counting=1
+research_only=7
+target_row_approved=false
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+RIO_ECONOMIC_FULL_CANONICAL_TOPIC_REPORT_20260519T014505Z.md
+```
+
+This closes canonical checks for the v4 sample (`canonical_check_required=0` in
+the complete topic report), but it does not approve production ingestion.
+Manual-approval policy and scoped Rio topic rendering still need review before
+any user-facing economic indicator.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

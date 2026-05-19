@@ -83,6 +83,8 @@ Current evidence:
 ```text
 20-row canonical pass: same_day=14, near_date=1, canonical_date_missing=2, date_mismatch=1, fetch_error=2
 date_quality_eligible_rows=15
+rows 21-31 canonical pass: same_day=8, canonical_date_missing=2, fetch_error=1
+full v4 topic report: canonical_rows_checked=31, count_current_period=17, manual_review_before_counting=1, research_only=7
 ```
 
 ## Gate 4 - Cluster Counting
@@ -100,6 +102,7 @@ Current evidence:
 v4 cluster annotation: row_count=31, cluster_count=3, clustered_row_count=9
 topic report: article_count=31, story_count=25
 extended topic report: count_current_period=11, manual_review_before_counting=1, research_only=4, canonical_check_required=9
+full topic report: count_current_period=17, manual_review_before_counting=1, research_only=7, canonical_check_required=0
 ```
 
 Rows 4/30/31, 8/9/10, and 16/17/18 must not inflate story counts.
@@ -145,6 +148,7 @@ plain data/targets.json target row is not safe enough for Rio economic monitorin
 preferred first production shape is scoped topic/query report before normal dashboard ingestion
 first topic-report artifact now exists and keeps target_row_approved=false
 extended topic-report artifact now uses cluster-member date evidence and still keeps target_row_approved=false
+full v4 topic-report artifact has canonical_rows_checked=31 and still keeps target_row_approved=false
 ```
 
 ## Current Next Step
@@ -153,7 +157,7 @@ extended topic-report artifact now uses cluster-member date evidence and still k
 do not add data/targets.json row yet
 wait for latest deploys to become live
 run fresh production scoping proof
-extend canonical checks to remaining rows 21-31 or build a scoped Rio topic-report view
+define manual approval for near_date/research-only rows or build a scoped Rio topic-report view
 preserve the v4 query families/exclusions in a scoped topic pipeline, not a plain keyword target row
 then decide whether the Rio methodology is ready for an operator-approved narrow first run
 ```

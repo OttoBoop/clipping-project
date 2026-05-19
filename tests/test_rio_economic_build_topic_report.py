@@ -124,3 +124,28 @@ def test_summarize_counts_story_article_dimension_and_date_policy():
         "jobs_income": 1,
         "tourism_events": 1,
     }
+
+
+def test_merge_canonical_payloads_combines_rows_and_rows_checked():
+    merged = topic_report.merge_canonical_payloads(
+        [
+            {
+                "meta": {"rows_checked": 2, "input_report": "sample-a.json"},
+                "rows": [
+                    {"row": 1, "status": "same_day"},
+                    {"row": 2, "status": "fetch_error"},
+                ],
+            },
+            {
+                "meta": {"rows_checked": 1, "input_report": "sample-a.json"},
+                "rows": [
+                    {"row": 2, "status": "same_day"},
+                    {"row": 3, "status": "near_date"},
+                ],
+            },
+        ]
+    )
+
+    assert merged["meta"]["rows_checked"] == 3
+    assert [row["row"] for row in merged["rows"]] == [1, 2, 3]
+    assert [row["status"] for row in merged["rows"]] == ["same_day", "same_day", "near_date"]

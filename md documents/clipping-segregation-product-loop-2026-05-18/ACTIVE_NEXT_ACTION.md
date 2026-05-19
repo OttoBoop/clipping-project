@@ -126,9 +126,11 @@ Continue the production loop. Current priority from the docs:
    from the first 10 canonical checks; the extended 20-row canonical pass now
    feeds a cluster-aware topic report with 11 current-period stories, 1 manual
    review story, 4 research-only stories, and 9 still requiring canonical
-   checks; next Rio step is fresh production scoping proof, remaining row 21-31
-   canonical review, and/or a scoped Rio topic-report view before any production
-   target row;
+   checks; the full 31-row canonical topic report now has 17 current-period
+   stories, 1 manual-review story, 7 research-only stories, and no remaining
+   canonical-check-required stories for the v4 sample; next Rio step is fresh
+   production scoping proof, manual approval policy, and/or a scoped Rio
+   topic-report view before any production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; V1 pilot scope and delivery-format
    decision now exist; demo script is now tied to the V1 offer without exposing

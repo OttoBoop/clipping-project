@@ -54,6 +54,36 @@ def canonical_by_row(canonical_payload: dict[str, Any] | None) -> dict[int, dict
     return output
 
 
+def merge_canonical_payloads(canonical_payloads: list[dict[str, Any]]) -> dict[str, Any]:
+    merged_rows: dict[int, dict[str, Any]] = {}
+    rows_checked = 0
+    source_reports: list[str] = []
+    for payload in canonical_payloads:
+        meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
+        if meta.get("input_report"):
+            source_reports.append(str(meta.get("input_report")))
+        for row in payload.get("rows") or []:
+            if not isinstance(row, dict):
+                continue
+            try:
+                row_number = int(row.get("row") or 0)
+            except (TypeError, ValueError):
+                continue
+            if row_number > 0:
+                merged_rows[row_number] = row
+        try:
+            rows_checked += int(meta.get("rows_checked") or 0)
+        except (TypeError, ValueError):
+            pass
+    return {
+        "meta": {
+            "rows_checked": rows_checked or len(merged_rows),
+            "source_reports": source_reports,
+        },
+        "rows": [merged_rows[key] for key in sorted(merged_rows)],
+    }
+
+
 def representative_row_number(index: int, row: dict[str, Any]) -> int:
     duplicate_of = row_number_from_duplicate(row.get("duplicate_of"))
     return duplicate_of or index
@@ -180,9 +210,10 @@ def summarize(stories: list[dict[str, Any]], source_meta: dict[str, Any] | None 
     }
 
 
-def build_payload(clustered_report: Path, canonical_report: Path | None = None) -> dict[str, Any]:
+def build_payload(clustered_report: Path, canonical_reports: list[Path] | None = None) -> dict[str, Any]:
     clustered_payload = load_json(clustered_report)
-    canonical_payload = load_json(canonical_report) if canonical_report else None
+    canonical_payloads = [load_json(path) for path in canonical_reports or []]
+    canonical_payload = merge_canonical_payloads(canonical_payloads) if canonical_payloads else None
     stories = build_stories(clustered_payload, canonical_payload)
     source_meta = clustered_payload.get("meta") if isinstance(clustered_payload.get("meta"), dict) else {}
     canonical_meta = canonical_payload.get("meta") if canonical_payload and isinstance(canonical_payload.get("meta"), dict) else {}
@@ -191,7 +222,8 @@ def build_payload(clustered_report: Path, canonical_report: Path | None = None) 
         "meta": {
             "generated_at": generated_at.isoformat(),
             "clustered_report": str(clustered_report),
-            "canonical_report": str(canonical_report) if canonical_report else "",
+            "canonical_reports": [str(path) for path in canonical_reports or []],
+            "canonical_report": str(canonical_reports[0]) if canonical_reports and len(canonical_reports) == 1 else "",
             "writes_production_db": False,
             "writes_assets_payload": False,
             "writes_targets_json": False,
@@ -303,7 +335,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         description="Build a scoped Rio economic topic report from review artifacts without touching production data.",
     )
     parser.add_argument("clustered_report", type=Path)
-    parser.add_argument("--canonical-report", type=Path, default=None)
+    parser.add_argument("--canonical-report", type=Path, action="append", default=[])
     parser.add_argument("--output-dir", type=Path, default=REPORTS_DIR)
     return parser.parse_args(argv)
 
