@@ -9068,3 +9068,129 @@ without passwords in this shell.
 
 Run diff/checks, commit/push the V1 add-on boundary update path-limited, poll
 Render, smoke live again, then re-read the docs.
+
+## 2026-05-18 22:30 -03 - Loop Cycle: V1 Add-On Boundary Commit And Push
+
+### Objective Reviewed
+
+Deploy the V1 add-on boundary docs so the sellable package does not drift into
+unbounded low-paid service work.
+
+### Action Taken
+
+Ran:
+
+```text
+git diff --check -> passed
+git add ACTIVE_NEXT_ACTION.md FIRST_SELLABLE_PACKAGE.md V1_DELIVERY_SCOPE.md WORK_LOG.md V1_ADD_ON_MENU_AND_BOUNDARIES.md
+git commit -m "docs: define V1 add-on boundaries"
+git push origin HEAD:master
+```
+
+### Evidence
+
+```text
+f8f7c10 docs: define V1 add-on boundaries
+git push -> master updated from 0500091 to f8f7c10
+```
+
+### Barrier Or Failure
+
+No git barrier. Commit was path-limited and no price was invented.
+
+### Next Objective From Docs
+
+Poll Render until `f8f7c10` is live, smoke production, then re-read the docs
+and continue.
+
+## 2026-05-18 22:31 -03 - Loop Cycle: Stale Blocker Cleanup
+
+### Objective Reviewed
+
+During the required doc reread, `LOOP_OPERATING_PROTOCOL.md` still listed
+`viewerAuthConfigured=false` as the current known blocker, but repeated Render
+health checks now show viewer auth configured.
+
+### Action Taken
+
+Updated:
+
+```text
+LOOP_OPERATING_PROTOCOL.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Recent live health checks consistently show:
+
+```text
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+```
+
+The protocol now says not to re-open the old blocker unless `/healthz`
+regresses.
+
+### Barrier Or Failure
+
+Render request logs remain unavailable through MCP because the logs tool
+reports `no workspace set`; deploy list and live smoke still work and remain
+the workaround.
+
+### Next Objective From Docs
+
+Poll Render for `f8f7c10`, smoke live when promoted, then commit/push this
+protocol cleanup with the add-on boundary log or a later substantive update.
+
+## 2026-05-18 22:32 -03 - Loop Cycle: V1 Add-On Boundary Live Smoke
+
+### Objective Reviewed
+
+Verify the live Render surface after deploying the V1 add-on boundary docs, then
+continue to the next documented dependency instead of stopping at a successful
+deploy.
+
+### Action Taken
+
+Confirmed Render promoted commit:
+
+```text
+f8f7c10bb1f253800f4d7a2e874289ad8f46ae57 docs: define V1 add-on boundaries
+```
+
+Ran logged-out live smoke against:
+
+```text
+https://clipping-project.onrender.com/
+```
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+Positive authenticated viewer/admin proof is still blocked in this shell because
+the viewer/admin passwords are not available and should not be guessed.
+
+### Next Objective From Docs
+
+Commit/push the protocol cleanup that removes the stale `viewerAuthConfigured=false`
+blocker, wait for Render, smoke production again, then re-read the objective docs
+and choose the next weak axis.

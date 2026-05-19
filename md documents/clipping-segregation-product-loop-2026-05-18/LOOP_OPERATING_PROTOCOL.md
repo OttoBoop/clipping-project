@@ -118,9 +118,25 @@ The following are not stop conditions:
 - Render deployed;
 - one live smoke passed.
 
-## Current Known Blocker
+## Current Known Blockers
 
-Production has the logged-out privacy gate, but `/healthz` reports
-`viewerAuthConfigured=false`. Do not claim Axis 1 complete until Render has
-`CLIPPING_VIEWER_PASSWORDS` configured and at least one viewer profile has been
-smoked end to end on the live site.
+Production repeatedly reports:
+
+```text
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+missingConfig=[]
+```
+
+The old `viewerAuthConfigured=false` blocker is resolved on Render. Do not
+re-open it unless `/healthz` regresses.
+
+Remaining blockers:
+
+- positive authenticated viewer/admin smoke cannot be repeated from shells that
+  do not have the viewer/admin passwords;
+- admin CSRF/target-management live smoke still needs operator credentials;
+- no real buyer/prospect conversation is available inside the repo;
+- Rio economic production ingestion remains blocked until extended
+  date-quality checks, fresh live scoping proof, and topic/report isolation are
+  accepted.
