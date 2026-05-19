@@ -6553,3 +6553,60 @@ paid client is ready to receive access.
 
 Run diff checks, commit/push this docs update path-limited, poll Render, and
 smoke the newest live deploy when it changes.
+
+## 2026-05-18 21:13 -03 - Loop Cycle: Delivery Format Pushed And Live Da54b6c Smoked
+
+### Objective Reviewed
+
+After defining the V1 delivery format, push the docs update and keep Render as
+the acceptance bar for every new live deploy.
+
+### Action Taken
+
+Created and pushed:
+
+```text
+2c7dde8 docs: define V1 delivery format
+```
+
+Polled Render, saw `da54b6c` live, then ran another logged-out live smoke.
+
+### Evidence
+
+Render poll:
+
+```text
+dep-d86fqo2ddbjc739t4aog 2c7dde8 docs: define V1 delivery format -> queued
+dep-d86fpr4rp5ls739ctpcg 40a0a02 docs: log Rio v4 deploy smoke -> update_in_progress
+dep-d86fp6b7uimc73bdubo0 da54b6c docs: add Rio economic v4 dry-run review -> live
+```
+
+Live logged-out smoke on `da54b6c`:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof is still not
+repeatable from this shell without viewer passwords.
+
+### Next Objective From Docs
+
+Commit/push this log entry path-limited, poll Render for `40a0a02` and
+`2c7dde8`, then repeat smoke if the live commit changes. If deploy wait
+continues, re-read product docs and tie the demo script to the V1 offer.
