@@ -143,6 +143,255 @@
     }
   })();
 
+  (function setupAdminViewers() {
+    var box = document.getElementById("manageViewersBox");
+    if (!box) return;
+    if (initialSessionRole !== "admin") return;
+    box.hidden = false;
+
+    var listEl = document.getElementById("manageViewersList");
+    var addForm = document.getElementById("addViewerForm");
+    var addOptions = document.getElementById("addViewerTargetOptions");
+    var addMessage = document.getElementById("addViewerMessage");
+    var manageMessage = document.getElementById("manageViewersMessage");
+    var editDialog = document.getElementById("editViewerDialog");
+    var editForm = document.getElementById("editViewerForm");
+    var editOptions = document.getElementById("editViewerTargetOptions");
+    var editTitle = document.getElementById("editViewerTitle");
+    var editMessage = document.getElementById("editViewerMessage");
+    var editCancel = document.getElementById("editViewerCancel");
+    if (!listEl || !addForm || !addOptions || !editDialog || !editForm || !editOptions) return;
+
+    var editingProfile = "";
+    var availableTargets = [];
+    var viewersCache = [];
+
+    function setFieldMessage(el, text, kind) {
+      if (!el) return;
+      el.textContent = text || "";
+      el.classList.remove("ok", "error");
+      if (kind) el.classList.add(kind);
+    }
+
+    function loadTargetOptions() {
+      return apiFetch("/api/targets", { cache: "no-store" })
+        .then(function (resp) {
+          if (!resp.ok) throw new Error("targets_unavailable");
+          return resp.json();
+        })
+        .then(function (data) {
+          var rows = (data && data.targets) || [];
+          availableTargets = rows
+            .filter(function (row) { return row && !row.archived; })
+            .map(function (row) {
+              return {
+                key: String(row.key || ""),
+                label: String(row.display_name || row.label || row.key || ""),
+                primary: Boolean(row.primary),
+              };
+            })
+            .filter(function (row) { return row.key; });
+        })
+        .catch(function () { availableTargets = []; });
+    }
+
+    function renderTargetOptions(container, selected) {
+      if (!container) return;
+      var selectedSet = new Set((selected || []).map(String));
+      if (!availableTargets.length) {
+        container.innerHTML = '<p class="field-help">Nenhum target cadastrado ainda — adicione nomes secundários antes de criar clientes.</p>';
+        return;
+      }
+      container.innerHTML = availableTargets.map(function (row) {
+        var checked = selectedSet.has(row.key) ? " checked" : "";
+        var tag = row.primary ? ' <em class="chip chip-primary-mini">principal</em>' : "";
+        return (
+          '<label class="viewer-target-option"><input type="checkbox" name="target_keys" value="' +
+          escapeHtml(row.key) +
+          '"' + checked + '>' +
+          '<span>' + escapeHtml(row.label) + tag + '</span></label>'
+        );
+      }).join("");
+    }
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>"']/g, function (ch) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+      });
+    }
+
+    function viewerRow(viewer) {
+      var keys = (viewer.target_keys || []).map(escapeHtml).join(", ") || '<em class="field-help">nenhum</em>';
+      var pwStatus = viewer.has_password
+        ? '<span class="chip chip-ok">com senha</span>'
+        : '<span class="chip chip-warn">sem senha</span>';
+      return (
+        '<article class="viewer-card" data-viewer-profile="' + escapeHtml(viewer.profile) + '">' +
+          '<div class="viewer-card-head">' +
+            '<div>' +
+              '<strong>' + escapeHtml(viewer.label) + '</strong>' +
+              '<span class="viewer-card-profile">' + escapeHtml(viewer.profile) + '</span>' +
+            '</div>' +
+            pwStatus +
+          '</div>' +
+          '<p class="viewer-card-targets"><span class="field-help">Vê:</span> ' + keys + '</p>' +
+          '<div class="viewer-card-actions">' +
+            '<button type="button" class="secondary-action" data-viewer-edit="' + escapeHtml(viewer.profile) + '">Editar</button>' +
+            '<button type="button" class="secondary-action danger-action" data-viewer-archive="' + escapeHtml(viewer.profile) + '">Arquivar</button>' +
+          '</div>' +
+        '</article>'
+      );
+    }
+
+    function renderViewers() {
+      if (!viewersCache.length) {
+        listEl.innerHTML = '<p class="field-help">Nenhum cliente cadastrado.</p>';
+        return;
+      }
+      listEl.innerHTML = viewersCache.map(viewerRow).join("");
+    }
+
+    async function loadViewers() {
+      try {
+        var resp = await apiFetch("/api/admin/viewers", { cache: "no-store" });
+        if (!resp.ok) {
+          setFieldMessage(manageMessage, "Não foi possível carregar clientes (HTTP " + resp.status + ").", "error");
+          return;
+        }
+        var data = await resp.json();
+        viewersCache = (data && data.viewers) || [];
+        renderViewers();
+        setFieldMessage(manageMessage, "", "");
+      } catch (error) {
+        console.error("[clipping] viewers load failed", error);
+        setFieldMessage(manageMessage, "Erro ao carregar clientes.", "error");
+      }
+    }
+
+    function getSelectedTargetKeys(container) {
+      if (!container) return [];
+      return Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(function (el) {
+        return el.value;
+      });
+    }
+
+    addForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      setFieldMessage(addMessage, "Criando...", "");
+      var formData = new FormData(addForm);
+      var body = {
+        profile: String(formData.get("profile") || "").trim(),
+        label: String(formData.get("label") || "").trim(),
+        password: String(formData.get("password") || ""),
+        target_keys: getSelectedTargetKeys(addOptions),
+      };
+      var submitButton = addForm.querySelector('button[type="submit"]');
+      if (submitButton) submitButton.disabled = true;
+      try {
+        var resp = await apiPost("/api/admin/viewers", body);
+        var data = await resp.json().catch(function () { return {}; });
+        if (!resp.ok) {
+          var msg = (data && (data.message || data.suggestion)) || ("HTTP " + resp.status);
+          setFieldMessage(addMessage, msg, "error");
+          return;
+        }
+        setFieldMessage(addMessage, 'Cliente "' + body.profile + '" criado.', "ok");
+        addForm.reset();
+        renderTargetOptions(addOptions, []);
+        await loadViewers();
+      } catch (error) {
+        console.error("[clipping] create viewer failed", error);
+        setFieldMessage(addMessage, "Falha de rede ao criar cliente.", "error");
+      } finally {
+        if (submitButton) submitButton.disabled = false;
+      }
+    });
+
+    function closeEditDialog() {
+      try { editDialog.close(); } catch (_) { editDialog.removeAttribute("open"); }
+      editingProfile = "";
+    }
+
+    if (editCancel) editCancel.addEventListener("click", closeEditDialog);
+
+    function openEditDialog(profile) {
+      var viewer = viewersCache.find(function (row) { return row.profile === profile; });
+      if (!viewer) return;
+      editingProfile = profile;
+      editTitle.textContent = "Editar cliente " + profile;
+      editForm.elements.label.value = viewer.label || "";
+      editForm.elements.password.value = "";
+      renderTargetOptions(editOptions, viewer.target_keys || []);
+      setFieldMessage(editMessage, "", "");
+      if (typeof editDialog.showModal === "function") editDialog.showModal();
+      else editDialog.setAttribute("open", "");
+    }
+
+    editForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      if (!editingProfile) { closeEditDialog(); return; }
+      var formData = new FormData(editForm);
+      var body = {
+        label: String(formData.get("label") || "").trim(),
+        target_keys: getSelectedTargetKeys(editOptions),
+      };
+      var passwordRaw = String(formData.get("password") || "");
+      if (passwordRaw) body.password = passwordRaw;
+      setFieldMessage(editMessage, "Salvando...", "");
+      try {
+        var resp = await apiPatch("/api/admin/viewers/" + encodeURIComponent(editingProfile), body);
+        var data = await resp.json().catch(function () { return {}; });
+        if (!resp.ok) {
+          var msg = (data && (data.message || data.suggestion)) || ("HTTP " + resp.status);
+          setFieldMessage(editMessage, msg, "error");
+          return;
+        }
+        setFieldMessage(editMessage, "Salvo.", "ok");
+        await loadViewers();
+        window.setTimeout(closeEditDialog, 800);
+      } catch (error) {
+        console.error("[clipping] edit viewer failed", error);
+        setFieldMessage(editMessage, "Falha de rede ao salvar.", "error");
+      }
+    });
+
+    listEl.addEventListener("click", async function (event) {
+      var editTarget = event.target.closest("[data-viewer-edit]");
+      if (editTarget) {
+        openEditDialog(editTarget.getAttribute("data-viewer-edit"));
+        return;
+      }
+      var archiveTarget = event.target.closest("[data-viewer-archive]");
+      if (archiveTarget) {
+        var profile = archiveTarget.getAttribute("data-viewer-archive");
+        if (!window.confirm('Arquivar o cliente "' + profile + '"? O acesso dele será removido imediatamente.')) return;
+        archiveTarget.disabled = true;
+        setFieldMessage(manageMessage, "Arquivando...", "");
+        try {
+          var resp = await apiPost("/api/admin/viewers/" + encodeURIComponent(profile) + "/archive", {});
+          var data = await resp.json().catch(function () { return {}; });
+          if (!resp.ok) {
+            var msg = (data && (data.message || data.suggestion)) || ("HTTP " + resp.status);
+            setFieldMessage(manageMessage, msg, "error");
+            return;
+          }
+          setFieldMessage(manageMessage, 'Cliente "' + profile + '" arquivado.', "ok");
+          await loadViewers();
+        } catch (error) {
+          console.error("[clipping] archive viewer failed", error);
+          setFieldMessage(manageMessage, "Falha de rede ao arquivar.", "error");
+        } finally {
+          archiveTarget.disabled = false;
+        }
+      }
+    });
+
+    loadTargetOptions().then(function () {
+      renderTargetOptions(addOptions, []);
+      return loadViewers();
+    });
+  })();
+
   const storyStack = document.getElementById("storyStack");
   const flatStack = document.getElementById("flatStack");
   const targetFilters = document.getElementById("targetFilters");

@@ -127,6 +127,58 @@
           </details>
           <span id="manageTargetsMessage" class="form-message" role="status"></span>
         </details>
+
+        <details class="manage-viewers-box" id="manageViewersBox" data-admin-only="1" hidden>
+          <summary>Clientes (viewers)</summary>
+          <p class="manage-viewers-note">Cada cliente loga com uma senha e vê só os nomes que você liberar para ele. Criar, editar ou arquivar aqui não exige redeploy — vale na hora.</p>
+          <div class="manage-viewers-list" id="manageViewersList" aria-live="polite"></div>
+
+          <details class="add-viewer-box">
+            <summary>Adicionar cliente novo</summary>
+            <form id="addViewerForm" class="add-viewer-form" novalidate>
+              <label>Identificador interno
+                <input type="text" name="profile" required autocomplete="off" minlength="2" maxlength="32" pattern="[a-z0-9][a-z0-9_]{1,31}" placeholder="Ex.: maria_silva (sem espaços, minúsculas)">
+                <span class="field-help">Letras minúsculas, números e _. Usado em URLs internas e logs.</span>
+              </label>
+              <label>Nome para exibir
+                <input type="text" name="label" required minlength="2" placeholder="Ex.: Maria Silva (Gabinete)">
+              </label>
+              <label>Senha inicial
+                <input type="text" name="password" required minlength="3" autocomplete="new-password" placeholder="Ex.: maria-silva-2026">
+                <span class="field-help">Senha que você vai mandar pelo WhatsApp. Pode ter espaço, hífen, números. Ela troca a própria depois de logar.</span>
+              </label>
+              <fieldset class="viewer-target-set">
+                <legend>Nomes visíveis para esse cliente</legend>
+                <div class="viewer-target-options" id="addViewerTargetOptions"></div>
+                <span class="field-help">Marque os nomes que o cliente vai poder consultar no painel. Pelo menos um.</span>
+              </fieldset>
+              <button type="submit" class="secondary-action">Criar cliente</button>
+              <span id="addViewerMessage" class="form-message" role="status"></span>
+            </form>
+          </details>
+          <span id="manageViewersMessage" class="form-message" role="status"></span>
+        </details>
+
+        <dialog class="password-dialog" id="editViewerDialog" aria-label="Editar cliente">
+          <form id="editViewerForm" method="dialog">
+            <h2 id="editViewerTitle">Editar cliente</h2>
+            <label>Nome para exibir
+              <input type="text" name="label" required minlength="2">
+            </label>
+            <fieldset class="viewer-target-set">
+              <legend>Nomes visíveis</legend>
+              <div class="viewer-target-options" id="editViewerTargetOptions"></div>
+            </fieldset>
+            <label>Senha nova <span class="field-help">(deixe em branco para manter a atual)</span>
+              <input type="text" name="password" autocomplete="new-password" placeholder="Opcional">
+            </label>
+            <p class="password-message" id="editViewerMessage" role="status"></p>
+            <menu class="password-dialog-actions">
+              <button type="button" class="secondary-action" id="editViewerCancel">Cancelar</button>
+              <button type="submit" class="primary-action">Salvar</button>
+            </menu>
+          </form>
+        </dialog>
       </div>
 
       <div class="runner-panel" id="progressTabPanel" data-tab-panel="progress" hidden>
