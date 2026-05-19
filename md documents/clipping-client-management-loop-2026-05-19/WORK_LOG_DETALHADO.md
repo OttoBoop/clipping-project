@@ -299,3 +299,53 @@ Final: `">Arquivar</button>';` — abre string com `"` (double quote), termina c
 **Interpretação:** UI primary mgmt completa. Mas a falha de quoting é a 2ª vez nessa sessão que rodar pytest cedo me salvou de bug invisível no diff (a 1ª foi a desincronização do tools/pages_assets em commit anterior). Lição: pytest é cheap, rodar SEMPRE após edits de JS estrutural.
 
 ---
+
+### 2026-05-19 20:00 — Pós-compactação: restauração de docs perdidos no cherry-pick rebase
+
+**Contexto:** [WORK_LOG_MAJOR.md](WORK_LOG_MAJOR.md) entrada 12:50 — fim do dia anterior. O Otávio voltou, viu que o mantra não estava sendo seguido e perguntou "Que porra é essa". Diagnóstico: os 6 arquivos do loop (LONG_TERM_GOALS, MANTRA, work logs, session log, goals atingidos) **não estavam em HEAD**.
+**Ação:** `git checkout e138350 -- "md documents/clipping-client-management-loop-2026-05-19/"`. O commit `e138350` é o último com a versão completa dos docs (incluindo a regra prod-push e a regra de responder próprias perguntas no mantra). Cherry-pick rebase anterior (188-commit divergence) só trouxe commits de backend; docs foram esquecidos.
+**Resultado:** 6 arquivos restaurados, commit `fd4184b`, pushed.
+**Interpretação:** padrão a vigiar — cherry-picks seletivos podem deixar docs/configs órfãos. Quando rebase parcial, listar explicitamente o que NÃO veio.
+
+---
+
+### 2026-05-19 20:00–20:18 — Goal 1: implementação backend + UI completa
+
+**Contexto:** [WORK_LOG_MAJOR.md](WORK_LOG_MAJOR.md) entrada 20:18 — Goal 1 (onboarding admin via UI).
+
+**Ações (sequência):**
+
+1. **`web_app/segmentation.py`**: add `ViewerProfileError`, regex `PROFILE_KEY_RE`, `set_viewer_profile()`, `archive_viewer_profile()`, `_write_profiles_file()`, `_ensure_writable_profiles()`. Mudou semântica de `viewer_profiles()`: file não-vazio **substitui** defaults em vez de mergir (sem isso, archive seria revertido).
+2. **`web_app/auth.py`**: add `remove_viewer_password()` e `has_viewer_password()`.
+3. **`web_app/storage_bridge.py`**: add `viewer_profiles.json` aos `RUNTIME_FILES`.
+4. **`web_app/app.py`**: add `_viewer_profile_error_response()`, `_viewer_listing()`, `_validate_target_keys_for_viewer()`, e 4 endpoints (`GET/POST/PATCH /api/admin/viewers` + `POST /archive`). Import block atualizado.
+5. **`index.html`**: nova `<details class="manage-viewers-box">` após `manageTargetsBox` + `<dialog class="password-dialog" id="editViewerDialog">` pra edição.
+6. **`assets/clipping.js`**: nova IIFE `setupAdminViewers()` com loadTargetOptions/renderTargetOptions/loadViewers/renderViewers/openEditDialog + handlers de submit/click.
+7. **`assets/clipping.css`**: classes `.manage-viewers-box`, `.viewer-card*`, `.viewer-target-*`, `.add-viewer-*`, `.chip-ok`, `.chip-warn`, `.chip-primary-mini`.
+8. **`tools/pages_assets/`**: sync via `cp assets/clipping.js assets/clipping.css tools/pages_assets/`.
+9. **`tests/test_admin_viewers.py`**: 12 testes novos cobrindo happy, invalid key, duplicate, unknown target, update, password change, archive, 404, admin-pseudo, viewer-cannot-access.
+10. **`tests/test_admin_ui.py`**: 1 update no `test_storage_current_files_are_runtime_mutable_only` pra incluir `data/viewer_profiles.json` na lista esperada.
+
+**Resultado:** 369/369 pytest passed. Commits `81bd1bd` (backend) e `d3af727` (UI). Pushed.
+
+**Smoke prod 20:21–20:22:** 9/9 etapas verdes (script `/tmp/smoke_admin_viewers.sh`). Goal 1 migrou pra `GOALS_ATINGIDOS.md` em `8fbbd86`.
+
+---
+
+### 2026-05-19 20:25 — Fix do último buraco da família display_name duplicate
+
+**Contexto:** [WORK_LOG_MAJOR.md](WORK_LOG_MAJOR.md) entrada 11:50 já tinha fechado dedup em `create_secondary_target`; 12:15 fechou em `update_secondary_target`. Faltava `restore_secondary_target`.
+
+**Cenário do bug (4 passos):**
+1. `create "Shakira"` → `key=shakira`
+2. `archive shakira` (passa dedup no create porque dedup ignora arquivados)
+3. `create "Shakira"` → `key=shakira_2`, display="Shakira" ativo
+4. `restore shakira` → **dois rows ativos** com display "Shakira"
+
+**Ação:** `restore_secondary_target` agora itera outras rows ativas (`other_idx != index`, `archived=False`), compara display_name normalizado+casefold, e levanta `ValidationError` se conflitar. `target_validation_payload` ganhou branch pra mensagem "Já existe um nome ativo cadastrado" → suggestion "Arquive ou renomeie o nome ativo conflitante antes de restaurar este".
+
+**Testes adicionados (2):** block-on-conflict (verifica que archived stays archived) + allow-when-no-conflict.
+
+**Pytest:** 87/87 nas suítes tocadas. Commit `f4b42a2`. Deploy disparado.
+
+---
