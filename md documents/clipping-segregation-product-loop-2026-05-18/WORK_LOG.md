@@ -6497,3 +6497,59 @@ This did not block logged-out privacy proof or Rio dry-run methodology work.
 Commit/push this log entry path-limited, poll Render until `da54b6c` resolves,
 then smoke the newest live deploy. If deploy wait continues, re-read the docs
 and choose the next unblocked product/operations item.
+
+## 2026-05-18 21:12 -03 - Loop Cycle: V1 Delivery Format Decision
+
+### Objective Reviewed
+
+Render was still deploying, so the loop returned to the docs and picked the
+next unblocked product-packaging item: close the V1 delivery-format decision
+without creating a new site, custom report product, or unlimited manual work.
+
+### Action Taken
+
+Read:
+
+```text
+FIRST_SELLABLE_PACKAGE.md
+V1_DELIVERY_SCOPE.md
+OPERATOR_COST_DISCIPLINE.md
+FIRST_CLIENT_ONBOARDING_CHECKLIST.md
+```
+
+Added:
+
+```text
+V1_DELIVERY_FORMAT_DECISION.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+FIRST_SELLABLE_PACKAGE.md
+V1_DELIVERY_SCOPE.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Decision recorded:
+
+```text
+V1 pilot = private scoped dashboard
++ two operator-run updates per week
++ one lightweight weekly written summary
+source of truth = scoped dashboard
+not included = custom branded PDF, automated WhatsApp bot, daily AI brief, realtime alerts
+```
+
+### Barrier Or Failure
+
+No technical blocker. This is a packaging/operations decision, not proof that a
+paid client is ready to receive access.
+
+### Next Objective From Docs
+
+Run diff checks, commit/push this docs update path-limited, poll Render, and
+smoke the newest live deploy when it changes.

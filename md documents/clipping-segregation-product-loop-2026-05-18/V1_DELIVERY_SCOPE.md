@@ -30,6 +30,16 @@ support: password/access help during business hours
 review: end-of-pilot decision on frequency, targets, and add-ons
 ```
 
+Delivery format decision:
+
+```text
+V1_DELIVERY_FORMAT_DECISION.md
+source of truth: private scoped dashboard
+included artifact: one lightweight weekly written summary
+channels: plain text, email, WhatsApp, or small manual screenshot/export
+not included: custom branded PDF, automated bot, daily AI brief, realtime alerts
+```
+
 Why this shape:
 
 - weekly-only may feel too slow for politics;

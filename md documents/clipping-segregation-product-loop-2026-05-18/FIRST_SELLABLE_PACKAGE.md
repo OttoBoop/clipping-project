@@ -147,5 +147,6 @@ Remaining before first paid client:
 - test the admin/operator target-update path with operator credentials;
 - write password rotation and offboarding instructions; first-client checklist
   documented in `FIRST_CLIENT_ONBOARDING_CHECKLIST.md`;
-- decide whether the first delivery is dashboard-only or dashboard plus manual
-  WhatsApp/PDF summary.
+- first delivery format decision is documented in
+  `V1_DELIVERY_FORMAT_DECISION.md`: private scoped dashboard plus two
+  operator-run updates per week and one lightweight weekly written summary.

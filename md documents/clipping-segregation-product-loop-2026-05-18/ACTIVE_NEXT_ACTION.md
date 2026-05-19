@@ -105,8 +105,9 @@ Continue the production loop. Current priority from the docs:
    step is canonical source/date checking, duplicate clustering, and fresh
    production scoping proof before any production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
-   demo/prospect strategy now exists; next packaging step is defining included
-   update frequency and delivery format; V1 pilot scope now exists;
+   demo/prospect strategy now exists; V1 pilot scope and delivery-format
+   decision now exist; next packaging step is tying the demo script to the V1
+   offer without exposing secrets or promising custom work;
 6. review costs, password rotation, and operations;
    first-client onboarding/offboarding checklist now exists;
 7. then re-read the docs and choose the next weak axis.
