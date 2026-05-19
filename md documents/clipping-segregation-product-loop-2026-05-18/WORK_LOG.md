@@ -7430,3 +7430,59 @@ path-limited before commit scope review.
 Commit/push path-limited, poll Render for `b8b3b01` and the new commit, smoke
 production when live, then continue with cluster-annotated Rio sample or fresh
 production scoping proof.
+
+## 2026-05-18 21:49 -03 - Loop Cycle: Date Policy Push And B8b3b01 Live Smoke
+
+### Objective Reviewed
+
+Continue production loop: deploy docs/tooling changes directly to `master`,
+verify live privacy gate when Render advances, and keep the next Rio objective
+queued instead of stopping on deploy progress.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+19377b2 tools: add Rio date quality policy
+git push origin HEAD:master -> master updated from b8b3b01 to 19377b2
+```
+
+Polled Render MCP:
+
+```text
+dep-d86g9fgjs32c738k5eqg 19377b2 tools: add Rio date quality policy -> build_in_progress
+dep-d86g816rnols73ftcog0 b8b3b01 docs: extend Rio canonical date review -> live
+```
+
+Ran logged-out live smoke while `b8b3b01` was live.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof remains blocked in
+this shell by missing viewer passwords. Latest commit `19377b2` was still
+building at this check.
+
+### Next Objective From Docs
+
+Commit/push this log entry path-limited, poll Render until `19377b2` is live,
+smoke production again, then continue with the cluster-annotated Rio sample or
+fresh production scoping proof.
