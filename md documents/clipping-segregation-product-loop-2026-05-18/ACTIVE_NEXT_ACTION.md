@@ -30,6 +30,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
   prospect conversation.
 - Rio economic indicator methodology track.
 - Render production checklist.
+- Authenticated Render smoke runbook/script for repeating viewer/admin proof
+  when passwords are available outside Git.
 - Market research plan.
 - Initial sourced market research notes.
 - Political/communications competitor pass.
@@ -123,6 +125,8 @@ Continue the production loop. Current priority from the docs:
 
 1. keep the logged-out privacy gate verified on Render;
 2. keep real viewer profile proof verified after deploys;
+   a non-secret authenticated smoke helper now exists, but running it still
+   requires viewer/admin passwords outside this shell;
 3. keep target-management no-fake-UI review fresh; a 2026-05-18 code/docs
    pass exists and logged-out live mutation calls now reject with
    `admin_login_required`, but positive admin CSRF/target-management smoke on

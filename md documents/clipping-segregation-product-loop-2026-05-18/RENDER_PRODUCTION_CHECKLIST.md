@@ -61,6 +61,16 @@ For each configured viewer:
 - `/api/targets` returns only allowed target metadata;
 - mutation attempts return `401` or `403`.
 
+Operator helper:
+
+```text
+AUTHENTICATED_RENDER_SMOKE_RUNBOOK.md
+tools/authenticated_render_smoke.py
+```
+
+Use this helper when viewer/admin passwords are available outside Git. Do not
+paste passwords, cookies, CSRF tokens, or full private payloads into the repo.
+
 ## Empty Demo Workaround Checks
 
 If Render still reports `viewerAuthConfigured=false`, verify the public empty
@@ -85,6 +95,10 @@ replace real Flavio/Shakira/Rio viewer verification.
 - `/api/csrf` returns a token;
 - admin mutation without CSRF returns `403`;
 - admin mutation with CSRF reaches the real operation.
+
+The authenticated smoke helper checks admin login, CSRF-token presence, and
+missing-CSRF rejection. It intentionally skips successful production target
+mutation unless an approved disposable-target cleanup plan exists.
 
 ## Static Export Boundary
 

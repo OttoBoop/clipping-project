@@ -11478,3 +11478,210 @@ manual-approval methodology or buyer/pilot evidence maintenance.
 The status snapshot is fresher, but it does not resolve authenticated proof,
 approval writes, buyer evidence, measured pilot cost, or a finished Rio
 indicator.
+
+## 2026-05-19 11:14 -03 - Loop Cycle: Status Snapshot Deploy Smoke
+
+### Objective Reviewed
+
+Verify the refreshed system-status snapshot commit on the live Render app and
+record the logged-out privacy gate before returning to the objective docs.
+
+### Render Audit
+
+Render deploy:
+
+```text
+service=srv-d7p2p5beo5us739f9k40
+deploy=dep-d86s27r7uimc73bkv1fg
+commit=e6eef5c70cbeb4609be227b5681f70a68b90b969
+message=docs: refresh status after Rio UI guard
+status=live
+finishedAt=2026-05-20T14:13:19.865635Z
+```
+
+Live logged-out smoke:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+```
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+e6eef5c docs: refresh status after Rio UI guard
+git push origin HEAD:master
+```
+
+### Evidence
+
+The latest status snapshot is deployed and the live privacy gate still blocks
+logged-out access to dashboard payloads, raw texts, Rio report data, live
+results, targets, classifications, CSRF, and update status.
+
+### Barrier Or Failure
+
+The git commit again required escalated permission because the sandbox exposed
+the worktree git index lock as read-only. Push used escalated permission because
+network access is restricted in the sandbox. The commands succeeded after the
+barriers were handled.
+
+Authenticated viewer/admin proof remains blocked by missing credentials.
+
+### Next Objective From Docs
+
+Re-open the docs. The remaining unblocked paths are Rio manual-approval
+methodology, buyer/pilot evidence maintenance, or another checklist review that
+does not require credentials.
+
+### Why The Loop Continues
+
+The deploy passed, but authenticated proof, approval writes, buyer evidence,
+measured pilot work, and final Rio methodology remain unfinished.
+
+## 2026-05-19 11:20 -03 - Loop Cycle: Authenticated Render Smoke Workaround
+
+### Objective Reviewed
+
+Re-read the loop docs after the latest deploy smoke. The repeated hard blocker
+is positive authenticated viewer/admin proof: the shell has no real passwords,
+so logged-out checks pass but profile-specific proof cannot be repeated here.
+
+### Render Audit
+
+Latest live deploy remains:
+
+```text
+deploy=dep-d86s27r7uimc73bkv1fg
+commit=e6eef5c70cbeb4609be227b5681f70a68b90b969
+logged-out smoke passed
+```
+
+### Action Taken
+
+Read:
+
+```text
+LONG_TERM_GOALS.md
+ACTIVE_NEXT_ACTION.md
+RENDER_PRODUCTION_CHECKLIST.md
+WORK_LOG.md
+web_app/auth.py
+web_app/app.py
+```
+
+Created/updated:
+
+```text
+tools/authenticated_render_smoke.py
+AUTHENTICATED_RENDER_SMOKE_RUNBOOK.md
+RENDER_PRODUCTION_CHECKLIST.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The helper:
+
+```text
+reads CLIPPING_SMOKE_VIEWER_PASSWORDS and CLIPPING_SMOKE_ADMIN_PASSWORD from env only
+does not print passwords
+checks viewer login/profile
+checks scoped clipping-data/raw-texts/targets/live-results
+checks Rio endpoint boundary
+checks viewer target write rejection
+checks admin login, CSRF-token presence, and missing-CSRF rejection
+skips successful production target mutation by default
+```
+
+Checks run:
+
+```text
+python3 -m py_compile tools/authenticated_render_smoke.py -> passed
+python3 tools/authenticated_render_smoke.py --help -> passed
+python3 tools/authenticated_render_smoke.py -> expected failure without env:
+  viewer passwords configured for smoke: set CLIPPING_SMOKE_VIEWER_PASSWORDS outside Git
+  admin password configured for smoke: set CLIPPING_SMOKE_ADMIN_PASSWORD outside Git
+git diff --check -> passed
+```
+
+### Barrier Or Failure
+
+This does not run authenticated production proof by itself. Real viewer/admin
+passwords are still required outside Git. Successful admin mutation with CSRF is
+still intentionally gated by an explicit disposable-target cleanup plan.
+
+### Next Objective From Docs
+
+Run static checks on the helper, commit/push path-limited, wait for Render,
+smoke production, then return to the docs. Next likely unblocked item after
+that is Rio manual approval methodology or buyer/pilot evidence maintenance.
+
+### Why The Loop Continues
+
+The blocker now has a repeatable operator workaround, but the actual
+authenticated proof still needs credentials, and Rio approvals/buyer evidence
+remain unfinished.
+
+## 2026-05-19 11:15 -03 - Loop Cycle: Resume And Commit Authenticated Smoke Helper
+
+### Objective Reviewed
+
+Re-read the required loop anchors:
+
+```text
+LONG_TERM_GOALS.md
+DEPENDENCY_MAP.md
+CURRENT_SHORT_TERM_LOOP.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_CHECKLIST.md
+RENDER_PRODUCTION_CHECKLIST.md
+WORK_LOG.md
+```
+
+The active axis remains Axis 1: prove real password-gated segregation on the
+current FastAPI/Render app. The specific open proof gap is authenticated
+viewer/admin verification on the live site after deploys.
+
+### Action Taken
+
+Reviewed the uncommitted authenticated smoke helper/runbook and re-ran focused
+local checks before committing.
+
+### Evidence
+
+```text
+python3 -m py_compile tools/authenticated_render_smoke.py -> passed
+python3 tools/authenticated_render_smoke.py --help -> passed
+python3 tools/authenticated_render_smoke.py -> expected failure without env
+git diff --check -> passed
+```
+
+### Barrier Or Failure
+
+No viewer/admin password is available in this shell, so the helper correctly
+reports missing credential env vars instead of pretending authenticated Render
+proof happened. The next step is path-limited commit/push, Render deploy wait,
+logged-out live smoke, then another docs review.
+
+### Why The Loop Continues
+
+The helper reduces a blocker into a repeatable operator action, but the live
+authenticated proof still has to be run with real credentials, and the Rio,
+buyer, pricing, and operations tracks still need review.
