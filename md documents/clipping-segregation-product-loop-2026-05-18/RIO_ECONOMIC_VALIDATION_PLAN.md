@@ -373,6 +373,21 @@ Future Rio counts must distinguish `article_count` from deduplicated
 `story_count`; otherwise repeated sources will inflate the apparent economic
 signal.
 
+Cluster review format update:
+
+```text
+tools/rio_economic_dry_run.py now emits blank cluster fields:
+cluster_key
+cluster_label
+primary_dimension
+secondary_dimensions
+representative_url
+duplicate_of
+```
+
+These fields are manual-review scaffolding only. They do not write to the
+production database, scoped assets payload, or `data/targets.json`.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

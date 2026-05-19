@@ -85,6 +85,12 @@ def test_collect_rows_dedupes_urls_and_preserves_review_fields():
     assert [row["url"] for row in rows] == ["https://example.com/a", "https://example.com/b"]
     assert rows[0]["review_label"] == ""
     assert rows[0]["false_positive_reason"] == ""
+    assert rows[0]["cluster_key"] == ""
+    assert rows[0]["cluster_label"] == ""
+    assert rows[0]["primary_dimension"] == ""
+    assert rows[0]["secondary_dimensions"] == ""
+    assert rows[0]["representative_url"] == ""
+    assert rows[0]["duplicate_of"] == ""
 
 
 def test_collect_rows_accepts_custom_query_specs():
@@ -154,7 +160,13 @@ def test_write_reports_creates_json_csv_and_markdown(tmp_path):
     assert json_payload["meta"]["writes_production_db"] is False
     assert json_payload["meta"]["writes_assets_payload"] is False
     assert json_payload["meta"]["writes_targets_json"] is False
-    assert "Rio Economic Dry Run Review" in (tmp_path / "rio_economic_dry_run_20260519T120000Z.md").read_text(encoding="utf-8")
+    csv_text = (tmp_path / "rio_economic_dry_run_20260519T120000Z.csv").read_text(encoding="utf-8")
+    markdown_text = (tmp_path / "rio_economic_dry_run_20260519T120000Z.md").read_text(encoding="utf-8")
+    assert "cluster_key" in csv_text
+    assert "duplicate_of" in csv_text
+    assert "Rio Economic Dry Run Review" in markdown_text
+    assert "Primary Dimension" in markdown_text
+    assert "Duplicate Of" in markdown_text
     assert set(paths) == {"json", "csv", "markdown"}
 
 

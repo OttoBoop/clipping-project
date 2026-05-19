@@ -7186,3 +7186,94 @@ this shell by missing viewer passwords.
 
 Commit/push this log entry path-limited, poll Render for `3ded606` and
 `4ae7ce9`, and continue with the next docs-derived item.
+
+## 2026-05-18 21:39 -03 - Loop Cycle: Render MCP Poll And Rio Cluster Fields
+
+### Objective Reviewed
+
+Re-read the long-term goals, dependency map, short-term loop, active next
+action, system review checklist, Render checklist, Rio validation plan, and the
+bottom of this log. The active axis remains production segregation first, with
+Rio economic methodology continuing only in non-production artifacts.
+
+### Action Taken
+
+Checked local worktree state and Render deploy state. Local `render` CLI is not
+installed, so the loop used the Render MCP instead of stopping.
+
+Render MCP deploy state:
+
+```text
+dep-d86g3pf3jp8c73aij550 6d5d3b docs: log cluster review deploy smoke -> update_in_progress
+dep-d86g39iddbjc739t9ihg 3ded606 docs: log canonical helper deploy smoke -> live
+```
+
+Ran logged-out live smoke against the current live service and then started the
+next docs-derived Rio task: extend the dry-run review format with optional
+manual cluster fields.
+
+Updated:
+
+```text
+tools/rio_economic_dry_run.py
+tests/test_rio_economic_dry_run.py
+RIO_ECONOMIC_V4_DUPLICATE_CLUSTER_REVIEW.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+ACTIVE_NEXT_ACTION.md
+```
+
+### Evidence
+
+Live logged-out smoke:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+Cluster fields added as blank review scaffolding:
+
+```text
+cluster_key
+cluster_label
+primary_dimension
+secondary_dimensions
+representative_url
+duplicate_of
+```
+
+Local checks:
+
+```text
+python -m pytest tests/test_rio_economic_dry_run.py -> failed: No module named pytest
+python -m compileall tools/rio_economic_dry_run.py tests/test_rio_economic_dry_run.py -> passed
+python tools/rio_economic_dry_run.py --offline-fixture --max-queries 1 --output-dir /tmp/rio-cluster-field-smoke -> passed, row_count=1
+rg cluster fields in /tmp/rio-cluster-field-smoke -> JSON/CSV/MD fields present
+```
+
+Compileall dirtied tracked `pipeline/__pycache__/*.pyc`; those generated
+artifacts were restored path-limited before commit scope review.
+
+### Barrier Or Failure
+
+No logged-out privacy regression. Authenticated viewer proof is still blocked
+from this shell by missing viewer passwords. Render CLI is absent locally, but
+Render MCP works and is the workaround. Local pytest is unavailable in this
+shell, so compile/offline-script checks are the current workaround.
+
+### Next Objective From Docs
+
+Commit/push this path-limited change, poll Render until the new commit is live,
+smoke production again, then continue with extended canonical source/date
+checking or a cluster-annotated sample.

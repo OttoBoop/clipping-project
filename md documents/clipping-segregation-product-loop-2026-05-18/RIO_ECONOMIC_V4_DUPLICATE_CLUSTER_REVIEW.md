@@ -75,7 +75,7 @@ counts must distinguish article_count from story_count
 
 ## Suggested Manual Clustering Fields
 
-If a review CSV/JSON is extended later, add:
+The dry-run review CSV/JSON/MD format now includes optional blank fields for:
 
 ```text
 cluster_key
@@ -88,12 +88,14 @@ duplicate_of
 
 ## Current Status
 
-V4 duplicate risk is understood enough for manual review, but not yet automated
-inside the Rio dry-run script.
+V4 duplicate risk is understood enough for manual review, and the Rio dry-run
+script now emits blank cluster fields so the next sample review can annotate
+clusters directly without changing production data.
 
 Next safe step:
 
 ```text
-extend the dry-run review format with optional cluster fields, or keep manual
-cluster notes until the first narrow production run is approved.
+run the next reviewed sample with cluster annotations, extend canonical
+source/date checks, and keep the production rio_economico target row blocked
+until fresh scoping proof and methodology acceptance are recorded.
 ```

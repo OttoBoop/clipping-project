@@ -18,6 +18,14 @@ from pipeline.collectors import CandidateArticle, collect_google_news
 
 
 REPORTS_DIR = PROJECT_ROOT / "data" / "reports"
+CLUSTER_REVIEW_FIELDS = [
+    "cluster_key",
+    "cluster_label",
+    "primary_dimension",
+    "secondary_dimensions",
+    "representative_url",
+    "duplicate_of",
+]
 
 
 @dataclass(frozen=True)
@@ -114,6 +122,12 @@ def article_to_row(spec: RioEconomicQuery, article: CandidateArticle) -> dict[st
         "why_candidate": spec.why_candidate,
         "review_label": "",
         "false_positive_reason": "",
+        "cluster_key": "",
+        "cluster_label": "",
+        "primary_dimension": "",
+        "secondary_dimensions": "",
+        "representative_url": "",
+        "duplicate_of": "",
         "notes": "",
     }
 
@@ -180,6 +194,7 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "why_candidate",
         "review_label",
         "false_positive_reason",
+        *CLUSTER_REVIEW_FIELDS,
         "notes",
     ]
     with path.open("w", encoding="utf-8", newline="") as handle:
@@ -204,8 +219,8 @@ def write_markdown(path: Path, payload: dict[str, Any]) -> None:
         f"Queries: `{payload['meta']['query_count']}`",
         f"Candidate rows: `{payload['meta']['row_count']}`",
         "",
-        "| Dimension | Query | Source | Published | Title | Review | False Positive Reason | Notes |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Dimension | Query | Source | Published | Title | Review | False Positive Reason | Cluster | Primary Dimension | Duplicate Of | Notes |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for row in rows:
         lines.append(
@@ -219,6 +234,9 @@ def write_markdown(path: Path, payload: dict[str, Any]) -> None:
                     md_escape(row.get("title")),
                     "",
                     "",
+                    md_escape(row.get("cluster_key")),
+                    md_escape(row.get("primary_dimension")),
+                    md_escape(row.get("duplicate_of")),
                     "",
                 ]
             )
