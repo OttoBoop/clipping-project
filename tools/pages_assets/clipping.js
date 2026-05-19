@@ -903,17 +903,32 @@
     );
   }
 
+  var PROTECTED_PRIMARY_KEYS = ["flavio_valle", "pedro_angelito"];
+  function isProtectedPrimaryKey(key) {
+    return PROTECTED_PRIMARY_KEYS.indexOf(String(key || "")) !== -1;
+  }
+
   function managedTargetCard(target) {
     var key = escapeHtml(target.key);
     var archived = Boolean(target.archived);
-    var classes = "manage-target-card" + (archived ? " is-archived" : "");
+    var isPrimary = Boolean(target.primary);
+    var isProtected = isProtectedPrimaryKey(target.key);
+    var classes = "manage-target-card" + (archived ? " is-archived" : "") + (isPrimary ? " is-primary" : "");
+    var badge = "";
+    if (isProtected) badge = '<span class="chip chip-protected">Principal protegido</span>';
+    else if (isPrimary) badge = '<span class="chip chip-primary">Principal</span>';
     var meta =
       '<dl class="manage-target-meta">' +
       "<div><dt>Termos relacionados</dt><dd>" + listText(visibleTargetKeywords(target), "Sem termos extras") + "</dd></div>" +
       "<div><dt>Correspondências exatas</dt><dd>" + listText(target.exact_aliases || [], "Sem correspondências exatas") + "</dd></div>" +
       "</dl>";
-    var body = '<div class="manage-target-card-head"><div><strong>' + escapeHtml(target.label || target.key) + "</strong><small>" + escapeHtml(target.key) + "</small></div></div>";
-    if (!archived && editingTargetKey === target.key) {
+    var body =
+      '<div class="manage-target-card-head"><div><strong>' +
+      escapeHtml(target.label || target.key) +
+      "</strong><small>" + escapeHtml(target.key) + "</small></div>" +
+      (badge ? "<div>" + badge + "</div>" : "") +
+      "</div>";
+    if (!archived && editingTargetKey === target.key && !isProtected) {
       body += managedTargetForm(target);
     } else {
       body += meta;
@@ -936,12 +951,18 @@
           '<button type="button" class="secondary-action" data-target-archive-cancel="' + key + '">Cancelar</button>' +
           "</div>" +
           "</div>";
-      } else {
+      } else if (isProtected) {
         body +=
-          '<div class="manage-target-actions">' +
-          '<button type="button" class="secondary-action" data-target-edit="' + key + '">Editar</button>' +
-          '<button type="button" class="danger-action" data-target-archive-start="' + key + '">Arquivar</button>' +
-          "</div>";
+          '<p class="muted-inline">Este é um nome principal protegido e não pode ser editado, rebaixado ou arquivado pelo painel.</p>';
+      } else {
+        var actions = '<button type="button" class="secondary-action" data-target-edit="' + key + '">Editar</button>';
+        if (isPrimary) {
+          actions += '<button type="button" class="secondary-action" data-target-demote="' + key + '">Rebaixar para secundário</button>';
+        } else {
+          actions += '<button type="button" class="secondary-action" data-target-promote="' + key + '">Promover a principal</button>';
+        }
+        actions += '<button type="button" class="danger-action" data-target-archive-start="' + key + '">Arquivar</button>';
+        body += '<div class="manage-target-actions">' + actions + "</div>";
       }
     }
     return '<article class="' + classes + '">' + body + "</article>";
@@ -949,11 +970,11 @@
 
   function renderManageTargets() {
     if (!manageTargetsList || !archivedTargetsList) return;
-    var active = managedTargets.filter(function (target) { return !target.primary && !target.archived; });
-    var archived = managedTargets.filter(function (target) { return !target.primary && target.archived; });
+    var active = managedTargets.filter(function (target) { return !target.archived; });
+    var archived = managedTargets.filter(function (target) { return target.archived; });
     manageTargetsList.innerHTML = active.length
       ? active.map(managedTargetCard).join("")
-      : '<p class="filter-note">Nenhum nome secundário ativo cadastrado.</p>';
+      : '<p class="filter-note">Nenhum nome ativo cadastrado.</p>';
     archivedTargetsList.innerHTML = archived.length
       ? archived.map(managedTargetCard).join("")
       : '<p class="filter-note">Nenhum nome arquivado.</p>';
@@ -1007,6 +1028,34 @@
       await reloadTargetsAfterManagement(key, { remove: true });
     } catch (error) {
       setMessage(manageTargetsMessage, friendlyError(error, "Não foi possível arquivar este nome."), "error");
+      renderManageTargets();
+    }
+  }
+
+  async function promoteManagedTarget(key) {
+    setMessage(manageTargetsMessage, "Promovendo a principal...", "");
+    try {
+      var resp = await apiPost("/api/targets/" + encodeURIComponent(key) + "/promote", {});
+      var data = await resp.json().catch(function () { return {}; });
+      if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
+      setMessage(manageTargetsMessage, targetMutationMessage("Nome agora aparece como principal.", data), "ok");
+      await reloadTargetsAfterManagement(key, { select: true });
+    } catch (error) {
+      setMessage(manageTargetsMessage, friendlyError(error, "Não foi possível promover este nome."), "error");
+      renderManageTargets();
+    }
+  }
+
+  async function demoteManagedTarget(key) {
+    setMessage(manageTargetsMessage, "Rebaixando para secundário...", "");
+    try {
+      var resp = await apiPost("/api/targets/" + encodeURIComponent(key) + "/demote", {});
+      var data = await resp.json().catch(function () { return {}; });
+      if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
+      setMessage(manageTargetsMessage, targetMutationMessage("Nome rebaixado para secundário.", data), "ok");
+      await reloadTargetsAfterManagement(key, { select: true });
+    } catch (error) {
+      setMessage(manageTargetsMessage, friendlyError(error, "Não foi possível rebaixar este nome."), "error");
       renderManageTargets();
     }
   }
@@ -2278,6 +2327,20 @@
     if (restoreButton) {
       restoreButton.disabled = true;
       restoreManagedTarget(restoreButton.dataset.targetRestore || "");
+      return;
+    }
+
+    const promoteButton = event.target.closest("[data-target-promote]");
+    if (promoteButton) {
+      promoteButton.disabled = true;
+      promoteManagedTarget(promoteButton.dataset.targetPromote || "");
+      return;
+    }
+
+    const demoteButton = event.target.closest("[data-target-demote]");
+    if (demoteButton) {
+      demoteButton.disabled = true;
+      demoteManagedTarget(demoteButton.dataset.targetDemote || "");
       return;
     }
 
