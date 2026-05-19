@@ -465,6 +465,68 @@ def logout(request: Request) -> JSONResponse:
     return response
 
 
+@app.post("/api/change-password")
+async def change_password(request: Request) -> JSONResponse:
+    session = require_viewer(request)
+    require_csrf(request)
+    payload = await read_json(request)
+    old_password = str(payload.get("old_password") or "")
+    new_password = str(payload.get("new_password") or "")
+    if not old_password or not new_password:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": "password_change_invalid",
+                "message": "Informe a senha atual e a nova senha.",
+                "field": "old_password" if not old_password else "new_password",
+                "suggestion": "Preencha os dois campos.",
+            },
+        )
+    identity = login_identity(old_password)
+    role = str(session.get("role") or "")
+    profile = str(session.get("profile") or "")
+    if not identity or identity.get("role") != role or identity.get("profile") != profile:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": "password_change_invalid",
+                "message": "Senha atual incorreta.",
+                "field": "old_password",
+                "suggestion": "Confira a senha atual e tente de novo.",
+            },
+        )
+    try:
+        if role == "admin":
+            from . import auth as auth_module
+
+            auth_module.set_admin_password(new_password)
+        else:
+            from . import auth as auth_module
+
+            auth_module.set_viewer_password(profile, new_password)
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": "password_change_invalid",
+                "message": str(exc),
+                "field": "new_password",
+                "suggestion": "Use uma senha com 3 caracteres ou mais.",
+            },
+        )
+    new_session = make_session(profile or "admin", role=role, profile=profile or "admin")
+    response = JSONResponse({"ok": True, "role": role, "profile": profile})
+    response.set_cookie(
+        COOKIE_NAME,
+        new_session,
+        httponly=True,
+        samesite="lax",
+        secure=request.url.scheme == "https",
+        max_age=8 * 60 * 60,
+    )
+    return response
+
+
 @app.get("/healthz")
 def healthz() -> dict[str, Any]:
     return {

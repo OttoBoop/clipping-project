@@ -5,16 +5,20 @@ import hashlib
 import hmac
 import json
 import os
+import tempfile
 import time
+from pathlib import Path
 from typing import Any
 
 from fastapi import HTTPException, Request
 
+from .config import ROOT
 from .segmentation import viewer_profiles
 
 
 COOKIE_NAME = "clipping_admin"
 SESSION_SECONDS = 8 * 60 * 60
+CREDENTIALS_PATH = ROOT / "data" / "clipping_credentials.json"
 PUBLIC_EMPTY_DEMO_PROFILE = "demo_cliente"
 PUBLIC_EMPTY_DEMO_PASSWORD = "demo-cliente"
 
@@ -23,8 +27,74 @@ def _env_value(name: str) -> str:
     return os.environ.get(name, "").strip()
 
 
+def _load_credentials_file() -> dict[str, Any] | None:
+    """Return parsed credentials JSON, or None if missing/corrupt.
+
+    Schema: {"admin_password": str, "viewer_passwords": {profile: password}}
+    """
+    if not CREDENTIALS_PATH.is_file():
+        return None
+    try:
+        data = json.loads(CREDENTIALS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def _write_credentials_file(data: dict[str, Any]) -> None:
+    CREDENTIALS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{CREDENTIALS_PATH.name}.", suffix=".tmp", dir=str(CREDENTIALS_PATH.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp_name, CREDENTIALS_PATH)
+    finally:
+        if os.path.exists(tmp_name):
+            os.unlink(tmp_name)
+
+
+def _file_admin_password() -> str:
+    data = _load_credentials_file()
+    if not data:
+        return ""
+    return str(data.get("admin_password") or "").strip()
+
+
+def _file_viewer_passwords() -> dict[str, str]:
+    data = _load_credentials_file()
+    if not data:
+        return {}
+    raw = data.get("viewer_passwords") or {}
+    if not isinstance(raw, dict):
+        return {}
+    result: dict[str, str] = {}
+    for profile, value in raw.items():
+        key = str(profile or "").strip()
+        if not key:
+            continue
+        password = str(value or "").strip() if isinstance(value, str) else ""
+        if password:
+            result[key] = password
+    return result
+
+
+def credentials_source() -> str:
+    """Return 'file' if credentials file is present and non-empty, else 'env'."""
+    file_admin = _file_admin_password()
+    file_viewers = _file_viewer_passwords()
+    if file_admin or file_viewers:
+        return "file"
+    return "env"
+
+
 def auth_configured() -> bool:
-    return bool(_env_value("CLIPPING_ADMIN_PASSWORD") and _env_value("CLIPPING_SESSION_SECRET"))
+    has_admin = bool(_file_admin_password() or _env_value("CLIPPING_ADMIN_PASSWORD"))
+    return has_admin and bool(_env_value("CLIPPING_SESSION_SECRET"))
 
 
 def viewer_auth_configured() -> bool:
@@ -36,17 +106,20 @@ def public_empty_demo_configured() -> bool:
 
 
 def login_configured() -> bool:
-    return bool(
-        _env_value("CLIPPING_SESSION_SECRET")
-        and (_env_value("CLIPPING_ADMIN_PASSWORD") or viewer_passwords() or public_empty_demo_passwords())
+    has_any_password = bool(
+        _file_admin_password()
+        or _env_value("CLIPPING_ADMIN_PASSWORD")
+        or viewer_passwords()
+        or public_empty_demo_passwords()
     )
+    return bool(_env_value("CLIPPING_SESSION_SECRET")) and has_any_password
 
 
 def missing_auth_config() -> list[str]:
     missing: list[str] = []
     if not _env_value("CLIPPING_SESSION_SECRET"):
         missing.append("CLIPPING_SESSION_SECRET")
-    if not _env_value("CLIPPING_ADMIN_PASSWORD"):
+    if not (_file_admin_password() or _env_value("CLIPPING_ADMIN_PASSWORD")):
         missing.append("CLIPPING_ADMIN_PASSWORD")
     if not viewer_passwords():
         missing.append("CLIPPING_VIEWER_PASSWORDS")
@@ -103,11 +176,14 @@ def verify_session(token: str | None) -> dict[str, Any] | None:
 
 
 def check_password(password: str) -> bool:
-    expected = _env_value("CLIPPING_ADMIN_PASSWORD")
+    expected = _file_admin_password() or _env_value("CLIPPING_ADMIN_PASSWORD")
     return bool(expected) and hmac.compare_digest(password, expected)
 
 
 def viewer_passwords() -> dict[str, str]:
+    file_viewers = _file_viewer_passwords()
+    if file_viewers:
+        return file_viewers
     raw = _env_value("CLIPPING_VIEWER_PASSWORDS")
     if not raw:
         return {}
@@ -163,6 +239,45 @@ def public_empty_demo_passwords() -> dict[str, str]:
     if _profile_target_keys(PUBLIC_EMPTY_DEMO_PROFILE):
         return {}
     return {PUBLIC_EMPTY_DEMO_PROFILE: password}
+
+
+def set_admin_password(new_password: str) -> None:
+    """Persist a new admin password to the credentials file.
+
+    Migrates the existing env-var-defined viewer passwords into the file on the
+    first write so a fresh `data/clipping_credentials.json` does not erase them.
+    """
+    cleaned = str(new_password or "").strip()
+    if len(cleaned) < 3:
+        raise ValueError("Senha precisa de pelo menos 3 caracteres.")
+    data = _load_credentials_file() or {}
+    if not data.get("viewer_passwords"):
+        env_viewers = viewer_passwords()
+        if env_viewers:
+            data["viewer_passwords"] = env_viewers
+    data["admin_password"] = cleaned
+    _write_credentials_file(data)
+
+
+def set_viewer_password(profile: str, new_password: str) -> None:
+    """Persist a new password for an existing viewer profile."""
+    profile_key = str(profile or "").strip()
+    if not profile_key:
+        raise ValueError("Perfil obrigatorio.")
+    cleaned = str(new_password or "").strip()
+    if len(cleaned) < 3:
+        raise ValueError("Senha precisa de pelo menos 3 caracteres.")
+    data = _load_credentials_file() or {}
+    viewers = dict(data.get("viewer_passwords") or {})
+    if not viewers:
+        viewers = dict(viewer_passwords())
+    viewers[profile_key] = cleaned
+    data["viewer_passwords"] = viewers
+    if not data.get("admin_password"):
+        env_admin = _env_value("CLIPPING_ADMIN_PASSWORD")
+        if env_admin:
+            data["admin_password"] = env_admin
+    _write_credentials_file(data)
 
 
 def login_identity(password: str) -> dict[str, str] | None:
