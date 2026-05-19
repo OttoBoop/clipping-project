@@ -47,6 +47,16 @@ GET /api/targets -> 401
 GET /api/classifications -> 401
 ```
 
+Operator helper:
+
+```text
+LOGGED_OUT_RENDER_SMOKE_RUNBOOK.md
+tools/logged_out_render_smoke.py
+```
+
+This helper does not replace authenticated viewer/admin proof. It only
+standardizes the logged-out privacy/static boundary.
+
 ## Viewer Checks
 
 For each configured viewer:

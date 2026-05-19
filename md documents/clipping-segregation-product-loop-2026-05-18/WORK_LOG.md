@@ -13474,7 +13474,7 @@ python3 -B tools/buyer_quote_tracker_check.py -> ok=true, real_buyer_conversatio
 python3 -B tools/pilot_ledger_check.py -> ok=true, measured_pilot_run_count=0, measured_weekly_summary_count=0, measured_support_issue_count=0, minimum_sustainable_monthly_price_decided=false
 python3 -B tools/viewer_profiles_check.py -> ok=true, profile_count=4, target_count=5, topic_only_keys_present_as_targets=[]
 python3 -B tools/rio_economic_manual_approval_check.py -> ok=true, sidecar_rows=[1, 5, 11, 15, 19, 22, 25, 26], approved_promotions=0, target_row_approved=false
-python3 -B tests/test_rio_economic_ui_static.py -> passed
+python3 -B -c "from tests import test_rio_economic_ui_static as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
 git diff --check -> passed
 ```
 
@@ -13532,3 +13532,81 @@ packaging/cost docs that do not require inventing buyer or pilot rows.
 The market refresh deploy is live and logged-out privacy still passes, but the
 system still lacks fresh authenticated production proof in this shell, real
 buyer quote rows, measured pilot operation rows, and real Rio manual approvals.
+
+## 2026-05-19 15:02 -03 - Loop Cycle: Logged-Out Smoke Helper
+
+### Objective Reviewed
+
+Re-read the loop protocol, Render checklist, active next action, and recent log
+after the `daa55a8` deploy smoke. The next unblocked weak point was that the
+logged-out production proof still relied on repeated manual curl batches,
+making it easy to skip endpoints, forget the quoted `&`, or log a partial smoke
+as complete.
+
+### Action Taken
+
+Created a non-secret smoke helper and focused tests:
+
+```text
+tools/logged_out_render_smoke.py
+tests/test_logged_out_render_smoke.py
+LOGGED_OUT_RENDER_SMOKE_RUNBOOK.md
+```
+
+Updated:
+
+```text
+RENDER_PRODUCTION_CHECKLIST.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Local checks:
+
+```text
+python3 -B -m py_compile tools/logged_out_render_smoke.py tests/test_logged_out_render_smoke.py -> passed
+python3 -B tests/test_logged_out_render_smoke.py -> passed
+python3 -B -c "from tests import test_logged_out_render_smoke as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+python3 -B -c "from tests import test_rio_economic_ui_static as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+```
+
+Live helper check:
+
+```text
+python3 -B tools/logged_out_render_smoke.py -> ok=true
+checked /healthz, /, private /assets payloads, Rio report API, update/status,
+live-results with query params, targets/categories/classifications/csrf, raw
+data files, legacy root clipping-data.json
+```
+
+### Barrier Or Failure
+
+Two issues were found and resolved:
+
+```text
+python3 -B tests/test_logged_out_render_smoke.py initially failed with ModuleNotFoundError: No module named 'tools'
+fix: add repo root to sys.path for direct test execution
+
+python3 -B tools/logged_out_render_smoke.py initially failed with Temporary failure in name resolution in the sandbox
+fix: rerun with approved network escalation for this exact helper command
+```
+
+Also corrected the previous log line that claimed
+`python3 -B tests/test_rio_economic_ui_static.py -> passed`; that direct command
+does not execute tests because the file has no runner. The real executed
+command is the explicit import/call form recorded above.
+
+### Next Objective From Docs
+
+Run `git diff --check`, commit/push this helper path-limited, wait for Render,
+run `tools/logged_out_render_smoke.py` against live again, log the deployment,
+then re-open the `.md` files and continue to the next weak unblocked axis.
+
+### Why The Loop Continues
+
+The logged-out proof is now repeatable, but this still does not produce fresh
+authenticated profile proof, admin positive mutation proof, real buyer
+evidence, measured pilot cost, or Rio manual approvals.

@@ -64,6 +64,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Render env change safety runbook for password/profile operations.
 - Render operations review snapshot for service metadata, live health gate, and
   password rotation/offboarding boundaries.
+- Logged-out Render smoke helper for repeating the non-secret production
+  privacy/static-boundary check after deploys.
 - Rio economic ingestion architecture decision: do not flatten Rio into a plain
   target row; preserve query families, exclusions, date quality, and clusters.
 - V1 add-on menu/boundaries for avoiding unlimited low-paid service scope.
@@ -147,6 +149,8 @@ Known unrelated live-source failures from full suite:
 Continue the production loop. Current priority from the docs:
 
 1. keep the logged-out privacy gate verified on Render;
+   `tools/logged_out_render_smoke.py` now standardizes this non-secret check
+   and should be run after deploys, while manual curl can remain a backup;
 2. keep real viewer profile proof verified after deploys;
    a non-secret authenticated smoke helper now exists, but running it still
    requires viewer/admin passwords outside this shell; it now supports

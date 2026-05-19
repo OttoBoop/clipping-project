@@ -130,6 +130,10 @@ Freshly proven after deploy:
   still returns `401` when logged out after `9c681e9`.
 - the 2026-05-20 market refresh is live as documentation/packaging evidence,
   not as a final pricing decision.
+- the logged-out Render smoke is now scriptable with
+  `tools/logged_out_render_smoke.py`, which checks `/healthz`, the login page,
+  private `/assets` routes, scoped APIs, and raw `data/` denial without
+  requiring secrets.
 
 ## Authenticated Production Proof
 
@@ -318,6 +322,8 @@ Password operations:
 - `python3 -B tools/authenticated_render_smoke.py` was re-run after the
   `9c681e9` live deploy and failed only on missing outside-Git smoke
   credentials;
+- `python3 -B tools/logged_out_render_smoke.py` passed against the live Render
+  site after the `daa55a8` deploy;
 - no real buyer quote/interview row exists in
   `BUYER_QUOTE_VALIDATION_TRACKER.md`;
 - no measured pilot/update run exists in `V1_PILOT_OPERATING_LEDGER.md`;
