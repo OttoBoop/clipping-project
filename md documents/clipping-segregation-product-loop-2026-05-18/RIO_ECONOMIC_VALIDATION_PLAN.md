@@ -416,6 +416,21 @@ near_date rows require manual review
 date_mismatch/canonical_date_missing rows are research-only until manual approval
 ```
 
+Cluster-annotated v4 review:
+
+```text
+tools/rio_economic_apply_cluster_annotations.py
+data/reports/rio_economic_v4_cluster_annotations_20260518.json
+data/reports/rio_economic_clustered_review_20260519T004653Z.json
+row_count=31
+cluster_count=3
+clustered_row_count=9
+RIO_ECONOMIC_CLUSTERED_REVIEW_20260519T004653Z.md
+```
+
+The cluster review proves at least nine article rows should collapse into three
+stories before dashboard counts or weekly summaries.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

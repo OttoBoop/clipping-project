@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "source_report": "data/reports/rio_economic_dry_run_20260519T000719Z.json",
+    "created_by": "Atlas/Codex",
+    "created_for": "Rio economic v4 manual cluster review",
+    "writes_production_db": false,
+    "writes_assets_payload": false,
+    "writes_targets_json": false
+  },
+  "annotations": [
+    {
+      "rows": [4, 30, 31],
+      "cluster_key": "shakira_copacabana_economic_impact",
+      "cluster_label": "Shakira economic impact in Copacabana",
+      "primary_dimension": "tourism_events",
+      "secondary_dimensions": ["economic_development"],
+      "representative_row": 4
+    },
+    {
+      "rows": [8, 9, 10],
+      "cluster_key": "mercado_popular_uruguaiana",
+      "cluster_label": "Novo Mercado Popular da Uruguaiana",
+      "primary_dimension": "commerce_services",
+      "secondary_dimensions": [],
+      "representative_row": 8
+    },
+    {
+      "rows": [16, 17, 18],
+      "cluster_key": "mais_valia_mais_valera_regularization",
+      "cluster_label": "Mais Valia/Mais Valera regularization discount",
+      "primary_dimension": "construction_real_estate",
+      "secondary_dimensions": [],
+      "representative_row": 16
+    }
+  ]
+}

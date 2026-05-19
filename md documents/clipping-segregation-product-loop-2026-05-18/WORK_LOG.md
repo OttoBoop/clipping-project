@@ -7486,3 +7486,76 @@ building at this check.
 Commit/push this log entry path-limited, poll Render until `19377b2` is live,
 smoke production again, then continue with the cluster-annotated Rio sample or
 fresh production scoping proof.
+
+## 2026-05-18 21:53 -03 - Loop Cycle: Rio Cluster Annotation Artifact
+
+### Objective Reviewed
+
+Re-read the long-term goals, active next action, Rio date-quality policy,
+duplicate-cluster review, and the bottom of this log. The next weak Rio item was
+to turn duplicate cluster notes into a reproducible artifact without creating a
+production `rio_economico` target row.
+
+### Action Taken
+
+Added:
+
+```text
+tools/rio_economic_apply_cluster_annotations.py
+tests/test_rio_economic_apply_cluster_annotations.py
+data/reports/rio_economic_v4_cluster_annotations_20260518.json
+data/reports/rio_economic_clustered_review_20260519T004653Z.json
+data/reports/rio_economic_clustered_review_20260519T004653Z.csv
+data/reports/rio_economic_clustered_review_20260519T004653Z.md
+RIO_ECONOMIC_CLUSTERED_REVIEW_20260519T004653Z.md
+```
+
+Updated:
+
+```text
+RIO_ECONOMIC_V4_DUPLICATE_CLUSTER_REVIEW.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+Ran:
+
+```text
+python -m compileall tools/rio_economic_apply_cluster_annotations.py tests/test_rio_economic_apply_cluster_annotations.py
+python -m pytest tests/test_rio_economic_apply_cluster_annotations.py
+python tools/rio_economic_apply_cluster_annotations.py data/reports/rio_economic_dry_run_20260519T000719Z.json data/reports/rio_economic_v4_cluster_annotations_20260518.json
+direct Python cluster annotation assertion smoke
+```
+
+### Evidence
+
+```text
+compileall -> passed
+pytest -> failed: No module named pytest
+direct Python cluster annotation assertion smoke -> passed
+cluster annotation script -> ok=true row_count=31 cluster_count=3 clustered_row_count=9
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+Clustered rows:
+
+```text
+Shakira economic impact rows 4, 30, 31 -> representative row 4
+Mercado Popular da Uruguaiana rows 8, 9, 10 -> representative row 8
+Mais Valia/Mais Valera rows 16, 17, 18 -> representative row 16
+```
+
+### Barrier Or Failure
+
+Local pytest remains unavailable. This artifact is still review-only; it does
+not combine date-quality status with clustering yet and does not approve
+production Rio ingestion.
+
+### Next Objective From Docs
+
+Run diff/checks, commit/push path-limited, poll Render for queued deploys,
+smoke production when the latest commit is live, then combine date-quality and
+cluster gates or run fresh production scoping proof.

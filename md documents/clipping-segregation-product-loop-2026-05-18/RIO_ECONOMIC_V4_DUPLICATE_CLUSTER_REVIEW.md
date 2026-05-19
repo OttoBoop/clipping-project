@@ -92,10 +92,21 @@ V4 duplicate risk is understood enough for manual review, and the Rio dry-run
 script now emits blank cluster fields so the next sample review can annotate
 clusters directly without changing production data.
 
+Cluster annotations have now been applied to the v4 report:
+
+```text
+tools/rio_economic_apply_cluster_annotations.py
+data/reports/rio_economic_v4_cluster_annotations_20260518.json
+data/reports/rio_economic_clustered_review_20260519T004653Z.json
+cluster_count=3
+clustered_row_count=9
+RIO_ECONOMIC_CLUSTERED_REVIEW_20260519T004653Z.md
+```
+
 Next safe step:
 
 ```text
-run the next reviewed sample with cluster annotations, extend canonical
-source/date checks, and keep the production rio_economico target row blocked
-until fresh scoping proof and methodology acceptance are recorded.
+combine cluster annotations with date-quality gating, run fresh production
+scoping proof, and keep the production rio_economico target row blocked until
+methodology acceptance is recorded.
 ```
