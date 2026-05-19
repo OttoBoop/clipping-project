@@ -9556,3 +9556,129 @@ staged.
 Run diff/checks, commit/push path-limited, wait for Render, smoke production,
 then re-read docs. The next Rio step after this is manual-approval policy or a
 scoped Rio topic-report view, not more v4 canonical review.
+
+## 2026-05-18 22:58 -03 - Loop Cycle: Full Rio Report Commit, Deploy, And Smoke
+
+### Objective Reviewed
+
+Deploy the full 31-row Rio canonical/topic-report update and verify the live
+segregation gate did not regress.
+
+### Action Taken
+
+Committed and pushed path-limited:
+
+```text
+0bcebe6 tools: complete Rio canonical topic report
+```
+
+Waited for Render deploy:
+
+```text
+dep-d86h6qgk1i2s73d4qs40 -> live
+```
+
+Ran logged-out smoke against `https://clipping-project.onrender.com/`.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+Authenticated viewer/admin proof still requires real credentials. Generated
+`pipeline/__pycache__/*.pyc` files remain dirty and uncommitted.
+
+### Next Objective From Docs
+
+Re-read the objective docs and move to the next unblocked item. The Rio v4
+sample no longer needs more canonical checks; likely next items are manual
+approval policy, scoped Rio topic-report view, operations/password review, or
+sellable buyer-package validation.
+
+## 2026-05-18 23:05 -03 - Loop Cycle: Scoped Rio Topic Report Endpoint
+
+### Objective Reviewed
+
+Move from offline Rio topic-report artifacts to a scoped app surface without
+creating a normal clipping target row or exposing Rio data to Shakira/Flavio.
+
+### Action Taken
+
+Added:
+
+```text
+GET /api/reports/rio-economic-topic
+```
+
+Access policy:
+
+```text
+logged out -> 401 viewer_login_required
+non-Rio viewer -> 403 rio_economic_profile_required
+rio_economico viewer -> 200
+admin -> 200
+```
+
+The endpoint reads the latest committed
+`data/reports/rio_economic_topic_report_*.json` and annotates response `meta`
+with the session role/profile and `reportSurface=scoped_rio_economic_topic`.
+
+Updated docs/checklists:
+
+```text
+RIO_ECONOMIC_SCOPED_TOPIC_REPORT_ENDPOINT_2026-05-18.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_CHECKLIST.md
+RENDER_PRODUCTION_CHECKLIST.md
+RIO_ECONOMIC_PRODUCTION_GATE_V0.md
+```
+
+### Evidence
+
+Static syntax check:
+
+```text
+ast parse passed for app and admin ui test
+ast parse passed for scoped Rio endpoint files
+git diff --check -> passed
+```
+
+Test added:
+
+```text
+tests/test_admin_ui.py::test_rio_economic_topic_report_is_scoped_to_rio_profile
+```
+
+### Barrier Or Failure
+
+Local TestClient smoke is blocked because the active Python environment lacks
+FastAPI:
+
+```text
+ModuleNotFoundError: No module named 'fastapi'
+```
+
+This is not a stop condition. The next available proof is path-limited commit,
+Render deploy, and live logged-out smoke for
+`/api/reports/rio-economic-topic`. Positive Rio/Shakira/Admin proof still
+requires credentials.
+
+### Next Objective From Docs
+
+Run diff/checks, commit/push this endpoint path-limited, wait for Render, smoke
+logged-out `/api/reports/rio-economic-topic`, then re-read docs.

@@ -45,12 +45,14 @@ from .jobs import (
     run_export_snapshot,
 )
 from .segmentation import (
+    is_admin_session,
     scoped_classifications,
     scoped_dashboard_payload,
     scoped_live_results,
     scoped_raw_texts,
     scoped_status_response,
     scoped_targets_response,
+    session_profile_key,
     viewer_profiles_configured,
 )
 from .storage_bridge import artifact_store
@@ -76,6 +78,8 @@ BASE_CATEGORIES = (
 
 
 ACTIVE_TARGET_MUTATION_STATUSES = {"queued", "running", "exporting", "cancel_requested"}
+RIO_ECONOMIC_TOPIC_PROFILE = "rio_economico"
+RIO_ECONOMIC_TOPIC_REPORT_GLOB = "rio_economic_topic_report_*.json"
 
 
 def public_targets(*, include_archived: bool = False) -> dict[str, Any] | list[dict[str, Any]]:
@@ -303,6 +307,34 @@ def read_json_file(path) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
+def latest_rio_economic_topic_report_path():
+    reports_dir = ROOT / "data" / "reports"
+    reports = sorted(reports_dir.glob(RIO_ECONOMIC_TOPIC_REPORT_GLOB))
+    return reports[-1] if reports else None
+
+
+def scoped_rio_economic_topic_report(session: dict[str, Any]) -> dict[str, Any]:
+    if not is_admin_session(session) and session_profile_key(session) != RIO_ECONOMIC_TOPIC_PROFILE:
+        raise HTTPException(status_code=403, detail="rio_economic_profile_required")
+    report_path = latest_rio_economic_topic_report_path()
+    if not report_path:
+        raise HTTPException(status_code=404, detail="rio_economic_topic_report_not_found")
+    payload = read_json_file(report_path)
+    if not payload:
+        raise HTTPException(status_code=404, detail="rio_economic_topic_report_not_found")
+    meta = payload.setdefault("meta", {})
+    if isinstance(meta, dict):
+        meta.update(
+            {
+                "viewerRole": str(session.get("role") or ""),
+                "viewerProfile": session_profile_key(session),
+                "reportSurface": "scoped_rio_economic_topic",
+                "reportFile": report_path.name,
+            }
+        )
+    return payload
+
+
 def safe_asset_path(asset_path: str):
     asset_file = (ASSETS_DIR / asset_path).resolve()
     assets_root = ASSETS_DIR.resolve()
@@ -439,6 +471,12 @@ def update_live_results(request: Request, job_id: str = "", target_key: str = ""
     session = require_viewer(request)
     data = live_results_for_job(job_id, target_key=target_key, scope=scope, limit=limit)
     return scoped_live_results(data, session, requested_target_key=target_key)
+
+
+@app.get("/api/reports/rio-economic-topic")
+def rio_economic_topic_report(request: Request) -> dict[str, Any]:
+    session = require_viewer(request)
+    return scoped_rio_economic_topic_report(session)
 
 
 @app.post("/api/update/start")

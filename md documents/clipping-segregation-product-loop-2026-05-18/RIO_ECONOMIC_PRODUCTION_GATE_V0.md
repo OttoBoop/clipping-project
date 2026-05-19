@@ -149,6 +149,7 @@ preferred first production shape is scoped topic/query report before normal dash
 first topic-report artifact now exists and keeps target_row_approved=false
 extended topic-report artifact now uses cluster-member date evidence and still keeps target_row_approved=false
 full v4 topic-report artifact has canonical_rows_checked=31 and still keeps target_row_approved=false
+scoped endpoint /api/reports/rio-economic-topic exists for admin/rio_economico only
 ```
 
 ## Current Next Step
@@ -158,6 +159,7 @@ do not add data/targets.json row yet
 wait for latest deploys to become live
 run fresh production scoping proof
 define manual approval for near_date/research-only rows or build a scoped Rio topic-report view
+verify /api/reports/rio-economic-topic on Render after deploy
 preserve the v4 query families/exclusions in a scoped topic pipeline, not a plain keyword target row
 then decide whether the Rio methodology is ready for an operator-approved narrow first run
 ```

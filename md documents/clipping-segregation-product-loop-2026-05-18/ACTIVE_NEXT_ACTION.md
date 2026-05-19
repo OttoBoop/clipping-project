@@ -43,6 +43,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Rio economic ingestion architecture decision: do not flatten Rio into a plain
   target row; preserve query families, exclusions, date quality, and clusters.
 - V1 add-on menu/boundaries for avoiding unlimited low-paid service scope.
+- Scoped Rio economic topic-report endpoint at `/api/reports/rio-economic-topic`
+  with Rio/admin-only access and no target-row creation.
 
 ## Current Verification State
 
@@ -129,8 +131,9 @@ Continue the production loop. Current priority from the docs:
    checks; the full 31-row canonical topic report now has 17 current-period
    stories, 1 manual-review story, 7 research-only stories, and no remaining
    canonical-check-required stories for the v4 sample; next Rio step is fresh
-   production scoping proof, manual approval policy, and/or a scoped Rio
-   topic-report view before any production target row;
+   production scoping proof, manual approval policy, live logged-out proof for
+   `/api/reports/rio-economic-topic`, and a Rio-only UI decision before any
+   production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; V1 pilot scope and delivery-format
    decision now exist; demo script is now tied to the V1 offer without exposing

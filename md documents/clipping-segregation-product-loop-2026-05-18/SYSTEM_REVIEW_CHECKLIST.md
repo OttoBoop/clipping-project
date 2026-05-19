@@ -39,6 +39,8 @@ results, classifications, or exports.
 
 - `/api/targets` returns only allowed target metadata for viewer profiles.
 - `/api/update/live-results` returns only allowed target items.
+- `/api/reports/rio-economic-topic` is hidden from logged-out users and
+  restricted to admin or the `rio_economico` viewer profile.
 - `/api/classifications` returns only allowed target classifications.
 - `/api/categories` is currently shared taxonomy; if future categories become
   client-specific, this endpoint must be scoped before exposing it to viewers.

@@ -111,6 +111,36 @@ def login_viewer(client: TestClient, password: str = "viewer-shakira") -> None:
     assert response.json()["role"] == "viewer"
 
 
+def write_rio_topic_report_fixture(root: Path) -> Path:
+    reports_dir = root / "data" / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    report_path = reports_dir / "rio_economic_topic_report_20260519T014505Z.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "meta": {
+                    "story_count": 25,
+                    "article_count": 31,
+                    "canonical_rows_checked": 31,
+                    "target_row_approved": False,
+                    "writes_production_db": False,
+                    "writes_assets_payload": False,
+                    "writes_targets_json": False,
+                },
+                "stories": [
+                    {
+                        "representative_row": 23,
+                        "date_quality_policy": "count_current_period",
+                        "title": "Prestacao de contas da Prefeitura do Rio",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return report_path
+
+
 def db_counts(db_file):
     with sqlite3.connect(db_file) as conn:
         return {
@@ -452,6 +482,37 @@ def test_viewer_cannot_widen_live_results_or_write_admin_actions(monkeypatch, tm
     assert [response.status_code for response in write_attempts] == [401] * len(write_attempts)
     assert [response.json()["detail"] for response in write_attempts] == ["admin_login_required"] * len(write_attempts)
     assert_empty_db(db_file)
+
+
+def test_rio_economic_topic_report_is_scoped_to_rio_profile(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+    app_module = importlib.import_module("web_app.app")
+    monkeypatch.setattr(app_module, "ROOT", tmp_path)
+    report_path = write_rio_topic_report_fixture(tmp_path)
+
+    with TestClient(app) as client:
+        logged_out = client.get("/api/reports/rio-economic-topic")
+        login_viewer(client, "viewer-shakira")
+        shakira = client.get("/api/reports/rio-economic-topic")
+        login_viewer(client, "viewer-rio")
+        rio = client.get("/api/reports/rio-economic-topic")
+        login(client)
+        admin = client.get("/api/reports/rio-economic-topic")
+
+    assert logged_out.status_code == 401
+    assert shakira.status_code == 403
+    assert shakira.json()["detail"] == "rio_economic_profile_required"
+    assert rio.status_code == 200
+    rio_payload = rio.json()
+    assert rio_payload["meta"]["viewerRole"] == "viewer"
+    assert rio_payload["meta"]["viewerProfile"] == "rio_economico"
+    assert rio_payload["meta"]["reportSurface"] == "scoped_rio_economic_topic"
+    assert rio_payload["meta"]["reportFile"] == report_path.name
+    assert rio_payload["meta"]["target_row_approved"] is False
+    assert rio_payload["meta"]["writes_production_db"] is False
+    assert rio_payload["stories"][0]["title"] == "Prestacao de contas da Prefeitura do Rio"
+    assert admin.status_code == 200
+    assert admin.json()["meta"]["viewerProfile"] == "admin"
 
 
 def test_admin_route_is_retired_and_status_requires_login(monkeypatch, tmp_path):

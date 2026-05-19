@@ -42,6 +42,7 @@ GET / -> login page
 GET /assets/clipping-data.json -> 401
 GET /assets/clipping-raw-texts.json -> 401
 GET /api/update/status -> 401
+GET /api/reports/rio-economic-topic -> 401
 GET /api/targets -> 401
 GET /api/classifications -> 401
 ```
@@ -55,6 +56,8 @@ For each configured viewer:
 - `/assets/clipping-data.json` returns only allowed targets;
 - `/assets/clipping-raw-texts.json` returns only raw keys for allowed articles;
 - `/api/update/live-results?target_key=<forbidden>` returns no forbidden items;
+- `/api/reports/rio-economic-topic` returns `403` for non-Rio viewers and `200`
+  only for `rio_economico` or admin;
 - `/api/targets` returns only allowed target metadata;
 - mutation attempts return `401` or `403`.
 
