@@ -7792,6 +7792,57 @@ Run diff/checks, commit/push path-limited, poll Render until queued deploys are
 live, smoke production again, then continue with production scoping proof or
 buyer/prospect packaging validation.
 
+## 2026-05-18 22:04 -03 - Loop Cycle: Prospect Profile Setup Checklist
+
+### Objective Reviewed
+
+Render was still deploying queued commits. The loop used the packaging item from
+`ACTIVE_NEXT_ACTION.md`: dedicated prospect-profile setup for a serious
+hands-on buyer demo.
+
+### Action Taken
+
+Added:
+
+```text
+PROSPECT_PROFILE_SETUP_CHECKLIST.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The checklist now separates casual demos from serious hands-on access and
+requires:
+
+```text
+prospect_<short_name> profile
+written allowed targets
+Render password merge without committing secrets
+logged-out JSON/API 401 proof
+prospect scoped payload/raw-text proof
+forbidden target live-results proof
+viewer write rejection
+operator controls hidden
+offboarding/rotation after demo
+```
+
+### Barrier Or Failure
+
+No real prospect exists in this shell, so no profile or password was created.
+That is intentional; the checklist prevents creating speculative access.
+
+### Next Objective From Docs
+
+Run diff/checks, commit/push path-limited, poll Render until queued deploys are
+live, smoke production again, then continue with live scoping proof, buyer/quote
+validation, or operations review.
+
 ## 2026-05-18 21:56 -03 - Loop Cycle: Cluster Artifact Push And 990ada0 Live Smoke
 
 ### Objective Reviewed

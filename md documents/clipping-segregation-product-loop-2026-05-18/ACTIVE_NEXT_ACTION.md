@@ -119,8 +119,8 @@ Continue the production loop. Current priority from the docs:
    decision now exist; demo script is now tied to the V1 offer without exposing
    secrets or promising custom work; political competitor desk-research pass
    now exists; buyer interview guide now exists; next packaging step is live
-   buyer/quote validation or a dedicated prospect-profile checklist when there
-   is a real prospect;
+   buyer/quote validation with a real prospect; dedicated prospect-profile
+   setup checklist now exists for serious hands-on access;
 6. review costs, password rotation, and operations;
    first-client onboarding/offboarding checklist now exists; V1 pilot operating
    ledger now exists for measuring update time, weekly summary time, support,
