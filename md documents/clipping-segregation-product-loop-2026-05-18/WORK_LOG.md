@@ -12236,3 +12236,89 @@ the docs and continue.
 The guard prevents fake pricing evidence, but it does not create real buyer
 conversations, measured pilot work, authenticated proof, or Rio manual
 approvals.
+
+## 2026-05-19 13:42 -03 - Loop Cycle: Worktree Recovery And Pilot Ledger Guard Live Deploy
+
+### Objective Reviewed
+
+Continue after the pilot ledger guard push, verify Render production, and keep
+the docs/logs current instead of stopping at a successful push.
+
+### Barrier Or Failure
+
+The temporary worktree `/tmp/clipping-seg-workaround` disappeared while the
+loop was still active. The main repo worktree at
+`/home/otavio/Documents/vscode/clipping-project` is dirty with unrelated
+Shakira/debug work, so I did not pull or overwrite it.
+
+Extra static-boundary curl checks for `/data/...` paths also hit the sandbox
+network/approval boundary and were not completed in that moment. I continued
+with the approved Render privacy endpoints and logged the barrier instead of
+stopping.
+
+### Action Taken
+
+Recovered without touching the dirty main worktree:
+
+```text
+git fetch origin master
+git worktree add --detach /tmp/clipping-seg-loop2 FETCH_HEAD
+```
+
+The new detached worktree is at:
+
+```text
+/tmp/clipping-seg-loop2
+HEAD=a8d47af tools: add pilot ledger pricing guard
+```
+
+Waited for Render deploy:
+
+```text
+deploy=dep-d86skqok1i2s73dbjhm0
+commit=a8d47af60cba9a74a94e66b8096dfa5d61308f88
+status=live
+finishedAt=2026-05-20T14:53:06.627708Z
+```
+
+Updated:
+
+```text
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Live logged-out smoke on `https://clipping-project.onrender.com/`:
+
+```text
+GET /healthz -> 200
+  loginConfigured=true
+  viewerAuthConfigured=true
+  viewerProfilesConfigured=true
+  demoViewerConfigured=false
+  missingConfig=[]
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
+```
+
+### Next Objective From Docs
+
+Commit/push the refreshed status/log snapshot, wait for Render, smoke again,
+then re-open the docs. If credentials remain unavailable, continue with the
+next unblocked product/Rio/operations review.
+
+### Why The Loop Continues
+
+The pilot ledger guard is live, but the actual business evidence is still zero:
+no buyer row, no measured pilot row, no authenticated fresh proof, and no Rio
+manual approval.

@@ -8,9 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-ef5d8e1 feat: guard Rio manual approval counts
-deploy dep-d86sbu57vvec73b6dkfg -> live
-finishedAt=2026-05-20T14:35:00.001667Z
+a8d47af tools: add pilot ledger pricing guard
+deploy dep-d86skqok1i2s73dbjhm0 -> live
+finishedAt=2026-05-20T14:53:06.627708Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -32,6 +32,7 @@ GET /api/targets -> 401 viewer_login_required
 GET /api/classifications -> 401 viewer_login_required
 GET /api/csrf -> 401 viewer_login_required
 GET /api/update/status -> 401 viewer_login_required
+GET /api/categories -> 401 viewer_login_required
 ```
 
 Meaning:
@@ -62,6 +63,8 @@ e6eef5c docs: refresh status after Rio UI guard
 d6104e6 tools: add authenticated Render smoke helper
 2ac51e3 docs: log authenticated smoke helper deploy
 ef5d8e1 feat: guard Rio manual approval counts
+0f23ef6 tools: add admin disposable target smoke
+a8d47af tools: add pilot ledger pricing guard
 ```
 
 Freshly proven after deploy:
@@ -90,6 +93,11 @@ Freshly proven after deploy:
   source/date evidence;
 - the live JS now prefers `indicator_policy_counts` while falling back to the
   older date-quality counts.
+- the authenticated smoke helper now has an explicit opt-in admin mutation path
+  that creates only an `Atlas Teste Smoke <timestamp>` target and immediately
+  archives it;
+- the pilot ledger now has a checker that keeps template rows and guessed time
+  from becoming pricing evidence.
 
 ## Authenticated Production Proof
 
@@ -112,7 +120,7 @@ viewer/admin passwords are not available here
 ```
 
 Therefore this snapshot does not claim fresh positive viewer/admin browser
-proof after `ef5d8e1`. The fresh proof is logged-out production privacy plus
+proof after `a8d47af`. The fresh proof is logged-out production privacy plus
 deployed static/read-only Rio UI markers. Positive authenticated proof must be
 repeated by Otavio/operator or a session with the real viewer/admin passwords.
 
@@ -185,6 +193,18 @@ Safe sales posture:
 - do not share Flavio/Shakira/Rio/admin credentials;
 - do not use static exports as private access;
 - keep V1 bounded to the pilot scope documented in `V1_DELIVERY_SCOPE.md`.
+- run `tools/pilot_ledger_check.py` before treating operator-time rows as
+  pricing evidence.
+
+Current pilot ledger check:
+
+```text
+ok=true
+measured_pilot_run_count=0
+measured_weekly_summary_count=0
+measured_support_issue_count=0
+minimum_sustainable_monthly_price_decided=false
+```
 
 ## Operations State
 
@@ -209,7 +229,7 @@ Password operations:
 ## Current Gaps
 
 - positive admin CSRF/target-management smoke on Render still needs operator
-  credentials;
+  credentials and explicit approval before using the disposable mutation flag;
 - positive viewer proof after latest deploys still needs viewer credentials;
 - no real buyer quote/interview row exists in
   `BUYER_QUOTE_VALIDATION_TRACKER.md`;

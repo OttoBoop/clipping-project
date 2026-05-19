@@ -203,7 +203,7 @@ If `viewerAuthConfigured=false` returns, treat it as a regression and re-check
 Render env configuration. Do not rotate or publish viewer passwords in docs.
 
 Use `SYSTEM_REVIEW_STATUS_2026-05-20.md` as the current proof/blocker snapshot;
-it now reflects live commit `ef5d8e1`.
+it now reflects live commit `a8d47af`.
 
 ## Do Not Do Next
 
