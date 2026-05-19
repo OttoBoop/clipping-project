@@ -88,6 +88,18 @@ unclear=0
 useful_or_unclear_before_clustering=25/31
 ```
 
+Duplicate cluster follow-up:
+
+```text
+RIO_ECONOMIC_V4_DUPLICATE_CLUSTER_REVIEW.md
+Shakira economic impact rows: 4, 30, 31
+Mercado Popular rows: 8, 9, 10
+Mais Valia/Mais Valera rows: 16, 17, 18
+```
+
+After clustering, the v4 sample should be evaluated by `story_count` as well as
+`article_count`.
+
 ## Gate Status
 
 V4 is better than v3 for known false positives, but it still is not production

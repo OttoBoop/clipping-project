@@ -105,8 +105,9 @@ Continue the production loop. Current priority from the docs:
    body/source pass now reviewed 21 rows across all six dimensions; v4 query
    file/sample/review now removed the known row 15/27 false positives;
    canonical review helper and first 3-row canonical sample now exist; next Rio
-   step is extending canonical source/date checking, duplicate clustering, and
-   fresh production scoping proof before any production target row;
+   duplicate cluster review now exists; next Rio step is extending canonical
+   source/date checking, optionally adding cluster fields to the dry-run format,
+   and fresh production scoping proof before any production target row;
 5. convert the live proof into a sellable demo script without exposing secrets;
    demo/prospect strategy now exists; V1 pilot scope and delivery-format
    decision now exist; demo script is now tied to the V1 offer without exposing

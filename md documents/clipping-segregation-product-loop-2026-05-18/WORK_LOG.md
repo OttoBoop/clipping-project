@@ -6985,3 +6985,58 @@ from this shell by missing viewer passwords.
 Commit/push this log entry path-limited, poll Render until `68c8fcf` becomes
 live, smoke it, then continue with Rio duplicate clustering or extended
 canonical review.
+
+## 2026-05-18 21:29 -03 - Loop Cycle: Rio V4 Duplicate Cluster Review
+
+### Objective Reviewed
+
+Render was still deploying `68c8fcf`, so the loop continued with the next Rio
+blocker from the docs: duplicate clustering before any Rio dashboard or
+production target row.
+
+### Action Taken
+
+Added:
+
+```text
+RIO_ECONOMIC_V4_DUPLICATE_CLUSTER_REVIEW.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+RIO_ECONOMIC_V4_SAMPLE_REVIEW_20260519T000719Z.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Duplicate clusters recorded:
+
+```text
+Shakira economic impact rows: 4, 30, 31
+Mercado Popular da Uruguaiana rows: 8, 9, 10
+Mais Valia/Mais Valera rows: 16, 17, 18
+```
+
+Counting policy recorded:
+
+```text
+article_count = raw article/source count
+story_count = deduplicated story clusters
+primary_dimension = one chosen dimension per cluster
+secondary_dimensions = optional supporting dimensions
+```
+
+### Barrier Or Failure
+
+This is a manual review/policy document. It does not yet automate cluster fields
+inside the Rio dry-run script.
+
+### Next Objective From Docs
+
+Run diff checks, commit/push the duplicate-cluster review path-limited, poll
+Render, smoke `68c8fcf` or the new docs commit when live, then decide whether
+to add optional cluster fields to the dry-run report format.

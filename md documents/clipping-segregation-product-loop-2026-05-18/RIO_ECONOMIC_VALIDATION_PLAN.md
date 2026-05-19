@@ -360,6 +360,19 @@ without storing article bodies. It also confirms row 1 must remain blocked or
 manually reviewed because the canonical page did not expose a usable published
 date.
 
+Duplicate cluster review:
+
+```text
+RIO_ECONOMIC_V4_DUPLICATE_CLUSTER_REVIEW.md
+Shakira economic impact -> one cross-dimension event cluster
+Mercado Popular da Uruguaiana -> one commerce/services cluster
+Mais Valia/Mais Valera -> one construction/licensing cluster
+```
+
+Future Rio counts must distinguish `article_count` from deduplicated
+`story_count`; otherwise repeated sources will inflate the apparent economic
+signal.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?
