@@ -320,6 +320,26 @@ row 1 exposed Google News recency/source mismatch risk
 Shakira and Mercado Popular stories need clustering before dashboard use
 ```
 
+V4 mitigation sample:
+
+```text
+data/reports/rio_economic_revised_queries_v4_20260518.json
+data/reports/rio_economic_dry_run_20260519T000719Z.json
+row_count=31
+query_count=12
+RIO_ECONOMIC_V4_SAMPLE_REVIEW_20260519T000719Z.md
+true_positive=24
+useful_unclear=1
+duplicate=6
+false_positive=0
+useful_or_unclear_before_clustering=25/31
+```
+
+V4 removed the known generic hotel-jobs false positive and state-government
+Fazenda false positive from the sampled title set. Production is still blocked
+until canonical source/date checks, duplicate clustering, and fresh production
+segregation proof are handled.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

@@ -6340,3 +6340,102 @@ fresh authenticated viewer proof still blocked by missing passwords in shell
 Run diff checks, commit/push this Rio review path-limited, poll Render, then
 continue with the next unblocked item: query/source mitigation for Rio v4 or
 fresh live privacy smoke if the new deploy becomes live first.
+
+## 2026-05-18 21:08 -03 - Loop Cycle: Rio V4 Query Mitigation Dry Run
+
+### Objective Reviewed
+
+Continue from the body/source review instead of stopping at the document. The
+next unblocked Rio item is applying the row 15/27/date/duplicate mitigations in
+a dry-run-only query file.
+
+### Action Taken
+
+Created:
+
+```text
+data/reports/rio_economic_revised_queries_v4_20260518.json
+```
+
+Ran:
+
+```text
+python -m json.tool data/reports/rio_economic_revised_queries_v4_20260518.json >/dev/null
+python -m compileall tools/rio_economic_dry_run.py tests/test_rio_economic_dry_run.py
+python tools/rio_economic_dry_run.py --queries-file data/reports/rio_economic_revised_queries_v4_20260518.json --limit-per-query 3 --request-timeout 5 --resolve-timeout 0 --collection-timeout 6000
+```
+
+Generated:
+
+```text
+data/reports/rio_economic_dry_run_20260519T000719Z.json
+data/reports/rio_economic_dry_run_20260519T000719Z.csv
+data/reports/rio_economic_dry_run_20260519T000719Z.md
+RIO_ECONOMIC_V4_SAMPLE_REVIEW_20260519T000719Z.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+WORK_LOG.md
+```
+
+### Evidence
+
+Dry-run output:
+
+```text
+ok=true
+row_count=31
+query_count=12
+resolve_timeout=0
+writes_production_db=false
+writes_assets_payload=false
+writes_targets_json=false
+```
+
+Title review:
+
+```text
+true_positive=24
+useful_unclear=1
+duplicate=6
+false_positive=0
+useful_or_unclear_before_clustering=25/31
+```
+
+The v4 sample no longer includes the v3 body/source false positives:
+
+```text
+Vagas abertas reforcam/reforçam movimento da hotelaria em janeiro
+Governo do Rio / Receita Estadual / PF / Claudio Castro Fazenda story
+```
+
+Render poll during this cycle:
+
+```text
+dep-d86fnd0k1i2s73d43mo0 48baf67 docs: add Rio v3 body source review -> build_in_progress
+dep-d86fl5addbjc739t0mig 595ce78 docs: log live smoke on clipping follow-up deploy -> live
+```
+
+### Barrier Or Failure
+
+`python -m compileall` dirtied tracked `pipeline/__pycache__` files. They were
+restored before staging. Full pytest remains unavailable in this shell because
+pytest/FastAPI dependencies are not installed.
+
+The Rio production target row remains blocked by:
+
+```text
+canonical source/date check for Google News rows
+story clustering before dashboard display
+fresh logged-out Render smoke after latest deploy
+fresh authenticated viewer proof or accepted password blocker
+```
+
+### Next Objective From Docs
+
+Run diff checks, commit/push the v4 query/sample/review path-limited, poll
+Render, and if the latest deploy is live run logged-out privacy smoke again.

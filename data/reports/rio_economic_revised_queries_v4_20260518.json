@@ -1,0 +1,77 @@
+{
+  "created_at": "2026-05-19T00:10:00Z",
+  "source_review": "md documents/clipping-segregation-product-loop-2026-05-18/RIO_ECONOMIC_V3_BODY_SOURCE_REVIEW_20260518.md",
+  "notes": "Fourth Rio economic dry-run query set. Applies body/source review mitigations for generic hotel-jobs leakage, state-government Fazenda leakage, duplicate-prone stories, and Google News source/date sanity risk. This file is still dry-run only and must not be used as a production target row.",
+  "queries": [
+    {
+      "dimension": "tourism_events",
+      "query": "\"Rio de Janeiro\" \"ocupacao hoteleira\"",
+      "why_candidate": "city visitor-demand signal with hotel occupancy anchor; canonical article date must be checked before production",
+      "exclude_title_terms": ["Rio das Ostras", "Rio Grande", "2017"]
+    },
+    {
+      "dimension": "tourism_events",
+      "query": "\"Rio de Janeiro\" \"impacto economico\" turismo",
+      "why_candidate": "tourism stories with explicit economic impact language",
+      "exclude_title_terms": ["Rio Grande", "Rio das Ostras"]
+    },
+    {
+      "dimension": "commerce_services",
+      "query": "\"Prefeitura do Rio\" ambulantes comercio",
+      "why_candidate": "city commerce/order signal tied to municipal action",
+      "exclude_title_terms": ["Rio Grande", "Festimar"]
+    },
+    {
+      "dimension": "commerce_services",
+      "query": "\"Prefeitura do Rio\" \"Mercado Popular da Uruguaiana\"",
+      "why_candidate": "city commerce hub signal with strong place anchor; duplicate stories must be clustered before dashboard display",
+      "exclude_title_terms": ["duplicado"]
+    },
+    {
+      "dimension": "jobs_income",
+      "query": "\"Prefeitura do Rio\" \"vagas\" \"Trabalho e Renda\"",
+      "why_candidate": "city jobs signal anchored to municipal labor office",
+      "exclude_title_terms": ["Porto Velho", "portovelho"]
+    },
+    {
+      "dimension": "jobs_income",
+      "query": "\"Rio de Janeiro\" hotelaria vagas emprego",
+      "why_candidate": "hotel/tourism labor-market signal with explicit city anchor",
+      "exclude_title_terms": ["Brasil", "nacional", "corporativo", "Vagas abertas reforcam movimento", "Vagas abertas reforçam movimento", "Soho House", "Sao Paulo", "São Paulo"]
+    },
+    {
+      "dimension": "construction_real_estate",
+      "query": "\"Prefeitura do Rio\" licenciamento obras",
+      "why_candidate": "municipal permitting and construction activity signal"
+    },
+    {
+      "dimension": "construction_real_estate",
+      "query": "\"cidade do Rio\" mercado imobiliario",
+      "why_candidate": "city-specific real-estate activity",
+      "exclude_title_terms": ["Rio Grande"]
+    },
+    {
+      "dimension": "municipal_finance",
+      "query": "\"Prefeitura do Rio\" ISS arrecadacao",
+      "why_candidate": "municipal tax and revenue signal",
+      "exclude_title_terms": ["Pernambuco", "pernambucanos", "Receita Estadual", "Governo do Estado"]
+    },
+    {
+      "dimension": "municipal_finance",
+      "query": "\"Fazenda\" \"Camara do Rio\" arrecadacao",
+      "why_candidate": "municipal finance result with city legislative anchor",
+      "exclude_title_terms": ["IBS", "federalismo", "Comite gestor", "Comitê gestor", "Governo do Rio", "Receita Estadual", "Claudio Castro", "Cláudio Castro", "Policia Federal", "Polícia Federal", "Palacio Guanabara", "Palácio Guanabara", "Refit", "ICMS"]
+    },
+    {
+      "dimension": "economic_development",
+      "query": "\"Invest.Rio\" empresas investidores",
+      "why_candidate": "city business-attraction and investor signal"
+    },
+    {
+      "dimension": "economic_development",
+      "query": "\"Prefeitura do Rio\" \"impacto economico\"",
+      "why_candidate": "official city economic-impact language; duplicate event stories must be clustered before dashboard display",
+      "exclude_title_terms": ["maes", "mães", "estado do Rio"]
+    }
+  ]
+}

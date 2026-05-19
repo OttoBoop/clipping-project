@@ -1,0 +1,548 @@
+{
+  "meta": {
+    "generated_at": "2026-05-19T00:07:19.205975+00:00",
+    "date_from": "",
+    "date_to": "",
+    "limit_per_query": 3,
+    "request_timeout": 5,
+    "resolve_timeout": 0,
+    "collection_timeout": 6000,
+    "redirect_resolution_skipped": true,
+    "queries_file": "data/reports/rio_economic_revised_queries_v4_20260518.json",
+    "query_count": 12,
+    "row_count": 31,
+    "timeout_policy": "dry_run_smoke_timeouts_are_allowed",
+    "writes_production_db": false,
+    "writes_assets_payload": false,
+    "writes_targets_json": false
+  },
+  "queries": [
+    {
+      "dimension": "tourism_events",
+      "query": "\"Rio de Janeiro\" \"ocupacao hoteleira\"",
+      "why_candidate": "city visitor-demand signal with hotel occupancy anchor; canonical article date must be checked before production",
+      "exclude_title_terms": [
+        "Rio das Ostras",
+        "Rio Grande",
+        "2017"
+      ]
+    },
+    {
+      "dimension": "tourism_events",
+      "query": "\"Rio de Janeiro\" \"impacto economico\" turismo",
+      "why_candidate": "tourism stories with explicit economic impact language",
+      "exclude_title_terms": [
+        "Rio Grande",
+        "Rio das Ostras"
+      ]
+    },
+    {
+      "dimension": "commerce_services",
+      "query": "\"Prefeitura do Rio\" ambulantes comercio",
+      "why_candidate": "city commerce/order signal tied to municipal action",
+      "exclude_title_terms": [
+        "Rio Grande",
+        "Festimar"
+      ]
+    },
+    {
+      "dimension": "commerce_services",
+      "query": "\"Prefeitura do Rio\" \"Mercado Popular da Uruguaiana\"",
+      "why_candidate": "city commerce hub signal with strong place anchor; duplicate stories must be clustered before dashboard display",
+      "exclude_title_terms": [
+        "duplicado"
+      ]
+    },
+    {
+      "dimension": "jobs_income",
+      "query": "\"Prefeitura do Rio\" \"vagas\" \"Trabalho e Renda\"",
+      "why_candidate": "city jobs signal anchored to municipal labor office",
+      "exclude_title_terms": [
+        "Porto Velho",
+        "portovelho"
+      ]
+    },
+    {
+      "dimension": "jobs_income",
+      "query": "\"Rio de Janeiro\" hotelaria vagas emprego",
+      "why_candidate": "hotel/tourism labor-market signal with explicit city anchor",
+      "exclude_title_terms": [
+        "Brasil",
+        "nacional",
+        "corporativo",
+        "Vagas abertas reforcam movimento",
+        "Vagas abertas reforçam movimento",
+        "Soho House",
+        "Sao Paulo",
+        "São Paulo"
+      ]
+    },
+    {
+      "dimension": "construction_real_estate",
+      "query": "\"Prefeitura do Rio\" licenciamento obras",
+      "why_candidate": "municipal permitting and construction activity signal",
+      "exclude_title_terms": []
+    },
+    {
+      "dimension": "construction_real_estate",
+      "query": "\"cidade do Rio\" mercado imobiliario",
+      "why_candidate": "city-specific real-estate activity",
+      "exclude_title_terms": [
+        "Rio Grande"
+      ]
+    },
+    {
+      "dimension": "municipal_finance",
+      "query": "\"Prefeitura do Rio\" ISS arrecadacao",
+      "why_candidate": "municipal tax and revenue signal",
+      "exclude_title_terms": [
+        "Pernambuco",
+        "pernambucanos",
+        "Receita Estadual",
+        "Governo do Estado"
+      ]
+    },
+    {
+      "dimension": "municipal_finance",
+      "query": "\"Fazenda\" \"Camara do Rio\" arrecadacao",
+      "why_candidate": "municipal finance result with city legislative anchor",
+      "exclude_title_terms": [
+        "IBS",
+        "federalismo",
+        "Comite gestor",
+        "Comitê gestor",
+        "Governo do Rio",
+        "Receita Estadual",
+        "Claudio Castro",
+        "Cláudio Castro",
+        "Policia Federal",
+        "Polícia Federal",
+        "Palacio Guanabara",
+        "Palácio Guanabara",
+        "Refit",
+        "ICMS"
+      ]
+    },
+    {
+      "dimension": "economic_development",
+      "query": "\"Invest.Rio\" empresas investidores",
+      "why_candidate": "city business-attraction and investor signal",
+      "exclude_title_terms": []
+    },
+    {
+      "dimension": "economic_development",
+      "query": "\"Prefeitura do Rio\" \"impacto economico\"",
+      "why_candidate": "official city economic-impact language; duplicate event stories must be clustered before dashboard display",
+      "exclude_title_terms": [
+        "maes",
+        "mães",
+        "estado do Rio"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "query": "\"Rio de Janeiro\" \"ocupacao hoteleira\"",
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Mais de 70% dos quartos de hotel do Rio estão reservados para o carnaval - Portal ABC do ABC",
+      "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxNSUNQWlRiaFhIWlE1clBSTHdwSGhSQUtZUkkyZi0zel9rWDlDZVFTdVV0ZFhWbFBaU1h0YkMxeVlmOW5QMWNRdF8wd3lmWWt1RUgtSVZSLVVXa3JyLXI3MHFPU1BNdTZYaTc4SkM4eUd2OUFmU3A1SmNVZG9qZFFOTllqSUt1QThoY1R4ZmF0aUhjeW5ndDlFMlNVbmRTS3Z0UlE?oc=5",
+      "published_at": "2026-05-17T23:29:28+00:00",
+      "why_candidate": "city visitor-demand signal with hotel occupancy anchor; canonical article date must be checked before production",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Rio de Janeiro\" \"ocupacao hoteleira\"",
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Efeito 'loba': ocupação hoteleira na Zona Sul atinge média de 80% dez dias antes do show de Shakira - O Globo",
+      "url": "https://news.google.com/rss/articles/CBMi7AFBVV95cUxNdVpyR25XcEwyLVBfNHhKUlhDY3VIWXRQMEd5OUxaZnRUMS1vU0xrRm5paFZpbnY0RDM3NkwtQVBDR0dpT0g1NXB1ZlNqd1RiYXM0SFpoX1NDcmJqUDFQSkpvVF9vU1laaEpyTGt1VDg1X3ROalpWejduRGZ4ZzBQb2tId0VPNHFJU2pMQ0gwS2tBSXhGLVFDOEYyYzFqUHpWX3g1aEVjSUx5cnNOYUJtdENNVUNmTjMxU3U3TVhSNHQwSTJoWTJKZnNqX2NPRjVTbFFFcC0taDd4VHdtR0trb0NvTkd3VVZ4Z3ZDRtIB-wFBVV95cUxOWGt5NzQ2c1lKa1NQRU50ZGhUWU90OUpaX2UtM1NEOFNQOVRyUkJqbjB6d211eXY3NTNpX2lIUkM0YVdXNktiMnd3aXdQM0tkT2Y2MFliUm1MSUxjYXVQSFhTam55VDlkLTZDTHVVV3lRYlB4MmFMd0dHSC1jblQzY3E4d0NqWGRXZU42bF9vdm10ZVd2UE5BVG0wTEVZOFFyNVByNnA5SXJCNlNUOXdiVFA4RlFja1dHNlE0T2NzdzVzSm1aS1JtTjFpQjlJSXFqcWZqeTdTMzNBUkFPWXJrc1YwZV90UzRZdmlzSm5HZ3ZmMTFjLXVnbVp1NA?oc=5",
+      "published_at": "2026-04-23T07:00:00+00:00",
+      "why_candidate": "city visitor-demand signal with hotel occupancy anchor; canonical article date must be checked before production",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Rio de Janeiro\" \"ocupacao hoteleira\"",
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Ocupação hoteleira no carnaval supera 99% no Rio de Janeiro - Agência Brasil",
+      "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQREZ3QVBYX1JHYmxPOW1CS3ZWV2Z0QU40QTFNSXR4RzJWSDdTdFNGMlNGVWdTVUR6RzVEMlo3NUFvMmVWRktId3htR0xubi1weE4xN016TUZnSzlDajItbmwzX1FKcUNnOFNUTEc1MUxDWHdQRG9oOXBVaDBPbHhwSHc4eWFXTWV0N25ROURXdEl6bHNxVUZ4cWNhZGJjZ1c4YTlSOUI5VjJVM1NXNkhSSEppazhDajg?oc=5",
+      "published_at": "2026-02-18T08:00:00+00:00",
+      "why_candidate": "city visitor-demand signal with hotel occupancy anchor; canonical article date must be checked before production",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Rio de Janeiro\" \"impacto economico\" turismo",
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Prefeitura do Rio: show de Shakira deve ter impacto econômico de aproximadamente R$ 800 milhões para a cidade - Prefeitura da Cidade do Rio de Janeiro",
+      "url": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxPQnhUbjBVZWhQSU5Na2taQXZMQkNvT0VpQ3dpUFZSMDB5a2dTSXJsRGZsUldCVHRsM0FuNWQxZWNISmNhNzh6ZlBhSkYyTHk4cFVibVdpa0JFSUI5X0NiQV9jWHNSNkVqazJUZHNWTnVSY2pBRm9DalUxWGd1emJPM0ItdURZd3NxRndiZlF3TjRTVlRiWXRRNUJQeDlrZkJ6M3ZEdnFZUEZrSWhCVm9YSGlKOWxubFBXWGNVV0o2SWR3MHl0cUpzLV9vUjRyUllqZVJCT0lCZHpFQXNpcFFWalA2WlBuSkJLNTNFZVJ3?oc=5",
+      "published_at": "2026-04-27T07:00:00+00:00",
+      "why_candidate": "tourism stories with explicit economic impact language",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Rio de Janeiro\" \"impacto economico\" turismo",
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Show de Lady Gaga em Copacabana promete espetáculo grandioso e forte impacto econômico - InMagazine",
+      "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxPc1lUMFJHeExRNUxyQXNmdGFxMS1oaGtQRVp6dDBpTzR3cnBqaWp0UEJCRmNKZkhRWVhjSHFWUkVleHZCbHFRX0tVbkFQYnRFQ3I0WDNQOExCVGVxWGFkTW9URWRubEFnTlQxb1JycHE4TEI4b2R1QUlJaTU3dkVIVnVsSi1jdGdkcVZwRWdlUkROd2hySVNfZzR2dmJYR2RaVmZ2UjdZbjJwcjl3RzZQcVFuMWdfTHh1V0M2aXE5UdIBxAFBVV95cUxNYmJ2TXVfcVhGUWVGYmFQT1dFTHp0cnpibGQtLUpmOU5zQ3Q1a0JNVEdnUVB2MkpFRmxvNUpnUGFyaGQ0RGhCczY5b2xtZHp5LWJSYnB2ajRBLWZhTl83Y044c2gwSnVOWXRvMjhFejFfTTViV1RhT1lsdmtfYWJGWnIxZEZGNGJ1Y0RUNHJSTU1zZUd0VkswcTl0SlNWTHV2ZW4tVGxscGtKcnczTkE0eWI3eG1aOVhudWdoQmMxNm0za2dn?oc=5",
+      "published_at": "2026-05-03T07:00:00+00:00",
+      "why_candidate": "tourism stories with explicit economic impact language",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Rio de Janeiro\" \"impacto economico\" turismo",
+      "dimension": "tourism_events",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Rio de Janeiro espera receber 3,5 milhões de visitantes durante o outono - Panrotas",
+      "url": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxOaUV5RFhTQnNOUDNDalNmT0REMG05Umc4bk9qR19YQ3dWM1RxUkZ4UzVnWG9QaWdCYmY5VkdhckVQanB2bHBoU3pXRlRpcHk2MVRHS20yY0xMVk9NejlibF9HOGgyTFN4em9EbTdHN2hreUNJbzI1ZUY5RmhRb0RvWEd2NWFtbExYYTNCQ1AxaDlFN19KUF91MU9HSjA2LWtOeFZnWlRmdGtPdEUwM3FkcW50RENtSENMcXZQUEtUTzB5LXJ4cnRiZnRkTUFzbjc2dnc?oc=5",
+      "published_at": "2026-03-25T07:00:00+00:00",
+      "why_candidate": "tourism stories with explicit economic impact language",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" ambulantes comercio",
+      "dimension": "commerce_services",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Prefeitura do Rio reorganiza ambulantes e libera calçadas no entorno de hospital público em Jacarepaguá - Diário do Rio",
+      "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxONUxXRkFjajZZRDNfSDRFeTU2VEFyRGNFWDFaUXkzeEpfc1ZYUGtmR3R4dU1tYzRkMGEzeDV1RUg0UzZlVWdUQlEwN1dmTnVBSzlpTk5Ja1EtRDlhWnBSNkVVSFdwRXdoUU1PSENBSWl5SG85T2M4VV9HNThQZEpmd2prZGRZd19mVklkSi1GdndOdkVtYmNZeVMwaVpJRjJ0RzBYSnI3MWM0dUE?oc=5",
+      "published_at": "2026-05-12T19:30:25+00:00",
+      "why_candidate": "city commerce/order signal tied to municipal action",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" ambulantes comercio",
+      "dimension": "commerce_services",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Prefeitura do Rio lança projeto do novo Mercado Popular da Uruguaiana - Prefeitura da Cidade do Rio de Janeiro",
+      "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxPMXllc2x0WDFOdUxzZ21DLVotTnJsaHRZNGhnTFVLbTBYQTNMOGMzcm9vTHI5elhidVFnTUxFdG5pZ0ZvQlRyUHBRTXg0UkRZbHE2M0VUb2RTeXFqN3g1aktWUzBYREh4TVoxMG5IUjVteFR5djlfOGtXZUVKdW81VjFyNU1HR3pOY3Y5YVphRVJxM1U3OUo0VXlKNExPeHBhMlRkaA?oc=5",
+      "published_at": "2026-03-01T08:00:00+00:00",
+      "why_candidate": "city commerce/order signal tied to municipal action",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" \"Mercado Popular da Uruguaiana\"",
+      "dimension": "commerce_services",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Prefeitura do Rio lança projeto do Novo Mercado Popular da Uruguaiana - Tempo Real RJ",
+      "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE8zSG9xb21nS3g0cnB0QWJoOGJiVGxWMjRHREk4bDJiRmdteWxheTdBRWlkeHdDWEFGeGIwYTR2dUo5SDh1SDVGT0dQek1ramg2T2M3R1ZDSUVsaGN2NXNyUGQ5My1OeVNfUjRMSTdoOE1FUQ?oc=5",
+      "published_at": "2026-03-01T08:00:00+00:00",
+      "why_candidate": "city commerce hub signal with strong place anchor; duplicate stories must be clustered before dashboard display",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" \"Mercado Popular da Uruguaiana\"",
+      "dimension": "commerce_services",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Projeto do novo Mercado Popular da Uruguaiana é lançado - Rádio Globo",
+      "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPSzBBZzlhaXh3Y0JtZWtyLXUzWFMtWU5hR3lrd3ROVWFUa05jQjdtSFNvdE1wSEoxUDNHY2UxdUFOZkZkanJxVjlvV0xmNm44TXdibEVYTjFPUWNqb3loTHVNMzFpakR0emRwWXFfc0lCazloNFhMRVI0cC1TalZoZWVCYnM5b3diWEpQaHR5OF9JdzJCeFlFcUUwSEY3cHI2dzhTX3h2MW9LLUtpQ0Vqc0Z5cF9TUdIBxAFBVV95cUxPWlF2SnVjMHc5X1ZpUXFkWWpGX202YlZqc1hsR25jSXJrYmUwNGxjU3FsMEJYVVY2eHVZbTJhYWxjOTMzbDNINVBQaVl6MXQ3MmdxNW9nM3hKbHZWVERKd0pWdFZGOTU5RmZQSGpLSktMcTlPRXpsRUd3cWZNWUZOeUE0VV9tQ29Wb3BNbDdYRUQ3LUFHZjNwb3B4VGVVZmpmY0VuRkpCMEM3YS1CaF9jZ2VPRFFrNTRMWlB0X3ZYNXR0cnZZ?oc=5",
+      "published_at": "2026-03-02T08:00:00+00:00",
+      "why_candidate": "city commerce hub signal with strong place anchor; duplicate stories must be clustered before dashboard display",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" \"vagas\" \"Trabalho e Renda\"",
+      "dimension": "jobs_income",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Prefeitura do Rio de Janeiro: inscrições abertas para 2.867 vagas em novo seletivo - JC Concursos",
+      "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxORG4xRTd1RTJROF9SR0ppTURwZHo1UEx3cjZZVlpzTUVPMFMzUG1hMnl2TndINy1rNXBpM2IzY3dOaDZDUC1LQjFvbFRBa1U5WmJreTNlU2RTUEFwbWFjY2VKY3pEMU1NbTZUU2t6ZXBsNUYxVkhOQl9MVjdxbWlSWmQtNzF4OC05ZFQyMXFGNVk0NVBPTWgtVFFCUDNXYzdJUnRZQXN2T0g4cDBhaGNrOFZfNV91S3VKem5qemNBQ2xoNTZNMTZFeDlxa9IB0AFBVV95cUxON19Cd0dsREQ2LUludElIek4xaTVDSFQtZ3d0QTd3YjUxS2w5RDJBWjFLM0pPeWI2bGlwUGQ5cGd3SEMyTW5PcThBRDdETTlxNFJtd1U1TnllNVlaY1dSTlZaVjN5NF9oZTJCVWpQRFJJYlgxcUZTX0lzYkZ4OWdZeXZXRUw5bHJoaU15MTQ5V19WUE9mSmFzM0V1NkE1ZW1FTVhtcXNqRExZTktvS2NDOEdpT2NLLU9meE5HV05QV0RNU3g1aWdKb3N6NVVZcFdn?oc=5",
+      "published_at": "2026-05-19T17:13:38+00:00",
+      "why_candidate": "city jobs signal anchored to municipal labor office",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" \"vagas\" \"Trabalho e Renda\"",
+      "dimension": "jobs_income",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Rio tem 2.867 vagas de emprego abertas nesta semana - Diário do Rio",
+      "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxNN1BCY1hDQVVwUWFkYmdvQXhqbXlhRFNRaDlKQV91YnlILTUwVjZBTW82UkFaaURUdm9jNkpKSGdfd2FEbUVISEU3UzBJZzdYS1ZLdmpzc1lleURZa2hNREdlVGNmSTJzWW9HS0VXbFNtQXY1RVVvcXFlNEhlam1CV0ln?oc=5",
+      "published_at": "2026-05-18T10:28:17+00:00",
+      "why_candidate": "city jobs signal anchored to municipal labor office",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" \"vagas\" \"Trabalho e Renda\"",
+      "dimension": "jobs_income",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Programa Trabalha Rio leva atendimento gratuito de emprego a diferentes bairros do Rio nesta semana - Diário da Guanabara",
+      "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxPempqRzR5SGwtRHdPcW1hak5RdGx4THpRZV84aHYxRTdBTmV2NkViNmI3SHpDMTVTSXNESDhETTd0WlBCZW9nWW5OZUN6enVXX25nMklPWFl6eHE4ODBLcjM4NDRJRnAwMkRjcjFjcjJnU3JkV0JyaFJjbVFxb3U5NkRGZms4LTJLMkV6U1c0VmlaOW5YenBSZmd5cXB1ZFRwWUw1Y291ajYtX1BpZTh1RWhQWndkS204Y2RCYzlWMFA2Vl92?oc=5",
+      "published_at": "2026-05-17T13:16:37+00:00",
+      "why_candidate": "city jobs signal anchored to municipal labor office",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Rio de Janeiro\" hotelaria vagas emprego",
+      "dimension": "jobs_income",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Grand Hyatt Rio de Janeiro recebe potenciais candidatos para vagas de emprego - Panrotas",
+      "url": "https://news.google.com/rss/articles/CBMi2wFBVV95cUxPNlZuZTk0bkE0Y0w2ME1LcjdWaXFDd2hXRjhrMkdfWG9mNDdXQWVNUGI2TWRFWUNKOUpMWC1oMVFrZTNLOGV5cVFicDJKNTdqd1dHMGZXYlZXUFplNVdTNnpRbTNJZE5FMnV2NWdhLVRiMXF3TzhWa05yaWdiX1h6aG80SE5yNkJuakY2ZnNwQldnbThhUzU0S1hoV056QldudWVIZFY5SE1kYVVnOTdGbkp5aGduQ1V4a1ZIaG1nYjFCbm9IN09kVzdialFOb2VtX2xuWFlhWTgtTmM?oc=5",
+      "published_at": "2025-10-17T07:00:00+00:00",
+      "why_candidate": "hotel/tourism labor-market signal with explicit city anchor",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Rio de Janeiro\" hotelaria vagas emprego",
+      "dimension": "jobs_income",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Hilton Copacabana e Hilton Barra abrem vaga para Gerente de Compras Cluster no Rio - ABIH-RJ",
+      "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxNUG8wR0dNaGtsV1QzR21na3AwdGJKbnhIc1RzbWZ1VGZwSm5td2lCYlhmczM4OVhQOXVwd3hMUTZSaDI2SDdkRl9HOWVTWEFJYjkzVEkyalQ3d1NDM05hNVlyb0Z0LXB4OFF5WnZIODNVNS1BemNBZXpNM2RxTkpvRVVOMXQzbDR4aTRCZ2ZLR0cxcEZ1QlZmVkxueFd3YXdYNDAtVnVIUzR2UzZlellPdWtsUQ?oc=5",
+      "published_at": "2026-05-07T13:21:47+00:00",
+      "why_candidate": "hotel/tourism labor-market signal with explicit city anchor",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" licenciamento obras",
+      "dimension": "construction_real_estate",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Prefeitura garante 30% de desconto para quem regularizar obras até 2 de março - Prefeitura da Cidade do Rio de Janeiro",
+      "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxOV25LbHE4TkpuSEE5Y1U4VlR6OFF3cDRUUm1lQ0tGaDNfQ0Jxcng5Z0RpaG5VY3FCcmQ3QjdPVEtham5fUG9FMUVwMjY2ZkpaSmRQZllfLTFJTW85akdWZk1TZEJaTDFJb0NEclRjMDVuN2stcVlNemlOd244S200WlI5UC1GZjg0Znl4QjdYVHhPU29tYU9MVmdDa2VBeU5lM1Y1YmppcXFrU3YwZVZLMDMzeE5iVnFub2hoR2tKWlh3NHRnYnRMZkcwdUQyWmlYQTVDU2Nn?oc=5",
+      "published_at": "2026-02-24T08:00:00+00:00",
+      "why_candidate": "municipal permitting and construction activity signal",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" licenciamento obras",
+      "dimension": "construction_real_estate",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Mais Valia e Mais Valerá: Prefeitura do Rio estende prazo e dá até 30% de desconto para regularizar obras - Diário do Rio",
+      "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxNM005ak5Oa0FKajFQSTZWTUV6STRvUGVBUWlPaTVXUnQ5em1aNm8ycXhRQ0dtQzktODVIdlBhOE81M0gtbWdoUnlfRFNvbldYZ1dLSG94MWtKQkplSTlTV29FSHdBbWh4c09vd1B0VnZ1WWV2TU1sNVZoRHlKRFRuZnBHQTRlbk5JRkVfSHpRNWhERXUwbzloQUlxMEZoVmFJckMyMHJoSHhjc3VELU42V0pWWXhPbkxyWXk2Z1dDbG8yRXdaR2dJ?oc=5",
+      "published_at": "2026-02-24T08:00:00+00:00",
+      "why_candidate": "municipal permitting and construction activity signal",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" licenciamento obras",
+      "dimension": "construction_real_estate",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "'Mais valia' e 'mais valerá': Prefeitura do Rio prorroga prazo para regularizar obras com até 30% de desconto - Tempo Real RJ",
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE1NRmRLT1ZHYVhSNzVzaS16OTM3SDF0ZlRsTndyRlBwcE5uVmVXUFJGSmtUQzlDZUpDN0EyXzNpdk1wMG5KeDhvaGRlSE12ZkhWeU1JWGRncl80ZTdGeWVNLS12MnJRSjhfVWktNHkya3M?oc=5",
+      "published_at": "2026-02-24T08:00:00+00:00",
+      "why_candidate": "municipal permitting and construction activity signal",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"cidade do Rio\" mercado imobiliario",
+      "dimension": "construction_real_estate",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "A nova onda de investimentos no mercado imobiliário do Rio de Janeiro - VEJA",
+      "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPRmE0NUZWRjllYWc5ZkhHWmVZYWxiOHRXRXNHS3oxV2lUYW55cmVUY2huVVFHdXlqWFQ0Zzl3cFE4U2lBQ19RVXp6RGdfakhJRXRtQmtfTV9CRy1UT1ZLekhmaGcyV09YS0djTXBHaEkxWnh3ZnQtQnVzaU9uYjdtYUJxd0VydjczejZuU1FFV09GcFVOdGN1aGYxUzlPazhkdTVVRmpEWmpwVmNmVUJkVlZISE1qUQ?oc=5",
+      "published_at": "2026-05-12T19:17:16+00:00",
+      "why_candidate": "city-specific real-estate activity",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"cidade do Rio\" mercado imobiliario",
+      "dimension": "construction_real_estate",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Um terço dos apartamentos novos em 3 lugares do Rio de Janeiro está sendo comprado por estrangeiros - Tribuna de Minas",
+      "url": "https://news.google.com/rss/articles/CBMi6AFBVV95cUxQWE90dUtfbFNoVjZ2dDR6M3liUkotNnFVOVdTVG8yRm54WlBDbjNjTFB6MjA4Y1ZLQkFScjkxbE1IbERCeWJpa0ZwU0lUNVA3amhFUGd5SjVTNXN4bFFfcmVnMlVtek9yYnFTMDF3MmFUZG9wOUVUWk5hbVBmeHlISkNCVEkxbDNvdjRVLVVFbkxxMWoxZjFvd0tOMkhKeE9SWWQ1YkpCdmFKVXZzWTNsMWNMQ2tFeGg4bUxGZzh6cXJkb2xHdm9KV1hKcEJ2bktCYW5UcGk3YS04Z0ttdkJ2OGhWcnhNdi0y?oc=5",
+      "published_at": "2026-05-15T23:21:00+00:00",
+      "why_candidate": "city-specific real-estate activity",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"cidade do Rio\" mercado imobiliario",
+      "dimension": "construction_real_estate",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Fundos imobiliários discutem novos projetos e oportunidades no Rio de Janeiro - Diário do Rio",
+      "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxOdHE5Qmpwal84cXF0cGc4a1gzQk11RXplbUZEb3NqOVlHdEZOQmxOcElEcjQ3N1hZWGIySlBTRFVITDNBN2E0RTY3d0g2Qks4cDExWmsxdmZFYXJ0NnRHS0hVYUlaTTRleTVlVVY0NE1nN2tHZ3RmMHp0dTZJQ2JZZEFRaTlGNjc1Q2I3eXBhdncyVzBfWVRmWWNnVkRBa1FwYzdhbQ?oc=5",
+      "published_at": "2026-05-08T13:54:06+00:00",
+      "why_candidate": "city-specific real-estate activity",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" ISS arrecadacao",
+      "dimension": "municipal_finance",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Turismo recorde em 2025 faz arrecadação do ISS do setor ser de mais de R$ 300 milhões - Prefeitura da Cidade do Rio de Janeiro",
+      "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxOX0J3RE8xT3VuNHhqbEFMNmxnSmpMeTJYVEJpREVjNjdQMkZnUVlZRV8tOURYblB4YzI1X04yOGctWXV2V25fQVBqY2tDOTEweTRHUFZVMHBPeFk5VEZnRFEyWHgtcjBfZkFPMVJRYktaQkpXYndZc2FlODNpSzdjaWFoYTUxeUVUZWdCQkNyRVdTanpyajZxODE0NlMxUzVjWXlDemJyTXFkTnRMX3lTM2Q3ekZuWUc1S3RUaWV3VTRiSS13S0lOdlljb2dJazg?oc=5",
+      "published_at": "2026-03-09T07:00:00+00:00",
+      "why_candidate": "municipal tax and revenue signal",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" ISS arrecadacao",
+      "dimension": "municipal_finance",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Prestação de contas: Prefeitura do Rio deixou de arrecadar R$ 3,8 bilhões em impostos em 2025; oposição questiona beneficiários - Tempo Real RJ",
+      "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE1LbVhoT3dCQXNTc2NvaURTdE5XV1Y3aGhjb0ZwRHBKNmd6TDd1MXJRS1ptTnhuMmtiSTlPdnpCUjVzaE1CWllvQVV5c2ktU0R2V3R6ZmtzaGp1dnJZ?oc=5",
+      "published_at": "2026-04-19T07:00:00+00:00",
+      "why_candidate": "municipal tax and revenue signal",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" ISS arrecadacao",
+      "dimension": "municipal_finance",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Rio arrecadou 37% a mais no 1º semestre de 2025 com serviços ligados ao setor aeroportuário - Prefeitura da Cidade do Rio de Janeiro",
+      "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxObjNQa1J0ZEtjYkxtRUNhQ285NkhGV2UxNGFCbXN1YVdqTmZURVo1ci1HR1dET2hCeHpuWE9hNmh1V3BfdXZRY1dtbi1JU3lQT28wV3hTV0djNXRPSUVrQWtLWGRpc3U0ME1tOGU2eURyVFQwM1RLR21LdjNBd19hbV9CbVpVekxDdml6OXNoaWoxdHlPT0UtUWR2M3czdTlRSF9CMnhNdTdZT2VyTnFvRkJlMmpFYWRkdXV3emRB?oc=5",
+      "published_at": "2025-09-29T07:00:00+00:00",
+      "why_candidate": "municipal tax and revenue signal",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Fazenda\" \"Camara do Rio\" arrecadacao",
+      "dimension": "municipal_finance",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Fazenda apresenta resultados do último quadrimestre de 2025 em audiência pública na Câmara do Rio - Câmara Municipal do Rio de Janeiro",
+      "url": "https://news.google.com/rss/articles/CBMi3wFBVV95cUxPT2lXQ1dZQ3pXTEN5NWQ2a0U4SzluZkROLU1SSFRTQ1VPSGtyR3NrTTRZbWxPRVF0RF9MdWRaT0RxQlBrQjNoWWlmVTlJT05pVHVqRHl0NXNZZzNXVmVIdzByZ0FYNzJVQzhHUXJ4QzhSQmxzUGZqQjBXTW8wLXYzcHN2bnNCQ0pKWVVEandsMHZySmR4SU9RRlh0V05pblkxelh2ZGFXV3h1c0hXZnI4MFk0MXRhS3dBQ3ROVjJ0Ql9kX3gzS3cxUmMzbUJ6ODNGTDRGRDFUTWdFdV9NMVVR?oc=5",
+      "published_at": "2026-04-28T18:31:05+00:00",
+      "why_candidate": "municipal finance result with city legislative anchor",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Fazenda\" \"Camara do Rio\" arrecadacao",
+      "dimension": "municipal_finance",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Fazenda presta contas à Câmara do Rio sobre o 2º quadrimestre de 2025 do Poder Executivo - Câmara Municipal do Rio de Janeiro",
+      "url": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxPSjZnZE5IT2laaWNhSEZaZkhjcjVkQU5EREg3eHJ0ZmZTbWNxLUJPaE1UTS1ZRzdFSzhEQXhrZXNoSGROTGdVWjdpWFRKcDVJR0YzSHBRdEdXaXROdHBkVXd3b2JIYkFmRHdWNVpqT3FKczYzdUdpek9yWG9mNjBMNm56aVZNZTFsZi1hQXhjN0JPUkVnOHZJTURTb25STmQzaG80UE1DODcyenhpVzFyV0llTHM3eTkzME94WmQwRTFtMXZpYy1aNk83WjJ1dERLUHc?oc=5",
+      "published_at": "2025-12-04T08:00:00+00:00",
+      "why_candidate": "municipal finance result with city legislative anchor",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Invest.Rio\" empresas investidores",
+      "dimension": "economic_development",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Invest.Rio leva o Rio ao Web Summit Vancouver para atrair negócios e investidores - Diário do Rio",
+      "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxPSzBMMWVodV9hUVcwRlNQLUh3VFR3QlVOcUhYMEVFejdOX3E3OVVKVWVycDRUWW9lcHF0cVRRNHVlaGtvUzRXQmlRNWFXT2tndzNMRmM0UzV4OG5HYnZXVWVsRGJfRmNSOHFHY2lVckZzQ1JlS29VeXFZeS1FS2VmS0hYWDdGMFNoZUZkQjdrOTdGWlVHb2twb1hHSEpFZk9OcXlldnV2TWRjUQ?oc=5",
+      "published_at": "2026-05-13T17:31:07+00:00",
+      "why_candidate": "city business-attraction and investor signal",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Invest.Rio\" empresas investidores",
+      "dimension": "economic_development",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Invest.Rio aposta em IA e energia para atrair capital externo no Web Summit - CNN Brasil",
+      "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxOTGY0cHc2RFRscHdzck5CcjBreUFpSVRaclBMdHNreHBiNFA2c3ZyOHlpVzVvb0x2V0oySFF6NHlxTjRGWFJjT1NvZzNEbWdudVJvOC1JdnJHbUxYSWNUYkFVSGc3dUxkbEc2NHQzekZVUjJQekc1cnNPamR6ZUtMTWFRNE1raTcwMnJOdkJkdUtMQWZYOThZSlFwenZvMGtGTWdYVUVlMVd0eHduU1ExS2VRYTZaaTJJVnR3ejFySTI?oc=5",
+      "published_at": "2026-05-12T18:50:23+00:00",
+      "why_candidate": "city business-attraction and investor signal",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Invest.Rio\" empresas investidores",
+      "dimension": "economic_development",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Com agenda estratégica de negócios, Invest.Rio e Maravalley organizam Missão Lisboa 2025 - Prefeitura da Cidade do Rio de Janeiro",
+      "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxObTlkdWZXMmRNUFpNR08yXzU0bWlSdlpsRHlMTnRXYUYwZDhXeVVtT19wcnpVQjhEYnZwdC1NeGU3cWJsZGQ1VHczQlVnbTBYc1lhSzA4WENOclI0R05NUEhIWE1oWlVhTWtCQV8wb3Nadm1XLXZYWTl6VW5hZ3I0MWpMbFhEWWhZQmJPNGtpOFA2b0l0RVhsZzRfZS1GYS1FRy00b3hwYXEwYXNLUjU1YWM5RThzaEc3c3c?oc=5",
+      "published_at": "2025-11-07T08:00:00+00:00",
+      "why_candidate": "city business-attraction and investor signal",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" \"impacto economico\"",
+      "dimension": "economic_development",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Show de Shakira terá impacto econômico maior que Lady Gaga e Madonna, estima Rio - Bora Investir",
+      "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxObjBGN3lsMmt6OGUyeDd2SFZLSkIwVDFTYXluS2ptcHc5Y1l0c1NVSWlNOTZlY1JLbWFtVldtRnJEc3UwbkJhMW11YzRpWGpwRHhIOENJZ084X0w3TVZOZGd1RWZOalZvTHBpMXVTNVdSWDZNeFZIemVMazFMcm5Rc2xZbEZ6Q0lpTUlwYTJwNHFmcVZ0MXJzSWdMVHg1NF9Cd2E3Ml91dkxfLUVHSzBoNS1XSVV0QlFMUTd2MQ?oc=5",
+      "published_at": "2026-04-27T07:00:00+00:00",
+      "why_candidate": "official city economic-impact language; duplicate event stories must be clustered before dashboard display",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    },
+    {
+      "query": "\"Prefeitura do Rio\" \"impacto economico\"",
+      "dimension": "economic_development",
+      "source": "Google News",
+      "source_type": "google_news",
+      "title": "Prefeitura do Rio espera movimentar R$ 776,2 milhões com Shakira - Poder360",
+      "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxNOERpcm1JQWtORVljU1NBeFpUaU9OYURxal92YTlNZ0xaODhpS1Ziem1WVDNaYzNXVHVhU0hBVjE1LTkyLWNCc3NsVWYtY0g1amZVZHpwT0o0b0N2QkVEaHdhV3VuQXVLOEx3d0tPUjBvMkNyTUI0bmRIYU1hZzVTeUE3eEN4blhTY0Z6bXpaVjJ3cU1pcGFESTgwUGdfek1SVHhZdngwbE4?oc=5",
+      "published_at": "2026-05-02T07:00:00+00:00",
+      "why_candidate": "official city economic-impact language; duplicate event stories must be clustered before dashboard display",
+      "review_label": "",
+      "false_positive_reason": "",
+      "notes": ""
+    }
+  ]
+}
