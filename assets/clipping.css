@@ -859,6 +859,74 @@ main {
   line-height: 1;
 }
 
+.rio-report-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(180, 196, 209, 0.72);
+}
+
+.rio-report-panel[hidden] {
+  display: none;
+}
+
+.rio-report-grid {
+  margin-bottom: 0;
+}
+
+.rio-report-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rio-report-status span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  border: 1px solid rgba(180, 196, 209, 0.72);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.rio-report-list {
+  display: grid;
+  gap: 10px;
+}
+
+.rio-report-item {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid rgba(180, 196, 209, 0.72);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  padding: 12px;
+}
+
+.rio-report-item strong,
+.rio-report-item span {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rio-report-item strong {
+  color: var(--brand-strong);
+  line-height: 1.25;
+}
+
+.rio-report-item span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .story-card {
   padding: 0;
   overflow: hidden;

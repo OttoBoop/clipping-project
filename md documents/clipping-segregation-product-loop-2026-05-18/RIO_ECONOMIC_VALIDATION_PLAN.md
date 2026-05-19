@@ -554,6 +554,19 @@ not_reviewed=8
 The sidecar currently promotes nothing. It only makes the eight non-automatic
 stories explicit and reviewable.
 
+Rio scoped UI decision:
+
+```text
+RIO_ECONOMIC_UI_DECISION_V0.md
+index.html adds hidden-by-default rioEconomicReportPanel
+assets/clipping.js fetches /api/reports/rio-economic-topic only for admin or rio_economico
+panel is read-only and has no approval, target creation, run, or publication controls
+```
+
+This gives the Rio profile a separate view without contaminating Flavio/Shakira
+filters or creating a fake approval UI. It still does not approve production
+ingestion or target-row creation.
+
 ## First Review Questions For The Loop
 
 - Which 8-12 queries produce a broad but reviewable first sample?

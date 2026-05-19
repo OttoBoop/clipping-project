@@ -9961,3 +9961,129 @@ This timestamp inconsistency is logged instead of rewriting prior history.
 Commit the sidecar paths only, push to `master`, wait for Render, run
 logged-out production smoke, log the evidence, then re-read docs and continue
 to the next weak axis.
+
+## 2026-05-18 23:12 -03 - Loop Cycle: Manual Approval Sidecar Deploy And Smoke
+
+### Objective Reviewed
+
+Deploy the Rio manual approval sidecar and confirm the production privacy gate
+did not regress.
+
+### Action Taken
+
+Committed and pushed path-limited:
+
+```text
+457343f tools: add Rio manual approval sidecar
+```
+
+Waited for Render deploy:
+
+```text
+dep-d86hfs4m0tmc73dbsb80 -> live
+```
+
+Ran logged-out smoke against `https://clipping-project.onrender.com/`.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /index.html -> 404
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+```
+
+Local worktree after push contained only inherited tracked
+`pipeline/__pycache__/*.pyc` dirt before this log update.
+
+### Barrier Or Failure
+
+Positive Flavio/Shakira/Rio/admin live proof is still blocked by lack of
+viewer/admin passwords in this shell. This is not a stop condition: continue
+with non-secret live checks and the next docs-derived technical or product
+review item.
+
+### Next Objective From Docs
+
+Re-read the long-term docs and choose the next weak axis. Current candidates
+from `ACTIVE_NEXT_ACTION.md` are Rio-only UI decision for the scoped report,
+operations/password rotation review, or sellable demo packaging without secret
+exposure.
+
+## 2026-05-18 23:18 -03 - Loop Cycle: Rio Read-only UI Decision
+
+### Objective Reviewed
+
+Prevent the Rio economic track from becoming either a fake UI or a polluted
+ordinary target list. The UI must be segregated by profile and backed by the
+scoped report endpoint.
+
+### Action Taken
+
+Added:
+
+```text
+RIO_ECONOMIC_UI_DECISION_V0.md
+tests/test_rio_economic_ui_static.py
+```
+
+Updated:
+
+```text
+index.html
+assets/clipping.js
+assets/clipping.css
+ACTIVE_NEXT_ACTION.md
+RIO_ECONOMIC_PRODUCTION_GATE_V0.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+WORK_LOG.md
+```
+
+The dashboard now has a hidden-by-default `rioEconomicReportPanel` in the Base
+tab. `assets/clipping.js` reads `data-clipping-session-profile` and fetches
+`/api/reports/rio-economic-topic` only for admin or `rio_economico`. The panel
+is read-only: it renders aggregate counts, manual status, production gate, and
+report stories, with no approval, target creation, update, or publish action.
+
+### Evidence
+
+Checks run:
+
+```text
+git diff --check -> pass
+python -m py_compile tests/test_rio_economic_ui_static.py -> pass
+direct static assertions -> rio economic ui static assertions passed
+rg static proof -> rioEconomicReportPanel, viewerCanSeeRioReport, and scoped endpoint present
+```
+
+### Barrier Or Failure
+
+Local JS/runtime test tooling is unavailable in this shell:
+
+```text
+node --check assets/clipping.js -> /bin/bash: node: command not found
+python -m pytest tests/test_rio_economic_ui_static.py -> No module named pytest
+python -m playwright --version -> No module named playwright
+python -m pip install --user esprima -> No module named pip
+```
+
+Positive authenticated Render proof still needs viewer/admin credentials. This
+does not stop the loop; it means the deploy smoke must at least prove the
+logged-out gate, static assets delivery, and scoped endpoint rejection.
+
+### Next Objective From Docs
+
+Commit/push the Rio read-only UI paths only, wait for Render, run production
+smoke, log evidence, re-read docs, then continue to the next weak axis.
