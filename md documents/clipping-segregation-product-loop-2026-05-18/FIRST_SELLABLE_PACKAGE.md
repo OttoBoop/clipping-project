@@ -155,3 +155,15 @@ Remaining before first paid client:
 - first delivery format decision is documented in
   `V1_DELIVERY_FORMAT_DECISION.md`: private scoped dashboard plus two
   operator-run updates per week and one lightweight weekly written summary.
+
+Latest demo-readiness review:
+
+```text
+SELLABLE_DEMO_READINESS_REVIEW_2026-05-18.md
+```
+
+Current decision: controlled operator demo is safe; hands-on external access
+requires a dedicated demo/prospect profile, Render password update with
+`replace=false`, scoped proof, and an offboarding plan. The Rio economic panel
+can be shown only as a read-only methodology preview, not as a finished
+indicator product.

@@ -10221,3 +10221,112 @@ or rotate live credentials by itself.
 Run checks, commit/push the operations review plus the prior deploy log
 path-limited, wait for Render, smoke production, then re-read docs and continue
 to sellable demo/prospect packaging or another weak checklist item.
+
+## 2026-05-18 23:31 -03 - Loop Cycle: Render Operations Review Deploy And Smoke
+
+### Objective Reviewed
+
+Deploy the operations review docs and confirm the live app/privacy gates did not
+regress after the docs-only auto-deploy.
+
+### Action Taken
+
+Committed and pushed path-limited:
+
+```text
+e846ee1 docs: add Render operations review
+```
+
+Waited for Render deploy:
+
+```text
+dep-d86hm2gk1i2s73d52hcg -> live
+```
+
+Ran logged-out smoke against production.
+
+### Evidence
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+```
+
+### Barrier Or Failure
+
+No deploy barrier. Positive authenticated proof and real password rotation
+still require operator-provided secrets.
+
+### Next Objective From Docs
+
+Re-read the objective docs. The next likely unblocked item is sellable
+demo/prospect packaging review or another no-secret checklist audit.
+
+## 2026-05-18 23:36 -03 - Loop Cycle: Sellable Demo Readiness Review
+
+### Objective Reviewed
+
+Convert the live segregation proof into a safe, sellable demo path without
+sharing existing client credentials, overpromising Rio, or inventing final
+pricing.
+
+### Action Taken
+
+Created:
+
+```text
+SELLABLE_DEMO_READINESS_REVIEW_2026-05-18.md
+```
+
+Updated:
+
+```text
+ACTIVE_NEXT_ACTION.md
+FIRST_SELLABLE_PACKAGE.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The readiness review records:
+
+```text
+controlled operator demo: yes
+hands-on external password: only after dedicated demo/prospect setup
+first paid-client onboarding: needs real prospect scope and password rotation plan
+Rio economic indicator as finished product: no
+```
+
+It maps the current live proof to a safe demo script and keeps the V1 boundary:
+
+```text
+30 days
+up to 5 names/terms
+2 operator-run updates per week
+private dashboard
+1 short weekly summary
+```
+
+### Barrier Or Failure
+
+No real buyer/prospect exists in this shell, so no final quote, password, or
+hands-on prospect profile was created. Positive authenticated browser proof
+still requires credentials.
+
+### Next Objective From Docs
+
+Run docs checks, commit/push path-limited, wait for Render, smoke production,
+then re-read docs and continue. Likely next unblocked item is either buyer quote
+tracker readiness or another system review/status refresh.

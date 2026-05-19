@@ -24,6 +24,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Playwright browser smoke for logged-out, Flavio viewer, Shakira viewer, and
   admin.
 - First sellable package draft.
+- Sellable demo readiness review for what can be shown safely without external
+  password sharing or overpromising.
 - Rio economic indicator methodology track.
 - Render production checklist.
 - Market research plan.
@@ -152,7 +154,10 @@ Continue the production loop. Current priority from the docs:
    setup checklist and buyer quote validation tracker now exist for serious
    hands-on access and pricing evidence capture; V1 add-on menu now separates
    base pilot from frequency, adversary, custom source, report-format,
-   classification, crisis, and Rio methodology add-ons;
+   classification, crisis, and Rio methodology add-ons; sellable demo readiness
+   review now says operator screen-share is safe, hands-on external password
+   needs dedicated profile/setup/offboarding, and Rio is only a read-only
+   methodology preview;
 6. review costs, password rotation, and operations;
    first-client onboarding/offboarding checklist now exists; V1 pilot operating
    ledger now exists for measuring update time, weekly summary time, support,
