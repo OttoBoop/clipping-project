@@ -10544,3 +10544,172 @@ fabricated.
 Run docs checks, commit/push path-limited, wait for Render, smoke production,
 then re-read docs. Likely next unblocked item is Rio manual approval/methodology
 review.
+
+## 2026-05-18 23:54 -03 - Loop Cycle: Buyer Quote Tracker Deploy Smoke Closed
+
+### Objective Reviewed
+
+Close the pending production evidence for commit `6c5f10a` before choosing a
+new work item. The site vivo remains the acceptance bar.
+
+### Action Taken
+
+Checked the remaining logged-out endpoint on production:
+
+```text
+GET https://clipping-project.onrender.com/api/csrf
+```
+
+Checked the working tree before continuing.
+
+### Evidence
+
+Render deploy `dep-d86hs9l7vvec73b07mu0` for commit `6c5f10a` is live.
+Logged-out smoke evidence recorded for this deploy:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+```
+
+The only dirty files before the next loop item were inherited tracked pycache
+files under `pipeline/__pycache__/`; they remain unstaged.
+
+### Barrier Or Failure
+
+Positive authenticated viewer/admin production proof is still blocked by
+missing credentials in this shell. This is logged as a live-proof barrier, not
+as a reason to stop.
+
+### Next Objective From Docs
+
+Re-open the long-term docs and pick the next unblocked, verifiable item. Based
+on the prior queue, the likely next item is Rio manual-approval/methodology
+review without promoting any production target row.
+
+## 2026-05-18 23:58 -03 - Loop Cycle: Rio Manual Review Queue
+
+### Objective Reviewed
+
+Re-read the required loop docs and selected the next weak Rio economic item:
+the sidecar had eight `not_reviewed` stories, but no operator-facing queue that
+made the review order and required evidence obvious.
+
+### Render Audit
+
+The live privacy gate for commit `6c5f10a` was already checked in the previous
+entry:
+
+```text
+GET /healthz -> 200
+GET / -> 200 login page
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+```
+
+### Action Taken
+
+Read:
+
+```text
+LONG_TERM_GOALS.md
+DEPENDENCY_MAP.md
+CURRENT_SHORT_TERM_LOOP.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_CHECKLIST.md
+RENDER_PRODUCTION_CHECKLIST.md
+LOOP_OPERATING_PROTOCOL.md
+WORK_LOG.md
+RIO_ECONOMIC_MANUAL_APPROVAL_POLICY_V0.md
+RIO_ECONOMIC_MANUAL_APPROVAL_SIDECAR_REPORT_20260519T020159Z.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+RIO_ECONOMIC_PRODUCTION_GATE_V0.md
+```
+
+`jq` was not installed in this shell, so structured JSON inspection used a
+read-only `python3` snippet to extract the eight `not_reviewed` stories from:
+
+```text
+data/reports/rio_economic_topic_report_20260519T020159Z.json
+data/reports/rio_economic_manual_approvals_v0.json
+```
+
+The first attempt to patch all affected docs failed because
+`ACTIVE_NEXT_ACTION.md` context did not match exactly. No file was changed by
+that failed patch. The workaround was to split the edit into smaller patches.
+
+Created/updated:
+
+```text
+RIO_ECONOMIC_MANUAL_REVIEW_QUEUE_2026-05-18.md
+RIO_ECONOMIC_VALIDATION_PLAN.md
+RIO_ECONOMIC_PRODUCTION_GATE_V0.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The new queue records:
+
+```text
+count_current_period=17
+manual_review_before_counting=1
+research_only=7
+not_required=17
+not_reviewed=8
+approved_promotions=0
+rows_remaining_not_reviewed=8
+target_row_approved=false
+```
+
+Rows listed for human review:
+
+```text
+1 canonical_date_missing
+5 date_mismatch
+11 near_date
+15 fetch_error
+19 canonical_date_missing
+22 fetch_error
+25 canonical_date_missing
+26 canonical_date_missing
+```
+
+Row 11 is now explicitly first in the operator order because it is the only
+`near_date` row. No row was promoted and no production target row was created.
+
+### Barrier Or Failure
+
+Positive authenticated Rio viewer proof on Render still requires credentials
+that are not available in this shell. Manual approval also requires human
+source/date review; it was not fabricated.
+
+### Next Objective From Docs
+
+Run docs checks, commit/push path-limited, wait for Render, smoke production,
+then re-read the `.md` files. Likely next unblocked items are either another
+Rio production-scoping proof attempt or buyer/pilot operations review without
+inventing real buyer data.
+
+### Why The Loop Continues
+
+This only clarified the manual review queue. It did not finish authenticated
+viewer proof, Rio approval writes, buyer validation, or operating-cost review.

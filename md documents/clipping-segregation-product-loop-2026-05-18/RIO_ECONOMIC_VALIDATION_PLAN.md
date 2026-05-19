@@ -554,6 +554,21 @@ not_reviewed=8
 The sidecar currently promotes nothing. It only makes the eight non-automatic
 stories explicit and reviewable.
 
+Manual review queue:
+
+```text
+RIO_ECONOMIC_MANUAL_REVIEW_QUEUE_2026-05-18.md
+approved_promotions=0
+rows_remaining_not_reviewed=8
+target_row_approved=false
+```
+
+The queue converts the eight `not_reviewed` sidecar rows into an operator
+checklist. Row 11 is the first review candidate because it is `near_date`; the
+other seven rows remain research-only unless a human records source/date
+evidence. This still does not approve production ingestion or target-row
+creation.
+
 Rio scoped UI decision:
 
 ```text
