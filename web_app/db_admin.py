@@ -20,7 +20,12 @@ from .config import ROOT, db_path as configured_db_path
 
 
 TARGETS_PATH = ROOT / "data" / "targets.json"
-PRIMARY_TARGET_KEYS = ("flavio_valle", "pedro_angelito")
+PROTECTED_PRIMARY_KEYS = ("flavio_valle", "pedro_angelito")
+
+
+def is_primary(row: dict[str, Any]) -> bool:
+    key = str(row.get("key") or "").strip()
+    return key in PROTECTED_PRIMARY_KEYS or bool(row.get("primary"))
 SYNTHETIC_SMOKE_TITLE = "Atlas smoke test: manual unique story flow for Flavio Valle"
 SYNTHETIC_SMOKE_SOURCES = {
     "atlas smoke test",
@@ -173,7 +178,7 @@ def maybe_auto_archive_synthetic_targets(rows: list[dict[str, Any]]) -> tuple[li
     archived_keys: list[str] = []
     for row in rows:
         key = str(row.get("key") or "").strip()
-        if not key or key in PRIMARY_TARGET_KEYS or bool(row.get("archived")):
+        if not key or is_primary(row) or bool(row.get("archived")):
             continue
         if not is_synthetic_test_target(row):
             continue
@@ -217,18 +222,29 @@ def unique_target_slug(display_name: str, existing_keys: set[str]) -> str:
     base = normalize_target_slug(display_name)
     candidate = base
     index = 2
-    while candidate in existing_keys or candidate in PRIMARY_TARGET_KEYS:
+    while candidate in existing_keys or candidate in PROTECTED_PRIMARY_KEYS:
         candidate = f"{base}_{index}"
         index += 1
     return candidate
 
 
 def locked_primary_keys() -> list[str]:
-    return list(PRIMARY_TARGET_KEYS)
+    """Keys hardcoded as primary that cannot be demoted via API."""
+    return list(PROTECTED_PRIMARY_KEYS)
 
 
 def primary_target_keys() -> list[str]:
-    return locked_primary_keys()
+    """All currently-primary keys: protected ones plus any promoted via API."""
+    rows = []
+    try:
+        rows = normalize_targets(load_targets())
+    except Exception:
+        return list(PROTECTED_PRIMARY_KEYS)
+    keys = [str(row.get("key") or "").strip() for row in rows if row.get("primary")]
+    for protected in PROTECTED_PRIMARY_KEYS:
+        if protected not in keys:
+            keys.append(protected)
+    return keys
 
 
 def sanitize_target(row: dict[str, Any]) -> dict[str, Any]:
@@ -237,7 +253,7 @@ def sanitize_target(row: dict[str, Any]) -> dict[str, Any]:
         return {}
     display_name = normalize_text(row.get("display_name") or row.get("label") or key)
     label = normalize_text(row.get("label") or display_name or key)
-    primary = key in PRIMARY_TARGET_KEYS
+    primary = is_primary(row)
     target = {
         "key": key,
         "label": label or key,
@@ -277,12 +293,13 @@ def normalize_targets_file() -> bool:
 
 
 def public_targets(*, include_archived: bool = False) -> dict[str, Any]:
-    targets = [
-        target
-        for target in normalize_targets(load_targets())
-        if target and (include_archived or not target.get("archived"))
-    ]
-    return {"targets": targets, "primaryKeys": locked_primary_keys()}
+    all_targets = [t for t in normalize_targets(load_targets()) if t]
+    targets = [t for t in all_targets if include_archived or not t.get("archived")]
+    primary_keys = [t["key"] for t in all_targets if t.get("primary")]
+    for protected in PROTECTED_PRIMARY_KEYS:
+        if protected not in primary_keys:
+            primary_keys.append(protected)
+    return {"targets": targets, "primaryKeys": primary_keys}
 
 
 def list_public_targets() -> dict[str, Any]:
@@ -314,7 +331,7 @@ def find_target_index(rows: list[dict[str, Any]], key: str) -> int:
 
 def ensure_secondary_mutable(row: dict[str, Any]) -> None:
     key = str(row.get("key") or "").strip()
-    if key in PRIMARY_TARGET_KEYS:
+    if key in PROTECTED_PRIMARY_KEYS:
         raise ValidationError("Nomes principais nao podem ser editados por aqui.")
 
 
@@ -382,6 +399,38 @@ def create_secondary_target(payload: dict[str, Any]) -> dict[str, Any]:
         target["exact_aliases"] = cleaned["exact_aliases"]
     if is_synthetic_test_target(target):
         target.update(archive_metadata("Alvo de teste arquivado automaticamente."))
+    rows.append(target)
+    write_targets_atomic(normalize_targets(rows))
+    return sanitize_target(target)
+
+
+def create_primary_target(payload: dict[str, Any]) -> dict[str, Any]:
+    cleaned = clean_target_payload(payload)
+
+    rows = normalize_targets(load_targets())
+
+    new_name_folded = cleaned["display_name"].casefold()
+    for row in rows:
+        if bool(row.get("archived")):
+            continue
+        existing_name = normalize_text(row.get("display_name") or row.get("label") or "")
+        if existing_name.casefold() == new_name_folded:
+            raise ValidationError(
+                f"Já existe um nome cadastrado como '{row.get('label') or existing_name}'. Escolha um nome diferente ou edite o existente."
+            )
+
+    existing_keys = {str(row.get("key") or "").strip() for row in rows}
+    key = unique_target_slug(cleaned["display_name"], existing_keys)
+    target = {
+        "key": key,
+        "label": cleaned["display_name"],
+        "display_name": cleaned["display_name"],
+        "className": "primary",
+        "primary": True,
+        "keywords": cleaned["keywords"],
+    }
+    if cleaned["exact_aliases"]:
+        target["exact_aliases"] = cleaned["exact_aliases"]
     rows.append(target)
     write_targets_atomic(normalize_targets(rows))
     return sanitize_target(target)

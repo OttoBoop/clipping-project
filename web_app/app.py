@@ -116,6 +116,15 @@ def create_secondary_target(payload: dict[str, Any]) -> dict[str, Any]:
     return helper(payload)
 
 
+def create_primary_target(payload: dict[str, Any]) -> dict[str, Any]:
+    from . import db_admin
+
+    helper = getattr(db_admin, "create_primary_target", None)
+    if not helper:
+        raise ValidationError("Cadastro de alvo principal ainda nao disponivel.")
+    return helper(payload)
+
+
 def upload_targets_artifacts(kind: str, result: dict[str, Any], key: str) -> list[str]:
     if not artifact_store.enabled:
         return []
@@ -595,6 +604,21 @@ async def add_target(request: Request) -> JSONResponse:
     payload = await read_json(request)
     try:
         result = create_secondary_target(payload)
+    except ValidationError as exc:
+        return target_validation_response(exc)
+    except Exception as exc:
+        return target_operation_error_response("create", exc)
+    key = str(result.get("key") or "created")
+    return target_mutation_response("targets-created", result, key, sync_reason="target-created")
+
+
+@app.post("/api/targets/primary")
+async def add_primary_target(request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    payload = await read_json(request)
+    try:
+        result = create_primary_target(payload)
     except ValidationError as exc:
         return target_validation_response(exc)
     except Exception as exc:

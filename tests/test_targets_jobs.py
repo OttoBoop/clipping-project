@@ -42,8 +42,8 @@ def test_create_secondary_target_writes_sanitized_non_primary_target_atomically(
                     "key": "ana_maria",
                     "label": "Ana Maria",
                     "display_name": "Ana Maria",
-                    "primary": True,
-                    "className": "primary",
+                    "primary": False,
+                    "className": "",
                     "keywords": ["Ana Maria"],
                 },
             ]
@@ -121,6 +121,57 @@ def test_create_secondary_target_rejects_duplicate_display_name(monkeypatch, tmp
     stored = json.loads(targets_path.read_text(encoding="utf-8"))
     assert len(stored) == 1, "no extra row should have been written"
     assert stored[0]["key"] == "shakira"
+
+
+def test_create_primary_target_writes_primary_row_and_appears_in_primary_keys(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "flavio_valle", "label": "Flavio Valle", "primary": True, "keywords": ["Flavio Valle"]},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    created = db_admin.create_primary_target({"display_name": "Maria Silva", "keywords": ["Maria S.", "M. Silva"]})
+
+    assert created["key"] == "maria_silva"
+    assert created["primary"] is True
+    assert created["className"] == "primary"
+    assert created["keywords"] == ["Maria Silva", "Maria S.", "M. Silva"]
+
+    public = db_admin.public_targets()
+    assert "maria_silva" in public["primaryKeys"]
+    assert "flavio_valle" in public["primaryKeys"]
+    by_key = {row["key"]: row for row in public["targets"]}
+    assert by_key["maria_silva"]["primary"] is True
+
+
+def test_create_primary_target_rejects_duplicate_display_name_against_secondary(monkeypatch, tmp_path):
+    db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
+    targets_path = tmp_path / "targets.json"
+    targets_path.write_text(
+        json.dumps(
+            [
+                {"key": "shakira", "label": "Shakira", "primary": False, "keywords": ["Shakira"]},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
+    try:
+        db_admin.create_primary_target({"display_name": "Shakira"})
+    except db_admin.ValidationError as exc:
+        assert "Já existe um nome cadastrado" in str(exc)
+    else:
+        raise AssertionError("primary creation should be rejected when display_name collides with active secondary")
+
+    stored = json.loads(targets_path.read_text(encoding="utf-8"))
+    assert len(stored) == 1
 
 
 def test_update_secondary_target_rejects_renaming_to_existing_display_name(monkeypatch, tmp_path):
@@ -310,7 +361,14 @@ def test_create_secondary_target_simple_path_uses_display_name_keyword(monkeypat
     assert stored[-1]["keywords"] == ["Carla Souza"]
 
 
-def test_normalize_targets_file_forces_current_primary_contract(monkeypatch, tmp_path):
+def test_normalize_targets_forces_protected_keys_primary_and_honors_promoted_flag(monkeypatch, tmp_path):
+    """
+    Contract:
+    - PROTECTED_PRIMARY_KEYS (flavio_valle, pedro_angelito) are always primary,
+      even if the file says otherwise.
+    - Other rows honor their primary flag from the file (allows admin-promoted
+      primaries via API).
+    """
     db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
     targets_path = tmp_path / "targets.json"
     targets_path.write_text(
@@ -319,7 +377,7 @@ def test_normalize_targets_file_forces_current_primary_contract(monkeypatch, tmp
                 {"key": "flavio_valle", "label": "Flavio Valle", "primary": False, "keywords": ["Flavio Valle"]},
                 {"key": "pedro_angelito", "label": "Pedro Angelito", "primary": False, "keywords": ["Pedro Angelito"]},
                 {"key": "bernardo_rubiao", "label": "Bernardo Rubiao", "primary": True, "className": "primary", "keywords": ["Bernardo Rubiao"]},
-                {"key": "ana_maria", "label": "Ana Maria", "primary": True, "className": "primary", "keywords": ["Ana Maria"]},
+                {"key": "ana_maria", "label": "Ana Maria", "primary": False, "className": "", "keywords": ["Ana Maria"]},
             ]
         ),
         encoding="utf-8",
@@ -330,15 +388,20 @@ def test_normalize_targets_file_forces_current_primary_contract(monkeypatch, tmp
 
     assert changed is True
     public = db_admin.public_targets()
-    assert public["primaryKeys"] == ["flavio_valle", "pedro_angelito"]
+    assert set(public["primaryKeys"]) == {"flavio_valle", "pedro_angelito", "bernardo_rubiao"}
     by_key = {row["key"]: row for row in public["targets"]}
+    # Protected keys are forced primary even if file said False.
     assert by_key["flavio_valle"]["primary"] is True
     assert by_key["pedro_angelito"]["primary"] is True
-    assert by_key["bernardo_rubiao"]["primary"] is False
+    # Promoted-via-file key honors the flag.
+    assert by_key["bernardo_rubiao"]["primary"] is True
+    # Non-primary file flag stays non-primary.
     assert by_key["ana_maria"]["primary"] is False
     stored = {row["key"]: row for row in json.loads(targets_path.read_text(encoding="utf-8"))}
+    assert stored["flavio_valle"]["className"] == "primary"
     assert stored["pedro_angelito"]["className"] == "primary"
-    assert stored["bernardo_rubiao"]["className"] == ""
+    assert stored["bernardo_rubiao"]["className"] == "primary"
+    assert stored["ana_maria"]["className"] == ""
 
 
 def test_build_update_spec_accepts_safe_custom_collector_and_long_dates(monkeypatch, tmp_path):
