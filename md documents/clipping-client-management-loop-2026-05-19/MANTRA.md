@@ -31,13 +31,13 @@ A cada 5 respostas substantivas do assistente, este texto é repetido na íntegr
 
 **DURANTE A AÇÃO** preciso registrar cada sub-ação em `WORK_LOG_DETALHADO.md`. Se mudei de método estratégico, escrevo a versão objetiva em `WORK_LOG_MAJOR.md`.
 
-**OS 5 GRANDES OBJETIVOS DO LOOP** (não saio deles):
+**OS GRANDES OBJETIVOS DO LOOP** (não saio deles):
 
-1. **Onboarding admin via UI** — admin gerencia clientes sem env var nem redeploy.
-2. **Sessão controlada pelo usuário** — logout funcional + cada usuário troca a própria senha.
-3. **Senhas simples e comunicáveis** — admin define ao criar, sem hex de 48 chars.
-4. **Regressão-zero entre features** — toda mudança preserva caminho end-to-end das antigas.
-5. **Target management completo com erros claros** — add/remove primário, demote pra secundário, add secundário; mensagens específicas, nunca "something went wrong".
+1. ✅ ~~**Onboarding admin via UI**~~ — atingido 2026-05-19 (smoke em prod verde). Ver [GOALS_ATINGIDOS.md](GOALS_ATINGIDOS.md).
+2. **Sessão controlada pelo usuário** — logout funcional + cada usuário troca a própria senha. *Código em prod desde 12:08; aguarda verificação visual do Otávio.*
+3. **Senhas simples e comunicáveis** — admin define ao criar, sem hex de 48 chars. *Rotação concluída 12:35; criação humana coberta pelo Goal 1; aguarda verificação visual do Otávio.*
+4. **Regressão-zero entre features** — toda mudança preserva caminho end-to-end das antigas. (Meta contínua — nunca migra.)
+5. **Target management completo com erros claros** — add/remove primário, demote pra secundário, add secundário; mensagens específicas, nunca "something went wrong". *Código em prod desde 12:45; aguarda verificação visual do Otávio.*
 
 **REGRA-MÃE**: "Não apareça só na UI, mas conectado a todos os sistemas secundários e primários."
 
