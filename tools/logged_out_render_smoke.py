@@ -27,6 +27,7 @@ class ExpectedEndpoint:
     status: int
     detail: str | None = None
     markers: tuple[str, ...] = ()
+    absent_markers: tuple[str, ...] = ()
     method: str = "GET"
     body: dict[str, Any] | None = None
 
@@ -49,6 +50,21 @@ class CheckResult:
 DEFAULT_ENDPOINTS = (
     ExpectedEndpoint("/healthz", 200),
     ExpectedEndpoint("/", 200, markers=("Acessar clipping", "Senha de acesso")),
+    ExpectedEndpoint(
+        "/api/login",
+        401,
+        "invalid_password",
+        absent_markers=(
+            "flavio",
+            "shakira",
+            "rio_economico",
+            "demo_cliente",
+            "CLIPPING_VIEWER_PASSWORDS",
+            "CLIPPING_ADMIN_PASSWORD",
+        ),
+        method="POST",
+        body={"password": "definitely-wrong-smoke-password"},
+    ),
     ExpectedEndpoint("/assets/clipping-data.json", 401, "viewer_login_required"),
     ExpectedEndpoint("/assets/clipping-raw-texts.json", 401, "viewer_login_required"),
     ExpectedEndpoint("/api/reports/rio-economic-topic", 401, "viewer_login_required"),
@@ -177,18 +193,22 @@ def check_endpoint(client: SmokeClient, expected: ExpectedEndpoint) -> CheckResu
     detail_ok = expected.detail is None or response_detail(response) == expected.detail
     markers_missing = [marker for marker in expected.markers if marker not in response.raw]
     markers_ok = not markers_missing
+    absent_seen = [marker for marker in expected.absent_markers if marker in response.raw]
+    absent_ok = not absent_seen
 
     extra_ok = True
     extra_detail = ""
     if expected.method == "GET" and expected.path == "/healthz":
         extra_ok, extra_detail = health_flags_ok(response.body)
 
-    ok = status_ok and detail_ok and markers_ok and extra_ok
+    ok = status_ok and detail_ok and markers_ok and absent_ok and extra_ok
     detail = f"status={response.status} expected={expected.status}"
     if expected.detail is not None:
         detail += f" detail={response_detail(response)}"
     if markers_missing:
         detail += f" missing_markers={markers_missing}"
+    if absent_seen:
+        detail += f" forbidden_markers={absent_seen}"
     if extra_detail:
         detail += f" {extra_detail}"
     return result(f"{expected.method} {expected.path}", ok, detail)

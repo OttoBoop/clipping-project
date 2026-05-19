@@ -150,6 +150,45 @@ def test_logged_out_operator_mutation_rejection_is_checked():
     assert all(endpoint.detail == "admin_login_required" for endpoint in operator_mutations)
 
 
+def test_invalid_login_rejection_forbids_profile_leaks():
+    login_checks = [endpoint for endpoint in smoke.DEFAULT_ENDPOINTS if endpoint.path == "/api/login"]
+
+    assert len(login_checks) == 1
+    login_check = login_checks[0]
+    assert login_check.method == "POST"
+    assert login_check.detail == "invalid_password"
+    assert "flavio" in login_check.absent_markers
+    assert "shakira" in login_check.absent_markers
+
+
+def test_absent_marker_seen_is_a_failure():
+    client = FakeClient(
+        {
+            ("POST", "/api/login"): (
+                401,
+                {"detail": "invalid_password", "profile": "flavio"},
+                '{"detail":"invalid_password","profile":"flavio"}',
+                "application/json",
+            )
+        }
+    )
+
+    check = quiet_check(
+        client,
+        smoke.ExpectedEndpoint(
+            "/api/login",
+            401,
+            "invalid_password",
+            absent_markers=("flavio",),
+            method="POST",
+            body={"password": "wrong"},
+        ),
+    )
+
+    assert check.ok is False
+    assert "forbidden_markers" in check.detail
+
+
 if __name__ == "__main__":
     for name, value in sorted(globals().items()):
         if name.startswith("test_") and callable(value):

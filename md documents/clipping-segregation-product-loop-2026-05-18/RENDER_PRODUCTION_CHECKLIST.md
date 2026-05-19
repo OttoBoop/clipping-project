@@ -39,6 +39,7 @@ Expected:
 
 ```text
 GET / -> login page
+POST /api/login with wrong password -> 401 invalid_password without profile names
 GET /assets/clipping-data.json -> 401
 GET /assets/clipping-raw-texts.json -> 401
 GET /api/update/status -> 401

@@ -24,6 +24,7 @@ The script checks the non-secret production boundary:
 ```text
 /healthz -> configured login/viewer/profile state
 / -> login page markers
+POST /api/login with a wrong password -> 401 invalid_password and no profile markers
 /assets/clipping-data.json -> 401 viewer_login_required
 /assets/clipping-raw-texts.json -> 401 viewer_login_required
 /api/reports/rio-economic-topic -> 401 viewer_login_required

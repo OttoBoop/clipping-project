@@ -13883,3 +13883,147 @@ Commit/push this helper expansion path-limited, wait for Render, rerun
 Logged-out mutation rejection is now repeatable, but this does not prove
 credentialed viewer scoping, admin CSRF-positive mutation, real buyer/pilot
 evidence, or Rio manual approvals.
+
+## 2026-05-19 19:13 -03 - Loop Cycle: Logged-Out Mutation Smoke Live Deploy
+
+### Objective Reviewed
+
+The expanded logged-out mutation smoke needed live Render proof, not just local
+tests or a push.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+4f77770 tools: extend logged-out mutation smoke
+```
+
+Waited for Render:
+
+```text
+deploy=dep-d8732vgjs32c73901f40
+commit=4f777709d711c74b95ba5c91f0b2953f86436055
+status=live
+finishedAt=2026-05-20T22:12:55.327699Z
+```
+
+Ran:
+
+```text
+python3 -B tools/logged_out_render_smoke.py
+```
+
+### Evidence
+
+Result:
+
+```text
+ok=true
+failed=[]
+```
+
+Fresh live mutation rejection proof:
+
+```text
+POST /api/update/start -> 401 admin_login_required
+POST /api/update/cancel -> 401 admin_login_required
+POST /api/update/resume -> 401 admin_login_required
+POST /api/export -> 401 admin_login_required
+POST /api/targets -> 401 admin_login_required
+PATCH /api/targets/shakira -> 401 admin_login_required
+POST /api/targets/shakira/archive -> 401 admin_login_required
+POST /api/targets/shakira/restore -> 401 admin_login_required
+POST /api/categories -> 401 admin_login_required
+POST /api/classifications -> 401 admin_login_required
+```
+
+The same run also rechecked health, login page, private payload 401s, scoped API
+401s, and raw data 404s.
+
+### Barrier Or Failure
+
+No logged-out live failure. Positive admin mutation proof remains blocked by
+admin credentials plus explicit operator approval for the disposable mutation
+path.
+
+### Next Objective From Docs
+
+Re-open the `.md` files. The next unblocked work should either harden another
+non-secret failure class or improve the path for a future credentialed run
+without inventing buyer/pilot/Rio approval evidence.
+
+### Why The Loop Continues
+
+Logged-out reads and direct mutations are now repeatedly proven, but logged-in
+viewer scoping, admin CSRF-positive mutation, buyer validation, measured pilot
+cost, and Rio manual approval evidence remain incomplete.
+
+## 2026-05-19 19:16 -03 - Loop Cycle: Bad Login No-Leak Smoke
+
+### Objective Reviewed
+
+The system checklist says login failure must not reveal configured passwords or
+profiles. This was not yet part of the repeatable logged-out smoke helper.
+
+### Action Taken
+
+Extended:
+
+```text
+tools/logged_out_render_smoke.py
+tests/test_logged_out_render_smoke.py
+LOGGED_OUT_RENDER_SMOKE_RUNBOOK.md
+RENDER_PRODUCTION_CHECKLIST.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+The helper now sends a bad password to:
+
+```text
+POST /api/login
+```
+
+Expected:
+
+```text
+401 invalid_password
+no flavio/shakira/rio_economico/demo_cliente/profile config markers in response body
+```
+
+### Evidence
+
+Local checks:
+
+```text
+python3 -B -m py_compile tools/logged_out_render_smoke.py tests/test_logged_out_render_smoke.py -> passed
+python3 -B tests/test_logged_out_render_smoke.py -> passed
+python3 -B -c "from tests import test_logged_out_render_smoke as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+git diff --check -> passed
+```
+
+Live check before commit:
+
+```text
+python3 -B tools/logged_out_render_smoke.py -> ok=true
+POST /api/login -> 401 invalid_password
+```
+
+### Barrier Or Failure
+
+No bad-login leak found. This still does not prove successful logins or scoped
+payloads for Flavio/Shakira/Rio because this shell lacks the real viewer/admin
+smoke credentials.
+
+### Next Objective From Docs
+
+Commit/push this bad-login smoke expansion path-limited, wait for Render, rerun
+the logged-out helper, log the live deploy, then re-open the docs.
+
+### Why The Loop Continues
+
+Bad-login behavior is now repeatable in the non-secret smoke, but positive
+authenticated scoping, admin CSRF-positive mutation, buyer validation, measured
+pilot cost, and Rio manual approval evidence remain incomplete.

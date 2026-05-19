@@ -8,9 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-dc5994d tools: check authenticated UI shell
-deploy dep-d872pi68bjmc73c3mvug -> live
-finishedAt=2026-05-20T21:52:48.932Z
+4f77770 tools: extend logged-out mutation smoke
+deploy dep-d8732vgjs32c73901f40 -> live
+finishedAt=2026-05-20T22:12:55.327699Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -24,6 +24,7 @@ viewerProfilesConfigured=true
 demoViewerConfigured=false
 missingConfig=[]
 GET / -> 200 login page
+POST /api/login -> 401 invalid_password, no profile/config markers
 GET /api/reports/rio-economic-topic -> 401 viewer_login_required
 GET /assets/clipping-data.json -> 401 viewer_login_required
 GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
@@ -91,6 +92,7 @@ e7826f3 tools: guard viewer profile scopes
 daa55a8 docs: log market refresh deploy smoke
 72ea188 tools: add logged-out Render smoke
 dc5994d tools: check authenticated UI shell
+4f77770 tools: extend logged-out mutation smoke
 ```
 
 Freshly proven after deploy:
@@ -153,6 +155,8 @@ Freshly proven after deploy:
 - the logged-out Render smoke now also checks direct mutation rejection for
   update/export, target create/edit/archive/restore, category creation, and
   classification writes.
+- the logged-out Render smoke now also checks that a bad login returns
+  `invalid_password` without profile/config markers.
 
 ## Authenticated Production Proof
 
@@ -345,7 +349,7 @@ Password operations:
   viewer/admin shell marker checks and still failed only on missing outside-Git
   smoke credentials;
 - `python3 -B tools/logged_out_render_smoke.py` passed against the live Render
-  site after the `dc5994d` deploy;
+  site after the `4f77770` deploy;
 - no real buyer quote/interview row exists in
   `BUYER_QUOTE_VALIDATION_TRACKER.md`;
 - no measured pilot/update run exists in `V1_PILOT_OPERATING_LEDGER.md`;
@@ -371,5 +375,5 @@ Continue from the weakest unblocked items:
 6. keep approval UI/actions hidden until approval writes are connected end to
    end.
 7. re-open the long-term docs and choose the next weak unblocked item after
-   this live `dc5994d` smoke.
+   this live `4f77770` smoke.
 ```
