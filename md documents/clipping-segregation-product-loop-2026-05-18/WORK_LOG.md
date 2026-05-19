@@ -10713,3 +10713,148 @@ inventing real buyer data.
 
 This only clarified the manual review queue. It did not finish authenticated
 viewer proof, Rio approval writes, buyer validation, or operating-cost review.
+
+## 2026-05-18 23:59 -03 - Loop Cycle: Rio Manual Review Queue Deploy Smoke
+
+### Objective Reviewed
+
+Push the Rio manual review queue to the live Render-backed app and prove that
+the deploy did not weaken the production privacy gate.
+
+### Render Audit
+
+Render deploy:
+
+```text
+service=srv-d7p2p5beo5us739f9k40
+deploy=dep-d86i0f3tqb8s73dbfsb0
+commit=118cb8e706094ed9c611d52e86246eef888f62d1
+message=docs: add Rio manual review queue
+status=live
+finishedAt=2026-05-20T02:47:05.309534Z
+```
+
+Live smoke:
+
+```text
+GET /healthz -> 200
+loginConfigured=true
+viewerAuthConfigured=true
+viewerProfilesConfigured=true
+demoViewerConfigured=false
+missingConfig=[]
+GET / -> 200 login page
+GET /api/reports/rio-economic-topic -> 401 viewer_login_required
+GET /assets/clipping-data.json -> 401 viewer_login_required
+GET /assets/clipping-raw-texts.json -> 401 viewer_login_required
+GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
+GET /api/targets -> 401 viewer_login_required
+GET /api/classifications -> 401 viewer_login_required
+GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
+```
+
+### Action Taken
+
+Committed path-limited docs only:
+
+```text
+118cb8e docs: add Rio manual review queue
+```
+
+Pushed:
+
+```text
+git push origin HEAD:master
+```
+
+### Evidence
+
+The queued docs are now on `master` and Render reports the deploy as live. The
+logged-out production gate still blocks the Rio report endpoint, static
+payloads, raw texts, live results, targets, classifications, CSRF, and update
+status.
+
+Working tree after commit/push has only inherited tracked pycache dirt under
+`pipeline/__pycache__/`; no docs are left unstaged.
+
+### Barrier Or Failure
+
+Authenticated live Rio viewer/admin proof remains blocked by credentials not
+available in this shell. This deploy was docs-only and did not create an
+approval UI or approval write path.
+
+### Next Objective From Docs
+
+Re-read the `.md` files and choose the next weak axis. Likely next unblocked
+candidate: review pilot operating/cost ledger readiness or refresh the system
+status snapshot with the new Rio manual review queue evidence.
+
+### Why The Loop Continues
+
+A deploy and a logged-out smoke are checkpoints, not completion. The loop still
+has authenticated proof, Rio approval workflow, sellable pilot evidence, and
+cost/operations review to revisit.
+
+## 2026-05-19 00:02 -03 - Loop Cycle: Refresh System Review Snapshot
+
+### Objective Reviewed
+
+Re-read the required loop docs after the `118cb8e` deploy. The weakest obvious
+doc drift was `SYSTEM_REVIEW_STATUS_2026-05-20.md`, which still named
+`3c20936` as the latest live snapshot even though Render was already live on
+`118cb8e`.
+
+### Render Audit
+
+Used the just-recorded Render/live evidence:
+
+```text
+deploy=dep-d86i0f3tqb8s73dbfsb0
+commit=118cb8e706094ed9c611d52e86246eef888f62d1
+status=live
+GET /healthz -> 200
+GET / -> 200 login page
+private endpoints -> 401 viewer_login_required
+```
+
+### Action Taken
+
+Updated:
+
+```text
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+ACTIVE_NEXT_ACTION.md
+WORK_LOG.md
+```
+
+### Evidence
+
+The system status snapshot now records:
+
+```text
+latest live commit=118cb8e
+deploy=dep-d86i0f3tqb8s73dbfsb0
+buyer quote tracker has zero real buyer evidence
+Rio manual review queue exists
+approved_promotions=0
+approval writes remain absent end to end
+```
+
+### Barrier Or Failure
+
+Positive authenticated viewer/admin proof is still blocked by missing
+credentials in this shell. The snapshot now says that explicitly for
+`118cb8e` instead of the older `3c20936`.
+
+### Next Objective From Docs
+
+Run docs checks, commit/push path-limited with the previous deploy-smoke log
+and refreshed status, wait for Render, smoke production, then re-read the docs.
+After that, the next unblocked weak axis is likely the pilot operating/cost
+ledger or target-management no-fake-UI/admin-CSRF blocker review.
+
+### Why The Loop Continues
+
+The snapshot is fresher, but it does not create authenticated proof, approval
+writes, buyer evidence, measured pilot cost, or a finished Rio indicator.

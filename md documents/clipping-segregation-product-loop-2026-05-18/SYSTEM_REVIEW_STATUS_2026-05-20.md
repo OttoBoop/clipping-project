@@ -8,8 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-3c20936 docs: add sellable demo readiness review
-deploy dep-d86hob67r5hc73cnrq3g -> live
+118cb8e docs: add Rio manual review queue
+deploy dep-d86i0f3tqb8s73dbfsb0 -> live
+finishedAt=2026-05-20T02:47:05.309534Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -30,6 +31,7 @@ GET /api/update/live-results?scope=base&limit=240 -> 401 viewer_login_required
 GET /api/targets -> 401 viewer_login_required
 GET /api/classifications -> 401 viewer_login_required
 GET /api/csrf -> 401 viewer_login_required
+GET /api/update/status -> 401 viewer_login_required
 ```
 
 Meaning:
@@ -49,6 +51,9 @@ Since the previous status snapshot, the loop added and deployed:
 287aa5a web: add scoped Rio economic report panel
 e846ee1 docs: add Render operations review
 3c20936 docs: add sellable demo readiness review
+9906b21 docs: refresh system review status
+6c5f10a docs: clarify buyer quote tracker readiness
+118cb8e docs: add Rio manual review queue
 ```
 
 Freshly proven after deploy:
@@ -62,6 +67,10 @@ Freshly proven after deploy:
   `replace=false`;
 - demo readiness now separates safe operator screen-share from hands-on
   external password access.
+- buyer quote tracking now explicitly records zero real conversations, zero
+  hands-on demo reactions, zero measured pilot runs, and no final price;
+- Rio manual review now has a queue for the eight `not_reviewed` stories, with
+  row 11 as the first review candidate and `approved_promotions=0`.
 
 ## Authenticated Production Proof
 
@@ -84,9 +93,9 @@ viewer/admin passwords are not available here
 ```
 
 Therefore this snapshot does not claim fresh positive viewer/admin browser
-proof after `3c20936`. The fresh proof is logged-out production privacy plus
-static asset deployment. Positive authenticated proof must be repeated by
-Otavio/operator or a session with the real viewer/admin passwords.
+proof after `118cb8e`. The fresh proof is logged-out production privacy plus
+the deployed docs/methodology updates. Positive authenticated proof must be
+repeated by Otavio/operator or a session with the real viewer/admin passwords.
 
 ## Rio Economic Track
 
@@ -95,6 +104,9 @@ Current state:
 - no production `rio_economico` target row has been added;
 - latest topic report has `target_row_approved=false`;
 - manual approval sidecar exists and promotes no rows;
+- manual review queue exists for rows 1, 5, 11, 15, 19, 22, 25, and 26;
+- row 11 is the first candidate for human review because it is `near_date`;
+- `approved_promotions=0` and all eight non-automatic rows remain unpromoted;
 - `/api/reports/rio-economic-topic` is scoped to admin or `rio_economico`;
 - logged-out access returns `401`;
 - the UI panel is hidden by default and fetches the scoped endpoint only for
@@ -107,6 +119,8 @@ Remaining Rio blockers:
 - fresh positive `rio_economico` viewer proof on Render;
 - any real manual approval must be written to the sidecar and the report
   regenerated before promotion;
+- approval writes do not exist end to end, so the Rio panel must remain
+  read-only;
 - no ordinary target-row ingestion until `RIO_ECONOMIC_PRODUCTION_GATE_V0.md`
   passes.
 
@@ -158,6 +172,8 @@ Password operations:
 - no real buyer quote/interview row exists in
   `BUYER_QUOTE_VALIDATION_TRACKER.md`;
 - no measured pilot/update run exists in `V1_PILOT_OPERATING_LEDGER.md`;
+- no final price has been selected because buyer quote evidence and measured
+  operator cost are still empty;
 - local toolchain in this shell lacks `pytest`, `fastapi`, `node`, and
   Playwright, so recent code checks used static/direct assertions plus Render
   deploy smoke.
@@ -172,4 +188,6 @@ Continue from the weakest unblocked items:
 3. record real buyer/demo quote data without inventing price;
 4. record real pilot operator-time data before final pricing;
 5. continue Rio manual-approval/methodology work without target-row pollution.
+6. keep approval UI/actions hidden until approval writes are connected end to
+   end.
 ```

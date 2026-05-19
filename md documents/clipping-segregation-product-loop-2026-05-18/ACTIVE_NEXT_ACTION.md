@@ -43,7 +43,7 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
 - Operator cost discipline guardrail.
 - System review status snapshot for 2026-05-19.
 - System review status snapshot for 2026-05-20 after Rio panel, operations,
-  and demo-readiness deploys.
+  demo-readiness, buyer-tracker, and Rio manual-review-queue deploys.
 - Target management no-fake-UI review snapshot for 2026-05-18.
 - Render env change safety runbook for password/profile operations.
 - Render operations review snapshot for service metadata, live health gate, and
@@ -179,7 +179,8 @@ Continue the production loop. Current priority from the docs:
 If `viewerAuthConfigured=false` returns, treat it as a regression and re-check
 Render env configuration. Do not rotate or publish viewer passwords in docs.
 
-Use `SYSTEM_REVIEW_STATUS_2026-05-20.md` as the current proof/blocker snapshot.
+Use `SYSTEM_REVIEW_STATUS_2026-05-20.md` as the current proof/blocker snapshot;
+it now reflects live commit `118cb8e`.
 
 ## Do Not Do Next
 
