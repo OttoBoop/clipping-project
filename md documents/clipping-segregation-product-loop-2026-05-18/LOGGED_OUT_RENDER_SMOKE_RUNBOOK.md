@@ -37,10 +37,22 @@ The script checks the non-secret production boundary:
 /data/viewer_profiles.json -> 404 Not Found
 /data/reports/rio_economic_topic_report_20260519T142621Z.json -> 404 Not Found
 /clipping-data.json -> 404 Not Found
+POST /api/update/start -> 401 admin_login_required
+POST /api/update/cancel -> 401 admin_login_required
+POST /api/update/resume -> 401 admin_login_required
+POST /api/export -> 401 admin_login_required
+POST /api/targets -> 401 admin_login_required
+PATCH /api/targets/shakira -> 401 admin_login_required
+POST /api/targets/shakira/archive -> 401 admin_login_required
+POST /api/targets/shakira/restore -> 401 admin_login_required
+POST /api/categories -> 401 admin_login_required
+POST /api/classifications -> 401 admin_login_required
 ```
 
 This avoids treating a browser-visible login page as sufficient proof while
-still keeping the check runnable without passwords.
+still keeping the check runnable without passwords. The mutation checks are
+deliberately no-op rejections; they must not create, edit, archive, restore,
+export, update, or classify anything while logged out.
 
 ## What It Does Not Prove
 

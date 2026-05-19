@@ -27,6 +27,8 @@ class ExpectedEndpoint:
     status: int
     detail: str | None = None
     markers: tuple[str, ...] = ()
+    method: str = "GET"
+    body: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -60,6 +62,40 @@ DEFAULT_ENDPOINTS = (
     ExpectedEndpoint("/data/viewer_profiles.json", 404, "Not Found"),
     ExpectedEndpoint("/data/reports/rio_economic_topic_report_20260519T142621Z.json", 404, "Not Found"),
     ExpectedEndpoint("/clipping-data.json", 404, "Not Found"),
+    ExpectedEndpoint("/api/update/start", 401, "admin_login_required", method="POST", body={"preset": "base"}),
+    ExpectedEndpoint("/api/update/cancel", 401, "admin_login_required", method="POST", body={}),
+    ExpectedEndpoint("/api/update/resume", 401, "admin_login_required", method="POST", body={"job_id": "logged-out-smoke"}),
+    ExpectedEndpoint("/api/export", 401, "admin_login_required", method="POST", body={}),
+    ExpectedEndpoint(
+        "/api/targets",
+        401,
+        "admin_login_required",
+        method="POST",
+        body={"display_name": "Logged Out Smoke Should Not Create"},
+    ),
+    ExpectedEndpoint(
+        "/api/targets/shakira",
+        401,
+        "admin_login_required",
+        method="PATCH",
+        body={"display_name": "Logged Out Smoke Should Not Edit"},
+    ),
+    ExpectedEndpoint(
+        "/api/targets/shakira/archive",
+        401,
+        "admin_login_required",
+        method="POST",
+        body={"reason": "Logged-out smoke should not archive."},
+    ),
+    ExpectedEndpoint("/api/targets/shakira/restore", 401, "admin_login_required", method="POST", body={}),
+    ExpectedEndpoint("/api/categories", 401, "admin_login_required", method="POST", body={"name": "Smoke Category"}),
+    ExpectedEndpoint(
+        "/api/classifications",
+        401,
+        "admin_login_required",
+        method="POST",
+        body={"article_id": "smoke", "target_key": "shakira", "sentiment": "neutral", "categories": []},
+    ),
 )
 
 
@@ -67,9 +103,14 @@ class SmokeClient:
     def __init__(self, base_url: str) -> None:
         self.base_url = base_url.rstrip("/")
 
-    def get(self, path: str) -> HttpResponse:
+    def request(self, method: str, path: str, body: dict[str, Any] | None = None) -> HttpResponse:
         url = urllib.parse.urljoin(self.base_url + "/", path.lstrip("/"))
-        req = urllib.request.Request(url, method="GET", headers={"Accept": "application/json,text/html"})
+        data = None
+        headers = {"Accept": "application/json,text/html"}
+        if body is not None:
+            data = json.dumps(body).encode("utf-8")
+            headers["Content-Type"] = "application/json"
+        req = urllib.request.Request(url, data=data, method=method, headers=headers)
         try:
             with urllib.request.urlopen(req, timeout=30) as response:
                 raw = response.read().decode("utf-8", errors="replace")
@@ -79,6 +120,9 @@ class SmokeClient:
             raw = exc.read().decode("utf-8", errors="replace")
             content_type = exc.headers.get("content-type", "")
             return HttpResponse(exc.code, parse_body(raw, content_type), raw, content_type)
+
+    def get(self, path: str) -> HttpResponse:
+        return self.request("GET", path)
 
 
 def parse_body(raw: str, content_type: str) -> Any:
@@ -128,7 +172,7 @@ def health_flags_ok(body: Any) -> tuple[bool, str]:
 
 
 def check_endpoint(client: SmokeClient, expected: ExpectedEndpoint) -> CheckResult:
-    response = client.get(expected.path)
+    response = client.request(expected.method, expected.path, expected.body)
     status_ok = response.status == expected.status
     detail_ok = expected.detail is None or response_detail(response) == expected.detail
     markers_missing = [marker for marker in expected.markers if marker not in response.raw]
@@ -136,7 +180,7 @@ def check_endpoint(client: SmokeClient, expected: ExpectedEndpoint) -> CheckResu
 
     extra_ok = True
     extra_detail = ""
-    if expected.path == "/healthz":
+    if expected.method == "GET" and expected.path == "/healthz":
         extra_ok, extra_detail = health_flags_ok(response.body)
 
     ok = status_ok and detail_ok and markers_ok and extra_ok
@@ -147,7 +191,7 @@ def check_endpoint(client: SmokeClient, expected: ExpectedEndpoint) -> CheckResu
         detail += f" missing_markers={markers_missing}"
     if extra_detail:
         detail += f" {extra_detail}"
-    return result(expected.path, ok, detail)
+    return result(f"{expected.method} {expected.path}", ok, detail)
 
 
 def run_smoke(base_url: str, endpoints: tuple[ExpectedEndpoint, ...] = DEFAULT_ENDPOINTS) -> list[CheckResult]:

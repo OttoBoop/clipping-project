@@ -13745,3 +13745,141 @@ then re-open the docs for the next weak unblocked item.
 The next credentialed run will be stronger, but no fresh authenticated
 production proof exists in this shell yet, and real buyer, pilot-cost, and Rio
 manual approval evidence remain absent.
+
+## 2026-05-19 18:53 -03 - Loop Cycle: Authenticated Smoke UI Guard Live Deploy
+
+### Objective Reviewed
+
+The authenticated smoke helper change had to reach the actual Render service.
+Local tests were only a checkpoint, not completion.
+
+### Action Taken
+
+Committed and pushed:
+
+```text
+dc5994d tools: check authenticated UI shell
+```
+
+Waited for Render:
+
+```text
+deploy=dep-d872pi68bjmc73c3mvug
+commit=dc5994d556969270ae1282f92722ff519bc1a730
+status=live
+finishedAt=2026-05-20T21:52:48.932Z
+```
+
+Ran the logged-out helper against the live site after deploy.
+
+### Evidence
+
+```text
+python3 -B tools/logged_out_render_smoke.py -> ok=true
+```
+
+Checked:
+
+```text
+/healthz configured
+/ login page markers
+private /assets payloads -> 401
+Rio/update/target/category/classification/csrf APIs -> 401
+raw data and legacy root JSON -> 404
+```
+
+### Barrier Or Failure
+
+No logged-out production regression. Authenticated positive proof still cannot
+run in this shell because the viewer/admin smoke credentials are absent.
+
+### Next Objective From Docs
+
+Re-open the `.md` files and pick a non-secret weak item. Priority remains
+production segregation first; where credentials are unavailable, continue with
+guardrails that make the next credentialed or operator run harder to fake.
+
+### Why The Loop Continues
+
+The hardened authenticated helper is deployed, but logged-in scoping still has
+no fresh credentialed live proof here, and buyer/pilot/Rio manual evidence are
+still not real.
+
+## 2026-05-19 18:58 -03 - Loop Cycle: Logged-Out Mutation Rejection Smoke
+
+### Objective Reviewed
+
+The active docs still call out target management and fake/admin-only controls
+as a failure class. The logged-out smoke helper covered private reads but did
+not yet standardize the direct mutation checks that prove logged-out users
+cannot trigger update, export, target management, category, or classification
+actions.
+
+### Action Taken
+
+Extended:
+
+```text
+tools/logged_out_render_smoke.py
+tests/test_logged_out_render_smoke.py
+LOGGED_OUT_RENDER_SMOKE_RUNBOOK.md
+RENDER_PRODUCTION_CHECKLIST.md
+ACTIVE_NEXT_ACTION.md
+SYSTEM_REVIEW_STATUS_2026-05-20.md
+WORK_LOG.md
+```
+
+The helper now supports non-GET requests and checks logged-out rejection for:
+
+```text
+POST /api/update/start
+POST /api/update/cancel
+POST /api/update/resume
+POST /api/export
+POST /api/targets
+PATCH /api/targets/shakira
+POST /api/targets/shakira/archive
+POST /api/targets/shakira/restore
+POST /api/categories
+POST /api/classifications
+```
+
+### Evidence
+
+Local checks:
+
+```text
+python3 -B -m py_compile tools/logged_out_render_smoke.py tests/test_logged_out_render_smoke.py -> passed
+python3 -B tests/test_logged_out_render_smoke.py -> passed
+python3 -B -c "from tests import test_logged_out_render_smoke as t; [getattr(t, name)() for name in dir(t) if name.startswith('test_')]" -> passed
+git diff --check -> passed
+```
+
+Live check before commit:
+
+```text
+python3 -B tools/logged_out_render_smoke.py -> ok=true
+```
+
+The live helper confirmed every new mutation route returned:
+
+```text
+401 admin_login_required
+```
+
+### Barrier Or Failure
+
+No logged-out mutation rejection failure. Positive admin mutation with CSRF is
+still blocked because it requires admin credentials plus explicit permission for
+the disposable production write.
+
+### Next Objective From Docs
+
+Commit/push this helper expansion path-limited, wait for Render, rerun
+`tools/logged_out_render_smoke.py`, log the live deploy, and re-open the docs.
+
+### Why The Loop Continues
+
+Logged-out mutation rejection is now repeatable, but this does not prove
+credentialed viewer scoping, admin CSRF-positive mutation, real buyer/pilot
+evidence, or Rio manual approvals.

@@ -68,6 +68,8 @@ Axis 1: functional password-gated segregation on the current FastAPI app.
   password rotation/offboarding boundaries.
 - Logged-out Render smoke helper for repeating the non-secret production
   privacy/static-boundary check after deploys.
+- Logged-out Render smoke helper now also rejects direct update/export/target
+  management/category/classification mutations with `admin_login_required`.
 - Rio economic ingestion architecture decision: do not flatten Rio into a plain
   target row; preserve query families, exclusions, date quality, and clusters.
 - V1 add-on menu/boundaries for avoiding unlimited low-paid service scope.
@@ -152,7 +154,9 @@ Continue the production loop. Current priority from the docs:
 
 1. keep the logged-out privacy gate verified on Render;
    `tools/logged_out_render_smoke.py` now standardizes this non-secret check
-   and should be run after deploys, while manual curl can remain a backup;
+   and should be run after deploys, while manual curl can remain a backup; it
+   now includes direct logged-out mutation rejection for update/export/targets,
+   categories, and classifications;
 2. keep real viewer profile proof verified after deploys;
    a non-secret authenticated smoke helper now exists, but running it still
    requires viewer/admin passwords outside this shell; it now supports
@@ -241,7 +245,7 @@ If `viewerAuthConfigured=false` returns, treat it as a regression and re-check
 Render env configuration. Do not rotate or publish viewer passwords in docs.
 
 Use `SYSTEM_REVIEW_STATUS_2026-05-20.md` as the current proof/blocker snapshot;
-it now reflects live commit `72ea188`.
+it now reflects live commit `dc5994d`.
 
 ## Do Not Do Next
 

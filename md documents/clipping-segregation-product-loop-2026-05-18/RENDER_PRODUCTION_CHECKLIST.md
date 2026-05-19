@@ -45,6 +45,14 @@ GET /api/update/status -> 401
 GET /api/reports/rio-economic-topic -> 401
 GET /api/targets -> 401
 GET /api/classifications -> 401
+POST /api/update/start -> 401
+POST /api/export -> 401
+POST /api/targets -> 401
+PATCH /api/targets/<known-target> -> 401
+POST /api/targets/<known-target>/archive -> 401
+POST /api/targets/<known-target>/restore -> 401
+POST /api/categories -> 401
+POST /api/classifications -> 401
 ```
 
 Operator helper:
@@ -54,8 +62,9 @@ LOGGED_OUT_RENDER_SMOKE_RUNBOOK.md
 tools/logged_out_render_smoke.py
 ```
 
-This helper does not replace authenticated viewer/admin proof. It only
-standardizes the logged-out privacy/static boundary.
+This helper does not replace authenticated viewer/admin proof. It standardizes
+the logged-out privacy/static boundary and direct logged-out mutation
+rejection.
 
 ## Viewer Checks
 

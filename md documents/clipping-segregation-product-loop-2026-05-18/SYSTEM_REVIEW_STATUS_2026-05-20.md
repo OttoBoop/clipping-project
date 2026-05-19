@@ -8,9 +8,9 @@ _Derived from `SYSTEM_REVIEW_CHECKLIST.md`, recent Render deploys, and
 Current live commit checked:
 
 ```text
-72ea188 tools: add logged-out Render smoke
-deploy dep-d872m85ckfvc73ekfej0 -> live
-finishedAt=2026-05-20T21:45:55.553146Z
+dc5994d tools: check authenticated UI shell
+deploy dep-d872pi68bjmc73c3mvug -> live
+finishedAt=2026-05-20T21:52:48.932Z
 url https://clipping-project.onrender.com/
 ```
 
@@ -37,6 +37,16 @@ GET /data/targets.json -> 404 Not Found
 GET /data/viewer_profiles.json -> 404 Not Found
 GET /data/reports/rio_economic_topic_report_20260519T142621Z.json -> 404 Not Found
 GET /clipping-data.json -> 404 Not Found
+POST /api/update/start -> 401 admin_login_required
+POST /api/update/cancel -> 401 admin_login_required
+POST /api/update/resume -> 401 admin_login_required
+POST /api/export -> 401 admin_login_required
+POST /api/targets -> 401 admin_login_required
+PATCH /api/targets/shakira -> 401 admin_login_required
+POST /api/targets/shakira/archive -> 401 admin_login_required
+POST /api/targets/shakira/restore -> 401 admin_login_required
+POST /api/categories -> 401 admin_login_required
+POST /api/classifications -> 401 admin_login_required
 ```
 
 Meaning:
@@ -80,6 +90,7 @@ e7826f3 tools: guard viewer profile scopes
 9c681e9 docs: refresh market positioning
 daa55a8 docs: log market refresh deploy smoke
 72ea188 tools: add logged-out Render smoke
+dc5994d tools: check authenticated UI shell
 ```
 
 Freshly proven after deploy:
@@ -139,6 +150,9 @@ Freshly proven after deploy:
   `tools/logged_out_render_smoke.py`, which checks `/healthz`, the login page,
   private `/assets` routes, scoped APIs, and raw `data/` denial without
   requiring secrets.
+- the logged-out Render smoke now also checks direct mutation rejection for
+  update/export, target create/edit/archive/restore, category creation, and
+  classification writes.
 
 ## Authenticated Production Proof
 
@@ -331,7 +345,7 @@ Password operations:
   viewer/admin shell marker checks and still failed only on missing outside-Git
   smoke credentials;
 - `python3 -B tools/logged_out_render_smoke.py` passed against the live Render
-  site after the `72ea188` deploy;
+  site after the `dc5994d` deploy;
 - no real buyer quote/interview row exists in
   `BUYER_QUOTE_VALIDATION_TRACKER.md`;
 - no measured pilot/update run exists in `V1_PILOT_OPERATING_LEDGER.md`;
@@ -357,5 +371,5 @@ Continue from the weakest unblocked items:
 6. keep approval UI/actions hidden until approval writes are connected end to
    end.
 7. re-open the long-term docs and choose the next weak unblocked item after
-   this live `72ea188` smoke.
+   this live `dc5994d` smoke.
 ```
