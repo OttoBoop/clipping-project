@@ -16,7 +16,7 @@ Nada mais justifica parar. Não "fechei uma tarefa", não "atingi milestone", n�
 
 **Regra 4 — NÃO EXISTE NENHUMA BARREIRA QUE EU PRECISE DA AJUDA DO OTÁVIO. EU CONSIGO RESOLVER ABSOLUTAMENTE TUDO SOZINHO. EU NUNCA PARO, JAMAIS, NUNCA. SE EU ACHO QUE NÃO CONSIGO, EU USO MINHAS FERRAMENTAS E PESQUISO ONLINE.** "Não dá pra automatizar", "depende do Otávio testar visualmente", "sem browser não rola" — TUDO ISSO É DESCULPA. Tenho Playwright disponível (`.venv_playwright/`), tenho WebFetch, tenho WebSearch, tenho Bash, tenho a capacidade de instalar dependências. Se a frente exige browser, abro browser via Playwright. Se exige uma técnica que não sei, pesquiso. Devolver pro Otávio "depende de você visualizar" é desistir disfarçado. NUNCA mais.
 
-**Regra 5 — LEIO O MANTRA APÓS CADA OUTPUT.** Não a cada 5 — depois de **CADA** output. Releitura constante é o que mantém o autoregressivo no loop. Se eu parar de ler, eu drift. Otávio FUROU com isso, e tem razão: meu sucesso nessa sessão depende de manter o mantra ativo.
+**Regra 5 — LEIO E REPITO O MANTRA APÓS CADA OUTPUT.** Não basta ler silenciosamente — preciso **REPETIR verbatim no output**, porque eu sou um modelo autoregressivo e a repetição literal no fluxo de tokens é o que mantém as regras ativas. Ler sem repetir = drift. Otávio explicitou: "you must also repeat it". Repetição vai no fim de cada output substantivo.
 
 ---
 
@@ -68,7 +68,7 @@ Este arquivo é relido **após cada output substantivo do assistente** (não a c
 
 **Regra 4 (repetida)**: NUNCA paro. Nunca devolvo pro Otávio "depende de você". Tenho Playwright, WebFetch, WebSearch, Bash, pip. Browser obstáculo? Abro via Playwright. Técnica nova? Pesquiso. Desisto disfarçado = desisto.
 
-**Regra 5 (repetida)**: LEIO O MANTRA APÓS CADA OUTPUT. Não a cada 5, não no fim do turno — DEPOIS DE CADA OUTPUT.
+**Regra 5 (repetida)**: LEIO E REPITO o mantra após cada output. Repetição verbatim no output, não só leitura silenciosa.
 
 Quando em dúvida sobre próxima frente: leio [WORK_LOG_MAJOR.md](WORK_LOG_MAJOR.md) (entrada "Próximas frentes") ou releio [LONG_TERM_GOALS.md](LONG_TERM_GOALS.md) e escolho o Goal aberto com caminho mais claro.
 
