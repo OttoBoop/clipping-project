@@ -72,6 +72,48 @@ def login_as_admin(page: Page, base: str, password: str) -> None:
         page.wait_for_selector("#app", timeout=15000)
 
 
+def goal_viewer_segregation(page: Page, base: str, viewer_pass: str, viewer_profile: str = "flavio") -> None:
+    """Visually verify that a viewer sees their segregated dashboard and
+    has no admin affordances (no manage targets, no add target, no clientes).
+    Counterpart to authenticated_render_smoke's HTML-marker check."""
+    print(f"\n=== GOAL 1+4 — viewer segregation visual ({viewer_profile}) ===")
+    page.goto(base + "/", wait_until="domcontentloaded")
+    page.locator("#password").fill(viewer_pass)
+    page.locator("#loginButton").click()
+    page.wait_for_load_state("domcontentloaded")
+    page.wait_for_selector("#app", timeout=15000)
+
+    role_attr = page.locator("#app").get_attribute("data-clipping-session-role")
+    profile_attr = page.locator("#app").get_attribute("data-clipping-session-profile")
+    print(f"  shell attrs: role={role_attr}, profile={profile_attr}")
+    assert role_attr == "viewer", f"expected viewer role, got {role_attr}"
+    assert profile_attr == viewer_profile, f"expected profile {viewer_profile}, got {profile_attr}"
+
+    body_class = page.locator("body").get_attribute("class") or ""
+    assert "viewer-readonly" in body_class, f"body class missing viewer-readonly: '{body_class}'"
+    print(f"  body class: '{body_class}' ✅")
+
+    # Admin sections should be hidden via CSS body.viewer-readonly .add-target-box
+    # Their parent `details` is set hidden by JS as well. Either way: not visible.
+    manage_box = page.locator("#manageTargetsBox")
+    if manage_box.count() > 0:
+        visible = manage_box.is_visible()
+        assert not visible, "manageTargetsBox visible to viewer!"
+        print("  #manageTargetsBox hidden from viewer ✅")
+    viewers_box = page.locator("#manageViewersBox")
+    if viewers_box.count() > 0:
+        visible = viewers_box.is_visible()
+        assert not visible, "manageViewersBox visible to viewer!"
+        print("  #manageViewersBox hidden from viewer ✅")
+
+    # Session bar: viewer should still see profile + logout/change-password
+    expect(page.locator("#sessionBar")).to_be_visible(timeout=10000)
+    expect(page.locator("#logoutButton")).to_be_visible()
+    expect(page.locator("#changePasswordButton")).to_be_visible()
+    print("  viewer can still logout + change own password ✅")
+    shot(page, f"viewer_segregation_{viewer_profile}")
+
+
 def goal3_human_passwords(page: Page, base: str, expected: dict[str, str]) -> None:
     """expected is {profile_label_or_admin: password}. Logs in as each in
     a fresh context, asserts the session bar shows the right profile, then
@@ -368,6 +410,14 @@ def main() -> int:
             page = ctx.new_page()
             goal1_admin_viewers(page, base, admin_pass)
             ctx.close()
+
+            # Viewer segregation visual (Goals 1 + 4 cross-check)
+            flavio_pw = human_passwords.get("flavio")
+            if flavio_pw:
+                ctx = browser.new_context()
+                page = ctx.new_page()
+                goal_viewer_segregation(page, base, flavio_pw, "flavio")
+                ctx.close()
         finally:
             browser.close()
 
