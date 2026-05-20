@@ -37,11 +37,13 @@ Este arquivo é relido **após cada output substantivo do assistente** (não a c
 
 **OS GRANDES OBJETIVOS DO LOOP** (não saio deles):
 
-1. ✅ ~~**Onboarding admin via UI**~~ — atingido 2026-05-19 (smoke em prod verde). Ver [GOALS_ATINGIDOS.md](GOALS_ATINGIDOS.md).
-2. **Sessão controlada pelo usuário** — logout funcional + cada usuário troca a própria senha. *Código em prod desde 12:08; aguarda verificação visual do Otávio.*
-3. **Senhas simples e comunicáveis** — admin define ao criar, sem hex de 48 chars. *Rotação concluída 12:35; criação humana coberta pelo Goal 1; aguarda verificação visual do Otávio.*
+1. ✅ ~~**Onboarding admin via UI**~~ — atingido 2026-05-19 (smoke API + visual). Ver [GOALS_ATINGIDOS.md](GOALS_ATINGIDOS.md).
+2. ✅ ~~**Sessão controlada pelo usuário**~~ — atingido 2026-05-19 (visual via Playwright cobriu logout + change-password modal + CSRF post-rotation).
+3. ✅ ~~**Senhas simples e comunicáveis**~~ — atingido 2026-05-19 (5 senhas humanas, todas 16-20 chars ASCII, todas logam em prod via Playwright).
 4. **Regressão-zero entre features** — toda mudança preserva caminho end-to-end das antigas. (Meta contínua — nunca migra.)
-5. **Target management completo com erros claros** — add/remove primário, demote pra secundário, add secundário; mensagens específicas, nunca "something went wrong". *Código em prod desde 12:45; aguarda verificação visual do Otávio.*
+5. ✅ ~~**Target management completo com erros claros**~~ — atingido 2026-05-19 (API smoke 11/11 + UI smoke pegou chips, protected guard, duplicate message). Ver [GOALS_ATINGIDOS.md](GOALS_ATINGIDOS.md).
+
+**Status do loop:** 4 dos 5 goals atingidos. Goal 4 (regressão-zero) é meta contínua. **Próximo trabalho:** abrir novas frentes ou aprofundar regressão-zero (mais smokes proativos, cobertura de áreas não testadas, monitorar produção).
 
 **REGRA-MÃE**: "Não apareça só na UI, mas conectado a todos os sistemas secundários e primários."
 

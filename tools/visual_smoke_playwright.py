@@ -72,6 +72,38 @@ def login_as_admin(page: Page, base: str, password: str) -> None:
         page.wait_for_selector("#app", timeout=15000)
 
 
+def goal3_human_passwords(page: Page, base: str, expected: dict[str, str]) -> None:
+    """expected is {profile_label_or_admin: password}. Logs in as each in
+    a fresh context, asserts the session bar shows the right profile, then
+    logs out. Verifies Goal 3 — the production set of passwords is human
+    and works."""
+    print("\n=== GOAL 3 — human passwords for all five roles ===")
+    for profile, pw in expected.items():
+        ctx = page.context.browser.new_context()
+        p = ctx.new_page()
+        try:
+            p.goto(base + "/", wait_until="domcontentloaded")
+            p.locator("#password").fill(pw)
+            p.locator("#loginButton").click()
+            p.wait_for_load_state("domcontentloaded")
+            p.wait_for_selector("#app", timeout=15000)
+            # Confirm session bar profile label matches what we expect.
+            bar = p.locator("#sessionBar")
+            expect(bar).to_be_visible(timeout=10000)
+            actual = p.locator("#sessionProfileLabel").inner_text().strip()
+            expected_label = "admin" if profile == "admin" else profile
+            assert expected_label.lower() in actual.lower() or actual.lower() in expected_label.lower(), (
+                f"profile mismatch: expected ~'{expected_label}', got '{actual}'"
+            )
+            print(f"  ✅ '{profile}' logged in (label='{actual}', pw len={len(pw)})")
+            # Quick "is the password ditavel por telefone?" sanity:
+            # human-friendly means 6-32 chars, ASCII letters/digits/hyphen.
+            assert 5 < len(pw) < 33, f"password '{pw}' is not human-length"
+            assert all(c.isalnum() or c in "-_" for c in pw), f"password '{pw}' has non-friendly chars"
+        finally:
+            ctx.close()
+
+
 def goal2_logout(page: Page, base: str, admin_pass: str) -> None:
     print("\n=== GOAL 2 — logout UI ===")
     login_as_admin(page, base, admin_pass)
@@ -285,10 +317,26 @@ def main() -> int:
 
     print(f"==> Visual smoke against {base}  (screenshots → {SCREENSHOT_DIR})")
 
+    # Goal 3 — set of human passwords currently active in production.
+    # Updated 2026-05-19 after the rotation in MAJOR entry 12:35.
+    human_passwords = {
+        "admin": admin_pass,
+        "flavio": os.environ.get("CLIPPING_SMOKE_FLAVIO", "flavio-gabinete-2026"),
+        "shakira": os.environ.get("CLIPPING_SMOKE_SHAKIRA", "shakira-fgv-2026"),
+        "rio_economico": os.environ.get("CLIPPING_SMOKE_RIO", "rio-economico-2026"),
+        "demo_cliente": os.environ.get("CLIPPING_SMOKE_DEMO", "demo-cliente-2026"),
+    }
+
     throwaway: str | None = None
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=not args.headed)
         try:
+            # Goal 3 – human passwords for all five roles
+            ctx = browser.new_context()
+            page = ctx.new_page()
+            goal3_human_passwords(page, base, human_passwords)
+            ctx.close()
+
             # Goal 2 – logout
             ctx = browser.new_context()
             page = ctx.new_page()

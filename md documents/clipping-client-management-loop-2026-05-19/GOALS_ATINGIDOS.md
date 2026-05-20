@@ -62,3 +62,115 @@ Caminho end-to-end coberto: UI → `/api/admin/viewers` → `set_viewer_profile`
 - ⚠️ **Restore de viewer arquivado não existe**: archive limpa senha e profile. Pra trazer de volta, admin recria.
 - ⚠️ **Merge defaults↔file mudou** (entrada major 2026-05-19 20:18): `viewer_profiles()` agora pula o merge com `DEFAULT_VIEWER_PROFILES` se o arquivo não for vazio. Sem isso, archive seria revertido pelos defaults. Se Supabase backup for restaurado parcial/corrompido, viewers podem sumir — vigiar a sincronia.
 - ⚠️ **Push em prod sem redeploy só funciona pra MUTAÇÕES** (file writes em runtime). Adicionar/alterar **endpoint** continua exigindo deploy (FastAPI carrega rotas no import). Não é regressão — é a borda natural entre data e code.
+
+---
+
+## Goal 2 — Sessão controlada pelo usuário (atingido 2026-05-19)
+
+**Critério de sucesso cumprido:**
+
+> "Otávio clica 'Sair' no header em prod → vai pra tela de login + cookie removido. Otávio loga, abre 'Trocar senha' no header, digita senha antiga errada → erro 'senha atual incorreta'. Digita certa + nova → senha trocada, próximo login funciona com nova."
+> ([LONG_TERM_GOALS.md](LONG_TERM_GOALS.md) Goal 2 + [WORK_LOG_MAJOR.md](WORK_LOG_MAJOR.md) entrada 2026-05-19 12:18)
+
+**Evidência (visual smoke via Playwright em prod, 2026-05-19 ~20:48):**
+
+Chromium real navegando `clipping-project.onrender.com`:
+
+| Passo | UI mostrou | Status |
+|---|---|---|
+| Login → sessão admin | session bar visível, label='admin' | ✅ |
+| Clicar `#logoutButton` | retorna pra `#password` form, URL=`/` | ✅ |
+| Cookie `clipping_admin` após logout | ausente | ✅ |
+| Abrir `#changePasswordButton` | modal `#changePasswordDialog` visível | ✅ |
+| Submeter wrong-old | `#changePasswordMessage` = "Senha atual incorreta." | ✅ |
+| Submeter pair válido | message = "Senha trocada. Use a nova no próximo login." + modal fecha sozinho | ✅ |
+| `GET /api/csrf` pós-troca | HTTP 200 (CSRF não-cacheado → re-fetch funciona) | ✅ |
+| Login com nova senha | sessão `admin` ativa | ✅ |
+| Reverter senha throwaway → original | message "Senha trocada" novamente | ✅ |
+
+Tool: [`tools/visual_smoke_playwright.py`](../../tools/visual_smoke_playwright.py).
+
+Caminho end-to-end coberto: UI `#logoutButton` → `apiPost("/api/logout")` → `require_csrf` + `require_viewer` → cookie expira. UI `#changePasswordForm` → `apiPost("/api/change-password")` → `login_identity(old)` → `set_admin_password(new)` (hash pbkdf2-sha256) → resign session cookie → `csrfToken = ""; csrfPromise = null` (invalida cache cliente).
+
+**Migrado do MANTRA.md em:** 2026-05-19
+
+**Notas de manutenção:**
+
+- ⚠️ **Bug encontrado durante a validação (commit `6a929c2`)**: o JS cacheava `csrfToken` da sessão antiga após change-password. Próxima ação CSRF-guarded dava 403 em prod sem mensagem na UI. Fix: invalidar cache (csrfToken="", csrfPromise=null) no sucesso de change-password. Se qualquer endpoint novo emitir nova sessão (login, future rotate-session, etc.), aplicar o mesmo pattern.
+- ⚠️ **Fix secundário (commit `ad8a6bf`)**: `loadViewers` estava limpando `#manageViewersMessage` na re-render. Removido o clear pra que mensagens de sucesso/erro persistam até a próxima ação. Pattern: nunca limpar feedback de usuário num re-load que aconteceu por causa daquele feedback.
+- 🎯 **Goal 2 reutiliza Goal 1's storage**: change-password só funciona porque `set_admin_password`/`set_viewer_password` gravam em `clipping_credentials.json` (não env var). Se um futuro PR voltar a env var, change-password quebra silenciosamente.
+
+---
+
+## Goal 3 — Senhas simples e comunicáveis (atingido 2026-05-19)
+
+**Critério de sucesso cumprido:**
+
+> "Todos os 5 logins em prod usam senhas humanas (ditáveis por telefone) e o admin pode trocar qualquer uma pela UI sem ajuda externa."
+> ([LONG_TERM_GOALS.md](LONG_TERM_GOALS.md) Goal 3 + [WORK_LOG_MAJOR.md](WORK_LOG_MAJOR.md) entrada 2026-05-19 ordem inicial)
+
+**Evidência (visual smoke, 2026-05-19 ~20:48):**
+
+Login em sequência, contexto novo por perfil, asserting que a session bar mostra o profile esperado:
+
+| Profile | Senha (em [~/Documents/clipping-project senhas.md]) | Len | Login OK |
+|---|---|---|---|
+| admin | `clipping-admin-2026` | 19 | ✅ label='admin' |
+| flavio | `flavio-gabinete-2026` | 20 | ✅ label='flavio' |
+| shakira | `shakira-fgv-2026` | 16 | ✅ label='shakira' |
+| rio_economico | `rio-economico-2026` | 18 | ✅ label='rio_economico' |
+| demo_cliente | `demo-cliente-2026` | 17 | ✅ label='demo_cliente' |
+
+Todas 16-20 chars, só ASCII alfanumérico + hífen — "ditáveis por telefone" no critério literal. **Nenhum hex de 48 chars sobreviveu** (rotação documentada em [WORK_LOG_MAJOR.md](WORK_LOG_MAJOR.md) 12:35).
+
+Troca de senha pela UI cobrida pelo Goal 2's modal (admin troca a própria) + Goal 1's `PATCH /api/admin/viewers/{profile}` (admin troca de qualquer viewer). Ambos validados em prod.
+
+**Migrado do MANTRA.md em:** 2026-05-19
+
+**Notas de manutenção:**
+
+- ⚠️ **Senhas estão em `~/Documents/clipping-project senhas.md`** (não-versionado). Hashadas em `data/clipping_credentials.json` com pbkdf2-sha256 310k rounds. Se o backup do Supabase corromper, dá pra recuperar manualmente pelas senhas do arquivo do Otávio.
+- ⚠️ **Nada de validador de força de senha**: foi decisão consciente (admin = Otávio, confiança). Se virar tool pra mais admins, considerar regra "≥8 chars, ≥1 dígito".
+- 🎯 **Se o storage migrar pra env-var de novo, Goal 3 quebra**: senhas humanas digitadas → hash gravado → file persistido. Se algum PR fizer fallback pra env-var sem mecanismo de re-hash, novos viewers ganharão senha env-var de novo. Vigiar.
+
+---
+
+## Goal 5 — Target management completo com erros claros (atingido 2026-05-19)
+
+**Critério de sucesso cumprido:**
+
+> "Otávio abre cliente 'flavio', testa as 4 operações [add/remove primário, demote primário→secundário, add secundário] e em **todas** vê: ou confirmação clara (happy), ou mensagem específica explicando o problema (conflito/inválido). Zero spinner infinito, zero 'something went wrong'."
+> ([LONG_TERM_GOALS.md](LONG_TERM_GOALS.md) Goal 5)
+
+**Evidência (visual smoke via Playwright em prod, 2026-05-19 ~20:48):**
+
+UI real, asserting visualmente:
+
+| Operação | UI mostrou | Status |
+|---|---|---|
+| Abrir "Gerenciar nomes secundários" | lista populada com 7 cards (Flavio + Pedro Angelito protegidos + secundários ativos) | ✅ |
+| Cards de protected primaries (flavio_valle) | chip "Principal protegido", **sem botões** promover/rebaixar/arquivar | ✅ |
+| Submit `addTargetForm` com display_name="Shakira" (duplicata) | `#addTargetMessage` = "Já existe um nome cadastrado como 'Shakira'. Escolha um nome diferente ou edite o existente." | ✅ |
+
+E o **smoke API** [`tools/targets_mgmt_smoke.py`](../../tools/targets_mgmt_smoke.py) (executado 20:35) já tinha coberto os 11 fluxos de erro estruturado:
+
+| Path | HTTP | Message literal de prod |
+|---|---|---|
+| create secondary happy | 200 | (sucesso) |
+| create secondary duplicado | 400 | "Já existe um nome cadastrado como 'Smoke Sec X'..." |
+| promote secondary→primary | 200 | (sucesso) |
+| re-promote primário | 400 | "Este nome ja e principal." |
+| demote primary→secondary | 200 | (sucesso) |
+| demote PROTECTED | 400 | "Nomes principais nao podem ser editados por aqui." |
+| create primary direto | 200 | (sucesso) |
+| archive primário | 200 | (sucesso) |
+| restore conflito (homônimo ativo) | 400 | "Já existe um nome ativo cadastrado como 'Smoke Sec X'..." |
+
+**Migrado do MANTRA.md em:** 2026-05-19
+
+**Notas de manutenção:**
+
+- ⚠️ **PROTECTED_PRIMARY_KEYS está duplicada JS↔Python** (`["flavio_valle", "pedro_angelito"]`). Pequena duplicação aceita pra não criar `/api/me`. Se a lista crescer, considerar injeção via dataset attribute.
+- ⚠️ **Família display_name dedup tem 4 caminhos cobertos**: create_secondary (commit `7a589d5`), create_primary (mesmo padrão), update_secondary (`f41a028`, com skip-self), restore_secondary (`f4b42a2`). Qualquer caminho novo que crie/restaure target precisa do mesmo guard.
+- ⚠️ **Mensagens em backend são em ASCII** (sem acentos: "ja", "nao"). UI render é OK. Não mexer no backend só por estética — risco de quebrar i18n / scripts externos.
+- 🎯 **Smoke targets ficam arquivados após cada run**: acumulam. Eventualmente vale `archive_known_test_targets()` reagindo a marker tipo "smoke_" — fora de escopo agora.
