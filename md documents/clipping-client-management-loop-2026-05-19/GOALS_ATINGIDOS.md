@@ -135,9 +135,41 @@ Troca de senha pela UI cobrida pelo Goal 2's modal (admin troca a própria) + Go
 
 ---
 
-## ✅ Goal 5 — Per-client custom targets RESTAURADO 2026-05-20
+## ✅ Goal 5 — Per-client custom targets RESTAURADO 2026-05-20 (fase 1) + fase 2 (viewer-autenticado muta)
 
-**Commit:** `39dcd0c` (2026-05-20T21:05 −0300), deployed live em prod (`dep-d87nke0js32c73eco6og` ~21:35 −0300).
+**Fase 2 (commit `65fd44d`, deploy `dep-d87pd7rtqb8s73e7ppog` live 2026-05-20T23:35 −0300):**
+
+Confronto do Otávio (2026-05-20): *"QUE PORRA É ESSA COM O OBJETIVO NOVE? Você quer que para o Flávio adicionar registros, ele precise logar como um adm?"* — fase 1 só permitia admin-via-simulação mutar; viewer-autenticado-como-viewer continuava read-only. Fase 2 corrige: viewer loga com sua senha e muta targets dentro do scope dele.
+
+Evidência end-to-end em prod (curl, 2026-05-20T23:38 −0300):
+
+```
+# Login VIEWER flavio (não admin)
+POST /api/login {"password":"flavio-gabinete-2026"} → {role: viewer, profile: flavio}
+
+# Viewer cria target SEM ?as_profile — backend atribui pelo session.profile
+POST /api/targets {"display_name":"Sergio Cabral Test","keywords":["sergio"]}
+  → key=sergio_cabral_test_1779319979, assignedToProfile=flavio
+
+# Viewer vê target em /api/targets (scoped)
+GET /api/targets → 5 targets: [flavio_valle, pedro_*, bernardo_rubiao, sergio_cabral_test_*]
+
+# Viewer tenta archive target de OUTRO cliente (shakira)
+POST /api/targets/shakira/archive → HTTP 403 + {"error":"target_out_of_scope","message":"Este nome não pertence ao seu cliente. Peça ao admin para atribuí-lo, se aplicável.","field":"target_key"}
+
+# Viewer archive PRÓPRIO target
+POST /api/targets/sergio_cabral_test_*/archive → 200, assignedToProfile=flavio
+
+# Segregação: shakira NÃO vê target do flavio
+[login shakira] GET /api/targets → 1 target: [shakira] (sem o sergio_cabral_test_*)
+```
+
+Atores que agora mutam (per LONG_TERM_GOALS.md Goal 5):
+1. **Viewer autenticado** (flavio, shakira, etc.) — muta no SEU scope; out-of-scope retorna 403 com mensagem clara.
+2. **Admin via simulação** `?as_profile=X` — fase 1, continua funcionando, atribui ao X.
+3. **Admin sem simulação** — catálogo global, sem auto-assign.
+
+**Fase 1 — commit anterior `39dcd0c`** (2026-05-20T21:05 −0300), deployed live em prod (`dep-d87nke0js32c73eco6og` ~21:35 −0300).
 
 **Evidência end-to-end em prod (curl, 2026-05-20T21:38 −0300):**
 

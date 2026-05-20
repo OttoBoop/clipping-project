@@ -54,7 +54,7 @@ Este arquivo é relido **após cada output substantivo do assistente** (não a c
 2. ✅ ~~**Sessão controlada pelo usuário**~~ — atingido 2026-05-19 (visual via Playwright cobriu logout + change-password modal + CSRF post-rotation).
 3. ✅ ~~**Senhas simples e comunicáveis**~~ — atingido 2026-05-19 (5 senhas humanas, todas 16-20 chars ASCII, todas logam em prod via Playwright).
 4. **Regressão-zero entre features** — toda mudança preserva caminho end-to-end das antigas. (Meta contínua — nunca migra.)
-5. ✅ ~~**Per-client custom targets**~~ — RESTAURADO e atingido 2026-05-20 (commit `39dcd0c`, deploy `dep-d87nke0js32c73eco6og` live ~21:35). Evidência end-to-end em prod via curl: POST `/api/targets?as_profile=flavio` cria + auto-assigna ao `flavio.target_keys` (4→5 keys); archive em simulação remove (5→4 keys). `assignedToProfile` retornado em ambos. Ver [GOALS_ATINGIDOS.md](GOALS_ATINGIDOS.md).
+5. ✅ ~~**Per-client custom targets**~~ — RESTAURADO em 2 fases (2026-05-20). FASE 1 (commit `39dcd0c`, ~21:35): admin em simulação `?as_profile=X` muta + auto-assign. FASE 2 (commit `65fd44d`, deploy `dep-d87pd7rtqb8s73e7ppog` ~23:35): **viewer-autenticado** (Flávio logado com `flavio-gabinete-2026`, NÃO admin) muta seus próprios targets. Out-of-scope retorna 403 com mensagem clara. Segregação preservada — shakira não vê target do flavio. Ver [GOALS_ATINGIDOS.md](GOALS_ATINGIDOS.md).
 
 **Status do loop:** 4 dos 5 goals atingidos (Goal 5 finalmente atingido com a chave "per-client custom" honrada). Goal 4 (regressão-zero) é meta contínua. **Próximo trabalho:** abrir frente nova OU aprofundar Goal 4 (visual smoke playwright rodar em prod, mais cobertura proativa).
 
