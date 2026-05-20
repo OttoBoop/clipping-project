@@ -689,4 +689,40 @@ Vão acumular se o smoke for re-rodado. Eventual cleanup via `archive_known_test
 - Goal 4 (regressão-zero) cresceu: 8 smokes (10 cenários internos no Playwright) cobrem leitura, mutation, segregação, e agora simulation.
 - A regressão UX original (admin perde controles ao logar como viewer) **não está fixada no fluxo subjacente** — se admin logar manualmente como viewer, o cookie ainda é sobrescrito. Mas agora ele NÃO PRECISA mais fazer isso: o dropdown elimina o motivo. Documentar como "padrão recomendado: simular via dropdown, nunca relogar como viewer".
 
+---
+
+## 2026-05-20 (mais tarde) — Polish jitter + Regra 6 + smoke_all confirmation
+
+**Goal endereçado:** Goal 4 (regressão-zero) — polish + observabilidade
+
+**Mudanças desta sub-iteração:**
+
+1. **Polish anti-jitter:** `data-clipping-simulating-label` server-rendered → banner mostra "Flavio Valle" no primeiro frame em vez de "flavio" piscar por ~2s antes do `/api/admin/viewers` async resolver. JS lê o attr diretamente em `showAsSimulating()`. Test `test_dashboard_html_marks_simulation` ganhou assertion `data-clipping-simulating-label="Flavio Valle"`.
+
+2. **Mantra Regra 6:** "Termino cada output com cláusula de ação imediata 'Agora vou X'". Observação do Otávio: eu parava mesmo lendo + repetindo o mantra. A cláusula é forcing function — coloca um token de comando no fim do output que aciona o autoregressivo a continuar no próximo turno em vez de morrer no check-in passivo. Memory `feedback_clausula_acao_imediata.md` salva.
+
+3. **Smoke sentinel anti-jitter:** `goal_admin_simulation` em `tools/visual_smoke_playwright.py` agora assercia `#simulateBannerProfile` contém "Flavio Valle" imediatamente após `expect(banner).to_be_visible()` — sem `wait_for_timeout`. Regressão futura do jitter (alguém remover o data-attr ou o JS deixar de consumir) será pega no Playwright.
+
+4. **Bug pego no goal_viewer_segregation:** `is_visible()` é instantâneo e racing com `applyViewerControls()` que aplica `body.viewer-readonly` quando viewer loga. Mudei pra `expect(box).to_be_hidden()` que auto-aguarda. Test agora estável.
+
+**smoke_all run pós-mudanças (2026-05-20 ~03:25):**
+
+- 6 OK + 1 falha **transitória** em `admin_viewers_smoke` (HTTP 502 `archive viewer` — Bad Gateway do Render, não regressão funcional).
+- Smoke isolado imediatamente depois passou 9/9 → confirma transitoriedade.
+- Cleanup: arquivado o `smoke_1779258117_3042` que ficou órfão após o 502.
+- **Observação:** smokes não têm retry pra 502/503/timeout. Trade-off consciente: adicionar retry mascararia bugs reais. Operador re-roda smoke individual se vir 502 no smoke_all.
+
+**Commits desta sub-iteração:**
+
+- `19f3de8` feat(simulate)+mantra: server-render label + Regra 6
+- `134d758` tools(smoke): expect().to_be_hidden() + anti-jitter assertion
+- `1b8db72` docs(ccm-loop): SESSION_LOG entry
+
+**Critério de sucesso atingido:**
+
+- ✅ Pytest local: 378/378.
+- ✅ visual_smoke_playwright 10/10 cenários em prod, anti-jitter validado.
+- ✅ Curl direto em prod: `data-clipping-simulating-label="Flavio Valle"` aparece no HTML; banner mostra label completo imediato.
+- ✅ smoke_all: 6/7 OK, 1/7 transitório (502, isolado passa 9/9).
+
 **Próxima sub-ação concreta:** atualizar SESSION_LOG, commitar docs, aguardar decisão do Otávio sobre próximo passo. Candidatos para enquanto ele revisa: começar storage migration (frente bloqueadora de Goals 1, 2-B, 3) OU mexer em casos-edge restantes do baseline (acentos diferentes, payload sem keywords, etc.).
