@@ -39,6 +39,7 @@ run "admin_readonly_smoke (Goal 4 — admin GETs)"      python tools/admin_reado
 run "admin_viewers_smoke (Goal 1 — viewer CRUD)"      python tools/admin_viewers_smoke.py "${BASE_ARG[@]}"
 run "targets_mgmt_smoke (Goal 5 — target ops)"        python tools/targets_mgmt_smoke.py "${BASE_ARG[@]}"
 run "password_change_smoke (Goal 2 — change-password)" python tools/password_change_smoke.py "${BASE_ARG[@]}"
+run "manual_story_smoke (Goal 4 — input gates)"        python tools/manual_story_smoke.py "${BASE_ARG[@]}"
 run "visual_smoke_playwright (Goals 1/2/3/5 — UI)"    .venv_playwright/bin/python tools/visual_smoke_playwright.py "${BASE_ARG[@]}"
 
 echo
