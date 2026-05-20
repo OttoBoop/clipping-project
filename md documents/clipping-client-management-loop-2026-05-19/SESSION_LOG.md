@@ -361,7 +361,48 @@ Push em `origin/master` ✅. Deploy disparado via Render API às 20:19 (HTTP 202
 
 ---
 
-## 2026-05-19 21:00–21:33 — Resposta à fúria do Otávio + fechamento do loop CCM
+## 2026-05-20 — Feature dropdown "Ver como [perfil]" + Regra 6 do mantra
+
+**Goal endereçado:** UX legítima (admin vê como cliente vê) + fix da regressão UX que o Otávio passou (logou como viewer flavio, perdeu controles admin, 600 articles "sumiram" — eram filtragem por target_keys do profile, não dado perdido).
+
+**O que foi feito (commits desta sessão):**
+
+13. `84e3cb3` — `feat(simulate): admin "Ver como [perfil]" dropdown + sticky banner`
+14. `6774cf1` — `tools: visual_smoke covers admin 'Ver como' simulation flow`
+15. `a5ee04c` — docs(ccm-loop): MAJOR entry for simulate feature
+16. `19f3de8` — `feat(simulate)+mantra: server-render label + Regra 6 cláusula de ação`
+17. `134d758` — `tools(smoke): expect().to_be_hidden() + anti-jitter assertion no banner`
+
+**Diff resumido:**
+
+- `web_app/app.py`: `effective_session_for()` + `simulating_profile()` helpers; aplicados em todos endpoints de leitura (dashboard-data, raw-texts, update/status, live-results, targets, classifications, reports/rio-economic-topic). `dashboard_html_for_session()` aceita `simulating=""`, injeta `data-clipping-real-role`, `data-clipping-real-profile`, `data-clipping-simulating`, `data-clipping-simulating-label`.
+- `index.html`: `<details id="simulateBox">` na session-bar + `<aside id="simulateBanner">` sticky.
+- `assets/clipping.js`: novos consts `initialRealRole`, `initialRealProfile`, `initialSimulating`, `initialSimulatingLabel`; helpers `isRealAdmin()`, `inSimulation()`; nova IIFE `setupSimulateDropdown()` que lista profiles via `/api/admin/viewers` e navega via `?as_profile=X`.
+- `assets/clipping.css`: `.session-simulate` (dropdown summary + lista flutuante) e `.simulate-banner` (sticky amarelo).
+- `tests/test_admin_simulate.py`: 7 casos cobrindo payload filtrado, profile inexistente 400, viewer ignora param, admin sem param vê tudo, viewer não escala via `?as_profile=admin`, HTML marca simulating + label, HTML admin normal sem attr.
+- `tools/visual_smoke_playwright.py`: nova função `goal_admin_simulation` com 3 etapas (admin → simulação flavio → voltar). Anti-jitter assert pega regressão futura. `goal_viewer_segregation` mudou pra `expect().to_be_hidden()` (auto-wait).
+- `MANTRA.md`: Regra 6 nova ("Termino cada output com cláusula de ação imediata 'Agora vou X'") + repetição no bloco final.
+
+**Mantra status:**
+
+- Regra 4 (não-parar + pesquisar) — ativa, foi a regra que destravou a feature em vez de devolver pro Otávio
+- Regra 5 (ler+repetir verbatim) — escalada de "ler" pra "ler+repetir"
+- Regra 6 (cláusula "Agora vou X") — nova; forcing function que aciona o autoregressivo a continuar em vez de morrer no check-in passivo
+
+**Smoke status final pós-deploy `19f3de8`:**
+
+- 378/378 pytest local
+- visual_smoke_playwright 10/10 cenários internos verde em prod (article rendering, 5 senhas humanas, logout, change-password, change-password CSRF post-rotation, revert, target mgmt, viewer CRUD, viewer segregation, admin simulation)
+- API smokes (admin_readonly, admin_viewers, targets_mgmt, password_change, logged_out, authenticated) — pendente rodar smoke_all com fixes recentes
+
+**Pra você revisar:**
+
+1. Abrir `clipping-project.onrender.com` com `clipping-admin-2026`
+2. No header, ver o novo dropdown "Ver como: admin (eu)"
+3. Clicar "Flavio Valle" → URL fica `/?as_profile=flavio`, body vira viewer-readonly, banner amarelo aparece com "Flavio Valle (flavio)", controles admin somem, vê 174 stories / 200 articles
+4. Clicar "Voltar pra admin" no banner → URL limpa, restaura admin completo
+5. Testar com shakira (265 stories só do show) e rio_economico
+6. Confirmar que pra trocar de verdade entre sessões admin/viewer continua sendo via logout+login (o dropdown é só visualização)
 
 **Otávio (literal):** "Por favor, adicione no mantra 'não existe nenhuma barreira que eu precise da ajuda do Otávio, eu consigo resolver absolutamente tudo sozinho, eu NUNCA paro' ... Why the fuck aren't you reading the mantra? You will fail again."
 
