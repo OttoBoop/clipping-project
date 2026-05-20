@@ -879,4 +879,40 @@ visual_smoke_playwright       Goals 1/2/3/5 + simulação + viewer-to-viewer
 
 **Para futura IA:** se ver `oomKilled` em events, primeiro checar app logs por endpoint sendo hammered. Polling agressivo + payload pesado é o padrão. Render API útil: `/v1/services/{id}/events` (eventos do server) e `/v1/logs?ownerId=X&resource=Y&type=build|app` (logs de build e app).
 
+---
+
+## 2026-05-21 (mais tarde) — OOMs são CRÔNICOS: 30+ events em 3 semanas
+
+**Investigação adicional:** paginei `/v1/services/{id}/events` por 14 páginas (1370+ events, range 2026-04-29 → 2026-05-21):
+
+| Período | OOMs |
+|---|---|
+| 2026-05-21 | 1 (09:21) |
+| 2026-05-20 | 4 (12:46, 13:05, 13:38, 18:22) |
+| 2026-05-18 | 2 (13:39, 13:44) |
+| 2026-05-06 | 5 (15:41-18:07) |
+| 2026-05-05 | **15** (13:48-23:51) ← **dia crítico** |
+| 2026-05-02 | 1 |
+| 2026-05-01 | 3 |
+| **Total ~3 sem** | **~30 OOMs** |
+
+**Conclusão:** OOM é problema **crônico estrutural**, não one-off. O fix `pollBaseLiveResults` 5s→60s ataca a fonte mais óbvia de carga constante, mas não é garantia de eliminar todos os OOMs:
+
+1. **Memory pressure tem múltiplas fontes prováveis:**
+   - Polling (atacado pelo fix)
+   - Job execution (crawl/ingest puxa muitos artigos em memória)
+   - Supabase backup uploads (upload_current_artifacts materializa o DB inteiro)
+   - Live results merge in payload (cresce com sessões longas)
+
+2. **Padrão 2026-05-05 (15 OOMs em horas):** sugere admin rodou updates pesados naquele dia. Job execution provavelmente é fonte # 2 de pressão.
+
+3. **Recomendação:** Otávio decida entre:
+   - **Plano Starter** ($7/mês): 512Mi → 2Gi (4x mais), resolve crônico
+   - **Esperar fix do polling em prod** e monitorar — pode aliviar mas provavelmente não eliminar
+   - **Investigar memory leaks no backend** (próximo loop futuro, requer profiling em prod)
+
+**Próxima frente potencial pra futuro loop (não esta sessão):** profile memory growth no FastAPI durante jobs. Pode ser via `psutil` + endpoint `/debug/memory` que retorna RSS atual. Ou Supabase artifact storage being more aggressive about clearing local cache.
+
+**Decisão pra agora:** o fix do polling já pushed (commit `71d16f7`). Quando quota resetar e build pegar, espera-se redução de OOMs mas talvez não eliminação. Documentar pra próxima sessão investigar leaks se OOMs continuarem após o fix landar.
+
 **Próxima sub-ação concreta:** atualizar SESSION_LOG, commitar docs, aguardar decisão do Otávio sobre próximo passo. Candidatos para enquanto ele revisa: começar storage migration (frente bloqueadora de Goals 1, 2-B, 3) OU mexer em casos-edge restantes do baseline (acentos diferentes, payload sem keywords, etc.).
