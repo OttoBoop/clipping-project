@@ -135,6 +135,49 @@ Troca de senha pela UI cobrida pelo Goal 2's modal (admin troca a própria) + Go
 
 ---
 
+## ✅ Goal 5 — Per-client custom targets RESTAURADO 2026-05-20
+
+**Commit:** `39dcd0c` (2026-05-20T21:05 −0300), deployed live em prod (`dep-d87nke0js32c73eco6og` ~21:35 −0300).
+
+**Evidência end-to-end em prod (curl, 2026-05-20T21:38 −0300):**
+
+```
+# Login admin
+POST /api/login → {role: admin, profile: admin}
+
+# Estado inicial: flavio.target_keys tem 4 keys
+GET /api/admin/viewers → flavio.target_keys (4): [flavio_valle, pedro_duarte, pedro_angelito, bernardo_rubiao]
+
+# Criar secondary em simulação flavio
+POST /api/targets?as_profile=flavio {display_name: "Audit Verify 1779312705"}
+  → key=audit_verify_1779312705, assignedToProfile=flavio
+
+# flavio.target_keys cresceu para 5
+GET /api/admin/viewers → flavio.target_keys (5): [..., audit_verify_1779312705]
+
+# Archive em simulação flavio
+POST /api/targets/audit_verify_1779312705/archive?as_profile=flavio
+  → assignedToProfile=flavio (= removido do scope)
+
+# flavio.target_keys voltou para 4 (key foi removido)
+GET /api/admin/viewers → flavio.target_keys (4): [flavio_valle, pedro_duarte, pedro_angelito, bernardo_rubiao]
+```
+
+**Critério cumprido:**
+- ✅ Admin em simulação `?as_profile=flavio` consegue criar target que entra automaticamente em `flavio.target_keys`
+- ✅ Archive em simulação remove do scope do profile
+- ✅ Response inclui `assignedToProfile` para frontend confirmar
+- ✅ Endpoints `require_admin` (mutação ainda barrada pra viewer-autenticado-como-viewer; D1=A)
+- ✅ 12/12 tests em `test_admin_simulate.py` cobrindo create/archive/restore + no-op global + viewer-blocked
+
+**Pendente (não bloqueia o Goal):**
+- Visual smoke playwright (`tools/visual_smoke_playwright.py:goal_admin_simulation`) atualizado para asseritar `#manageTargetsBox` VISIBLE em simulação (era hidden — assertion invertida no commit `39dcd0c`). Rodar em prod requer Playwright local.
+- Goal 5.D1=B (viewer-autenticado muta seus targets) e D2=isolado-por-viewer ficam como decisões pendentes do Otávio para fase futura.
+
+**Migrado do MANTRA.md em:** 2026-05-20 (Goal 5 marcado como atingido restaurado)
+
+---
+
 ## ⚠️ Goal 5 — REABERTO 2026-05-20 (originalmente "atingido" 2026-05-19 — atingimento foi prematuro)
 
 **Por que reaberto:** auditoria de prompts (`AUDITORIA_PROMPTS_*.md`, gerada 2026-05-20) mostrou que a resposta verbatim do Otávio à AskUserQuestion de 2026-05-19 era:

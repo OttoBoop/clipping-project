@@ -54,9 +54,9 @@ Este arquivo é relido **após cada output substantivo do assistente** (não a c
 2. ✅ ~~**Sessão controlada pelo usuário**~~ — atingido 2026-05-19 (visual via Playwright cobriu logout + change-password modal + CSRF post-rotation).
 3. ✅ ~~**Senhas simples e comunicáveis**~~ — atingido 2026-05-19 (5 senhas humanas, todas 16-20 chars ASCII, todas logam em prod via Playwright).
 4. **Regressão-zero entre features** — toda mudança preserva caminho end-to-end das antigas. (Meta contínua — nunca migra.)
-5. **Per-client custom targets** — REABERTO 2026-05-20. Goal 5 foi marcado atingido prematuramente em 2026-05-19; auditoria de prompts (`AUDITORIA_PROMPTS_*.md`) revelou que o pedido original era "**Per-client custom targets**" (verbatim, AskUserQuestion 2026-05-19) e o que foi entregue (gerência admin centralizada + UI viewer-readonly em simulação) ignora a chave "per-client custom". Restauração da capacidade de mutar dentro do contexto do cliente em curso.
+5. ✅ ~~**Per-client custom targets**~~ — RESTAURADO e atingido 2026-05-20 (commit `39dcd0c`, deploy `dep-d87nke0js32c73eco6og` live ~21:35). Evidência end-to-end em prod via curl: POST `/api/targets?as_profile=flavio` cria + auto-assigna ao `flavio.target_keys` (4→5 keys); archive em simulação remove (5→4 keys). `assignedToProfile` retornado em ambos. Ver [GOALS_ATINGIDOS.md](GOALS_ATINGIDOS.md).
 
-**Status do loop:** 3 dos 5 goals atingidos. Goal 4 (regressão-zero) é meta contínua — falhou agora porque eu mesmo regredi Goal 5. Goal 5 reaberto. **Próximo trabalho:** restaurar mutação per-client (simulação `?as_profile=X` aceita mutação + atribuição automática ao profile alvo).
+**Status do loop:** 4 dos 5 goals atingidos (Goal 5 finalmente atingido com a chave "per-client custom" honrada). Goal 4 (regressão-zero) é meta contínua. **Próximo trabalho:** abrir frente nova OU aprofundar Goal 4 (visual smoke playwright rodar em prod, mais cobertura proativa).
 
 **REGRA-MÃE**: "Não apareça só na UI, mas conectado a todos os sistemas secundários e primários."
 

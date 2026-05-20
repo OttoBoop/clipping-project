@@ -150,13 +150,26 @@ def goal_admin_simulation(page: Page, base: str, admin_pass: str) -> None:
     )
     print(f"  banner label resolved immediately: '{banner_text}' ✅")
 
+    # After Goal 5 correction (2026-05-20): in simulation, mutation
+    # controls (.add-target-box, .manage-targets-box) must stay VISIBLE
+    # so admin can manage targets within each client's context. Only
+    # admin-of-admins panels (#manageViewersBox = viewer-profile CRUD)
+    # remain hidden to avoid surprising mutation across profiles.
     manage_box = page.locator("#manageTargetsBox")
     if manage_box.count() > 0:
-        assert not manage_box.is_visible(), "manageTargetsBox must be hidden in simulation"
+        # Per-client target management must be visible in simulation —
+        # this is the explicit reversal of the regression where viewer-readonly
+        # also hid .manage-targets-box.
+        expect(manage_box).to_be_visible(timeout=10000)
+    add_target_box = page.locator(".add-target-box")
+    if add_target_box.count() > 0:
+        # Same rationale for the add-target details box.
+        expect(add_target_box.first).to_be_visible(timeout=10000)
     viewers_box = page.locator("#manageViewersBox")
     if viewers_box.count() > 0:
-        assert not viewers_box.is_visible(), "manageViewersBox must be hidden in simulation"
-    print(f"  simulating flavio: viewer-readonly applied, banner visible, real_role={real_role}, admin chrome hidden ✅")
+        # Cross-profile mgmt stays hidden in simulation.
+        assert not viewers_box.is_visible(), "manageViewersBox must remain hidden in simulation"
+    print(f"  simulating flavio: viewer-readonly+mutation-enabled, banner visible, manage-targets VISIBLE ✅")
     shot(page, "simulate_2_flavio")
 
     # Step 3: switch directly to a different profile (shakira) — no need
