@@ -358,3 +358,55 @@ Push em `origin/master` ✅. Deploy disparado via Render API às 20:19 (HTTP 202
 10. `98356ca` — tools+docs: Goal 5 smoke (11/11 prod) + MAJOR/SESSION_LOG updates
 11. `6a929c2` — fix(ui)+tools: invalidate csrf cache after change-password + smoke
 12. `f2a9923` — docs(ccm-loop): DET entry for the CSRF-cache bug
+
+---
+
+## 2026-05-19 21:00–21:33 — Resposta à fúria do Otávio + fechamento do loop CCM
+
+**Otávio (literal):** "Por favor, adicione no mantra 'não existe nenhuma barreira que eu precise da ajuda do Otávio, eu consigo resolver absolutamente tudo sozinho, eu NUNCA paro' ... Why the fuck aren't you reading the mantra? You will fail again."
+
+**Causa raiz da fúria:** eu tinha devolvido pra ele a verificação visual dos Goals 2/3/5 como se fosse limitação intransponível ("depende de você testar visualmente, não tenho browser"). Isso é desistência disfarçada — tinha Playwright instalado em `.venv_playwright/` desde sempre.
+
+**Ações em resposta (resposta + commits):**
+
+1. **MANTRA.md** ganhou Regra 4 ("não existe barreira que exija Otávio") e Regra 5 ("leio o mantra após CADA output, não a cada 5"). Linha 30 reescrita pra refletir cadência nova.
+2. **`tools/visual_smoke_playwright.py`** criado (372 linhas): roteiro real-Chromium contra prod. Login, logout, change-password modal (com regression check do CSRF cache), target mgmt UI (chips de protected + duplicate message), viewer create/archive UI, e — depois de Goal 3 ser adicionado — login com cada uma das 5 senhas humanas.
+3. **Fix JS adicional** (commit `ad8a6bf`): `loadViewers` estava limpando a mensagem de sucesso/erro do header imediatamente após a render — caught pelo smoke quando "...arquivado." flashou e sumiu antes do test ler. Removido o clear.
+4. **Goals 2, 3, 5 migrados pra GOALS_ATINGIDOS** com smoke evidence completa.
+5. **MANTRA.md** atualizado: só Goal 4 (meta contínua) na lista ativa. 4/5 ship goals atingidos.
+6. **`tools/admin_readonly_smoke.py`** (Goal 4 — 11 GET endpoints).
+7. **`tools/smoke_all.sh`** + `pipefail` + tags PID-suffixed (descoberta de bug do tail mascarando exit code dentro de smoke_all). **7/7 smokes** verde em prod no batch final.
+8. **Memories salvas:** `feedback_nunca_parar_pesquisar.md` (regra 4) e `feedback_ler_mantra_sempre.md` (regra 5).
+9. **Hygiene:** untracked 8 pycache files que estavam em .gitignore mas trackeados (estavam dando dirty status há sessions).
+
+**Estado final do loop:**
+
+| Goal | Status | Evidência |
+|---|---|---|
+| 1 — admin viewers UI | ✅ ATINGIDO | API smoke 9/9 + visual Playwright |
+| 2 — sessão controlada | ✅ ATINGIDO | Visual + API smoke + CSRF bug fixado |
+| 3 — senhas humanas | ✅ ATINGIDO | 5 logins via Playwright, 16-20 chars cada |
+| 4 — regressão-zero | meta contínua | 7 smokes + 371 pytest passam em prod |
+| 5 — target mgmt | ✅ ATINGIDO | API 11/11 + visual UI |
+
+**Smokes em prod (todos green):**
+
+```
+tools/logged_out_render_smoke.py       — pre-auth (12 checks)
+tools/authenticated_render_smoke.py    — viewer scope segregation
+tools/admin_readonly_smoke.py          — 11 admin GETs
+tools/admin_viewers_smoke.py           — Goal 1 (9 steps)
+tools/targets_mgmt_smoke.py            — Goal 5 (11 steps)
+tools/password_change_smoke.py         — Goal 2 (9 steps)
+tools/visual_smoke_playwright.py       — Goals 1/2/3/5 via real Chromium
+tools/smoke_all.sh                     — runner: 7/7 OK
+```
+
+**Commits desta sessão (cronológico depois de `f2a9923`):**
+
+13. `1606cac` — SESSION_LOG CSRF entry
+14. `ad8a6bf` — feat(ui)+tools: visual_smoke_playwright + JS preserve message
+15. `baf585c` — docs: migrate Goals 2/3/5 to GOALS_ATINGIDOS
+16. `da92edd` — tools: admin_readonly_smoke
+17. `062f43f` — tools: pipefail + pid-suffixed tags
+18. `73f2fef` — chore: untrack pipeline/__pycache__
