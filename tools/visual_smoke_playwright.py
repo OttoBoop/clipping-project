@@ -129,8 +129,16 @@ def goal_admin_simulation(page: Page, base: str, admin_pass: str) -> None:
     # Step 2: navigate to ?as_profile=flavio and verify simulation state.
     page.goto(base + "/?as_profile=flavio", wait_until="domcontentloaded")
     page.wait_for_selector("#simulateBanner", state="visible", timeout=15000)
+    # After Goal 5 correction (2026-05-20): viewer-readonly must NOT linger
+    # on <body> in simulation, because admin keeps mutation capability and
+    # the controls (.add-target-box, .manage-targets-box) must be usable.
+    # The backend emits <body class="viewer-readonly"> for SSR, then
+    # applyViewerControls() strips it once JS recognises inSimulation().
     body_class = page.locator("body").get_attribute("class") or ""
-    assert "viewer-readonly" in body_class, f"body should be viewer-readonly when simulating, got '{body_class}'"
+    assert "viewer-readonly" not in body_class, (
+        f"body should NOT be viewer-readonly in admin simulation (admin can mutate), "
+        f"got '{body_class}'"
+    )
     real_role = page.locator("#app").get_attribute("data-clipping-real-role")
     assert real_role == "admin", f"real role should remain admin in simulation, got {real_role}"
     sim_attr = page.locator("#app").get_attribute("data-clipping-simulating")
@@ -202,8 +210,18 @@ def goal_admin_simulation(page: Page, base: str, admin_pass: str) -> None:
     sim_attr_4 = page.locator("#app").get_attribute("data-clipping-simulating")
     assert sim_attr_4 == "demo_cliente"
     # No JS console errors during the empty-profile render.
-    benign = ("Failed to load resource: the server responded with a status of 404",)
-    actual_errors = [e for e in console_errors if not any(b in e for b in benign)]
+    # Benign: 404/502/503 (Render free transient + legitimately-empty routes)
+    # and the wrapper messages the app prints when those fetches fail
+    # ("TypeError: Failed to fetch" is the JS error event for network noise,
+    # not a real bug). Real JS bugs (TypeError on undefined, ReferenceError,
+    # etc.) still fail the smoke.
+    benign_substrings = (
+        "Failed to load resource: the server responded with a status of 404",
+        "Failed to load resource: the server responded with a status of 502",
+        "Failed to load resource: the server responded with a status of 503",
+        "TypeError: Failed to fetch",
+    )
+    actual_errors = [e for e in console_errors if not any(b in e for b in benign_substrings)]
     assert not actual_errors, f"console errors with empty profile: {actual_errors}"
     print(f"  switched to demo_cliente (empty profile): no JS errors ✅")
     shot(page, "simulate_2c_demo_empty")
