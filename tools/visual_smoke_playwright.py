@@ -178,6 +178,23 @@ def goal_admin_simulation(page: Page, base: str, admin_pass: str) -> None:
     assert sim_attr_3 == "rio_economico"
     print(f"  switched to rio_economico ✅")
 
+    # Step 4b: simulate demo_cliente — the edge case where the profile has
+    # zero target_keys. UI must render gracefully (no stories, no chips,
+    # no JS console errors). Catches divisions-by-zero / null deref bugs.
+    console_errors: list[str] = []
+    page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
+    page.goto(base + "/?as_profile=demo_cliente", wait_until="domcontentloaded")
+    page.wait_for_selector("#simulateBanner", state="visible", timeout=15000)
+    page.wait_for_timeout(3000)  # give JS time to settle
+    sim_attr_4 = page.locator("#app").get_attribute("data-clipping-simulating")
+    assert sim_attr_4 == "demo_cliente"
+    # No JS console errors during the empty-profile render.
+    benign = ("Failed to load resource: the server responded with a status of 404",)
+    actual_errors = [e for e in console_errors if not any(b in e for b in benign)]
+    assert not actual_errors, f"console errors with empty profile: {actual_errors}"
+    print(f"  switched to demo_cliente (empty profile): no JS errors ✅")
+    shot(page, "simulate_2c_demo_empty")
+
     # Step 5: click 'Voltar pra admin' and verify restore.
     page.locator("#simulateExitButton").click()
     page.wait_for_load_state("domcontentloaded")
