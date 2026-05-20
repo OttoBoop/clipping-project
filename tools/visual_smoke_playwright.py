@@ -159,7 +159,26 @@ def goal_admin_simulation(page: Page, base: str, admin_pass: str) -> None:
     print(f"  simulating flavio: viewer-readonly applied, banner visible, real_role={real_role}, admin chrome hidden ✅")
     shot(page, "simulate_2_flavio")
 
-    # Step 3: click 'Voltar pra admin' and verify restore.
+    # Step 3: switch directly to a different profile (shakira) — no need
+    # to exit simulation first. Catches bugs where the JS assumed admin->
+    # viewer transitions but missed viewer->viewer.
+    page.goto(base + "/?as_profile=shakira", wait_until="domcontentloaded")
+    page.wait_for_selector("#simulateBanner", state="visible", timeout=15000)
+    sim_attr_2 = page.locator("#app").get_attribute("data-clipping-simulating")
+    assert sim_attr_2 == "shakira", f"switched simulating attr should be 'shakira', got {sim_attr_2}"
+    sim_label_2 = page.locator("#app").get_attribute("data-clipping-simulating-label")
+    assert sim_label_2 == "Show da Shakira", f"shakira label should be 'Show da Shakira', got {sim_label_2!r}"
+    print(f"  switched to shakira: label resolved as '{sim_label_2}' ✅")
+    shot(page, "simulate_2b_shakira")
+
+    # Step 4: also try rio_economico — profile that has only 1 target_key.
+    page.goto(base + "/?as_profile=rio_economico", wait_until="domcontentloaded")
+    page.wait_for_selector("#simulateBanner", state="visible", timeout=15000)
+    sim_attr_3 = page.locator("#app").get_attribute("data-clipping-simulating")
+    assert sim_attr_3 == "rio_economico"
+    print(f"  switched to rio_economico ✅")
+
+    # Step 5: click 'Voltar pra admin' and verify restore.
     page.locator("#simulateExitButton").click()
     page.wait_for_load_state("domcontentloaded")
     page.wait_for_selector("#app", timeout=15000)
