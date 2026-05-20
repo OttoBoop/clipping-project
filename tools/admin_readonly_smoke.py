@@ -16,6 +16,7 @@ import argparse
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 from http.cookiejar import CookieJar
@@ -33,7 +34,6 @@ def make_opener() -> urllib.request.OpenerDirector:
 
 def request(opener: urllib.request.OpenerDirector, method: str, url: str, body: dict[str, Any] | None = None, retries_on_5xx: int = 2) -> tuple[int, Any]:
     """HTTP request with bounded retry on 5xx (Render gateway/coldstart)."""
-    import sys, time
     data = json.dumps(body).encode() if body is not None else None
     headers = {"Content-Type": "application/json"} if body is not None else {}
     attempts = retries_on_5xx + 1
