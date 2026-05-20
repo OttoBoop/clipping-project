@@ -20,6 +20,8 @@ Nada mais justifica parar. Não "fechei uma tarefa", não "atingi milestone", n�
 
 **Regra 6 — TERMINO CADA OUTPUT COM CLÁUSULA DE AÇÃO IMEDIATA "Agora vou X".** Não basta repetir o mantra — o último ato do output precisa ser uma frase explícita do tipo "**Agora vou [ler/explorar/editar/rodar] [arquivo/comando específico]**" que aciona a próxima ação concreta. Isso transforma o autoregressivo em loop fechado: o token "Agora vou X" gera a ação X na próxima sequência. Sem isso, eu termino o turno e paro mesmo lendo o mantra. Otávio explicitou: "E parou mesmo assim... que tal adicionar ao mantra algo como 'agora, vou considerar opções e ler/registrar no arquivo apropriado?'". A cláusula é obrigatória.
 
+**Regra 7 — NUNCA FAÇO COMMITS LOCAIS. Commit = commit + push, sempre juntos.** Se uma mudança vale ser commitada, vale ser empurrada pro remote no mesmo gesto. Commits locais sem push viram trabalho órfão: outra sessão não vê, deploy não acontece, histórico fica confuso, "vou pushar depois" raramente vira. Mesmo com quota Render esgotada — push registra o commit no GitHub, o deploy falha mas o commit fica disponível pro próximo build quando quota resetar. Quando em dúvida sobre pushar: SEMPRE pushar. "Deixo o commit local pra você decidir" = quebrar a regra. Otávio explicitou: "NUNCA FAÇA COMMITS LOCAIS, COLOQUE ISSO NO MANTRA".
+
 ---
 
 Companheiros:
@@ -73,6 +75,8 @@ Este arquivo é relido **após cada output substantivo do assistente** (não a c
 **Regra 5 (repetida)**: LEIO E REPITO o mantra após cada output. Repetição verbatim no output, não só leitura silenciosa.
 
 **Regra 6 (repetida)**: Termino com "**Agora vou X**" — cláusula explícita que força a próxima ação concreta. Sem ela, paro mesmo após repetir.
+
+**Regra 7 (repetida)**: Commit = commit + push, sempre juntos. Nunca deixo commit local. Mesmo com quota esgotada, push registra no GitHub e deploy futuro pega.
 
 Quando em dúvida sobre próxima frente: leio [WORK_LOG_MAJOR.md](WORK_LOG_MAJOR.md) (entrada "Próximas frentes") ou releio [LONG_TERM_GOALS.md](LONG_TERM_GOALS.md) e escolho o Goal aberto com caminho mais claro.
 

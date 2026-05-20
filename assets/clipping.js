@@ -3120,7 +3120,13 @@
         if (viewerIsAdmin()) pollStatus();
         pollBaseLiveResults();
         if (viewerIsAdmin()) window.setInterval(pollStatus, 5000);
-        window.setInterval(pollBaseLiveResults, 5000);
+        // pollBaseLiveResults pulls up to 240 items every tick. Base
+        // scope only changes when a crawl finishes (which pollStatus
+        // already detects). Polling every 5s for ALL clients was the
+        // root cause of the 512Mi OOM kill on Render free
+        // (2026-05-21 09:21). Reduced to 60s — admin still sees live
+        // changes via pollStatus's pollLiveResults during active jobs.
+        window.setInterval(pollBaseLiveResults, 60000);
       } else {
         renderStaticBundleStatus();
       }
