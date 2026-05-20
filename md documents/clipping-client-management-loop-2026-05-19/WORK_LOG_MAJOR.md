@@ -832,4 +832,51 @@ visual_smoke_playwright       Goals 1/2/3/5 + simulação + viewer-to-viewer
 
 **Total: 9 ferramentas Python + 1 shell runner + visual Playwright = cobertura horizontal completa do backend admin.**
 
+---
+
+## 2026-05-21 — Investigação profunda: OOM kill + quota Render esgotada + Regra 7 do mantra
+
+**Goal endereçado:** Goal 4 (regressão-zero) — não assumir causa, investigar até raiz
+
+**Trigger:** Otávio questionou: "Por que você não tenta descobrir o que está causando os erros?". Eu havia assumido `pipeline_minutes_exhausted` sem ver logs reais.
+
+**Descobertas via Render API + logs:**
+
+1. **`pipeline_minutes_exhausted` é REAL** — 9 eventos consecutivos entre 06:36-06:55 UTC durante a rajada de pushes. Plano free Render tem cota mensal, esgotou. Build minutes API não pública — só dashboard web.
+
+2. **OOM kill às 09:21 UTC** (issue separada do quota): `server_failed` com `memoryLimit: 512Mi` excedido. Container morreu, restartou em ~30s. Causa raiz identificada nos app logs:
+
+   ```
+   GET /api/update/live-results?scope=base&limit=240 — a cada 5 segundos, todas as abas, todos os usuários
+   ```
+
+   Em `assets/clipping.js:3123`: `window.setInterval(pollBaseLiveResults, 5000)`. Cada tick puxava até 240 items via `live_results_for_base` (que internamente fetcha `row_limit=max(300, 240*8)=1920 rows` do SQLite). 12 req/min/cliente, indefinidamente, sem checagem de job ativo. Em plano free com 512Mi, esse era o ponto de pressão constante.
+
+**Fix executado:** `pollBaseLiveResults` de 5s → 60s (12x menos carga). `pollStatus` (admin only, leve) continua a 5s e durante job ativo chama `pollLiveResults(data)` com job_id específico — admin segue vendo live results em tempo real DURANTE atualizações. Apenas o refresh da base estática (que só muda quando job termina) caiu pra 60s — diferença invisível pra UX.
+
+**Por que esse método (e não outro):**
+
+- ✅ **Cirúrgico**: 1-line change, sem alterar lógica de polling-during-job
+- ✅ **Sem regressão funcional**: live results durante crawl seguem instantâneos via pollStatus → pollLiveResults
+- ✅ **Sem dependência de deploy bem-sucedido**: commit fica no GitHub; quando quota resetar, build pega esse commit como HEAD
+- ✅ **Métricas-alvo**: redução de 92% nas requests deste endpoint = redução proporcional na memória ativa
+
+**Métodos descartados:**
+
+- ❌ Tornar polling totalmente dinâmico (5s during job, stop when idle): mais complexo, requer mudanças em setInterval pra clearInterval/setTimeout recursivo. Ganho marginal sobre 60s.
+- ❌ Cache HTTP no payload + ETag: requer mudança backend + cliente, mais código.
+- ❌ Reduzir `limit=240` no server-side: arbitrário, sem dado dizendo qual número certo.
+- ❌ Esperar admin testar manualmente antes de fixar: dado a regra "nunca devolver problemas pro Otávio" (Regra 4 do mantra).
+
+**Mantra Regra 7 nova:** "NUNCA FAÇO COMMITS LOCAIS. Commit = commit + push, sempre juntos." Trigger: Otávio explicitou "NUNCA FAÇA COMMITS LOCAIS, COLOQUE ISSO NO MANTRA" após eu propor "deixar commit local pra você decidir". Memory `feedback_nunca_commit_local.md` salva. Combinada com Regra 4 (não desistir) + Regra 6 (cláusula ação): força sequência commit+push como uma operação atômica.
+
+**Critério de sucesso (pendente):**
+
+- ✅ Causa raiz identificada via Render events + logs API
+- ✅ Fix pushed (commit `71d16f7`) — registrado no GitHub
+- ⏳ Deploy bloqueado por `pipeline_minutes_exhausted` — fix vai live quando quota Render free resetar (ciclo mensal, data no dashboard) OU se Otávio upgrade Starter
+- ⏳ Verificação pós-deploy: monitorar `server_failed` events em prod — espera-se zero OOMs daqui pra frente
+
+**Para futura IA:** se ver `oomKilled` em events, primeiro checar app logs por endpoint sendo hammered. Polling agressivo + payload pesado é o padrão. Render API útil: `/v1/services/{id}/events` (eventos do server) e `/v1/logs?ownerId=X&resource=Y&type=build|app` (logs de build e app).
+
 **Próxima sub-ação concreta:** atualizar SESSION_LOG, commitar docs, aguardar decisão do Otávio sobre próximo passo. Candidatos para enquanto ele revisa: começar storage migration (frente bloqueadora de Goals 1, 2-B, 3) OU mexer em casos-edge restantes do baseline (acentos diferentes, payload sem keywords, etc.).
