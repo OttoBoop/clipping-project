@@ -640,4 +640,53 @@ A implementação direta — endpoint `POST /api/change-password` que lê `old_p
 
 Vão acumular se o smoke for re-rodado. Eventual cleanup via `archive_known_test_targets` se virar problema (atualmente reage só a marker "atlas_teste").
 
+---
+
+## 2026-05-20 — Feature nova: dropdown "Ver como [perfil]" + fix da regressão "600 notícias sumiram"
+
+**Goal endereçado:** Goal 4 (regressão-zero) + UX legítima nova (admin precisava de uma forma de testar a view de cada cliente sem perder a sessão admin)
+
+**Trigger:** Otávio relatou em pânico que abriu "a view do flavio_valle" e 600 notícias sumiram + addTargetForm/manageTargetsBox inacessíveis. Diagnóstico: ele logou como viewer flavio com a senha `flavio-gabinete-2026` pra ver como o cliente vê, o cookie `clipping_admin` (mesmo nome pra admin e viewer) foi sobrescrito, sessão virou viewer, `body.viewer-readonly` aplicado, `scoped_dashboard_payload` filtrou pelos target_keys do profile flavio (`flavio_valle, pedro_*, bernardo_rubiao`) → shakira + rio_economico desapareceram (~600 articles).
+
+**Método executado:**
+
+1. **`effective_session_for(request, session)` + `simulating_profile(request, session)`** em `web_app/app.py`: helpers que resolvem `?as_profile=X` (admin-only) numa fake session com `role=viewer, profile=X`. Os helpers `scoped_*` existentes em `web_app/segmentation.py` consomem a fake session sem modificação — single source of truth.
+2. **Endpoints atualizados** pra usar `effective_session`: `GET /assets/clipping-data.json`, `clipping-raw-texts.json`, `/api/update/status`, `/api/update/live-results`, `/api/targets`, `/api/classifications`, `/api/reports/rio-economic-topic`.
+3. **`dashboard_html_for_session`** ganhou parâmetro `simulating=""` que muda os data attrs do `<main id="app">`: `data-clipping-session-role/profile` reflete o VIEWER simulado (pra UI escolher chrome de viewer), `data-clipping-real-role/profile` preserva o admin pra dropdown saber que pode sair, `data-clipping-simulating="<profile>"` marca o modo.
+4. **Mutações continuam barradas** por `require_admin` que lê o COOKIE real, não a fake session. Viewer com `?as_profile=admin` não escala pra admin (test cobre).
+5. **UI HTML**: `<details id="simulateBox">` no header session-bar com lista de perfis; `<aside id="simulateBanner">` sticky amarelo com "Voltar pra admin".
+6. **UI JS**: nova IIFE `setupSimulateDropdown` carrega `/api/admin/viewers` pra popular opções, navega pra `/?as_profile=X` na seleção; helpers `isRealAdmin()` e `inSimulation()` separam admin-real de admin-em-simulação. `viewerIsAdmin()` continua false em simulação (applyViewerControls esconde admin chrome como o viewer real).
+7. **Tests novos** (`tests/test_admin_simulate.py`, 7 casos): payload filtrado, profile inexistente 400, viewer ignora param, admin sem param vê tudo, viewer não escala via `?as_profile=admin`, HTML marca simulating attr, HTML admin normal sem attr.
+
+**Por que esse método:**
+
+- ✅ **Single source of truth**: usei a mesma lógica `scoped_dashboard_payload` que o viewer real usa. Garante que admin VÊ exatamente o que o cliente vê — sem divergência. Atende REGRA-MÃE ("não apareça só na UI").
+- ✅ **Cookie imutável**: a sessão admin no cookie nunca muda. Pra sair da simulação, basta navegar sem o query param. Refresh mantém estado via URL.
+- ✅ **Mutação protegida**: `require_admin` lê o cookie real → admin em simulação CONTINUA podendo mutar (mas a UI esconde os controles). Se eu deixar a UI exposta, ele poderia debugar sem perder superpoderes.
+- ✅ **URL compartilhável**: `?as_profile=flavio` na URL — admin pode mandar pro time interno discutir "olha o que o Flavio vê". Viewer ignora o param.
+- ✅ **Sem migration**: zero mudança em schema, env var, ou storage.
+
+**Métodos descartados:**
+
+- ❌ Pure-client filter (front aplica filtro localmente): divergiria do viewer real ao longo do tempo.
+- ❌ Endpoint novo `/api/admin/simulate?profile=X`: redundante com query param em endpoints existentes.
+- ❌ Dropdown que faz logout+login: quebraria a regra de "só visualização" do Otávio.
+
+**Critério de sucesso atingido (em prod):**
+
+- ✅ Pytest local: 378/378 passed.
+- ✅ Commit `84e3cb3` (feat) + `6774cf1` (smoke) pushed, deploy live em 2026-05-20 02:39.
+- ✅ Smoke curl em prod confirmou: admin sem param → 462 stories / 784 articles / 6 targets; admin `?as_profile=flavio` → 174 stories / 200 articles / só targets do flavio; admin `?as_profile=shakira` → 265 stories / só shakira; profile inexistente → 400 `viewer_profile_not_found`.
+- ✅ Visual Playwright: dropdown visível pra real admin, banner amarelo aparece em simulação, manageTargetsBox/manageViewersBox escondidos durante simulação, "Voltar pra admin" restaura tudo (URL limpa, admin chrome volta).
+
+**Goal 4 expandido:**
+
+`tools/visual_smoke_playwright.py` ganhou `goal_admin_simulation` que valida o flow completo via Chromium real. Smoke ainda pega regressão se alguém quebrar o data-attr scheme, esconder o banner sem querer, ou deixar a URL suja após exit.
+
+**Status do loop após esta entrega:**
+
+- 4/5 ship goals continuam em `GOALS_ATINGIDOS.md` (1, 2, 3, 5).
+- Goal 4 (regressão-zero) cresceu: 8 smokes (10 cenários internos no Playwright) cobrem leitura, mutation, segregação, e agora simulation.
+- A regressão UX original (admin perde controles ao logar como viewer) **não está fixada no fluxo subjacente** — se admin logar manualmente como viewer, o cookie ainda é sobrescrito. Mas agora ele NÃO PRECISA mais fazer isso: o dropdown elimina o motivo. Documentar como "padrão recomendado: simular via dropdown, nunca relogar como viewer".
+
 **Próxima sub-ação concreta:** atualizar SESSION_LOG, commitar docs, aguardar decisão do Otávio sobre próximo passo. Candidatos para enquanto ele revisa: começar storage migration (frente bloqueadora de Goals 1, 2-B, 3) OU mexer em casos-edge restantes do baseline (acentos diferentes, payload sem keywords, etc.).
