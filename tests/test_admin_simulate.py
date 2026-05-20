@@ -183,6 +183,7 @@ def test_dashboard_html_marks_simulation(monkeypatch, tmp_path):
     assert resp.status_code == 200
     html = resp.text
     assert 'data-clipping-simulating="flavio"' in html, "missing simulating marker"
+    assert 'data-clipping-simulating-label="Flavio Valle"' in html, "missing pretty label attr"
     assert 'data-clipping-session-role="viewer"' in html, "public role should be viewer"
     assert 'data-clipping-session-profile="flavio"' in html
     assert 'data-clipping-real-role="admin"' in html, "real role tracked separately"

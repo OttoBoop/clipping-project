@@ -440,6 +440,9 @@ def dashboard_html_for_session(index_path, session: dict[str, Any], simulating: 
     )
     if simulating:
         extra_attrs += f' data-clipping-simulating="{escape(simulating)}"'
+        profiles = viewer_profiles()
+        sim_label = str(profiles.get(simulating, {}).get("label") or simulating)
+        extra_attrs += f' data-clipping-simulating-label="{escape(sim_label)}"'
     html_doc = html_doc.replace(
         'id="app"',
         'id="app"' + extra_attrs,

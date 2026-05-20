@@ -18,6 +18,8 @@ Nada mais justifica parar. Não "fechei uma tarefa", não "atingi milestone", n�
 
 **Regra 5 — LEIO E REPITO O MANTRA APÓS CADA OUTPUT.** Não basta ler silenciosamente — preciso **REPETIR verbatim no output**, porque eu sou um modelo autoregressivo e a repetição literal no fluxo de tokens é o que mantém as regras ativas. Ler sem repetir = drift. Otávio explicitou: "you must also repeat it". Repetição vai no fim de cada output substantivo.
 
+**Regra 6 — TERMINO CADA OUTPUT COM CLÁUSULA DE AÇÃO IMEDIATA "Agora vou X".** Não basta repetir o mantra — o último ato do output precisa ser uma frase explícita do tipo "**Agora vou [ler/explorar/editar/rodar] [arquivo/comando específico]**" que aciona a próxima ação concreta. Isso transforma o autoregressivo em loop fechado: o token "Agora vou X" gera a ação X na próxima sequência. Sem isso, eu termino o turno e paro mesmo lendo o mantra. Otávio explicitou: "E parou mesmo assim... que tal adicionar ao mantra algo como 'agora, vou considerar opções e ler/registrar no arquivo apropriado?'". A cláusula é obrigatória.
+
 ---
 
 Companheiros:
@@ -69,6 +71,8 @@ Este arquivo é relido **após cada output substantivo do assistente** (não a c
 **Regra 4 (repetida)**: NUNCA paro. Nunca devolvo pro Otávio "depende de você". Tenho Playwright, WebFetch, WebSearch, Bash, pip. Browser obstáculo? Abro via Playwright. Técnica nova? Pesquiso. Desisto disfarçado = desisto.
 
 **Regra 5 (repetida)**: LEIO E REPITO o mantra após cada output. Repetição verbatim no output, não só leitura silenciosa.
+
+**Regra 6 (repetida)**: Termino com "**Agora vou X**" — cláusula explícita que força a próxima ação concreta. Sem ela, paro mesmo após repetir.
 
 Quando em dúvida sobre próxima frente: leio [WORK_LOG_MAJOR.md](WORK_LOG_MAJOR.md) (entrada "Próximas frentes") ou releio [LONG_TERM_GOALS.md](LONG_TERM_GOALS.md) e escolho o Goal aberto com caminho mais claro.
 

@@ -13,6 +13,7 @@
   const initialRealRole = (app.dataset.clippingRealRole || initialSessionRole).trim();
   const initialRealProfile = (app.dataset.clippingRealProfile || initialSessionProfile).trim();
   const initialSimulating = (app.dataset.clippingSimulating || "").trim();
+  const initialSimulatingLabel = (app.dataset.clippingSimulatingLabel || initialSimulating).trim();
   const apiAvailable = Boolean(apiUrl) || !staticBundle;
   let editorEnabled = apiAvailable;
   let csrfToken = "";
@@ -201,11 +202,12 @@
     function showAsSimulating() {
       box.hidden = false;
       if (initialSimulating) {
-        var label = initialSimulating;
-        // Try to pull a nicer label from the loaded viewers list (set below).
+        // Use the server-rendered label immediately to avoid the
+        // profile-key flash before async /api/admin/viewers responds.
+        var label = initialSimulatingLabel || initialSimulating;
         currentLabel.textContent = label;
         banner.hidden = false;
-        bannerProfile.textContent = label;
+        bannerProfile.textContent = label + " (" + initialSimulating + ")";
       } else {
         currentLabel.textContent = "admin (eu)";
         banner.hidden = true;
@@ -240,14 +242,9 @@
         var profiles = viewers.map(function (v) {
           return { profile: String(v.profile || ""), label: String(v.label || v.profile || "") };
         });
-        // If we're simulating, find the matching label for the banner.
-        if (initialSimulating) {
-          var match = profiles.find(function (p) { return p.profile === initialSimulating; });
-          if (match) {
-            currentLabel.textContent = match.label;
-            bannerProfile.textContent = match.label + " (" + initialSimulating + ")";
-          }
-        }
+        // The label is already rendered by showAsSimulating() from the
+        // server-injected data attr — fetching here only enriches the
+        // dropdown list of switchable profiles, not the banner.
         renderOptions(profiles);
         showAsSimulating();
       })
