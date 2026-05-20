@@ -47,6 +47,7 @@ from .jobs import (
 from .segmentation import (
     ViewerProfileError,
     add_target_to_profile,
+    allowed_target_keys,
     archive_viewer_profile,
     is_admin_session,
     remove_target_from_profile,
@@ -760,16 +761,59 @@ def list_targets(request: Request, include_archived: bool = False) -> dict[str, 
     return scoped_targets_response(public_targets_response(include_archived=include_archived), effective)
 
 
-def _assign_simulated_profile(request: Request, session: dict[str, Any], target_key: str, op: str) -> str:
-    """When admin is simulating ?as_profile=X, patch X.target_keys atomically.
+def _validate_target_scope(session: dict[str, Any], target_key: str) -> None:
+    """Pre-mutation guard: when session is a viewer, block edits on targets
+    outside the viewer's scope. Admin sessions pass through (full catalogue
+    + ?as_profile=X simulation handled by _apply_target_assignment).
 
-    op='add' (create/restore) appends; op='remove' (archive) strips the key
-    + any default_targets entry. Returns the profile key when applied, or ""
-    when no simulation is active. Surfaces ViewerProfileError as 500 because
-    the underlying mutation has already succeeded — silent drift would be
-    worse than a visible error.
+    Raises HTTPException(403, target_out_of_scope) with a structured payload
+    the frontend can present to the user.
     """
-    target_profile = simulating_profile(request, session)
+    role = str(session.get("role") or "")
+    if role != "viewer":
+        return
+    profile = str(session.get("profile") or "")
+    if not profile:
+        raise HTTPException(status_code=401, detail="session_missing_profile")
+    if not target_key:
+        return
+    allowed = allowed_target_keys(session)
+    if allowed is None or target_key in allowed:
+        return
+    raise HTTPException(
+        status_code=403,
+        detail={
+            "error": "target_out_of_scope",
+            "message": "Este nome não pertence ao seu cliente. Peça ao admin para atribuí-lo, se aplicável.",
+            "field": "target_key",
+        },
+    )
+
+
+def _apply_target_assignment(
+    request: Request,
+    session: dict[str, Any],
+    target_key: str,
+    op: str,
+) -> str:
+    """Post-mutation: patch the relevant profile's target_keys atomically.
+
+    - Admin with ?as_profile=X: assigns to X (simulation mode).
+    - Admin without ?as_profile: returns "" (global catalogue, no assignment).
+    - Viewer: assigns to viewer's own profile (from session.profile).
+
+    op='add' (create/restore) appends the key; op='remove' (archive) strips
+    the key + any default_targets entry. Returns the profile that received
+    the patch, or "" when no patch was applied. Surfaces ViewerProfileError
+    as 500 because the underlying target mutation already succeeded.
+    """
+    role = str(session.get("role") or "")
+    if role == "admin":
+        target_profile = simulating_profile(request, session)
+    elif role == "viewer":
+        target_profile = str(session.get("profile") or "")
+    else:
+        return ""
     if not target_profile or not target_key:
         return ""
     try:
@@ -784,7 +828,7 @@ def _assign_simulated_profile(request: Request, session: dict[str, Any], target_
 
 @app.post("/api/targets")
 async def add_target(request: Request) -> JSONResponse:
-    session = require_admin(request)
+    session = require_viewer(request)
     require_csrf(request)
     payload = await read_json(request)
     try:
@@ -794,13 +838,13 @@ async def add_target(request: Request) -> JSONResponse:
     except Exception as exc:
         return target_operation_error_response("create", exc)
     key = str(result.get("key") or "created")
-    assigned = _assign_simulated_profile(request, session, key, "add")
+    assigned = _apply_target_assignment(request, session, key, "add")
     return target_mutation_response("targets-created", result, key, sync_reason="target-created", assigned_profile=assigned)
 
 
 @app.post("/api/targets/primary")
 async def add_primary_target(request: Request) -> JSONResponse:
-    session = require_admin(request)
+    session = require_viewer(request)
     require_csrf(request)
     payload = await read_json(request)
     try:
@@ -810,14 +854,15 @@ async def add_primary_target(request: Request) -> JSONResponse:
     except Exception as exc:
         return target_operation_error_response("create", exc)
     key = str(result.get("key") or "created")
-    assigned = _assign_simulated_profile(request, session, key, "add")
+    assigned = _apply_target_assignment(request, session, key, "add")
     return target_mutation_response("targets-created", result, key, sync_reason="target-created", assigned_profile=assigned)
 
 
 @app.patch("/api/targets/{target_key}")
 async def update_target(target_key: str, request: Request) -> JSONResponse:
-    require_admin(request)
+    session = require_viewer(request)
     require_csrf(request)
+    _validate_target_scope(session, target_key)
     payload = await read_json(request)
     try:
         result = update_secondary_target(target_key, payload)
@@ -831,8 +876,9 @@ async def update_target(target_key: str, request: Request) -> JSONResponse:
 
 @app.post("/api/targets/{target_key}/promote")
 async def promote_target(target_key: str, request: Request) -> JSONResponse:
-    require_admin(request)
+    session = require_viewer(request)
     require_csrf(request)
+    _validate_target_scope(session, target_key)
     try:
         result = promote_target_to_primary(target_key)
     except ValidationError as exc:
@@ -845,8 +891,9 @@ async def promote_target(target_key: str, request: Request) -> JSONResponse:
 
 @app.post("/api/targets/{target_key}/demote")
 async def demote_target(target_key: str, request: Request) -> JSONResponse:
-    require_admin(request)
+    session = require_viewer(request)
     require_csrf(request)
+    _validate_target_scope(session, target_key)
     try:
         result = demote_target_to_secondary(target_key)
     except ValidationError as exc:
@@ -859,8 +906,9 @@ async def demote_target(target_key: str, request: Request) -> JSONResponse:
 
 @app.post("/api/targets/{target_key}/archive")
 async def archive_target(target_key: str, request: Request) -> JSONResponse:
-    session = require_admin(request)
+    session = require_viewer(request)
     require_csrf(request)
+    _validate_target_scope(session, target_key)
     payload = await read_json(request)
     try:
         result = archive_secondary_target(target_key, str(payload.get("reason") or "Arquivado pela equipe."))
@@ -868,14 +916,19 @@ async def archive_target(target_key: str, request: Request) -> JSONResponse:
         return target_validation_response(exc)
     except Exception as exc:
         return target_operation_error_response("archive", exc)
-    assigned = _assign_simulated_profile(request, session, target_key, "remove")
+    assigned = _apply_target_assignment(request, session, target_key, "remove")
     return target_mutation_response("targets-archived", result, target_key, assigned_profile=assigned)
 
 
 @app.post("/api/targets/{target_key}/restore")
 def restore_target(target_key: str, request: Request) -> JSONResponse:
-    session = require_admin(request)
+    session = require_viewer(request)
     require_csrf(request)
+    # Restore is a special case: target is archived (not in any viewer's
+    # target_keys), so scope check would always fail for a viewer. Allow
+    # any authenticated viewer to restore — the target then enters their
+    # own target_keys via _apply_target_assignment below. Admin restores
+    # as before (global or simulated).
     try:
         result = restore_secondary_target(target_key)
     except ValidationError as exc:
@@ -883,7 +936,7 @@ def restore_target(target_key: str, request: Request) -> JSONResponse:
     except Exception as exc:
         return target_operation_error_response("restore", exc)
     key = str(result.get("key") or target_key)
-    assigned = _assign_simulated_profile(request, session, key, "add")
+    assigned = _apply_target_assignment(request, session, key, "add")
     return target_mutation_response("targets-restored", result, key, sync_reason="target-restored", assigned_profile=assigned)
 
 

@@ -1064,6 +1064,15 @@
     return "";
   }
 
+  function isAuthenticatedViewer() {
+    // Real viewer (not admin, not simulation): a session with role=viewer
+    // and a profile attached. They can mutate their own scope per Goal 5
+    // phase 2 (2026-05-20): targets created go into their target_keys,
+    // archive/promote/demote constrained by backend _validate_target_scope.
+    if (isRealAdmin()) return false;
+    return Boolean(sessionProfile());
+  }
+
   function viewerCanSeeRioReport() {
     return apiAvailable && (viewerIsAdmin() || sessionProfile() === "rio_economico");
   }
@@ -1071,11 +1080,12 @@
   function applyViewerControls() {
     var isAdmin = viewerIsAdmin();
     var simulating = inSimulation();
-    // Admin in simulation keeps mutation capability — the cookie session
-    // is admin, the require_admin guard on the backend still passes, and
-    // mutations carry ?as_profile=X so the new target is auto-assigned to
-    // the simulated profile's target_keys.
-    var canMutate = isAdmin || simulating;
+    var authViewer = isAuthenticatedViewer();
+    // Phase 2 (2026-05-20): mutation capability extends to authenticated
+    // viewers — they manage targets within their own target_keys scope.
+    // viewer-readonly body class is dropped for anyone with mutation rights;
+    // backend _validate_target_scope enforces per-target authorisation.
+    var canMutate = isAdmin || simulating || authViewer;
     editorEnabled = canMutate && !(payload && payload.meta && payload.meta.editorEnabled === false);
     document.body.classList.toggle("viewer-readonly", !canMutate);
     runTabs.forEach(function (button) {
@@ -1093,6 +1103,12 @@
         addTargetForm.closest("details").hidden = false;
       }
       if (manageTargetsBox) manageTargetsBox.hidden = false;
+    }
+    // Cross-profile mgmt (Clientes panel) is real-admin-only: hidden for
+    // simulation and for authenticated viewers.
+    var manageViewersBox = document.getElementById("manageViewersBox");
+    if (manageViewersBox) {
+      manageViewersBox.hidden = !isRealAdmin() || Boolean(initialSimulating);
     }
   }
 

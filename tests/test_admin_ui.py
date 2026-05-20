@@ -461,26 +461,42 @@ def test_viewer_cannot_widen_live_results_or_write_admin_actions(monkeypatch, tm
         login_viewer(client, "viewer-shakira")
         all_results = client.get("/api/update/live-results")
         widened = client.get("/api/update/live-results?target_key=flavio_valle")
-        write_attempts = [
+        # Admin-only ops (job control, exports, categories, classifications,
+        # manual-story): still require_admin → viewer hits 401.
+        admin_only_attempts = [
             client.post("/api/update/start", json={"preset": "rapido"}),
             client.post("/api/update/resume", json={"job_id": "job"}),
             client.post("/api/update/cancel"),
             client.post("/api/export"),
+            client.post("/api/categories", json={"name": "Teste"}),
+            client.post("/api/classifications", json={"article_id": 1, "target_key": "shakira"}),
+            client.post("/api/manual-story", json=manual_story_payload(target_keys=["shakira"])),
+        ]
+        # Target mutation endpoints (Goal 5 phase 2, 2026-05-20):
+        # - require_viewer now passes for authenticated viewers
+        # - CSRF is missing in this test client → 403 csrf_check_failed
+        target_attempts_without_csrf = [
             client.post("/api/targets", json={"display_name": "Ana Teste"}),
             client.patch("/api/targets/ana_teste", json={"display_name": "Ana Nova"}),
             client.post("/api/targets/ana_teste/archive", json={"reason": "Duplicado."}),
             client.post("/api/targets/ana_teste/restore"),
-            client.post("/api/categories", json={"name": "Teste"}),
-            client.post("/api/classifications", json={"article_id": 1, "target_key": "shakira"}),
-            client.post("/api/manual-story", json=manual_story_payload(target_keys=["shakira"])),
         ]
 
     assert all_results.status_code == 200
     assert [item["articleId"] for item in all_results.json()["items"]] == [2]
     assert widened.status_code == 200
     assert widened.json()["items"] == []
-    assert [response.status_code for response in write_attempts] == [401] * len(write_attempts)
-    assert [response.json()["detail"] for response in write_attempts] == ["admin_login_required"] * len(write_attempts)
+    # Admin-only endpoints: viewer rejected before CSRF check.
+    assert [r.status_code for r in admin_only_attempts] == [401] * len(admin_only_attempts)
+    assert [r.json()["detail"] for r in admin_only_attempts] == ["admin_login_required"] * len(admin_only_attempts)
+    # Target endpoints: viewer is authenticated, but mutations require CSRF.
+    # Without a CSRF token in this client, all four return 403 csrf_check_failed,
+    # which still prevents any write — verified by assert_empty_db below.
+    assert [r.status_code for r in target_attempts_without_csrf] == [403] * len(target_attempts_without_csrf), (
+        f"target write attempts without CSRF should all be 403, got "
+        f"{[r.status_code for r in target_attempts_without_csrf]}"
+    )
+    assert [r.json()["detail"] for r in target_attempts_without_csrf] == ["csrf_check_failed"] * 4
     assert_empty_db(db_file)
 
 
@@ -1054,7 +1070,13 @@ def test_empty_demo_viewer_login_works_without_viewer_password_env(monkeypatch, 
     assert raw_response.json() == {}
     assert targets_response.status_code == 200
     assert targets_response.json()["targets"] == []
-    assert write_response.status_code == 401
+    # Goal 5 phase 2 (2026-05-20): viewer authenticated CAN mutate. Demo
+    # client logging without CSRF token still hits 403 csrf_check_failed —
+    # mutation blocked, but for a different reason than before (was 401
+    # admin_login_required; now 403 csrf because viewer can reach the
+    # endpoint but CSRF is missing).
+    assert write_response.status_code == 403
+    assert write_response.json()["detail"] == "csrf_check_failed"
 
 
 def test_empty_demo_password_disabled_when_real_viewer_passwords_exist(monkeypatch, tmp_path):

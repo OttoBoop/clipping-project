@@ -68,7 +68,11 @@ O gatilho desse goal: o Otávio relatou que **adicionar novos targets gera erros
 
 Chave: **"Per-client custom targets"** — cada cliente tem seus próprios targets primários e secundários, customizáveis **dentro do contexto do cliente** (não via tela admin separada que atribui depois).
 
-O ator pode ser admin operando via simulação `?as_profile=X` (modelo single-admin atual; cada mutação atribui automaticamente ao profile alvo via `add_target_to_profile`) e/ou viewer autenticado-como-viewer (decisão pendente — exige restaurar password segregation que foi removida pelo codex em `6fd0bac` 2026-05-18).
+**Atores que podem mutar** (fase 2 do Goal 5, 2026-05-20):
+
+1. **Viewer autenticado-como-viewer** (cliente real loga com sua senha, ex: Flávio com `flavio-gabinete-2026`) — muta targets DENTRO do scope do `target_keys` dele. Backend `_validate_target_scope` retorna 403 `target_out_of_scope` se viewer tentar editar/arquivar target fora do scope. Novos targets criados pelo viewer entram automaticamente no scope dele.
+2. **Admin via simulação `?as_profile=X`** — modelo single-admin para uso pelo dono do sistema operar no contexto de cada cliente. Mutação atribui ao profile alvo via `add_target_to_profile`. UI esconde `#manageViewersBox` em simulação.
+3. **Admin sem simulação** — opera no catálogo global de targets. Nenhuma atribuição automática; usa `/api/admin/viewers` PATCH para atribuir manualmente quando necessário.
 
 **Operações requeridas** (cada uma no contexto do cliente):
 
@@ -88,7 +92,9 @@ Cada operação precisa:
 **Failure cases:**
 - clicar "adicionar target" e ver spinner infinito ou erro genérico "something went wrong" sem indicação de qual etapa falhou
 - adicionar target no contexto de flavio e o target NÃO aparecer no `flavio.target_keys` (assinatura silenciosa de regressão da atribuição automática)
-- admin em modo simulação `?as_profile=flavio` ver `.add-target-box` escondido → não consegue gerenciar targets do flavio sem sair do contexto (regressão atual em 2026-05-20, corrigida nesta rodada)
+- admin em modo simulação `?as_profile=flavio` ver `.add-target-box` escondido → não consegue gerenciar targets do flavio sem sair do contexto (regressão de 2026-05-20 fase 1, corrigida em commit `39dcd0c`)
+- **Flávio logar com `flavio-gabinete-2026` e NÃO conseguir adicionar/editar targets dele** — sentido absurdo "cliente precisa de senha de admin pra gerenciar seu próprio scope" (regressão de 2026-05-20 fase 1, corrigida na fase 2)
+- viewer (ex: Flávio) editar/arquivar target de OUTRO cliente (ex: shakira) — deve retornar 403 `target_out_of_scope` com mensagem clara, não 500 nem sucesso silencioso
 
 ---
 

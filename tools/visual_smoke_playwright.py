@@ -243,10 +243,15 @@ def goal_admin_simulation(page: Page, base: str, admin_pass: str) -> None:
 
 
 def goal_viewer_segregation(page: Page, base: str, viewer_pass: str, viewer_profile: str = "flavio") -> None:
-    """Visually verify that a viewer sees their segregated dashboard and
-    has no admin affordances (no manage targets, no add target, no clientes).
-    Counterpart to authenticated_render_smoke's HTML-marker check."""
-    print(f"\n=== GOAL 1+4 — viewer segregation visual ({viewer_profile}) ===")
+    """Phase 2 (2026-05-20): viewer authenticated CAN mutate their own
+    targets. This smoke verifies:
+    - viewer sees the segregated dashboard (their own scope)
+    - .manage-targets-box and add-target box are VISIBLE (mutation enabled)
+    - #manageViewersBox stays hidden (cross-profile mgmt is admin-only)
+    - #simulateBox stays hidden (only real admin can simulate)
+    - viewer-readonly body class is NOT present (mutation enabled)
+    - session bar with logout + change-password works"""
+    print(f"\n=== GOAL 1+4+5 — viewer segregation+mutation visual ({viewer_profile}) ===")
     page.goto(base + "/", wait_until="domcontentloaded")
     page.locator("#password").fill(viewer_pass)
     page.locator("#loginButton").click()
@@ -259,22 +264,36 @@ def goal_viewer_segregation(page: Page, base: str, viewer_pass: str, viewer_prof
     assert role_attr == "viewer", f"expected viewer role, got {role_attr}"
     assert profile_attr == viewer_profile, f"expected profile {viewer_profile}, got {profile_attr}"
 
+    # Viewer can mutate own scope → no viewer-readonly class after JS runs.
+    # Backend may have emitted it for SSR, but applyViewerControls strips it
+    # for authenticated viewers (same as admin-in-simulation).
+    page.wait_for_timeout(1500)  # let JS settle
     body_class = page.locator("body").get_attribute("class") or ""
-    assert "viewer-readonly" in body_class, f"body class missing viewer-readonly: '{body_class}'"
-    print(f"  body class: '{body_class}' ✅")
+    assert "viewer-readonly" not in body_class, (
+        f"viewer-readonly should NOT be present for authenticated viewer "
+        f"(mutation enabled); got '{body_class}'"
+    )
+    print(f"  body class clean (mutation enabled for viewer) ✅")
 
-    # Admin sections should be hidden via CSS body.viewer-readonly .add-target-box
-    # Their parent `details` is set hidden by JS as well. Either way: not visible.
-    # Use expect().to_be_hidden() so Playwright auto-waits for the JS to
-    # apply visibility (was racy with bare is_visible()).
+    # Mutation chrome is visible — viewer can add/manage own targets.
     manage_box = page.locator("#manageTargetsBox")
     if manage_box.count() > 0:
-        expect(manage_box).to_be_hidden(timeout=5000)
-        print("  #manageTargetsBox hidden from viewer ✅")
+        expect(manage_box).to_be_visible(timeout=5000)
+        print("  #manageTargetsBox VISIBLE for viewer ✅")
+    add_target = page.locator(".add-target-box")
+    if add_target.count() > 0:
+        expect(add_target.first).to_be_visible(timeout=5000)
+        print("  .add-target-box VISIBLE for viewer ✅")
+
+    # Cross-profile admin-only chrome stays hidden.
     viewers_box = page.locator("#manageViewersBox")
     if viewers_box.count() > 0:
         expect(viewers_box).to_be_hidden(timeout=5000)
-        print("  #manageViewersBox hidden from viewer ✅")
+        print("  #manageViewersBox hidden from viewer (cross-profile = admin-only) ✅")
+    simulate_box = page.locator("#simulateBox")
+    if simulate_box.count() > 0:
+        expect(simulate_box).to_be_hidden(timeout=5000)
+        print("  #simulateBox hidden from viewer (simulation = admin-only) ✅")
 
     # Session bar: viewer should still see profile + logout/change-password
     expect(page.locator("#sessionBar")).to_be_visible(timeout=10000)

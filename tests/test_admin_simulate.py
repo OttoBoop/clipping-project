@@ -166,25 +166,28 @@ def test_admin_without_param_sees_full_payload(monkeypatch, tmp_path):
     assert story_ids == ["s1", "s2"]
 
 
-def test_admin_simulating_cannot_mutate_targets(monkeypatch, tmp_path):
-    """Admin in simulation mode is still admin in the cookie — but a fake
-    viewer session must NOT grant the simulated viewer admin powers. POST
-    /api/targets goes through require_admin which reads the real cookie,
-    so admin keeps the ability to mutate. This test asserts the inverse:
-    a viewer logged in with ?as_profile=admin cannot escalate."""
-    _, app_module = reload_app(monkeypatch, tmp_path)
+def test_viewer_cannot_escalate_via_as_profile(monkeypatch, tmp_path):
+    """Phase 2 (2026-05-20): viewer authenticated CAN mutate, but only their
+    own scope. ?as_profile=X passed by a viewer is ignored — the profile
+    comes from the session, not the query param. Confirms a viewer trying
+    to escalate via ?as_profile=admin still acts as themselves."""
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
     client = TestClient(app_module.app)
     login(client, "viewer-flavio")
     csrf = client.get("/api/csrf").json()["csrf"]
-    # Viewer tries to use ?as_profile=admin to escalate — backend ignores
-    # the param (viewer cannot simulate), require_admin still rejects.
     resp = client.post(
         "/api/targets?as_profile=admin",
         headers={"X-CSRF-Token": csrf},
-        json={"display_name": "Should Not Create", "keywords": []},
+        json={"display_name": "Viewer Self Scope", "keywords": ["v"]},
     )
-    assert resp.status_code == 401
-    assert "admin_login_required" in resp.text
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    # Assignment goes to viewer's own profile, regardless of as_profile param.
+    assert body.get("assignedToProfile") == "flavio", body
+    new_key = body.get("key")
+    profiles = _profiles_path(tmp_path)
+    assert new_key in profiles["profiles"]["flavio"]["target_keys"]
+    assert new_key not in profiles["profiles"].get("shakira", {}).get("target_keys", [])
 
 
 def test_dashboard_html_marks_simulation(monkeypatch, tmp_path):
@@ -341,17 +344,82 @@ def test_admin_without_simulation_no_assignment(monkeypatch, tmp_path):
         )
 
 
-def test_viewer_create_target_still_blocked(monkeypatch, tmp_path):
-    """Even with ?as_profile, viewer cannot mutate — require_admin reads
-    the real cookie, not the fake simulated session."""
-    _, app_module = reload_app(monkeypatch, tmp_path)
+def test_viewer_authenticated_creates_in_own_scope(monkeypatch, tmp_path):
+    """Phase 2: viewer authenticated as 'flavio' creates a secondary target
+    without any ?as_profile — assignment goes to flavio.target_keys.
+    Shakira does NOT receive the key."""
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
     client = TestClient(app_module.app)
     login(client, "viewer-flavio")
     csrf = client.get("/api/csrf").json()["csrf"]
     resp = client.post(
-        "/api/targets?as_profile=flavio",
+        "/api/targets",
         headers={"X-CSRF-Token": csrf},
-        json={"display_name": "Viewer Should Not Create", "keywords": []},
+        json={"display_name": "Viewer Own Scope", "keywords": ["vos"]},
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body.get("assignedToProfile") == "flavio"
+    new_key = body.get("key")
+    profiles = _profiles_path(tmp_path)
+    assert new_key in profiles["profiles"]["flavio"]["target_keys"]
+    assert new_key not in profiles["profiles"].get("shakira", {}).get("target_keys", [])
+
+
+def test_viewer_cannot_archive_target_out_of_scope(monkeypatch, tmp_path):
+    """Phase 2: viewer flavio cannot archive 'shakira' (out of his scope).
+    Returns 403 target_out_of_scope without touching the target."""
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    client = TestClient(app_module.app)
+    login(client, "viewer-flavio")
+    csrf = client.get("/api/csrf").json()["csrf"]
+    resp = client.post(
+        "/api/targets/shakira/archive",
+        headers={"X-CSRF-Token": csrf},
+        json={"reason": "sabotage attempt"},
+    )
+    assert resp.status_code == 403, resp.text
+    assert "target_out_of_scope" in resp.text
+
+
+def test_viewer_can_archive_own_target(monkeypatch, tmp_path):
+    """Phase 2: viewer flavio creates + archives his own target. Both
+    succeed; archive strips the key from flavio.target_keys."""
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    client = TestClient(app_module.app)
+    login(client, "viewer-flavio")
+    csrf = client.get("/api/csrf").json()["csrf"]
+    # Create
+    create_resp = client.post(
+        "/api/targets",
+        headers={"X-CSRF-Token": csrf},
+        json={"display_name": "Marina Mendes", "keywords": ["Marina"]},
+    )
+    assert create_resp.status_code == 200, create_resp.text
+    new_key = create_resp.json()["key"]
+    profiles_before = _profiles_path(tmp_path)
+    assert new_key in profiles_before["profiles"]["flavio"]["target_keys"]
+    # Archive (own scope — must succeed)
+    arch_resp = client.post(
+        f"/api/targets/{new_key}/archive",
+        headers={"X-CSRF-Token": csrf},
+        json={"reason": "test cleanup"},
+    )
+    assert arch_resp.status_code == 200, arch_resp.text
+    assert arch_resp.json().get("assignedToProfile") == "flavio"
+    profiles_after = _profiles_path(tmp_path)
+    assert new_key not in profiles_after["profiles"]["flavio"]["target_keys"]
+
+
+def test_unauthenticated_create_target_blocked(monkeypatch, tmp_path):
+    """No session at all → require_viewer rejects with viewer_login_required."""
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    client = TestClient(app_module.app)
+    # No login — but CSRF requires a session, so we just hit the endpoint cold.
+    resp = client.post(
+        "/api/targets",
+        headers={"X-CSRF-Token": "noop"},
+        json={"display_name": "Unauthorized", "keywords": []},
     )
     assert resp.status_code == 401
-    assert "admin_login_required" in resp.text
+    assert "viewer_login_required" in resp.text
