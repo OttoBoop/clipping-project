@@ -760,4 +760,76 @@ Vão acumular se o smoke for re-rodado. Eventual cleanup via `archive_known_test
 
 **Pra futura IA:** se um smoke começar a falhar com >2 retries num endpoint específico, o problema é persistente (cold start lento, infra degradada, ou bug). Investigar não só re-rodar.
 
+---
+
+## 2026-05-20 — Cobertura smoke ampliada: 7 → 10 suites (manual_story, categories, classifications)
+
+**Goal endereçado:** Goal 4 (regressão-zero) — coverage expansion
+
+**Motivação:** após smoke retry estabilizar a infraestrutura, expandi pra endpoints admin POST que ainda não tinham sentinela. Três suites novas, focando em INPUT GATES (não happy path destrutivo):
+
+### `tools/manual_story_smoke.py` (6 casos)
+
+Cobertura do `POST /api/manual-story` sem inserir story real (que tem side effects pesados: DB insert + Supabase backup + job record + opcional export):
+
+1. POST sem CSRF → 403
+2. POST sem title (com target_keys válido) → 400 'Informe o titulo'
+3. POST sem summary/full_text → 400 'Informe um resumo'
+4. POST sem target_keys → 400 'Escolha pelo menos um nome'
+5. POST com target_key desconhecido → 400 'Nome acompanhado desconhecido'
+6. viewer POST → 401
+
+**Insight:** validate_target_keys roda ANTES do title check no `insert_manual_story`. Smoke documenta a ordem.
+
+### `tools/categories_smoke.py` (6 casos)
+
+Cobertura completa do `POST /api/categories` — happy path INCLUÍDO porque `get_or_create_category` é idempotente:
+
+1. GET /api/categories → 200
+2. POST sem CSRF → 403
+3. POST sem name → 400 'name is required'
+4. POST com 'smoke_test_category' → 200 (id=14 em prod)
+5. POST de novo com mesmo name → 200 retorna MESMO id (idempotência)
+6. viewer POST → 401
+
+**Insight:** smoke deixa `smoke_test_category` (id=14) na DB que é reusado em runs futuros — zero acúmulo de lixo.
+
+### `tools/classifications_smoke.py` (8 casos)
+
+Cobertura input-gate do `POST /api/classifications` sem upsertar (que muta mention + classification + categories + Supabase):
+
+1. POST sem CSRF → 403
+2. POST sem article_id → 400 'article_id and target_key are required'
+3. POST com article_id string → 400 'article_id must be an integer'
+4. POST com article_sentiment inválido → 400 'must be one of'
+5. POST com centimetragem string → 400 'centimetragem must be numeric'
+6. POST com categories não-lista → 400 'categories must be a list'
+7. GET /api/classifications → 200 (read-only)
+8. viewer POST → 401
+
+**Insight:** todos os erros 400 disparam ANTES de qualquer find_mention_id/upsert — usando article_id=99999999 inexistente é seguro porque a validação de shape vem antes da query.
+
+### Resultado integrado
+
+`smoke_all.sh` agora tem **10 suites**, todas com retry-on-5xx:
+
+```
+logged_out_render_smoke       pre-auth (12 checks)
+authenticated_render_smoke    viewer scope segregation
+admin_readonly_smoke          11 admin GETs
+admin_viewers_smoke           Goal 1 (9 steps)
+targets_mgmt_smoke            Goal 5 (11 steps)
+password_change_smoke         Goal 2 (9 steps)
+manual_story_smoke            6 input gates
+categories_smoke              6 (incluindo idempotência)
+classifications_smoke         8 input gates
+visual_smoke_playwright       Goals 1/2/3/5 + simulação + viewer-to-viewer
+```
+
+**smoke_all run 2026-05-20:** 10/10 OK, zero retries necessários. Render estável nesse run. Commit `dc88ee2` pushed e deploy live.
+
+**Pra futura IA:** se quiser ampliar mais, o último endpoint admin POST sem cobertura específica é `/api/update/start` (rodar crawl). Tem side effects máximos (cria job real, faz HTTP scraping externo) e é o mais perigoso pra smoke. Recomendação: NÃO criar smoke automático pra esse — só cobertura via input gate seria útil (require_admin + require_csrf + payload validation), mas é redundante com os outros.
+
+**Total: 9 ferramentas Python + 1 shell runner + visual Playwright = cobertura horizontal completa do backend admin.**
+
 **Próxima sub-ação concreta:** atualizar SESSION_LOG, commitar docs, aguardar decisão do Otávio sobre próximo passo. Candidatos para enquanto ele revisa: começar storage migration (frente bloqueadora de Goals 1, 2-B, 3) OU mexer em casos-edge restantes do baseline (acentos diferentes, payload sem keywords, etc.).
