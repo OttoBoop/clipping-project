@@ -725,4 +725,39 @@ Vão acumular se o smoke for re-rodado. Eventual cleanup via `archive_known_test
 - ✅ Curl direto em prod: `data-clipping-simulating-label="Flavio Valle"` aparece no HTML; banner mostra label completo imediato.
 - ✅ smoke_all: 6/7 OK, 1/7 transitório (502, isolado passa 9/9).
 
+---
+
+## 2026-05-20 — Smoke retry-on-5xx (resposta direta ao falso negativo do smoke_all)
+
+**Goal endereçado:** Goal 4 (regressão-zero) — observability layer pros smokes
+
+**Trigger:** o smoke_all anterior teve 1 falha transitória (502 archive viewer). Isolado passou 9/9. Conclusão: smokes precisam de retry bounded pra eliminar falsos negativos sem mascarar bugs reais.
+
+**Método executado:** adicionado `retries_on_5xx=2` (com backoff 3s) em `request()` de 4 ferramentas (`admin_viewers_smoke`, `targets_mgmt_smoke`, `password_change_smoke`, `admin_readonly_smoke`). Retry SÓ em 5xx — 4xx (erros de contrato) continuam fail-fast. Log explícito em stderr quando dispara:
+
+```
+  ! transient 502 on POST /api/targets/X/archive — retry 1/2 in 3s
+```
+
+**Por que esse método:**
+
+- ✅ **Bounded**: 2 retries máx. Se um endpoint estiver REALMENTE quebrado, 3 tentativas falham e o smoke quebra → operador investiga.
+- ✅ **5xx-only**: 4xx (validation/auth/contract) continuam fail-fast. Não mascara bugs de produto.
+- ✅ **Loud**: stderr loga quando dispara. Operador vê "ah, teve retry" e pode investigar o 5xx subjacente se quiser (Render coldstart, gateway hiccup, deploy em curso).
+- ✅ **Idempotent**: GETs e archives/restores são idempotentes; retry seguro. Creates não são idempotentes em geral, mas o smoke já tem tag único por (time+pid).
+
+**Métodos descartados:**
+
+- ❌ Retry infinito: mascara bugs persistentes.
+- ❌ Retry em 4xx: vira "tentar até validar", esconde bugs.
+- ❌ Sem retry (status quo): falso negativo no smoke_all força operador a re-rodar isolado pra cada hiccup.
+
+**Critério de sucesso atingido (smoke_all re-run, exit 0):**
+
+- ✅ 7/7 passed (era 6/7 antes do retry).
+- ✅ 1 retry transitório disparou: `POST /api/targets/smoke_sec_X/archive` → 502 → retry 1/2 → 200. Sistema funcionou como projetado.
+- ✅ Commit `f6e6d86` pushed.
+
+**Pra futura IA:** se um smoke começar a falhar com >2 retries num endpoint específico, o problema é persistente (cold start lento, infra degradada, ou bug). Investigar não só re-rodar.
+
 **Próxima sub-ação concreta:** atualizar SESSION_LOG, commitar docs, aguardar decisão do Otávio sobre próximo passo. Candidatos para enquanto ele revisa: começar storage migration (frente bloqueadora de Goals 1, 2-B, 3) OU mexer em casos-edge restantes do baseline (acentos diferentes, payload sem keywords, etc.).
