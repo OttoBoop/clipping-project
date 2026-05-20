@@ -9,6 +9,10 @@
   const staticBundle = app.dataset.clippingStatic === "1";
   const initialSessionRole = (app.dataset.clippingSessionRole || "").trim();
   const initialSessionProfile = (app.dataset.clippingSessionProfile || "").trim();
+  // Real cookie session (preserved when admin simulates a viewer profile).
+  const initialRealRole = (app.dataset.clippingRealRole || initialSessionRole).trim();
+  const initialRealProfile = (app.dataset.clippingRealProfile || initialSessionProfile).trim();
+  const initialSimulating = (app.dataset.clippingSimulating || "").trim();
   const apiAvailable = Boolean(apiUrl) || !staticBundle;
   let editorEnabled = apiAvailable;
   let csrfToken = "";
@@ -147,6 +151,111 @@
         }
       });
     }
+  })();
+
+  (function setupSimulateDropdown() {
+    var box = document.getElementById("simulateBox");
+    var banner = document.getElementById("simulateBanner");
+    var bannerProfile = document.getElementById("simulateBannerProfile");
+    var bannerExit = document.getElementById("simulateExitButton");
+    var currentLabel = document.getElementById("simulateCurrentLabel");
+    var optionsList = document.getElementById("simulateOptions");
+    // Only the real admin gets the dropdown (and the banner).
+    if (!box || !banner || !bannerProfile || !bannerExit || !currentLabel || !optionsList) return;
+    if (!isRealAdmin()) return;
+
+    function setLocation(url) {
+      window.location.href = url;
+    }
+
+    function exitSimulation() {
+      setLocation(window.location.pathname);
+    }
+
+    function enterSimulation(profile) {
+      var url = window.location.pathname + "?as_profile=" + encodeURIComponent(profile);
+      setLocation(url);
+    }
+
+    function renderOptions(profiles) {
+      // profiles is [{profile, label}], always preceded by an "admin" entry.
+      var rows = [{ profile: "", label: "admin (eu)" }];
+      profiles.forEach(function (p) { rows.push(p); });
+      optionsList.innerHTML = rows.map(function (row) {
+        var sel = (row.profile === initialSimulating) || (!row.profile && !initialSimulating);
+        var marker = sel ? "✓ " : "";
+        return (
+          '<li role="menuitem"><button type="button" data-simulate-profile="' +
+          escapeAttr(row.profile) + '">' + marker + escapeText(row.label) + '</button></li>'
+        );
+      }).join("");
+    }
+
+    function escapeAttr(s) {
+      return String(s || "").replace(/[&<>"']/g, function (ch) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+      });
+    }
+    function escapeText(s) { return escapeAttr(s); }
+
+    function showAsSimulating() {
+      box.hidden = false;
+      if (initialSimulating) {
+        var label = initialSimulating;
+        // Try to pull a nicer label from the loaded viewers list (set below).
+        currentLabel.textContent = label;
+        banner.hidden = false;
+        bannerProfile.textContent = label;
+      } else {
+        currentLabel.textContent = "admin (eu)";
+        banner.hidden = true;
+      }
+    }
+
+    bannerExit.addEventListener("click", exitSimulation);
+
+    optionsList.addEventListener("click", function (event) {
+      var btn = event.target.closest("[data-simulate-profile]");
+      if (!btn) return;
+      var profile = btn.getAttribute("data-simulate-profile") || "";
+      if (profile === initialSimulating || (!profile && !initialSimulating)) {
+        // Already in that mode; just close the dropdown.
+        box.removeAttribute("open");
+        return;
+      }
+      if (!profile) {
+        exitSimulation();
+      } else {
+        enterSimulation(profile);
+      }
+    });
+
+    // Load the available viewer profiles via /api/admin/viewers (only the
+    // real admin's cookie can call this). When simulating, this still works
+    // because mutations are barred by require_admin reading the real cookie.
+    apiFetch("/api/admin/viewers", { cache: "no-store" })
+      .then(function (resp) { return resp.ok ? resp.json() : { viewers: [] }; })
+      .then(function (data) {
+        var viewers = (data && data.viewers) || [];
+        var profiles = viewers.map(function (v) {
+          return { profile: String(v.profile || ""), label: String(v.label || v.profile || "") };
+        });
+        // If we're simulating, find the matching label for the banner.
+        if (initialSimulating) {
+          var match = profiles.find(function (p) { return p.profile === initialSimulating; });
+          if (match) {
+            currentLabel.textContent = match.label;
+            bannerProfile.textContent = match.label + " (" + initialSimulating + ")";
+          }
+        }
+        renderOptions(profiles);
+        showAsSimulating();
+      })
+      .catch(function () {
+        // Even if the API fails, expose the exit affordance when simulating.
+        renderOptions([]);
+        showAsSimulating();
+      });
   })();
 
   (function setupAdminViewers() {
@@ -933,6 +1042,14 @@
     if (initialSessionRole) return initialSessionRole === "admin";
     if (!payload || !payload.meta || !Object.prototype.hasOwnProperty.call(payload.meta, "viewerRole")) return true;
     return payload.meta.viewerRole === "admin";
+  }
+
+  function isRealAdmin() {
+    return initialRealRole === "admin";
+  }
+
+  function inSimulation() {
+    return Boolean(initialSimulating) && isRealAdmin();
   }
 
   function sessionProfile() {

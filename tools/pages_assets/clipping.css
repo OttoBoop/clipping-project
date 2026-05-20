@@ -2008,6 +2008,77 @@ details[open] > summary .story-toggle {
 .session-logout:hover { filter: brightness(0.95); }
 .session-logout:disabled { opacity: 0.6; cursor: not-allowed; }
 
+.session-simulate {
+  position: relative;
+}
+.session-simulate[hidden] { display: none; }
+.session-simulate > summary {
+  cursor: pointer;
+  padding: 6px 12px;
+  border: 1px solid rgba(180, 196, 209, 0.7);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bg-deep);
+  list-style: none;
+}
+.session-simulate > summary::-webkit-details-marker { display: none; }
+.session-simulate > summary::after {
+  content: " ▾";
+  color: var(--muted);
+  font-size: 11px;
+}
+.session-simulate[open] > summary {
+  background: var(--surface-soft);
+  border-color: var(--brand);
+}
+.simulate-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid rgba(180, 196, 209, 0.7);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  min-width: 220px;
+  z-index: 100;
+}
+.simulate-options li { margin: 0; }
+.simulate-options button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  color: var(--bg-deep);
+  cursor: pointer;
+}
+.simulate-options button:hover { background: var(--surface-soft); }
+
+.simulate-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #fff7e0;
+  color: #6b4b00;
+  border: 1px solid #f0c75c;
+  border-radius: 8px;
+  margin: 10px auto;
+  max-width: 1200px;
+  font-weight: 700;
+  font-size: 14px;
+}
+.simulate-banner[hidden] { display: none; }
+.simulate-banner button { white-space: nowrap; }
+
 .password-dialog {
   border: 1px solid var(--line);
   border-radius: 12px;

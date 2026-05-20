@@ -342,6 +342,35 @@ def current_session(request: Request) -> dict[str, Any] | None:
     return verify_session(request.cookies.get(COOKIE_NAME))
 
 
+def simulating_profile(request: Request, session: dict[str, Any] | None) -> str:
+    """Return the viewer profile an admin is simulating, or empty string.
+
+    Only admin sessions can simulate; viewers with the query param simply
+    see their own scope. The profile must exist in viewer_profiles().
+    """
+    if not session or str(session.get("role") or "") != "admin":
+        return ""
+    raw = str(request.query_params.get("as_profile") or "").strip()
+    if not raw:
+        return ""
+    if raw == "admin":
+        return ""
+    if raw not in viewer_profiles():
+        raise HTTPException(status_code=400, detail="viewer_profile_not_found")
+    return raw
+
+
+def effective_session_for(request: Request, session: dict[str, Any]) -> dict[str, Any]:
+    """Resolve `?as_profile=X` (admin only) into a fake viewer session that
+    the scoped_* helpers will treat as a real viewer for filtering purposes.
+    Mutations remain barred because require_admin reads the real cookie.
+    """
+    target = simulating_profile(request, session)
+    if not target:
+        return session
+    return {"sub": target, "role": "viewer", "profile": target, "exp": session.get("exp")}
+
+
 def read_json_file(path) -> dict[str, Any]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -388,21 +417,35 @@ def safe_asset_path(asset_path: str):
     return asset_file
 
 
-def dashboard_html_for_session(index_path, session: dict[str, Any]) -> str:
+def dashboard_html_for_session(index_path, session: dict[str, Any], simulating: str = "") -> str:
     html_doc = index_path.read_text(encoding="utf-8")
     html_doc = html_doc.replace('data-clipping-static="1"', 'data-clipping-static="0"', 1)
-    role = str(session.get("role") or "admin")
-    profile = str(session.get("profile") or ("admin" if role == "admin" else ""))
+    real_role = str(session.get("role") or "admin")
+    real_profile = str(session.get("profile") or ("admin" if real_role == "admin" else ""))
+    # When admin is simulating, the public role/profile reflects the
+    # simulated viewer so the JS shell behaves identically to the real
+    # viewer experience. The real role/profile are exposed under separate
+    # data attrs so the dropdown can show "back to admin".
+    if simulating:
+        public_role = "viewer"
+        public_profile = simulating
+    else:
+        public_role = real_role
+        public_profile = real_profile
+    extra_attrs = (
+        f' data-clipping-session-role="{escape(public_role)}"'
+        f' data-clipping-session-profile="{escape(public_profile)}"'
+        f' data-clipping-real-role="{escape(real_role)}"'
+        f' data-clipping-real-profile="{escape(real_profile)}"'
+    )
+    if simulating:
+        extra_attrs += f' data-clipping-simulating="{escape(simulating)}"'
     html_doc = html_doc.replace(
         'id="app"',
-        (
-            'id="app"'
-            f' data-clipping-session-role="{escape(role)}"'
-            f' data-clipping-session-profile="{escape(profile)}"'
-        ),
+        'id="app"' + extra_attrs,
         1,
     )
-    if role != "admin":
+    if public_role != "admin":
         html_doc = html_doc.replace("<body>", '<body class="viewer-readonly">', 1)
     return html_doc
 
@@ -411,11 +454,13 @@ def dashboard_html_for_session(index_path, session: dict[str, Any]) -> str:
 def dashboard_asset(asset_path: str, request: Request) -> Response:
     if asset_path == "clipping-data.json":
         session = require_viewer(request)
-        payload = scoped_dashboard_payload(read_json_file(ASSETS_DIR / "clipping-data.json"), session)
+        effective = effective_session_for(request, session)
+        payload = scoped_dashboard_payload(read_json_file(ASSETS_DIR / "clipping-data.json"), effective)
         return JSONResponse(payload)
     if asset_path == "clipping-raw-texts.json":
         session = require_viewer(request)
-        scoped_payload = scoped_dashboard_payload(read_json_file(ASSETS_DIR / "clipping-data.json"), session)
+        effective = effective_session_for(request, session)
+        scoped_payload = scoped_dashboard_payload(read_json_file(ASSETS_DIR / "clipping-data.json"), effective)
         raw_payload = read_json_file(ASSETS_DIR / "clipping-raw-texts.json")
         return JSONResponse(scoped_raw_texts(raw_payload, scoped_payload))
     return FileResponse(safe_asset_path(asset_path))
@@ -426,9 +471,13 @@ def public_dashboard(request: Request) -> Response:
     session = current_session(request)
     if not session:
         return HTMLResponse(login_html(), status_code=200)
+    simulating = simulating_profile(request, session)
     index_path = ROOT / "index.html"
     if index_path.is_file():
-        return HTMLResponse(dashboard_html_for_session(index_path, session), status_code=200)
+        return HTMLResponse(
+            dashboard_html_for_session(index_path, session, simulating=simulating),
+            status_code=200,
+        )
     return HTMLResponse("<h1>Clipping institucional</h1><p>Painel ainda nao gerado.</p>", status_code=200)
 
 
@@ -562,11 +611,12 @@ def healthz() -> dict[str, Any]:
 @app.get("/api/update/status")
 def update_status(request: Request) -> dict[str, Any]:
     session = require_viewer(request)
+    effective = effective_session_for(request, session)
     try:
         recent = recent_jobs(include_observability=False)
     except Exception:
         recent = []
-    return scoped_status_response({"current": safe_current_status(), "recent": recent}, session)
+    return scoped_status_response({"current": safe_current_status(), "recent": recent}, effective)
 
 
 def safe_current_status() -> dict[str, Any]:
@@ -582,14 +632,16 @@ def safe_current_status() -> dict[str, Any]:
 @app.get("/api/update/live-results")
 def update_live_results(request: Request, job_id: str = "", target_key: str = "", scope: str = "", limit: int = 60) -> dict[str, Any]:
     session = require_viewer(request)
+    effective = effective_session_for(request, session)
     data = live_results_for_job(job_id, target_key=target_key, scope=scope, limit=limit)
-    return scoped_live_results(data, session, requested_target_key=target_key)
+    return scoped_live_results(data, effective, requested_target_key=target_key)
 
 
 @app.get("/api/reports/rio-economic-topic")
 def rio_economic_topic_report(request: Request) -> dict[str, Any]:
     session = require_viewer(request)
-    return scoped_rio_economic_topic_report(session)
+    effective = effective_session_for(request, session)
+    return scoped_rio_economic_topic_report(effective)
 
 
 @app.post("/api/update/start")
@@ -696,7 +748,8 @@ def list_classification_categories(request: Request) -> dict[str, Any]:
 @app.get("/api/targets")
 def list_targets(request: Request, include_archived: bool = False) -> dict[str, Any]:
     session = require_viewer(request)
-    return scoped_targets_response(public_targets_response(include_archived=include_archived), session)
+    effective = effective_session_for(request, session)
+    return scoped_targets_response(public_targets_response(include_archived=include_archived), effective)
 
 
 @app.post("/api/targets")
@@ -1029,8 +1082,9 @@ async def create_classification_category(request: Request) -> dict[str, Any]:
 @app.get("/api/classifications")
 def list_classifications_bulk(request: Request) -> dict[str, Any]:
     session = require_viewer(request)
+    effective = effective_session_for(request, session)
     rows = _classification_db().get_classifications_with_context(limit=100000)
-    rows = scoped_classifications(rows, session)
+    rows = scoped_classifications(rows, effective)
     return {
         "classifications": [
             {

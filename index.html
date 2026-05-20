@@ -19,9 +19,18 @@
         Logado como <strong id="sessionProfileLabel">…</strong>
         <span class="session-role-tag" id="sessionRoleTag" hidden></span>
       </span>
+      <details class="session-simulate" id="simulateBox" hidden>
+        <summary>Ver como: <span id="simulateCurrentLabel">admin</span></summary>
+        <ul class="simulate-options" id="simulateOptions" role="menu"></ul>
+      </details>
       <button type="button" class="session-secondary" id="changePasswordButton">Trocar senha</button>
       <button type="button" class="session-logout" id="logoutButton">Sair</button>
     </header>
+
+    <aside class="simulate-banner" id="simulateBanner" hidden role="status">
+      <span>🎭 Modo simulação: vendo como <strong id="simulateBannerProfile"></strong></span>
+      <button type="button" class="secondary-action" id="simulateExitButton">Voltar pra admin</button>
+    </aside>
 
     <dialog class="password-dialog" id="changePasswordDialog">
       <form id="changePasswordForm" method="dialog">
