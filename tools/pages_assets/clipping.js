@@ -60,6 +60,15 @@
     return apiFetch(path, { method: "PATCH", headers: headers, body: JSON.stringify(body) });
   }
 
+  // Append ?as_profile=X to target-mutation paths so the backend auto-assigns
+  // the affected target to the simulated profile's target_keys. Safe to call
+  // when not simulating — returns the path unchanged.
+  function withSimulateParam(path) {
+    if (!initialSimulating || !isRealAdmin()) return path;
+    var sep = path.indexOf("?") >= 0 ? "&" : "?";
+    return path + sep + "as_profile=" + encodeURIComponent(initialSimulating);
+  }
+
   (function setupSessionBar() {
     var bar = document.getElementById("sessionBar");
     var profileLabel = document.getElementById("sessionProfileLabel");
@@ -1061,13 +1070,19 @@
 
   function applyViewerControls() {
     var isAdmin = viewerIsAdmin();
-    editorEnabled = isAdmin && !(payload && payload.meta && payload.meta.editorEnabled === false);
-    document.body.classList.toggle("viewer-readonly", !isAdmin);
+    var simulating = inSimulation();
+    // Admin in simulation keeps mutation capability — the cookie session
+    // is admin, the require_admin guard on the backend still passes, and
+    // mutations carry ?as_profile=X so the new target is auto-assigned to
+    // the simulated profile's target_keys.
+    var canMutate = isAdmin || simulating;
+    editorEnabled = canMutate && !(payload && payload.meta && payload.meta.editorEnabled === false);
+    document.body.classList.toggle("viewer-readonly", !canMutate);
     runTabs.forEach(function (button) {
       var tab = button.dataset.runTab || "";
-      button.hidden = !isAdmin && tab !== "base";
+      button.hidden = !canMutate && tab !== "base";
     });
-    if (!isAdmin) {
+    if (!canMutate) {
       activateRunTab("base");
       if (addTargetForm && addTargetForm.closest("details")) {
         addTargetForm.closest("details").hidden = true;
@@ -1387,7 +1402,7 @@
   async function archiveManagedTarget(key) {
     setMessage(manageTargetsMessage, "Arquivando...", "");
     try {
-      var resp = await apiPost("/api/targets/" + encodeURIComponent(key) + "/archive", {
+      var resp = await apiPost(withSimulateParam("/api/targets/" + encodeURIComponent(key) + "/archive"), {
         reason: "Arquivado pelo painel de gerenciamento.",
       });
       var data = await resp.json().catch(function () { return {}; });
@@ -1405,7 +1420,7 @@
   async function promoteManagedTarget(key) {
     setMessage(manageTargetsMessage, "Promovendo a principal...", "");
     try {
-      var resp = await apiPost("/api/targets/" + encodeURIComponent(key) + "/promote", {});
+      var resp = await apiPost(withSimulateParam("/api/targets/" + encodeURIComponent(key) + "/promote"), {});
       var data = await resp.json().catch(function () { return {}; });
       if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
       setMessage(manageTargetsMessage, targetMutationMessage("Nome agora aparece como principal.", data), "ok");
@@ -1419,7 +1434,7 @@
   async function demoteManagedTarget(key) {
     setMessage(manageTargetsMessage, "Rebaixando para secundário...", "");
     try {
-      var resp = await apiPost("/api/targets/" + encodeURIComponent(key) + "/demote", {});
+      var resp = await apiPost(withSimulateParam("/api/targets/" + encodeURIComponent(key) + "/demote"), {});
       var data = await resp.json().catch(function () { return {}; });
       if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
       setMessage(manageTargetsMessage, targetMutationMessage("Nome rebaixado para secundário.", data), "ok");
@@ -1433,7 +1448,7 @@
   async function restoreManagedTarget(key) {
     setMessage(manageTargetsMessage, "Restaurando...", "");
     try {
-      var resp = await apiPost("/api/targets/" + encodeURIComponent(key) + "/restore", {});
+      var resp = await apiPost(withSimulateParam("/api/targets/" + encodeURIComponent(key) + "/restore"), {});
       var data = await resp.json().catch(function () { return {}; });
       if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
       pendingArchiveKey = "";
@@ -2847,7 +2862,7 @@
         exact_aliases: splitList(form.get("exact_aliases")),
       };
       try {
-        var resp = await apiPost("/api/targets", body);
+        var resp = await apiPost(withSimulateParam("/api/targets"), body);
         var data = await resp.json().catch(function () { return {}; });
         if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
         setMessage(addTargetMessage, targetMutationMessage("Nome extra salvo. Ele já vale para a Base atual e para próximas rodadas.", data), "ok");
@@ -2888,7 +2903,7 @@
       exact_aliases: splitList(form.get("exact_aliases")),
     };
     try {
-      var resp = await apiPatch("/api/targets/" + encodeURIComponent(key), body);
+      var resp = await apiPatch(withSimulateParam("/api/targets/" + encodeURIComponent(key)), body);
       var data = await resp.json().catch(function () { return {}; });
       if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
       editingTargetKey = "";

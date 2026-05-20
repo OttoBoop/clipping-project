@@ -60,21 +60,35 @@ O gatilho desse goal: o Otávio relatou que **adicionar novos targets gera erros
 
 **Failure case:** PR de senhas que muda o filtro de payload de viewer e quebra silenciosamente o `POST /api/targets` porque ninguém retestou esse caminho.
 
-### Goal 5 — Gerenciamento completo de targets por cliente, com erros claros
+### Goal 5 — Per-client custom targets (gerenciamento per-cliente com erros claros)
 
-Admin precisa poder, **para cada cliente**:
+**Resposta original do Otávio (verbatim, AskUserQuestion 2026-05-19):**
 
-- Adicionar **target primário**
-- Remover **target primário**
-- Transformar **target primário em secundário**
-- Adicionar **target secundário** (essa parte hoje tem bugs graves — exige revisão completa)
+> *"Per-client custom targets, mas vamos expandir... Adicionar targets primários, Remover targets primários, Transformar targets primários em secundários. Além disso, eu vi bugs graves para adicionar targets secundários, precisamos de uma rodada completa de revisão... com erros claros"*
 
-Cada uma dessas 4 operações precisa:
+Chave: **"Per-client custom targets"** — cada cliente tem seus próprios targets primários e secundários, customizáveis **dentro do contexto do cliente** (não via tela admin separada que atribui depois).
+
+O ator pode ser admin operando via simulação `?as_profile=X` (modelo single-admin atual; cada mutação atribui automaticamente ao profile alvo via `add_target_to_profile`) e/ou viewer autenticado-como-viewer (decisão pendente — exige restaurar password segregation que foi removida pelo codex em `6fd0bac` 2026-05-18).
+
+**Operações requeridas** (cada uma no contexto do cliente):
+
+- Adicionar **target primário** — cria target global + atribui ao `target_keys` do profile alvo
+- Remover **target primário** — remove do `target_keys` (target global pode permanecer no catálogo)
+- Transformar **target primário em secundário** (promote/demote) — opera global, mas a UI mostra resultado dentro do contexto do profile
+- Adicionar **target secundário** — cria + atribui (essa parte teve bugs graves; revisão completa exigida)
+- Arquivar/restaurar target — opera global, atribuição persiste
+
+Cada operação precisa:
 
 1. Funcionar end-to-end (UI → ingest → filtro → export — não só "aparecer na lista")
-2. Produzir **mensagens de erro claras** quando algo dá errado (ex: "target já existe", "nome conflita com homônimo", "ingest não conseguiu encontrar nenhuma fonte pro nome X") — não erro genérico, não silêncio
+2. Atribuir automaticamente ao profile do contexto atual (`target_keys` patch atômico)
+3. Produzir **mensagens de erro claras** (ex: "target já existe", "nome conflita com homônimo", "ingest não conseguiu encontrar nenhuma fonte pro nome X")
+4. UI **visível no contexto do cliente** — quando admin entra em simulação `?as_profile=flavio`, o `.add-target-box` e `.manage-targets-box` ficam visíveis (não escondidos pelo CSS `viewer-readonly`)
 
-**Failure case:** clicar "adicionar target" e ver spinner infinito ou erro genérico "something went wrong" sem indicação de qual etapa falhou.
+**Failure cases:**
+- clicar "adicionar target" e ver spinner infinito ou erro genérico "something went wrong" sem indicação de qual etapa falhou
+- adicionar target no contexto de flavio e o target NÃO aparecer no `flavio.target_keys` (assinatura silenciosa de regressão da atribuição automática)
+- admin em modo simulação `?as_profile=flavio` ver `.add-target-box` escondido → não consegue gerenciar targets do flavio sem sair do contexto (regressão atual em 2026-05-20, corrigida nesta rodada)
 
 ---
 

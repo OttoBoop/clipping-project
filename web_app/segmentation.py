@@ -249,6 +249,79 @@ def set_viewer_profile(
     return {"profile": key, **profiles[key]}
 
 
+def add_target_to_profile(profile_key: str, target_key: str) -> dict[str, Any]:
+    """Add target_key to profile's target_keys, atomically.
+
+    Used when admin in simulation mode (`?as_profile=X`) creates or promotes a
+    target — the target_keys list is patched in-place so the profile sees the
+    new target on next dashboard load. Idempotent: re-adding an existing key
+    is a no-op.
+    """
+    key = str(profile_key or "").strip().lower()
+    target = str(target_key or "").strip()
+    if not key:
+        raise ViewerProfileError("viewer_profile_invalid", "Identificador do cliente é obrigatório.", field="profile")
+    if not target:
+        raise ViewerProfileError("viewer_profile_invalid", "Identificador do target é obrigatório.", field="target_key")
+
+    profiles = _ensure_writable_profiles()
+    if key not in profiles:
+        raise ViewerProfileError(
+            "viewer_profile_not_found",
+            f'Cliente "{key}" não encontrado.',
+            field="profile",
+        )
+
+    entry = profiles[key] or {}
+    target_keys = list(entry.get("target_keys") or [])
+    if target not in target_keys:
+        target_keys.append(target)
+        entry["target_keys"] = target_keys
+        profiles[key] = entry
+        _write_profiles_file(profiles)
+    return {"profile": key, **entry}
+
+
+def remove_target_from_profile(profile_key: str, target_key: str) -> dict[str, Any]:
+    """Remove target_key from profile's target_keys, atomically.
+
+    Used when admin in simulation mode archives or demotes a target out of the
+    profile's scope. Also strips the key from `default_targets` to keep
+    invariants (default ⊆ target_keys). Idempotent.
+    """
+    key = str(profile_key or "").strip().lower()
+    target = str(target_key or "").strip()
+    if not key:
+        raise ViewerProfileError("viewer_profile_invalid", "Identificador do cliente é obrigatório.", field="profile")
+    if not target:
+        raise ViewerProfileError("viewer_profile_invalid", "Identificador do target é obrigatório.", field="target_key")
+
+    profiles = _ensure_writable_profiles()
+    if key not in profiles:
+        raise ViewerProfileError(
+            "viewer_profile_not_found",
+            f'Cliente "{key}" não encontrado.',
+            field="profile",
+        )
+
+    entry = profiles[key] or {}
+    target_keys = list(entry.get("target_keys") or [])
+    defaults = list(entry.get("default_targets") or [])
+    changed = False
+    if target in target_keys:
+        target_keys = [k for k in target_keys if k != target]
+        entry["target_keys"] = target_keys
+        changed = True
+    if target in defaults:
+        defaults = [k for k in defaults if k != target]
+        entry["default_targets"] = defaults
+        changed = True
+    if changed:
+        profiles[key] = entry
+        _write_profiles_file(profiles)
+    return {"profile": key, **entry}
+
+
 def archive_viewer_profile(profile_key: str) -> dict[str, Any]:
     """Remove a viewer profile from the on-disk profile file.
 

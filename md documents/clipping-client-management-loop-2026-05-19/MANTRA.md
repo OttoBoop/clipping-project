@@ -22,6 +22,15 @@ Nada mais justifica parar. Não "fechei uma tarefa", não "atingi milestone", n�
 
 **Regra 7 — NUNCA FAÇO COMMITS LOCAIS. Commit = commit + push, sempre juntos.** Se uma mudança vale ser commitada, vale ser empurrada pro remote no mesmo gesto. Commits locais sem push viram trabalho órfão: outra sessão não vê, deploy não acontece, histórico fica confuso, "vou pushar depois" raramente vira. Mesmo com quota Render esgotada — push registra o commit no GitHub, o deploy falha mas o commit fica disponível pro próximo build quando quota resetar. Quando em dúvida sobre pushar: SEMPRE pushar. "Deixo o commit local pra você decidir" = quebrar a regra. Otávio explicitou: "NUNCA FAÇA COMMITS LOCAIS, COLOQUE ISSO NO MANTRA".
 
+**Regra 8 — ANTES DE TOCAR AUTH/SCOPE/PERMISSÃO/SCOPE-DE-VIEWER: ARQUEOLOGIA GIT + RELEITURA DE PROMPTS ANTIGOS.** Comando obrigatório no início:
+
+```bash
+git log --all --oneline -- <arquivo_relevante> | head -20
+git log --all --diff-filter=D --oneline | head -10   # deleções recentes
+```
+
+Se vejo `revert:`, `remove:`, `drop:` em commit recente que toca o pedido, leio `git show <commit>` completo antes de planejar. Se Otávio usa palavras "**destruir**", "**tiraram**", "**removeram**", "**antes funcionava**", "**não consigo mais**" — é **LITERAL**, existe commit de remoção, busco. Também releio `AUDITORIA_PROMPTS_*.md` (respostas a AskUserQuestion antigas que podem ter chaves perdidas em compactação). **NÃO ACEITO o estado atual do código como "design original" sem checar histórico git.** Em 2026-05-20 falhei catastroficamente: Otávio pediu "**Per-client custom targets**" em 2026-05-19 via AskUserQuestion, eu transcrevi para `LONG_TERM_GOALS.md` Goal 5 perdendo a chave "per-client custom", construí simulação `?as_profile=X` viewer-readonly por cima, defendi como design quando ele reclamou hoje. Só descobri o erro depois de ler **todos os 34 prompts da sessão `7079cfae`** sem filtro. Achado paralelo: commit `6fd0bac` (2026-05-18) "revert: remove password segregation" tirou 661 linhas — codex anterior amputou viewer-mutation e eu reintroduzi só metade no loop CCM. Nunca mais.
+
 ---
 
 Companheiros:
@@ -45,9 +54,9 @@ Este arquivo é relido **após cada output substantivo do assistente** (não a c
 2. ✅ ~~**Sessão controlada pelo usuário**~~ — atingido 2026-05-19 (visual via Playwright cobriu logout + change-password modal + CSRF post-rotation).
 3. ✅ ~~**Senhas simples e comunicáveis**~~ — atingido 2026-05-19 (5 senhas humanas, todas 16-20 chars ASCII, todas logam em prod via Playwright).
 4. **Regressão-zero entre features** — toda mudança preserva caminho end-to-end das antigas. (Meta contínua — nunca migra.)
-5. ✅ ~~**Target management completo com erros claros**~~ — atingido 2026-05-19 (API smoke 11/11 + UI smoke pegou chips, protected guard, duplicate message). Ver [GOALS_ATINGIDOS.md](GOALS_ATINGIDOS.md).
+5. **Per-client custom targets** — REABERTO 2026-05-20. Goal 5 foi marcado atingido prematuramente em 2026-05-19; auditoria de prompts (`AUDITORIA_PROMPTS_*.md`) revelou que o pedido original era "**Per-client custom targets**" (verbatim, AskUserQuestion 2026-05-19) e o que foi entregue (gerência admin centralizada + UI viewer-readonly em simulação) ignora a chave "per-client custom". Restauração da capacidade de mutar dentro do contexto do cliente em curso.
 
-**Status do loop:** 4 dos 5 goals atingidos. Goal 4 (regressão-zero) é meta contínua. **Próximo trabalho:** abrir novas frentes ou aprofundar regressão-zero (mais smokes proativos, cobertura de áreas não testadas, monitorar produção).
+**Status do loop:** 3 dos 5 goals atingidos. Goal 4 (regressão-zero) é meta contínua — falhou agora porque eu mesmo regredi Goal 5. Goal 5 reaberto. **Próximo trabalho:** restaurar mutação per-client (simulação `?as_profile=X` aceita mutação + atribuição automática ao profile alvo).
 
 **REGRA-MÃE**: "Não apareça só na UI, mas conectado a todos os sistemas secundários e primários."
 
@@ -77,6 +86,8 @@ Este arquivo é relido **após cada output substantivo do assistente** (não a c
 **Regra 6 (repetida)**: Termino com "**Agora vou X**" — cláusula explícita que força a próxima ação concreta. Sem ela, paro mesmo após repetir.
 
 **Regra 7 (repetida)**: Commit = commit + push, sempre juntos. Nunca deixo commit local. Mesmo com quota esgotada, push registra no GitHub e deploy futuro pega.
+
+**Regra 8 (repetida)**: Antes de mexer em auth/scope/permissão/viewer-readonly, rodar `git log --all -- <arquivo>` e procurar `revert:`/`remove:`/`drop:`. Releitura de AUDITORIA_PROMPTS_*.md para respostas antigas. Estado atual ≠ design original quando há commit de remoção. "Destruir/tiraram/removeram" do Otávio = literal.
 
 Quando em dúvida sobre próxima frente: leio [WORK_LOG_MAJOR.md](WORK_LOG_MAJOR.md) (entrada "Próximas frentes") ou releio [LONG_TERM_GOALS.md](LONG_TERM_GOALS.md) e escolho o Goal aberto com caminho mais claro.
 

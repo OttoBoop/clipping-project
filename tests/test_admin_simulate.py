@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from pipeline.database import ClippingDB
 
 
-def reload_app(monkeypatch, tmp_path, *, admin_password="test-password", session_secret="test-session-secret"):
+def reload_app(monkeypatch, tmp_path, *, admin_password="test-password", session_secret="test-session-secret", isolate_targets=False):
     db_file = tmp_path / "clipping.db"
     ClippingDB(db_file)
     monkeypatch.setenv("CLIPPING_DB_PATH", str(db_file))
@@ -83,6 +83,24 @@ def reload_app(monkeypatch, tmp_path, *, admin_password="test-password", session
     monkeypatch.setattr(app_module, "ASSETS_DIR", assets_dir)
     credentials_path = tmp_path / "clipping_credentials.json"
     monkeypatch.setattr(auth, "CREDENTIALS_PATH", credentials_path)
+
+    if isolate_targets:
+        # Mirror the test approach used by test_targets_jobs: redirect
+        # TARGETS_PATH to a per-test temp file so mutation tests don't
+        # leak entries into data/targets.json (which is the production file).
+        db_admin = importlib.import_module("web_app.db_admin")
+        targets_path = tmp_path / "targets.json"
+        targets_path.write_text(
+            json.dumps(
+                [
+                    {"key": "flavio_valle", "label": "Flavio Valle", "display_name": "Flavio Valle", "primary": False, "className": "", "keywords": ["Flavio Valle"]},
+                    {"key": "shakira", "label": "Shakira", "display_name": "Shakira", "primary": False, "className": "", "keywords": ["Shakira"]},
+                ]
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(db_admin, "TARGETS_PATH", targets_path)
+
     return auth, app_module
 
 
@@ -203,3 +221,137 @@ def test_dashboard_html_admin_normal_has_no_simulating_attr(monkeypatch, tmp_pat
     assert "data-clipping-simulating" not in html, "no simulation attr when no param"
     assert 'data-clipping-session-role="admin"' in html
     assert 'viewer-readonly' not in html, "admin body not viewer-readonly"
+
+
+# ---------------------------------------------------------------------------
+# Per-client custom targets (Goal 5 corrigido 2026-05-20):
+# Admin in ?as_profile=X simulation can mutate; mutation auto-assigns the
+# affected target to the simulated profile's target_keys.
+# ---------------------------------------------------------------------------
+
+
+def _profiles_path(monkeypatch_tmp):
+    """Helper: read current viewer_profiles.json on disk for assertions."""
+    import os
+    path = os.environ.get("CLIPPING_VIEWER_PROFILES_PATH", "")
+    if not path:
+        return {}
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def test_admin_simulating_create_secondary_assigns_to_profile(monkeypatch, tmp_path):
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    client = TestClient(app_module.app)
+    login(client, "test-password")
+    csrf = client.get("/api/csrf").json()["csrf"]
+    resp = client.post(
+        "/api/targets?as_profile=flavio",
+        headers={"X-CSRF-Token": csrf},
+        json={"display_name": "Teste Per Client", "keywords": ["teste"]},
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body.get("assignedToProfile") == "flavio"
+    new_key = body.get("key")
+    assert new_key
+    # Confirm on-disk profile got the new key in target_keys.
+    profiles = _profiles_path(tmp_path)
+    flavio = profiles["profiles"]["flavio"]
+    assert new_key in flavio["target_keys"], f"new key {new_key} missing from flavio.target_keys"
+
+
+def test_admin_simulating_archive_strips_from_profile(monkeypatch, tmp_path):
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    client = TestClient(app_module.app)
+    login(client, "test-password")
+    csrf = client.get("/api/csrf").json()["csrf"]
+    # First create a secondary in simulation flavio (auto-assigns).
+    create_resp = client.post(
+        "/api/targets?as_profile=flavio",
+        headers={"X-CSRF-Token": csrf},
+        json={"display_name": "Teste Archive", "keywords": ["t"]},
+    )
+    assert create_resp.status_code == 200, create_resp.text
+    new_key = create_resp.json()["key"]
+    profiles_before = _profiles_path(tmp_path)
+    assert new_key in profiles_before["profiles"]["flavio"]["target_keys"]
+    # Archive in simulation flavio — should remove from target_keys.
+    archive_resp = client.post(
+        f"/api/targets/{new_key}/archive?as_profile=flavio",
+        headers={"X-CSRF-Token": csrf},
+        json={"reason": "test cleanup"},
+    )
+    assert archive_resp.status_code == 200, archive_resp.text
+    assert archive_resp.json().get("assignedToProfile") == "flavio"
+    profiles_after = _profiles_path(tmp_path)
+    assert new_key not in profiles_after["profiles"]["flavio"]["target_keys"], (
+        f"key {new_key} should have been stripped from flavio.target_keys after archive"
+    )
+
+
+def test_admin_simulating_restore_re_assigns(monkeypatch, tmp_path):
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    client = TestClient(app_module.app)
+    login(client, "test-password")
+    csrf = client.get("/api/csrf").json()["csrf"]
+    # Create + archive in simulation flavio.
+    create_resp = client.post(
+        "/api/targets?as_profile=flavio",
+        headers={"X-CSRF-Token": csrf},
+        json={"display_name": "Teste Restore Cycle", "keywords": ["t"]},
+    )
+    new_key = create_resp.json()["key"]
+    client.post(
+        f"/api/targets/{new_key}/archive?as_profile=flavio",
+        headers={"X-CSRF-Token": csrf},
+        json={"reason": "cycle"},
+    )
+    # Restore in simulation flavio — should re-add to target_keys.
+    restore_resp = client.post(
+        f"/api/targets/{new_key}/restore?as_profile=flavio",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert restore_resp.status_code == 200, restore_resp.text
+    assert restore_resp.json().get("assignedToProfile") == "flavio"
+    profiles = _profiles_path(tmp_path)
+    assert new_key in profiles["profiles"]["flavio"]["target_keys"]
+
+
+def test_admin_without_simulation_no_assignment(monkeypatch, tmp_path):
+    """Without ?as_profile, mutation behaves as before: target is global,
+    no auto-assignment to any profile."""
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    client = TestClient(app_module.app)
+    login(client, "test-password")
+    csrf = client.get("/api/csrf").json()["csrf"]
+    resp = client.post(
+        "/api/targets",
+        headers={"X-CSRF-Token": csrf},
+        json={"display_name": "Global Target", "keywords": ["g"]},
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body.get("assignedToProfile", "") == "", "no profile when no simulation"
+    new_key = body.get("key")
+    profiles = _profiles_path(tmp_path)
+    for pkey, pdata in profiles["profiles"].items():
+        assert new_key not in pdata["target_keys"], (
+            f"global target {new_key} leaked into profile {pkey}"
+        )
+
+
+def test_viewer_create_target_still_blocked(monkeypatch, tmp_path):
+    """Even with ?as_profile, viewer cannot mutate — require_admin reads
+    the real cookie, not the fake simulated session."""
+    _, app_module = reload_app(monkeypatch, tmp_path)
+    client = TestClient(app_module.app)
+    login(client, "viewer-flavio")
+    csrf = client.get("/api/csrf").json()["csrf"]
+    resp = client.post(
+        "/api/targets?as_profile=flavio",
+        headers={"X-CSRF-Token": csrf},
+        json={"display_name": "Viewer Should Not Create", "keywords": []},
+    )
+    assert resp.status_code == 401
+    assert "admin_login_required" in resp.text

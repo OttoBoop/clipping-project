@@ -135,7 +135,24 @@ Troca de senha pela UI cobrida pelo Goal 2's modal (admin troca a própria) + Go
 
 ---
 
-## Goal 5 — Target management completo com erros claros (atingido 2026-05-19)
+## ⚠️ Goal 5 — REABERTO 2026-05-20 (originalmente "atingido" 2026-05-19 — atingimento foi prematuro)
+
+**Por que reaberto:** auditoria de prompts (`AUDITORIA_PROMPTS_*.md`, gerada 2026-05-20) mostrou que a resposta verbatim do Otávio à AskUserQuestion de 2026-05-19 era:
+
+> *"**Per-client custom targets**, mas vamos expandir... Adicionar targets primários, Remover targets primários, Transformar targets primários em secundários..."*
+
+A chave **"Per-client custom targets"** (targets customizados POR CADA CLIENTE, no contexto do cliente) foi perdida quando eu transcrevi a resposta para `LONG_TERM_GOALS.md` Goal 5 (saiu "Admin precisa poder, para cada cliente: Adicionar target primário..." — interpretação literal pobre = "admin global centralizado + atribuição posterior").
+
+A "evidência de atingimento" abaixo cobriu os 11 fluxos de erro estruturado do CATÁLOGO GLOBAL de targets (admin operando centralmente), mas **não cobriu**:
+- Adição de target dentro do contexto de cada cliente (sem sair do contexto)
+- Atribuição automática ao `target_keys` do profile alvo
+- UI visível no modo simulação `?as_profile=X` (atual: `.add-target-box` e `.manage-targets-box` ficam escondidos pelo CSS `viewer-readonly` mesmo em simulação — admin precisa sair pra mutar)
+
+A "evidência" abaixo permanece válida como **prova parcial** (catálogo global + erros estruturados funcionam), mas o Goal completo só será atingido depois da restauração de mutação per-client em simulação. **Não marcar como atingido até evidência visual mostrar fluxo "admin entra em simulação flavio → adiciona target X → X aparece em flavio.target_keys + na lista de targets do flavio".**
+
+---
+
+## Goal 5 — Target management completo com erros claros (atingido PARCIAL 2026-05-19 — superado por reabertura 2026-05-20)
 
 **Critério de sucesso cumprido:**
 

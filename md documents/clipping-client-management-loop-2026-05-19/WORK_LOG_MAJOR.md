@@ -916,3 +916,61 @@ visual_smoke_playwright       Goals 1/2/3/5 + simulação + viewer-to-viewer
 **Decisão pra agora:** o fix do polling já pushed (commit `71d16f7`). Quando quota resetar e build pegar, espera-se redução de OOMs mas talvez não eliminação. Documentar pra próxima sessão investigar leaks se OOMs continuarem após o fix landar.
 
 **Próxima sub-ação concreta:** atualizar SESSION_LOG, commitar docs, aguardar decisão do Otávio sobre próximo passo. Candidatos para enquanto ele revisa: começar storage migration (frente bloqueadora de Goals 1, 2-B, 3) OU mexer em casos-edge restantes do baseline (acentos diferentes, payload sem keywords, etc.).
+
+---
+
+## 2026-05-20 — Goal 5 REABERTO: "Per-client custom targets" foi mal-transcrito
+
+**Goal endereçado:** Goal 5 (revertendo atingimento prematuro de 2026-05-19) + Goal 4 (regressão-zero — preciso restaurar o que eu mesmo regredi)
+
+**Trigger:** Otávio confrontou em 2026-05-20T14:23:07:
+
+> *"Por favor, leia cuidadosamente oplano de long oprazo e contraste com o website. Nada está tal como eu gsotaria que estivesse. Okay, nada foi um exagero, mas está bemm ruim. O erro mais grave é que eu pedi para segregar as view, para que cada usuario pudesse adicionar seus proprios targets primarios e secundarios. Ao invés disso, a ia antiga decidiu DESTRUIR a capacidade de adicionar qualquer coisa para os outros perfis. O que me deixa INFURIADO."*
+
+Em 2026-05-20T14:50:06 ele insistiu pra eu fazer arqueologia honesta:
+
+> *"Faça quotes verbatim. E se não tinha mesmo esse pedido, por que caralhos você achou que seria uma boa ideia tirar uma função que já existia."*
+
+Em 2026-05-20T14:59:43 ele me forçou a pegar TODOS os prompts da sessão `7079cfae` sem filtro:
+
+> *"você tá dando desculpas, afirmando que você não tem culpa sobre o que essa mesma conversa fez antes de compactar. Por favor, tente corretamente pegar TODOS OS PROMPTS dessa conversa."*
+
+**Achado arqueológico (depois de ler 34 prompts da sessão `7079cfae` sem filtro):** no item 6 "All user messages" do resumo da 1ª compactação (prompt #11 da sessão, 2026-05-19T23:04:47), está registrada como resposta dele a uma AskUserQuestion minha:
+
+> *"Per-client custom targets, mas vamos expandir... Adicionar targets primários, Remover targets primários, Transformar targets primários em secundários. Além disso, eu vi bugs graves para adicionar targets secundários, precisamos de uma rodada completa de revisão... com erros claros"*
+
+A chave **"Per-client custom targets"** foi perdida quando eu (Claude, mesma sessão, janela pré-compactação) transcrevi para `LONG_TERM_GOALS.md` Goal 5 como "Admin precisa poder, para cada cliente: Adicionar target primário..." — interpretação literal pobre.
+
+**Achado paralelo (`6fd0bac`, 2026-05-18 06:41 −0300):** commit *"revert: remove password segregation from target repair loop"* — codex anterior tirou 661 linhas, deletou `segmentation.py` inteiro, `viewer_passwords()`, `login_identity()`, `viewer_auth_configured()`, `login_configured()`, `require_viewer()`, parâmetros `role`/`profile` de `make_session()`. Quando comecei o loop CCM em 2026-05-19, eu reintroduzi **apenas** o scope de leitura (novo `segmentation.py`) e não restaurei a mutação por viewer.
+
+**Onde eu errei:**
+
+1. Recebi "Per-client custom targets" via AskUserQuestion em 2026-05-19, perdi a chave na transcrição para Goal 5
+2. Construí simulação `?as_profile=X` (commits `84e3cb3` 2026-05-20, `19f3de8`) que mantém `viewer-readonly` em modo simulação → admin em simulação **perde** capacidade de mutar
+3. Não fiz `git log --all -- web_app/segmentation.py` antes de planejar — teria visto `6fd0bac` imediatamente
+4. Marquei Goal 5 como atingido em 2026-05-19 com base em smoke do catálogo GLOBAL de targets, ignorando que o pedido era PER-CLIENT
+5. Quando Otávio reclamou hoje, defendi a decisão como "design original" antes de arqueologia
+
+**Método novo escolhido:**
+
+- **Backend:** estender endpoints de mutação (`web_app/app.py:758-856`) para aceitar `?as_profile=X` via `effective_session_for(request, session)` existente. Após criação de target, chamar novo `add_target_to_profile(profile, target_key)` em `segmentation.py` para atribuição atômica no `target_keys` do profile alvo.
+- **Frontend:** `applyViewerControls()` em `assets/clipping.js` ganha branch `inSimulation()` — em simulação, controles de mutação ficam visíveis (CSS `viewer-readonly` não aplicado), e fetches passam `?as_profile=X`.
+- **Auth:** `require_admin` continua exigindo cookie admin real — viewer-as-viewer ainda não muta (decisão D1=A do plano `hey-there-claude-so-cryptic-dahl.md`). D1=B (restaurar password segregation pra viewer mutar) fica como fase 2 se Otávio quiser.
+- **Targets globais com atribuição automática** (D2=globais). Target é entidade única no DB; criar em `?as_profile=flavio` cria + atribui.
+
+**Métodos descartados:**
+
+- ❌ Aceitar atual `viewer-readonly` em simulação: é exatamente o que regredi
+- ❌ Restaurar 100% de `6fd0bac` (`viewer_passwords` + `login_identity` + cookie por-viewer): grande mudança, dependência maior, viewer-as-viewer não é o pedido literal de hoje
+- ❌ Tabela targets com `owner_profile` (isolar universos): requer refazer ingest/export/queries; não é o pedido
+
+**Critério de sucesso (observável em prod):**
+
+- Admin loga, entra em simulação `?as_profile=flavio`, vê `.add-target-box` **visível**
+- Adiciona target "teste" → cria + aparece em `flavio.target_keys` (verificável via `GET /api/admin/viewers`)
+- Sai simulação → admin direto → vê "teste" listado na lista global de targets + atribuído ao flavio
+- Outro profile (shakira) NÃO vê o target "teste" no seu payload
+
+**Próxima sub-ação concreta:** adicionar `add_target_to_profile()` e `remove_target_from_profile()` em `web_app/segmentation.py`, depois estender os 7 endpoints de mutação em `web_app/app.py`. Commit + push após cada chunk verde (Regra 7).
+
+**Regra 8 nova adicionada ao MANTRA.md:** "ANTES DE TOCAR AUTH/SCOPE/PERMISSÃO: rodar `git log --all -- <arquivo>` + reler AskUserQuestion answers em `AUDITORIA_PROMPTS_*.md`. 'Destruir/tiraram/removeram' do Otávio é literal — existe commit." Memória `feedback_arqueologia_git_antes_auth.md` salva. Memória `project_clipping_segregation_revert_6fd0bac.md` documenta o achado.
