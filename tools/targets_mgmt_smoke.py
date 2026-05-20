@@ -160,6 +160,9 @@ def main() -> int:
     pri_key = body["key"] if isinstance(body, dict) else ""
 
     print("\n9. Archive both smoke targets")
+    # archive_secondary_target's guard (ensure_secondary_mutable) only blocks
+    # PROTECTED_PRIMARY_KEYS (flavio_valle, pedro_angelito) — primaries
+    # created by promote/create_primary_target are archivable directly.
     status, _ = request(
         opener, "POST", f"{base}/api/targets/{pri_key}/archive", csrf=csrf,
         body={"reason": "smoke cleanup"},
