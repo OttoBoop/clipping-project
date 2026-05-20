@@ -50,7 +50,14 @@ def request(
     *,
     body: dict[str, Any] | None = None,
     csrf: str | None = None,
+    retries_on_5xx: int = 2,
 ) -> tuple[int, dict[str, Any] | str]:
+    """HTTP request with bounded retry on 5xx (Render gateway/coldstart).
+
+    4xx errors fail-fast (they're contract errors and should surface).
+    5xx triggers up to `retries_on_5xx` retries with 3s backoff, with
+    a loud line on stderr so the operator sees it happened.
+    """
     data = None
     headers = {}
     if body is not None:
@@ -58,14 +65,23 @@ def request(
         headers["Content-Type"] = "application/json"
     if csrf:
         headers["X-CSRF-Token"] = csrf
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    try:
-        with opener.open(req, timeout=30) as resp:
-            payload = resp.read().decode("utf-8", errors="replace")
-            status = resp.getcode()
-    except urllib.error.HTTPError as exc:
-        payload = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
-        status = exc.code
+    attempts = retries_on_5xx + 1
+    payload = ""
+    status = 0
+    for attempt in range(1, attempts + 1):
+        req = urllib.request.Request(url, data=data, headers=headers, method=method)
+        try:
+            with opener.open(req, timeout=30) as resp:
+                payload = resp.read().decode("utf-8", errors="replace")
+                status = resp.getcode()
+        except urllib.error.HTTPError as exc:
+            payload = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
+            status = exc.code
+        if status < 500:
+            break
+        if attempt < attempts:
+            print(f"  ! transient {status} on {method} {url} — retry {attempt}/{retries_on_5xx} in 3s", file=sys.stderr)
+            time.sleep(3)
     parsed: dict[str, Any] | str
     try:
         parsed = json.loads(payload) if payload else {}

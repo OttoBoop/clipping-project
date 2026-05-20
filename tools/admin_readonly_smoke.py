@@ -31,17 +31,28 @@ def make_opener() -> urllib.request.OpenerDirector:
     return opener
 
 
-def request(opener: urllib.request.OpenerDirector, method: str, url: str, body: dict[str, Any] | None = None) -> tuple[int, Any]:
+def request(opener: urllib.request.OpenerDirector, method: str, url: str, body: dict[str, Any] | None = None, retries_on_5xx: int = 2) -> tuple[int, Any]:
+    """HTTP request with bounded retry on 5xx (Render gateway/coldstart)."""
+    import sys, time
     data = json.dumps(body).encode() if body is not None else None
     headers = {"Content-Type": "application/json"} if body is not None else {}
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    try:
-        with opener.open(req, timeout=30) as resp:
-            payload = resp.read().decode("utf-8", errors="replace")
-            status = resp.getcode()
-    except urllib.error.HTTPError as exc:
-        payload = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
-        status = exc.code
+    attempts = retries_on_5xx + 1
+    payload = ""
+    status = 0
+    for attempt in range(1, attempts + 1):
+        req = urllib.request.Request(url, data=data, headers=headers, method=method)
+        try:
+            with opener.open(req, timeout=30) as resp:
+                payload = resp.read().decode("utf-8", errors="replace")
+                status = resp.getcode()
+        except urllib.error.HTTPError as exc:
+            payload = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
+            status = exc.code
+        if status < 500:
+            break
+        if attempt < attempts:
+            print(f"  ! transient {status} on {method} {url} — retry {attempt}/{retries_on_5xx} in 3s", file=sys.stderr)
+            time.sleep(3)
     try:
         return status, json.loads(payload) if payload else {}
     except json.JSONDecodeError:
