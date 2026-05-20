@@ -128,15 +128,27 @@ def goal_admin_simulation(page: Page, base: str, admin_pass: str) -> None:
 
     # Step 2: navigate to ?as_profile=flavio and verify simulation state.
     page.goto(base + "/?as_profile=flavio", wait_until="domcontentloaded")
-    page.wait_for_selector("#app", timeout=15000)
-    page.wait_for_timeout(2000)
+    page.wait_for_selector("#simulateBanner", state="visible", timeout=15000)
     body_class = page.locator("body").get_attribute("class") or ""
     assert "viewer-readonly" in body_class, f"body should be viewer-readonly when simulating, got '{body_class}'"
-    assert page.locator("#simulateBanner").is_visible(), "banner must appear during simulation"
     real_role = page.locator("#app").get_attribute("data-clipping-real-role")
     assert real_role == "admin", f"real role should remain admin in simulation, got {real_role}"
     sim_attr = page.locator("#app").get_attribute("data-clipping-simulating")
     assert sim_attr == "flavio", f"simulating attr should be 'flavio', got {sim_attr}"
+
+    # Anti-jitter assertion: the banner must already show the pretty label
+    # ("Flavio Valle") right after the banner becomes visible — no async
+    # wait. This catches the regression where the label was filled in only
+    # after /api/admin/viewers resolved (~2s flash of profile-key).
+    sim_label_attr = page.locator("#app").get_attribute("data-clipping-simulating-label")
+    assert sim_label_attr == "Flavio Valle", (
+        f"server should pre-render simulating-label, got {sim_label_attr!r}"
+    )
+    banner_text = page.locator("#simulateBannerProfile").inner_text().strip()
+    assert "Flavio Valle" in banner_text, (
+        f"banner must show 'Flavio Valle' immediately (no jitter), got {banner_text!r}"
+    )
+    print(f"  banner label resolved immediately: '{banner_text}' ✅")
 
     manage_box = page.locator("#manageTargetsBox")
     if manage_box.count() > 0:
@@ -186,15 +198,15 @@ def goal_viewer_segregation(page: Page, base: str, viewer_pass: str, viewer_prof
 
     # Admin sections should be hidden via CSS body.viewer-readonly .add-target-box
     # Their parent `details` is set hidden by JS as well. Either way: not visible.
+    # Use expect().to_be_hidden() so Playwright auto-waits for the JS to
+    # apply visibility (was racy with bare is_visible()).
     manage_box = page.locator("#manageTargetsBox")
     if manage_box.count() > 0:
-        visible = manage_box.is_visible()
-        assert not visible, "manageTargetsBox visible to viewer!"
+        expect(manage_box).to_be_hidden(timeout=5000)
         print("  #manageTargetsBox hidden from viewer ✅")
     viewers_box = page.locator("#manageViewersBox")
     if viewers_box.count() > 0:
-        visible = viewers_box.is_visible()
-        assert not visible, "manageViewersBox visible to viewer!"
+        expect(viewers_box).to_be_hidden(timeout=5000)
         print("  #manageViewersBox hidden from viewer ✅")
 
     # Session bar: viewer should still see profile + logout/change-password
