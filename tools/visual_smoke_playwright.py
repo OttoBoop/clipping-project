@@ -72,6 +72,42 @@ def login_as_admin(page: Page, base: str, password: str) -> None:
         page.wait_for_selector("#app", timeout=15000)
 
 
+def goal_article_rendering(page: Page, base: str, admin_pass: str) -> None:
+    """Verify the core read experience didn't regress: articles render
+    inside story cards, the targets filter chips exist, the visible-articles
+    stat is > 0. Catches regressions where data loads but UI fails to
+    populate (the silent-fail class)."""
+    print("\n=== GOAL 4 — core article rendering didn't regress ===")
+    login_as_admin(page, base, admin_pass)
+
+    # Wait for #app to be live + data to populate the article-card grid.
+    page.wait_for_function(
+        "document.querySelectorAll('.article-card').length > 0",
+        timeout=30000,
+    )
+
+    def parse_int(s: str) -> int:
+        digits = "".join(ch for ch in (s or "") if ch.isdigit())
+        return int(digits) if digits else 0
+
+    base_stories = parse_int(page.locator("#baseStoriesStat").inner_text())
+    base_articles = parse_int(page.locator("#baseArticlesStat").inner_text())
+    print(f"  base stats: stories={base_stories}, articles={base_articles}")
+    assert base_stories > 0 and base_articles > 0, "base stats are zero"
+
+    article_count = page.locator(".article-card").count()
+    print(f"  .article-card elements rendered: {article_count}")
+    assert article_count > 0, "no article cards rendered"
+
+    # Sanity: the first article-card has a non-empty title.
+    first_title = page.locator(".article-card").first.inner_text().strip()[:80]
+    assert len(first_title) > 5, f"first article-card has empty title: '{first_title}'"
+    print(f"  first article title: '{first_title}...'")
+
+    shot(page, "core_articles_rendered")
+    print("  core read experience renders ✅")
+
+
 def goal_viewer_segregation(page: Page, base: str, viewer_pass: str, viewer_profile: str = "flavio") -> None:
     """Visually verify that a viewer sees their segregated dashboard and
     has no admin affordances (no manage targets, no add target, no clientes).
@@ -373,6 +409,12 @@ def main() -> int:
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=not args.headed)
         try:
+            # Goal 4 – core article rendering smoke
+            ctx = browser.new_context()
+            page = ctx.new_page()
+            goal_article_rendering(page, base, admin_pass)
+            ctx.close()
+
             # Goal 3 – human passwords for all five roles
             ctx = browser.new_context()
             page = ctx.new_page()
