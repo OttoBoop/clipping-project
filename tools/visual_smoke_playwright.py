@@ -108,6 +108,61 @@ def goal_article_rendering(page: Page, base: str, admin_pass: str) -> None:
     print("  core read experience renders ✅")
 
 
+def goal_admin_simulation(page: Page, base: str, admin_pass: str) -> None:
+    """Verify the 'Ver como [perfil]' admin simulation flow:
+    - dropdown visible for real admin, hidden banner initially
+    - navigating to /?as_profile=flavio applies viewer-readonly + banner
+    - admin chrome (manageTargetsBox, manageViewersBox) hidden in simulation
+    - 'Voltar pra admin' restores admin shell + clears query string"""
+    print("\n=== GOAL extra — admin 'Ver como' simulation flow ===")
+    login_as_admin(page, base, admin_pass)
+    page.wait_for_timeout(2000)
+
+    # Step 1: real admin sees the dropdown and no banner.
+    box = page.locator("#simulateBox")
+    expect(box).to_be_visible(timeout=10000)
+    banner_hidden = page.locator("#simulateBanner").get_attribute("hidden")
+    assert banner_hidden is not None, "simulate banner should start hidden for real admin"
+    print("  real admin: dropdown visible, banner hidden ✅")
+    shot(page, "simulate_1_admin")
+
+    # Step 2: navigate to ?as_profile=flavio and verify simulation state.
+    page.goto(base + "/?as_profile=flavio", wait_until="domcontentloaded")
+    page.wait_for_selector("#app", timeout=15000)
+    page.wait_for_timeout(2000)
+    body_class = page.locator("body").get_attribute("class") or ""
+    assert "viewer-readonly" in body_class, f"body should be viewer-readonly when simulating, got '{body_class}'"
+    assert page.locator("#simulateBanner").is_visible(), "banner must appear during simulation"
+    real_role = page.locator("#app").get_attribute("data-clipping-real-role")
+    assert real_role == "admin", f"real role should remain admin in simulation, got {real_role}"
+    sim_attr = page.locator("#app").get_attribute("data-clipping-simulating")
+    assert sim_attr == "flavio", f"simulating attr should be 'flavio', got {sim_attr}"
+
+    manage_box = page.locator("#manageTargetsBox")
+    if manage_box.count() > 0:
+        assert not manage_box.is_visible(), "manageTargetsBox must be hidden in simulation"
+    viewers_box = page.locator("#manageViewersBox")
+    if viewers_box.count() > 0:
+        assert not viewers_box.is_visible(), "manageViewersBox must be hidden in simulation"
+    print(f"  simulating flavio: viewer-readonly applied, banner visible, real_role={real_role}, admin chrome hidden ✅")
+    shot(page, "simulate_2_flavio")
+
+    # Step 3: click 'Voltar pra admin' and verify restore.
+    page.locator("#simulateExitButton").click()
+    page.wait_for_load_state("domcontentloaded")
+    page.wait_for_selector("#app", timeout=15000)
+    page.wait_for_timeout(2000)
+    body_class_after = page.locator("body").get_attribute("class") or ""
+    assert "viewer-readonly" not in body_class_after, "viewer-readonly should be gone after exit"
+    assert "?as_profile" not in page.url, f"URL should be clean after exit, got {page.url}"
+    if manage_box.count() > 0:
+        assert manage_box.is_visible() or not manage_box.evaluate("el => el.hidden"), (
+            "manageTargetsBox should be visible again after exit"
+        )
+    print(f"  after 'Voltar pra admin': body={body_class_after!r}, URL clean, admin chrome restored ✅")
+    shot(page, "simulate_3_back")
+
+
 def goal_viewer_segregation(page: Page, base: str, viewer_pass: str, viewer_profile: str = "flavio") -> None:
     """Visually verify that a viewer sees their segregated dashboard and
     has no admin affordances (no manage targets, no add target, no clientes).
@@ -460,6 +515,12 @@ def main() -> int:
                 page = ctx.new_page()
                 goal_viewer_segregation(page, base, flavio_pw, "flavio")
                 ctx.close()
+
+            # Admin "Ver como" simulation flow (2026-05-20 feature)
+            ctx = browser.new_context()
+            page = ctx.new_page()
+            goal_admin_simulation(page, base, admin_pass)
+            ctx.close()
         finally:
             browser.close()
 
