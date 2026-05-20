@@ -19,34 +19,49 @@ SMTP).
 
 ## 2. What Otávio handed over
 
-Verbatim from the chat that opened this task:
+Otávio handed over the full invitation body in Portuguese on 2026-05-20.
+It's a formal invite from **Osmar Lima, Secretário Municipal de
+Desenvolvimento Econômico da Prefeitura do Rio**, to alunos e
+professores do **Programadores Cariocas**, for the **Claude Impact Lab
+Rio** hackathon (primeira edição brasileira, patrocinado pela
+Anthropic, realizado pela Taicor + João Lisboa).
 
-> I want to send the following invitation email. The text is below.
->
-> *(the code block in the chat was empty — body copy not yet pasted)*
->
-> Here is a link with the invitation and stuff: <https://luma.com/3i0rkczm>
+The body is stored verbatim in `invite_template.txt` (sibling file).
+The subject I chose for it: *"Convite — Claude Impact Lab Rio (24/05,
+Maravalley)"* — easy to override at send time via `--subject "..."` if
+Otávio wants something different.
 
-The luma page returned **HTTP 403** when I tried to fetch it from this
-sandbox, so I have not been able to capture the event details (title,
-host, date/time, location, body copy) automatically. Either Otávio
-pastes the body text directly into this folder later, or someone with
-browser access pulls it off the luma page.
+**Event quick reference (from the body):**
+
+- **Quando:** Domingo, 24 de maio de 2026, 9h–19h.
+- **Onde:** Maravalley.
+- **Sobre:** Hackathon de um dia, soluções com Claude para desafios
+  reais da cidade nas áreas de Saúde ou Segurança Pública. Melhores
+  soluções são doadas ao município.
+- **Inscrições / agenda:** <https://luma.com/3i0rkczm>.
+- **Patrocinador:** Anthropic. **Realização:** Taicor + João Lisboa
+  (embaixador do Claude no Brasil). **Apoio:** Prefeitura do Rio /
+  SMDE.
+
+⏰ **Time pressure:** today is 2026-05-20; the event is in **4 days**.
+Recipient list + sender Gmail need to land soon for the invite to be
+useful.
 
 ## 3. Open fios (open threads)
 
 | # | Fio                                                              | Status                                                 |
 |---|------------------------------------------------------------------|--------------------------------------------------------|
-| 1 | Capture the invitation body (subject + body text).               | **Pending** — code block was empty in the prompt.       |
-| 2 | Capture the recipient list (who gets the invite).                | **Pending** — not yet specified.                        |
+| 1 | Capture the invitation body (subject + body text).               | **DONE** 2026-05-20 — see `invite_template.txt`.        |
+| 2 | Capture the recipient list (alunos e professores do              | **Pending** — Otávio to provide the list, or point at  |
+|   | Programadores Cariocas).                                         | wherever the addresses live.                            |
 | 3 | Decide / wire up the sender Gmail (Otávio's "task 3" — log in   | **Pending** — Otávio flagged this as a separate task.   |
-|   | with the appropriate email account).                             |                                                        |
-| 4 | Drop the body into `invite_template.txt` + recipients into       | **Blocked** by #1, #2.                                  |
+|   | with the appropriate email account).                             | Probably a Prefeitura / SMDE address given the signer.  |
+| 4 | Drop the body into `invite_template.txt` + recipients into       | Partial — body done (#1). Recipients still blocked.     |
 |   | `recipients.txt` inside this folder.                             |                                                        |
 | 5 | Decide whether this send reuses the existing `send-invites.yml` | **Blocked** by #3 (different sender → different App     |
 |   | workflow or gets its own (different sender = different repo      | Password = different repo secret or different OTS link).|
 |   | secret / OTS link).                                              |                                                        |
-| 6 | Fire the send. Read `last-run-status.md` to confirm outcome.    | **Blocked** by #1–#5.                                   |
+| 6 | Fire the send. Read `last-run-status.md` to confirm outcome.    | **Blocked** by #2, #3.                                  |
 
 ## 4. The luma link
 
