@@ -100,7 +100,7 @@ def main() -> int:
         print("CLIPPING_ADMIN_PASSWORD env var is required", file=sys.stderr)
         return 2
 
-    tag = str(int(time.time()))
+    tag = f"{int(time.time())}_{os.getpid() % 10000}"
     sec_name = f"Smoke Sec {tag}"
     pri_name = f"Smoke Pri {tag}"
 

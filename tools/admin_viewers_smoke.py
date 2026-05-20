@@ -92,7 +92,8 @@ def main() -> int:
         print("CLIPPING_ADMIN_PASSWORD env var is required", file=sys.stderr)
         return 2
 
-    tag = str(int(time.time()))
+    # Tag combines pid + time so concurrent / back-to-back runs don't collide.
+    tag = f"{int(time.time())}_{os.getpid() % 10000}"
     smoke_profile = f"smoke_{tag}"
     smoke_password = f"smoke-{smoke_profile}-2026"
 
