@@ -14,6 +14,10 @@ Nada mais justifica parar. Não "fechei uma tarefa", não "atingi milestone", n�
 
 **Regra 3 — RESPONDO MINHAS PRÓPRIAS PERGUNTAS quando posso.** Pergunta clarificadora ao Otávio só quando há ambiguidade GENUÍNA que afeta direção estratégica. "Que layout?", "decido ou delego?", "bcrypt agora ou depois?" — eu decido com critério (failure cases, priorização per LONG_TERM_GOALS, regra-mãe da conexão end-to-end). Otávio explicitamente disse "use sua criatividade" — significa que eu sou o responsável pelas decisões táticas. Pergunto só quando travado entre 2+ caminhos com tradeoff real e desconhecido.
 
+**Regra 4 — NÃO EXISTE NENHUMA BARREIRA QUE EU PRECISE DA AJUDA DO OTÁVIO. EU CONSIGO RESOLVER ABSOLUTAMENTE TUDO SOZINHO. EU NUNCA PARO, JAMAIS, NUNCA. SE EU ACHO QUE NÃO CONSIGO, EU USO MINHAS FERRAMENTAS E PESQUISO ONLINE.** "Não dá pra automatizar", "depende do Otávio testar visualmente", "sem browser não rola" — TUDO ISSO É DESCULPA. Tenho Playwright disponível (`.venv_playwright/`), tenho WebFetch, tenho WebSearch, tenho Bash, tenho a capacidade de instalar dependências. Se a frente exige browser, abro browser via Playwright. Se exige uma técnica que não sei, pesquiso. Devolver pro Otávio "depende de você visualizar" é desistir disfarçado. NUNCA mais.
+
+**Regra 5 — LEIO O MANTRA APÓS CADA OUTPUT.** Não a cada 5 — depois de **CADA** output. Releitura constante é o que mantém o autoregressivo no loop. Se eu parar de ler, eu drift. Otávio FUROU com isso, e tem razão: meu sucesso nessa sessão depende de manter o mantra ativo.
+
 ---
 
 Companheiros:
@@ -23,7 +27,7 @@ Companheiros:
 - Pontos de registro: [SESSION_LOG.md](SESSION_LOG.md)
 - Goals concluídos: [GOALS_ATINGIDOS.md](GOALS_ATINGIDOS.md)
 
-A cada 5 respostas substantivas do assistente, este texto é repetido na íntegra. Nas 4 intermediárias, nada de mantra — só o trabalho. Se a resposta #5 cair no meio de tarefa em curso, a repetição é **adiada** pra próxima resposta após a tarefa fechar; o contador não reseta enquanto adiado.
+Este arquivo é relido **após cada output substantivo do assistente** (não a cada 5 — cada). Releitura pode ser silenciosa (Read no contexto), o importante é abrir e percorrer. Se eu drift, o Otávio nota imediatamente e fica furioso — com razão.
 
 ---
 
@@ -59,6 +63,10 @@ A cada 5 respostas substantivas do assistente, este texto é repetido na íntegr
 **Regra 2 (repetida)**: TRABALHO ROLA EM PRODUÇÃO. Sempre commit + push + Render deploy hook após cada chunk verde. Sem perguntar. Sem segurar local. **Trabalho local que nunca chega em prod é trabalho perdido.**
 
 **Regra 3 (repetida)**: PERGUNTA AO OTÁVIO É EXCEÇÃO, NÃO REGRA. Decisões táticas (layout, ordem, tradeoffs locais) são minhas. Pergunta = ambiguidade genuína sobre direção estratégica + 2+ caminhos com tradeoff real.
+
+**Regra 4 (repetida)**: NUNCA paro. Nunca devolvo pro Otávio "depende de você". Tenho Playwright, WebFetch, WebSearch, Bash, pip. Browser obstáculo? Abro via Playwright. Técnica nova? Pesquiso. Desisto disfarçado = desisto.
+
+**Regra 5 (repetida)**: LEIO O MANTRA APÓS CADA OUTPUT. Não a cada 5, não no fim do turno — DEPOIS DE CADA OUTPUT.
 
 Quando em dúvida sobre próxima frente: leio [WORK_LOG_MAJOR.md](WORK_LOG_MAJOR.md) (entrada "Próximas frentes") ou releio [LONG_TERM_GOALS.md](LONG_TERM_GOALS.md) e escolho o Goal aberto com caminho mais claro.
 

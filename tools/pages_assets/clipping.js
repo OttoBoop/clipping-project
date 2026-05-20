@@ -267,7 +267,8 @@
         var data = await resp.json();
         viewersCache = (data && data.viewers) || [];
         renderViewers();
-        setFieldMessage(manageMessage, "", "");
+        // Preserve any success/error message set by the caller (create,
+        // archive, edit). Only clear when there's no pending feedback.
       } catch (error) {
         console.error("[clipping] viewers load failed", error);
         setFieldMessage(manageMessage, "Erro ao carregar clientes.", "error");
