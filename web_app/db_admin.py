@@ -131,6 +131,16 @@ def ensure_app_tables(db_file: Path) -> None:
                 FOREIGN KEY(story_id) REFERENCES stories(id)
             );
 
+            CREATE TABLE IF NOT EXISTS activity_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                user_role TEXT NOT NULL,
+                user_profile TEXT NOT NULL,
+                action TEXT NOT NULL,
+                target_key TEXT,
+                details_json TEXT
+            );
+
             CREATE INDEX IF NOT EXISTS idx_jobs_active
                 ON jobs(status, started_at)
                 WHERE status IN ('queued', 'running', 'exporting', 'cancel_requested');
@@ -140,6 +150,12 @@ def ensure_app_tables(db_file: Path) -> None:
 
             CREATE INDEX IF NOT EXISTS idx_job_source_runs_job_status
                 ON job_source_runs(job_id, status, id);
+
+            CREATE INDEX IF NOT EXISTS idx_activity_log_recent
+                ON activity_log(timestamp DESC, id DESC);
+
+            CREATE INDEX IF NOT EXISTS idx_activity_log_profile
+                ON activity_log(user_profile, timestamp DESC);
 
             CREATE INDEX IF NOT EXISTS idx_job_source_runs_source
                 ON job_source_runs(source_type, source_name);

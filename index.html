@@ -168,6 +168,29 @@
           <span id="manageViewersMessage" class="form-message" role="status"></span>
         </details>
 
+        <details class="manage-activity-box" id="manageActivityBox" data-admin-only="1" hidden>
+          <summary>Registros de atividade</summary>
+          <p class="manage-activity-note">Histórico cronológico do que aconteceu no sistema — logins, troca de senha, criação/arquivamento de targets e clientes. Útil pra auditar quem mexeu no quê.</p>
+          <div class="activity-filters">
+            <label>Filtrar por ação
+              <select id="activityActionFilter">
+                <option value="">Todas</option>
+                <option value="login.">Logins (sucesso + falha)</option>
+                <option value="logout">Logout</option>
+                <option value="change_password">Troca de senha</option>
+                <option value="target.">Targets (criar / editar / arquivar)</option>
+                <option value="viewer.">Clientes (criar / editar / arquivar)</option>
+              </select>
+            </label>
+            <label>Filtrar por cliente
+              <input type="text" id="activityProfileFilter" placeholder="ex.: flavio">
+            </label>
+            <button type="button" class="secondary-action" id="activityRefreshButton">Atualizar lista</button>
+          </div>
+          <div class="activity-list" id="activityList" aria-live="polite"></div>
+          <p class="activity-message" id="activityMessage" role="status"></p>
+        </details>
+
         <dialog class="password-dialog" id="editViewerDialog" aria-label="Editar cliente">
           <form id="editViewerForm" method="dialog">
             <h2 id="editViewerTitle">Editar cliente</h2>

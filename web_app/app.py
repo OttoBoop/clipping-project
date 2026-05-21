@@ -44,6 +44,7 @@ from .jobs import (
     record_target_sync,
     run_export_snapshot,
 )
+from . import activity
 from .segmentation import (
     ViewerProfileError,
     add_target_to_profile,
@@ -502,12 +503,14 @@ async def login(request: Request) -> JSONResponse:
     payload = await read_json(request)
     identity = login_identity(str(payload.get("password") or ""))
     if not identity:
+        activity.record("login.fail", session=None)
         raise HTTPException(status_code=401, detail="invalid_password")
     session_token = make_session(
         identity["sub"],
         role=identity["role"],
         profile=identity["profile"],
     )
+    activity.record("login.success", session=identity)
     response = JSONResponse({"ok": True, "role": identity["role"], "profile": identity["profile"]})
     response.set_cookie(
         COOKIE_NAME,
@@ -522,8 +525,9 @@ async def login(request: Request) -> JSONResponse:
 
 @app.post("/api/logout")
 def logout(request: Request) -> JSONResponse:
-    require_viewer(request)
+    session = require_viewer(request)
     require_csrf(request)
+    activity.record("logout", session=session)
     response = JSONResponse({"ok": True})
     response.delete_cookie(COOKIE_NAME)
     return response
@@ -586,6 +590,7 @@ async def change_password(request: Request) -> JSONResponse:
             )
         except Exception:  # noqa: BLE001
             pass
+    activity.record("change_password", session=session)
     new_session = make_session(profile or "admin", role=role, profile=profile or "admin")
     response = JSONResponse({"ok": True, "role": role, "profile": profile})
     response.set_cookie(
@@ -839,6 +844,7 @@ async def add_target(request: Request) -> JSONResponse:
         return target_operation_error_response("create", exc)
     key = str(result.get("key") or "created")
     assigned = _apply_target_assignment(request, session, key, "add")
+    activity.record("target.create", session=session, target_key=key, details={"primary": False, "assignedTo": assigned})
     return target_mutation_response("targets-created", result, key, sync_reason="target-created", assigned_profile=assigned)
 
 
@@ -855,6 +861,7 @@ async def add_primary_target(request: Request) -> JSONResponse:
         return target_operation_error_response("create", exc)
     key = str(result.get("key") or "created")
     assigned = _apply_target_assignment(request, session, key, "add")
+    activity.record("target.create_primary", session=session, target_key=key, details={"primary": True, "assignedTo": assigned})
     return target_mutation_response("targets-created", result, key, sync_reason="target-created", assigned_profile=assigned)
 
 
@@ -871,6 +878,7 @@ async def update_target(target_key: str, request: Request) -> JSONResponse:
     except Exception as exc:
         return target_operation_error_response("update", exc)
     key = str(result.get("key") or target_key)
+    activity.record("target.update", session=session, target_key=key)
     return target_mutation_response("targets-updated", result, key, sync_reason="target-updated", cleanup=True)
 
 
@@ -886,6 +894,7 @@ async def promote_target(target_key: str, request: Request) -> JSONResponse:
     except Exception as exc:
         return target_operation_error_response("update", exc)
     key = str(result.get("key") or target_key)
+    activity.record("target.promote", session=session, target_key=key)
     return target_mutation_response("targets-promoted", result, key, sync_reason="target-promoted")
 
 
@@ -901,6 +910,7 @@ async def demote_target(target_key: str, request: Request) -> JSONResponse:
     except Exception as exc:
         return target_operation_error_response("update", exc)
     key = str(result.get("key") or target_key)
+    activity.record("target.demote", session=session, target_key=key)
     return target_mutation_response("targets-demoted", result, key, sync_reason="target-demoted")
 
 
@@ -910,13 +920,15 @@ async def archive_target(target_key: str, request: Request) -> JSONResponse:
     require_csrf(request)
     _validate_target_scope(session, target_key)
     payload = await read_json(request)
+    reason = str(payload.get("reason") or "Arquivado pela equipe.")
     try:
-        result = archive_secondary_target(target_key, str(payload.get("reason") or "Arquivado pela equipe."))
+        result = archive_secondary_target(target_key, reason)
     except ValidationError as exc:
         return target_validation_response(exc)
     except Exception as exc:
         return target_operation_error_response("archive", exc)
     assigned = _apply_target_assignment(request, session, target_key, "remove")
+    activity.record("target.archive", session=session, target_key=target_key, details={"reason": reason, "removedFrom": assigned})
     return target_mutation_response("targets-archived", result, target_key, assigned_profile=assigned)
 
 
@@ -937,6 +949,7 @@ def restore_target(target_key: str, request: Request) -> JSONResponse:
         return target_operation_error_response("restore", exc)
     key = str(result.get("key") or target_key)
     assigned = _apply_target_assignment(request, session, key, "add")
+    activity.record("target.restore", session=session, target_key=key, details={"assignedTo": assigned})
     return target_mutation_response("targets-restored", result, key, sync_reason="target-restored", assigned_profile=assigned)
 
 
@@ -990,7 +1003,7 @@ def list_admin_viewers(request: Request) -> dict[str, Any]:
 
 @app.post("/api/admin/viewers")
 async def create_admin_viewer(request: Request) -> JSONResponse:
-    require_admin(request)
+    session = require_admin(request)
     require_csrf(request)
     payload = await read_json(request)
     profile = str(payload.get("profile") or "").strip()
@@ -1041,12 +1054,13 @@ async def create_admin_viewer(request: Request) -> JSONResponse:
             pass
 
     record["has_password"] = True
+    activity.record("viewer.create", session=session, target_key=profile, details={"label": label, "target_keys": list(target_keys)})
     return JSONResponse({"ok": True, "viewer": record})
 
 
 @app.patch("/api/admin/viewers/{profile_key}")
 async def update_admin_viewer(profile_key: str, request: Request) -> JSONResponse:
-    require_admin(request)
+    session = require_admin(request)
     require_csrf(request)
     payload = await read_json(request)
     profiles = viewer_profiles()
@@ -1113,12 +1127,13 @@ async def update_admin_viewer(profile_key: str, request: Request) -> JSONRespons
     from . import auth as auth_module
 
     record["has_password"] = auth_module.has_viewer_password(profile_key)
+    activity.record("viewer.update", session=session, target_key=profile_key, details={"label": label, "target_keys": list(target_keys), "password_changed": password is not None})
     return JSONResponse({"ok": True, "viewer": record})
 
 
 @app.post("/api/admin/viewers/{profile_key}/archive")
 def archive_admin_viewer(profile_key: str, request: Request) -> JSONResponse:
-    require_admin(request)
+    session = require_admin(request)
     require_csrf(request)
     try:
         removed = archive_viewer_profile(profile_key)
@@ -1138,7 +1153,30 @@ def archive_admin_viewer(profile_key: str, request: Request) -> JSONResponse:
         except Exception:  # noqa: BLE001
             pass
 
+    activity.record("viewer.archive", session=session, target_key=profile_key)
     return JSONResponse({"ok": True, "archived": removed["profile"], "viewer": removed})
+
+
+@app.get("/api/admin/activity")
+def list_admin_activity(
+    request: Request,
+    limit: int = 200,
+    since: str = "",
+    action: str = "",
+    profile: str = "",
+) -> dict[str, Any]:
+    """Recent activity log entries (admin-only). Filters: ?limit=, ?since=ISO,
+    ?action=prefix (e.g. 'target.' or 'login.'), ?profile=key.
+    """
+    require_admin(request)
+    capped = max(1, min(int(limit or 0) or 200, 1000))
+    rows = activity.recent(
+        limit=capped,
+        since_iso=since or None,
+        action_prefix=action or None,
+        profile=profile or None,
+    )
+    return {"activity": rows, "count": len(rows), "limit": capped}
 
 
 @app.post("/api/categories")

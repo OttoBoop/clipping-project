@@ -264,6 +264,110 @@
       });
   })();
 
+  (function setupAdminActivity() {
+    // Tela de registros (Goal pendente do prompt #5 de 2026-05-19:
+    // "Uma tela de registros também seria muito bom"). Admin-only.
+    var box = document.getElementById("manageActivityBox");
+    if (!box) return;
+    if (initialSessionRole !== "admin") return;
+    box.hidden = false;
+
+    var listEl = document.getElementById("activityList");
+    var msgEl = document.getElementById("activityMessage");
+    var actionFilter = document.getElementById("activityActionFilter");
+    var profileFilter = document.getElementById("activityProfileFilter");
+    var refreshBtn = document.getElementById("activityRefreshButton");
+
+    var ACTION_LABELS = {
+      "login.success": "Login (ok)",
+      "login.fail": "Login (senha incorreta)",
+      "logout": "Logout",
+      "change_password": "Troca de senha",
+      "target.create": "Criou target",
+      "target.create_primary": "Criou target principal",
+      "target.update": "Editou target",
+      "target.promote": "Promoveu target a principal",
+      "target.demote": "Rebaixou target a secundário",
+      "target.archive": "Arquivou target",
+      "target.restore": "Restaurou target",
+      "viewer.create": "Criou cliente",
+      "viewer.update": "Editou cliente",
+      "viewer.archive": "Arquivou cliente",
+    };
+
+    function fmtTs(iso) {
+      if (!iso) return "";
+      try {
+        var d = new Date(iso);
+        return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "medium" });
+      } catch (_) { return String(iso); }
+    }
+
+    function fmtUser(r) {
+      var role = r.userRole || "?";
+      var profile = r.userProfile || "";
+      if (role === "anonymous") return "anônimo";
+      if (role === "admin" && profile === "admin") return "admin";
+      return role + " · " + profile;
+    }
+
+    function detailsLine(r) {
+      var d = r.details || {};
+      var bits = [];
+      if (r.targetKey) bits.push("alvo: " + r.targetKey);
+      if (d.assignedTo) bits.push("atribuído a: " + d.assignedTo);
+      if (d.removedFrom) bits.push("removido de: " + d.removedFrom);
+      if (d.reason) bits.push("motivo: " + d.reason);
+      if (d.password_changed) bits.push("senha alterada");
+      if (d.label) bits.push("rótulo: " + d.label);
+      return bits.join(" · ");
+    }
+
+    function render(rows) {
+      if (!listEl) return;
+      if (!rows.length) {
+        listEl.innerHTML = '<p class="filter-note">Nenhum registro corresponde aos filtros.</p>';
+        return;
+      }
+      var html = '<table class="activity-table"><thead><tr>' +
+        '<th>Quando</th><th>Quem</th><th>Ação</th><th>Detalhes</th>' +
+        '</tr></thead><tbody>';
+      rows.forEach(function (r) {
+        var label = ACTION_LABELS[r.action] || r.action;
+        html += '<tr>' +
+          '<td>' + escapeHtml(fmtTs(r.timestamp)) + '</td>' +
+          '<td>' + escapeHtml(fmtUser(r)) + '</td>' +
+          '<td>' + escapeHtml(label) + '</td>' +
+          '<td>' + escapeHtml(detailsLine(r)) + '</td>' +
+          '</tr>';
+      });
+      html += "</tbody></table>";
+      listEl.innerHTML = html;
+    }
+
+    async function load() {
+      setMessage(msgEl, "Carregando registros...", "");
+      var params = new URLSearchParams();
+      params.set("limit", "200");
+      if (actionFilter && actionFilter.value) params.set("action", actionFilter.value);
+      if (profileFilter && profileFilter.value.trim()) params.set("profile", profileFilter.value.trim());
+      try {
+        var resp = await apiFetch("/api/admin/activity?" + params.toString(), { cache: "no-store" });
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        var data = await resp.json();
+        render(data.activity || []);
+        setMessage(msgEl, (data.count || 0) + " registro(s) carregado(s).", "ok");
+      } catch (e) {
+        setMessage(msgEl, "Não foi possível carregar registros: " + (e && e.message || e), "error");
+      }
+    }
+
+    if (refreshBtn) refreshBtn.addEventListener("click", load);
+    if (actionFilter) actionFilter.addEventListener("change", load);
+    if (profileFilter) profileFilter.addEventListener("change", load);
+    box.addEventListener("toggle", function () { if (box.open) load(); });
+  })();
+
   (function setupAdminViewers() {
     var box = document.getElementById("manageViewersBox");
     if (!box) return;
