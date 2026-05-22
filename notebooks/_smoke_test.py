@@ -82,6 +82,7 @@ def is_pdf(path):
 
 
 def run_cenario(nome, fn, *args, **kwargs):
+    esperado = kwargs.pop("_esperado", None)
     print(f"\n========== CENARIO: {nome} ==========")
     inicio = datetime.datetime.now()
     try:
@@ -99,13 +100,15 @@ def run_cenario(nome, fn, *args, **kwargs):
     dur = (datetime.datetime.now() - inicio).total_seconds()
 
     if isinstance(saida, list):
-        # range: lista de paths
-        ok = all(is_pdf(p) for p in saida) and len(saida) > 0
-        print(f"  -> range com {len(saida)} arquivos, todos PDF? {ok} ({dur:.1f}s)")
+        # range: lista de paths. Sucesso = todos PDF E quantidade esperada
+        todos_pdf = all(is_pdf(p) for p in saida)
+        bateu = (len(saida) == esperado) if esperado is not None else (len(saida) > 0)
+        ok = todos_pdf and bateu
+        print(f"  -> range com {len(saida)}/{esperado if esperado else '?'} arquivos, todos PDF? {todos_pdf} ({dur:.1f}s)")
         for p in saida:
             tam = os.path.getsize(p) if os.path.exists(p) else 0
             print(f"     - {os.path.basename(p)} {tam/1024/1024:.2f} MB  pdf={is_pdf(p)}")
-        return (nome, ok, f"{len(saida)} arquivos em {dur:.1f}s")
+        return (nome, ok, f"{len(saida)}/{esperado} arquivos em {dur:.1f}s")
     else:
         ok = is_pdf(saida)
         tam = os.path.getsize(saida) if saida and os.path.exists(saida) else 0
@@ -125,8 +128,8 @@ resultados.append(run_cenario("DCM_hoje", ns["baixar_dcm_hoje"]))
 ano = datetime.date.today().year
 resultados.append(run_cenario(f"DCM_edicao_1_{ano}", ns["baixar_dcm_edicao"], ano, 1))
 
-# --- DCM range curto (2 edicoes) ---
-resultados.append(run_cenario(f"DCM_range_1a2_{ano}", ns["baixar_dcm_range"], ano, 1, 2))
+# --- DCM range curto (2 edicoes), DEVE retornar 2 arquivos PDF (exigencia explicita) ---
+resultados.append(run_cenario(f"DCM_range_1a2_{ano}", ns["baixar_dcm_range"], ano, 1, 2, _esperado=2))
 
 
 print("\n\n========== RESUMO ==========")
