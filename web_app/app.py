@@ -513,6 +513,19 @@ def admin_page() -> RedirectResponse:
     return RedirectResponse("/", status_code=307)
 
 
+def _request_meta(request: Request) -> dict[str, str]:
+    """Extract IP + UA prefix for activity log details.
+
+    Render reverse-proxies, so X-Forwarded-For is the source of truth for IP.
+    UA is truncated to 80 chars to keep details JSON compact while remaining
+    distinguishable (browser/bot/playwright/curl).
+    """
+    xff = request.headers.get("x-forwarded-for") or ""
+    ip = xff.split(",")[0].strip() if xff else (request.client.host if request.client else "")
+    ua = (request.headers.get("user-agent") or "")[:80]
+    return {"ip": ip, "ua": ua}
+
+
 @app.post("/api/login")
 async def login(request: Request) -> JSONResponse:
     if not login_configured():
@@ -520,14 +533,14 @@ async def login(request: Request) -> JSONResponse:
     payload = await read_json(request)
     identity = login_identity(str(payload.get("password") or ""))
     if not identity:
-        activity.record("login.fail", session=None)
+        activity.record("login.fail", session=None, details=_request_meta(request))
         raise HTTPException(status_code=401, detail="invalid_password")
     session_token = make_session(
         identity["sub"],
         role=identity["role"],
         profile=identity["profile"],
     )
-    activity.record("login.success", session=identity)
+    activity.record("login.success", session=identity, details=_request_meta(request))
     response = JSONResponse({"ok": True, "role": identity["role"], "profile": identity["profile"]})
     response.set_cookie(
         COOKIE_NAME,
@@ -544,7 +557,7 @@ async def login(request: Request) -> JSONResponse:
 def logout(request: Request) -> JSONResponse:
     session = require_viewer(request)
     require_csrf(request)
-    activity.record("logout", session=session)
+    activity.record("logout", session=session, details=_request_meta(request))
     response = JSONResponse({"ok": True})
     response.delete_cookie(COOKIE_NAME)
     return response
@@ -607,7 +620,11 @@ async def change_password(request: Request) -> JSONResponse:
             )
         except Exception:  # noqa: BLE001
             pass
-    activity.record("change_password", session=session)
+    activity.record(
+        "change_password",
+        session=session,
+        details={"role": role, "profile": profile or "admin", **_request_meta(request)},
+    )
     new_session = make_session(profile or "admin", role=role, profile=profile or "admin")
     response = JSONResponse({"ok": True, "role": role, "profile": profile})
     response.set_cookie(
