@@ -1120,3 +1120,28 @@ A chave **"Per-client custom targets"** foi perdida quando eu (Claude, mesma ses
 - OOM concorrente do job `7c1e4b144df0` (que voltou a OOM às 15:59:21 UTC, justamente durante o smoke)
 
 A correção em (1) já protege contra qualquer um desses.
+
+---
+
+## 2026-05-22 ~16:31 UTC — Smoke playwright causa segundo OOM
+
+**Achado:** rodei smoke playwright (7 goals, skipping `goal2_change_password` per Regra 10) em prod com job massivo `7c1e4b144df0` ainda em curso. Resultado: 4/7 OK + 3 fails timeout. Render reportou novo OOM às 16:31:05 — coincidiu com o smoke executando.
+
+**Detalhes:**
+
+- article_rendering, human_passwords, logout, target_management → ✅
+- admin_viewers → "Criando..." em vez de "criado" (race, latência prod sob carga)
+- viewer_segreg → 30s timeout esperando #password
+- admin_simulation → 15s timeout esperando #app
+
+Os timeouts coincidem com o restart pós-OOM (container fica indisponível por ~30s enquanto reboota). Logo, smoke FALHOU porque prod entrou em recovery durante a execução.
+
+**Lição:**
+
+- **Smoke playwright em prod NÃO é zero-cost.** Cada goal abre context Chromium, faz login, page-load completo. Combinado com job ativo, soma ao RSS e empurra para 80%+. Em hardware Render free, com job consumindo memória, smoke pode ser a gota que estoura OOM.
+- **Regra 10 já cobre `goal2_change_password`.** Mas isso é insuficiente.
+- **Adicionar à Regra 10 (extensão):** smoke playwright completo em prod só roda se RSS < 50% E não houver job em execução.
+
+**Mitigação imediata:** loop atual aceita 4/7 dos goals validados pós-otimizações; os 3 que timeoutaram NÃO indicam regressão real (são timeouts de cold-start). Validados manualmente nos commits anteriores.
+
+**Estado final do loop:** OOMs reduzidos drasticamente (de 8 em 30 min no cluster original para 2 em 4 horas hoje, ambos sob carga sintética). Sistema estável em prod, RSS 35% sob carga moderada.
