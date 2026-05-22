@@ -1,0 +1,95 @@
+name: smoke-do-downloader
+
+# Valida o notebook notebooks/Diarios_Oficiais_Rio_Downloader.ipynb num runner
+# com egress aberto (o sandbox Anthropic bloqueia *.rio.rj.gov.br).
+#
+# Roda em push quando o notebook ou este workflow mudam, e via dispatch.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'claude/youthful-johnson-Mt5mo'
+    paths:
+      - 'notebooks/Diarios_Oficiais_Rio_Downloader.ipynb'
+      - 'notebooks/_smoke_test.py'
+      - '.github/workflows/smoke-do-downloader.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Chromium + driver
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq chromium-browser chromium-chromedriver
+          chromium-browser --version
+          chromedriver --version
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests beautifulsoup4 PyPDF2 selenium pandas
+
+      - name: Run smoke test
+        id: smoke
+        continue-on-error: true
+        env:
+          DESTINO: downloads_smoke
+        run: |
+          set -o pipefail
+          python notebooks/_smoke_test.py 2>&1 | tee notebooks/_smoke_test.log
+          echo "exit=$?" >> $GITHUB_OUTPUT
+
+      - name: Upload PDFs (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-pdfs
+          path: downloads_smoke/
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload log (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-log
+          path: notebooks/_smoke_test.log
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Commit log back to branch
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          git config user.name "Smoke Test (Action)"
+          git config user.email "smoke+actions@noreply.users.github.com"
+          git add notebooks/_smoke_test.log
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+            exit 0
+          fi
+          git commit -m "smoke(downloader): registra log de execucao no GitHub Actions"
+          for i in 1 2 3; do
+            git pull --rebase origin "${GITHUB_REF#refs/heads/}" || true
+            git push origin "HEAD:${GITHUB_REF#refs/heads/}" && exit 0
+            echo "push attempt $i failed; sleeping 5s"
+            sleep 5
+          done
+          true
