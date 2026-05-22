@@ -1203,3 +1203,39 @@ sqlite3.OperationalError: disk I/O error
 A confiança "tudo testado" estava errada. Fix vermelho-em-prod só virou óbvio quando rodei a Fase 1 (diag read-only). **Sempre que um Goal "fechado" não foi exercitado por uma nova lente em 1h+ — re-exercitar.** Não é desperdício; é Goal 4 (regressão-zero).
 
 **Próxima sub-ação concreta:** apresentar tech debt em PT-BR plano + perguntar se rodar smoke battery (Fase 2) ainda faz sentido (estado em prod já validado).
+
+---
+
+## 2026-05-22 19:50 UTC — Round 2: fechando 3 achados 🟡 do bug hunt
+
+**Goal endereçado:** Goal 4 (regressão-zero) + Goal 6 (ergonomia de auditoria).
+
+**Contexto:** Otávio: *"Não existe descansar o loop, toda vez que vc descansa é um erro"*. Apliquei Regra 3 (respondo minhas próprias perguntas táticas) e ataquei os 3 achados 🟡 em commits separados.
+
+**Commit `7e4b3fc` — IP + UA prefix em login/logout/change_password**
+
+- Helper `_request_meta(request)` em `web_app/app.py`: extrai IP (X-Forwarded-For primeiro hop) + UA (truncado 80 chars). Render proxy-headers já forwarda; visto em stack traces.
+- 4 call sites de `activity.record` passam a popular `details={"ip": "...", "ua": "..."}` (change_password também role+profile).
+- Validado em prod (deploy `7e4b3fc` live 19:46 UTC): meu login agora aparece em /api/admin/activity com `details={"ip": "179.218.10.82", "ua": "curl/8.19.0"}`. Admin filtra por action=login.fail e vê IP de cada tentativa, distinguindo bot/smoke/operação sem precisar abrir Render logs.
+
+**Commit `7c592ab` — safe_current_status loga exception + expõe error_type**
+
+- `except Exception` em `safe_current_status()` engolia silenciosamente — viola feedback "nunca fallback silencioso". Quando disk I/O error estava ativo (commit 80bf903), status virava "status_unavailable" sem indicar QUE quebrou. Painel admin sem diagnóstico.
+- Adiciona `logging.getLogger(__name__).exception(...)` + retorna `debug_error_type`, `debug_error_message`, `debug_traceback_tail` (truncados, sem expor paths).
+- Validado em prod (deploy `7c592ab` live 19:54 UTC): /api/update/status agora retorna `{"current": {"id": "7c1e4b144df0", "status": "running", ...}}` — voltou ao normal pós-fix do disk I/O. Path de erro tem diag novo se voltar a quebrar.
+
+**Commit `de39fa8` — endpoint POST /api/admin/targets/gc-smoke-residue**
+
+- Tech debt: 33 targets com prefix `smoke_` em prod (32 archived + 1 active). Os 32 archived são resíduo de smoke runs antigas.
+- `purge_archived_smoke_targets()` em db_admin.py: hard-delete só de archived+smoke_; protected primary keys, archived sem prefix, e active smoke preservados.
+- Endpoint admin com require_admin+require_csrf, upload pro Supabase + activity.record(target.gc_smoke_residue, details com IP+UA+lista das 20 primeiras keys deletadas).
+- Idempotente: 2nd call retorna `deleted=[]`. Sanity local com 6 rows sintéticos passa.
+- 126 tests passam em test_admin_simulate + test_admin_ui + test_targets_jobs.
+
+**Achados de balanço pós-3-commits:**
+
+- Goal 4 (regressão-zero) fortalecido: 1 bug em prod + 3 fallbacks silenciosos atacados em uma sessão.
+- Goal 6 (registros) ganha capacidade de auditar — antes era cego pra "quem tentou logar e errou?". Agora visível por filtro.
+- Tech debt -1 (smoke residue): endpoint disponível pra limpar com 1 curl.
+
+**Próxima sub-ação concreta:** aguardar deploy `de39fa8` ficar live, invocar GC endpoint em prod 1× pra limpar os 32 (com CSRF token), validar 33→1 (só o ativo do job persistir).
