@@ -550,3 +550,61 @@ def test_unauthenticated_create_target_blocked(monkeypatch, tmp_path):
     )
     assert resp.status_code == 401
     assert "viewer_login_required" in resp.text
+
+
+def test_gc_smoke_residue_removes_only_archived_smoke(monkeypatch, tmp_path):
+    """Endpoint POST /api/admin/targets/gc-smoke-residue deleta apenas
+    targets archived com prefix 'smoke_'. Preserva: active smoke, archived
+    sem prefix, e PROTECTED_PRIMARY_KEYS."""
+    import json as _json
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    # Sobrescrever o targets.json com mix de cenários
+    from web_app import db_admin as _db_admin
+    targets_path = _db_admin.TARGETS_PATH
+    targets_path.write_text(_json.dumps([
+        {"key": "flavio_valle", "label": "Flavio", "archived": False},
+        {"key": "shakira", "label": "Shakira", "archived": False},
+        {"key": "smoke_sec_111", "label": "Smoke Sec 111", "archived": True},
+        {"key": "smoke_pri_222", "label": "Smoke Pri 222", "archived": True},
+        {"key": "smoke_active_333", "label": "Smoke Active 333", "archived": False},
+        {"key": "real_archived", "label": "Real Archived", "archived": True},
+    ]), encoding="utf-8")
+
+    client = TestClient(app_module.app)
+    login(client, "test-password")
+    csrf = client.get("/api/csrf").json()["csrf"]
+    resp = client.post(
+        "/api/admin/targets/gc-smoke-residue",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["count"] == 2
+    assert set(body["deleted"]) == {"smoke_sec_111", "smoke_pri_222"}
+
+    remaining = _json.loads(targets_path.read_text(encoding="utf-8"))
+    remaining_keys = {r["key"] for r in remaining}
+    assert remaining_keys == {"flavio_valle", "shakira", "smoke_active_333", "real_archived"}
+
+    # Idempotent: 2nd call returns deleted=[]
+    csrf2 = client.get("/api/csrf").json()["csrf"]
+    resp2 = client.post(
+        "/api/admin/targets/gc-smoke-residue",
+        headers={"X-CSRF-Token": csrf2},
+    )
+    assert resp2.status_code == 200
+    assert resp2.json()["count"] == 0
+
+
+def test_gc_smoke_residue_requires_admin(monkeypatch, tmp_path):
+    """Viewer não consegue invocar GC — require_admin rejeita."""
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    client = TestClient(app_module.app)
+    login(client, "viewer-flavio")
+    csrf = client.get("/api/csrf").json()["csrf"]
+    resp = client.post(
+        "/api/admin/targets/gc-smoke-residue",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert resp.status_code == 401, resp.text
+    assert "admin" in resp.text.lower()
