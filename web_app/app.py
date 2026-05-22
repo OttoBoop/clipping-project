@@ -772,7 +772,9 @@ def _validate_target_scope(session: dict[str, Any], target_key: str) -> None:
     + ?as_profile=X simulation handled by _apply_target_assignment).
 
     Raises HTTPException(403, target_out_of_scope) with a structured payload
-    the frontend can present to the user.
+    the frontend can present to the user. Also records the denial as an
+    activity event ("target.scope_denied") so the admin audit log shows
+    every attempt to mutate out-of-scope, not just successful mutations.
     """
     role = str(session.get("role") or "")
     if role != "viewer":
@@ -785,6 +787,12 @@ def _validate_target_scope(session: dict[str, Any], target_key: str) -> None:
     allowed = allowed_target_keys(session)
     if allowed is None or target_key in allowed:
         return
+    activity.record(
+        "target.scope_denied",
+        session=session,
+        target_key=target_key,
+        details={"attemptedBy": profile, "reason": "target_out_of_scope"},
+    )
     raise HTTPException(
         status_code=403,
         detail={

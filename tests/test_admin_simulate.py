@@ -368,18 +368,35 @@ def test_viewer_authenticated_creates_in_own_scope(monkeypatch, tmp_path):
 
 def test_viewer_cannot_archive_target_out_of_scope(monkeypatch, tmp_path):
     """Phase 2: viewer flavio cannot archive 'shakira' (out of his scope).
-    Returns 403 target_out_of_scope without touching the target."""
+    Returns 403 target_out_of_scope without touching the target. The
+    attempt is also recorded as an activity event (Goal 6 phase 2 —
+    scope_denied audit trail)."""
     _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
-    client = TestClient(app_module.app)
-    login(client, "viewer-flavio")
-    csrf = client.get("/api/csrf").json()["csrf"]
-    resp = client.post(
-        "/api/targets/shakira/archive",
-        headers={"X-CSRF-Token": csrf},
-        json={"reason": "sabotage attempt"},
-    )
-    assert resp.status_code == 403, resp.text
-    assert "target_out_of_scope" in resp.text
+    # Use `with TestClient` so the FastAPI lifespan runs and
+    # ensure_app_tables creates the activity_log table.
+    with TestClient(app_module.app) as client:
+        login(client, "viewer-flavio")
+        csrf = client.get("/api/csrf").json()["csrf"]
+        resp = client.post(
+            "/api/targets/shakira/archive",
+            headers={"X-CSRF-Token": csrf},
+            json={"reason": "sabotage attempt"},
+        )
+        assert resp.status_code == 403, resp.text
+        assert "target_out_of_scope" in resp.text
+
+        # Verify the denial was recorded. Switch to admin to read activity log.
+        client.post("/api/logout", headers={"X-CSRF-Token": csrf})
+        login(client, "test-password")
+        activity_resp = client.get("/api/admin/activity?action=target.scope_denied")
+        assert activity_resp.status_code == 200, activity_resp.text
+        rows = activity_resp.json().get("activity", [])
+        assert len(rows) >= 1, f"scope_denied should have been captured: {activity_resp.json()}"
+        denied = rows[0]
+        assert denied["userRole"] == "viewer"
+        assert denied["userProfile"] == "flavio"
+        assert denied["targetKey"] == "shakira"
+        assert denied["details"]["reason"] == "target_out_of_scope"
 
 
 def test_viewer_can_archive_own_target(monkeypatch, tmp_path):
