@@ -66,7 +66,13 @@ def validate_configured_db_file(db_file: Path) -> Path:
     return resolved
 
 
+_app_tables_initialized: set[Path] = set()
+
+
 def ensure_app_tables(db_file: Path) -> None:
+    resolved = Path(db_file).resolve()
+    if resolved in _app_tables_initialized:
+        return
     ClippingDB(db_file)
     with connect(db_file) as conn:
         conn.executescript(
@@ -174,6 +180,7 @@ def ensure_app_tables(db_file: Path) -> None:
                 conn.execute(statement)
             except sqlite3.OperationalError:
                 pass
+    _app_tables_initialized.add(resolved)
 
 
 def is_synthetic_test_target(row: dict[str, Any]) -> bool:

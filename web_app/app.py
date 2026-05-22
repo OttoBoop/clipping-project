@@ -1298,6 +1298,61 @@ def admin_debug_memory(request: Request) -> dict[str, Any]:
     }
 
 
+@app.get("/api/admin/debug/disk")
+def admin_debug_disk(request: Request) -> dict[str, Any]:
+    """Disk usage do filesystem onde o DB SQLite vive + tamanho dos arquivos.
+
+    Render free usa filesystem efêmero (~1GB). Se DB + WAL + journal somam
+    perto disso, escritas falham com `sqlite3.OperationalError: disk I/O error`.
+    Use isto pra diferenciar disco-cheio de DB-corrompido.
+    """
+    require_admin(request)
+    import shutil
+    from . import config
+
+    db = config.db_path()
+    parent = db.parent
+
+    def mib(b: int) -> float:
+        return round(b / 1024 / 1024, 2)
+
+    usage = shutil.disk_usage(parent if parent.exists() else "/")
+
+    files: dict[str, dict[str, Any]] = {}
+    for suffix in ("", "-wal", "-shm", "-journal"):
+        p = db.with_suffix(db.suffix + suffix) if suffix else db
+        if p.exists():
+            st = p.stat()
+            files[p.name] = {"size_mib": mib(st.st_size), "size_bytes": st.st_size}
+
+    # Largest files no diretório data/
+    data_dir = config.DATA_DIR
+    top_files: list[dict[str, Any]] = []
+    if data_dir.exists():
+        for p in data_dir.rglob("*"):
+            try:
+                if p.is_file():
+                    sz = p.stat().st_size
+                    if sz > 1024 * 1024:  # >1 MiB
+                        top_files.append({"path": str(p.relative_to(data_dir)), "size_mib": mib(sz)})
+            except OSError:
+                continue
+        top_files.sort(key=lambda d: d["size_mib"], reverse=True)
+        top_files = top_files[:15]
+
+    return {
+        "filesystem": {
+            "mount_probe": str(parent),
+            "total_mib": mib(usage.total),
+            "used_mib": mib(usage.used),
+            "free_mib": mib(usage.free),
+            "used_pct": round(100 * usage.used / usage.total, 1),
+        },
+        "db_files": files,
+        "data_dir_top_files": top_files,
+    }
+
+
 @app.post("/api/categories")
 async def create_classification_category(request: Request) -> dict[str, Any]:
     require_admin(request)
