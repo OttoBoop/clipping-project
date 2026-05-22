@@ -2018,6 +2018,22 @@ details[open] > summary .story-toggle {
 .session-bar[hidden] { display: none; }
 .session-info { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 .session-info strong { color: var(--text); }
+.session-memory {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+}
+.session-memory[hidden] { display: none; }
+.session-memory.memory-ok    { background: #d6f5e0; color: #14532d; }
+.session-memory.memory-warn  { background: #fef0c4; color: #7a4b00; }
+.session-memory.memory-hot   { background: #ffd7d7; color: #7a1010; }
+.session-memory .memory-icon { font-size: 12px; }
 .session-role-tag {
   display: inline-block;
   padding: 2px 8px;

@@ -69,6 +69,45 @@
     return path + sep + "as_profile=" + encodeURIComponent(initialSimulating);
   }
 
+  (function setupMemoryBadge() {
+    // Badge na session-bar mostrando VmRSS / 512 MiB do worker Render.
+    // Goal 4 (regressão-zero/estabilidade): admin ver saturação em tempo real
+    // antes de lançar job grande. Sem cap nem alerta — só visibility.
+    // Só para admin real (não em simulação, não para viewer).
+    var badge = document.getElementById("sessionMemoryBadge");
+    var text = document.getElementById("sessionMemoryText");
+    if (!badge || !text) return;
+    if (initialRealRole !== "admin") return;
+    badge.hidden = false;
+
+    function setColor(sat) {
+      badge.classList.remove("memory-ok", "memory-warn", "memory-hot");
+      if (sat >= 80) badge.classList.add("memory-hot");
+      else if (sat >= 60) badge.classList.add("memory-warn");
+      else badge.classList.add("memory-ok");
+    }
+
+    async function refresh() {
+      try {
+        var resp = await apiFetch("/api/admin/debug/memory", { cache: "no-store" });
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        var data = await resp.json();
+        var rss = Math.round(data.vm_rss_mib || 0);
+        var lim = Math.round(data.limit_mib || 512);
+        var sat = lim ? Math.round((rss / lim) * 100) : 0;
+        text.textContent = rss + "/" + lim + " MiB · " + sat + "%";
+        badge.title = "VmRSS=" + rss + " MiB | VmHWM=" + (data.vm_hwm_mib || "?") + " MiB | VmPeak=" + (data.vm_peak_mib || "?") + " MiB | limit=" + lim + " MiB";
+        setColor(sat);
+      } catch (_) {
+        text.textContent = "—";
+        badge.title = "memory probe falhou";
+      }
+    }
+
+    refresh();
+    window.setInterval(refresh, 60000);
+  })();
+
   (function setupSessionBar() {
     var bar = document.getElementById("sessionBar");
     var profileLabel = document.getElementById("sessionProfileLabel");
