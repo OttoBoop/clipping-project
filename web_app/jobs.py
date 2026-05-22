@@ -666,11 +666,24 @@ def run_export_snapshot(job_id: str | None = None) -> None:
         "--db",
         str(export_db_path),
     ]
-    completed = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=EXPORT_TIMEOUT_SECONDS, check=False)
+    # OOM mitigation (2026-05-22): pipe stdout/stderr to DEVNULL instead of
+    # capturing. capture_output=True buffered the entire child output in the
+    # parent process, doubling memory pressure during exports of 460+ stories
+    # / 780+ articles. The child prints progress lines that we never used
+    # except for a count log — replaced by a synthetic ok/fail marker.
+    # See WORK_LOG_MAJOR.md "OOMs são CRÔNICOS" (2026-05-21).
+    completed = subprocess.run(
+        cmd,
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        timeout=EXPORT_TIMEOUT_SECONDS,
+        check=False,
+    )
     if completed.returncode != 0:
         raise RuntimeError("export_failed")
     if job_id:
-        append_event(job_id, "export_complete", {"lines": len(completed.stdout.splitlines())})
+        append_event(job_id, "export_complete", {"returncode": completed.returncode})
 
 
 def run_durable_update(job_id: str, spec: dict[str, Any], cancel_event: threading.Event) -> dict[str, Any]:

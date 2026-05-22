@@ -1219,6 +1219,63 @@ def list_own_activity(
     return {"activity": rows, "count": len(rows), "limit": capped, "profile": profile}
 
 
+def _read_proc_status() -> dict[str, int]:
+    """Parse /proc/self/status (Linux). Returns Vm* in bytes.
+
+    Used by /api/admin/debug/memory to investigate the chronic OOM pattern
+    (30+ events in 3 weeks observed via Render API in 2026-05-21). No
+    external deps — Render runs Ubuntu, /proc is reliable.
+    """
+    out: dict[str, int] = {}
+    try:
+        with open("/proc/self/status", "r", encoding="ascii") as fh:
+            for line in fh:
+                if not line.startswith("Vm"):
+                    continue
+                key, _, rest = line.partition(":")
+                rest = rest.strip()
+                if not rest:
+                    continue
+                parts = rest.split()
+                if not parts:
+                    continue
+                try:
+                    val = int(parts[0])
+                except ValueError:
+                    continue
+                unit = parts[1].lower() if len(parts) > 1 else "kb"
+                multiplier = {"kb": 1024, "mb": 1024 * 1024, "gb": 1024 ** 3}.get(unit, 1)
+                out[key.strip()] = val * multiplier
+    except OSError:
+        pass
+    return out
+
+
+@app.get("/api/admin/debug/memory")
+def admin_debug_memory(request: Request) -> dict[str, Any]:
+    """RSS + Vm* snapshot of the FastAPI worker process. Admin-only.
+
+    The container limit on Render free is 512 MiB. OOM kill happens when
+    `VmRSS` (or workload + kernel) crosses that. Use this to spot whether
+    the process is sitting close to the wall before pushing a heavy job.
+    """
+    require_admin(request)
+    proc = _read_proc_status()
+
+    def mib(b: int) -> float:
+        return round(b / 1024 / 1024, 2)
+
+    return {
+        "limit_mib": 512,
+        "vm_rss_mib": mib(proc.get("VmRSS", 0)),
+        "vm_size_mib": mib(proc.get("VmSize", 0)),
+        "vm_peak_mib": mib(proc.get("VmPeak", 0)),
+        "vm_hwm_mib": mib(proc.get("VmHWM", 0)),  # peak RSS ("high water mark")
+        "vm_data_mib": mib(proc.get("VmData", 0)),
+        "raw_bytes": proc,
+    }
+
+
 @app.post("/api/categories")
 async def create_classification_category(request: Request) -> dict[str, Any]:
     require_admin(request)
