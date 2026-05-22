@@ -1,5 +1,5 @@
 Traceback (most recent call last):
-  File "/home/runner/work/clipping-project/clipping-project/notebooks/_smoke_test.py", line 57, in run_cenario
+  File "/home/runner/work/clipping-project/clipping-project/notebooks/_smoke_test.py", line 80, in run_cenario
     saida = fn(*args, destino=DESTINO, **kwargs) if "destino" not in kwargs else fn(*args, **kwargs)
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "<string>", line 171, in baixar_dcm_hoje
@@ -22,27 +22,27 @@ Traceback (most recent call last):
 selenium.common.exceptions.SessionNotCreatedException: Message: session not created
 from unknown error: no chrome binary at /usr/bin/google-chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
 Stacktrace:
-#0 0x55c4605601da <unknown>
-#1 0x55c45ff76629 <unknown>
-#2 0x55c45ffb1460 <unknown>
-#3 0x55c45ffb0137 <unknown>
-#4 0x55c45fffe362 <unknown>
-#5 0x55c45fffdabc <unknown>
-#6 0x55c45ffbd767 <unknown>
-#7 0x55c45ffbe551 <unknown>
-#8 0x55c460523a7b <unknown>
-#9 0x55c460526ad3 <unknown>
-#10 0x55c460511a3c <unknown>
-#11 0x55c460527279 <unknown>
-#12 0x55c4604fa507 <unknown>
-#13 0x55c46054d8f8 <unknown>
-#14 0x55c46054dae6 <unknown>
-#15 0x55c46055ebc3 <unknown>
-#16 0x7f22ebff9aa4 <unknown>
-#17 0x7f22ec086c6c <unknown>
+#0 0x565512aa41da <unknown>
+#1 0x5655124ba629 <unknown>
+#2 0x5655124f5460 <unknown>
+#3 0x5655124f4137 <unknown>
+#4 0x565512542362 <unknown>
+#5 0x565512541abc <unknown>
+#6 0x565512501767 <unknown>
+#7 0x565512502551 <unknown>
+#8 0x565512a67a7b <unknown>
+#9 0x565512a6aad3 <unknown>
+#10 0x565512a55a3c <unknown>
+#11 0x565512a6b279 <unknown>
+#12 0x565512a3e507 <unknown>
+#13 0x565512a918f8 <unknown>
+#14 0x565512a91ae6 <unknown>
+#15 0x565512aa2bc3 <unknown>
+#16 0x7f43629eeaa4 <unknown>
+#17 0x7f4362a7bc6c <unknown>
 
 Traceback (most recent call last):
-  File "/home/runner/work/clipping-project/clipping-project/notebooks/_smoke_test.py", line 57, in run_cenario
+  File "/home/runner/work/clipping-project/clipping-project/notebooks/_smoke_test.py", line 80, in run_cenario
     saida = fn(*args, destino=DESTINO, **kwargs) if "destino" not in kwargs else fn(*args, **kwargs)
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "<string>", line 214, in baixar_dcm_edicao
@@ -65,24 +65,24 @@ Traceback (most recent call last):
 selenium.common.exceptions.SessionNotCreatedException: Message: session not created
 from unknown error: no chrome binary at /usr/bin/google-chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
 Stacktrace:
-#0 0x5630f92f21da <unknown>
-#1 0x5630f8d08629 <unknown>
-#2 0x5630f8d43460 <unknown>
-#3 0x5630f8d42137 <unknown>
-#4 0x5630f8d90362 <unknown>
-#5 0x5630f8d8fabc <unknown>
-#6 0x5630f8d4f767 <unknown>
-#7 0x5630f8d50551 <unknown>
-#8 0x5630f92b5a7b <unknown>
-#9 0x5630f92b8ad3 <unknown>
-#10 0x5630f92a3a3c <unknown>
-#11 0x5630f92b9279 <unknown>
-#12 0x5630f928c507 <unknown>
-#13 0x5630f92df8f8 <unknown>
-#14 0x5630f92dfae6 <unknown>
-#15 0x5630f92f0bc3 <unknown>
-#16 0x7ff628fa9aa4 <unknown>
-#17 0x7ff629036c6c <unknown>
+#0 0x55d4547d71da <unknown>
+#1 0x55d4541ed629 <unknown>
+#2 0x55d454228460 <unknown>
+#3 0x55d454227137 <unknown>
+#4 0x55d454275362 <unknown>
+#5 0x55d454274abc <unknown>
+#6 0x55d454234767 <unknown>
+#7 0x55d454235551 <unknown>
+#8 0x55d45479aa7b <unknown>
+#9 0x55d45479dad3 <unknown>
+#10 0x55d454788a3c <unknown>
+#11 0x55d45479e279 <unknown>
+#12 0x55d454771507 <unknown>
+#13 0x55d4547c48f8 <unknown>
+#14 0x55d4547c4ae6 <unknown>
+#15 0x55d4547d5bc3 <unknown>
+#16 0x7f244603caa4 <unknown>
+#17 0x7f24460c9c6c <unknown>
 
 [smoke] notebook = notebooks/Diarios_Oficiais_Rio_Downloader.ipynb
 [smoke] destino  = /home/runner/work/clipping-project/clipping-project/downloads_smoke
@@ -93,7 +93,7 @@ Destino: /home/runner/work/clipping-project/clipping-project/downloads_smoke
 ========== CENARIO: DOP_hoje ==========
 [DOP] baixando id=14807 <- https://doweb.rio.rj.gov.br/portal/edicoes/download/14807
 [DOP] OK downloads_smoke/DOP_2026_05_22.pdf (5.59 MB)
-  -> downloads_smoke/DOP_2026_05_22.pdf  5.59 MB  pdf=True  (15.5s)
+  -> downloads_smoke/DOP_2026_05_22.pdf  5.59 MB  pdf=True  (13.5s)
 
 ========== CENARIO: DCM_hoje ==========
 
@@ -103,95 +103,95 @@ Destino: /home/runner/work/clipping-project/clipping-project/downloads_smoke
 [DCM] aviso (edicao 1): Message: session not created
 from unknown error: no chrome binary at /usr/bin/google-chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
 Stacktrace:
-#0 0x55d12c4891da <unknown>
-#1 0x55d12be9f629 <unknown>
-#2 0x55d12beda460 <unknown>
-#3 0x55d12bed9137 <unknown>
-#4 0x55d12bf27362 <unknown>
-#5 0x55d12bf26abc <unknown>
-#6 0x55d12bee6767 <unknown>
-#7 0x55d12bee7551 <unknown>
-#8 0x55d12c44ca7b <unknown>
-#9 0x55d12c44fad3 <unknown>
-#10 0x55d12c43aa3c <unknown>
-#11 0x55d12c450279 <unknown>
-#12 0x55d12c423507 <unknown>
-#13 0x55d12c4768f8 <unknown>
-#14 0x55d12c476ae6 <unknown>
-#15 0x55d12c487bc3 <unknown>
-#16 0x7fedd7d61aa4 <unknown>
-#17 0x7fedd7deec6c <unknown>
+#0 0x559ab46db1da <unknown>
+#1 0x559ab40f1629 <unknown>
+#2 0x559ab412c460 <unknown>
+#3 0x559ab412b137 <unknown>
+#4 0x559ab4179362 <unknown>
+#5 0x559ab4178abc <unknown>
+#6 0x559ab4138767 <unknown>
+#7 0x559ab4139551 <unknown>
+#8 0x559ab469ea7b <unknown>
+#9 0x559ab46a1ad3 <unknown>
+#10 0x559ab468ca3c <unknown>
+#11 0x559ab46a2279 <unknown>
+#12 0x559ab4675507 <unknown>
+#13 0x559ab46c88f8 <unknown>
+#14 0x559ab46c8ae6 <unknown>
+#15 0x559ab46d9bc3 <unknown>
+#16 0x7f7448908aa4 <unknown>
+#17 0x7f7448995c6c <unknown>
 
 [DCM] aviso (edicao 2): Message: session not created
 from unknown error: no chrome binary at /usr/bin/google-chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
 Stacktrace:
-#0 0x55ab64f191da <unknown>
-#1 0x55ab6492f629 <unknown>
-#2 0x55ab6496a460 <unknown>
-#3 0x55ab64969137 <unknown>
-#4 0x55ab649b7362 <unknown>
-#5 0x55ab649b6abc <unknown>
-#6 0x55ab64976767 <unknown>
-#7 0x55ab64977551 <unknown>
-#8 0x55ab64edca7b <unknown>
-#9 0x55ab64edfad3 <unknown>
-#10 0x55ab64ecaa3c <unknown>
-#11 0x55ab64ee0279 <unknown>
-#12 0x55ab64eb3507 <unknown>
-#13 0x55ab64f068f8 <unknown>
-#14 0x55ab64f06ae6 <unknown>
-#15 0x55ab64f17bc3 <unknown>
-#16 0x7f199b6b0aa4 <unknown>
-#17 0x7f199b73dc6c <unknown>
+#0 0x556fab3e81da <unknown>
+#1 0x556faadfe629 <unknown>
+#2 0x556faae39460 <unknown>
+#3 0x556faae38137 <unknown>
+#4 0x556faae86362 <unknown>
+#5 0x556faae85abc <unknown>
+#6 0x556faae45767 <unknown>
+#7 0x556faae46551 <unknown>
+#8 0x556fab3aba7b <unknown>
+#9 0x556fab3aead3 <unknown>
+#10 0x556fab399a3c <unknown>
+#11 0x556fab3af279 <unknown>
+#12 0x556fab382507 <unknown>
+#13 0x556fab3d58f8 <unknown>
+#14 0x556fab3d5ae6 <unknown>
+#15 0x556fab3e6bc3 <unknown>
+#16 0x7f6ff6476aa4 <unknown>
+#17 0x7f6ff6503c6c <unknown>
 
   -> range com 0 arquivos, todos PDF? False (0.8s)
 
 
 ========== RESUMO ==========
-  [OK  ] DOP_hoje                       5864660 bytes em 15.5s
+  [OK  ] DOP_hoje                       5864660 bytes em 13.5s
   [FAIL] DCM_hoje                       raise SessionNotCreatedException: Message: session not created
 from unknown error: no chrome binary at /usr/bin/google-chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
 Stacktrace:
-#0 0x55c4605601da <unknown>
-#1 0x55c45ff76629 <unknown>
-#2 0x55c45ffb1460 <unknown>
-#3 0x55c45ffb0137 <unknown>
-#4 0x55c45fffe362 <unknown>
-#5 0x55c45fffdabc <unknown>
-#6 0x55c45ffbd767 <unknown>
-#7 0x55c45ffbe551 <unknown>
-#8 0x55c460523a7b <unknown>
-#9 0x55c460526ad3 <unknown>
-#10 0x55c460511a3c <unknown>
-#11 0x55c460527279 <unknown>
-#12 0x55c4604fa507 <unknown>
-#13 0x55c46054d8f8 <unknown>
-#14 0x55c46054dae6 <unknown>
-#15 0x55c46055ebc3 <unknown>
-#16 0x7f22ebff9aa4 <unknown>
-#17 0x7f22ec086c6c <unknown>
+#0 0x565512aa41da <unknown>
+#1 0x5655124ba629 <unknown>
+#2 0x5655124f5460 <unknown>
+#3 0x5655124f4137 <unknown>
+#4 0x565512542362 <unknown>
+#5 0x565512541abc <unknown>
+#6 0x565512501767 <unknown>
+#7 0x565512502551 <unknown>
+#8 0x565512a67a7b <unknown>
+#9 0x565512a6aad3 <unknown>
+#10 0x565512a55a3c <unknown>
+#11 0x565512a6b279 <unknown>
+#12 0x565512a3e507 <unknown>
+#13 0x565512a918f8 <unknown>
+#14 0x565512a91ae6 <unknown>
+#15 0x565512aa2bc3 <unknown>
+#16 0x7f43629eeaa4 <unknown>
+#17 0x7f4362a7bc6c <unknown>
 
   [FAIL] DCM_edicao_1_2026              raise SessionNotCreatedException: Message: session not created
 from unknown error: no chrome binary at /usr/bin/google-chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
 Stacktrace:
-#0 0x5630f92f21da <unknown>
-#1 0x5630f8d08629 <unknown>
-#2 0x5630f8d43460 <unknown>
-#3 0x5630f8d42137 <unknown>
-#4 0x5630f8d90362 <unknown>
-#5 0x5630f8d8fabc <unknown>
-#6 0x5630f8d4f767 <unknown>
-#7 0x5630f8d50551 <unknown>
-#8 0x5630f92b5a7b <unknown>
-#9 0x5630f92b8ad3 <unknown>
-#10 0x5630f92a3a3c <unknown>
-#11 0x5630f92b9279 <unknown>
-#12 0x5630f928c507 <unknown>
-#13 0x5630f92df8f8 <unknown>
-#14 0x5630f92dfae6 <unknown>
-#15 0x5630f92f0bc3 <unknown>
-#16 0x7ff628fa9aa4 <unknown>
-#17 0x7ff629036c6c <unknown>
+#0 0x55d4547d71da <unknown>
+#1 0x55d4541ed629 <unknown>
+#2 0x55d454228460 <unknown>
+#3 0x55d454227137 <unknown>
+#4 0x55d454275362 <unknown>
+#5 0x55d454274abc <unknown>
+#6 0x55d454234767 <unknown>
+#7 0x55d454235551 <unknown>
+#8 0x55d45479aa7b <unknown>
+#9 0x55d45479dad3 <unknown>
+#10 0x55d454788a3c <unknown>
+#11 0x55d45479e279 <unknown>
+#12 0x55d454771507 <unknown>
+#13 0x55d4547c48f8 <unknown>
+#14 0x55d4547c4ae6 <unknown>
+#15 0x55d4547d5bc3 <unknown>
+#16 0x7f244603caa4 <unknown>
+#17 0x7f24460c9c6c <unknown>
 
   [FAIL] DCM_range_1a2_2026             0 arquivos em 0.8s
 
