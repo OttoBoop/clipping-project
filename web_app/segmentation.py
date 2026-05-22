@@ -396,9 +396,15 @@ def scoped_targets_response(response: dict[str, Any], session: dict[str, Any]) -
 def scoped_dashboard_payload(payload: dict[str, Any], session: dict[str, Any]) -> dict[str, Any]:
     allowed = allowed_target_keys(session)
     if allowed is None:
-        scoped = copy.deepcopy(payload)
-        scoped.setdefault("meta", {})
-        scoped["meta"].update({"viewerRole": "admin", "viewerProfile": "admin", "editorEnabled": True})
+        # Admin path: only mutation is meta annotation. copy.deepcopy of a
+        # multi-MiB payload (462+ stories, 784+ articles) was pure waste —
+        # measured ~25 MiB RSS bump per /assets/clipping-data.json hit in
+        # prod (2026-05-22). We shallow-copy the top-level dict so the
+        # caller's payload is never mutated; meta is a new dict so updates
+        # don't leak either.
+        scoped = dict(payload)
+        existing_meta = scoped.get("meta") or {}
+        scoped["meta"] = {**existing_meta, "viewerRole": "admin", "viewerProfile": "admin", "editorEnabled": True}
         return scoped
 
     scoped: dict[str, Any] = copy.deepcopy(payload)
