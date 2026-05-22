@@ -379,8 +379,14 @@ def effective_session_for(request: Request, session: dict[str, Any]) -> dict[str
 
 
 def read_json_file(path) -> dict[str, Any]:
+    # OOM mitigation (2026-05-22): json.load(open(...)) avoids the
+    # intermediate Python str that path.read_text() would build before
+    # parsing — for 25 MiB JSON payloads (clipping-data.json,
+    # clipping-raw-texts.json) that's ~25 MiB of transient allocation
+    # eliminated per call.
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
     except Exception:
         return {}
     return data if isinstance(data, dict) else {}
