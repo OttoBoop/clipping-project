@@ -344,6 +344,36 @@ def write_targets_atomic(rows: list[dict[str, Any]]) -> None:
             os.unlink(tmp_name)
 
 
+def purge_archived_smoke_targets() -> list[str]:
+    """Delete (hard-remove from targets.json) targets that match BOTH:
+
+    - archived == True
+    - key starts with 'smoke_' (created by tools/*_smoke.py runs)
+
+    Returns the list of keys deleted. Idempotent — safe to call repeatedly.
+
+    Conservative: NEVER touches active targets, NEVER touches archived non-smoke
+    targets (those are real user mutations and might be restored). Protected
+    primary keys are also exempt.
+    """
+    rows = json.loads(TARGETS_PATH.read_text(encoding="utf-8"))
+    keep: list[dict[str, Any]] = []
+    deleted: list[str] = []
+    for row in rows:
+        key = str(row.get("key") or "").strip()
+        archived = bool(row.get("archived"))
+        if key in PROTECTED_PRIMARY_KEYS:
+            keep.append(row)
+            continue
+        if archived and key.startswith("smoke_"):
+            deleted.append(key)
+            continue
+        keep.append(row)
+    if deleted:
+        write_targets_atomic(keep)
+    return deleted
+
+
 def find_target_index(rows: list[dict[str, Any]], key: str) -> int:
     normalized = str(key or "").strip()
     for index, row in enumerate(rows):

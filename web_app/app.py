@@ -34,6 +34,7 @@ from .db_admin import (
     insert_manual_story,
     load_targets,
     normalize_targets_file,
+    purge_archived_smoke_targets,
     restore_secondary_target,
     update_secondary_target,
 )
@@ -1374,6 +1375,35 @@ def admin_debug_disk(request: Request) -> dict[str, Any]:
         "db_files": files,
         "data_dir_top_files": top_files,
     }
+
+
+@app.post("/api/admin/targets/gc-smoke-residue")
+def admin_gc_smoke_residue(request: Request) -> dict[str, Any]:
+    """Hard-delete smoke residue targets (archived + key starts with 'smoke_').
+
+    Idempotente: chamadas repetidas retornam `deleted=[]` se nada sobrar.
+    Conservador: nunca toca em target ativo nem em archived sem prefix `smoke_`.
+
+    Após mudança, faz upload do targets.json pro Supabase para persistir entre
+    deploys/restarts. Captura evento `target.gc_smoke_residue` no activity_log.
+    """
+    session = require_admin(request)
+    require_csrf(request)
+    deleted = purge_archived_smoke_targets()
+    if deleted and artifact_store.enabled:
+        try:
+            artifact_store.upload_current_artifacts(
+                manifest={"kind": "targets-gc-smoke-residue", "deleted_count": len(deleted)},
+                job_id="targets-gc-smoke",
+            )
+        except Exception:  # noqa: BLE001
+            pass
+    activity.record(
+        "target.gc_smoke_residue",
+        session=session,
+        details={"deleted_count": len(deleted), "deleted_keys": deleted[:20], **_request_meta(request)},
+    )
+    return {"deleted": deleted, "count": len(deleted)}
 
 
 @app.post("/api/categories")
