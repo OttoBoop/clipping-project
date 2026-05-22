@@ -26,6 +26,68 @@ Companheiros:
 
 ## Entradas
 
+## ✅ Goal 6 — Visualização de registros de atividade (atingido 2026-05-22)
+
+**Critério de sucesso cumprido:**
+
+> "Otávio loga em prod como admin, abre a seção 'Registros de atividade' no painel admin, vê tabela cronológica com logins, mudanças de senha, criação/arquivamento de targets, criação/arquivamento de viewers — todos com timestamp, autor (role/profile), ação e detalhes. Filtros por ação e por profile funcionam."
+> ([LONG_TERM_GOALS.md](LONG_TERM_GOALS.md) Goal 6)
+
+**Pedido literal do Otávio (verbatim, 2026-05-19T13:12, prompt #3):**
+
+> *"Uma tela de registros também seria muito bom."*
+
+**Gap histórico reconhecido:** pedido recebido em 2026-05-19 só foi entregue em 2026-05-22 (3 dias de atraso). Causa: eu não criei Goal próprio no `LONG_TERM_GOALS.md` no setup do loop — transcrevi outros pedidos do prompt #3 (logout, change-password, senhas simples, tela de clientes) mas a "tela de registros" caiu no esquecimento. Descoberto via auditoria prompt-by-prompt (prompt #36) e corrigido na sequência. Aprendizado: Regra 9 nova do MANTRA — auto-auditoria periódica obrigatória.
+
+**Commit:** `d96c8e2` (2026-05-22 ~00:43 −0300), deployed live em prod.
+
+**Evidência end-to-end em prod (curl, 2026-05-22T00:45 −0300):**
+
+```
+# Disparar mistura de eventos (login flavio, criar target, archive, tentar archive de outro cliente, logout, login fail)
+
+# Admin lê /api/admin/activity (sem filtros)
+GET /api/admin/activity → count=6
+  2026-05-22T00:45:00 | anonymous            | login.fail
+  2026-05-22T00:44:57 | viewer/flavio        | logout
+  2026-05-22T00:44:53 | viewer/flavio        | target.archive   target=audit_activity_* -flavio "test"
+  2026-05-22T00:44:49 | viewer/flavio        | target.create    target=audit_activity_* →flavio
+  2026-05-22T00:44:48 | viewer/flavio        | login.success
+  2026-05-22T00:44:17 | admin/admin          | login.success
+
+# Filtros funcionam
+GET /api/admin/activity?action=login.   → 2 entries (success, fail)
+GET /api/admin/activity?profile=admin   → 1 entry (admin login)
+```
+
+**Caminho end-to-end coberto:**
+
+UI `<details id="manageActivityBox">` → fetch `apiFetch("/api/admin/activity?…")` → `app.py:/api/admin/activity` (require_admin) → `web_app/activity.py:recent()` → `sqlite3.Connection(db_path()).execute("SELECT … FROM activity_log WHERE … ORDER BY timestamp DESC LIMIT ?")` → JSON com timestamp/userRole/userProfile/action/targetKey/details.
+
+Captura escrita por `activity.record(action, session=, target_key=, details=)` (best-effort, nunca raises), instrumentada em:
+- `/api/login` (success + fail)
+- `/api/logout`
+- `/api/change-password`
+- `/api/targets` (POST/PATCH), `/api/targets/primary`, `/api/targets/{key}/{promote,demote,archive,restore}`
+- `/api/admin/viewers` (POST/PATCH), `/api/admin/viewers/{key}/archive`
+
+Tabela `activity_log` criada em `ensure_app_tables` (db_admin.py), preservada por Supabase backup (RUNTIME_FILES inclui o DB).
+
+**Migrado do MANTRA.md em:** 2026-05-22
+
+**Pendências futuras (não bloqueiam o Goal):**
+
+- Capturar tentativas bloqueadas por scope (403 `target_out_of_scope`) — hoje `_validate_target_scope` levanta antes de `activity.record`, então tentativas de violação ficam sem trilha. Mudança simples se Otávio decidir querer.
+- UI no painel do viewer (read-only) com seu próprio histórico — hoje só admin lê.
+- Política de retenção — `activity_log` cresce indefinidamente; eventual rotation/archive depois de N meses.
+
+**Notas de manutenção:**
+
+- ⚠️ Histórico pré-`d96c8e2` está perdido — a tabela só passou a existir no deploy de 2026-05-22 00:43. Logins/mutações anteriores não foram capturados.
+- ⚠️ `activity.record` é best-effort (try/except amplo) por design — uma falha de logging NUNCA bloqueia uma mutação ou login bem-sucedido. Se eventos pararem de aparecer, checar conectividade SQLite primeiro (e não bug no fluxo principal).
+
+---
+
 ## Goal 1 — Onboarding administrativo via UI (atingido 2026-05-19)
 
 **Critério de sucesso cumprido:**

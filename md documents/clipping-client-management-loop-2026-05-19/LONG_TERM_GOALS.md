@@ -30,6 +30,7 @@ Admin **gerencia clientes (viewers) sem editar env var nem fazer redeploy**. Inc
 - Tela listando todos os clientes registrados (perfis ativos, role, último login se houver)
 - Formulário de criação de novo cliente (nome do perfil, senha, targets que enxerga)
 - Ação de arquivar/desativar cliente
+- Visualização de registros de atividade dos clientes — quem logou, quando, quais mutações fez. *(Entrega dedicada no Goal 6; esta linha sinaliza que admin UI inclui isso como parte do onboarding completo.)*
 
 **Failure case:** criar cliente novo exigir editar `CLIPPING_VIEWER_PASSWORDS` no Render Dashboard à mão e disparar redeploy.
 
@@ -95,6 +96,39 @@ Cada operação precisa:
 - admin em modo simulação `?as_profile=flavio` ver `.add-target-box` escondido → não consegue gerenciar targets do flavio sem sair do contexto (regressão de 2026-05-20 fase 1, corrigida em commit `39dcd0c`)
 - **Flávio logar com `flavio-gabinete-2026` e NÃO conseguir adicionar/editar targets dele** — sentido absurdo "cliente precisa de senha de admin pra gerenciar seu próprio scope" (regressão de 2026-05-20 fase 1, corrigida na fase 2)
 - viewer (ex: Flávio) editar/arquivar target de OUTRO cliente (ex: shakira) — deve retornar 403 `target_out_of_scope` com mensagem clara, não 500 nem sucesso silencioso
+
+### Goal 6 — Visualização de registros de atividade
+
+Admin (e eventualmente cada cliente sobre o próprio scope) consegue ver histórico de quem logou, quem mudou senha, quem criou/arquivou/promoveu/rebaixou target, quem criou/editou/arquivou cliente. Captura é estruturada em DB (tabela `activity_log`), API expõe via `GET /api/admin/activity` com filtros (action, profile, since, limit), UI mostra como seção do painel admin.
+
+**Pedido literal do Otávio (2026-05-19T13:12, prompt #3):**
+
+> *"Uma tela de registros também seria muito bom."*
+
+**Atores que podem ler:**
+1. **Admin** — vê tudo, todos os perfis, todas as ações.
+2. **Viewer** *(pendência futura — não bloqueia atingimento da fase 1)* — vê só registros do seu próprio scope (read-only).
+
+**Eventos capturados (mínimo):**
+
+- `login.success` / `login.fail`
+- `logout`
+- `change_password`
+- `target.create`, `target.create_primary`, `target.update`, `target.promote`, `target.demote`, `target.archive`, `target.restore` (com `assignedTo` / `removedFrom` quando aplicável)
+- `viewer.create`, `viewer.update`, `viewer.archive`
+
+**Failure cases:**
+
+- admin abre painel e seção de registros não carrega
+- mutação acontece mas não vira linha em `activity_log` (silent miss)
+- filtros voltam resultado errado (`?profile=flavio` retornando ações de shakira)
+- histórico pré-implementação está perdido — limitação aceita; documentar publicamente.
+
+**Pendências futuras (não bloqueiam atingimento):**
+
+- Capturar tentativas bloqueadas por scope (403 `target_out_of_scope`)
+- UI viewer-próprio-histórico (read-only) na sessão do cliente
+- Política de retenção / rotation (hoje cresce indefinidamente)
 
 ---
 
