@@ -1,6 +1,6 @@
 [smoke] notebook = notebooks/Diarios_Oficiais_Rio_Downloader.ipynb
 [smoke] destino  = /home/runner/work/clipping-project/clipping-project/downloads_smoke
-[smoke] carregando 10526 chars de codigo do notebook...
+[smoke] carregando 11492 chars de codigo do notebook...
 Destino: /home/runner/work/clipping-project/clipping-project/downloads_smoke
 [smoke] codigo carregado.
 [smoke] which google-chrome -> /usr/bin/google-chrome
@@ -11,49 +11,32 @@ Destino: /home/runner/work/clipping-project/clipping-project/downloads_smoke
 ========== CENARIO: DOP_hoje ==========
 [DOP] baixando id=14807 <- https://doweb.rio.rj.gov.br/portal/edicoes/download/14807
 [DOP] OK downloads_smoke/DOP_2026_05_22.pdf (5.59 MB)
-  -> downloads_smoke/DOP_2026_05_22.pdf  5.59 MB  pdf=True  (11.0s)
+  -> downloads_smoke/DOP_2026_05_22.pdf  5.59 MB  pdf=True  (12.1s)
 
 ========== CENARIO: DCM_hoje ==========
 [DCM] última edição: 93 (22_05_2026)
 [DCM] OK downloads_smoke/DCM_22_05_2026_ed93.pdf
-  -> downloads_smoke/DCM_22_05_2026_ed93.pdf  8.99 MB  pdf=True  (42.7s)
+  -> downloads_smoke/DCM_22_05_2026_ed93.pdf  8.99 MB  pdf=True  (34.1s)
 
 ========== CENARIO: DCM_edicao_1_2026 ==========
 [DCM] OK downloads_smoke/DCM_ed1_ano2026.pdf
-  -> downloads_smoke/DCM_ed1_ano2026.pdf  6.40 MB  pdf=True  (37.6s)
+  -> downloads_smoke/DCM_ed1_ano2026.pdf  6.40 MB  pdf=True  (32.8s)
 
 ========== CENARIO: DCM_range_1a2_2026 ==========
-[DCM] aviso (edicao 1): Message: 
-Stacktrace:
-#0 0x556df736b22a <unknown>
-#1 0x556df6d69ab9 <unknown>
-#2 0x556df6dbe046 <unknown>
-#3 0x556df6dbe281 <unknown>
-#4 0x556df6e08f74 <unknown>
-#5 0x556df6e06116 <unknown>
-#6 0x556df6db1662 <unknown>
-#7 0x556df6db2451 <unknown>
-#8 0x556df732ed8b <unknown>
-#9 0x556df7331c65 <unknown>
-#10 0x556df731b458 <unknown>
-#11 0x556df73327f0 <unknown>
-#12 0x556df73021c0 <unknown>
-#13 0x556df7358168 <unknown>
-#14 0x556df7358305 <unknown>
-#15 0x556df7369c5e <unknown>
-#16 0x7f2258e9caa4 <unknown>
-#17 0x7f2258f29c6c <unknown>
-
+[DCM] erro baixando https://dcmdigital.camara.rj.gov.br/download/C032755CDBC39B9C82774CBA7032FC21: HTTPSConnectionPool(host='dcmdigital.camara.rj.gov.br', port=443): Max retries exceeded with url: /download/C032755CDBC39B9C82774CBA7032FC21 (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)')))
+[DCM] ed 1/2026 tentativa 1/3 falhou: RuntimeError: Nenhum caderno baixado com sucesso.
+[DCM] OK downloads_smoke/DCM_ed1_ano2026.pdf
 [DCM] OK downloads_smoke/DCM_ed2_ano2026.pdf
-  -> range com 1 arquivos, todos PDF? True (109.3s)
+  -> range com 2/2 arquivos, todos PDF? True (112.1s)
+     - DCM_ed1_ano2026.pdf 6.40 MB  pdf=True
      - DCM_ed2_ano2026.pdf 6.29 MB  pdf=True
 
 
 ========== RESUMO ==========
-  [OK  ] DOP_hoje                       5864660 bytes em 11.0s
-  [OK  ] DCM_hoje                       9427207 bytes em 42.7s
-  [OK  ] DCM_edicao_1_2026              6710408 bytes em 37.6s
-  [OK  ] DCM_range_1a2_2026             1 arquivos em 109.3s
+  [OK  ] DOP_hoje                       5864660 bytes em 12.1s
+  [OK  ] DCM_hoje                       9427207 bytes em 34.1s
+  [OK  ] DCM_edicao_1_2026              6710408 bytes em 32.8s
+  [OK  ] DCM_range_1a2_2026             2/2 arquivos em 112.1s
 
 ========== ARQUIVOS EM downloads_smoke ==========
       8.99 MB  DCM_22_05_2026_ed93.pdf
