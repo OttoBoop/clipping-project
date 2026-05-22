@@ -128,10 +128,9 @@ Admin (e eventualmente cada cliente sobre o próprio scope) consegue ver histór
 
 - ✅ Capturar tentativas bloqueadas por scope (commit `7ed465e`)
 - ✅ UI viewer-próprio-histórico read-only via `GET /api/me/activity` (commit `eb49dc0`)
+- ✅ Política de retenção (commit `bff0185`) — env `CLIPPING_ACTIVITY_RETENTION_DAYS` (default 90 dias, 0 desabilita); `activity.purge_older_than()` chamado uma vez por boot no lifespan da FastAPI.
 
-**Pendência ainda aberta:**
-
-- Política de retenção / rotation (hoje `activity_log` cresce indefinidamente)
+**Nenhuma pendência aberta.**
 
 ---
 

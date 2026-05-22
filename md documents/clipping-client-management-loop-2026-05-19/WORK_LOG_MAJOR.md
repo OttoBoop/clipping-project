@@ -1014,3 +1014,48 @@ A chave **"Per-client custom targets"** foi perdida quando eu (Claude, mesma ses
 **Frente parcialmente endereçada (não bloqueia loop):**
 
 - Retenção do `activity_log` — ainda em aberto. Pode atacar depois da medição de memória.
+
+---
+
+## 2026-05-22 (mais tarde) — OOM ataque #2 resultado final + retenção activity_log
+
+**Goals endereçados:** Goal 4 (regressão-zero / estabilidade em prod) + Goal 6 (retenção é a última pendência).
+
+**Comparação de RSS em prod, 3 commits de otimização aplicados:**
+
+| Métrica | Original `c5a5c8d` | `0f011f8` (DEVNULL) | `0a19399` (deepcopy admin) | `499509c` (json.load) | Δ total |
+|---|---|---|---|---|---|
+| Baseline ocioso (MiB) | ~278 | 258 | 263 | **185** | **-93** |
+| 1 puxada (MiB) | — | 278 | 241 | 205 | **-73** |
+| HWM em 1 ciclo (MiB) | — | 305 | 286 | **233** | **-72** |
+| HWM em 10 puxadas (MiB) | — | 305 | 287 | 285 | -20 |
+| Saturação sob carga | — | 59% | 49.9% | 55.8% | -3 pp |
+| VmPeak histórico (MiB) | — | 1130 | 1027 | **582** | **-548** |
+
+**Otimizações aplicadas em ordem:**
+
+1. **`0f011f8` — run_export_snapshot DEVNULL**: `subprocess.run(capture_output=True)` buffered todo o stdout do `export_mobile_snapshot.py` no processo pai. Trocado por `stdout=DEVNULL, stderr=DEVNULL`. Efeito real visível só quando export job rodar (raro, mas elimina spike enorme).
+
+2. **`0a19399` — scoped_dashboard_payload sem deepcopy admin**: admin path fazia `copy.deepcopy(payload)` multi-MiB só pra adicionar 3 chaves em meta. Substituído por shallow copy do top-level + spread no meta. HWM em 1 ciclo: 305 → 286 (-19 MiB).
+
+3. **`499509c` — read_json_file via json.load(open)**: `json.loads(path.read_text())` aloca string intermediária de 25 MiB + dict de 25 MiB. `json.load(open(...))` parsa direto, elimina a string. HWM em 1 ciclo: 286 → 233 (-53 MiB). Baseline ocioso caiu drasticamente (263 → 185) porque o startup também evita as strings transitórias.
+
+**Próximas otimizações disponíveis (não aplicadas — esperando evidência de necessidade):**
+
+- `scoped_dashboard_payload` no caminho viewer faz `copy.deepcopy(payload)` + deepcopy de cada article + cada story. Pra payload viewer-filtrado os dicts copiados são menores, mas se houver many concurrent viewers o cumulativo pode importar. Refactor pra construir dict novo de zero (sem deepcopy) é possível mas mais risk.
+- Cache estático do `clipping-data.json` em memória — economiza I/O mas multiplica RSS por viewer concorrente; trade-off ruim no free plan.
+
+**Goal 6 (retenção do activity_log) — última pendência fechada (`bff0185`):**
+
+- `web_app/activity.py:purge_older_than(days)` deleta rows com timestamp < cutoff. Best-effort.
+- Lifespan da FastAPI chama uma vez por boot com `CLIPPING_ACTIVITY_RETENTION_DAYS` (default 90 dias, 0 desabilita).
+- Conta de rows removidas vai no manifest do `startup-runtime-normalization` upload pro Supabase backup, pra rastrear.
+- 2 testes novos cobrem cenário 100d/30d/1d com retention=60 e zero-day noop.
+
+**Status do loop após esta rodada:**
+
+- Goal 4 (regressão-zero, contínuo): preservado — todos os testes verdes (81/81 + 19/19 simulate). Otimizações de memória ATACAM o problema crônico de OOM identificado em 2026-05-21.
+- Goal 6: sem pendências.
+- VmRSS sob carga moderada está em 56% do limite (vs 59% antes). Folga maior pra picos transitórios.
+
+**Próxima sub-ação concreta:** aguardar deploy `bff0185` ficar live, confirmar via curl que ainda funciona (`/api/admin/debug/memory` retorna válido + activity logs continuam capturando), depois abrir nova frente. Candidatos: monitorar Render events nas próximas horas pra ver se OOMs param OU atacar `scoped_dashboard_payload` viewer path se houver evidência.

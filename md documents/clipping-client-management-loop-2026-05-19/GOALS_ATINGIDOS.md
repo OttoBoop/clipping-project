@@ -80,9 +80,7 @@ Tabela `activity_log` criada em `ensure_app_tables` (db_admin.py), preservada po
 - ✅ **Capturar tentativas bloqueadas por scope** — `_validate_target_scope` agora chama `activity.record("target.scope_denied", ...)` antes de levantar 403. Verificado em prod: flavio tentou archive shakira → HTTP 403 + evento capturado com `userRole=viewer, userProfile=flavio, targetKey=shakira, reason=target_out_of_scope`.
 - ✅ **UI no painel do viewer (read-only) com próprio histórico** — novo endpoint `GET /api/me/activity` (require_viewer, scoped via `session.profile`). Painel "Registros" agora renderiza em ambos os roles: admin usa `/api/admin/activity` com filtros completos, viewer usa `/api/me/activity` com filtro de cliente escondido. Filtro de ação funciona nos dois. **Feature relacionada:** viewer também vê tentativas de outros clientes mexerem com SEUS targets (security event útil, não bug).
 
-**Pendência ainda futura (não bloqueia o Goal):**
-
-- Política de retenção — `activity_log` cresce indefinidamente; eventual rotation/archive depois de N meses.
+**Todas as pendências fechadas em 2026-05-22.** Última: política de retenção (commit `bff0185`) — `activity.purge_older_than()` chamado uma vez por boot do FastAPI via lifespan. Janela default 90 dias, configurável por `CLIPPING_ACTIVITY_RETENTION_DAYS` env var (0 desabilita). Conta de rows removidas vai no manifest do startup upload pro Supabase. Testes cobrem 100d/30d/1d com retention=60 (só 100d sai) e zero-day noop.
 
 **Notas de manutenção:**
 
