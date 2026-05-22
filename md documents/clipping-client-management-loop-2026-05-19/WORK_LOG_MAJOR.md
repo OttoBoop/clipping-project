@@ -1059,3 +1059,23 @@ A chave **"Per-client custom targets"** foi perdida quando eu (Claude, mesma ses
 - VmRSS sob carga moderada está em 56% do limite (vs 59% antes). Folga maior pra picos transitórios.
 
 **Próxima sub-ação concreta:** aguardar deploy `bff0185` ficar live, confirmar via curl que ainda funciona (`/api/admin/debug/memory` retorna válido + activity logs continuam capturando), depois abrir nova frente. Candidatos: monitorar Render events nas próximas horas pra ver se OOMs param OU atacar `scoped_dashboard_payload` viewer path se houver evidência.
+
+---
+
+## 2026-05-22 15:30 UTC — Causa raiz do cluster OOM identificada
+
+**Achado:** o cluster de 8 OOMs em 12:59-13:28 UTC aconteceu com job `7c1e4b144df0` em execução, perfil EXTREMO: 4 targets (incluindo `seguranca_presente`), janela **2014-01-01 → 2026-05-22 = 12 anos**, `max_candidates=90000`, 4 workers, preset=custom collector=all. Backfill histórico massivo.
+
+**Timeline:**
+1. Job disparado ~12:58 UTC
+2. Cluster: 8 OOMs em 30 min (12:59, 13:02, 13:06, 13:10, 13:15, 13:21, 13:25, 13:28)
+3. Após 13:28, sem novos OOMs por 3h+ apesar de carga (RSS ~300 MiB)
+
+**Causa provável da estabilização:** os 3 deploys (`0f011f8` + `0a19399` + `499509c`) ficaram live DURANTE o cluster — reduziram baseline + HWM, dando margem para o job continuar sem cruzar 512 MiB.
+
+**Instrumentação `f7d22d8`** ativa em prod: `run_source_run` agora emite `rss_mib_before/after/delta` por source_run. Próximos eventos vão revelar exatamente onde RSS cresce.
+
+**Próximas frentes (não imediatas, requer aprovação Otávio):**
+- UX: warning quando job >2 anos ou >10k candidates é lançado
+- Cap defensivo em candidate_workers no Render free
+- Streaming `archive_full_text` em vez de buffer
