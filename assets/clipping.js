@@ -264,19 +264,36 @@
       });
   })();
 
-  (function setupAdminActivity() {
-    // Tela de registros (Goal pendente do prompt #5 de 2026-05-19:
-    // "Uma tela de registros também seria muito bom"). Admin-only.
+  (function setupActivity() {
+    // Tela de registros (Goal 6 — pedido do prompt #5 de 2026-05-19:
+    // "Uma tela de registros também seria muito bom"). Visível para:
+    // - admin (real ou em simulação): vê tudo via /api/admin/activity
+    //   com filtros completos (ação + cliente).
+    // - viewer autenticado-como-viewer (ex: flavio): vê só os próprios
+    //   eventos via /api/me/activity. Filtro de cliente fica escondido
+    //   (já é auto-scope). Read-only.
     var box = document.getElementById("manageActivityBox");
     if (!box) return;
-    if (initialSessionRole !== "admin") return;
+    var isAdmin = (initialRealRole === "admin");
+    if (!isAdmin && initialSessionRole !== "viewer") return;
     box.hidden = false;
 
     var listEl = document.getElementById("activityList");
     var msgEl = document.getElementById("activityMessage");
     var actionFilter = document.getElementById("activityActionFilter");
     var profileFilter = document.getElementById("activityProfileFilter");
+    var profileFilterLabel = document.getElementById("activityProfileFilterLabel");
     var refreshBtn = document.getElementById("activityRefreshButton");
+    var titleEl = document.getElementById("activityBoxTitle");
+    var noteEl = document.getElementById("activityBoxNote");
+
+    // Viewer-mode tweaks: rename to "Meus registros", hide profile filter,
+    // adjust note copy.
+    if (!isAdmin) {
+      if (titleEl) titleEl.textContent = "Meus registros";
+      if (noteEl) noteEl.textContent = "Histórico das suas ações neste sistema — logins, troca de senha, criação/arquivamento de targets seus. Só você (e o admin) vê.";
+      if (profileFilterLabel) profileFilterLabel.style.display = "none";
+    }
 
     var ACTION_LABELS = {
       "login.success": "Login (ok)",
@@ -348,11 +365,16 @@
     async function load() {
       setMessage(msgEl, "Carregando registros...", "");
       var params = new URLSearchParams();
-      params.set("limit", "200");
+      params.set("limit", isAdmin ? "200" : "100");
       if (actionFilter && actionFilter.value) params.set("action", actionFilter.value);
-      if (profileFilter && profileFilter.value.trim()) params.set("profile", profileFilter.value.trim());
+      // Profile filter only applies to admin endpoint — viewer endpoint is
+      // auto-scoped by session.
+      if (isAdmin && profileFilter && profileFilter.value.trim()) {
+        params.set("profile", profileFilter.value.trim());
+      }
+      var url = (isAdmin ? "/api/admin/activity?" : "/api/me/activity?") + params.toString();
       try {
-        var resp = await apiFetch("/api/admin/activity?" + params.toString(), { cache: "no-store" });
+        var resp = await apiFetch(url, { cache: "no-store" });
         if (!resp.ok) throw new Error("HTTP " + resp.status);
         var data = await resp.json();
         render(data.activity || []);

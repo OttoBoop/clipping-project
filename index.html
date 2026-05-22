@@ -168,9 +168,9 @@
           <span id="manageViewersMessage" class="form-message" role="status"></span>
         </details>
 
-        <details class="manage-activity-box" id="manageActivityBox" data-admin-only="1" hidden>
-          <summary>Registros de atividade</summary>
-          <p class="manage-activity-note">Histórico cronológico do que aconteceu no sistema — logins, troca de senha, criação/arquivamento de targets e clientes. Útil pra auditar quem mexeu no quê.</p>
+        <details class="manage-activity-box" id="manageActivityBox" hidden>
+          <summary><span id="activityBoxTitle">Registros de atividade</span></summary>
+          <p class="manage-activity-note" id="activityBoxNote">Histórico cronológico do que aconteceu no sistema — logins, troca de senha, criação/arquivamento de targets e clientes. Útil pra auditar quem mexeu no quê.</p>
           <div class="activity-filters">
             <label>Filtrar por ação
               <select id="activityActionFilter">
@@ -182,7 +182,7 @@
                 <option value="viewer.">Clientes (criar / editar / arquivar)</option>
               </select>
             </label>
-            <label>Filtrar por cliente
+            <label id="activityProfileFilterLabel">Filtrar por cliente
               <input type="text" id="activityProfileFilter" placeholder="ex.: flavio">
             </label>
             <button type="button" class="secondary-action" id="activityRefreshButton">Atualizar lista</button>

@@ -1187,6 +1187,38 @@ def list_admin_activity(
     return {"activity": rows, "count": len(rows), "limit": capped}
 
 
+@app.get("/api/me/activity")
+def list_own_activity(
+    request: Request,
+    limit: int = 100,
+    since: str = "",
+    action: str = "",
+) -> dict[str, Any]:
+    """Read-only own-activity log for the authenticated viewer (Goal 6
+    pendência #2 — 2026-05-22). Scoped to events where the user is the
+    actor OR where the affected target belongs to the user's scope.
+
+    Admin authenticated as admin (without ?as_profile) sees nothing useful
+    here — admin should use /api/admin/activity for the global view. This
+    endpoint exists for clients (Flávio, Shakira, Rio, demo) to audit
+    their own actions without depending on the dono.
+    """
+    session = require_viewer(request)
+    profile = str(session.get("profile") or "").strip()
+    if not profile or profile == "admin":
+        # Admin should use the admin endpoint; return empty here to avoid
+        # confusion (admin has no "personal" profile scope).
+        return {"activity": [], "count": 0, "limit": int(limit or 100)}
+    capped = max(1, min(int(limit or 0) or 100, 500))
+    rows = activity.recent(
+        limit=capped,
+        since_iso=since or None,
+        action_prefix=action or None,
+        profile=profile,
+    )
+    return {"activity": rows, "count": len(rows), "limit": capped, "profile": profile}
+
+
 @app.post("/api/categories")
 async def create_classification_category(request: Request) -> dict[str, Any]:
     require_admin(request)

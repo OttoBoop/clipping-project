@@ -428,6 +428,64 @@ def test_viewer_can_archive_own_target(monkeypatch, tmp_path):
     assert new_key not in profiles_after["profiles"]["flavio"]["target_keys"]
 
 
+def test_viewer_can_read_own_activity_log(monkeypatch, tmp_path):
+    """Goal 6 phase 2 pendência #2 (2026-05-22): viewer flavio reads
+    /api/me/activity and sees only events scoped to his profile.
+    Cannot read shakira's activity even via filter manipulation."""
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    with TestClient(app_module.app) as client:
+        # Flavio logs in → captura login.success com profile=flavio
+        login(client, "viewer-flavio")
+        flavio_csrf = client.get("/api/csrf").json()["csrf"]
+        # Flavio cria um target dele → captura target.create
+        create_resp = client.post(
+            "/api/targets",
+            headers={"X-CSRF-Token": flavio_csrf},
+            json={"display_name": "Audit Own Log", "keywords": ["audit"]},
+        )
+        assert create_resp.status_code == 200, create_resp.text
+        # Logout para gerar logout event
+        client.post("/api/logout", headers={"X-CSRF-Token": flavio_csrf})
+
+        # Shakira faz coisas também — flavio NÃO deve ver isso
+        login(client, "viewer-shakira")
+        shakira_csrf = client.get("/api/csrf").json()["csrf"]
+        client.post(
+            "/api/targets",
+            headers={"X-CSRF-Token": shakira_csrf},
+            json={"display_name": "Shakira Sound", "keywords": ["shakira sound"]},
+        )
+        client.post("/api/logout", headers={"X-CSRF-Token": shakira_csrf})
+
+        # Flavio lê /api/me/activity
+        login(client, "viewer-flavio")
+        resp = client.get("/api/me/activity")
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["profile"] == "flavio"
+        rows = body["activity"]
+        # Pelo menos 3 events do flavio: login.success, target.create, logout
+        # + o segundo login.success que ele acabou de fazer
+        flavio_only = [r for r in rows if r["userProfile"] == "flavio"]
+        assert len(flavio_only) >= 3, f"flavio should see his events: {rows}"
+        # Nenhum evento da shakira deve estar visível
+        leaked = [r for r in rows if r["userProfile"] == "shakira"]
+        assert leaked == [], f"shakira events leaked into flavio scope: {leaked}"
+
+
+def test_admin_me_activity_returns_empty(monkeypatch, tmp_path):
+    """Admin tem painel completo em /api/admin/activity. /api/me/activity
+    para admin retorna lista vazia (não tem 'próprio scope' útil)."""
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    with TestClient(app_module.app) as client:
+        login(client, "test-password")
+        resp = client.get("/api/me/activity")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["activity"] == []
+        assert body["count"] == 0
+
+
 def test_unauthenticated_create_target_blocked(monkeypatch, tmp_path):
     """No session at all → require_viewer rejects with viewer_login_required."""
     _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
