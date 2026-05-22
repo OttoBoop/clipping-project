@@ -358,10 +358,23 @@ def goal2_logout(page: Page, base: str, admin_pass: str) -> None:
 
 
 def goal2_change_password(page: Page, base: str, admin_pass: str) -> str:
-    """Returns the throwaway password (caller restores)."""
+    """Returns the throwaway password (caller restores).
+
+    Safety mechanism (added 2026-05-22 after incident): persists the
+    throwaway to /tmp/clipping_smoke_throwaway.txt BEFORE attempting the
+    mutation. If the script crashes mid-flow (Playwright timeout, OOM,
+    etc.) the dono can read the file and recover manually instead of
+    brute-forcing the timestamp.
+    """
     print("\n=== GOAL 2 — change-password modal ===")
     login_as_admin(page, base, admin_pass)
     throwaway = f"smoke-visual-{int(time.time())}"
+    try:
+        with open("/tmp/clipping_smoke_throwaway.txt", "w") as fh:
+            fh.write(throwaway + "\n")
+        print(f"  throwaway gravada em /tmp/clipping_smoke_throwaway.txt (recovery)")
+    except OSError:
+        pass
 
     btn = page.locator("#changePasswordButton")
     expect(btn).to_be_visible()
