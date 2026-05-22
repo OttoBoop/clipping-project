@@ -46,7 +46,15 @@ print("[smoke] codigo carregado.")
 # Como sobrescrevemos _dcm_novo_driver no mesmo namespace, todas as funcoes
 # DCM (baixar_dcm_hoje, baixar_dcm_edicao) passam a usa-lo.
 import shutil as _shutil
-_chrome_bin = _shutil.which("google-chrome") or _shutil.which("google-chrome-stable")
+_chrome_bin = (
+    _shutil.which("google-chrome")
+    or _shutil.which("google-chrome-stable")
+    or _shutil.which("chrome")
+)
+print(f"[smoke] which google-chrome -> {_shutil.which('google-chrome')}")
+print(f"[smoke] which chrome        -> {_shutil.which('chrome')}")
+print(f"[smoke] which chromium      -> {_shutil.which('chromium')}")
+print(f"[smoke] which chromium-browser -> {_shutil.which('chromium-browser')}")
 if not _chrome_bin:
     _chromium_bin = _shutil.which("chromium-browser") or _shutil.which("chromium")
     if _chromium_bin:
