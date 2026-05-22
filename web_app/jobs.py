@@ -958,6 +958,13 @@ def run_source_run(
     source_type = str(row["source_type"])
     cursor = safe_json_dict(row.get("cursor_json"))
     mark_source_run_running(source_run_id)
+    # OOM diagnosis (2026-05-22): snapshot RSS antes do source_run para
+    # rastrear quais sources elevam memória durante update jobs.
+    try:
+        from .diagnostics import rss_mib
+        rss_before = rss_mib()
+    except Exception:
+        rss_before = 0.0
     append_event(
         job_id,
         "source_run_started",
@@ -967,6 +974,7 @@ def run_source_run(
             "target_key": target_key,
             "target_label": target_label,
             "status": "running",
+            "rss_mib_before": rss_before,
         },
     )
     try:
@@ -1029,6 +1037,11 @@ def run_source_run(
             last_error="",
             finished=complete,
         )
+        try:
+            from .diagnostics import rss_mib
+            rss_after = rss_mib()
+        except Exception:
+            rss_after = 0.0
         append_event(
             job_id,
             "source_run_complete" if complete else "source_run_checkpoint",
@@ -1043,6 +1056,9 @@ def run_source_run(
                 "mentions_inserted": result.mentions_inserted,
                 "stories_touched": result.stories_touched,
                 "status": next_status,
+                "rss_mib_before": rss_before,
+                "rss_mib_after": rss_after,
+                "rss_mib_delta": round(rss_after - rss_before, 2),
             },
         )
         return {
