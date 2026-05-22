@@ -1236,6 +1236,42 @@ def list_own_activity(
     return {"activity": rows, "count": len(rows), "limit": capped, "profile": profile}
 
 
+@app.get("/api/admin/jobs/{job_id}/source-run-events")
+def admin_source_run_events(job_id: str, request: Request, limit: int = 100) -> dict[str, Any]:
+    """Filter job_events to only the source_run_* family (started, complete,
+    checkpoint, failed) so the instrumented rss_mib_* payloads aren't drowned
+    by article_saved/source_progress floods. Useful to diagnose memory peaks
+    during long-running update jobs.
+    """
+    require_admin(request)
+    import sqlite3
+    from .config import db_path
+    capped = max(1, min(int(limit or 0) or 100, 500))
+    rows: list[dict[str, Any]] = []
+    try:
+        with sqlite3.connect(str(db_path())) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.execute(
+                "SELECT created_at, event, payload_json FROM job_events "
+                "WHERE job_id = ? AND event LIKE 'source_run_%' "
+                "ORDER BY id DESC LIMIT ?",
+                (job_id, capped),
+            )
+            for r in cur:
+                try:
+                    payload = json.loads(r["payload_json"] or "{}")
+                except json.JSONDecodeError:
+                    payload = {}
+                rows.append({
+                    "created_at": r["created_at"],
+                    "event": r["event"],
+                    "payload": payload,
+                })
+    except Exception as exc:
+        return {"job_id": job_id, "events": [], "count": 0, "error": str(exc)}
+    return {"job_id": job_id, "events": rows, "count": len(rows), "limit": capped}
+
+
 @app.get("/api/admin/debug/memory")
 def admin_debug_memory(request: Request) -> dict[str, Any]:
     """RSS + Vm* snapshot of the FastAPI worker process. Admin-only.
