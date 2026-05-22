@@ -18,6 +18,8 @@
 8. **ANTES DE TOCAR AUTH/SCOPE/PERMISSÃO:** `git log --all -- <arquivo>` + reler AskUserQuestion answers em `AUDITORIA_PROMPTS_*.md`. "Destruir/tiraram/removeram" do Otávio é literal — existe commit de remoção.
 9. **AUTO-AUDITORIA PERIÓDICA.** A cada 10 outputs substantivos OU antes de marcar Goal atingido: `python3 tools/auditar_prompts.py --since 2026-05-19` + contrastar contra `LONG_TERM_GOALS.md`. Pedido literal não-coberto = abrir Goal ou WORK_LOG entry. Otávio NÃO deve precisar pedir "leia todos os prompts" novamente.
 
+10. **SMOKE PLAYWRIGHT EM PROD NUNCA RODA SOZINHO `goal2_change_password`.** Esse smoke muta a senha admin do file. Se crashar entre fase 2 (mudar senha) e `goal2_revert_password` (restaurar), admin trava. Em 2026-05-22 isso causou 1h+ de lockout que precisou de endpoint temporário de recovery via env var. Recovery: `~/Documents/clipping-project senhas.md` doc "Recovery: env var ainda tem a 48-hex original" + commit `16e8be3` (smoke grava throwaway em `/tmp/clipping_smoke_throwaway.txt`). Antes de rodar smoke completo em prod: validar que o sistema está estável (sem job massivo em curso, sem OOM no histórico recente).
+
 ---
 
 ## Goals do loop (atualizar quando migrar)
