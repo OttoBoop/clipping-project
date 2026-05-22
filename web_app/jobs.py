@@ -2348,6 +2348,12 @@ def sanitize_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "items",
         "lines",
         "error",
+        # Diagnostics (Goal 4 — 2026-05-22): RSS instrumentation per
+        # source_run lets admin trace memory growth by source/target.
+        "rss_mib_before",
+        "rss_mib_after",
+        "rss_mib_delta",
+        "returncode",
     }
     safe: dict[str, Any] = {}
     for key, value in payload.items():
