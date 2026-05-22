@@ -75,10 +75,13 @@ Tabela `activity_log` criada em `ensure_app_tables` (db_admin.py), preservada po
 
 **Migrado do MANTRA.md em:** 2026-05-22
 
-**Pendências futuras (não bloqueiam o Goal):**
+**Pendências fechadas em 2026-05-22 (commits `7ed465e` e `eb49dc0`, deploys live):**
 
-- Capturar tentativas bloqueadas por scope (403 `target_out_of_scope`) — hoje `_validate_target_scope` levanta antes de `activity.record`, então tentativas de violação ficam sem trilha. Mudança simples se Otávio decidir querer.
-- UI no painel do viewer (read-only) com seu próprio histórico — hoje só admin lê.
+- ✅ **Capturar tentativas bloqueadas por scope** — `_validate_target_scope` agora chama `activity.record("target.scope_denied", ...)` antes de levantar 403. Verificado em prod: flavio tentou archive shakira → HTTP 403 + evento capturado com `userRole=viewer, userProfile=flavio, targetKey=shakira, reason=target_out_of_scope`.
+- ✅ **UI no painel do viewer (read-only) com próprio histórico** — novo endpoint `GET /api/me/activity` (require_viewer, scoped via `session.profile`). Painel "Registros" agora renderiza em ambos os roles: admin usa `/api/admin/activity` com filtros completos, viewer usa `/api/me/activity` com filtro de cliente escondido. Filtro de ação funciona nos dois. **Feature relacionada:** viewer também vê tentativas de outros clientes mexerem com SEUS targets (security event útil, não bug).
+
+**Pendência ainda futura (não bloqueia o Goal):**
+
 - Política de retenção — `activity_log` cresce indefinidamente; eventual rotation/archive depois de N meses.
 
 **Notas de manutenção:**

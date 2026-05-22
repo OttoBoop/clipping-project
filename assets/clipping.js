@@ -291,7 +291,7 @@
     // adjust note copy.
     if (!isAdmin) {
       if (titleEl) titleEl.textContent = "Meus registros";
-      if (noteEl) noteEl.textContent = "Histórico das suas ações neste sistema — logins, troca de senha, criação/arquivamento de targets seus. Só você (e o admin) vê.";
+      if (noteEl) noteEl.textContent = "Histórico das suas ações neste sistema — logins, troca de senha, criação/arquivamento de targets seus, mais qualquer tentativa de outro cliente mexer com um dos seus nomes (target.scope_denied). Só você (e o admin) vê.";
       if (profileFilterLabel) profileFilterLabel.style.display = "none";
     }
 

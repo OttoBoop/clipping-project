@@ -124,11 +124,14 @@ Admin (e eventualmente cada cliente sobre o próprio scope) consegue ver histór
 - filtros voltam resultado errado (`?profile=flavio` retornando ações de shakira)
 - histórico pré-implementação está perdido — limitação aceita; documentar publicamente.
 
-**Pendências futuras (não bloqueiam atingimento):**
+**Pendências fechadas (2026-05-22):**
 
-- Capturar tentativas bloqueadas por scope (403 `target_out_of_scope`)
-- UI viewer-próprio-histórico (read-only) na sessão do cliente
-- Política de retenção / rotation (hoje cresce indefinidamente)
+- ✅ Capturar tentativas bloqueadas por scope (commit `7ed465e`)
+- ✅ UI viewer-próprio-histórico read-only via `GET /api/me/activity` (commit `eb49dc0`)
+
+**Pendência ainda aberta:**
+
+- Política de retenção / rotation (hoje `activity_log` cresce indefinidamente)
 
 ---
 
