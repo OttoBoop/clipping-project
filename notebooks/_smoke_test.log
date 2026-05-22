@@ -1,199 +1,62 @@
-Traceback (most recent call last):
-  File "/home/runner/work/clipping-project/clipping-project/notebooks/_smoke_test.py", line 80, in run_cenario
-    saida = fn(*args, destino=DESTINO, **kwargs) if "destino" not in kwargs else fn(*args, **kwargs)
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<string>", line 171, in baixar_dcm_hoje
-  File "<string>", line 127, in _dcm_novo_driver
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/chrome/webdriver.py", line 45, in __init__
-    super().__init__(
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/chromium/webdriver.py", line 66, in __init__
-    super().__init__(command_executor=executor, options=self.options)
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/common/webdriver.py", line 25, in __init__
-    super().__init__(*args, **kwargs)
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/remote/webdriver.py", line 276, in __init__
-    self.start_session(capabilities)
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/remote/webdriver.py", line 372, in start_session
-    response = self.execute(Command.NEW_SESSION, caps)["value"]
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/remote/webdriver.py", line 468, in execute
-    self.error_handler.check_response(response)
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/remote/errorhandler.py", line 232, in check_response
-    raise exception_class(message, screen, stacktrace)
-selenium.common.exceptions.SessionNotCreatedException: Message: session not created
-from unknown error: no chrome binary at /usr/bin/google-chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
-Stacktrace:
-#0 0x565512aa41da <unknown>
-#1 0x5655124ba629 <unknown>
-#2 0x5655124f5460 <unknown>
-#3 0x5655124f4137 <unknown>
-#4 0x565512542362 <unknown>
-#5 0x565512541abc <unknown>
-#6 0x565512501767 <unknown>
-#7 0x565512502551 <unknown>
-#8 0x565512a67a7b <unknown>
-#9 0x565512a6aad3 <unknown>
-#10 0x565512a55a3c <unknown>
-#11 0x565512a6b279 <unknown>
-#12 0x565512a3e507 <unknown>
-#13 0x565512a918f8 <unknown>
-#14 0x565512a91ae6 <unknown>
-#15 0x565512aa2bc3 <unknown>
-#16 0x7f43629eeaa4 <unknown>
-#17 0x7f4362a7bc6c <unknown>
-
-Traceback (most recent call last):
-  File "/home/runner/work/clipping-project/clipping-project/notebooks/_smoke_test.py", line 80, in run_cenario
-    saida = fn(*args, destino=DESTINO, **kwargs) if "destino" not in kwargs else fn(*args, **kwargs)
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<string>", line 214, in baixar_dcm_edicao
-  File "<string>", line 127, in _dcm_novo_driver
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/chrome/webdriver.py", line 45, in __init__
-    super().__init__(
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/chromium/webdriver.py", line 66, in __init__
-    super().__init__(command_executor=executor, options=self.options)
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/common/webdriver.py", line 25, in __init__
-    super().__init__(*args, **kwargs)
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/remote/webdriver.py", line 276, in __init__
-    self.start_session(capabilities)
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/remote/webdriver.py", line 372, in start_session
-    response = self.execute(Command.NEW_SESSION, caps)["value"]
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/remote/webdriver.py", line 468, in execute
-    self.error_handler.check_response(response)
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/selenium/webdriver/remote/errorhandler.py", line 232, in check_response
-    raise exception_class(message, screen, stacktrace)
-selenium.common.exceptions.SessionNotCreatedException: Message: session not created
-from unknown error: no chrome binary at /usr/bin/google-chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
-Stacktrace:
-#0 0x55d4547d71da <unknown>
-#1 0x55d4541ed629 <unknown>
-#2 0x55d454228460 <unknown>
-#3 0x55d454227137 <unknown>
-#4 0x55d454275362 <unknown>
-#5 0x55d454274abc <unknown>
-#6 0x55d454234767 <unknown>
-#7 0x55d454235551 <unknown>
-#8 0x55d45479aa7b <unknown>
-#9 0x55d45479dad3 <unknown>
-#10 0x55d454788a3c <unknown>
-#11 0x55d45479e279 <unknown>
-#12 0x55d454771507 <unknown>
-#13 0x55d4547c48f8 <unknown>
-#14 0x55d4547c4ae6 <unknown>
-#15 0x55d4547d5bc3 <unknown>
-#16 0x7f244603caa4 <unknown>
-#17 0x7f24460c9c6c <unknown>
-
 [smoke] notebook = notebooks/Diarios_Oficiais_Rio_Downloader.ipynb
 [smoke] destino  = /home/runner/work/clipping-project/clipping-project/downloads_smoke
 [smoke] carregando 10526 chars de codigo do notebook...
 Destino: /home/runner/work/clipping-project/clipping-project/downloads_smoke
 [smoke] codigo carregado.
+[smoke] which google-chrome -> /usr/bin/google-chrome
+[smoke] which chrome        -> /opt/hostedtoolcache/setup-chrome/chromium/stable/x64/chrome
+[smoke] which chromium      -> /usr/bin/chromium
+[smoke] which chromium-browser -> /usr/bin/chromium-browser
 
 ========== CENARIO: DOP_hoje ==========
 [DOP] baixando id=14807 <- https://doweb.rio.rj.gov.br/portal/edicoes/download/14807
 [DOP] OK downloads_smoke/DOP_2026_05_22.pdf (5.59 MB)
-  -> downloads_smoke/DOP_2026_05_22.pdf  5.59 MB  pdf=True  (13.5s)
+  -> downloads_smoke/DOP_2026_05_22.pdf  5.59 MB  pdf=True  (11.0s)
 
 ========== CENARIO: DCM_hoje ==========
+[DCM] última edição: 93 (22_05_2026)
+[DCM] OK downloads_smoke/DCM_22_05_2026_ed93.pdf
+  -> downloads_smoke/DCM_22_05_2026_ed93.pdf  8.99 MB  pdf=True  (42.7s)
 
 ========== CENARIO: DCM_edicao_1_2026 ==========
+[DCM] OK downloads_smoke/DCM_ed1_ano2026.pdf
+  -> downloads_smoke/DCM_ed1_ano2026.pdf  6.40 MB  pdf=True  (37.6s)
 
 ========== CENARIO: DCM_range_1a2_2026 ==========
-[DCM] aviso (edicao 1): Message: session not created
-from unknown error: no chrome binary at /usr/bin/google-chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
+[DCM] aviso (edicao 1): Message: 
 Stacktrace:
-#0 0x559ab46db1da <unknown>
-#1 0x559ab40f1629 <unknown>
-#2 0x559ab412c460 <unknown>
-#3 0x559ab412b137 <unknown>
-#4 0x559ab4179362 <unknown>
-#5 0x559ab4178abc <unknown>
-#6 0x559ab4138767 <unknown>
-#7 0x559ab4139551 <unknown>
-#8 0x559ab469ea7b <unknown>
-#9 0x559ab46a1ad3 <unknown>
-#10 0x559ab468ca3c <unknown>
-#11 0x559ab46a2279 <unknown>
-#12 0x559ab4675507 <unknown>
-#13 0x559ab46c88f8 <unknown>
-#14 0x559ab46c8ae6 <unknown>
-#15 0x559ab46d9bc3 <unknown>
-#16 0x7f7448908aa4 <unknown>
-#17 0x7f7448995c6c <unknown>
+#0 0x556df736b22a <unknown>
+#1 0x556df6d69ab9 <unknown>
+#2 0x556df6dbe046 <unknown>
+#3 0x556df6dbe281 <unknown>
+#4 0x556df6e08f74 <unknown>
+#5 0x556df6e06116 <unknown>
+#6 0x556df6db1662 <unknown>
+#7 0x556df6db2451 <unknown>
+#8 0x556df732ed8b <unknown>
+#9 0x556df7331c65 <unknown>
+#10 0x556df731b458 <unknown>
+#11 0x556df73327f0 <unknown>
+#12 0x556df73021c0 <unknown>
+#13 0x556df7358168 <unknown>
+#14 0x556df7358305 <unknown>
+#15 0x556df7369c5e <unknown>
+#16 0x7f2258e9caa4 <unknown>
+#17 0x7f2258f29c6c <unknown>
 
-[DCM] aviso (edicao 2): Message: session not created
-from unknown error: no chrome binary at /usr/bin/google-chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
-Stacktrace:
-#0 0x556fab3e81da <unknown>
-#1 0x556faadfe629 <unknown>
-#2 0x556faae39460 <unknown>
-#3 0x556faae38137 <unknown>
-#4 0x556faae86362 <unknown>
-#5 0x556faae85abc <unknown>
-#6 0x556faae45767 <unknown>
-#7 0x556faae46551 <unknown>
-#8 0x556fab3aba7b <unknown>
-#9 0x556fab3aead3 <unknown>
-#10 0x556fab399a3c <unknown>
-#11 0x556fab3af279 <unknown>
-#12 0x556fab382507 <unknown>
-#13 0x556fab3d58f8 <unknown>
-#14 0x556fab3d5ae6 <unknown>
-#15 0x556fab3e6bc3 <unknown>
-#16 0x7f6ff6476aa4 <unknown>
-#17 0x7f6ff6503c6c <unknown>
-
-  -> range com 0 arquivos, todos PDF? False (0.8s)
+[DCM] OK downloads_smoke/DCM_ed2_ano2026.pdf
+  -> range com 1 arquivos, todos PDF? True (109.3s)
+     - DCM_ed2_ano2026.pdf 6.29 MB  pdf=True
 
 
 ========== RESUMO ==========
-  [OK  ] DOP_hoje                       5864660 bytes em 13.5s
-  [FAIL] DCM_hoje                       raise SessionNotCreatedException: Message: session not created
-from unknown error: no chrome binary at /usr/bin/google-chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
-Stacktrace:
-#0 0x565512aa41da <unknown>
-#1 0x5655124ba629 <unknown>
-#2 0x5655124f5460 <unknown>
-#3 0x5655124f4137 <unknown>
-#4 0x565512542362 <unknown>
-#5 0x565512541abc <unknown>
-#6 0x565512501767 <unknown>
-#7 0x565512502551 <unknown>
-#8 0x565512a67a7b <unknown>
-#9 0x565512a6aad3 <unknown>
-#10 0x565512a55a3c <unknown>
-#11 0x565512a6b279 <unknown>
-#12 0x565512a3e507 <unknown>
-#13 0x565512a918f8 <unknown>
-#14 0x565512a91ae6 <unknown>
-#15 0x565512aa2bc3 <unknown>
-#16 0x7f43629eeaa4 <unknown>
-#17 0x7f4362a7bc6c <unknown>
-
-  [FAIL] DCM_edicao_1_2026              raise SessionNotCreatedException: Message: session not created
-from unknown error: no chrome binary at /usr/bin/google-chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
-Stacktrace:
-#0 0x55d4547d71da <unknown>
-#1 0x55d4541ed629 <unknown>
-#2 0x55d454228460 <unknown>
-#3 0x55d454227137 <unknown>
-#4 0x55d454275362 <unknown>
-#5 0x55d454274abc <unknown>
-#6 0x55d454234767 <unknown>
-#7 0x55d454235551 <unknown>
-#8 0x55d45479aa7b <unknown>
-#9 0x55d45479dad3 <unknown>
-#10 0x55d454788a3c <unknown>
-#11 0x55d45479e279 <unknown>
-#12 0x55d454771507 <unknown>
-#13 0x55d4547c48f8 <unknown>
-#14 0x55d4547c4ae6 <unknown>
-#15 0x55d4547d5bc3 <unknown>
-#16 0x7f244603caa4 <unknown>
-#17 0x7f24460c9c6c <unknown>
-
-  [FAIL] DCM_range_1a2_2026             0 arquivos em 0.8s
+  [OK  ] DOP_hoje                       5864660 bytes em 11.0s
+  [OK  ] DCM_hoje                       9427207 bytes em 42.7s
+  [OK  ] DCM_edicao_1_2026              6710408 bytes em 37.6s
+  [OK  ] DCM_range_1a2_2026             1 arquivos em 109.3s
 
 ========== ARQUIVOS EM downloads_smoke ==========
+      8.99 MB  DCM_22_05_2026_ed93.pdf
+      6.40 MB  DCM_ed1_ano2026.pdf
+      6.29 MB  DCM_ed2_ano2026.pdf
       5.59 MB  DOP_2026_05_22.pdf
