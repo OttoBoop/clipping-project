@@ -1236,30 +1236,6 @@ def list_own_activity(
     return {"activity": rows, "count": len(rows), "limit": capped, "profile": profile}
 
 
-@app.post("/api/_recovery/reset-admin-from-env")
-async def recovery_reset_admin_from_env(request: Request) -> JSONResponse:
-    """TEMPORARY (2026-05-22): admin file password got out-of-sync with env
-    after a smoke playwright run partially mutated credentials. This endpoint
-    accepts the env-var value CLIPPING_ADMIN_PASSWORD as a one-time recovery
-    token and resets the file admin password back to that value. After use,
-    REMOVE THIS ENDPOINT. Not behind auth because admin auth is what is
-    broken — recovery without locking out the dono.
-    """
-    expected = os.environ.get("CLIPPING_ADMIN_PASSWORD", "").strip()
-    if not expected:
-        raise HTTPException(status_code=503, detail="env_password_unavailable")
-    try:
-        payload = await read_json(request)
-    except Exception:
-        payload = {}
-    provided = str((payload or {}).get("auth_token") or "").strip()
-    if not hmac.compare_digest(provided.encode("utf-8"), expected.encode("utf-8")):
-        raise HTTPException(status_code=401, detail="wrong_token")
-    from . import auth as auth_module
-    auth_module.set_admin_password(expected)
-    return JSONResponse({"ok": True, "msg": "admin password reset to env var value"})
-
-
 @app.get("/api/admin/debug/memory")
 def admin_debug_memory(request: Request) -> dict[str, Any]:
     """RSS + Vm* snapshot of the FastAPI worker process. Admin-only.
