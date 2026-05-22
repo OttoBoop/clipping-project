@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from contextlib import asynccontextmanager
 from html import escape
 from typing import Any
@@ -303,6 +304,14 @@ async def lifespan(_: FastAPI):
     target_cleanup = archive_known_test_targets()
     targets_normalized = normalize_targets_file()
     ensure_app_tables(db_path())
+    # Goal 6 retention: purge activity_log rows older than env-configured
+    # window (default 90 days). One-shot per boot — sqlite handles this
+    # cheaply for any sane row count.
+    try:
+        retention_days = int(os.environ.get("CLIPPING_ACTIVITY_RETENTION_DAYS", "90") or "90")
+    except (TypeError, ValueError):
+        retention_days = 90
+    activity_purged = activity.purge_older_than(retention_days)
     interrupted_jobs = mark_orphaned_active_jobs_interrupted()
     resume_startup = getattr(job_manager, "resume_startup_jobs", None)
     resumed_jobs = resume_startup() if resume_startup else 0
@@ -312,7 +321,7 @@ async def lifespan(_: FastAPI):
     newly_seeded = [n for n in BASE_CATEGORIES if n not in existing_names]
     for name in newly_seeded:
         cdb.get_or_create_category(name, created_by="system")
-    if (newly_seeded or targets_normalized or interrupted_jobs or resumed_jobs) and artifact_store.enabled:
+    if (newly_seeded or targets_normalized or interrupted_jobs or resumed_jobs or activity_purged) and artifact_store.enabled:
         artifact_store.upload_current_artifacts(
             manifest={
                 "kind": "startup-normalization",
@@ -320,6 +329,7 @@ async def lifespan(_: FastAPI):
                 "targetsNormalized": targets_normalized,
                 "orphanedJobsInterrupted": interrupted_jobs,
                 "resumedJobs": resumed_jobs,
+                "activityPurged": activity_purged,
             },
             job_id="startup-runtime-normalization",
         )

@@ -72,6 +72,35 @@ def record(
         pass
 
 
+def purge_older_than(
+    days: int,
+    *,
+    db_file: Path | None = None,
+) -> int:
+    """Delete activity_log rows older than `days`. Returns rows removed.
+
+    Called once per FastAPI lifespan startup (cheap; sqlite handles
+    100k+ rows easily). Default retention is 90 days — enough to audit
+    a quarter of operations, but bounded so the table never grows
+    forever in prod.
+
+    Override via env var CLIPPING_ACTIVITY_RETENTION_DAYS (set 0 to
+    disable). Never raises — best-effort.
+    """
+    if days <= 0:
+        return 0
+    try:
+        path = Path(db_file) if db_file else _default_db_path()
+        cutoff = datetime.now(timezone.utc).timestamp() - (days * 86400)
+        cutoff_iso = datetime.fromtimestamp(cutoff, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        with sqlite3.connect(str(path)) as conn:
+            cur = conn.execute("DELETE FROM activity_log WHERE timestamp < ?", (cutoff_iso,))
+            conn.commit()
+            return cur.rowcount or 0
+    except Exception:
+        return 0
+
+
 def recent(
     *,
     limit: int = 200,

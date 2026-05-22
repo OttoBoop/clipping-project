@@ -473,6 +473,58 @@ def test_viewer_can_read_own_activity_log(monkeypatch, tmp_path):
         assert leaked == [], f"shakira events leaked into flavio scope: {leaked}"
 
 
+def test_activity_purge_older_than_drops_old_rows(monkeypatch, tmp_path):
+    """Goal 6 retention: purge_older_than removes rows past the window.
+
+    Insert 3 rows manually with timestamps 100, 30 and 1 days old, then
+    purge with retention=60 days. Only the 30d and 1d rows should survive.
+    """
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    with TestClient(app_module.app) as client:
+        # Lifespan already created the table. Insert 3 rows directly.
+        import sqlite3
+        from datetime import datetime, timedelta, timezone
+        from web_app import activity as activity_mod
+
+        db_file = tmp_path / "clipping.db"
+        now = datetime.now(timezone.utc)
+        rows = [
+            (now - timedelta(days=100), "old"),
+            (now - timedelta(days=30), "recent"),
+            (now - timedelta(days=1), "fresh"),
+        ]
+        with sqlite3.connect(str(db_file)) as conn:
+            for ts, marker in rows:
+                conn.execute(
+                    "INSERT INTO activity_log (timestamp, user_role, user_profile, action, target_key, details_json) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    (ts.strftime("%Y-%m-%dT%H:%M:%S.%fZ"), "test", "test", "audit.test", marker, None),
+                )
+            conn.commit()
+
+        # Purge with 60-day retention → drops "old" only.
+        removed = activity_mod.purge_older_than(60, db_file=db_file)
+        assert removed == 1, f"expected 1 row removed, got {removed}"
+
+        with sqlite3.connect(str(db_file)) as conn:
+            surviving = conn.execute(
+                "SELECT target_key FROM activity_log WHERE action='audit.test' ORDER BY timestamp"
+            ).fetchall()
+        markers = [r[0] for r in surviving]
+        assert markers == ["recent", "fresh"], f"survived: {markers}"
+
+
+def test_activity_purge_zero_days_is_noop(monkeypatch, tmp_path):
+    """retention_days=0 disables purge entirely (escape hatch via env var
+    CLIPPING_ACTIVITY_RETENTION_DAYS=0)."""
+    _, app_module = reload_app(monkeypatch, tmp_path, isolate_targets=True)
+    with TestClient(app_module.app) as client:
+        from web_app import activity as activity_mod
+        db_file = tmp_path / "clipping.db"
+        removed = activity_mod.purge_older_than(0, db_file=db_file)
+        assert removed == 0
+
+
 def test_admin_me_activity_returns_empty(monkeypatch, tmp_path):
     """Admin tem painel completo em /api/admin/activity. /api/me/activity
     para admin retorna lista vazia (não tem 'próprio scope' útil)."""
