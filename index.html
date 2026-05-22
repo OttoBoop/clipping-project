@@ -104,6 +104,12 @@
             <button type="submit" class="primary-action" id="runUpdateButton">Rodar atualização</button>
             <span id="runFormMessage" class="form-message" role="status"></span>
           </div>
+
+          <aside class="run-warning" id="runHeavyWarning" hidden role="alert">
+            <strong>⚠️ Rodada potencialmente pesada.</strong>
+            <span id="runHeavyWarningDetail"></span>
+            <span class="run-warning-tip">No plano Render free (512 MiB), rodadas com janela > 2 anos ou muitos alvos podem causar OOM e reinício do servidor. Considere fatiar em janelas menores e checar o uso de memória no badge do topo antes de rodar.</span>
+          </aside>
         </form>
 
         <details class="add-target-box">

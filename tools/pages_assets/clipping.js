@@ -2932,6 +2932,48 @@
   if (updateRunForm) {
     attachDateMask(dateFromInput);
     attachDateMask(dateToInput);
+
+    // Heavy-job warning (Goal 4 — 2026-05-22). Aviso visual quando o
+    // admin configura update com janela > 2 anos OU > 5 targets. Sem
+    // bloquear o submit — admin decide. Causa raiz dos OOMs do dia foi
+    // job com 12 anos de janela + 4 targets + 90k candidates.
+    function evaluateHeavyJobWarning() {
+      var warnEl = document.getElementById("runHeavyWarning");
+      var detailEl = document.getElementById("runHeavyWarningDetail");
+      if (!warnEl || !detailEl) return;
+      var fromIso = brDateToIso(dateFromInput ? dateFromInput.value : "") || "";
+      var toIso = brDateToIso(dateToInput ? dateToInput.value : "") || "";
+      var nTargets = selectedRunTargetKeys().length;
+      var reasons = [];
+      if (fromIso && toIso) {
+        var dFrom = new Date(fromIso + "T00:00:00Z");
+        var dTo = new Date(toIso + "T00:00:00Z");
+        if (!isNaN(dFrom) && !isNaN(dTo) && dTo > dFrom) {
+          var diffYears = (dTo - dFrom) / (365.25 * 24 * 3600 * 1000);
+          if (diffYears > 2) {
+            reasons.push("Janela de " + diffYears.toFixed(1) + " anos (>2 anos é arriscado)");
+          }
+        }
+      }
+      if (nTargets > 5) {
+        reasons.push(nTargets + " alvos selecionados (>5 é pesado em paralelo)");
+      }
+      if (reasons.length === 0) {
+        warnEl.hidden = true;
+        detailEl.textContent = "";
+      } else {
+        warnEl.hidden = false;
+        detailEl.textContent = " " + reasons.join("; ") + ".";
+      }
+    }
+    if (dateFromInput) dateFromInput.addEventListener("input", evaluateHeavyJobWarning);
+    if (dateToInput) dateToInput.addEventListener("input", evaluateHeavyJobWarning);
+    [primaryRunTargets, secondaryRunTargets].forEach(function (container) {
+      if (container) container.addEventListener("change", evaluateHeavyJobWarning);
+    });
+    // Run once on setup in case the form already has values.
+    evaluateHeavyJobWarning();
+
     updateRunForm.addEventListener("submit", async function (event) {
       event.preventDefault();
       setMessage(runFormMessage, "Iniciando atualização...", "");
