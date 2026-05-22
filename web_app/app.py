@@ -670,10 +670,16 @@ def update_status(request: Request) -> dict[str, Any]:
 def safe_current_status() -> dict[str, Any]:
     try:
         return job_manager.current_status()
-    except Exception:
+    except Exception as exc:
+        import logging
+        import traceback
+        logging.getLogger(__name__).exception("job_manager.current_status() failed")
         return {
             "status": "status_unavailable",
             "error_message": "Não foi possível ler o status da atualização agora. Os artefatos publicados continuam disponíveis.",
+            "debug_error_type": type(exc).__name__,
+            "debug_error_message": str(exc)[:200],
+            "debug_traceback_tail": "".join(traceback.format_exception_only(type(exc), exc)).strip()[:300],
         }
 
 
