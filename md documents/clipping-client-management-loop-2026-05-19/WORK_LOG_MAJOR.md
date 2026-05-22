@@ -974,3 +974,43 @@ A chave **"Per-client custom targets"** foi perdida quando eu (Claude, mesma ses
 **Próxima sub-ação concreta:** adicionar `add_target_to_profile()` e `remove_target_from_profile()` em `web_app/segmentation.py`, depois estender os 7 endpoints de mutação em `web_app/app.py`. Commit + push após cada chunk verde (Regra 7).
 
 **Regra 8 nova adicionada ao MANTRA.md:** "ANTES DE TOCAR AUTH/SCOPE/PERMISSÃO: rodar `git log --all -- <arquivo>` + reler AskUserQuestion answers em `AUDITORIA_PROMPTS_*.md`. 'Destruir/tiraram/removeram' do Otávio é literal — existe commit." Memória `feedback_arqueologia_git_antes_auth.md` salva. Memória `project_clipping_segregation_revert_6fd0bac.md` documenta o achado.
+
+---
+
+## 2026-05-22 — OOM crônico ataque #2: export DEVNULL + scoped_dashboard_payload sem deepcopy
+
+**Goal endereçado:** Goal 4 (regressão-zero — preservar produção sob carga real).
+
+**Trigger:** Otávio reforçou Regra 1 ("n pare, vai tentando até conseguir"). Frente OOM estava registrada como "futura" desde 2026-05-21. Atacando agora.
+
+**Método escolhido:**
+
+1. **Instrumentação primeiro**: endpoint `GET /api/admin/debug/memory` (admin-only) que lê `/proc/self/status` no Linux (Render usa Ubuntu) e expõe `VmRSS`, `VmHWM`, `VmPeak`, `VmData`, `VmSize` em MiB + saturação contra o limite de 512 MiB. Sem dep nova (psutil não estava em requirements.txt).
+
+2. **Medição baseline em prod** (commit `0f011f8` live):
+   - Ocioso: VmRSS=258 MiB (50% do limite já gasto sem carga)
+   - 1 ciclo (clipping-data.json + raw-texts.json): +25 MiB
+   - 10 requests sequenciais: RSS estável (303 → 305) — GC do Python funciona, sem leak em hot path de leitura
+   - VmPeak histórico = 1130 MiB (algum job no passado dobrou — provável origem dos OOMs)
+
+3. **Otimização #1** (commit `0f011f8`): `run_export_snapshot` em `web_app/jobs.py` usava `subprocess.run(capture_output=True, text=True)`. Isso buffera todo o stdout/stderr do `tools/export_mobile_snapshot.py` no processo pai. Pra export de 460+ stories isso era N MiB inúteis. Trocado por `stdout=DEVNULL, stderr=DEVNULL`. Event payload `lines` substituído por `returncode`.
+
+4. **Otimização #2** (commit `0a19399`): `scoped_dashboard_payload` no caminho admin (`allowed=None`) fazia `copy.deepcopy(payload)` só pra setar 3 chaves em `meta`. Trocado por shallow copy do top-level dict + novo meta via spread. Caller payload não é mutado (top-level cópia), meta não vaza (novo dict). 81/81 testes verdes.
+
+**Métodos descartados:**
+
+- ❌ Adicionar psutil em requirements.txt — Render free tem build minutes contadas; adicionar dep aumenta build time e a dep externa. `/proc/self/status` resolve.
+- ❌ Cache estático de `clipping-data.json` em memória — economiza I/O mas multiplica RSS por viewer concorrente. Pior trade-off no plano free.
+- ❌ Streaming JSON do payload (`response.body_iterator`) — refactor profundo, alto risco de regressão; ataque vem depois se houver evidência de pico nos próximos OOMs.
+
+**Critério de sucesso (verificável em prod):**
+
+- ✅ Endpoint `/api/admin/debug/memory` retorna 200 com VmRSS atual (verificado 0f011f8 live)
+- ✅ Export job NÃO faz mais buffering (commit 0f011f8 — efeito observável só quando job de export rodar; eventual)
+- ⏳ Próximo curl em `/api/admin/debug/memory` após puxar `clipping-data.json` deve mostrar bump menor que 25 MiB (anterior à otimização). Medição agendada para após deploy de `0a19399`.
+
+**Próxima sub-ação concreta:** após deploy `0a19399` live, repetir o ciclo de medição (baseline → 1 puxada → 10 puxadas) e comparar HWM antes/depois. Se reduziu >10 MiB por ciclo, otimização vale. Senão, investigar a próxima fonte (provavelmente algo no ingest, em `run_source_run` ou `collect_source_run_candidates`).
+
+**Frente parcialmente endereçada (não bloqueia loop):**
+
+- Retenção do `activity_log` — ainda em aberto. Pode atacar depois da medição de memória.
