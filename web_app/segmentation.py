@@ -407,14 +407,20 @@ def scoped_dashboard_payload(payload: dict[str, Any], session: dict[str, Any]) -
         scoped["meta"] = {**existing_meta, "viewerRole": "admin", "viewerProfile": "admin", "editorEnabled": True}
         return scoped
 
-    scoped: dict[str, Any] = copy.deepcopy(payload)
+    # Viewer path (Goal 4 memória, 2026-05-22): construir scoped de zero
+    # ao invés de deepcopy(payload) + mutações no clone. payload é JSON
+    # acabado de carregar de disco (json.load), nada o muta depois deste
+    # ponto — shallow copy via dict spread é safe. Para articles e stories,
+    # spread também é safe porque o único nested-mutate é classifications
+    # (list re-bindada, não in-place). Resultado: -25 MiB transitórios por
+    # request viewer em payloads grandes.
     target_rows = [
-        row for row in scoped.get("targets", [])
+        {**row} for row in (payload.get("targets") or [])
         if _target_allowed(str(row.get("key") or ""), allowed)
     ]
     target_keys = [str(row.get("key") or "") for row in target_rows if str(row.get("key") or "")]
     default_targets = [
-        str(key) for key in scoped.get("defaultTargets", [])
+        str(key) for key in (payload.get("defaultTargets") or [])
         if str(key) in target_keys
     ] or list(target_keys)
 
@@ -422,7 +428,7 @@ def scoped_dashboard_payload(payload: dict[str, Any], session: dict[str, Any]) -
     total_articles = 0
     total_ai = 0
     total_raw = 0
-    for story in scoped.get("stories", []) or []:
+    for story in payload.get("stories", []) or []:
         story_keys = [str(key) for key in story.get("targetKeys", []) if str(key).strip()]
         articles: list[dict[str, Any]] = []
         story_target_keys: list[str] = []
@@ -430,8 +436,9 @@ def scoped_dashboard_payload(payload: dict[str, Any], session: dict[str, Any]) -
             article_keys = _article_keys(article, story_keys, allowed)
             if not article_keys:
                 continue
-            article_copy = copy.deepcopy(article)
-            article_copy["targetKeys"] = article_keys
+            # Shallow copy + spread: caller's article dict não é mutado
+            # porque cada key reatribuída cria novo binding (não in-place).
+            article_copy = {**article, "targetKeys": article_keys}
             if isinstance(article_copy.get("classifications"), list):
                 article_copy["classifications"] = [
                     row for row in article_copy["classifications"]
@@ -443,43 +450,47 @@ def scoped_dashboard_payload(payload: dict[str, Any], session: dict[str, Any]) -
                     story_target_keys.append(key)
         if not articles:
             continue
-        story_copy = copy.deepcopy(story)
-        story_copy["articles"] = articles
-        story_copy["targetKeys"] = story_target_keys
-        story_copy["articleCount"] = len(articles)
-        story_copy["aiCount"] = sum(1 for article in articles if str(article.get("summarySource") or "").lower() == "ai")
-        story_copy["rawCount"] = story_copy["articleCount"] - story_copy["aiCount"]
-        stories.append(story_copy)
-        total_articles += story_copy["articleCount"]
-        total_ai += story_copy["aiCount"]
-        total_raw += story_copy["rawCount"]
-
-    meta = copy.deepcopy(scoped.get("meta") or {})
-    profile = profile_config(session)
-    meta.update(
-        {
-            "viewerRole": "viewer",
-            "viewerProfile": session_profile_key(session),
-            "viewerLabel": str(profile.get("label") or session_profile_key(session)),
-            "editorEnabled": False,
-            "totalStories": len(stories),
-            "totalArticles": total_articles,
-            "totalAi": total_ai,
-            "totalRaw": total_raw,
-            "initialStoryCount": len(stories),
-            "initialArticleCount": total_articles,
-            "initialAiCount": total_ai,
-            "initialRawCount": total_raw,
+        article_count = len(articles)
+        ai_count = sum(1 for article in articles if str(article.get("summarySource") or "").lower() == "ai")
+        story_copy = {
+            **story,
+            "articles": articles,
+            "targetKeys": story_target_keys,
+            "articleCount": article_count,
+            "aiCount": ai_count,
+            "rawCount": article_count - ai_count,
         }
-    )
+        stories.append(story_copy)
+        total_articles += article_count
+        total_ai += ai_count
+        total_raw += article_count - ai_count
+
+    profile = profile_config(session)
+    meta = {
+        **(payload.get("meta") or {}),
+        "viewerRole": "viewer",
+        "viewerProfile": session_profile_key(session),
+        "viewerLabel": str(profile.get("label") or session_profile_key(session)),
+        "editorEnabled": False,
+        "totalStories": len(stories),
+        "totalArticles": total_articles,
+        "totalAi": total_ai,
+        "totalRaw": total_raw,
+        "initialStoryCount": len(stories),
+        "initialArticleCount": total_articles,
+        "initialAiCount": total_ai,
+        "initialRawCount": total_raw,
+    }
+    # Top-level shallow copy, replace the scoped fields.
+    scoped: dict[str, Any] = {**payload}
     scoped["meta"] = meta
     scoped["targets"] = target_rows
     scoped["defaultTargets"] = default_targets
     scoped["stories"] = stories
-    if "storyTargets" in scoped:
+    if "storyTargets" in payload:
         scoped["storyTargets"] = {
             str(sid): [key for key in keys if _target_allowed(str(key), allowed)]
-            for sid, keys in (scoped.get("storyTargets") or {}).items()
+            for sid, keys in (payload.get("storyTargets") or {}).items()
             if any(_target_allowed(str(key), allowed) for key in keys)
         }
     return scoped
