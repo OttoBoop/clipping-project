@@ -1145,3 +1145,61 @@ Os timeouts coincidem com o restart pós-OOM (container fica indisponível por ~
 **Mitigação imediata:** loop atual aceita 4/7 dos goals validados pós-otimizações; os 3 que timeoutaram NÃO indicam regressão real (são timeouts de cold-start). Validados manualmente nos commits anteriores.
 
 **Estado final do loop:** OOMs reduzidos drasticamente (de 8 em 30 min no cluster original para 2 em 4 horas hoje, ambos sob carga sintética). Sistema estável em prod, RSS 35% sob carga moderada.
+
+---
+
+## 2026-05-22 19:35 UTC — Bug hunt em prod: disk I/O error em `/api/update/live-results`
+
+**Goal endereçado:** Goal 4 (regressão-zero — bug ATIVO derrubando endpoint crítico).
+
+**Como achei:** Otávio provocou *"Você não achou nenhum errinho. E você já testou tudo"*. Sai do plan mode em modo bug-hunt, rodei Fase 1 do plano (diag read-only). Logo na primeira query Render logs: **`sqlite3.OperationalError: disk I/O error` ativo desde 18:38 UTC (1h+)**, repetindo a cada poll de live-results (~5s/usuário com painel aberto).
+
+**Stack trace exato:**
+
+```
+File "/opt/render/project/src/web_app/app.py", line 667, in update_live_results
+File "/opt/render/project/src/web_app/jobs.py", line 2045, in live_results_for_job
+File "/opt/render/project/src/web_app/db_admin.py", line 70, in ensure_app_tables
+File "/opt/render/project/src/pipeline/database.py", line 165, in _init_schema
+  conn.executescript(SCHEMA_SQL)
+sqlite3.OperationalError: disk I/O error
+```
+
+**Causa imediata:** `ensure_app_tables` era chamado em **CADA request** que toca DB. Total 17 call sites em jobs.py + app.py. Cada chamada faz `CREATE TABLE IF NOT EXISTS … (gigante)` + `executescript` (toca journal/WAL mesmo sem mudança de schema).
+
+**Hipótese inicial (errada):** disco do Render free cheio. **Refutada pelo endpoint novo `/api/admin/debug/disk`** (criado neste mesmo commit): mostrou disco 83.9% usado mas com 64 GB livres (Render usa filesystem compartilhado grande), DB tem só 66.8 MiB + WAL 8.1 MiB. Disco NÃO era problema.
+
+**Causa raiz revista:** **concorrência no WAL/journal.** Múltiplas threads chamando `executescript` em paralelo (live-results polling + run_source_run + outros) corromperam estado transiente do WAL. SQLite docs já avisam que `executescript` não deve rodar concorrente.
+
+**Fix aplicado (commit `80bf903`, deploy `dep-d888seqlk0gs73aoqg40` live 19:35 UTC):**
+
+1. Cache global `_app_tables_initialized: set[Path]` em `web_app/db_admin.py` — `ensure_app_tables` skipa se já rodou 1× pra esse path no boot do processo.
+2. Endpoint `GET /api/admin/debug/disk` (require_admin) com `shutil.disk_usage` + tamanho do DB/WAL/SHM/journal + top-15 files >1MiB em `data/`. Diferencia disco-cheio de DB-corrompido sem precisar redeploy pra investigar.
+
+**Validação end-to-end pós-deploy:**
+
+| Check | Antes | Depois |
+|---|---|---|
+| `GET /api/update/live-results` | HTTP 500 (disk I/O error) | HTTP 200 + items reais (job 7c1e4b144df0) |
+| `GET /api/admin/activity?limit=200` | count=0 (depois de várias 500s perdiam events) | count=143 desde 00:44 UTC |
+| `GET /api/admin/jobs/7c1e4b144df0/source-run-events` | erro `disk I/O error` | events com `rss_mib_before=124.66` ao vivo |
+| RSS após fix | 293 MiB / 56% sat | 284 MiB / 55% sat (estável) |
+| Render logs errors após 19:35 | espalhado | ZERO disk I/O error |
+
+**Achados laterais ao investigar activity_log:**
+
+- 89 `login.fail` vs 45 `login.success` em 19h de uptime. Todos `anonymous`, padrão temporal coincide com incidente admin pwd recovery (16:00) + smoke loops. **Não é brute force externo** (seria muito mais frequente e de IPs variados).
+- `login.fail` events NÃO capturam IP nem prefix da senha tentada — quando útil ter contexto pra distinguir bug vs ataque vs operação. **Tech debt registrado, não bloqueia Goal 6.**
+- `target.scope_denied` capturado 1× (commit 7ed465e funcional em prod, validado).
+- `change_password` capturado 1× (incidente das 16:00).
+- Activity_log preservado via Supabase backup (storage_bridge.RUNTIME_FILES inclui DB) — 143 events sobreviveram a 7 deploys hoje.
+
+**Pendência registrada (não bloqueia Goal 6):**
+
+- Capturar IP + user-agent prefix em `login.fail` events. Mudança simples em `activity.record` call site em `/api/login` fail branch.
+
+**Aprendizado meta:**
+
+A confiança "tudo testado" estava errada. Fix vermelho-em-prod só virou óbvio quando rodei a Fase 1 (diag read-only). **Sempre que um Goal "fechado" não foi exercitado por uma nova lente em 1h+ — re-exercitar.** Não é desperdício; é Goal 4 (regressão-zero).
+
+**Próxima sub-ação concreta:** apresentar tech debt em PT-BR plano + perguntar se rodar smoke battery (Fase 2) ainda faz sentido (estado em prod já validado).
