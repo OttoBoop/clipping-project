@@ -131,6 +131,11 @@ resultados.append(run_cenario(f"DCM_edicao_1_{ano}", ns["baixar_dcm_edicao"], an
 # --- DCM range curto (2 edicoes), DEVE retornar 2 arquivos PDF (exigencia explicita) ---
 resultados.append(run_cenario(f"DCM_range_1a2_{ano}", ns["baixar_dcm_range"], ano, 1, 2, _esperado=2))
 
+# --- DCM por data (heuristica): pede "hoje" — heuristica calcula 0 dias uteis
+# de diferenca e palpita o numero atual, entao deve convergir na 1a tentativa. ---
+hoje_iso = datetime.date.today().isoformat()
+resultados.append(run_cenario(f"DCM_por_data_{hoje_iso}", ns["baixar_dcm_por_data"], hoje_iso))
+
 
 print("\n\n========== RESUMO ==========")
 sucesso_total = True
