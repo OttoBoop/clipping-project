@@ -13,7 +13,7 @@ likely migrate to `OttoBoop/Automatic-Emails` later).
 Send one invitation email — body copy still pending — to a recipient
 list still pending, from a sender Gmail account still to be wired up.
 This folder collects the assets for that send so it can be triggered
-through the same proven pattern in `mass_email_invites/`
+through the same proven pattern in `INVITATION EMAIL/mailer/`
 (one-time-secret URL → push-trigger → GitHub-hosted runner → Gmail
 SMTP).
 
@@ -74,7 +74,7 @@ this file under "## Event details".)
 
 ## 5. Operating rules (inherited)
 
-Same as `mass_email_invites/LONG_TERM_GOAL.md`:
+Same as `INVITATION EMAIL/mailer/HISTORICAL/LONG_TERM_GOAL.md`:
 
 - Credentials never typed in chat plaintext — always one-time-secret
   link or repo secret.

@@ -43,7 +43,7 @@ on:
         default: ''
   push:
     paths:
-      - 'mass_email_invites/pending-send.url'
+      - 'INVITATION EMAIL/mailer/pending-send.url'
     branches:
       - 'claude/gmail-email-invitations-**'
       - 'master'
@@ -77,14 +77,14 @@ jobs:
           echo "pwd        : $(pwd)"
           echo "--- ls -la ---"
           ls -la
-          echo "--- ls -la mass_email_invites/ ---"
-          ls -la mass_email_invites/ || echo "DIR MISSING"
+          echo "--- ls -la INVITATION EMAIL/mailer/ ---"
+          ls -la "INVITATION EMAIL/mailer/" || echo "DIR MISSING"
           echo "--- pending-send.url (or MISSING) ---"
-          if [ -f mass_email_invites/pending-send.url ]; then
-            wc -c mass_email_invites/pending-send.url
+          if [ -f "INVITATION EMAIL/mailer/pending-send.url" ]; then
+            wc -c "INVITATION EMAIL/mailer/pending-send.url"
             # don't cat full content — we don't want the URL in plain logs.
             # show only first 30 chars and length.
-            FIRST="$(head -c 30 mass_email_invites/pending-send.url)"
+            FIRST="$(head -c 30 'INVITATION EMAIL/mailer/pending-send.url')"
             echo "first_30_chars=[$FIRST...]"
           else
             echo "pending-send.url MISSING"
@@ -104,7 +104,7 @@ jobs:
             SUBJ="${DISPATCH_SUBJECT:-}"
             echo "source=workflow_dispatch_input"
           else
-            FILE="mass_email_invites/pending-send.url"
+            FILE="INVITATION EMAIL/mailer/pending-send.url"
             if [ ! -f "$FILE" ]; then
               echo "::error::Trigger file $FILE not found in checkout."
               exit 1
@@ -148,7 +148,7 @@ jobs:
           if [ -n "$SUBJECT_OVERRIDE" ]; then
             args+=( --subject "$SUBJECT_OVERRIDE" )
           fi
-          python3 mass_email_invites/retrieve_and_send.py "${args[@]}" 2>&1 | tee /tmp/send.log
+          python3 "INVITATION EMAIL/mailer/retrieve_and_send.py" "${args[@]}" 2>&1 | tee /tmp/send.log
           SCRIPT_EXIT=${PIPESTATUS[0]}
           echo "script_exit=$SCRIPT_EXIT" >> "$GITHUB_OUTPUT"
 
@@ -173,7 +173,7 @@ jobs:
               echo "(no /tmp/send.log captured — Fire step did not run)"
             fi
             echo '```'
-          } > mass_email_invites/last-run-status.md
+          } > "INVITATION EMAIL/mailer/last-run-status.md"
 
       - name: Consume trigger and commit status (push only)
         if: github.event_name == 'push' && always()
@@ -182,10 +182,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # The trigger file may not exist if checkout was empty for some reason.
-          if [ -f mass_email_invites/pending-send.url ]; then
-            git rm mass_email_invites/pending-send.url
+          if [ -f "INVITATION EMAIL/mailer/pending-send.url" ]; then
+            git rm "INVITATION EMAIL/mailer/pending-send.url"
           fi
-          git add mass_email_invites/last-run-status.md
+          git add "INVITATION EMAIL/mailer/last-run-status.md"
           # Pull any concurrent changes (cleanup commits from other runs).
           git pull --rebase origin "${GITHUB_REF##refs/heads/}" || true
           git commit -m "send-invites: consume trigger + record run status"
@@ -194,5 +194,5 @@ jobs:
       - name: Fail job if script failed
         if: steps.send.outputs.script_exit != '0'
         run: |
-          echo "::error::Script exit code was ${{ steps.send.outputs.script_exit }}. See mass_email_invites/last-run-status.md."
+          echo "::error::Script exit code was ${{ steps.send.outputs.script_exit }}. See INVITATION EMAIL/mailer/last-run-status.md."
           exit 1

@@ -1,0 +1,21 @@
+# One-time-secret URLs (used by the CI push-trigger flow)
+pending-send.url
+**/pending-send.url
+
+# Recipient lists with PII — use .local.txt suffix to keep them out of git
+**/*.local.txt
+**/*.local.csv
+**/recipients.local.*
+
+# Test credential fixtures
+.test-creds.txt
+**/.test-creds.txt
+
+# Secrets (belt-and-braces, also covered by mailer/.gitignore)
+*.secret
+*.secret.txt
+credentials.txt
+credentials.json
+*.env
+.env
+.env.*
