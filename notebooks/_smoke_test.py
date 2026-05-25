@@ -121,6 +121,13 @@ resultados = []
 # --- DOP ---
 resultados.append(run_cenario("DOP_hoje", ns["baixar_dop_hoje"]))
 
+# --- DOP por data (heuristica por ID sequencial): pede o ultimo dia util ---
+_hoje = datetime.date.today()
+_d = _hoje - datetime.timedelta(days=1)
+while _d.weekday() >= 5:
+    _d -= datetime.timedelta(days=1)
+resultados.append(run_cenario(f"DOP_por_data_{_d.isoformat()}", ns["baixar_dop_por_data"], _d.isoformat()))
+
 # --- DCM ---
 resultados.append(run_cenario("DCM_hoje", ns["baixar_dcm_hoje"]))
 

@@ -58,7 +58,6 @@ jobs:
           python -m pip install requests beautifulsoup4 PyPDF2 selenium pandas
 
       - name: Investigate DOP portal
-        if: hashFiles('notebooks/_investigate_dop.py') != ''
         continue-on-error: true
         run: |
           python notebooks/_investigate_dop.py 2>&1 | tee notebooks/_investigate_dop.log
