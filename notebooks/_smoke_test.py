@@ -136,18 +136,6 @@ resultados.append(run_cenario(f"DCM_range_1a2_{ano}", ns["baixar_dcm_range"], an
 hoje_iso = datetime.date.today().isoformat()
 resultados.append(run_cenario(f"DCM_por_data_{hoje_iso}", ns["baixar_dcm_por_data"], hoje_iso))
 
-# --- DOP por data (API de arquivo historico): pede 3 dias uteis atras ---
-# Se a API responder, baixa o PDF de qualquer data. Se nao, fallback pra home
-# (que so tem a ultima data) — nesse caso o cenario vai falhar mas nao eh regressao.
-d = datetime.date.today()
-for _ in range(5):
-    d -= datetime.timedelta(days=1)
-    if d.weekday() < 5:
-        break
-dop_data_historica = d.isoformat()
-resultados.append(run_cenario(f"DOP_por_data_{dop_data_historica}",
-                              ns["baixar_dop_por_data"], dop_data_historica))
-
 
 print("\n\n========== RESUMO ==========")
 sucesso_total = True
