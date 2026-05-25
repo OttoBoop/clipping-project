@@ -13,6 +13,7 @@ on:
     paths:
       - 'notebooks/Diarios_Oficiais_Rio_Downloader.ipynb'
       - 'notebooks/_smoke_test.py'
+      - 'notebooks/_investigate_dop.py'
       - '.github/workflows/smoke-do-downloader.yml'
 
 permissions:
@@ -56,6 +57,12 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install requests beautifulsoup4 PyPDF2 selenium pandas
 
+      - name: Investigate DOP portal
+        if: hashFiles('notebooks/_investigate_dop.py') != ''
+        continue-on-error: true
+        run: |
+          python notebooks/_investigate_dop.py 2>&1 | tee notebooks/_investigate_dop.log
+
       - name: Run smoke test
         id: smoke
         continue-on-error: true
@@ -91,7 +98,7 @@ jobs:
           set +e
           git config user.name "Smoke Test (Action)"
           git config user.email "smoke+actions@noreply.users.github.com"
-          git add notebooks/_smoke_test.log
+          git add notebooks/_smoke_test.log notebooks/_investigate_dop_results.json notebooks/_investigate_dop.log 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "Nothing to commit."
             exit 0
