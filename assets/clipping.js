@@ -202,6 +202,167 @@
     }
   })();
 
+  (function setupDemoTour() {
+    if (initialSessionProfile !== "demo_cliente") return;
+    var STORAGE_KEY = "clipping_demo_tour_seen_v2";
+    if (window.localStorage && localStorage.getItem(STORAGE_KEY) === "1") return;
+
+    var steps = [
+      {
+        anchor: "#sessionBar",
+        title: "Você está em modo demo",
+        body: "Esta é a visão do <strong>Flávio Valle</strong> (cliente real, vereador do RJ). Aqui você navega exatamente como ele veria — só leitura, suas alterações não persistem.",
+      },
+      {
+        anchor: "#targetFilters",
+        title: "Nomes acompanhados",
+        body: "Cada cliente tem os seus próprios nomes pra monitorar. Aqui você liga/desliga quais aparecem nas notícias abaixo.",
+      },
+      {
+        anchor: ".runner-shell",
+        title: "Coleta e gerenciamento",
+        body: "Clientes reais usam essa área pra disparar novas coletas, adicionar nomes e ver progresso. No modo demo está desabilitado.",
+      },
+      {
+        anchor: "#flatStack,#storyStack,#loadingState",
+        title: "As notícias",
+        body: "Cada bloco é uma história — agrupa matérias do mesmo evento. Toque pra ver todas as fontes que cobriram aquele fato.",
+      },
+      {
+        anchor: "#sessionBar",
+        title: "Quer ter a sua?",
+        body: 'Cada cliente tem visão isolada com nomes próprios. Curtiu? <a href="https://www.linkedin.com/in/otavio-bopp" target="_blank" rel="noopener noreferrer">Falar comigo no LinkedIn →</a>',
+        isFinal: true,
+      },
+    ];
+
+    var currentIdx = 0;
+    var overlay = null;
+    var card = null;
+    var dim = null;
+
+    function buildOverlay() {
+      overlay = document.createElement("div");
+      overlay.className = "demo-tour-overlay";
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-label", "Tour do modo demo");
+
+      dim = document.createElement("div");
+      dim.className = "demo-tour-dim";
+      overlay.appendChild(dim);
+
+      card = document.createElement("div");
+      card.className = "demo-tour-card";
+      overlay.appendChild(card);
+
+      document.body.appendChild(overlay);
+    }
+
+    function findAnchor(selectors) {
+      var list = selectors.split(",");
+      for (var i = 0; i < list.length; i++) {
+        var el = document.querySelector(list[i].trim());
+        if (el && el.offsetParent !== null) return el;
+      }
+      return null;
+    }
+
+    function positionCard(anchorEl) {
+      if (!anchorEl || !card) return;
+      var rect = anchorEl.getBoundingClientRect();
+      var cardH = card.offsetHeight;
+      var cardW = card.offsetWidth;
+      var spaceBelow = window.innerHeight - rect.bottom;
+      var top, left;
+      if (spaceBelow > cardH + 30 || rect.top < cardH + 30) {
+        top = rect.bottom + window.scrollY + 12;
+      } else {
+        top = rect.top + window.scrollY - cardH - 12;
+      }
+      left = rect.left + window.scrollX + rect.width / 2 - cardW / 2;
+      left = Math.max(12, Math.min(left, window.innerWidth - cardW - 12));
+      card.style.top = top + "px";
+      card.style.left = left + "px";
+    }
+
+    function highlightAnchor(anchorEl) {
+      document.querySelectorAll(".demo-tour-highlight").forEach(function (el) {
+        el.classList.remove("demo-tour-highlight");
+      });
+      if (anchorEl) {
+        anchorEl.classList.add("demo-tour-highlight");
+        anchorEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+
+    function renderStep(idx) {
+      var step = steps[idx];
+      if (!step) return finish();
+      var anchor = findAnchor(step.anchor);
+      // If anchor missing (UI not loaded yet, or hidden), skip to next.
+      if (!anchor) {
+        if (idx < steps.length - 1) {
+          currentIdx = idx + 1;
+          return renderStep(currentIdx);
+        }
+        return finish();
+      }
+      highlightAnchor(anchor);
+      card.innerHTML =
+        '<div class="demo-tour-head">' +
+          '<span class="demo-tour-step">Passo ' + (idx + 1) + ' de ' + steps.length + '</span>' +
+          '<button type="button" class="demo-tour-close" aria-label="Pular tour">×</button>' +
+        '</div>' +
+        '<h3 class="demo-tour-title">' + step.title + '</h3>' +
+        '<p class="demo-tour-body">' + step.body + '</p>' +
+        '<div class="demo-tour-actions">' +
+          (idx > 0 ? '<button type="button" class="demo-tour-back">Voltar</button>' : '<span></span>') +
+          '<button type="button" class="demo-tour-next">' + (step.isFinal ? "Entendi" : "Próximo →") + '</button>' +
+        '</div>';
+      // Wait DOM update for offsetHeight
+      window.requestAnimationFrame(function () { positionCard(anchor); });
+
+      card.querySelector(".demo-tour-close").addEventListener("click", finish);
+      card.querySelector(".demo-tour-next").addEventListener("click", function () {
+        currentIdx = idx + 1;
+        if (currentIdx >= steps.length) return finish();
+        renderStep(currentIdx);
+      });
+      var backBtn = card.querySelector(".demo-tour-back");
+      if (backBtn) backBtn.addEventListener("click", function () {
+        currentIdx = Math.max(0, idx - 1);
+        renderStep(currentIdx);
+      });
+    }
+
+    function finish() {
+      if (window.localStorage) localStorage.setItem(STORAGE_KEY, "1");
+      document.querySelectorAll(".demo-tour-highlight").forEach(function (el) {
+        el.classList.remove("demo-tour-highlight");
+      });
+      if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }
+
+    function start() {
+      buildOverlay();
+      renderStep(0);
+    }
+
+    // Wait a beat for the dashboard JS to populate the DOM
+    if (document.readyState === "complete") {
+      window.setTimeout(start, 600);
+    } else {
+      window.addEventListener("load", function () { window.setTimeout(start, 600); });
+    }
+
+    window.addEventListener("resize", function () {
+      var step = steps[currentIdx];
+      if (!step || !card) return;
+      var anchor = findAnchor(step.anchor);
+      if (anchor) positionCard(anchor);
+    });
+  })();
+
   (function setupSimulateDropdown() {
     var box = document.getElementById("simulateBox");
     var banner = document.getElementById("simulateBanner");
