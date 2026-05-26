@@ -1564,15 +1564,22 @@ def login_html() -> str:
     )
 
     profiles = viewer_profiles()
-    public_labels = sorted(
-        [str(p.get("label") or k) for k, p in profiles.items() if not k.startswith("demo")],
+    all_labels = sorted(
+        [str(p.get("label") or k) for k, p in profiles.items()],
         key=str.lower,
     )
-    clients_block = (
-        f'<p class="login-clients">Atendendo: {" · ".join(escape(label) for label in public_labels)}</p>'
-        if public_labels
-        else ""
-    )
+    if all_labels:
+        items = "\n        ".join(f"<li>{escape(label)}</li>" for label in all_labels)
+        clients_block = (
+            f'<details class="login-clients">\n'
+            f'      <summary>Clientes atendidos ({len(all_labels)})</summary>\n'
+            f'      <ul>\n'
+            f'        {items}\n'
+            f'      </ul>\n'
+            f'    </details>'
+        )
+    else:
+        clients_block = ""
 
     return f"""<!doctype html>
 <html lang="pt-BR">
@@ -1587,6 +1594,19 @@ def login_html() -> str:
       margin: 0.75em 0 0.25em;
       line-height: 1.5;
     }}
+    .login-clients summary {{
+      cursor: pointer;
+      font-weight: 500;
+      padding: 0.2em 0;
+      user-select: none;
+    }}
+    .login-clients summary:hover {{ color: #0a66c2; }}
+    .login-clients ul {{
+      margin: 0.4em 0 0.4em 0.5em;
+      padding-left: 1.2em;
+      list-style: disc;
+    }}
+    .login-clients li {{ margin: 0.15em 0; }}
     .login-cta {{
       margin: 0.5em 0 1.25em;
       font-size: 0.95em;
