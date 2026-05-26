@@ -1396,7 +1396,12 @@
     // phase 2 (2026-05-20): targets created go into their target_keys,
     // archive/promote/demote constrained by backend _validate_target_scope.
     if (isRealAdmin()) return false;
+    if (isDemoSession()) return false;  // Demo público é read-only.
     return Boolean(sessionProfile());
+  }
+
+  function isDemoSession() {
+    return sessionProfile() === "demo_cliente";
   }
 
   function viewerCanSeeRioReport() {
@@ -1407,13 +1412,21 @@
     var isAdmin = viewerIsAdmin();
     var simulating = inSimulation();
     var authViewer = isAuthenticatedViewer();
+    var isDemo = isDemoSession();
     // Phase 2 (2026-05-20): mutation capability extends to authenticated
     // viewers — they manage targets within their own target_keys scope.
     // viewer-readonly body class is dropped for anyone with mutation rights;
     // backend _validate_target_scope enforces per-target authorisation.
-    var canMutate = isAdmin || simulating || authViewer;
+    // Demo público (2026-05-22): forçado a read-only mesmo sendo viewer.
+    var canMutate = (isAdmin || simulating || authViewer) && !isDemo;
     editorEnabled = canMutate && !(payload && payload.meta && payload.meta.editorEnabled === false);
     document.body.classList.toggle("viewer-readonly", !canMutate);
+    document.body.classList.toggle("is-demo", isDemo);
+    if (isDemo) {
+      // Trocar senha não faz sentido pro demo (back rejeita 403); esconder UI.
+      var changePwdBtn = document.getElementById("changePasswordButton");
+      if (changePwdBtn) changePwdBtn.hidden = true;
+    }
     runTabs.forEach(function (button) {
       var tab = button.dataset.runTab || "";
       button.hidden = !canMutate && tab !== "base";

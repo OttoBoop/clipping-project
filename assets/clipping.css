@@ -2310,3 +2310,30 @@ details[open] > summary .story-toggle {
   border-radius: 6px;
   transition: outline 0.2s;
 }
+
+/* Demo session — badge visual + read-only enforcement (Fase 4) */
+body.is-demo #sessionProfileLabel::after {
+  content: " · modo demo";
+  color: #d97706;
+  font-weight: 600;
+  font-size: 0.85em;
+  margin-left: 4px;
+}
+body.is-demo .runner-tab[data-run-tab="run"],
+body.is-demo .runner-tab[data-run-tab="progress"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+body.is-demo .runner-tab[data-run-tab="run"]:hover::after,
+body.is-demo .runner-tab[data-run-tab="progress"]:hover::after {
+  content: "Modo demo: só leitura";
+  position: absolute;
+  background: #0f172a;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  margin-left: 8px;
+  z-index: 100;
+}
