@@ -1568,28 +1568,29 @@ def login_html() -> str:
     configured = login_configured()
     disabled = "" if configured else "disabled"
     status = (
-        "Entre para acessar sua visao do clipping."
+        "Escolha quem você é e entre."
         if configured
         else "Acesso por senha ainda nao configurado no Render."
     )
 
+    # Build profile list: Demo first (default), others alphabetical.
     profiles = viewer_profiles()
-    all_labels = sorted(
-        [str(p.get("label") or k) for k, p in profiles.items()],
+    demo_key = "demo_cliente"
+    demo_label = "Cliente Demo"
+    if demo_key in profiles:
+        demo_label = str(profiles[demo_key].get("label") or demo_label)
+    other_labels = sorted(
+        [str(p.get("label") or k) for k, p in profiles.items() if k != demo_key],
         key=str.lower,
     )
-    if all_labels:
-        items = "\n        ".join(f"<li>{escape(label)}</li>" for label in all_labels)
-        clients_block = (
-            f'<details class="login-clients">\n'
-            f'      <summary>Clientes atendidos ({len(all_labels)})</summary>\n'
-            f'      <ul>\n'
-            f'        {items}\n'
-            f'      </ul>\n'
-            f'    </details>'
+
+    options_html = (
+        f'<option value="demo" selected>{escape(demo_label)} (acesso aberto)</option>\n'
+        + "\n".join(
+            f'        <option value="auth">{escape(label)}</option>'
+            for label in other_labels
         )
-    else:
-        clients_block = ""
+    )
 
     return f"""<!doctype html>
 <html lang="pt-BR">
@@ -1598,27 +1599,27 @@ def login_html() -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Acessar clipping</title>
   <style>{ADMIN_CSS}
-    .login-clients {{
-      color: var(--muted, #6b6b6b);
-      font-size: 0.92em;
-      margin: 0.75em 0 0.25em;
-      line-height: 1.5;
+    .login-card label {{ display: block; margin: 0.85em 0 0.25em; }}
+    .login-card select,
+    .login-card input[type="password"] {{
+      width: 100%;
+      padding: 0.55em 0.7em;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      background: #fff;
     }}
-    .login-clients summary {{
-      cursor: pointer;
-      font-weight: 500;
-      padding: 0.2em 0;
-      user-select: none;
+    .login-card select:focus,
+    .login-card input[type="password"]:focus {{
+      outline: none;
+      border-color: #0a66c2;
+      box-shadow: 0 0 0 2px rgba(10,102,194,0.15);
     }}
-    .login-clients summary:hover {{ color: #0a66c2; }}
-    .login-clients ul {{
-      margin: 0.4em 0 0.4em 0.5em;
-      padding-left: 1.2em;
-      list-style: disc;
-    }}
-    .login-clients li {{ margin: 0.15em 0; }}
+    .login-passwordRow[hidden] {{ display: none !important; }}
+
     .login-cta {{
-      margin: 0.5em 0 1.25em;
+      margin: 1.25em 0 0.5em;
       font-size: 0.95em;
     }}
     .login-cta a {{
@@ -1647,16 +1648,24 @@ def login_html() -> str:
       <p class="eyebrow">Clipping institucional</p>
       <h1>Acessar clipping</h1>
       <p>{escape(status)}</p>
-      {clients_block}
+
+      <label for="profileSelect">Você é:</label>
+      <select id="profileSelect" {disabled}>
+        {options_html}
+      </select>
+
+      <div class="login-passwordRow" id="passwordRow" hidden>
+        <label for="password">Senha</label>
+        <input id="password" type="password" autocomplete="current-password" {disabled}>
+      </div>
+
+      <button id="loginButton" type="button" {disabled} style="margin-top:1em;">Entrar</button>
+      <p id="loginMessage" class="muted"></p>
+
       <p class="login-cta">
         Quer ser cliente?
         <a href="https://www.linkedin.com/in/otavio-bopp" target="_blank" rel="noopener noreferrer">Falar comigo</a>
       </p>
-      <label>Senha de acesso
-        <input id="password" type="password" autocomplete="current-password" {disabled}>
-      </label>
-      <button id="loginButton" type="button" {disabled}>Entrar</button>
-      <p id="loginMessage" class="muted"></p>
     </section>
   </main>
   <footer class="login-footer">
@@ -1664,17 +1673,42 @@ def login_html() -> str:
     <a href="https://www.linkedin.com/in/otavio-bopp" target="_blank" rel="noopener noreferrer">Otávio Bopp</a>
   </footer>
   <script>
+    const sel = document.getElementById('profileSelect');
+    const row = document.getElementById('passwordRow');
+    const pw  = document.getElementById('password');
     const btn = document.getElementById('loginButton');
-    if (btn) btn.addEventListener('click', async () => {{
-      const password = document.getElementById('password').value;
-      const res = await fetch('/api/login', {{
-        method: 'POST',
-        headers: {{'Content-Type': 'application/json'}},
-        body: JSON.stringify({{password}})
-      }});
-      if (res.ok) window.location.reload();
-      else document.getElementById('loginMessage').textContent = 'Senha incorreta ou acesso ainda nao configurado.';
-    }});
+    const msg = document.getElementById('loginMessage');
+
+    function sync() {{
+      const needsPwd = sel && sel.value === 'auth';
+      if (row) row.hidden = !needsPwd;
+      if (!needsPwd && pw) pw.value = '';
+      if (msg) msg.textContent = '';
+      if (needsPwd && pw) setTimeout(() => pw.focus(), 30);
+    }}
+    if (sel) sel.addEventListener('change', sync);
+    sync();
+
+    async function submitLogin() {{
+      const isDemo = sel && sel.value === 'demo';
+      const password = isDemo ? 'demo-cliente' : (pw ? pw.value : '');
+      msg.textContent = isDemo ? 'Entrando como demo…' : 'Verificando…';
+      try {{
+        const res = await fetch('/api/login', {{
+          method: 'POST',
+          headers: {{'Content-Type': 'application/json'}},
+          body: JSON.stringify({{password}})
+        }});
+        if (res.ok) {{ window.location.reload(); return; }}
+        msg.textContent = isDemo
+          ? 'Modo demo ainda não está disponível. Tente outro cliente ou fale comigo.'
+          : 'Senha incorreta.';
+      }} catch (err) {{
+        msg.textContent = 'Erro de conexão. Tente de novo.';
+      }}
+    }}
+    if (btn) btn.addEventListener('click', submitLogin);
+    if (pw) pw.addEventListener('keydown', (e) => {{ if (e.key === 'Enter') submitLogin(); }});
   </script>
 </body>
 </html>"""
