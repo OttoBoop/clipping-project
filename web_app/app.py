@@ -14,6 +14,7 @@ from .auth import (
     COOKIE_NAME,
     auth_configured,
     csrf_token,
+    is_demo_session,
     login_configured,
     login_identity,
     make_session,
@@ -21,6 +22,7 @@ from .auth import (
     public_empty_demo_configured,
     require_admin,
     require_csrf,
+    require_not_demo,
     require_viewer,
     verify_session,
     viewer_auth_configured,
@@ -568,6 +570,7 @@ def logout(request: Request) -> JSONResponse:
 async def change_password(request: Request) -> JSONResponse:
     session = require_viewer(request)
     require_csrf(request)
+    require_not_demo(session)
     payload = await read_json(request)
     old_password = str(payload.get("old_password") or "")
     new_password = str(payload.get("new_password") or "")
@@ -884,6 +887,7 @@ def _apply_target_assignment(
 async def add_target(request: Request) -> JSONResponse:
     session = require_viewer(request)
     require_csrf(request)
+    require_not_demo(session)
     payload = await read_json(request)
     try:
         result = create_secondary_target(payload)
@@ -901,6 +905,7 @@ async def add_target(request: Request) -> JSONResponse:
 async def add_primary_target(request: Request) -> JSONResponse:
     session = require_viewer(request)
     require_csrf(request)
+    require_not_demo(session)
     payload = await read_json(request)
     try:
         result = create_primary_target(payload)
@@ -918,6 +923,7 @@ async def add_primary_target(request: Request) -> JSONResponse:
 async def update_target(target_key: str, request: Request) -> JSONResponse:
     session = require_viewer(request)
     require_csrf(request)
+    require_not_demo(session)
     _validate_target_scope(session, target_key)
     payload = await read_json(request)
     try:
@@ -935,6 +941,7 @@ async def update_target(target_key: str, request: Request) -> JSONResponse:
 async def promote_target(target_key: str, request: Request) -> JSONResponse:
     session = require_viewer(request)
     require_csrf(request)
+    require_not_demo(session)
     _validate_target_scope(session, target_key)
     try:
         result = promote_target_to_primary(target_key)
@@ -951,6 +958,7 @@ async def promote_target(target_key: str, request: Request) -> JSONResponse:
 async def demote_target(target_key: str, request: Request) -> JSONResponse:
     session = require_viewer(request)
     require_csrf(request)
+    require_not_demo(session)
     _validate_target_scope(session, target_key)
     try:
         result = demote_target_to_secondary(target_key)
@@ -967,6 +975,7 @@ async def demote_target(target_key: str, request: Request) -> JSONResponse:
 async def archive_target(target_key: str, request: Request) -> JSONResponse:
     session = require_viewer(request)
     require_csrf(request)
+    require_not_demo(session)
     _validate_target_scope(session, target_key)
     payload = await read_json(request)
     reason = str(payload.get("reason") or "Arquivado pela equipe.")
@@ -985,6 +994,7 @@ async def archive_target(target_key: str, request: Request) -> JSONResponse:
 def restore_target(target_key: str, request: Request) -> JSONResponse:
     session = require_viewer(request)
     require_csrf(request)
+    require_not_demo(session)
     # Restore is a special case: target is archived (not in any viewer's
     # target_keys), so scope check would always fail for a viewer. Allow
     # any authenticated viewer to restore — the target then enters their

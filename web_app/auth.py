@@ -266,16 +266,59 @@ def _profile_target_keys(profile: str) -> list[str]:
 
 
 def public_empty_demo_passwords() -> dict[str, str]:
+    """Return the public demo profile's login pwd if exposed.
+
+    Two modes, in order of precedence:
+
+    1. **CLIPPING_DEMO_PUBLIC=1 (new, 2026-05-22)** — demo is exposed even
+       with real viewers configured and even with target_keys assigned.
+       Used pra landing page institucional onde o demo é a versão default
+       acessível sem senha digitada (vitrine).
+
+    2. **Legacy "empty demo"** — demo só se torna público se NÃO houver
+       viewers reais (a menos que ..._WITH_REAL_VIEWERS=1 esteja setada)
+       E se demo NÃO tiver target_keys configurado. Mantido pra não
+       quebrar deploys que dependiam desse comportamento.
+
+    Both modes respect CLIPPING_DISABLE_PUBLIC_EMPTY_DEMO=1 (kill switch).
+    """
     if _truthy_env("CLIPPING_DISABLE_PUBLIC_EMPTY_DEMO"):
-        return {}
-    if viewer_passwords() and not _truthy_env("CLIPPING_ENABLE_PUBLIC_EMPTY_DEMO_WITH_REAL_VIEWERS"):
         return {}
     password = _env_value("CLIPPING_EMPTY_DEMO_PASSWORD") or PUBLIC_EMPTY_DEMO_PASSWORD
     if not password:
         return {}
+    if _truthy_env("CLIPPING_DEMO_PUBLIC"):
+        return {PUBLIC_EMPTY_DEMO_PROFILE: password}
+    # Legacy "empty demo" gating
+    if viewer_passwords() and not _truthy_env("CLIPPING_ENABLE_PUBLIC_EMPTY_DEMO_WITH_REAL_VIEWERS"):
+        return {}
     if _profile_target_keys(PUBLIC_EMPTY_DEMO_PROFILE):
         return {}
     return {PUBLIC_EMPTY_DEMO_PROFILE: password}
+
+
+def is_demo_session(session: dict[str, Any] | None) -> bool:
+    """True if session identifies the public demo profile.
+
+    Used pra read-only enforcement nos endpoints de mutação: demo public
+    pode ler tudo, mas não pode adicionar/arquivar/promover/rebaixar nada
+    nem trocar senha — defense in depth (front também esconde).
+    """
+    if not session:
+        return False
+    return str(session.get("profile") or "") == PUBLIC_EMPTY_DEMO_PROFILE
+
+
+def require_not_demo(session: dict[str, Any]) -> None:
+    """Raise 403 if session is the public demo. Use em endpoints de mutação."""
+    if is_demo_session(session):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "demo_readonly",
+                "message": "Modo demo é só leitura. Quer testar mutações? Falar comigo no LinkedIn.",
+            },
+        )
 
 
 def set_admin_password(new_password: str) -> None:
