@@ -1562,13 +1562,54 @@ def login_html() -> str:
         if configured
         else "Acesso por senha ainda nao configurado no Render."
     )
+
+    profiles = viewer_profiles()
+    public_labels = sorted(
+        [str(p.get("label") or k) for k, p in profiles.items() if not k.startswith("demo")],
+        key=str.lower,
+    )
+    clients_block = (
+        f'<p class="login-clients">Atendendo: {" · ".join(escape(label) for label in public_labels)}</p>'
+        if public_labels
+        else ""
+    )
+
     return f"""<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Acessar clipping</title>
-  <style>{ADMIN_CSS}</style>
+  <style>{ADMIN_CSS}
+    .login-clients {{
+      color: var(--muted, #6b6b6b);
+      font-size: 0.92em;
+      margin: 0.75em 0 0.25em;
+      line-height: 1.5;
+    }}
+    .login-cta {{
+      margin: 0.5em 0 1.25em;
+      font-size: 0.95em;
+    }}
+    .login-cta a {{
+      color: #0a66c2;
+      font-weight: 500;
+      text-decoration: none;
+    }}
+    .login-cta a:hover {{ text-decoration: underline; }}
+
+    .login-footer {{
+      text-align: center;
+      margin: 2.5em auto 1em;
+      color: var(--muted, #999);
+      font-size: 0.82em;
+    }}
+    .login-footer a {{
+      color: #0a66c2;
+      text-decoration: none;
+    }}
+    .login-footer a:hover {{ text-decoration: underline; }}
+  </style>
 </head>
 <body class="admin-body">
   <main class="admin-shell login-shell">
@@ -1576,6 +1617,11 @@ def login_html() -> str:
       <p class="eyebrow">Clipping institucional</p>
       <h1>Acessar clipping</h1>
       <p>{escape(status)}</p>
+      {clients_block}
+      <p class="login-cta">
+        Quer ser cliente?
+        <a href="https://www.linkedin.com/in/otavio-bopp" target="_blank" rel="noopener noreferrer">Falar comigo</a>
+      </p>
       <label>Senha de acesso
         <input id="password" type="password" autocomplete="current-password" {disabled}>
       </label>
@@ -1583,6 +1629,10 @@ def login_html() -> str:
       <p id="loginMessage" class="muted"></p>
     </section>
   </main>
+  <footer class="login-footer">
+    Feito por
+    <a href="https://www.linkedin.com/in/otavio-bopp" target="_blank" rel="noopener noreferrer">Otávio Bopp</a>
+  </footer>
   <script>
     const btn = document.getElementById('loginButton');
     if (btn) btn.addEventListener('click', async () => {{
