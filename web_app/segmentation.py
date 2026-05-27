@@ -47,8 +47,8 @@ DEFAULT_VIEWER_PROFILES: dict[str, dict[str, Any]] = {
     },
     "demo_cliente": {
         "label": "Cliente Demo",
-        "target_keys": [],
-        "default_targets": [],
+        "target_keys": ["flavio_valle"],
+        "default_targets": ["flavio_valle"],
     },
 }
 

@@ -1427,21 +1427,40 @@
       var changePwdBtn = document.getElementById("changePasswordButton");
       if (changePwdBtn) changePwdBtn.hidden = true;
     }
-    runTabs.forEach(function (button) {
-      var tab = button.dataset.runTab || "";
-      button.hidden = !canMutate && tab !== "base";
-    });
-    if (!canMutate) {
-      activateRunTab("base");
-      if (addTargetForm && addTargetForm.closest("details")) {
-        addTargetForm.closest("details").hidden = true;
-      }
-      if (manageTargetsBox) manageTargetsBox.hidden = true;
-    } else {
+    if (isDemo) {
+      // Demo público: vitrine completa — mostra TODAS as tabs e seções
+      // (visitante vê a interface real), mas com inputs/buttons disabled
+      // onde mutação seria necessária. Backend protege via require_not_demo.
+      runTabs.forEach(function (button) { button.hidden = false; });
       if (addTargetForm && addTargetForm.closest("details")) {
         addTargetForm.closest("details").hidden = false;
       }
       if (manageTargetsBox) manageTargetsBox.hidden = false;
+      // Disable inputs e buttons de mutação
+      document.querySelectorAll(
+        "#updateRunForm input, #updateRunForm button[type=submit], " +
+        "#addTargetForm input, #addTargetForm button[type=submit]"
+      ).forEach(function (el) {
+        el.disabled = true;
+        el.title = "Modo demo (só leitura)";
+      });
+    } else {
+      runTabs.forEach(function (button) {
+        var tab = button.dataset.runTab || "";
+        button.hidden = !canMutate && tab !== "base";
+      });
+      if (!canMutate) {
+        activateRunTab("base");
+        if (addTargetForm && addTargetForm.closest("details")) {
+          addTargetForm.closest("details").hidden = true;
+        }
+        if (manageTargetsBox) manageTargetsBox.hidden = true;
+      } else {
+        if (addTargetForm && addTargetForm.closest("details")) {
+          addTargetForm.closest("details").hidden = false;
+        }
+        if (manageTargetsBox) manageTargetsBox.hidden = false;
+      }
     }
     // Cross-profile mgmt (Clientes panel) is real-admin-only: hidden for
     // simulation and for authenticated viewers.
