@@ -112,6 +112,29 @@
           </aside>
         </form>
 
+        <details class="add-target-box" id="addPrimaryTargetBox">
+          <summary>Adicionar nome principal</summary>
+          <p class="add-target-note">Adicione um novo nome principal ao clipping. Nomes principais definem o foco do monitoramento.</p>
+          <form id="addPrimaryTargetForm" class="add-target-form" novalidate>
+            <label>Nome para buscar
+              <input type="text" name="display_name" autocomplete="off" required minlength="3" placeholder="Ex.: Maria Silva, Gabinete Alfa">
+            </label>
+            <details class="advanced-search-box">
+              <summary>Ajustar busca</summary>
+              <label>Termos relacionados
+                <textarea name="keywords" rows="2" placeholder="Ex.: Maria S. Silva, M. Silva"></textarea>
+                <span class="field-help">Use quando o nome também aparece com variações, abreviações ou nomes anteriores.</span>
+              </label>
+              <label>Correspondências exatas
+                <textarea name="exact_aliases" rows="2" placeholder='Ex.: "Maria Silva"'></textarea>
+                <span class="field-help">Use aspas para procurar exatamente esse texto e reduzir resultados fora do assunto.</span>
+              </label>
+            </details>
+            <button type="submit" class="secondary-action">Adicionar como principal</button>
+            <span id="addPrimaryTargetMessage" class="form-message" role="status"></span>
+          </form>
+        </details>
+
         <details class="add-target-box">
           <summary>Adicionar nome secundário</summary>
           <p class="add-target-note">Inclua uma pessoa, marca ou termo que também deve entrar no clipping.</p>
