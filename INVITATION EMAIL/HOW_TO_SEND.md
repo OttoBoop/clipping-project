@@ -21,9 +21,10 @@ charlie@example.com
 Blank lines and `#`-comment lines are skipped.
 
 **Where to put it:** by default the script reads `mailer/recipients.txt`.
-For a campaign-specific list, create `campaigns/<slug>/recipients.txt` (or
-`recipients.local.txt` if the addresses are PII that shouldn't be
-committed — `.gitignore` covers `*.local.*`).
+For a campaign-specific list, create `campaigns/<slug>/recipients.local.txt`
+and point the script at it with `--recipients <path>`. Use the `.local.txt`
+suffix for any real addresses (PII) — `.gitignore` covers `*.local.*`, so they
+never get committed. **Do not** copy PII into the tracked `mailer/recipients.txt`.
 
 ---
 
@@ -45,10 +46,14 @@ The first line must start with `Subject:`. The body begins after the first
 blank line.
 
 **Where to put it:** `mailer/invite_template.txt` is the default. For a
-campaign-specific body, create `campaigns/<slug>/invite_body.txt` and
-copy it into `mailer/invite_template.txt` before sending (or symlink it).
+campaign-specific body, create `campaigns/<slug>/invite_body.txt` and point the
+script at it with `--template <path>` (no copying needed).
 
-You can also override just the subject at runtime with `--subject "..."`.
+Runtime overrides:
+- `--subject "..."` — override just the subject line.
+- `--from-name "Equipe ..."` — set the From display name, so recipients see
+  `Equipe ... <account@gmail.com>` instead of a bare address. Recommended for
+  any outreach to people who don't already know the sending address.
 
 ---
 
@@ -81,13 +86,26 @@ link is consumed (one-time), so you'll need a fresh one for the live send.
 
 ### Option A — Local machine
 
+Default files:
 ```bash
 python3 "INVITATION EMAIL/mailer/retrieve_and_send.py" <OTS_URL>
+```
+
+Campaign-specific (PII-safe — recipients stay in a gitignored file):
+```bash
+python3 "INVITATION EMAIL/mailer/retrieve_and_send.py" \
+  --recipients "INVITATION EMAIL/campaigns/<slug>/recipients_batch1.local.txt" \
+  --template   "INVITATION EMAIL/campaigns/<slug>/invite_body.txt" \
+  --from-name  "Equipe ..." \
+  <OTS_URL>
 ```
 
 Requires outbound access to:
 - The OTS API (`https://*.onetimesecret.com`, port 443)
 - Gmail SMTP (`smtp.gmail.com`, port 465)
+
+> The Claude Code sandbox blocks SMTP (465/587 time out) — only HTTP/HTTPS
+> works there. Run this on a machine with open SMTP, or use Option B.
 
 ### Option B — GitHub Actions (for restricted environments)
 

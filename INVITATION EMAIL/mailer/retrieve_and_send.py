@@ -49,6 +49,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from email.message import EmailMessage
+from email.utils import formataddr
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -170,30 +171,30 @@ def parse_credentials(payload: str) -> tuple[str, str]:
     return user, pw
 
 
-def load_recipients() -> list[str]:
-    if not RECIPIENTS_PATH.exists():
-        raise SystemExit(f"recipients.txt not found at {RECIPIENTS_PATH}")
+def load_recipients(path: Path) -> list[str]:
+    if not path.exists():
+        raise SystemExit(f"recipients file not found at {path}")
     out: list[str] = []
-    for raw in RECIPIENTS_PATH.read_text(encoding="utf-8").splitlines():
+    for raw in path.read_text(encoding="utf-8").splitlines():
         s = raw.strip()
         if not s or s.startswith("#"):
             continue
         out.append(s)
     if not out:
-        raise SystemExit("recipients.txt is empty.")
+        raise SystemExit(f"recipients file is empty: {path}")
     return out
 
 
-def load_template() -> tuple[str, str]:
+def load_template(path: Path) -> tuple[str, str]:
     """Return (subject, body). Template format::
 
         Subject: <one line>
         <blank line>
         <body, possibly multi-line>
     """
-    if not TEMPLATE_PATH.exists():
-        raise SystemExit(f"invite_template.txt not found at {TEMPLATE_PATH}")
-    text = TEMPLATE_PATH.read_text(encoding="utf-8")
+    if not path.exists():
+        raise SystemExit(f"template file not found at {path}")
+    text = path.read_text(encoding="utf-8")
     lines = text.splitlines()
     subject = "Invitation"
     body_start = 0
@@ -214,9 +215,10 @@ def send_one(
     to_addr: str,
     subject: str,
     body: str,
+    from_name: str | None = None,
 ) -> None:
     msg = EmailMessage()
-    msg["From"] = from_addr
+    msg["From"] = formataddr((from_name, from_addr)) if from_name else from_addr
     msg["To"] = to_addr
     msg["Subject"] = subject
     msg.set_content(body)
@@ -243,7 +245,21 @@ def main() -> int:
     )
     ap.add_argument(
         "--subject",
-        help="Override the subject from invite_template.txt.",
+        help="Override the subject from the template.",
+    )
+    ap.add_argument(
+        "--recipients",
+        help="Path to the recipients file (default: mailer/recipients.txt). "
+        "Point this at a gitignored *.local.txt to keep PII out of the repo.",
+    )
+    ap.add_argument(
+        "--template",
+        help="Path to the template file (default: mailer/invite_template.txt).",
+    )
+    ap.add_argument(
+        "--from-name",
+        help="Display name for the From header, e.g. 'Equipe Programadores Cariocas'. "
+        "Renders as: From-Name <account@gmail.com>.",
     )
     args = ap.parse_args()
 
@@ -259,12 +275,15 @@ def main() -> int:
     user, password = parse_credentials(payload)
     payload = ""  # drop the reference; the local string above goes out of scope at return
 
-    recipients = load_recipients()
-    subject, body = load_template()
+    recipients_path = Path(args.recipients) if args.recipients else RECIPIENTS_PATH
+    template_path = Path(args.template) if args.template else TEMPLATE_PATH
+    recipients = load_recipients(recipients_path)
+    subject, body = load_template(template_path)
     if args.subject:
         subject = args.subject
 
-    print(f"[plan] from        : {user}")
+    from_display = formataddr((args.from_name, user)) if args.from_name else user
+    print(f"[plan] from        : {from_display}")
     print(f"[plan] subject     : {subject}")
     print(f"[plan] recipients  : {len(recipients)}")
     for r in recipients:
@@ -287,7 +306,7 @@ def main() -> int:
             smtp.login(user, password)
             for addr in recipients:
                 try:
-                    send_one(smtp, user, addr, subject, body)
+                    send_one(smtp, user, addr, subject, body, from_name=args.from_name)
                     successes.append(addr)
                     print(f"[ok]    {addr}")
                 except Exception as e:

@@ -35,12 +35,52 @@ Form link to the alumni.
 | # | Step | Status | Notes |
 |---|------|--------|-------|
 | 0 | Rewrite `INVITATION EMAIL/` as a generic mailing kit; scaffold this campaign subfolder. | **DONE** 2026-05-24 | This plan. See `prompt.md` for the original ask. |
-| 1 | Extract questionnaire structure from the docx (sections, questions, options, branching). | **Pending** | Docx is in session uploads. Output: structured spec (JSON or Markdown) in this subfolder. |
-| 2 | Create Google Form from the questionnaire spec. | **Pending** | Approach: Google Apps Script (`create_form.gs`) that Otavio pastes into script.google.com and runs. No GCP project needed. Fallback: manual form creation using the spec as a guide. |
-| 3 | Extract recipient emails from the xlsx. | **Pending** | Script: `extract_emails.py` in this subfolder. Output: `recipients.local.txt` (gitignored). Also: `stats.md` with aggregate counts (committed). |
-| 4 | Email body from "as meninas". | **Blocked** — waiting on external input. | The email body (what recipients see + the Form link) is not yet written. |
-| 5 | Sender Gmail account + App Password. | **Blocked** — Otavio to provide. | Follow `HOW_TO_AUTH.md`. Hand off via OTS link. |
-| 6 | Dry-run, then live send. | **Blocked** by 3, 4, 5. | Follow `HOW_TO_SEND.md`. Copy campaign recipients + body into `mailer/`, send via OTS URL. |
+| 1 | Extract questionnaire structure from the docx (sections, questions, options, branching). | **DONE** | Encoded directly into `create_form.gs`. |
+| 2 | Create Google Form from the questionnaire spec. | **DONE** 2026-05-29 | Otávio pasted `create_form.gs` into script.google.com and ran it. Live link recorded in `form.md`. |
+| 3 | Extract recipient emails from the xlsx. | **DONE** 2026-05-25 | `extract_emails.py` → 798 unique (112 Generation + 686 Senac, 0 overlap), all valid-format, deduped. PII in gitignored `recipients_all.local.txt`; aggregates in `stats.md`. |
+| 4 | Email body + Form link. | **DONE** 2026-05-29 | Body provided by Otávio; written verbatim to `invite_body.txt` with the Form link substituted. Subject: "Questionário Programadores Cariocas". |
+| 5 | Sender Gmail account + App Password. | **Pending** — Otávio to provide. | Personal Gmail. Hand off creds via a fresh OTS link per send (OTS burns on read). Follow `HOW_TO_AUTH.md`. |
+| 6 | Dry-run, then live send. | **In progress** — see Send plan below. | Sandbox CANNOT send (SMTP 465/587 firewalled; only HTTP/HTTPS via proxy). Send runs on GitHub Actions or Otávio's machine. |
+
+## Send plan (decided with Otávio 2026-05-29)
+
+- **Subject:** `Questionário Programadores Cariocas`
+- **From display name:** `Equipe Programadores Cariocas` (matches the body
+  signature; a bare personal-Gmail From reads as spam to alumni).
+- **Sender:** personal Gmail (≤500 recipients/day).
+- **Volume split:** 798 total → **400 today (batch 1) + 398 tomorrow (batch 2)**,
+  to stay under the daily cap. Batches are in gitignored
+  `recipients_batch1.local.txt` (400) and `recipients_batch2.local.txt` (398);
+  their union is exactly `recipients_all.local.txt` (verified lossless).
+- **Pilot first:** send to the 6 test addresses in `mailer/recipients.txt`,
+  verify rendering + Form link + From name, THEN run the batches.
+
+### Sequence (each live send needs its OWN fresh OTS link — OTS burns on read)
+1. Pilot → 6 test addresses.
+2. Batch 1 → 400 (day 1).
+3. Batch 2 → 398 (day 2).
+
+Command shape (run where SMTP is open — GitHub Actions or Otávio's machine):
+```
+python3 "INVITATION EMAIL/mailer/retrieve_and_send.py" \
+  --recipients "<batch>.local.txt" \
+  --template   "INVITATION EMAIL/campaigns/programadores-cariocas-survey/invite_body.txt" \
+  --from-name  "Equipe Programadores Cariocas" \
+  <FRESH_OTS_URL>
+```
+
+### Hard constraint: the sandbox cannot send mail
+SMTP egress (smtp.gmail.com:465 and :587) **times out** in the Claude sandbox —
+only HTTP/HTTPS works (via the egress proxy). So `retrieve_and_send.py` must run
+on a host with open SMTP. Two options:
+- **GitHub Actions** (`.github/workflows/send-invites.yml`): hands-off, but the
+  workflow reads the *committed* `mailer/recipients.txt`. Real recipients are PII
+  and must NOT be committed — so the workflow needs a PII-safe recipient source
+  (e.g. a repo **Actions secret** the workflow writes to a temp file, or a second
+  OTS link the script fetches). The pilot's 6 test addresses are already committed
+  and non-sensitive, so the pilot works as-is.
+- **Otávio's machine**: simplest + safest for PII (the `.local.txt` batches never
+  leave his disk). Run the command above three times across two days.
 
 ## Privacy decisions
 
@@ -52,8 +92,12 @@ Form link to the alumni.
 
 ## Open questions
 
-- Which Gmail account will send the survey? (Prefeitura/SMDE address, or
-  Otavio's personal?)
-- Who are "as meninas" writing the email body? When is it expected?
-- Should the Form collect responses anonymously, or tied to the email
-  address?
+- ~~Which Gmail account will send the survey?~~ **Resolved:** personal Gmail.
+- ~~Who writes the email body? When?~~ **Resolved:** provided by Otávio
+  2026-05-29; in `invite_body.txt`.
+- ~~Form anonymous or tied to email?~~ **Resolved:** form already created by
+  Otávio; whatever `create_form.gs` configured stands.
+- **OPEN — blocking the send:** Otávio's message referenced an OTS login link
+  but none was included. Need a fresh OTS URL (creds) before any live send.
+- **OPEN — send host:** GitHub Actions (needs PII-safe recipient delivery for
+  the real batches) vs Otávio running locally. Awaiting Otávio's choice.
