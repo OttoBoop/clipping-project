@@ -113,18 +113,59 @@ If your local machine can't reach those hosts (e.g. a sandboxed
 environment), the GitHub Actions workflow can do the send on a hosted
 runner.
 
+**Limitation:** the runner only sees files that are *committed* to the
+repo. A campaign that uses gitignored `*.local.txt` recipients (PII)
+cannot run on CI — use Option A for those. The pilot recipients in
+`mailer/recipients.txt` are committed and CI-safe.
+
 **Manual dispatch:**
 1. Go to the repo's **Actions** tab → **Send Invites** workflow.
 2. Click **Run workflow**.
 3. Paste the OTS URL into the `secret_url` input.
-4. Optionally check **Dry-run** or fill in a **Subject override**.
+4. Optionally fill in:
+   - `template_path` — e.g. `INVITATION EMAIL/campaigns/<slug>/invite_body.txt`
+   - `recipients_path` — e.g. `INVITATION EMAIL/campaigns/<slug>/recipients.txt`
+     (must be committed; gitignored files are not in the runner's checkout)
+   - `from_name` — e.g. `Equipe Programadores Cariocas`
+   - `subject_override` — overrides the subject line from the template
+   - `dry_run` — parse and plan, but don't contact SMTP
 5. Click **Run workflow**.
 
 **Push-trigger dispatch:**
-1. Write the OTS URL into `INVITATION EMAIL/mailer/pending-send.url`.
-2. Commit and push. The workflow triggers automatically.
-3. After the run, the workflow deletes the trigger file and commits the
-   run status to `mailer/last-run-status.md`.
+
+Write a `key=value` file at `INVITATION EMAIL/mailer/pending-send.url`,
+commit, and push. The workflow triggers on push to that path.
+
+Recognized keys (`url` is the only required one):
+```
+url=https://us.onetimesecret.com/secret/<KEY>
+template=INVITATION EMAIL/campaigns/<slug>/invite_body.txt
+recipients=INVITATION EMAIL/campaigns/<slug>/recipients.txt
+from_name=Equipe <Sender Name>
+subject=<override subject>
+```
+
+The legacy format (file contains only the bare URL) still works — the
+workflow extracts the URL by regex.
+
+After the run, the workflow deletes the trigger file and commits the
+run output to `mailer/last-run-status.md`.
+
+**Shortcut — `stage_send.sh`:**
+
+The helper `mailer/stage_send.sh` writes the trigger for you:
+
+```bash
+# Pilot (writes pending-send.url with survey body + from-name pre-filled):
+"INVITATION EMAIL/mailer/stage_send.sh" pilot https://us.onetimesecret.com/secret/<KEY>
+
+# Batches (prints the LOCAL command — CI can't see the gitignored PII):
+"INVITATION EMAIL/mailer/stage_send.sh" batch1 https://us.onetimesecret.com/secret/<KEY>
+"INVITATION EMAIL/mailer/stage_send.sh" batch2 https://us.onetimesecret.com/secret/<KEY>
+```
+
+See also `mailer/pending-send.url.example` for the annotated trigger
+format.
 
 ---
 

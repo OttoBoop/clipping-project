@@ -1,0 +1,31 @@
+# Trigger file for the Send Invites workflow.
+#
+# To fire a send via GitHub Actions:
+#   1. Copy this file to `pending-send.url` (same directory).
+#   2. Replace the URL placeholder below with a fresh one-time-secret URL
+#      whose payload contains:
+#         GMAIL_USER=<sender>@gmail.com
+#         GMAIL_APP_PASSWORD=<16-char app password>
+#      (See INVITATION EMAIL/HOW_TO_AUTH.md for how to generate that.)
+#   3. Edit the other keys to point at the right campaign body / recipients
+#      / from-name. The values below are pre-filled for the Programadores
+#      Cariocas survey PILOT (6 test addresses already in mailer/recipients.txt).
+#   4. `git add -- 'INVITATION EMAIL/mailer/pending-send.url'`
+#      `git commit -m 'send-invites: trigger <campaign>'`
+#      `git push`
+#   5. The workflow self-triggers on push to `pending-send.url`. After it
+#      runs, the trigger file is auto-deleted and the result is committed
+#      to `mailer/last-run-status.md`.
+#
+# Recognized keys (all key=value, one per line, # for comments):
+#   url=        REQUIRED. The one-time-secret URL with the Gmail creds.
+#   template=   Path to the email body (defaults to mailer/invite_template.txt).
+#   recipients= Path to the recipients file (defaults to mailer/recipients.txt).
+#               MUST be a path in the repo — gitignored files (e.g. *.local.txt)
+#               are NOT in the runner's checkout.
+#   from_name=  From display name, e.g. "Equipe Programadores Cariocas".
+#   subject=    Override the subject line from the template.
+
+url=https://us.onetimesecret.com/secret/REPLACE_WITH_FRESH_URL
+template=INVITATION EMAIL/campaigns/programadores-cariocas-survey/invite_body.txt
+from_name=Equipe Programadores Cariocas

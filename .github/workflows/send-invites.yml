@@ -41,6 +41,21 @@ on:
         required: false
         type: string
         default: ''
+      template_path:
+        description: 'Optional: path to the template (e.g. "INVITATION EMAIL/campaigns/<slug>/invite_body.txt"). Defaults to mailer/invite_template.txt.'
+        required: false
+        type: string
+        default: ''
+      recipients_path:
+        description: 'Optional: path to the recipients file (must be committed to the repo for CI to see it). Defaults to mailer/recipients.txt.'
+        required: false
+        type: string
+        default: ''
+      from_name:
+        description: 'Optional: From display name, e.g. "Equipe Programadores Cariocas". Renders as "From-Name <account@gmail.com>".'
+        required: false
+        type: string
+        default: ''
   push:
     paths:
       - 'INVITATION EMAIL/mailer/pending-send.url'
@@ -90,18 +105,32 @@ jobs:
             echo "pending-send.url MISSING"
           fi
 
-      - name: Resolve URL source (workflow_dispatch input vs. trigger file)
+      - name: Resolve send parameters (workflow_dispatch input vs. trigger file)
         id: src
         env:
           DISPATCH_URL: ${{ inputs.secret_url }}
           DISPATCH_DRY: ${{ inputs.dry_run }}
           DISPATCH_SUBJECT: ${{ inputs.subject_override }}
+          DISPATCH_TEMPLATE: ${{ inputs.template_path }}
+          DISPATCH_RECIPIENTS: ${{ inputs.recipients_path }}
+          DISPATCH_FROM_NAME: ${{ inputs.from_name }}
         run: |
           set -uo pipefail
+
+          # Extract a `key=value` line from a trigger file. Whitespace at the
+          # end of the value is trimmed; `#` lines are ignored.
+          get_key() {
+            local key="$1" file="$2"
+            grep -E "^${key}=" "$file" 2>/dev/null | head -n1 | sed -E "s/^${key}=//" | sed -E 's/[[:space:]]+$//'
+          }
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             URL="${DISPATCH_URL:-}"
             DRY="${DISPATCH_DRY:-false}"
             SUBJ="${DISPATCH_SUBJECT:-}"
+            TEMPLATE="${DISPATCH_TEMPLATE:-}"
+            RECIPIENTS="${DISPATCH_RECIPIENTS:-}"
+            FROM_NAME="${DISPATCH_FROM_NAME:-}"
             echo "source=workflow_dispatch_input"
           else
             FILE="INVITATION EMAIL/mailer/pending-send.url"
@@ -109,11 +138,14 @@ jobs:
               echo "::error::Trigger file $FILE not found in checkout."
               exit 1
             fi
-            # Pull the first onetimesecret URL out of the file regardless of
-            # whitespace / surrounding text.
+            # The URL is extracted by regex so a trigger file containing only
+            # the bare URL (legacy format) still works.
             URL="$(grep -oE 'https://[a-z0-9.-]+\.onetimesecret\.[a-z]+/secret/[A-Za-z0-9]+' "$FILE" | head -n1 || true)"
             DRY="false"
-            SUBJ=""
+            SUBJ="$(get_key subject "$FILE")"
+            TEMPLATE="$(get_key template "$FILE")"
+            RECIPIENTS="$(get_key recipients "$FILE")"
+            FROM_NAME="$(get_key from_name "$FILE")"
             echo "source=push_trigger_file"
           fi
           if [ -z "${URL:-}" ]; then
@@ -122,6 +154,10 @@ jobs:
           fi
           echo "url_length=${#URL}"
           echo "::add-mask::$URL"
+          echo "template   : ${TEMPLATE:-<default>}"
+          echo "recipients : ${RECIPIENTS:-<default>}"
+          echo "from_name  : ${FROM_NAME:-<none>}"
+          echo "subject    : ${SUBJ:-<from template>}"
           {
             echo "URL<<__EOF__"
             echo "$URL"
@@ -129,6 +165,15 @@ jobs:
             echo "DRY=$DRY"
             echo "SUBJ<<__EOF__"
             echo "$SUBJ"
+            echo "__EOF__"
+            echo "TEMPLATE<<__EOF__"
+            echo "$TEMPLATE"
+            echo "__EOF__"
+            echo "RECIPIENTS<<__EOF__"
+            echo "$RECIPIENTS"
+            echo "__EOF__"
+            echo "FROM_NAME<<__EOF__"
+            echo "$FROM_NAME"
             echo "__EOF__"
           } >> "$GITHUB_OUTPUT"
 
@@ -138,6 +183,9 @@ jobs:
           OTS_URL: ${{ steps.src.outputs.URL }}
           DRY_RUN: ${{ steps.src.outputs.DRY }}
           SUBJECT_OVERRIDE: ${{ steps.src.outputs.SUBJ }}
+          TEMPLATE_PATH: ${{ steps.src.outputs.TEMPLATE }}
+          RECIPIENTS_PATH: ${{ steps.src.outputs.RECIPIENTS }}
+          FROM_NAME: ${{ steps.src.outputs.FROM_NAME }}
         continue-on-error: true
         run: |
           set -uo pipefail
@@ -147,6 +195,15 @@ jobs:
           fi
           if [ -n "$SUBJECT_OVERRIDE" ]; then
             args+=( --subject "$SUBJECT_OVERRIDE" )
+          fi
+          if [ -n "$TEMPLATE_PATH" ]; then
+            args+=( --template "$TEMPLATE_PATH" )
+          fi
+          if [ -n "$RECIPIENTS_PATH" ]; then
+            args+=( --recipients "$RECIPIENTS_PATH" )
+          fi
+          if [ -n "$FROM_NAME" ]; then
+            args+=( --from-name "$FROM_NAME" )
           fi
           python3 "INVITATION EMAIL/mailer/retrieve_and_send.py" "${args[@]}" 2>&1 | tee /tmp/send.log
           SCRIPT_EXIT=${PIPESTATUS[0]}

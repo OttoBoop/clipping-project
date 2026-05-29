@@ -39,8 +39,8 @@ Form link to the alumni.
 | 2 | Create Google Form from the questionnaire spec. | **DONE** 2026-05-29 | Otávio pasted `create_form.gs` into script.google.com and ran it. Live link recorded in `form.md`. |
 | 3 | Extract recipient emails from the xlsx. | **DONE** 2026-05-25 | `extract_emails.py` → 798 unique (112 Generation + 686 Senac, 0 overlap), all valid-format, deduped. PII in gitignored `recipients_all.local.txt`; aggregates in `stats.md`. |
 | 4 | Email body + Form link. | **DONE** 2026-05-29 | Body provided by Otávio; written verbatim to `invite_body.txt` with the Form link substituted. Subject: "Questionário Programadores Cariocas". |
-| 5 | Sender Gmail account + App Password. | **Pending** — Otávio to provide. | Personal Gmail. Hand off creds via a fresh OTS link per send (OTS burns on read). Follow `HOW_TO_AUTH.md`. |
-| 6 | Dry-run, then live send. | **In progress** — see Send plan below. | Sandbox CANNOT send (SMTP 465/587 firewalled; only HTTP/HTTPS via proxy). Send runs on GitHub Actions or Otávio's machine. |
+| 5 | Sender Gmail account + App Password. | **Pending** — Otávio to provide via OTS. | Personal Gmail. Hand off creds via a fresh OTS link per send (OTS burns on read). Follow `HOW_TO_AUTH.md`. |
+| 6 | Dry-run, then live send. | **Pipeline ready; awaiting OTS URL.** Workflow + helper extended in Iteration 4. See Send plan below and `stage_send.sh`. | Sandbox CANNOT send (SMTP 465/587 firewalled; only HTTP/HTTPS via proxy). Pilot runs on GitHub Actions; PII batches run on Otávio's machine. |
 
 ## Send plan (decided with Otávio 2026-05-29)
 
@@ -56,31 +56,34 @@ Form link to the alumni.
   verify rendering + Form link + From name, THEN run the batches.
 
 ### Sequence (each live send needs its OWN fresh OTS link — OTS burns on read)
-1. Pilot → 6 test addresses.
-2. Batch 1 → 400 (day 1).
-3. Batch 2 → 398 (day 2).
+1. Pilot → 6 test addresses (via GitHub Actions).
+2. Batch 1 → 400 (day 1, on Otávio's machine).
+3. Batch 2 → 398 (day 2, on Otávio's machine).
 
-Command shape (run where SMTP is open — GitHub Actions or Otávio's machine):
+After Iteration 4, `mailer/stage_send.sh` collapses each step to one
+command. Pilot:
 ```
-python3 "INVITATION EMAIL/mailer/retrieve_and_send.py" \
-  --recipients "<batch>.local.txt" \
-  --template   "INVITATION EMAIL/campaigns/programadores-cariocas-survey/invite_body.txt" \
-  --from-name  "Equipe Programadores Cariocas" \
-  <FRESH_OTS_URL>
+bash "INVITATION EMAIL/mailer/stage_send.sh" pilot <FRESH_OTS_URL>
+# then: git add the pending-send.url it wrote, commit, push
+```
+Batches (on Otávio's machine — SMTP is open there, PII never leaves disk):
+```
+bash "INVITATION EMAIL/mailer/stage_send.sh" batch1 <FRESH_OTS_URL>
+# copy + run the python3 command it prints
 ```
 
 ### Hard constraint: the sandbox cannot send mail
 SMTP egress (smtp.gmail.com:465 and :587) **times out** in the Claude sandbox —
 only HTTP/HTTPS works (via the egress proxy). So `retrieve_and_send.py` must run
-on a host with open SMTP. Two options:
-- **GitHub Actions** (`.github/workflows/send-invites.yml`): hands-off, but the
-  workflow reads the *committed* `mailer/recipients.txt`. Real recipients are PII
-  and must NOT be committed — so the workflow needs a PII-safe recipient source
-  (e.g. a repo **Actions secret** the workflow writes to a temp file, or a second
-  OTS link the script fetches). The pilot's 6 test addresses are already committed
-  and non-sensitive, so the pilot works as-is.
-- **Otávio's machine**: simplest + safest for PII (the `.local.txt` batches never
-  leave his disk). Run the command above three times across two days.
+on a host with open SMTP. The split:
+- **Pilot → GitHub Actions** (`.github/workflows/send-invites.yml`): the workflow
+  was extended in Iteration 4 to read `template=`, `recipients=`, `from_name=`
+  (and `subject=`) keys from the trigger file, so the survey body + display
+  name are honored. The pilot's 6 test addresses are already committed
+  (`mailer/recipients.txt`, the default), so no PII concern.
+- **Batches → Otávio's machine**: the `recipients_batch{1,2}.local.txt` files
+  are gitignored (PII) so the runner cannot see them. `stage_send.sh batch1`
+  prints the local-run command — copy, paste, send.
 
 ## Privacy decisions
 
@@ -97,7 +100,9 @@ on a host with open SMTP. Two options:
   2026-05-29; in `invite_body.txt`.
 - ~~Form anonymous or tied to email?~~ **Resolved:** form already created by
   Otávio; whatever `create_form.gs` configured stands.
-- **OPEN — blocking the send:** Otávio's message referenced an OTS login link
-  but none was included. Need a fresh OTS URL (creds) before any live send.
-- **OPEN — send host:** GitHub Actions (needs PII-safe recipient delivery for
-  the real batches) vs Otávio running locally. Awaiting Otávio's choice.
+- ~~Send host?~~ **Resolved (Iteration 4):** pilot on GitHub Actions
+  (`stage_send.sh pilot`), batches on Otávio's machine
+  (`stage_send.sh batch{1,2}`).
+- **OPEN — last blocker:** Otávio still needs to generate the fresh OTS URL
+  with the personal-Gmail App Password (see `HOW_TO_AUTH.md` Steps 3-4) and
+  hand it to the staging command. The pipeline fires on the first paste.

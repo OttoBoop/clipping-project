@@ -51,3 +51,53 @@ scaffold this campaign subfolder.
 
 **Outcome:** Step 4 done; send fully staged. **Blocked on:** (1) a fresh OTS
 creds link from Otávio, (2) choice of send host (Actions vs local).
+
+## Iteration 4 (2026-05-29)
+
+**Goal:** Get the send pipeline to actually fire when an OTS URL arrives —
+the iteration-3 staging exposed a gap: the workflow only passed the URL to
+the script, so the survey body / from-name / template-path would have been
+ignored even with valid creds.
+
+**What was done:**
+- Extended `.github/workflows/send-invites.yml`:
+  - `workflow_dispatch` now accepts `template_path`, `recipients_path`,
+    and `from_name` inputs (in addition to the existing `secret_url`,
+    `dry_run`, `subject_override`).
+  - Push-trigger path now parses `pending-send.url` as a `key=value` file
+    with optional `template=`, `recipients=`, `from_name=`, `subject=`
+    keys. The bare-URL legacy format still works (extracted by regex).
+  - Resolved values are passed through to `retrieve_and_send.py` as the
+    corresponding `--template` / `--recipients` / `--from-name` /
+    `--subject` flags.
+- Added `mailer/pending-send.url.example` — an annotated trigger template
+  pre-filled with the survey body path and from-name. Copy → fill URL →
+  commit → push.
+- Added `mailer/stage_send.sh` — one-shot helper that writes the trigger
+  file for the pilot (CI-safe) or prints the local-run command for the
+  PII batches (gitignored, CI cannot see them):
+  ```
+  ./stage_send.sh pilot   <OTS_URL>   # CI: 6 test addresses
+  ./stage_send.sh batch1  <OTS_URL>   # LOCAL: 400 alumni
+  ./stage_send.sh batch2  <OTS_URL>   # LOCAL: 398 alumni
+  ```
+- Validated: workflow YAML parses, helper passes `bash -n`, end-to-end
+  fake-URL stage produces a trigger file with the expected three keys.
+- Re-ran the pilot dry-run with the survey template + from-name — output
+  matches Iteration 3: "Equipe Programadores Cariocas <user@gmail.com>",
+  subject "Questionário Programadores Cariocas", Form link intact, 6
+  test recipients listed.
+
+**Outcome:** **Pilot is one OTS-URL paste away.** Two paths now:
+- **Send pilot via CI:** Otávio runs
+  `bash "INVITATION EMAIL/mailer/stage_send.sh" pilot <fresh OTS URL>`,
+  then commits + pushes the resulting `pending-send.url`. CI fires the
+  send to the 6 test addresses, deletes the trigger, records output in
+  `mailer/last-run-status.md`.
+- **Batches (after pilot looks good):** Otávio runs `stage_send.sh
+  batch1 <fresh OTS URL>` on his machine and pastes the printed
+  `python3 ...` command. Same for batch2 the next day. The PII never
+  leaves his disk.
+
+**Still blocked on:** a fresh OTS creds link from Otávio. Nothing else
+is in the way.
