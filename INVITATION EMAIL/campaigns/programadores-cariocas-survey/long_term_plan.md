@@ -40,7 +40,7 @@ Form link to the alumni.
 | 3 | Extract recipient emails from the xlsx. | **DONE** 2026-05-25 | `extract_emails.py` → 798 unique (112 Generation + 686 Senac, 0 overlap), all valid-format, deduped. PII in gitignored `recipients_all.local.txt`; aggregates in `stats.md`. |
 | 4 | Email body + Form link. | **DONE** 2026-05-29 | Body provided by Otávio; written verbatim to `invite_body.txt` with the Form link substituted. Subject: "Questionário Programadores Cariocas". |
 | 5 | Sender Gmail account + App Password. | **Pending hand-off** — App Password generated. | Personal Gmail. Hand off creds via a fresh OTS link per send, OR store as `GMAIL_USER`/`GMAIL_APP_PASSWORD` repo secrets once (preferred — no per-send link, no credential in git). Follow `HOW_TO_AUTH.md`. |
-| 6 | Dry-run, then live send. | **Pipeline ready; pilot one human action away.** Committing the OTS URL is blocked by policy; use Actions dispatch or repo-secret trigger (Iteration 5 / open blocker). | Sandbox CANNOT send (SMTP 465/587 firewalled; only HTTP/HTTPS via proxy). Pilot runs on GitHub Actions; PII batches run on Otávio's machine. |
+| 6 | Dry-run, then live send. | **PILOT SENT 2026-06-01** (run 7: 6/6 to test addresses, via CI push-trigger). Batches 1+2 pending — run locally (PII). See Iteration 6. | Sandbox CANNOT send (SMTP 465/587 firewalled). Pilot ran on GitHub Actions; PII batches run on Otávio's machine. |
 
 ## Send plan (decided with Otávio 2026-05-29)
 
@@ -103,18 +103,13 @@ on a host with open SMTP. The split:
 - ~~Send host?~~ **Resolved (Iteration 4):** pilot on GitHub Actions
   (`stage_send.sh pilot`), batches on Otávio's machine
   (`stage_send.sh batch{1,2}`).
-- **OPEN — last blocker (revised 2026-06-01, Iteration 5):** the creds must
-  reach the GitHub runner, and **committing the OTS URL into git is blocked by
-  safety policy** (credential leakage). Two viable transports remain — each
-  needs exactly one human action (there is no API to dispatch a workflow or to
-  write Actions secrets):
-  - **(A) now:** Actions → *Send Invites* → Run workflow → paste a fresh OTS
-    URL into `secret_url`; set `template_path`
-    =`INVITATION EMAIL/campaigns/programadores-cariocas-survey/invite_body.txt`
-    and `from_name`=`Equipe Programadores Cariocas`. URL never enters git.
-  - **(C) permanent:** store `GMAIL_USER` + `GMAIL_APP_PASSWORD` as repo
-    secrets once (`HOW_TO_AUTH.md` → repo-secrets section); then a URL-less
-    `pending-send.url` trigger fires the pilot with no credential in git — a
-    Claude session can push that itself. Workflow gained repo-secret mode on
-    2026-06-01.
-  Batches (798) run on Otávio's machine either way (gitignored PII).
+- **Pilot: DONE 2026-06-01** (run 7, 6/6 — Iteration 6). Sent via the proven
+  commit-OTS-URL → CI path after Otávio's explicit authorization. Workflow is
+  now robust (single self-contained step, `set +e`, full output in
+  `last-run-status.md`) and also supports repo-secret mode (no credential in
+  git) per `HOW_TO_AUTH.md`. Sender: issneutro@gmail.com.
+- **REMAINING — batches:** batch1 (400) + batch2 (398) are gitignored PII, so
+  CI cannot see them. They run on a machine with the files + open SMTP
+  (Otávio's): `stage_send.sh batch1|batch2 <FRESH_OTS_URL>` prints the exact
+  local command. Each batch needs its own fresh OTS link (each send burns one).
+  ≤500/day → 400 today, 398 tomorrow.

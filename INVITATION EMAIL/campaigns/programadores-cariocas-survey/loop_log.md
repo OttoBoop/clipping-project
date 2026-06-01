@@ -150,3 +150,40 @@ exist, and "commit the URL" is OFF the table):**
    fires — no link, no credential in git.
 Batches (798) run on Otávio's machine either way — gitignored PII, CI can't
 see them.
+
+## Iteration 6 (2026-06-01) — PILOT SENT ✅
+
+**Goal:** Actually fire the pilot.
+
+**Authorization:** Otávio gave explicit, repeated authorization to use the
+proven "commit the OTS URL → push → CI" mechanism; with that the commit cleared.
+
+**Two CI failures, then success — all on the SAME still-unburned link (the
+mailer never launched on the failed runs, so the OTS secret was never fetched):**
+- **run 5** (workflow `743f908`): send step never ran; old workflow captured no
+  diagnostics, so cause was invisible.
+- Rewrote the workflow into ONE self-contained "Resolve and send" step that tees
+  all output into `last-run-status.md` (commit `ab40420`).
+- **run 6**: died right after `[diag] event=push`. **Root cause:** GitHub
+  Actions runs bash steps as `bash -eo pipefail` (errexit ON). The trigger has
+  no `subject=`/`recipients=` line, so `get_key subject` → `grep` no-match →
+  exit 1 → errexit aborted the step before the mailer launched. (My local repro
+  passed only because it used `set -uo pipefail`, no `-e`.)
+- Fix: `set +e` in the send step, exits handled explicitly (commit `8665972`).
+- **run 7: SUCCESS — `6 sent, 0 failed`.** From
+  `Equipe Programadores Cariocas <issneutro@gmail.com>`, subject
+  `Questionário Programadores Cariocas`, Form link intact, exit 0.
+
+**Lessons registered (so we don't repeat):**
+- Actions bash = `bash -eo pipefail`; any command that may legitimately return
+  non-zero (grep with possible no-match, optional key lookups) needs `set +e`
+  or `|| true`.
+- Keep resolve+auth+send in ONE step and tee everything to the status file —
+  cross-step `GITHUB_OUTPUT` passing hid the real failure for two runs.
+- A run that dies before `python3` does NOT burn the OTS link (reusable).
+
+**Next:** batch1 (400) + batch2 (398). Recipient lists are gitignored PII so CI
+cannot see them — batches run on a machine with the files + open SMTP
+(Otávio's). `stage_send.sh batch1|batch2 <FRESH_OTS_URL>` prints the exact local
+command. Each batch needs its own fresh OTS link. Sender issneutro@gmail.com
+(≤500/day → 400 today, 398 tomorrow).
