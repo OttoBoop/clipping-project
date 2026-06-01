@@ -1,5 +1,0 @@
-# repo-secret-mode probe: NO url -> workflow uses GMAIL_USER/GMAIL_APP_PASSWORD
-# repo secrets. Default recipients (the committed 6 test addresses). This
-# verifies whether CI already holds credentials, without touching any PII.
-template=INVITATION EMAIL/campaigns/programadores-cariocas-survey/invite_body.txt
-from_name=Equipe Programadores Cariocas
