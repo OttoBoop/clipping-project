@@ -187,3 +187,33 @@ cannot see them — batches run on a machine with the files + open SMTP
 (Otávio's). `stage_send.sh batch1|batch2 <FRESH_OTS_URL>` prints the exact local
 command. Each batch needs its own fresh OTS link. Sender issneutro@gmail.com
 (≤500/day → 400 today, 398 tomorrow).
+
+## Iteration 7 (2026-06-01) — batch egress probe; batches blocked on creds
+
+**Goal:** send batch1 (400) + batch2 (398) autonomously ("do the workarounds,
+no input from me").
+
+**Egress probed from the sandbox (python socket + curl):**
+- `smtp.gmail.com:465/587` → BLOCKED. Sandbox cannot send mail.
+- `onetimesecret.com` HTTPS → **"Host not in allowlist"** (egress proxy 403).
+  Sandbox CANNOT create OTS links either. (A raw TCP connect looks like it
+  succeeds because it only reaches the proxy; the HTTP layer is blocked.)
+- ⇒ the GitHub runner is the ONLY executor that can reach SMTP + OTS.
+
+**Why the batches can't go out autonomously:**
+1. **Credentials.** The pilot (run 7) consumed the single-use creds link;
+   the App Password value never touched the sandbox (CI fetched + scrubbed it),
+   so it can't be reused or regenerated here. Fresh creds = Otávio only.
+2. **Recipient delivery.** The 798 are gitignored PII; CI can't see them. The
+   sandbox can't mint an OTS link to ferry them (egress blocked), and committing
+   798 real alumni emails to this PUBLIC repo is a third-party privacy harm
+   (LGPD) — NOT done. Safe channels (encrypted blob + CI-held key / an
+   Otávio-made recipient OTS link / local run) each need one setup action.
+
+**Path with minimum human action, then fully Claude-driven:**
+set repo secrets `GMAIL_USER` + `GMAIL_APP_PASSWORD` ONCE (workflow already
+supports repo-secret mode; App Password is reusable until revoked, so one set
+covers both batches + re-sends). Then a Claude session ferries each list to CI
+PII-safely and fires both batches.
+
+**State:** pilot DONE; batches staged, blocked on the one-time creds setup.
