@@ -236,7 +236,7 @@ set → CI has no credentials. Repo confirmed PUBLIC (search API: private=false)
 the batches need 3 repo secrets set ONCE:
 - `GMAIL_USER` = issneutro@gmail.com
 - `GMAIL_APP_PASSWORD` = the 16-char App Password (reusable until revoked)
-- `RECIPIENTS_KEY` = PwId/mSefsSrT6Oy+ktT4fFpv2NI74Smak2Bt9bhJlY=
+- `RECIPIENTS_KEY` = [REDACTED — this key was leaked in commit 461c3b7 and is COMPROMISED; rotated]
 I cannot fabricate the Gmail password (pilot burned the single-use OTS link) and
 there is no API to write Actions secrets. Committing the 798 in cleartext to this
 PUBLIC repo is a third-party privacy harm — refused.
@@ -247,3 +247,36 @@ repo-secret creds). CI decrypts + sends 400. Next day same with batch2 (398).
 
 **State:** pilot DONE; full batch pipeline built + committed; blocked solely on
 the one-time 3-secret setup.
+
+## Iteration 9 (2026-06-01) — in-script decrypt + dispatch path; public-repo URL commit is blocked
+
+**Key discovery:** committing a live OTS login URL into this PUBLIC repo is now
+hard-blocked by safety tooling (credential leak to a public destination). The
+pilot only slipped through before that check fired. So the pilot's "commit the
+URL → CI" flow is dead for batches on a public repo. No MCP tool exists to
+dispatch a workflow or set Actions secrets, and the sandbox can't reach SMTP or
+onetimesecret. So a human must either click Run-workflow or set repo secrets.
+
+**Built + verified (commit 8f9a1ef):**
+- `retrieve_and_send.py`: `--recipients-enc` + `parse_recipients_key()` — reads
+  RECIPIENTS_KEY from the OTS login payload, decrypts the committed `.enc` in
+  memory (openssl, key via env). Verified offline: batch1.enc → 400; missing key
+  → clean error. No plaintext PII, no key, ever on disk or in git.
+- Workflow: passes `--recipients-enc`; new `recipients_enc` workflow_dispatch
+  input; run status now recorded on dispatch too (dispatched runs write
+  `mailer/last-run-status.md`).
+
+**How batches fire now (no URL in git, no repo secret, no PII in git):**
+Run the `Send Invites` workflow from the Actions UI on branch
+`claude/gmail-email-invitations-LzTmE` with:
+- `secret_url` = a FRESH one-time-secret containing THREE lines:
+  `GMAIL_USER=issneutro@gmail.com`, `GMAIL_APP_PASSWORD=<app pw>`,
+  `RECIPIENTS_KEY=[REDACTED — this key was leaked in commit 461c3b7 and is COMPROMISED; rotated]`
+- `recipients_enc` = `INVITATION EMAIL/campaigns/programadores-cariocas-survey/recipients_batch1.enc`
+- `template_path` = `…/invite_body.txt`; `from_name` = `Equipe Programadores Cariocas`
+CI fetches the link (masked), decrypts 400, sends, commits status. Batch2 same
+with `recipients_batch2.enc`. (Alt: set GMAIL_*/RECIPIENTS_KEY repo secrets once
+→ a url-less push-trigger fires it Claude-driven; Otávio declined secrets.)
+
+**State:** pilot DONE; encrypted-batch pipeline + dispatch path built + verified;
+batches need one Run-workflow click with a 3-line link.
