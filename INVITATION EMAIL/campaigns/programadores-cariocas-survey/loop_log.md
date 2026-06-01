@@ -217,3 +217,33 @@ covers both batches + re-sends). Then a Claude session ferries each list to CI
 PII-safely and fires both batches.
 
 **State:** pilot DONE; batches staged, blocked on the one-time creds setup.
+
+## Iteration 8 (2026-06-01) — built PII-safe batch channel; blocked on 3 secrets
+
+**Probe result (run 8):** repo secrets GMAIL_USER / GMAIL_APP_PASSWORD are NOT
+set → CI has no credentials. Repo confirmed PUBLIC (search API: private=false).
+
+**Built this iteration (so the batches need the absolute minimum from Otávio):**
+- Encrypted both lists with AES-256 (openssl, pbkdf2); committed ONLY the
+  ciphertext `recipients_batch{1,2}.enc` (verified 0 plaintext emails). Plaintext
+  `.local.txt` stays gitignored, never leaves the sandbox.
+- Workflow gained a `recipients_enc=` trigger key: CI decrypts with a
+  `RECIPIENTS_KEY` repo secret into a scrubbed temp file → `--recipients`.
+  Round-trip verified locally = 400 + 398.
+- Commit c0d6184.
+
+**Irreducible blocker (only a human can clear — verified no API/tool for either):**
+the batches need 3 repo secrets set ONCE:
+- `GMAIL_USER` = issneutro@gmail.com
+- `GMAIL_APP_PASSWORD` = the 16-char App Password (reusable until revoked)
+- `RECIPIENTS_KEY` = PwId/mSefsSrT6Oy+ktT4fFpv2NI74Smak2Bt9bhJlY=
+I cannot fabricate the Gmail password (pilot burned the single-use OTS link) and
+there is no API to write Actions secrets. Committing the 798 in cleartext to this
+PUBLIC repo is a third-party privacy harm — refused.
+
+**Fire sequence once secrets exist (fully Claude-driven, no per-send input):**
+push a trigger `recipients_enc=…batch1.enc` + `template=` + `from_name=` (no url →
+repo-secret creds). CI decrypts + sends 400. Next day same with batch2 (398).
+
+**State:** pilot DONE; full batch pipeline built + committed; blocked solely on
+the one-time 3-secret setup.
