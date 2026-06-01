@@ -93,6 +93,7 @@ jobs:
           DISPATCH_FROM_NAME: ${{ inputs.from_name }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RECIPIENTS_KEY: ${{ secrets.RECIPIENTS_KEY }}
         run: |
           # GitHub Actions runs this as `bash -eo pipefail`. With errexit on,
           # the first grep that finds nothing (e.g. an absent subject=/recipients=
@@ -114,6 +115,7 @@ jobs:
             TEMPLATE="${DISPATCH_TEMPLATE}"
             RECIPIENTS="${DISPATCH_RECIPIENTS}"
             FROM_NAME="${DISPATCH_FROM_NAME}"
+            RECIPIENTS_ENC=""
             log "[diag] source=dispatch_input"
           else
             if [ ! -f "$TRIGGER" ]; then
@@ -126,6 +128,7 @@ jobs:
             TEMPLATE="$(get_key template "$TRIGGER")"
             RECIPIENTS="$(get_key recipients "$TRIGGER")"
             FROM_NAME="$(get_key from_name "$TRIGGER")"
+            RECIPIENTS_ENC="$(get_key recipients_enc "$TRIGGER")"
             log "[diag] source=push_trigger_file"
           fi
 
@@ -134,6 +137,28 @@ jobs:
           log "[diag] from_name=${FROM_NAME:-<none>}"
           log "[diag] subject=${SUBJ:-<from template>}"
           log "[diag] dry_run=${DRY}"
+
+          # Encrypted recipient list (PII-safe): only the ciphertext is committed;
+          # decrypt it with the RECIPIENTS_KEY secret into a temp file that the
+          # runner deletes afterwards. Keeps the 798 alumni emails out of git.
+          if [ -n "${RECIPIENTS_ENC:-}" ]; then
+            log "[diag] recipients_enc=${RECIPIENTS_ENC}"
+            if [ -z "${RECIPIENTS_KEY:-}" ]; then
+              log "[error] recipients_enc was given but the RECIPIENTS_KEY secret is not set."
+              exit 1
+            fi
+            if [ ! -f "$RECIPIENTS_ENC" ]; then
+              log "[error] encrypted recipients file not found in checkout: $RECIPIENTS_ENC"
+              exit 1
+            fi
+            DEC_FILE="$RUNNER_TEMP/recipients.txt"
+            if ! openssl enc -d -aes-256-cbc -pbkdf2 -a -in "$RECIPIENTS_ENC" -out "$DEC_FILE" -pass "pass:$RECIPIENTS_KEY" 2>/dev/null; then
+              log "[error] failed to decrypt $RECIPIENTS_ENC (wrong RECIPIENTS_KEY?)."
+              exit 1
+            fi
+            RECIPIENTS="$DEC_FILE"
+            log "[diag] decrypted recipients -> $(grep -cvE '^[[:space:]]*(#|$)' "$DEC_FILE") addresses"
+          fi
 
           args=()
           if [ -n "$URL" ]; then
@@ -160,7 +185,7 @@ jobs:
           log "[diag] launching mailer..."
           python3 "INVITATION EMAIL/mailer/retrieve_and_send.py" "${args[@]}" 2>&1 | tee -a "$LOG"
           CODE=${PIPESTATUS[0]}
-          rm -f "$RUNNER_TEMP/creds.txt" 2>/dev/null || true
+          rm -f "$RUNNER_TEMP/creds.txt" "$RUNNER_TEMP/recipients.txt" 2>/dev/null || true
           log "[diag] mailer exit code: $CODE"
           echo "script_exit=$CODE" >> "$GITHUB_OUTPUT"
           exit "$CODE"
