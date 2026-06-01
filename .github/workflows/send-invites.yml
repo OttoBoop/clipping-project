@@ -94,7 +94,11 @@ jobs:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: |
-          set -o pipefail
+          # GitHub Actions runs this as `bash -eo pipefail`. With errexit on,
+          # the first grep that finds nothing (e.g. an absent subject=/recipients=
+          # key in the trigger) returns non-zero and aborts the whole step before
+          # the mailer launches. Disable errexit and handle exits explicitly.
+          set +e
           LOG=/tmp/send.log
           : > "$LOG"
           log() { echo "$@" | tee -a "$LOG"; }
