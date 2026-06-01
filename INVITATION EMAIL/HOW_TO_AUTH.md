@@ -95,6 +95,45 @@ the script consumed it, they get nothing.
 
 ---
 
+## Alternative (recommended for repeated / unattended sends): GitHub repo secrets
+
+The one-time-secret link is great for a single hand-off, but it burns on
+first read (so it must be re-minted for every send), and if you trigger the
+GitHub Actions workflow by *committing* the URL, the link briefly lands in
+git history — which the safety tooling (correctly) blocks as credential
+leakage. For anything you'll run more than once, or when you want a Claude
+session to fire the send without a human pasting a link each time, store the
+credentials as **GitHub Actions repo secrets** instead. Nothing sensitive
+ever enters git or chat.
+
+**One-time setup (~30 seconds — only a human can do this; there is no API to
+write Actions secrets):**
+
+1. Repo on GitHub → **Settings** → **Secrets and variables** → **Actions** →
+   **New repository secret**.
+2. Add two secrets:
+   - Name `GMAIL_USER`, value = the sender address (e.g. `sender@gmail.com`).
+   - Name `GMAIL_APP_PASSWORD`, value = the 16-character App Password from
+     Step 3 (spaces optional).
+3. Done. They're encrypted at rest, masked in logs, and can be overwritten
+   but never read back.
+
+**How a send uses them:** trigger the `Send Invites` workflow **without** a
+URL — either run it from the Actions tab with the `secret_url` input left
+empty, or push a `pending-send.url` trigger that contains only `template=` /
+`recipients=` / `from_name=` (no `url=`). The runner detects the missing URL,
+reads the two secrets, writes them to a 0600 file in its temp dir for the
+SMTP session, and scrubs that file afterwards.
+
+Because a URL-less trigger file carries **no credential**, it is safe to
+commit — so a send can be fired entirely from a trigger commit, with the App
+Password living only in GitHub's encrypted secret store.
+
+To rotate/revoke: overwrite the `GMAIL_APP_PASSWORD` secret, or delete the
+App Password in Google (Step 5 below) and create a new one.
+
+---
+
 ## Step 5 — After the send
 
 Revoke the App Password if you don't need it again:

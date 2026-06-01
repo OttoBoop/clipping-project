@@ -1,9 +1,22 @@
 name: Send Invites
 run-name: Send invites — Penelope
 
-# Triggered manually. Otávio (or anyone with write access) clicks "Run
-# workflow", pastes the one-time-secret URL into the `secret_url` input,
-# and the runner consumes the secret and sends the emails.
+# Triggered manually (workflow_dispatch) or by pushing a trigger file at
+# INVITATION EMAIL/mailer/pending-send.url.
+#
+# Two credential modes:
+#   1. OTS mode  — a one-time-secret URL (carrying GMAIL_USER + GMAIL_APP_PASSWORD)
+#                  is supplied via the dispatch input or the trigger file. The
+#                  runner fetches + burns it. The URL appears briefly in run
+#                  metadata (masked) and, for the push path, in git history until
+#                  the cleanup commit — acceptable only because the secret dies on
+#                  first read. Use a short TTL.
+#   2. Repo-secret mode — NO url is supplied. The runner reads the repo secrets
+#                  GMAIL_USER and GMAIL_APP_PASSWORD instead. Nothing sensitive
+#                  ever enters git: the trigger file carries only template /
+#                  recipients / from_name. Preferred for unattended or repeated
+#                  sends. Set the two secrets once under
+#                  Settings -> Secrets and variables -> Actions.
 #
 # Why this workflow exists: the Claude Code sandbox has no outbound network
 # (egress proxy returns 403 "Host not in allowlist"), so retrieve_and_send.py
@@ -11,28 +24,23 @@ run-name: Send invites — Penelope
 # onetimesecret.com and smtp.gmail.com:465, so we run the script here.
 #
 # Security notes:
-# - The one-time-secret URL appears in the workflow run metadata (visible
-#   to anyone with read access to this repo). Since the secret is destroyed
-#   the moment the workflow consumes it, the leaked URL is dead within
-#   seconds of being recorded. Use a short TTL (5-15 min) for defence in
-#   depth.
-# - The Gmail App Password itself never appears in logs: the script holds
-#   it as a local Python variable and the script doesn't echo it. The
-#   ::add-mask:: directive below is belt-and-braces in case the URL itself
-#   ever needs to be redacted from a later log line.
+# - In OTS mode the one-time-secret URL is destroyed the moment the workflow
+#   consumes it, so a leaked (post-read) URL is dead. Use a short TTL (5-15 min).
+# - In repo-secret mode the App Password is a masked GitHub secret; it is written
+#   to a 0600 file in $RUNNER_TEMP for the SMTP session and scrubbed afterwards.
+#   It never appears in logs and never enters git.
 # - The GMAIL_USER value (an email address) will appear in the logs once
-#   ([plan] from: <email>). If that bothers you, treat the workflow run as
-#   private and delete it after the send.
+#   ([plan] from: <email>). If that bothers you, treat the run as private.
 
 on:
   workflow_dispatch:
     inputs:
       secret_url:
-        description: 'One-time-secret URL. Payload must contain GMAIL_USER=... and GMAIL_APP_PASSWORD=... on separate lines.'
-        required: true
+        description: 'One-time-secret URL (GMAIL_USER=... and GMAIL_APP_PASSWORD=... on separate lines). Leave EMPTY to use the GMAIL_USER / GMAIL_APP_PASSWORD repo secrets instead.'
+        required: false
         type: string
       dry_run:
-        description: 'Dry-run: parse the secret and plan the send, but do NOT contact SMTP. (Still consumes the one-time-secret link.)'
+        description: 'Dry-run: parse the secret and plan the send, but do NOT contact SMTP. (Still consumes the one-time-secret link if one is given.)'
         required: false
         type: boolean
         default: false
@@ -97,7 +105,7 @@ jobs:
           echo "--- pending-send.url (or MISSING) ---"
           if [ -f "INVITATION EMAIL/mailer/pending-send.url" ]; then
             wc -c "INVITATION EMAIL/mailer/pending-send.url"
-            # don't cat full content — we don't want the URL in plain logs.
+            # don't cat full content — we don't want a URL in plain logs.
             # show only first 30 chars and length.
             FIRST="$(head -c 30 'INVITATION EMAIL/mailer/pending-send.url')"
             echo "first_30_chars=[$FIRST...]"
@@ -148,17 +156,25 @@ jobs:
             FROM_NAME="$(get_key from_name "$FILE")"
             echo "source=push_trigger_file"
           fi
+
+          # No URL supplied -> fall back to repo-secret auth (GMAIL_USER /
+          # GMAIL_APP_PASSWORD). This lets the send run WITHOUT any credential
+          # ever entering git: the trigger only carries template/recipients/from.
           if [ -z "${URL:-}" ]; then
-            echo "::error::Could not resolve a secret URL (URL empty after parse)."
-            exit 1
+            AUTH_MODE="repo_secret"
+            echo "auth_mode  : repo_secret (no OTS URL provided)"
+          else
+            AUTH_MODE="ots"
+            echo "url_length=${#URL}"
+            echo "::add-mask::$URL"
+            echo "auth_mode  : ots"
           fi
-          echo "url_length=${#URL}"
-          echo "::add-mask::$URL"
           echo "template   : ${TEMPLATE:-<default>}"
           echo "recipients : ${RECIPIENTS:-<default>}"
           echo "from_name  : ${FROM_NAME:-<none>}"
           echo "subject    : ${SUBJ:-<from template>}"
           {
+            echo "AUTH_MODE=$AUTH_MODE"
             echo "URL<<__EOF__"
             echo "$URL"
             echo "__EOF__"
@@ -177,10 +193,29 @@ jobs:
             echo "__EOF__"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Materialize credentials from repo secret (no-OTS path)
+        id: creds
+        if: steps.src.outputs.AUTH_MODE == 'repo_secret'
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          set -uo pipefail
+          if [ -z "${GMAIL_USER:-}" ] || [ -z "${GMAIL_APP_PASSWORD:-}" ]; then
+            echo "::error::No OTS URL was provided and the repo secrets GMAIL_USER / GMAIL_APP_PASSWORD are not set. Add them under Settings -> Secrets and variables -> Actions, or supply an OTS URL."
+            exit 1
+          fi
+          CRED_FILE="$RUNNER_TEMP/creds.txt"
+          ( umask 077; printf 'GMAIL_USER=%s\nGMAIL_APP_PASSWORD=%s\n' "$GMAIL_USER" "$GMAIL_APP_PASSWORD" > "$CRED_FILE" )
+          echo "cred_file=$CRED_FILE" >> "$GITHUB_OUTPUT"
+          echo "wrote credential file to runner temp (mode 0600)"
+
       - name: Fire the invites
         id: send
         env:
+          AUTH_MODE: ${{ steps.src.outputs.AUTH_MODE }}
           OTS_URL: ${{ steps.src.outputs.URL }}
+          CRED_FILE: ${{ steps.creds.outputs.cred_file }}
           DRY_RUN: ${{ steps.src.outputs.DRY }}
           SUBJECT_OVERRIDE: ${{ steps.src.outputs.SUBJ }}
           TEMPLATE_PATH: ${{ steps.src.outputs.TEMPLATE }}
@@ -189,7 +224,11 @@ jobs:
         continue-on-error: true
         run: |
           set -uo pipefail
-          args=( "$OTS_URL" )
+          if [ "$AUTH_MODE" = "repo_secret" ]; then
+            args=( --secret-file "$CRED_FILE" )
+          else
+            args=( "$OTS_URL" )
+          fi
           if [ "$DRY_RUN" = "true" ]; then
             args+=( --dry-run )
           fi
@@ -208,6 +247,10 @@ jobs:
           python3 "INVITATION EMAIL/mailer/retrieve_and_send.py" "${args[@]}" 2>&1 | tee /tmp/send.log
           SCRIPT_EXIT=${PIPESTATUS[0]}
           echo "script_exit=$SCRIPT_EXIT" >> "$GITHUB_OUTPUT"
+
+      - name: Scrub credential file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/creds.txt" 2>/dev/null || true
 
       - name: Record run status
         if: github.event_name == 'push' && always()
