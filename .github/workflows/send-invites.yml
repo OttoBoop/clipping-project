@@ -48,6 +48,11 @@ on:
         required: false
         type: string
         default: ''
+      recipients_enc:
+        description: 'Optional: path to an AES-encrypted (.enc) recipients file; decrypted in-script via RECIPIENTS_KEY from the login payload. Keeps PII out of git.'
+        required: false
+        type: string
+        default: ''
       from_name:
         description: 'Optional: From display name, e.g. "Equipe Programadores Cariocas".'
         required: false
@@ -90,10 +95,10 @@ jobs:
           DISPATCH_SUBJECT: ${{ inputs.subject_override }}
           DISPATCH_TEMPLATE: ${{ inputs.template_path }}
           DISPATCH_RECIPIENTS: ${{ inputs.recipients_path }}
+          DISPATCH_RECIPIENTS_ENC: ${{ inputs.recipients_enc }}
           DISPATCH_FROM_NAME: ${{ inputs.from_name }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          RECIPIENTS_KEY: ${{ secrets.RECIPIENTS_KEY }}
         run: |
           # GitHub Actions runs this as `bash -eo pipefail`. With errexit on,
           # the first grep that finds nothing (e.g. an absent subject=/recipients=
@@ -115,7 +120,7 @@ jobs:
             TEMPLATE="${DISPATCH_TEMPLATE}"
             RECIPIENTS="${DISPATCH_RECIPIENTS}"
             FROM_NAME="${DISPATCH_FROM_NAME}"
-            RECIPIENTS_ENC=""
+            RECIPIENTS_ENC="${DISPATCH_RECIPIENTS_ENC}"
             log "[diag] source=dispatch_input"
           else
             if [ ! -f "$TRIGGER" ]; then
@@ -137,27 +142,12 @@ jobs:
           log "[diag] from_name=${FROM_NAME:-<none>}"
           log "[diag] subject=${SUBJ:-<from template>}"
           log "[diag] dry_run=${DRY}"
-
-          # Encrypted recipient list (PII-safe): only the ciphertext is committed;
-          # decrypt it with the RECIPIENTS_KEY secret into a temp file that the
-          # runner deletes afterwards. Keeps the 798 alumni emails out of git.
           if [ -n "${RECIPIENTS_ENC:-}" ]; then
-            log "[diag] recipients_enc=${RECIPIENTS_ENC}"
-            if [ -z "${RECIPIENTS_KEY:-}" ]; then
-              log "[error] recipients_enc was given but the RECIPIENTS_KEY secret is not set."
-              exit 1
-            fi
             if [ ! -f "$RECIPIENTS_ENC" ]; then
               log "[error] encrypted recipients file not found in checkout: $RECIPIENTS_ENC"
               exit 1
             fi
-            DEC_FILE="$RUNNER_TEMP/recipients.txt"
-            if ! openssl enc -d -aes-256-cbc -pbkdf2 -a -in "$RECIPIENTS_ENC" -out "$DEC_FILE" -pass "pass:$RECIPIENTS_KEY" 2>/dev/null; then
-              log "[error] failed to decrypt $RECIPIENTS_ENC (wrong RECIPIENTS_KEY?)."
-              exit 1
-            fi
-            RECIPIENTS="$DEC_FILE"
-            log "[diag] decrypted recipients -> $(grep -cvE '^[[:space:]]*(#|$)' "$DEC_FILE") addresses"
+            log "[diag] recipients_enc=${RECIPIENTS_ENC} (decrypted in-script via the login-payload key)"
           fi
 
           args=()
@@ -180,6 +170,7 @@ jobs:
           [ -n "$SUBJ" ] && args+=( --subject "$SUBJ" )
           [ -n "$TEMPLATE" ] && args+=( --template "$TEMPLATE" )
           [ -n "$RECIPIENTS" ] && args+=( --recipients "$RECIPIENTS" )
+          [ -n "${RECIPIENTS_ENC:-}" ] && args+=( --recipients-enc "$RECIPIENTS_ENC" )
           [ -n "$FROM_NAME" ] && args+=( --from-name "$FROM_NAME" )
 
           log "[diag] launching mailer..."
@@ -190,8 +181,8 @@ jobs:
           echo "script_exit=$CODE" >> "$GITHUB_OUTPUT"
           exit "$CODE"
 
-      - name: Record run status (push only)
-        if: github.event_name == 'push' && always()
+      - name: Record run status
+        if: always()
         run: |
           {
             echo "# Last send-invites run"
@@ -213,8 +204,8 @@ jobs:
             echo '```'
           } > "INVITATION EMAIL/mailer/last-run-status.md"
 
-      - name: Consume trigger and commit status (push only)
-        if: github.event_name == 'push' && always()
+      - name: Consume trigger and commit status
+        if: always()
         run: |
           set -o pipefail
           git config user.name "github-actions[bot]"

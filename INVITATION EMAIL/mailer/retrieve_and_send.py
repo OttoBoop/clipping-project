@@ -41,9 +41,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import smtplib
 import ssl
+import subprocess
 import sys
 import urllib.error
 import urllib.parse
@@ -171,6 +173,60 @@ def parse_credentials(payload: str) -> tuple[str, str]:
     return user, pw
 
 
+def parse_recipients_key(payload: str) -> str:
+    """Pull an optional RECIPIENTS_KEY from the same dotenv-like payload.
+
+    Used to decrypt a committed *.enc recipients file without ever putting the
+    key in git or a repo secret — it rides inside the one-time-secret payload
+    alongside the Gmail credentials. Returns "" if absent.
+    """
+    for line in payload.splitlines():
+        s = line.strip()
+        if not s or s.startswith("#") or "=" not in s:
+            continue
+        k, v = s.split("=", 1)
+        if k.strip().upper() == "RECIPIENTS_KEY":
+            v = v.strip()
+            if len(v) >= 2 and v[0] == v[-1] and v[0] in ("'", '"'):
+                v = v[1:-1]
+            return v
+    return ""
+
+
+def decrypt_recipients(enc_path: str, key: str) -> list[str]:
+    """Decrypt an AES-256 (openssl) recipients file in memory and return the
+    list. The key is passed to openssl through the environment (never argv), and
+    the plaintext is never written to disk.
+    """
+    p = Path(enc_path)
+    if not p.exists():
+        raise SystemExit(f"--recipients-enc file not found: {enc_path}")
+    env = dict(os.environ)
+    env["RKEY"] = key
+    try:
+        proc = subprocess.run(
+            ["openssl", "enc", "-d", "-aes-256-cbc", "-pbkdf2", "-a",
+             "-in", str(p), "-pass", "env:RKEY"],
+            env=env, capture_output=True, text=True, timeout=30,
+        )
+    except FileNotFoundError:
+        raise SystemExit("openssl not found on PATH; cannot decrypt recipients.")
+    if proc.returncode != 0:
+        raise SystemExit(
+            "Failed to decrypt the recipients file (wrong RECIPIENTS_KEY?). "
+            f"openssl: {proc.stderr.strip()[:200]}"
+        )
+    out: list[str] = []
+    for raw in proc.stdout.splitlines():
+        s = raw.strip()
+        if not s or s.startswith("#"):
+            continue
+        out.append(s)
+    if not out:
+        raise SystemExit(f"decrypted recipients list is empty: {enc_path}")
+    return out
+
+
 def load_recipients(path: Path) -> list[str]:
     if not path.exists():
         raise SystemExit(f"recipients file not found at {path}")
@@ -253,6 +309,12 @@ def main() -> int:
         "Point this at a gitignored *.local.txt to keep PII out of the repo.",
     )
     ap.add_argument(
+        "--recipients-enc",
+        help="Path to an AES-256 (openssl) encrypted recipients file. Decrypted "
+        "in memory using RECIPIENTS_KEY taken from the login payload, so the real "
+        "addresses never touch git. Takes precedence over --recipients.",
+    )
+    ap.add_argument(
         "--template",
         help="Path to the template file (default: mailer/invite_template.txt).",
     )
@@ -273,11 +335,21 @@ def main() -> int:
         ap.error("Pass a onetimesecret URL, or --secret-file for offline testing.")
 
     user, password = parse_credentials(payload)
+    recipients_key = parse_recipients_key(payload)
     payload = ""  # drop the reference; the local string above goes out of scope at return
 
-    recipients_path = Path(args.recipients) if args.recipients else RECIPIENTS_PATH
     template_path = Path(args.template) if args.template else TEMPLATE_PATH
-    recipients = load_recipients(recipients_path)
+    if args.recipients_enc:
+        if not recipients_key:
+            raise SystemExit(
+                "--recipients-enc was given but no RECIPIENTS_KEY line was found in "
+                "the login payload.\nAdd a third line to your one-time-secret:\n"
+                "  RECIPIENTS_KEY=<key>"
+            )
+        recipients = decrypt_recipients(args.recipients_enc, recipients_key)
+    else:
+        recipients_path = Path(args.recipients) if args.recipients else RECIPIENTS_PATH
+        recipients = load_recipients(recipients_path)
     subject, body = load_template(template_path)
     if args.subject:
         subject = args.subject
