@@ -53,6 +53,16 @@ def test_connect_falls_back_when_wal_mode_hits_disk_io(monkeypatch, tmp_path):
     assert fake.closed is False
 
 
+def test_effective_candidate_workers_clamps_to_safe_default(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+
+    assert jobs.effective_candidate_workers({"candidate_workers": 4}) == 1
+
+    monkeypatch.setenv("CLIPPING_MAX_CANDIDATE_WORKERS", "2")
+    assert jobs.effective_candidate_workers({"candidate_workers": 4}) == 2
+    assert jobs.effective_candidate_workers({"candidate_workers": 1}) == 1
+
+
 def test_create_secondary_target_writes_sanitized_non_primary_target_atomically(monkeypatch, tmp_path):
     db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
     targets_path = tmp_path / "targets.json"

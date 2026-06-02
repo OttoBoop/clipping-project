@@ -398,3 +398,40 @@ backfill.
   not enabled after commit `5c8876b`, the job should come back as
   interrupted/resumable instead of auto-running. Then inspect state and resume
   manually from the checkpoint if the DB is readable.
+
+## 2026-06-02 18:48 America/Sao_Paulo - Restart Recovery Check
+
+- Log commit/restart deploy `f3b67a8` became live at
+  `2026-06-02T21:47:44Z`.
+- Post-restart SQLite state is healthy: read-only and app probes both report
+  `quickCheck=ok`, `journalMode=wal`, `activeJobsCount=0`.
+- Job `0b36e332911a` is now `interrupted_resumable`, not auto-resumed.
+- Preserved job totals: `articles=112`, `mentions=212`, `stories=212`.
+- Source-run counts after restart: `complete=19`, `failed_needs_fix=1`,
+  `interrupted_resumable=22892`.
+- Last source events before interruption: `Diario do Rio` WordPress API
+  checkpoint saw 25 candidates and saved 6 articles/mentions/stories; previous
+  Google News source completed with 98 articles/mentions/stories.
+- Memory after restart: `VmRSS=129.82 MiB`, `VmHWM=450.4 MiB`.
+- Disk after restart: free `46290.43 MiB`; DB `161.79 MiB`; WAL `8.25 MiB`;
+  SHM `0.03 MiB`.
+- Recovery decision before manual resume: patch the runner to reduce memory
+  pressure by clamping candidate worker concurrency and explicitly releasing
+  source candidate batches after each source. Then deploy, verify the job is
+  still resumable, and resume manually from `0b36e332911a`.
+
+## 2026-06-02 18:51 America/Sao_Paulo - Memory-Safety Patch Before Resume
+
+- Implemented `web_app/jobs.py` memory-safety patch before resuming:
+  - added `effective_candidate_workers(spec)`;
+  - default `CLIPPING_MAX_CANDIDATE_WORKERS` clamp is `1`, so a stored spec with
+    `candidate_workers=4` now runs source processing with one worker unless an
+    operator explicitly raises the env var;
+  - both durable and legacy update paths now use the clamp;
+  - durable `run_source_run` now clears the candidate batch and calls
+    `gc.collect()` in a `finally` block after every source run.
+- Added focused unit test for the worker clamp.
+- Verification: `compileall web_app/jobs.py` passed; focused pytest passed for
+  the worker clamp, WAL fallback, and `/healthz` schema.
+- Next action: deploy this patch, verify job `0b36e332911a` remains
+  `interrupted_resumable`, then resume manually and monitor memory closely.

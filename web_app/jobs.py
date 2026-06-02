@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import json
 import os
 import re
@@ -110,6 +111,16 @@ LIVE_CHECKPOINT_MIN_SECONDS = 30
 _CHECKPOINT_LOCK = threading.Lock()
 _LAST_CHECKPOINT_UPLOAD: dict[str, float] = {}
 _LAST_INCREMENTAL_EXPORT: dict[str, float] = {}
+
+
+def effective_candidate_workers(spec: dict[str, Any]) -> int:
+    requested = max(1, int(spec.get("candidate_workers") or DEFAULT_CANDIDATE_WORKERS))
+    raw_limit = str(os.environ.get("CLIPPING_MAX_CANDIDATE_WORKERS") or "1").strip()
+    try:
+        limit = max(1, int(raw_limit))
+    except ValueError:
+        limit = 1
+    return max(1, min(requested, limit))
 
 
 @dataclass(slots=True)
@@ -449,7 +460,7 @@ class JobManager:
                             max_process_seconds=int(spec["max_process_seconds"]),
                             db_path=str(db_path()),
                             cancel_check=cancel_event.is_set,
-                            candidate_workers=max(1, int(spec.get("candidate_workers") or DEFAULT_CANDIDATE_WORKERS)),
+                            candidate_workers=effective_candidate_workers(spec),
                         )
                         results = run_ingestion(
                             spec["collector"],
@@ -977,15 +988,18 @@ def run_source_run(
             "rss_mib_before": rss_before,
         },
     )
+    candidates: list[CandidateArticle] = []
+    candidate_total = 0
     try:
         candidates, next_cursor, complete = collect_source_run_candidates(spec, row, cursor)
+        candidate_total = len(candidates)
         if cancel_event.is_set():
             mark_source_run_interrupted(source_run_id, reason="cancel_requested")
             return {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0, "saved": False}
         record_progress(
             job_id,
             "source_collected",
-            {"source_name": source_name, "source_type": source_type, "candidates_total": len(candidates)},
+            {"source_name": source_name, "source_type": source_type, "candidates_total": candidate_total},
             target_key=target_key,
             target_label=target_label,
         )
@@ -1001,7 +1015,7 @@ def run_source_run(
             db_path=str(db_path()),
             cancel_check=cancel_event.is_set,
             archive_full_text=True,
-            candidate_workers=max(1, int(spec.get("candidate_workers") or DEFAULT_CANDIDATE_WORKERS)),
+            candidate_workers=effective_candidate_workers(spec),
         )
         result = process_candidates(
             source_name,
@@ -1030,7 +1044,7 @@ def run_source_run(
             status=next_status,
             cursor=next_cursor,
             candidates_seen=result.candidates_seen,
-            candidates_total=len(candidates),
+            candidates_total=candidate_total,
             articles_inserted=result.articles_inserted,
             mentions_inserted=result.mentions_inserted,
             stories_touched=result.stories_touched,
@@ -1051,7 +1065,7 @@ def run_source_run(
                 "target_key": target_key,
                 "target_label": target_label,
                 "candidates_seen": result.candidates_seen,
-                "candidates_total": len(candidates),
+                "candidates_total": candidate_total,
                 "articles_inserted": result.articles_inserted,
                 "mentions_inserted": result.mentions_inserted,
                 "stories_touched": result.stories_touched,
@@ -1089,6 +1103,9 @@ def run_source_run(
             },
         )
         return {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0, "saved": False}
+    finally:
+        candidates.clear()
+        gc.collect()
 
 
 def collect_source_run_candidates(
