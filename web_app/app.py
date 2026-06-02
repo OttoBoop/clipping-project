@@ -280,14 +280,40 @@ def target_mutation_response(
 ) -> JSONResponse:
     target_sync: dict[str, Any] = {}
     warning: dict[str, Any] | None = None
+    warnings: list[dict[str, Any]] = []
     if sync_reason:
         target_sync, warning = sync_target_after_mutation(target_key, reason=sync_reason, cleanup=cleanup)
-    uploaded = upload_targets_artifacts(kind, result, target_key)
+        if warning:
+            warnings.append(warning)
+    try:
+        uploaded = upload_targets_artifacts(kind, result, target_key)
+    except Exception as exc:  # noqa: BLE001 - post-save artifact upload must not invert a successful mutation.
+        uploaded = []
+        warnings.append(
+            {
+                "code": "target_artifact_upload_failed",
+                "message": "O nome foi salvo, mas o upload dos artefatos falhou.",
+                "suggestion": "Verifique o armazenamento e sincronize os artefatos depois.",
+                "error": str(exc),
+            }
+        )
+    try:
+        active_notice = target_mutation_notice()
+    except Exception as exc:  # noqa: BLE001 - status notice is advisory after the mutation is persisted.
+        active_notice = {}
+        warnings.append(
+            {
+                "code": "target_status_notice_failed",
+                "message": "O nome foi salvo, mas nao foi possivel checar a rodada ativa.",
+                "suggestion": "Consulte o progresso compartilhado antes de iniciar outra rodada.",
+                "error": str(exc),
+            }
+        )
     response: dict[str, Any] = {
         **result,
         "uploadedArtifactCount": len(uploaded),
         "uploadedArtifacts": uploaded,
-        **target_mutation_notice(),
+        **active_notice,
     }
     if sync_reason:
         response["targetSync"] = target_sync
@@ -295,6 +321,9 @@ def target_mutation_response(
             response["warning"] = warning
     if assigned_profile:
         response["assignedToProfile"] = assigned_profile
+    if warnings:
+        response["warnings"] = warnings
+        response.setdefault("warning", warnings[0])
     return JSONResponse(response)
 
 
