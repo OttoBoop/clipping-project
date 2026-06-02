@@ -54,7 +54,16 @@ def connect(db_file: Path) -> sqlite3.Connection:
     conn = sqlite3.connect(db_file)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA busy_timeout = 5000")
-    conn.execute("PRAGMA journal_mode = WAL")
+    try:
+        conn.execute("PRAGMA journal_mode = WAL")
+    except sqlite3.OperationalError as exc:
+        if "disk i/o error" not in str(exc).lower():
+            conn.close()
+            raise
+        try:
+            conn.execute("PRAGMA journal_mode = DELETE")
+        except sqlite3.Error:
+            pass
     return conn
 
 

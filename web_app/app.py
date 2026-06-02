@@ -1361,6 +1361,160 @@ def admin_debug_memory(request: Request) -> dict[str, Any]:
     }
 
 
+def _sqlite_debug_file_state() -> dict[str, Any]:
+    from . import config
+
+    db = config.db_path()
+
+    def mib(size: int) -> float:
+        return round(size / 1024 / 1024, 2)
+
+    files: dict[str, dict[str, Any]] = {}
+    for suffix in ("", "-wal", "-shm", "-journal"):
+        path = db.with_suffix(db.suffix + suffix) if suffix else db
+        if not path.exists():
+            continue
+        try:
+            stat = path.stat()
+            files[path.name] = {
+                "path": str(path),
+                "size_bytes": stat.st_size,
+                "size_mib": mib(stat.st_size),
+                "mode": oct(stat.st_mode & 0o777),
+            }
+        except OSError as exc:
+            files[path.name] = {"path": str(path), "error": str(exc)}
+    return {"db_path": str(db), "files": files}
+
+
+def _sqlite_debug_probe() -> dict[str, Any]:
+    import sqlite3
+
+    db = db_path()
+    result: dict[str, Any] = {"fileState": _sqlite_debug_file_state()}
+    probes: dict[str, Any] = {}
+    result["probes"] = probes
+
+    def run_probe(label: str, factory: Any) -> None:
+        probe: dict[str, Any] = {}
+        try:
+            with factory() as conn:
+                conn.row_factory = sqlite3.Row
+                try:
+                    probe["journalMode"] = conn.execute("PRAGMA journal_mode").fetchone()[0]
+                except Exception as exc:  # noqa: BLE001 - diagnostic endpoint reports partial state.
+                    probe["journalModeError"] = str(exc)
+                try:
+                    probe["quickCheck"] = conn.execute("PRAGMA quick_check").fetchone()[0]
+                except Exception as exc:  # noqa: BLE001
+                    probe["quickCheckError"] = str(exc)
+                try:
+                    tables = [
+                        str(row["name"])
+                        for row in conn.execute(
+                            "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"
+                        ).fetchall()
+                    ]
+                    probe["tables"] = tables
+                    if "jobs" in tables:
+                        probe["jobsCount"] = int(conn.execute("SELECT COUNT(*) FROM jobs").fetchone()[0])
+                        active_statuses = ("queued", "running", "exporting")
+                        probe["activeJobsCount"] = int(
+                            conn.execute(
+                                f"SELECT COUNT(*) FROM jobs WHERE status IN ({','.join('?' for _ in active_statuses)})",
+                                active_statuses,
+                            ).fetchone()[0]
+                        )
+                    if "job_events" in tables:
+                        probe["jobEventsCount"] = int(conn.execute("SELECT COUNT(*) FROM job_events").fetchone()[0])
+                except Exception as exc:  # noqa: BLE001
+                    probe["queryError"] = str(exc)
+        except Exception as exc:  # noqa: BLE001
+            probe["connectError"] = str(exc)
+            probe["connectErrorType"] = type(exc).__name__
+        probes[label] = probe
+
+    run_probe("readOnly", lambda: sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=10))
+    run_probe("appConnect", lambda: __import__("web_app.db_admin", fromlist=["connect"]).connect(db))
+    return result
+
+
+def _sqlite_rebuild_from_current() -> dict[str, Any]:
+    import os
+    import sqlite3
+    import tempfile
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    db = db_path()
+    if not db.is_file():
+        raise HTTPException(status_code=404, detail="sqlite_db_not_found")
+
+    backup_dir = artifact_store.backup_current_artifacts("sqlite-repair-pre-rebuild")
+    temp_name = ""
+    try:
+        with tempfile.NamedTemporaryFile(dir=db.parent, suffix=".sqlite-rebuild", delete=False) as temp:
+            temp_name = temp.name
+        with sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=10) as source:
+            source.execute("PRAGMA busy_timeout = 5000")
+            with sqlite3.connect(temp_name, timeout=10) as dest:
+                source.backup(dest)
+                check = dest.execute("PRAGMA quick_check").fetchone()[0]
+                if check != "ok":
+                    raise RuntimeError(f"sqlite_quick_check_failed:{check}")
+                try:
+                    dest.execute("PRAGMA journal_mode = DELETE")
+                except sqlite3.Error:
+                    pass
+        for suffix in ("-wal", "-shm", "-journal"):
+            sidecar = db.with_suffix(db.suffix + suffix)
+            try:
+                if sidecar.exists():
+                    sidecar.unlink()
+            except OSError:
+                pass
+        os.replace(temp_name, db)
+        temp_name = ""
+        ensure_app_tables(db)
+        recent_jobs(include_observability=False)
+        uploaded = artifact_store.upload_current_artifacts(
+            manifest={
+                "kind": "sqlite-rebuild-from-current",
+                "createdAt": datetime.now(timezone.utc).isoformat(),
+                "backupDir": str(backup_dir),
+            },
+            job_id="sqlite-rebuild-from-current",
+        )
+        return {
+            "ok": True,
+            "backupDir": str(backup_dir),
+            "uploadedArtifacts": uploaded,
+            "uploadedArtifactCount": len(uploaded),
+            "postRepair": _sqlite_debug_probe(),
+        }
+    finally:
+        if temp_name:
+            try:
+                Path(temp_name).unlink()
+            except OSError:
+                pass
+
+
+@app.post("/api/admin/debug/sqlite")
+async def admin_debug_sqlite(request: Request) -> dict[str, Any]:
+    require_admin(request)
+    require_csrf(request)
+    payload = await read_json(request)
+    action = str(payload.get("action") or "report").strip() or "report"
+    if action == "report":
+        return {"ok": True, "action": action, **_sqlite_debug_probe()}
+    if action == "rebuild_from_current":
+        if str(payload.get("confirm") or "") != "rebuild_from_current":
+            raise HTTPException(status_code=400, detail="confirm_rebuild_from_current_required")
+        return {"action": action, **_sqlite_rebuild_from_current()}
+    raise HTTPException(status_code=400, detail="unknown_sqlite_debug_action")
+
+
 @app.get("/api/admin/debug/disk")
 def admin_debug_disk(request: Request) -> dict[str, Any]:
     """Disk usage do filesystem onde o DB SQLite vive + tamanho dos arquivos.

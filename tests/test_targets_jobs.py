@@ -24,6 +24,35 @@ def reload_admin_modules(monkeypatch, tmp_path):
     return db_admin, jobs, db_file
 
 
+def test_connect_falls_back_when_wal_mode_hits_disk_io(monkeypatch, tmp_path):
+    db_admin, _, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    calls: list[str] = []
+
+    class FakeConnection:
+        row_factory = None
+        closed = False
+
+        def execute(self, sql, params=()):
+            calls.append(sql)
+            if sql == "PRAGMA journal_mode = WAL":
+                raise sqlite3.OperationalError("disk I/O error")
+            return SimpleNamespace(fetchone=lambda: ("delete",))
+
+        def close(self):
+            self.closed = True
+
+    fake = FakeConnection()
+    monkeypatch.setattr(db_admin.sqlite3, "connect", lambda path: fake)
+
+    conn = db_admin.connect(db_file)
+
+    assert conn is fake
+    assert "PRAGMA busy_timeout = 5000" in calls
+    assert "PRAGMA journal_mode = WAL" in calls
+    assert "PRAGMA journal_mode = DELETE" in calls
+    assert fake.closed is False
+
+
 def test_create_secondary_target_writes_sanitized_non_primary_target_atomically(monkeypatch, tmp_path):
     db_admin, _, _ = reload_admin_modules(monkeypatch, tmp_path)
     targets_path = tmp_path / "targets.json"
