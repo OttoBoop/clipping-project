@@ -80,7 +80,7 @@ concurrency:
 jobs:
   send:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -150,8 +150,6 @@ jobs:
           log "[diag] dry_run=${DRY}"
           if [ -n "${DISPATCH_RECIPIENTS_INLINE_B64:-}" ]; then
             INLINE_FILE="$RUNNER_TEMP/recipients_inline.txt"
-            # Decode -> write to a 0600 temp file -> mask each address in logs.
-            # Never written to disk outside RUNNER_TEMP; scrubbed in the cleanup line below.
             ( umask 077; printf '%s' "$DISPATCH_RECIPIENTS_INLINE_B64" | base64 -d > "$INLINE_FILE" )
             N=$(grep -cvE '^[[:space:]]*(#|$)' "$INLINE_FILE" || true)
             while IFS= read -r line; do
