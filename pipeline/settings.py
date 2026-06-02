@@ -73,7 +73,12 @@ RSS_FEEDS: list[dict[str, str]] = [
     {"source_name": "G1", "url": "https://g1.globo.com/rss/g1/"},
     {"source_name": "G1 Politica", "url": "https://g1.globo.com/rss/g1/politica/"},
     {"source_name": "G1 Rio", "url": "https://g1.globo.com/rss/g1/rio-de-janeiro/"},
-    {"source_name": "O Globo", "url": "https://oglobo.globo.com/rss.xml"},
+    {
+        "source_name": "O Globo",
+        "url": "https://oglobo.globo.com/rss.xml",
+        "disabled": "true",
+        "disabled_reason": "Production RSS returned non-XML during durable backfill; O Globo remains covered by sitemap/internal search.",
+    },
     {"source_name": "Extra", "url": "https://extra.globo.com/rss.xml"},
     {"source_name": "Folha", "url": "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml"},
     {"source_name": "UOL", "url": "https://rss.uol.com.br/feed/noticias.xml"},

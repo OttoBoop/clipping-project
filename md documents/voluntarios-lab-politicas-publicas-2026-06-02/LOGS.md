@@ -435,3 +435,61 @@ backfill.
   the worker clamp, WAL fallback, and `/healthz` schema.
 - Next action: deploy this patch, verify job `0b36e332911a` remains
   `interrupted_resumable`, then resume manually and monitor memory closely.
+
+## 2026-06-02 18:58 America/Sao_Paulo - Manual Resume After Memory Patch
+
+- Memory-safety deploy `299a154` became live at `2026-06-02T21:54:06Z`.
+- Verified job `0b36e332911a` before resume:
+  - status `interrupted_resumable`;
+  - `resumeAvailable=true`;
+  - totals preserved at `articles=112`, `mentions=212`, `stories=212`;
+  - target/date contract unchanged.
+- Playwright UI check:
+  - debug load showed `Retomar atualização` visible with no console errors;
+  - two click attempts with API-authenticated Playwright context still observed
+    the button hidden despite backend `resumeAvailable=true`;
+  - treated this as a timing/auth-context UI flake, not a backend blocker, and
+    used the same `/api/update/resume` endpoint directly to avoid delaying the
+    production recovery.
+- Resume API response HTTP 200 for job `0b36e332911a`.
+- Post-resume status: `running`; coverage reset to `pending`; totals preserved
+  at `articles=112`, `mentions=212`, `stories=212`.
+- Memory after resume: `VmRSS=362.11 MiB`, `VmHWM=453.39 MiB`.
+- Next action: continue monitoring with the worker clamp active; watch for
+  repeat disk I/O, memory pressure, source failures, or final
+  `failed_needs_fix` state.
+
+## 2026-06-02 19:00 America/Sao_Paulo - Post-Resume Monitoring Snapshot 1
+
+- Job `0b36e332911a` is `running`; all monitored endpoints HTTP 200.
+- Coverage state is `failed_needs_fix` because O Globo RSS failed again after
+  resume with the same XML parse error.
+- Source-run counts: `complete=19`, `failed_needs_fix=1`, `running=1`,
+  `pending=22891`.
+- Current source: `seguranca_presente` / WordPress API / `Diario do Rio`.
+- Latest WordPress checkpoint: 25 candidates, 0 new articles, 4 mentions, 4
+  stories.
+- Totals in status: `articles=112`, `mentions=316`, `stories=316`.
+- Memory with worker clamp active: current `VmRSS=274.99 MiB`; high-water
+  `VmHWM=523.14 MiB`.
+- Disk: free `66139.0 MiB`; DB `161.8 MiB`; WAL `0.2 MiB`; SHM `0.03 MiB`.
+- Decision: continue running. O Globo RSS is repeat-failing and should be
+  treated as a source fix/retry item later, not a reason to stop the whole
+  running job while other sources progress.
+
+## 2026-06-02 19:02 America/Sao_Paulo - O Globo RSS Disabled Before Next Resume
+
+- Durable source ledger can reconcile disabled sources by marking source keys no
+  longer present in active config as complete.
+- O Globo RSS (`rss:8`) failed twice in production with
+  `not well-formed (invalid token): line 1, column 0`.
+- Local fetch of `https://oglobo.globo.com/rss.xml` returned valid but empty XML,
+  and O Globo remains covered by O Globo Sitemap plus internal search sources.
+- Patched `pipeline/settings.py` to set O Globo RSS `disabled=true` with an
+  inline reason.
+- Verification: `compileall pipeline/settings.py web_app/jobs.py` passed;
+  focused pytest passed for worker clamp, WAL fallback, and `/healthz` schema.
+- Next action: deploy this source-config fix, accept the controlled interruption,
+  verify job `0b36e332911a` returns to `interrupted_resumable`, then resume
+  again. The resumed run should reconcile `rss:8` instead of repeating the O
+  Globo RSS failure for every target.
