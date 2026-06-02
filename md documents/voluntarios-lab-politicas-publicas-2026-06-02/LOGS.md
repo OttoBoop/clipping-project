@@ -237,3 +237,164 @@ backfill.
 - Next action: deploy this recovery patch, confirm production starts without
   auto-resuming the stale job, use the SQLite recovery endpoint if needed, then
   verify idle status before starting the requested backfill.
+
+## 2026-06-02 18:29 America/Sao_Paulo - Requested Backfill Started
+
+- Recovery deploy `5c8876b` became live at `2026-06-02T21:26:37Z`.
+- Post-deploy production check: SQLite readable (`quickCheck=ok` for read-only
+  and app probes), `activeJobsCount=0`, live-results HTTP 200, and no stale job
+  auto-resumed.
+- Memory before start: `VmRSS=119.99 MiB`, `VmHWM=404.66 MiB`, Render limit
+  512 MiB.
+- Disk before start: free `49504.2 MiB`; DB `140.7 MiB`; WAL `8.13 MiB`; SHM
+  `0.03 MiB`.
+- Used the update runner UI with Playwright:
+  - 27 target checkboxes rendered in the admin runner.
+  - Before correction, admin defaults checked 20 primary targets including
+    `flavio_valle` and `pedro_angelito`.
+  - Explicitly unchecked all extras and checked exactly the 18 requested
+    Voluntarios primary targets.
+  - Secondary checked targets: none.
+  - Dates set to `01/01/2014` through `02/06/2026`.
+  - Heavy-run warning displayed as expected: 12.4-year window and 18 targets.
+- Submitted `/api/update/start` through the UI. Response HTTP 200.
+- Production job id: `0b36e332911a`.
+- Job contract in response:
+  - `preset=custom`
+  - `collector=all`
+  - `date_from=2014-01-01`
+  - `date_to=2026-06-02`
+  - `export=true`
+  - `target_keys` exactly the 18 requested keys.
+- Immediate status after start: `running`, totals
+  `articles=0`, `mentions=0`, `stories=0`, `coverageState=pending`.
+- Next action: monitor status, source-run events, memory, disk, and live
+  results continuously; stop blind waiting on failures, 5xx, disk I/O, or
+  dangerous memory pressure.
+
+## 2026-06-02 18:30 America/Sao_Paulo - Monitoring Snapshot 1
+
+- Job `0b36e332911a` remains `running`, `coverageState=pending`.
+- Endpoint health this cycle: status 200, source-run events 200, memory 200,
+  disk 200, live-results 200.
+- Totals still `articles=0`, `mentions=0`, `stories=0`.
+- Source-run ledger: `sourceRunCount=22912`, visible 80; counts
+  `complete=3`, `running=1`, `pending=22908` in the status payload.
+- Recent source-run events show initial RSS runs for `seguranca_presente`:
+  `VEJA`, `VEJA RSS`, `VEJA Politica`, and `VEJA Cidades` completed with no
+  errors; most saw 20 candidates, no saved articles yet.
+- Current visible source at snapshot: `seguranca_presente` / RSS /
+  `VEJA Cidades`.
+- Memory: `VmRSS=211.51 MiB`, `VmHWM=468.75 MiB`, limit 512 MiB.
+- Disk: free `47233.27 MiB`; DB `149.7 MiB`; WAL `10.81 MiB`; SHM
+  `0.03 MiB`.
+- Live-results base endpoint returned 60 items.
+- No barrier detected. Next action: continue monitoring for progress, source
+  failures, memory pressure, disk I/O, or 5xx responses.
+
+## 2026-06-02 18:32 America/Sao_Paulo - Monitoring Snapshot 2 / Memory Pressure
+
+- Job `0b36e332911a` remained `running`; status endpoint HTTP 200.
+- Source-run ledger: `sourceRunCount=22912`; counts moved to
+  `complete=7`, `pending=22905`.
+- Recent RSS completions for `seguranca_presente`: `Veja Rio`, `G1`,
+  `G1 Politica`, all with no source-run errors.
+- Totals in the snapshot initially showed `articles=0`, `mentions=0`,
+  `stories=0`.
+- Memory danger sign: `VmRSS=518.73 MiB`, `VmHWM=518.73 MiB`, above the
+  documented 512 MiB Render limit.
+- Immediate confirmation check: job still `running`, `coverageState=running`;
+  current memory dropped to `VmRSS=267.67 MiB` while `VmHWM=517.96 MiB`.
+- Confirmation totals: `articles=0`, `mentions=100`, `stories=100`; recent
+  event showed `G1 Rio` RSS completed with 100 candidates and no error.
+- Disk during snapshot: free `60722.27 MiB`; DB `149.7 MiB`; WAL `10.81 MiB`.
+- Decision: do not cancel while current RSS has dropped and endpoints are
+  healthy, but tighten monitoring cadence because peak RSS crossed the limit.
+- Next action: continue monitoring closely; cancel/repair if current RSS rises
+  back to dangerous pressure, endpoints return 5xx, or job becomes failed /
+  interrupted.
+
+## 2026-06-02 18:34 America/Sao_Paulo - Monitoring Snapshot 3 / Source Failure Inspected
+
+- Job `0b36e332911a` still `running`; status/source-events/memory/disk/live
+  endpoints all HTTP 200.
+- Coverage state now reports `failed_needs_fix` because one source failed while
+  the job continues processing remaining sources.
+- Source-run counts: `complete=12`, `failed_needs_fix=1`, `running=1`,
+  `pending=22898`.
+- Failed source isolated:
+  - target: `seguranca_presente`
+  - source key: `rss:8`
+  - source: `O Globo`
+  - source type: `rss`
+  - error: `not well-formed (invalid token): line 1, column 0`
+- Recent healthy RSS completions include `Extra`, `Folha`, `UOL`, `Band`, and
+  `Estadao`, with no errors.
+- Local check of `https://oglobo.globo.com/rss.xml` returned valid XML, so this
+  currently looks like a transient/source-response failure rather than a
+  permanent parser bug.
+- Memory: current `VmRSS=270.05 MiB`, high-water `VmHWM=530.32 MiB`; continue
+  close monitoring because the peak crossed the nominal limit.
+- Disk: free `60731.77 MiB`; DB `149.79 MiB`; WAL `10.81 MiB`.
+- Decision: do not cancel while the job is still progressing and current RSS is
+  stable. If the job ends as `failed_needs_fix`, manually resume/retry failed
+  sources from the recorded state rather than starting a duplicate full job.
+
+## 2026-06-02 18:36 America/Sao_Paulo - Monitoring Snapshot 4
+
+- Job `0b36e332911a` still `running`; all monitored endpoints HTTP 200.
+- Coverage state remains `failed_needs_fix` because of the earlier O Globo RSS
+  failure, but the job is continuing through remaining sources.
+- Source-run counts: `complete=18`, `failed_needs_fix=1`, `running=1`,
+  `pending=22892`.
+- Totals advanced to `articles=33`, `mentions=133`, `stories=133`.
+- Source family progress: RSS for `seguranca_presente` has moved through
+  `Agencia Brasil`, `Diario do Rio`, `Tempo Real RJ`, `Agenda do Poder`, and
+  `Tribuna da Serra`; current event sample shows `Google News` started.
+- Memory: current `VmRSS=332.0 MiB`; high-water `VmHWM=536.4 MiB`; continue
+  close monitoring.
+- Disk: free `60745.99 MiB`; DB `151.25 MiB`; WAL `10.81 MiB`.
+- No new source failures in the sample. Next action: continue monitoring,
+  especially Google News memory and any additional `failed_needs_fix` sources.
+
+## 2026-06-02 18:40 America/Sao_Paulo - Monitoring Snapshot 5
+
+- Job `0b36e332911a` still `running`; all monitored endpoints HTTP 200.
+- Coverage state remains `failed_needs_fix` due to the earlier O Globo RSS
+  source failure.
+- Source-run counts: `complete=19`, `failed_needs_fix=1`, `running=1`,
+  `pending=22891`.
+- Google News completed for `seguranca_presente`: 100 candidates, 98 articles,
+  98 mentions, 98 stories, no error.
+- Totals advanced to `articles=98`, `mentions=198`, `stories=198`.
+- Current source family has moved to WordPress API; latest event shows
+  `Diario do Rio` started.
+- Memory: current `VmRSS=367.98 MiB`; high-water `VmHWM=583.49 MiB`.
+- Disk: free `60893.54 MiB`; DB `158.26 MiB`; WAL `0.17 MiB`.
+- Decision: continue close monitoring; no cancellation while current RSS is
+  below the wall and source progress is healthy, but HWM remains a serious risk
+  signal.
+
+## 2026-06-02 18:45 America/Sao_Paulo - SQLite Barrier During Job
+
+- Monitoring snapshot 6 hit a hard barrier:
+  - `/api/update/status` HTTP 200 but `current.status=status_unavailable`;
+  - `/api/update/live-results?scope=base&limit=60` returned HTTP 500;
+  - source-run events endpoint returned HTTP 200 but body included
+    `error=disk I/O error`;
+  - SQLite debug report showed read-only and app probes failing on
+    `journal_mode`, `quick_check`, and table queries.
+- File state at barrier: DB `159.99 MiB`; WAL `0 MiB`; no SHM listed.
+- Memory at barrier: current `VmRSS=366.37 MiB`; high-water
+  `VmHWM=619.19 MiB`.
+- Disk capacity remained fine: free `60566.74 MiB`.
+- Ran confirmed `/api/admin/debug/sqlite` action `clear_sidecars`. It removed
+  `/opt/render/project/src/data/clipping.db-wal`, but post-repair probes still
+  failed with `disk I/O error`.
+- Current DB is therefore unreadable in-process. Do not blind-wait and do not
+  start another full job.
+- Recovery decision: trigger a controlled redeploy/restart so startup downloads
+  the latest uploaded storage snapshot. Because `CLIPPING_AUTO_RESUME_JOBS` is
+  not enabled after commit `5c8876b`, the job should come back as
+  interrupted/resumable instead of auto-running. Then inspect state and resume
+  manually from the checkpoint if the DB is readable.
