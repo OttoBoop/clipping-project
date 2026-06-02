@@ -53,6 +53,11 @@ on:
         required: false
         type: string
         default: ''
+      recipients_inline_b64:
+        description: 'Optional: base64-encoded plaintext recipient list (one address per line). Decoded to a runner-temp file, masked in logs, used as --recipients. Never committed to git.'
+        required: false
+        type: string
+        default: ''
       from_name:
         description: 'Optional: From display name, e.g. "Equipe Programadores Cariocas".'
         required: false
@@ -96,6 +101,7 @@ jobs:
           DISPATCH_TEMPLATE: ${{ inputs.template_path }}
           DISPATCH_RECIPIENTS: ${{ inputs.recipients_path }}
           DISPATCH_RECIPIENTS_ENC: ${{ inputs.recipients_enc }}
+          DISPATCH_RECIPIENTS_INLINE_B64: ${{ inputs.recipients_inline_b64 }}
           DISPATCH_FROM_NAME: ${{ inputs.from_name }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
@@ -142,6 +148,20 @@ jobs:
           log "[diag] from_name=${FROM_NAME:-<none>}"
           log "[diag] subject=${SUBJ:-<from template>}"
           log "[diag] dry_run=${DRY}"
+          if [ -n "${DISPATCH_RECIPIENTS_INLINE_B64:-}" ]; then
+            INLINE_FILE="$RUNNER_TEMP/recipients_inline.txt"
+            # Decode -> write to a 0600 temp file -> mask each address in logs.
+            # Never written to disk outside RUNNER_TEMP; scrubbed in the cleanup line below.
+            ( umask 077; printf '%s' "$DISPATCH_RECIPIENTS_INLINE_B64" | base64 -d > "$INLINE_FILE" )
+            N=$(grep -cvE '^[[:space:]]*(#|$)' "$INLINE_FILE" || true)
+            while IFS= read -r line; do
+              addr="$(echo "$line" | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')"
+              [ -z "$addr" ] || [ "${addr:0:1}" = "#" ] && continue
+              echo "::add-mask::$addr"
+            done < "$INLINE_FILE"
+            RECIPIENTS="$INLINE_FILE"
+            log "[diag] inline recipients decoded -> $N addresses (masked)"
+          fi
           if [ -n "${RECIPIENTS_ENC:-}" ]; then
             if [ ! -f "$RECIPIENTS_ENC" ]; then
               log "[error] encrypted recipients file not found in checkout: $RECIPIENTS_ENC"
@@ -176,7 +196,7 @@ jobs:
           log "[diag] launching mailer..."
           python3 "INVITATION EMAIL/mailer/retrieve_and_send.py" "${args[@]}" 2>&1 | tee -a "$LOG"
           CODE=${PIPESTATUS[0]}
-          rm -f "$RUNNER_TEMP/creds.txt" "$RUNNER_TEMP/recipients.txt" 2>/dev/null || true
+          rm -f "$RUNNER_TEMP/creds.txt" "$RUNNER_TEMP/recipients.txt" "$RUNNER_TEMP/recipients_inline.txt" 2>/dev/null || true
           log "[diag] mailer exit code: $CODE"
           echo "script_exit=$CODE" >> "$GITHUB_OUTPUT"
           exit "$CODE"
