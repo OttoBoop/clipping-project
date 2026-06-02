@@ -493,3 +493,86 @@ backfill.
   verify job `0b36e332911a` returns to `interrupted_resumable`, then resume
   again. The resumed run should reconcile `rss:8` instead of repeating the O
   Globo RSS failure for every target.
+
+## 2026-06-02 19:07 America/Sao_Paulo - Resume After O Globo RSS Disable
+
+- Source-config deploy `c0d330e` became live at `2026-06-02T22:05:42Z`.
+- Before resume, job `0b36e332911a` was `interrupted_resumable`,
+  `resumeAvailable=true`, with totals `articles=132`, `mentions=336`,
+  `stories=336`.
+- Source counts before resume: `complete=19`, `failed_needs_fix=1`,
+  `interrupted_resumable=22892`.
+- Memory before resume after deploy: `VmRSS=136.73 MiB`, `VmHWM=461.26 MiB`.
+- Resume API response HTTP 200; job returned to `queued` then `running`.
+- Post-resume status: `running`, `coverageState=pending`, totals preserved at
+  `articles=132`, `mentions=336`, `stories=336`.
+- Memory after resume: `VmRSS=161.89 MiB`, `VmHWM=461.26 MiB`.
+- Next action: monitor whether `rss:8` is reconciled out and whether the job
+  continues through WordPress sources without repeat disk I/O.
+
+## 2026-06-02 19:13 America/Sao_Paulo - Post-O Globo Resume Monitoring Snapshot 1
+
+- Job `0b36e332911a` is `running`; all monitored endpoints HTTP 200.
+- O Globo RSS disable was reconciled by the durable ledger: source-run counts
+  are now `complete=20`, `running=1`, `pending=22891`, with no
+  `failed_needs_fix` source count.
+- Coverage state is `running`; `resumeAvailable=false`.
+- Current progress is still on `seguranca_presente` / `Diario do Rio`, date
+  window `2014-01-01` through `2026-06-02`.
+- Current status totals: `articles=17`, `mentions=19`, `stories=19`; progress
+  event totals: `articles=21`, `mentions=23`, `stories=23`; live results
+  endpoint returned 53 items.
+- Memory: `VmRSS=189.96 MiB`, `VmHWM=489.93 MiB`, `VmSize=436.61 MiB`,
+  `VmData=226.11 MiB`.
+- Disk: free `55168.08 MiB`; DB `166.17 MiB`, WAL `0.17 MiB`, SHM `0.03 MiB`.
+- Monitor note: an apparent `target_keys` count of 316 was caused by treating
+  the current job row's JSON text field as a list. Parsed progress and the
+  source ledger still point to the requested job contract; no duplicate job was
+  started and no scope change was made.
+- Next action: continue monitoring for stalls, memory pressure, disk I/O, and
+  source-specific failures.
+
+## 2026-06-02 19:16 America/Sao_Paulo - Three-Cycle Watch
+
+- Cycle 1: job `0b36e332911a` `running`, coverage `running`, source counts
+  `complete=20`, `running=1`, `pending=22891`; totals `articles=158`,
+  `mentions=390`, `stories=390`; live results 53; memory
+  `VmRSS=195.18 MiB`, `VmHWM=489.93 MiB`; DB `167.17 MiB`, WAL `0.42 MiB`.
+- Cycle 2: job still `running`; totals moved to `articles=167`,
+  `mentions=399`, `stories=399`; live results 56; memory `VmRSS=198.5 MiB`,
+  `VmHWM=489.93 MiB`; WAL grew to `2.46 MiB`.
+- Cycle 3: job still `running`; totals moved to `articles=170`,
+  `mentions=402`, `stories=402`; live results 56; memory sample
+  `VmRSS=371.57 MiB`, `VmHWM=489.93 MiB`; DB `168.51 MiB`, WAL `0.58 MiB`.
+- Immediate memory recheck after the cycle-3 spike dropped to
+  `VmRSS=208.93 MiB`, `VmHWM=489.93 MiB`, so the spike appears transient.
+- Current target/source remains `seguranca_presente` / `Diario do Rio`; no
+  source failure, no 5xx endpoint failure, no disk I/O error, and no duplicate
+  job was started.
+- Next action: continue monitoring; treat repeated sustained RSS above roughly
+  430 MiB, new `failed_needs_fix`, or any SQLite/disk barrier as a stop-and-fix
+  condition.
+
+## 2026-06-02 19:23 America/Sao_Paulo - Playwright Viewer Runner Bug
+
+- Production Playwright read-only verification confirmed the profile contract:
+  login page lists `Voluntários-Lab-Políticas-Públicas`; viewer login works;
+  `/api/targets` returns exactly the 18 requested keys; all are
+  `primary=true`, `className=primary`, and not archived; dashboard defaults are
+  exactly the same 18 keys; filter chips are all active/primary; runner primary
+  grid has exactly the 18 requested keys checked; runner secondary grid has
+  zero keys.
+- Playwright found a real viewer-facing runner bug: for the viewer profile,
+  `runnerStatusPill` stayed `Consultando...` and `runUpdateButton` remained
+  enabled while job `0b36e332911a` was actively running.
+- Admin UI did not have the bug: admin status pill showed `Atualizando` and
+  the run button was disabled; the requested 18 keys were present in the admin
+  primary runner grid.
+- Root cause in dashboard JS: `pollStatus()` only ran for `viewerIsAdmin()`,
+  but authenticated passworded viewers have runner controls too.
+- Prepared a minimal hotfix in `assets/clipping.js` and
+  `tools/pages_assets/clipping.js`: add a runner-control predicate and poll
+  status for admin/simulation/authenticated viewer sessions, excluding demo.
+- Next action: deploy the minimal UI hotfix, accept the controlled production
+  interruption, verify job `0b36e332911a` becomes resumable, then resume that
+  same job without starting a duplicate.

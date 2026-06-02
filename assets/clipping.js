@@ -1408,6 +1408,10 @@
     return apiAvailable && (viewerIsAdmin() || sessionProfile() === "rio_economico");
   }
 
+  function canUseRunnerControls() {
+    return (viewerIsAdmin() || inSimulation() || isAuthenticatedViewer()) && !isDemoSession();
+  }
+
   function applyViewerControls() {
     var isAdmin = viewerIsAdmin();
     var simulating = inSimulation();
@@ -3591,9 +3595,10 @@
       loadRioEconomicReport();
       if (apiAvailable) {
         refreshTargets();
-        if (viewerIsAdmin()) pollStatus();
+        var shouldPollStatus = canUseRunnerControls();
+        if (shouldPollStatus) pollStatus();
         pollBaseLiveResults();
-        if (viewerIsAdmin()) window.setInterval(pollStatus, 5000);
+        if (shouldPollStatus) window.setInterval(pollStatus, 5000);
         // pollBaseLiveResults pulls up to 240 items every tick. Base
         // scope only changes when a crawl finishes (which pollStatus
         // already detects). Polling every 5s for ALL clients was the
