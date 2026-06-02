@@ -1253,17 +1253,20 @@
     var canMutate = isAdmin || simulating || authViewer;
     editorEnabled = canMutate && !(payload && payload.meta && payload.meta.editorEnabled === false);
     document.body.classList.toggle("viewer-readonly", !canMutate);
+    var addPrimaryBox = document.getElementById("addPrimaryTargetBox");
     runTabs.forEach(function (button) {
       var tab = button.dataset.runTab || "";
       button.hidden = !canMutate && tab !== "base";
     });
     if (!canMutate) {
       activateRunTab("base");
+      if (addPrimaryBox) addPrimaryBox.hidden = true;
       if (addTargetForm && addTargetForm.closest("details")) {
         addTargetForm.closest("details").hidden = true;
       }
       if (manageTargetsBox) manageTargetsBox.hidden = true;
     } else {
+      if (addPrimaryBox) addPrimaryBox.hidden = false;
       if (addTargetForm && addTargetForm.closest("details")) {
         addTargetForm.closest("details").hidden = false;
       }
@@ -3066,6 +3069,48 @@
   }
 
   if (resumeUpdateButton) resumeUpdateButton.addEventListener("click", resumeActiveUpdate);
+
+  var addPrimaryTargetForm = document.getElementById("addPrimaryTargetForm");
+  var addPrimaryTargetMessage = document.getElementById("addPrimaryTargetMessage");
+
+  if (addPrimaryTargetForm) {
+    addPrimaryTargetForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      var form = new FormData(addPrimaryTargetForm);
+      var validationError = targetDisplayNameError(form.get("display_name"));
+      if (validationError) {
+        setMessage(addPrimaryTargetMessage, validationError, "error");
+        return;
+      }
+      setMessage(addPrimaryTargetMessage, "Salvando nome principal...", "");
+      var submit = addPrimaryTargetForm.querySelector('button[type="submit"]');
+      if (submit) submit.disabled = true;
+      var body = {
+        display_name: form.get("display_name"),
+        keywords: splitList(form.get("keywords")),
+        exact_aliases: splitList(form.get("exact_aliases")),
+      };
+      try {
+        var resp = await apiPost(withSimulateParam("/api/targets/primary"), body);
+        var data = await resp.json().catch(function () { return {}; });
+        if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
+        setMessage(addPrimaryTargetMessage, targetMutationMessage("Nome principal salvo. Ele já vale para a Base atual e para próximas rodadas.", data), "ok");
+        addPrimaryTargetForm.reset();
+        await refreshTargets();
+        if (data && data.key) {
+          selectedTargets.add(data.key);
+          ensureSelectedTargets();
+          if (payload) applyState();
+        }
+        await pollBaseLiveResults();
+        if (manageTargetsBox && manageTargetsBox.open) await refreshManageTargets();
+      } catch (error) {
+        setMessage(addPrimaryTargetMessage, friendlyError(error, "Não foi possível salvar este nome principal."), "error");
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+    });
+  }
 
   if (addTargetForm) {
     addTargetForm.addEventListener("submit", async function (event) {
