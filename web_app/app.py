@@ -346,8 +346,9 @@ async def lifespan(_: FastAPI):
         retention_days = 90
     activity_purged = activity.purge_older_than(retention_days)
     interrupted_jobs = mark_orphaned_active_jobs_interrupted()
+    auto_resume_jobs = str(os.environ.get("CLIPPING_AUTO_RESUME_JOBS") or "").strip().lower() in {"1", "true", "yes"}
     resume_startup = getattr(job_manager, "resume_startup_jobs", None)
-    resumed_jobs = resume_startup() if resume_startup else 0
+    resumed_jobs = resume_startup() if auto_resume_jobs and resume_startup else 0
     # Ensure classification + category tables exist (idempotent CREATE IF NOT EXISTS).
     cdb = ClippingDB(db_path())
     existing_names = {row["name"] for row in cdb.list_categories()}
@@ -362,6 +363,7 @@ async def lifespan(_: FastAPI):
                 "targetsNormalized": targets_normalized,
                 "orphanedJobsInterrupted": interrupted_jobs,
                 "resumedJobs": resumed_jobs,
+                "autoResumeJobs": auto_resume_jobs,
                 "activityPurged": activity_purged,
             },
             job_id="startup-runtime-normalization",
@@ -1387,6 +1389,33 @@ def _sqlite_debug_file_state() -> dict[str, Any]:
     return {"db_path": str(db), "files": files}
 
 
+def _sqlite_sidecar_paths() -> list[Any]:
+    db = db_path()
+    return [db.with_suffix(db.suffix + suffix) for suffix in ("-wal", "-shm", "-journal")]
+
+
+def _clear_sqlite_sidecars() -> dict[str, Any]:
+    cleared: list[str] = []
+    errors: list[dict[str, str]] = []
+    for path in _sqlite_sidecar_paths():
+        try:
+            if path.exists():
+                path.unlink()
+                cleared.append(str(path))
+        except OSError as exc:
+            errors.append({"path": str(path), "error": str(exc)})
+    return {"cleared": cleared, "errors": errors}
+
+
+def _forget_sqlite_schema_cache() -> None:
+    try:
+        from . import db_admin as db_admin_module
+
+        db_admin_module._app_tables_initialized.discard(db_path().resolve())
+    except Exception:  # noqa: BLE001 - best effort before schema re-check.
+        pass
+
+
 def _sqlite_debug_probe() -> dict[str, Any]:
     import sqlite3
 
@@ -1439,6 +1468,84 @@ def _sqlite_debug_probe() -> dict[str, Any]:
     return result
 
 
+def _latest_valid_sqlite_backup() -> dict[str, Any]:
+    import sqlite3
+
+    from . import config
+
+    backups_dir = config.DATA_DIR / "backups"
+    checked: list[dict[str, Any]] = []
+    if not backups_dir.exists():
+        return {"path": "", "checked": checked}
+    candidates = sorted(backups_dir.glob("*/data/clipping.db"), key=lambda path: path.stat().st_mtime, reverse=True)
+    for path in candidates[:20]:
+        item: dict[str, Any] = {"path": str(path)}
+        try:
+            item["size_bytes"] = path.stat().st_size
+            with sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=10) as conn:
+                check = conn.execute("PRAGMA quick_check").fetchone()[0]
+            item["quickCheck"] = check
+            checked.append(item)
+            if check == "ok":
+                return {"path": str(path), "checked": checked}
+        except Exception as exc:  # noqa: BLE001 - diagnostic endpoint reports backup candidates.
+            item["error"] = str(exc)
+            item["errorType"] = type(exc).__name__
+            checked.append(item)
+    return {"path": "", "checked": checked}
+
+
+def _restore_sqlite_from_latest_backup() -> dict[str, Any]:
+    import os
+    import shutil
+    import tempfile
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    latest = _latest_valid_sqlite_backup()
+    backup_path = str(latest.get("path") or "")
+    if not backup_path:
+        raise HTTPException(status_code=404, detail="valid_sqlite_backup_not_found")
+    current_backup_dir = artifact_store.backup_current_artifacts("sqlite-restore-pre-latest-backup")
+    db = db_path()
+    temp_name = ""
+    try:
+        with tempfile.NamedTemporaryFile(dir=db.parent, suffix=".sqlite-restore", delete=False) as temp:
+            temp_name = temp.name
+        shutil.copy2(backup_path, temp_name)
+        os.replace(temp_name, db)
+        temp_name = ""
+        sidecars = _clear_sqlite_sidecars()
+        _forget_sqlite_schema_cache()
+        ensure_app_tables(db)
+        recent_jobs(include_observability=False)
+        uploaded = artifact_store.upload_current_artifacts(
+            manifest={
+                "kind": "sqlite-restore-latest-backup",
+                "createdAt": datetime.now(timezone.utc).isoformat(),
+                "sourceBackup": backup_path,
+                "preRestoreBackupDir": str(current_backup_dir),
+            },
+            job_id="sqlite-restore-latest-backup",
+        )
+        return {
+            "ok": True,
+            "sourceBackup": backup_path,
+            "preRestoreBackupDir": str(current_backup_dir),
+            "sidecars": sidecars,
+            "uploadedArtifacts": uploaded,
+            "uploadedArtifactCount": len(uploaded),
+            "postRepair": _sqlite_debug_probe(),
+            "checkedBackups": latest.get("checked") or [],
+        }
+    finally:
+        if temp_name:
+            try:
+                Path(temp_name).unlink()
+            except OSError:
+                pass
+
+
 def _sqlite_rebuild_from_current() -> dict[str, Any]:
     import os
     import sqlite3
@@ -1475,6 +1582,7 @@ def _sqlite_rebuild_from_current() -> dict[str, Any]:
                 pass
         os.replace(temp_name, db)
         temp_name = ""
+        _forget_sqlite_schema_cache()
         ensure_app_tables(db)
         recent_jobs(include_observability=False)
         uploaded = artifact_store.upload_current_artifacts(
@@ -1508,10 +1616,18 @@ async def admin_debug_sqlite(request: Request) -> dict[str, Any]:
     action = str(payload.get("action") or "report").strip() or "report"
     if action == "report":
         return {"ok": True, "action": action, **_sqlite_debug_probe()}
+    if action == "clear_sidecars":
+        if str(payload.get("confirm") or "") != "clear_sidecars":
+            raise HTTPException(status_code=400, detail="confirm_clear_sidecars_required")
+        return {"ok": True, "action": action, "sidecars": _clear_sqlite_sidecars(), "postRepair": _sqlite_debug_probe()}
     if action == "rebuild_from_current":
         if str(payload.get("confirm") or "") != "rebuild_from_current":
             raise HTTPException(status_code=400, detail="confirm_rebuild_from_current_required")
         return {"action": action, **_sqlite_rebuild_from_current()}
+    if action == "restore_latest_backup":
+        if str(payload.get("confirm") or "") != "restore_latest_backup":
+            raise HTTPException(status_code=400, detail="confirm_restore_latest_backup_required")
+        return {"action": action, **_restore_sqlite_from_latest_backup()}
     raise HTTPException(status_code=400, detail="unknown_sqlite_debug_action")
 
 

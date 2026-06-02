@@ -203,3 +203,37 @@ backfill.
 - Next action: deploy the repair patch, run the SQLite report endpoint, repair
   only if status/live-results remain blocked, then start the single production
   backfill job once through the UI.
+
+## 2026-06-02 18:23 America/Sao_Paulo - Stale Auto-Resume Barrier
+
+- Repair deploy `5fce2ff` became live at `2026-06-02T21:16:25Z`.
+- The WAL fallback temporarily restored job observability, but startup then
+  auto-resumed old job `7c1e4b144df0` from `2026-05-22`.
+- This old job is not the requested Voluntarios backfill. Its target list is
+  `flavio_valle`, `pedro_angelito`, `smoke_sec_1779237862_2965`, and
+  `seguranca_presente`; its date range is `2014-01-01` through `2026-05-22`.
+- Because that job was running, the requested 18-target backfill was not
+  started. The one-full-job constraint for this task remains intact.
+- Source-run events showed the stale job processing `flavio_valle` /
+  `wordpress_api` (`Agenda do Poder`) after startup resume.
+- Attempted to cancel through the visible UI with Playwright. First UI-login
+  attempt did not authenticate; second run authenticated the browser through
+  `/api/login`, but the rendered page did not show an enabled cancel button and
+  no `/api/update/cancel` request was sent.
+- After the stale job resumed, SQLite regressed: `/api/update/status` again
+  reports `OperationalError: disk I/O error`; the new SQLite report endpoint
+  shows both read-only and app-level probes failing on `journal_mode`,
+  `quick_check`, and table queries. Disk capacity remains fine
+  (`free_mib` about `52318.62`; DB about `140.39 MiB`; WAL `0 MiB`).
+- Implemented a second repair patch:
+  - startup auto-resume is now disabled unless `CLIPPING_AUTO_RESUME_JOBS` is
+    explicitly true;
+  - `/api/admin/debug/sqlite` now has explicit confirmed actions for
+    `clear_sidecars` and `restore_latest_backup`;
+  - DB replacement paths clear the app-table initialization cache before
+    re-checking schema.
+- Verification before deploy: `compileall web_app/app.py web_app/db_admin.py`
+  passed; focused pytest passed for the WAL fallback and `/healthz` schema.
+- Next action: deploy this recovery patch, confirm production starts without
+  auto-resuming the stale job, use the SQLite recovery endpoint if needed, then
+  verify idle status before starting the requested backfill.
