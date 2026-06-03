@@ -576,3 +576,270 @@ backfill.
 - Next action: deploy the minimal UI hotfix, accept the controlled production
   interruption, verify job `0b36e332911a` becomes resumable, then resume that
   same job without starting a duplicate.
+
+## 2026-06-02 19:29 America/Sao_Paulo - UI Hotfix Deploy, Resume, and Verification
+
+- Committed and pushed `632f499` (`fix(ui): poll status for viewer runner
+  sessions`), staging only the runner-status polling hotfix plus this task log;
+  unrelated dirty worktree changes were not staged.
+- Render deploy `dep-d8flg7rrjlhs73anb8h0` for `632f499` became live at
+  `2026-06-02T22:26:38Z`.
+- Post-deploy job state: job `0b36e332911a` became
+  `interrupted_resumable`, `resumeAvailable=true`; source counts
+  `complete=20`, `interrupted_resumable=22892`; totals preserved at
+  `articles=203`, `mentions=436`, `stories=436`.
+- Resume API response HTTP 200 for the same job id; post-resume state became
+  `running`, coverage `pending`, with source counts `complete=20`,
+  `pending=22892` and totals still `203/436/436`.
+- Post-fix Playwright verification passed for the viewer profile:
+  - login page lists `Voluntários-Lab-Políticas-Públicas`;
+  - viewer login works as `voluntarios_lab_politicas`;
+  - `/api/targets`, dashboard targets, dashboard defaults, filter chips, and
+    runner primary grid all match exactly the 18 requested keys;
+  - all targets are primary/default active; runner secondary grid has zero
+    keys;
+  - viewer runner now shows `Atualizando`, `runUpdateButton.disabled=true`,
+    and the active-job message;
+  - no console errors or page errors.
+- Monitoring after resume: all endpoints HTTP 200; job `running`, coverage
+  `running`; source counts `complete=20`, `running=1`, `pending=22891`;
+  current target/source `seguranca_presente` / `Diario do Rio`; totals
+  `articles=206`, `mentions=544`, `stories=544`; live results 50.
+- Memory after resume: current `VmRSS=233.41 MiB`, but `VmHWM=502.62 MiB`;
+  this high-water value is close to the Render free limit and remains a watch
+  item even though current RSS dropped.
+- Disk after resume: free `54708.7 MiB`; DB `173.27 MiB`, WAL `0.02 MiB`, SHM
+  `0.03 MiB`.
+- Next action: continue monitoring memory and source progress; stop and fix if
+  RSS stays high or the service restarts/returns to `interrupted_resumable`.
+
+## 2026-06-02 19:32 America/Sao_Paulo - Post-Hotfix Memory Watch
+
+- Cycle 1 after hotfix resume: job `0b36e332911a` `running`, coverage
+  `pending`, source counts `complete=20`, `pending=22892`; status totals
+  temporarily showed `articles=6`, `mentions=13`, `stories=13` while the
+  resumed source-run accounting settled; memory was high at
+  `VmRSS=406.57 MiB`, `VmHWM=503.21 MiB`.
+- Cycle 2: job `running`, coverage `running`, source counts `complete=20`,
+  `running=1`, `pending=22891`; totals moved to `articles=217`,
+  `mentions=555`, `stories=555`; live results 51.
+- Cycle 2 memory dropped back to `VmRSS=234.2 MiB`; high-water increased to
+  `VmHWM=507.5 MiB`.
+- Current target/source remains `seguranca_presente` / `Diario do Rio`; latest
+  source events show checkpoints/starts without errors.
+- Disk remains usable: free `51445.22 MiB`; DB `173.52 MiB`, WAL `1.87 MiB`,
+  SHM `0.03 MiB`.
+- Decision: continue the job because current RSS recovered and the source
+  ledger is progressing, but keep memory as a high-risk watch item. A sustained
+  high RSS climb or another restart becomes a recovery/fix barrier.
+
+## 2026-06-02 19:34 America/Sao_Paulo - Memory Danger-Line Recheck
+
+- One-minute follow-up sample: all monitored endpoints HTTP 200; job
+  `0b36e332911a` `running`, coverage `pending`; source counts
+  `complete=20`, `pending=22892`; current target/source
+  `seguranca_presente` / `Diario do Rio`.
+- The sample hit the memory danger line: `VmRSS=430.77 MiB`,
+  `VmHWM=510.89 MiB`. Latest source event still reported RSS around
+  `215.5 MiB`, suggesting a transient allocation.
+- Immediate recheck: job still `running`, coverage `running`; source counts
+  `complete=20`, `running=1`, `pending=22891`; totals advanced to
+  `articles=228`, `mentions=566`, `stories=566`.
+- Immediate recheck memory dropped to `VmRSS=222.37 MiB`; `VmHWM` remains
+  `510.89 MiB`.
+- Decision: no duplicate job and no new deploy/fix right now. Continue
+  monitoring. Treat a sustained current RSS near/above `430 MiB`, an OOM
+  restart, or `interrupted_resumable` as the next recovery barrier.
+
+## 2026-06-02 19:39 America/Sao_Paulo - Contract Check After User Question
+
+- Re-read `LONG_TERM_GOALS.md`: required production job is one custom/all run
+  for all 18 keys, `date_from=2014-01-01`, `date_to=2026-06-02`.
+- Live production status confirms job `0b36e332911a` is configured with
+  `preset=custom`, `collector=all`, `target_keys_count=18`,
+  `date_from=2014-01-01`, `date_to=2026-06-02`.
+- The job has not completed the full backfill. It is still `running`, coverage
+  `running`, with source counts `complete=20`, `running=1`, `pending=22891`
+  out of `sourceRunCount=22912`.
+- Current target/source remains `seguranca_presente` / `Diario do Rio`.
+- Current totals: `articles=243`, `mentions=581`, `stories=581`.
+- Answer to user: the job was correctly launched from 2014, but the complete
+  all-target/all-source 2014-2026 backfill is not done yet.
+
+## 2026-06-02 19:44 America/Sao_Paulo - Live Website Publish Monitoring
+
+- User correctly flagged that monitoring must include continuous live website
+  updates, not only job status.
+- Verified the code path: after source runs save articles,
+  `publish_incremental_snapshot()` should export the dashboard and upload
+  artifacts; `upload_live_checkpoint()` separately uploads DB checkpoints for
+  live results.
+- Cycle 1:
+  - all checked endpoints HTTP 200;
+  - job `0b36e332911a` `running`, coverage `running`;
+  - totals `articles=251`, `mentions=589`, `stories=589`;
+  - `publishedAt=2026-06-02T22:41:01.192002+00:00`;
+  - `incremental_publish_complete` uploaded 7 artifacts including
+    `assets/clipping-data.json` and `assets/clipping-raw-texts.json`;
+  - dashboard asset `generatedAt=02/06/2026 22:40 UTC`;
+  - live-results latest saved item `2026-06-02T22:41:52.614378+00:00`;
+  - memory `VmRSS=219.64 MiB`, `VmHWM=510.89 MiB`.
+- Cycle 2:
+  - job still `running`, coverage `running`;
+  - totals advanced to `articles=256`, `mentions=594`, `stories=594`;
+  - `publishedAt=2026-06-02T22:42:38.783391+00:00`;
+  - another `incremental_publish_complete` uploaded 7 artifacts;
+  - dashboard asset `generatedAt=02/06/2026 22:42 UTC`;
+  - live-results latest saved item `2026-06-02T22:42:53.800377+00:00`;
+  - memory `VmRSS=234.78 MiB`, `VmHWM=517.82 MiB`.
+- Cycle 3:
+  - job still `running`, coverage `running`;
+  - totals advanced to `articles=262`, `mentions=600`, `stories=600`;
+  - live-results latest saved item advanced to
+    `2026-06-02T22:43:46.942848+00:00`;
+  - `live_checkpoint_uploaded` occurred at `2026-06-02T22:43:21.865010+00:00`;
+  - no new `incremental_publish_complete` appeared in this sample, likely
+    within the 90-second incremental publish throttle;
+  - memory `VmRSS=242.03 MiB`, `VmHWM=526.95 MiB`.
+- Decision: live-results and artifact publishing are moving, but continue
+  monitoring the next publish window and memory high-water. Current RSS remains
+  acceptable; high-water remains risky.
+
+## 2026-06-02 19:47 America/Sao_Paulo - Publish Window Confirmation
+
+- Waited through an additional incremental publish window after the prior
+  live-update sample.
+- Job `0b36e332911a` remained `running`, coverage `running`; source counts
+  `complete=20`, `running=1`, `pending=22891`.
+- Totals advanced to `articles=272`, `mentions=610`, `stories=610`.
+- Incremental dashboard publish succeeded again:
+  - `publishedAt=2026-06-02T22:46:02.224579+00:00`;
+  - `export_complete` at `2026-06-02T22:45:46.424733+00:00`;
+  - `incremental_publish_complete` uploaded 7 artifacts, including
+    `assets/clipping-data.json`, `assets/clipping-raw-texts.json`, and the
+    compressed DB.
+- Dashboard asset moved to `generatedAt=02/06/2026 22:45 UTC`,
+  `totalStories=883`, `totalArticles=1118`.
+- Live results remained fresh: latest saved item
+  `2026-06-02T22:46:56.839988+00:00`; base live-results states
+  `published=57`, `saved=3`.
+- Live DB checkpoints uploaded at `22:45:36Z`, `22:46:12Z`, and `22:46:46Z`.
+- Memory current `VmRSS=233.94 MiB`; high-water remains risky at
+  `VmHWM=526.95 MiB`.
+- Decision: live website update requirement is currently being met. Continue
+  monitoring because the backfill is far from complete and memory high-water is
+  above the nominal Render free limit.
+
+## 2026-06-02 19:51 America/Sao_Paulo - Active Loop After User Warning
+
+- Ran another active monitoring loop after confirming live-publish behavior.
+- Cycle 1:
+  - job `0b36e332911a` `running`, coverage `running`;
+  - totals `articles=276`, `mentions=614`, `stories=614`;
+  - live-results latest saved item advanced to
+    `2026-06-02T22:47:48.441086+00:00`;
+  - asset remained at `generatedAt=02/06/2026 22:45 UTC`;
+  - memory `VmRSS=235.89 MiB`, `VmHWM=526.95 MiB`.
+- Cycle 2:
+  - totals advanced to `articles=280`, `mentions=618`, `stories=618`;
+  - `publishedAt` advanced to `2026-06-02T22:48:36.156558+00:00`;
+  - dashboard asset advanced to `generatedAt=02/06/2026 22:48 UTC`,
+    `totalStories=888`, `totalArticles=1125`;
+  - live-results latest saved item advanced to
+    `2026-06-02T22:49:14.909377+00:00`;
+  - memory sample hit danger line at `VmRSS=453.23 MiB`.
+- Immediate memory recheck after cycle 2:
+  - job still `running`, coverage `running`;
+  - totals advanced to `articles=282`, `mentions=620`, `stories=620`;
+  - current memory recovered to `VmRSS=236.87 MiB`.
+- Cycle 3:
+  - totals advanced to `articles=283`, `mentions=621`, `stories=621`;
+  - live-results latest saved item advanced to
+    `2026-06-02T22:50:22.672983+00:00`;
+  - memory sample again hit danger line at `VmRSS=433.02 MiB`.
+- Immediate memory recheck after cycle 3:
+  - job still `running`, coverage `running`;
+  - totals advanced to `articles=285`, `mentions=623`, `stories=623`;
+  - current memory recovered to `VmRSS=240.13 MiB`;
+  - high-water increased to `VmHWM=530.04 MiB`.
+- Decision: live website update behavior is being met during this window
+  (`publishedAt`, asset `generatedAt`, and live-results all moved). Memory
+  spikes remain the main operational risk and must be checked immediately when
+  sampled above the danger threshold.
+
+## 2026-06-02 20:55 America/Sao_Paulo - Current Status Check
+
+- All monitored endpoints HTTP 200: status, memory, disk, source-run events,
+  base live-results, and dashboard asset.
+- Job `0b36e332911a` is still `running`, coverage `running`,
+  `resumeAvailable=false`.
+- Contract still intact: `date_from=2014-01-01`, `date_to=2026-06-02`.
+- Source ledger unchanged in shape: `complete=20`, `running=1`,
+  `pending=22891` out of `sourceRunCount=22912`.
+- Current target/source remains `seguranca_presente` / `Diario do Rio`.
+- Totals advanced to `articles=531`, `mentions=869`, `stories=869`.
+- Live website update path is currently working:
+  - `publishedAt=2026-06-02T23:54:51.269540+00:00`;
+  - dashboard asset `generatedAt=02/06/2026 23:54 UTC`;
+  - asset totals `totalStories=1060`, `totalArticles=1378`;
+  - base live-results latest saved item
+    `2026-06-02T23:55:21.995378+00:00`;
+  - live-results states among latest 60: `published=58`, `saved=2`.
+- Memory current is acceptable at `VmRSS=248.25 MiB`; high-water is very risky
+  at `VmHWM=585.19 MiB`.
+- Disk remains usable: free `66664.33 MiB`; DB `212.74 MiB`, WAL `0.58 MiB`,
+  SHM `0.03 MiB`.
+- Decision: continue monitoring. No duplicate job and no fix action right now
+  because current RSS is low, endpoints are healthy, live publishing is fresh,
+  and source events continue; memory high-water remains the main risk.
+
+## 2026-06-03 13:42 America/Sao_Paulo - Restarted Check, Found Source Barrier
+
+- Restarted monitoring after the prior check stopped.
+- Production comparison against the long-term plan:
+  - viewer website still matches the profile contract via Playwright;
+  - login page lists `Voluntários-Lab-Políticas-Públicas`;
+  - viewer login works as `voluntarios_lab_politicas`;
+  - `/api/targets`, dashboard targets, dashboard defaults, chips, and runner
+    primary grid all match exactly the 18 requested keys;
+  - all are primary/default-active; runner secondary grid has zero keys;
+  - runner shows `Atualizando` and blocks duplicate start;
+  - no browser console or page errors.
+- Viewer-scoped dashboard asset at check time:
+  - `generatedAt=03/06/2026 04:51 UTC`;
+  - `totalStories=929`, `totalArticles=1550`;
+  - latest viewer live result `2026-06-03T04:50:45.673824+00:00`.
+- Admin production status changed materially since the last log:
+  - job `0b36e332911a` still `running`;
+  - contract still intact: `date_from=2014-01-01`, `date_to=2026-06-02`;
+  - coverage now `failed_needs_fix`;
+  - source counts `complete=2705`, `failed_needs_fix=1`, `pending=20206`;
+  - totals `articles=1173`, `mentions=1180`, `stories=1180`;
+  - current source moved to `seguranca_presente` / `O Globo Sitemap`;
+  - dashboard publish is fresh at `publishedAt=2026-06-03T04:51:20.805007+00:00`;
+  - admin asset `generatedAt=03/06/2026 04:51 UTC`,
+    `totalStories=1490`, `totalArticles=2225`.
+- Failed source inspected:
+  - target `seguranca_presente`;
+  - source `Agenda do Poder`;
+  - source key `wordpress_api_v2:2:0`;
+  - cursor page 25, page size 25;
+  - accumulated `600` candidates and `131` saved articles/mentions/stories;
+  - error `fetch_url hard timeout (35s)` on the WordPress API page-25 URL;
+  - last failed at `2026-06-03T01:14:08.135194+00:00`.
+- Memory is an active barrier:
+  - first recheck `VmRSS=669.88 MiB`, `VmHWM=828.84 MiB`;
+  - follow-up `VmRSS=659.21 MiB`, `VmHWM=850.37 MiB`.
+- Prepared production hotfix:
+  - late WordPress hard timeouts after multiple successful pages are treated
+    as end-of-pagination instead of a fatal source failure;
+  - first/early WordPress timeouts still fail normally;
+  - focused tests passed:
+    `test_late_wordpress_hard_timeout_completes_source_run`,
+    `test_early_wordpress_hard_timeout_still_fails_source_run`, and
+    `test_durable_wordpress_source_runs_use_small_api_pages`;
+  - `compileall web_app/jobs.py` passed.
+- Next action: deploy the focused hotfix, accept controlled interruption,
+  verify job `0b36e332911a` becomes resumable, resume that same job, then
+  confirm the failed source is requeued and can complete without starting a
+  duplicate full job.

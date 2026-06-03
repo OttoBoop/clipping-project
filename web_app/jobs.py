@@ -1147,19 +1147,25 @@ def collect_source_run_candidates(
     if source_type == "wordpress_api":
         site = WORDPRESS_API_SITES[max(0, int(cursor.get("site_index") or 0))]
         page = max(1, int(cursor.get("page") or 1))
-        candidates = collect_wordpress_api(
-            str(cursor.get("query") or ""),
-            source_name=str(site.get("source_name") or "WordPress"),
-            base_url=str(site.get("base_url") or ""),
-            date_from=date_from,
-            date_to=date_to,
-            per_site_limit=WORDPRESS_PAGE_SIZE,
-            per_page=WORDPRESS_PAGE_SIZE,
-            request_timeout=request_timeout,
-            start_page=page,
-            max_pages=1,
-            raise_on_error=True,
-        )
+        try:
+            candidates = collect_wordpress_api(
+                str(cursor.get("query") or ""),
+                source_name=str(site.get("source_name") or "WordPress"),
+                base_url=str(site.get("base_url") or ""),
+                date_from=date_from,
+                date_to=date_to,
+                per_site_limit=WORDPRESS_PAGE_SIZE,
+                per_page=WORDPRESS_PAGE_SIZE,
+                request_timeout=request_timeout,
+                start_page=page,
+                max_pages=1,
+                raise_on_error=True,
+            )
+        except TimeoutError as exc:
+            seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total")))
+            if page >= 5 and seen_before >= WORDPRESS_PAGE_SIZE * 4 and "hard timeout" in str(exc):
+                return [], cursor, True
+            raise
         complete = len(candidates) < WORDPRESS_PAGE_SIZE or page >= WORDPRESS_MAX_PAGES
         next_cursor = dict(cursor)
         next_cursor["page"] = page + 1 if not complete else page

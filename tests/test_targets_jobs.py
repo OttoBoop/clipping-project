@@ -1485,6 +1485,79 @@ def test_durable_wordpress_source_runs_use_small_api_pages(monkeypatch, tmp_path
     assert observed["max_pages"] == 1
 
 
+def test_late_wordpress_hard_timeout_completes_source_run(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "preset": "custom",
+        "collector": "wordpress_api",
+        "target_keys": ["shakira"],
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "export": True,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+        "durable": True,
+    }
+    monkeypatch.setattr(jobs, "WORDPRESS_API_SITES", [{"source_name": "Agenda", "base_url": "https://example.com"}])
+
+    def timeout_wordpress_api(*_args, **_kwargs):
+        raise TimeoutError("fetch_url hard timeout (35s): https://example.com/wp-json/wp/v2/posts?page=25")
+
+    monkeypatch.setattr(jobs, "collect_wordpress_api", timeout_wordpress_api)
+
+    candidates, next_cursor, complete = jobs.collect_source_run_candidates(
+        spec,
+        {
+            "source_type": "wordpress_api",
+            "source_name": "Agenda",
+            "candidates_seen": 600,
+            "candidates_total": 600,
+        },
+        {"site_index": 0, "query_index": 0, "query": "Shakira", "page": 25},
+    )
+
+    assert candidates == []
+    assert complete is True
+    assert next_cursor["page"] == 25
+
+
+def test_early_wordpress_hard_timeout_still_fails_source_run(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "preset": "custom",
+        "collector": "wordpress_api",
+        "target_keys": ["shakira"],
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "export": True,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+        "durable": True,
+    }
+    monkeypatch.setattr(jobs, "WORDPRESS_API_SITES", [{"source_name": "Agenda", "base_url": "https://example.com"}])
+
+    def timeout_wordpress_api(*_args, **_kwargs):
+        raise TimeoutError("fetch_url hard timeout (35s): https://example.com/wp-json/wp/v2/posts?page=2")
+
+    monkeypatch.setattr(jobs, "collect_wordpress_api", timeout_wordpress_api)
+
+    try:
+        jobs.collect_source_run_candidates(
+            spec,
+            {
+                "source_type": "wordpress_api",
+                "source_name": "Agenda",
+                "candidates_seen": 25,
+                "candidates_total": 25,
+            },
+            {"site_index": 0, "query_index": 0, "query": "Shakira", "page": 2},
+        )
+    except TimeoutError:
+        pass
+    else:
+        raise AssertionError("early WordPress timeout should still fail the source run")
+
+
 def test_durable_internal_search_units_are_versioned_and_paged(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     units = jobs.build_source_units({"collector": "internal_search"}, "shakira")
