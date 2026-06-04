@@ -843,3 +843,322 @@ backfill.
   verify job `0b36e332911a` becomes resumable, resume that same job, then
   confirm the failed source is requeued and can complete without starting a
   duplicate full job.
+
+## 2026-06-04 20:27:03 -03 - Production Recovery Baseline
+
+- Job `0b36e332911a` status `interrupted_resumable`, coverage `interrupted_resumable`, resumeAvailable `True`.
+- Contract: date `2014-01-01` to `2026-06-02`, collector `all`, preset `custom`, exact 18 keys `True`.
+- Source ledger: total `22912`, counts `{"complete": 23, "interrupted_resumable": 22889}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `None`, mentions `805`, stories `301`, publishedAt `2026-06-03T01:40:39.522579+00:00`.
+- Website asset: generatedAt `03/06/2026 19:41 UTC`, stories `1485`, articles `2007`, targets `27`.
+- Live results: latest `2026-06-03T16:51:31.525271+00:00`, count `51`.
+- Viewer profile/login: login ok `False`, profile `{'found': True, 'label': 'Voluntários-Lab-Políticas-Públicas', 'hasPassword': True, 'targetKeysCount': 18, 'defaultTargetsCount': 18, 'missing': [], 'extra': [], 'defaultsMissing': [], 'defaultsExtra': [], 'targetKeys': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica'], 'defaultTargets': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica']}`.
+- Target contract: `{'count': 18, 'missing': [], 'extra': [], 'primaryExact': True}`.
+- Memory: VmRSS `154.02` MiB, VmHWM `682.22` MiB, limit `512` MiB.
+- Disk: free `71900.06` MiB, DB `254.16` MiB.
+- Storage diagnostic: enabled `False`, reason `supabase_env_not_available_locally`.
+- HTTP timings/status: `{"asset": {"elapsed": 1.31, "status": 200}, "disk": {"elapsed": 0.41, "status": 200}, "events": {"elapsed": 0.41, "status": 200}, "health": {"elapsed": 0.86, "status": 200}, "live": {"elapsed": 0.64, "status": 200}, "memory": {"elapsed": 0.61, "status": 200}, "sqlite": {"elapsed": 8.19, "status": 200}, "status": {"elapsed": 1.24, "status": 200}, "targets": {"elapsed": 0.24, "status": 200}, "viewers": {"elapsed": 0.23, "status": 200}}`.
+- Recent source events: `[{"at": "2026-06-03T01:41:53.755590+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:40.247251+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:40:52.964517+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:40:22.446931+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:39:08.444608+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:38:38.069488+00:00", "event": "source_run_complete", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "complete", "error": ""}, {"at": "2026-06-03T01:36:57.604497+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "running", "error": ""}, {"at": "2026-06-03T01:36:25.606763+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "pending", "error": ""}]`.
+- Barriers: `["job_status:interrupted_resumable", "coverage:interrupted_resumable", "viewer_login_failed"]`.
+
+## 2026-06-04 20:27:45 -03 - Password Repair Applied
+
+- Job `0b36e332911a` status `interrupted_resumable`, coverage `interrupted_resumable`, resumeAvailable `True`.
+- Contract: date `2014-01-01` to `2026-06-02`, collector `all`, preset `custom`, exact 18 keys `True`.
+- Source ledger: total `22912`, counts `{"complete": 23, "interrupted_resumable": 22889}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `None`, mentions `805`, stories `301`, publishedAt `2026-06-03T01:40:39.522579+00:00`.
+- Website asset: generatedAt `03/06/2026 19:41 UTC`, stories `1485`, articles `2007`, targets `27`.
+- Live results: latest `2026-06-03T16:51:31.525271+00:00`, count `51`.
+- Viewer profile/login: login ok `True`, profile `{'found': True, 'label': 'Voluntários-Lab-Políticas-Públicas', 'hasPassword': True, 'targetKeysCount': 18, 'defaultTargetsCount': 18, 'missing': [], 'extra': [], 'defaultsMissing': [], 'defaultsExtra': [], 'targetKeys': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica'], 'defaultTargets': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica']}`.
+- Target contract: `{'count': 18, 'missing': [], 'extra': [], 'primaryExact': True}`.
+- Memory: VmRSS `160.52` MiB, VmHWM `682.22` MiB, limit `512` MiB.
+- Disk: free `71906.5` MiB, DB `254.16` MiB.
+- Storage diagnostic: enabled `False`, reason `supabase_env_not_available_locally`.
+- HTTP timings/status: `{"asset": {"elapsed": 1.11, "status": 200}, "disk": {"elapsed": 0.24, "status": 200}, "events": {"elapsed": 0.24, "status": 200}, "health": {"elapsed": 0.96, "status": 200}, "live": {"elapsed": 0.32, "status": 200}, "memory": {"elapsed": 0.23, "status": 200}, "sqlite": {"elapsed": 0.59, "status": 200}, "status": {"elapsed": 0.84, "status": 200}, "targets": {"elapsed": 0.23, "status": 200}, "viewers": {"elapsed": 0.23, "status": 200}}`.
+- Recent source events: `[{"at": "2026-06-03T01:41:53.755590+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:40.247251+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:40:52.964517+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:40:22.446931+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:39:08.444608+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:38:38.069488+00:00", "event": "source_run_complete", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "complete", "error": ""}, {"at": "2026-06-03T01:36:57.604497+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "running", "error": ""}, {"at": "2026-06-03T01:36:25.606763+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "pending", "error": ""}]`.
+- Barriers: `["job_status:interrupted_resumable", "coverage:interrupted_resumable"]`.
+
+## 2026-06-04 20:31 America/Sao_Paulo - Checkpoint Recovery Decision
+
+- Implemented and ran the dedicated operator loop at
+  `tools/voluntarios_backfill_operator.py`.
+- Focused operator tests passed: `6 passed`.
+- Production credential drift was repaired through the admin viewer API:
+  saved viewer password now logs in as `voluntarios_lab_politicas`; plaintext
+  was updated only in `/home/otavio/Documents/clipping-project senhas.md`.
+- Playwright UI verification passed after the repair:
+  - login page lists `Voluntários-Lab-Políticas-Públicas`;
+  - UI login returns HTTP 200;
+  - `/api/targets` under the viewer returns HTTP 200;
+  - runner primary keys and checked primary keys are exactly the 18 requested
+    target keys;
+  - runner secondary keys are empty;
+  - no browser console/page errors were observed.
+- Storage/checkpoint comparison:
+  - production health reports storage enabled with prefix `clipping-project`;
+  - current production SQLite `quickCheck` is `ok`;
+  - current DB is `254.16 MiB` with source ledger
+    `{"complete": 23, "interrupted_resumable": 22889}`;
+  - local Supabase service-key env is unavailable to the operator script, so
+    direct storage object metadata cannot be listed locally;
+  - Render MCP log access is installed but has no workspace selected in this
+    session, so logs cannot be queried without user-side workspace selection.
+- Decision: no verified newer valid checkpoint is accessible through the
+  current safe operator surface. The recovery floor is therefore the current
+  production ledger: job `0b36e332911a`, `complete=23`,
+  `interrupted_resumable=22889`. Resume this same job only; do not start a
+  duplicate full job.
+
+## 2026-06-04 20:36 America/Sao_Paulo - Monitor False-Positive Corrected
+
+- Resumed job `0b36e332911a` successfully through `/api/update/resume`.
+- Post-resume status: `running`, coverage `pending/running`,
+  source ledger moved to `{"complete": 23, "pending": 22888, "running": 1}`.
+- The active source is `seguranca_presente` / `Agenda do Poder`; events show
+  fresh `source_run_started` and checkpoint events at `2026-06-04T23:32Z`,
+  `23:33Z`, and `23:34Z`.
+- Live website updates resumed:
+  - live-results latest timestamp advanced to `2026-06-04T23:35:53Z`;
+  - `publishedAt` advanced to `2026-06-04T23:34:15Z`;
+  - asset `generatedAt` advanced to `04/06/2026 23:34 UTC`.
+- The first monitor implementation incorrectly flagged
+  `source_stall_cycles:3` because the same source-run stayed active for
+  multiple cycles. That is not a real stall when articles, live-results,
+  events, or publish timestamps are moving.
+- Operator script was patched so stall detection now includes article,
+  mention, story, publish, and live-results movement, not only source-run
+  counts/current source.
+
+## 2026-06-04 20:37 America/Sao_Paulo - Memory Spike Recheck
+
+- Corrected monitor immediately found a real risk sample:
+  `VmRSS=563.04 MiB`, above the nominal `512 MiB` Render limit.
+- The sample still showed active work:
+  - fresh Agenda do Poder checkpoint at `2026-06-04T23:36:19Z`;
+  - live-results latest `2026-06-04T23:36:06Z`;
+  - `publishedAt=2026-06-04T23:36:21Z`;
+  - asset `generatedAt=04/06/2026 23:36 UTC`.
+- Immediate follow-up audit showed memory recovered to `VmRSS=262.98 MiB`;
+  SQLite remained `quickCheck=ok`; job stayed `running`; no barrier remained.
+- Decision: treat the high-RSS sample as a transient memory spike, not a
+  restart/fix barrier. Operator script was patched so monitor records first
+  high-RSS sample as a warning and stops only when high RSS is sustained across
+  consecutive cycles.
+
+## 2026-06-04 20:29:33 -03 - Playwright UI Contract Check
+
+- Job `None` status `None`, coverage `n/a`, resumeAvailable `None`.
+- Contract: date `None` to `None`, collector `None`, preset `None`, exact 18 keys `None`.
+- Source ledger: total `None`, counts `{}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `None`, mentions `None`, stories `None`, publishedAt `None`.
+- Website asset: generatedAt `None`, stories `None`, articles `None`, targets `None`.
+- Live results: latest `None`, count `None`.
+- Viewer profile/login: login ok `None`, profile `None`.
+- Target contract: `None`.
+- Memory: VmRSS `None` MiB, VmHWM `None` MiB, limit `None` MiB.
+- Disk: free `None` MiB, DB `None` MiB.
+- Storage diagnostic: enabled `None`, reason ``.
+- HTTP timings/status: `{}`.
+- Recent source events: `[]`.
+- Barriers: `["ui_primaryExact_failed", "ui_checkedPrimaryExact_failed", "ui_targets_http:401", "ui_target_contract_failed", "ui_console_or_page_errors"]`.
+
+## 2026-06-04 20:30:38 -03 - Playwright UI Contract Check
+
+- Job `None` status `None`, coverage `n/a`, resumeAvailable `None`.
+- Contract: date `None` to `None`, collector `None`, preset `None`, exact 18 keys `None`.
+- Source ledger: total `None`, counts `{}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `None`, mentions `None`, stories `None`, publishedAt `None`.
+- Website asset: generatedAt `None`, stories `None`, articles `None`, targets `None`.
+- Live results: latest `None`, count `None`.
+- Viewer profile/login: login ok `None`, profile `None`.
+- Target contract: `None`.
+- Memory: VmRSS `None` MiB, VmHWM `None` MiB, limit `None` MiB.
+- Disk: free `None` MiB, DB `None` MiB.
+- Storage diagnostic: enabled `None`, reason ``.
+- HTTP timings/status: `{}`.
+- Recent source events: `[]`.
+- Barriers: `[]`.
+
+## 2026-06-04 20:31:53 -03 - Resumed Same Production Job
+
+- Job `0b36e332911a` status `running`, coverage `pending`, resumeAvailable `False`.
+- Contract: date `2014-01-01` to `2026-06-02`, collector `all`, preset `custom`, exact 18 keys `True`.
+- Source ledger: total `22912`, counts `{"complete": 23, "pending": 22889}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `None`, mentions `805`, stories `301`, publishedAt `2026-06-03T01:40:39.522579+00:00`.
+- Website asset: generatedAt `03/06/2026 19:41 UTC`, stories `1485`, articles `2007`, targets `27`.
+- Live results: latest `2026-06-03T16:51:31.525271+00:00`, count `51`.
+- Viewer profile/login: login ok `True`, profile `{'found': True, 'label': 'Voluntários-Lab-Políticas-Públicas', 'hasPassword': True, 'targetKeysCount': 18, 'defaultTargetsCount': 18, 'missing': [], 'extra': [], 'defaultsMissing': [], 'defaultsExtra': [], 'targetKeys': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica'], 'defaultTargets': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica']}`.
+- Target contract: `{'count': 18, 'missing': [], 'extra': [], 'primaryExact': True}`.
+- Memory: VmRSS `218.2` MiB, VmHWM `721.84` MiB, limit `512` MiB.
+- Disk: free `71627.46` MiB, DB `254.18` MiB.
+- Storage diagnostic: enabled `False`, reason `supabase_env_not_available_locally`.
+- HTTP timings/status: `{"asset": {"elapsed": 0.78, "status": 200}, "disk": {"elapsed": 0.27, "status": 200}, "events": {"elapsed": 0.23, "status": 200}, "health": {"elapsed": 2.17, "status": 200}, "live": {"elapsed": 0.31, "status": 200}, "memory": {"elapsed": 0.22, "status": 200}, "sqlite": {"elapsed": 0.86, "status": 200}, "status": {"elapsed": 1.25, "status": 200}, "targets": {"elapsed": 0.27, "status": 200}, "viewers": {"elapsed": 0.27, "status": 200}}`.
+- Recent source events: `[{"at": "2026-06-03T01:41:53.755590+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:40.247251+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:40:52.964517+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:40:22.446931+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:39:08.444608+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:38:38.069488+00:00", "event": "source_run_complete", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "complete", "error": ""}, {"at": "2026-06-03T01:36:57.604497+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "running", "error": ""}, {"at": "2026-06-03T01:36:25.606763+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "pending", "error": ""}]`.
+- Barriers: `[]`.
+
+## 2026-06-04 20:32:25 -03 - Monitor Cycle 1
+
+- Job `0b36e332911a` status `running`, coverage `running`, resumeAvailable `False`.
+- Contract: date `2014-01-01` to `2026-06-02`, collector `all`, preset `custom`, exact 18 keys `True`.
+- Source ledger: total `22912`, counts `{"complete": 23, "pending": 22888, "running": 1}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `None`, mentions `805`, stories `301`, publishedAt `2026-06-03T01:40:39.522579+00:00`.
+- Website asset: generatedAt `03/06/2026 19:41 UTC`, stories `1485`, articles `2007`, targets `27`.
+- Live results: latest `2026-06-03T16:51:31.525271+00:00`, count `51`.
+- Viewer profile/login: login ok `True`, profile `{'found': True, 'label': 'Voluntários-Lab-Políticas-Públicas', 'hasPassword': True, 'targetKeysCount': 18, 'defaultTargetsCount': 18, 'missing': [], 'extra': [], 'defaultsMissing': [], 'defaultsExtra': [], 'targetKeys': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica'], 'defaultTargets': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica']}`.
+- Target contract: `{'count': 18, 'missing': [], 'extra': [], 'primaryExact': True}`.
+- Memory: VmRSS `215.3` MiB, VmHWM `721.84` MiB, limit `512` MiB.
+- Disk: free `71634.51` MiB, DB `254.18` MiB.
+- Storage diagnostic: enabled `False`, reason `supabase_env_not_available_locally`.
+- HTTP timings/status: `{"asset": {"elapsed": 1.11, "status": 200}, "disk": {"elapsed": 0.25, "status": 200}, "events": {"elapsed": 0.24, "status": 200}, "health": {"elapsed": 0.97, "status": 200}, "live": {"elapsed": 0.42, "status": 200}, "memory": {"elapsed": 0.24, "status": 200}, "sqlite": {"elapsed": 0.59, "status": 200}, "status": {"elapsed": 1.04, "status": 200}, "targets": {"elapsed": 0.26, "status": 200}, "viewers": {"elapsed": 0.24, "status": 200}}`.
+- Recent source events: `[{"at": "2026-06-04T23:32:16.043928+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:53.755590+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:40.247251+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:40:52.964517+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:40:22.446931+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:39:08.444608+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:38:38.069488+00:00", "event": "source_run_complete", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "complete", "error": ""}, {"at": "2026-06-03T01:36:57.604497+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "running", "error": ""}]`.
+- Barriers: `[]`.
+
+## 2026-06-04 20:33:35 -03 - Monitor Cycle 2
+
+- Job `0b36e332911a` status `running`, coverage `running`, resumeAvailable `False`.
+- Contract: date `2014-01-01` to `2026-06-02`, collector `all`, preset `custom`, exact 18 keys `True`.
+- Source ledger: total `22912`, counts `{"complete": 23, "pending": 22888, "running": 1}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `865`, mentions `1303`, stories `1303`, publishedAt `2026-06-03T01:40:39.522579+00:00`.
+- Website asset: generatedAt `03/06/2026 19:41 UTC`, stories `1485`, articles `2007`, targets `27`.
+- Live results: latest `2026-06-04T23:33:34.038244+00:00`, count `51`.
+- Viewer profile/login: login ok `True`, profile `{'found': True, 'label': 'Voluntários-Lab-Políticas-Públicas', 'hasPassword': True, 'targetKeysCount': 18, 'defaultTargetsCount': 18, 'missing': [], 'extra': [], 'defaultsMissing': [], 'defaultsExtra': [], 'targetKeys': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica'], 'defaultTargets': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica']}`.
+- Target contract: `{'count': 18, 'missing': [], 'extra': [], 'primaryExact': True}`.
+- Memory: VmRSS `243.51` MiB, VmHWM `721.84` MiB, limit `512` MiB.
+- Disk: free `71628.75` MiB, DB `254.18` MiB.
+- Storage diagnostic: enabled `False`, reason `supabase_env_not_available_locally`.
+- HTTP timings/status: `{"asset": {"elapsed": 0.93, "status": 200}, "disk": {"elapsed": 0.28, "status": 200}, "events": {"elapsed": 0.24, "status": 200}, "health": {"elapsed": 1.82, "status": 200}, "live": {"elapsed": 0.33, "status": 200}, "memory": {"elapsed": 0.24, "status": 200}, "sqlite": {"elapsed": 0.91, "status": 200}, "status": {"elapsed": 0.91, "status": 200}, "targets": {"elapsed": 0.24, "status": 200}, "viewers": {"elapsed": 0.22, "status": 200}}`.
+- Recent source events: `[{"at": "2026-06-04T23:32:16.043928+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:53.755590+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:40.247251+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:40:52.964517+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:40:22.446931+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:39:08.444608+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:38:38.069488+00:00", "event": "source_run_complete", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "complete", "error": ""}, {"at": "2026-06-03T01:36:57.604497+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Tribuna da Serra", "status": "running", "error": ""}]`.
+- Barriers: `[]`.
+
+## 2026-06-04 20:34:44 -03 - Monitor Cycle 3
+
+- Job `0b36e332911a` status `running`, coverage `running`, resumeAvailable `False`.
+- Contract: date `2014-01-01` to `2026-06-02`, collector `all`, preset `custom`, exact 18 keys `True`.
+- Source ledger: total `22912`, counts `{"complete": 23, "pending": 22888, "running": 1}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `7`, mentions `7`, stories `7`, publishedAt `2026-06-04T23:34:15.391707+00:00`.
+- Website asset: generatedAt `04/06/2026 23:34 UTC`, stories `1485`, articles `1957`, targets `27`.
+- Live results: latest `2026-06-04T23:33:59.015776+00:00`, count `51`.
+- Viewer profile/login: login ok `True`, profile `{'found': True, 'label': 'Voluntários-Lab-Políticas-Públicas', 'hasPassword': True, 'targetKeysCount': 18, 'defaultTargetsCount': 18, 'missing': [], 'extra': [], 'defaultsMissing': [], 'defaultsExtra': [], 'targetKeys': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica'], 'defaultTargets': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica']}`.
+- Target contract: `{'count': 18, 'missing': [], 'extra': [], 'primaryExact': True}`.
+- Memory: VmRSS `243.52` MiB, VmHWM `721.84` MiB, limit `512` MiB.
+- Disk: free `71642.63` MiB, DB `254.71` MiB.
+- Storage diagnostic: enabled `False`, reason `supabase_env_not_available_locally`.
+- HTTP timings/status: `{"asset": {"elapsed": 0.71, "status": 200}, "disk": {"elapsed": 0.25, "status": 200}, "events": {"elapsed": 0.25, "status": 200}, "health": {"elapsed": 0.96, "status": 200}, "live": {"elapsed": 0.33, "status": 200}, "memory": {"elapsed": 0.23, "status": 200}, "sqlite": {"elapsed": 0.67, "status": 200}, "status": {"elapsed": 0.82, "status": 200}, "targets": {"elapsed": 0.25, "status": 200}, "viewers": {"elapsed": 0.23, "status": 200}}`.
+- Recent source events: `[{"at": "2026-06-04T23:34:27.390700+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-04T23:33:59.096683+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:32:16.043928+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:53.755590+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:40.247251+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:40:52.964517+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:40:22.446931+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:39:08.444608+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}]`.
+- Barriers: `[]`.
+
+## 2026-06-04 20:35:56 -03 - Monitor Cycle 4
+
+- Job `0b36e332911a` status `running`, coverage `running`, resumeAvailable `False`.
+- Contract: date `2014-01-01` to `2026-06-02`, collector `all`, preset `custom`, exact 18 keys `True`.
+- Source ledger: total `22912`, counts `{"complete": 23, "pending": 22888, "running": 1}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `873`, mentions `1311`, stories `1311`, publishedAt `2026-06-04T23:34:15.391707+00:00`.
+- Website asset: generatedAt `04/06/2026 23:34 UTC`, stories `1485`, articles `1957`, targets `27`.
+- Live results: latest `2026-06-04T23:35:53.743800+00:00`, count `57`.
+- Viewer profile/login: login ok `True`, profile `{'found': True, 'label': 'Voluntários-Lab-Políticas-Públicas', 'hasPassword': True, 'targetKeysCount': 18, 'defaultTargetsCount': 18, 'missing': [], 'extra': [], 'defaultsMissing': [], 'defaultsExtra': [], 'targetKeys': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica'], 'defaultTargets': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica']}`.
+- Target contract: `{'count': 18, 'missing': [], 'extra': [], 'primaryExact': True}`.
+- Memory: VmRSS `248.74` MiB, VmHWM `721.84` MiB, limit `512` MiB.
+- Disk: free `71634.73` MiB, DB `254.71` MiB.
+- Storage diagnostic: enabled `False`, reason `supabase_env_not_available_locally`.
+- HTTP timings/status: `{"asset": {"elapsed": 0.94, "status": 200}, "disk": {"elapsed": 0.61, "status": 200}, "events": {"elapsed": 0.35, "status": 200}, "health": {"elapsed": 1.36, "status": 200}, "live": {"elapsed": 0.44, "status": 200}, "memory": {"elapsed": 0.31, "status": 200}, "sqlite": {"elapsed": 0.82, "status": 200}, "status": {"elapsed": 1.33, "status": 200}, "targets": {"elapsed": 0.26, "status": 200}, "viewers": {"elapsed": 0.26, "status": 200}}`.
+- Recent source events: `[{"at": "2026-06-04T23:34:27.390700+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-04T23:33:59.096683+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:32:16.043928+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:53.755590+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:40.247251+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:40:52.964517+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:40:22.446931+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:39:08.444608+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}]`.
+- Barriers: `["source_stall_cycles:3"]`.
+
+## 2026-06-04 20:36:39 -03 - Monitor Cycle 1
+
+- Job `0b36e332911a` status `running`, coverage `pending`, resumeAvailable `False`.
+- Contract: date `2014-01-01` to `2026-06-02`, collector `all`, preset `custom`, exact 18 keys `True`.
+- Source ledger: total `22912`, counts `{"complete": 23, "pending": 22889}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `16`, mentions `16`, stories `16`, publishedAt `2026-06-04T23:36:21.272789+00:00`.
+- Website asset: generatedAt `04/06/2026 23:36 UTC`, stories `1485`, articles `1961`, targets `27`.
+- Live results: latest `2026-06-04T23:36:06.557537+00:00`, count `57`.
+- Viewer profile/login: login ok `True`, profile `{'found': True, 'label': 'Voluntários-Lab-Políticas-Públicas', 'hasPassword': True, 'targetKeysCount': 18, 'defaultTargetsCount': 18, 'missing': [], 'extra': [], 'defaultsMissing': [], 'defaultsExtra': [], 'targetKeys': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica'], 'defaultTargets': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica']}`.
+- Target contract: `{'count': 18, 'missing': [], 'extra': [], 'primaryExact': True}`.
+- Memory: VmRSS `563.04` MiB, VmHWM `721.84` MiB, limit `512` MiB.
+- Disk: free `71641.68` MiB, DB `255.82` MiB.
+- Storage diagnostic: enabled `False`, reason `supabase_env_not_available_locally`.
+- HTTP timings/status: `{"asset": {"elapsed": 0.73, "status": 200}, "disk": {"elapsed": 0.43, "status": 200}, "events": {"elapsed": 0.24, "status": 200}, "health": {"elapsed": 2.05, "status": 200}, "live": {"elapsed": 0.43, "status": 200}, "memory": {"elapsed": 0.57, "status": 200}, "sqlite": {"elapsed": 1.54, "status": 200}, "status": {"elapsed": 1.66, "status": 200}, "targets": {"elapsed": 0.23, "status": 200}, "viewers": {"elapsed": 0.23, "status": 200}}`.
+- Recent source events: `[{"at": "2026-06-04T23:36:19.672268+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:34:27.390700+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-04T23:33:59.096683+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:32:16.043928+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:53.755590+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:40.247251+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:40:52.964517+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:40:22.446931+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}]`.
+- Barriers: `["memory_rss_danger:563.04"]`.
+
+## 2026-06-04 20:36:57 -03 - Production Recovery Baseline
+
+- Job `0b36e332911a` status `running`, coverage `running`, resumeAvailable `False`.
+- Contract: date `2014-01-01` to `2026-06-02`, collector `all`, preset `custom`, exact 18 keys `True`.
+- Source ledger: total `22912`, counts `{"complete": 23, "pending": 22888, "running": 1}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `16`, mentions `16`, stories `16`, publishedAt `2026-06-04T23:36:38.579555+00:00`.
+- Website asset: generatedAt `04/06/2026 23:36 UTC`, stories `1485`, articles `1961`, targets `27`.
+- Live results: latest `2026-06-04T23:36:06.557537+00:00`, count `57`.
+- Viewer profile/login: login ok `True`, profile `{'found': True, 'label': 'Voluntários-Lab-Políticas-Públicas', 'hasPassword': True, 'targetKeysCount': 18, 'defaultTargetsCount': 18, 'missing': [], 'extra': [], 'defaultsMissing': [], 'defaultsExtra': [], 'targetKeys': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica'], 'defaultTargets': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica']}`.
+- Target contract: `{'count': 18, 'missing': [], 'extra': [], 'primaryExact': True}`.
+- Memory: VmRSS `262.98` MiB, VmHWM `721.84` MiB, limit `512` MiB.
+- Disk: free `71639.54` MiB, DB `255.82` MiB.
+- Storage diagnostic: enabled `False`, reason `supabase_env_not_available_locally`.
+- HTTP timings/status: `{"asset": {"elapsed": 1.1, "status": 200}, "disk": {"elapsed": 0.25, "status": 200}, "events": {"elapsed": 0.24, "status": 200}, "health": {"elapsed": 1.23, "status": 200}, "live": {"elapsed": 0.3, "status": 200}, "memory": {"elapsed": 0.35, "status": 200}, "sqlite": {"elapsed": 0.56, "status": 200}, "status": {"elapsed": 1.44, "status": 200}, "targets": {"elapsed": 0.24, "status": 200}, "viewers": {"elapsed": 0.26, "status": 200}}`.
+- Recent source events: `[{"at": "2026-06-04T23:36:52.646575+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-04T23:36:19.672268+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:34:27.390700+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-04T23:33:59.096683+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:32:16.043928+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:53.755590+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:40.247251+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:40:52.964517+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}]`.
+- Barriers: `[]`.
+
+## 2026-06-04 20:37:36 -03 - Monitor Cycle 1
+
+- Job `0b36e332911a` status `running`, coverage `running`, resumeAvailable `False`.
+- Contract: date `2014-01-01` to `2026-06-02`, collector `all`, preset `custom`, exact 18 keys `True`.
+- Source ledger: total `22912`, counts `{"complete": 23, "pending": 22888, "running": 1}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `877`, mentions `1315`, stories `1315`, publishedAt `2026-06-04T23:36:38.579555+00:00`.
+- Website asset: generatedAt `04/06/2026 23:36 UTC`, stories `1485`, articles `1961`, targets `27`.
+- Live results: latest `2026-06-04T23:36:06.557537+00:00`, count `57`.
+- Viewer profile/login: login ok `True`, profile `{'found': True, 'label': 'Voluntários-Lab-Políticas-Públicas', 'hasPassword': True, 'targetKeysCount': 18, 'defaultTargetsCount': 18, 'missing': [], 'extra': [], 'defaultsMissing': [], 'defaultsExtra': [], 'targetKeys': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica'], 'defaultTargets': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica']}`.
+- Target contract: `{'count': 18, 'missing': [], 'extra': [], 'primaryExact': True}`.
+- Memory: VmRSS `262.0` MiB, VmHWM `721.84` MiB, limit `512` MiB.
+- Disk: free `71636.5` MiB, DB `255.82` MiB.
+- Storage diagnostic: enabled `False`, reason `supabase_env_not_available_locally`.
+- HTTP timings/status: `{"asset": {"elapsed": 1.02, "status": 200}, "disk": {"elapsed": 0.42, "status": 200}, "events": {"elapsed": 0.22, "status": 200}, "health": {"elapsed": 1.19, "status": 200}, "live": {"elapsed": 0.43, "status": 200}, "memory": {"elapsed": 0.49, "status": 200}, "sqlite": {"elapsed": 0.73, "status": 200}, "status": {"elapsed": 0.98, "status": 200}, "targets": {"elapsed": 0.23, "status": 200}, "viewers": {"elapsed": 0.23, "status": 200}}`.
+- Recent source events: `[{"at": "2026-06-04T23:36:52.646575+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-04T23:36:19.672268+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:34:27.390700+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-04T23:33:59.096683+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:32:16.043928+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:53.755590+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:40.247251+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}, {"at": "2026-06-03T01:40:52.964517+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}]`.
+- Barriers: `[]`.
+
+## 2026-06-04 20:38:53 -03 - Monitor Cycle 2
+
+- Job `0b36e332911a` status `running`, coverage `pending`, resumeAvailable `False`.
+- Contract: date `2014-01-01` to `2026-06-02`, collector `all`, preset `custom`, exact 18 keys `True`.
+- Source ledger: total `22912`, counts `{"complete": 23, "pending": 22889}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `22`, mentions `22`, stories `22`, publishedAt `2026-06-04T23:38:37.804853+00:00`.
+- Website asset: generatedAt `04/06/2026 23:38 UTC`, stories `1485`, articles `1964`, targets `27`.
+- Live results: latest `2026-06-04T23:38:30.601672+00:00`, count `60`.
+- Viewer profile/login: login ok `True`, profile `{'found': True, 'label': 'Voluntários-Lab-Políticas-Públicas', 'hasPassword': True, 'targetKeysCount': 18, 'defaultTargetsCount': 18, 'missing': [], 'extra': [], 'defaultsMissing': [], 'defaultsExtra': [], 'targetKeys': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica'], 'defaultTargets': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica']}`.
+- Target contract: `{'count': 18, 'missing': [], 'extra': [], 'primaryExact': True}`.
+- Memory: VmRSS `523.26` MiB, VmHWM `721.84` MiB, limit `512` MiB.
+- Disk: free `71640.55` MiB, DB `256.57` MiB.
+- Storage diagnostic: enabled `False`, reason `supabase_env_not_available_locally`.
+- HTTP timings/status: `{"asset": {"elapsed": 1.22, "status": 200}, "disk": {"elapsed": 0.41, "status": 200}, "events": {"elapsed": 0.25, "status": 200}, "health": {"elapsed": 1.74, "status": 200}, "live": {"elapsed": 0.34, "status": 200}, "memory": {"elapsed": 0.59, "status": 200}, "sqlite": {"elapsed": 1.04, "status": 200}, "status": {"elapsed": 1.98, "status": 200}, "targets": {"elapsed": 0.24, "status": 200}, "viewers": {"elapsed": 0.24, "status": 200}}`.
+- Recent source events: `[{"at": "2026-06-04T23:38:36.035642+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:36:52.646575+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-04T23:36:19.672268+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:34:27.390700+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-04T23:33:59.096683+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:32:16.043928+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:53.755590+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:40.247251+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Veja Rio", "status": "pending", "error": ""}]`.
+- Barriers: `[]`.
+
+## 2026-06-04 20:40:08 -03 - Monitor Cycle 3
+
+- Job `0b36e332911a` status `running`, coverage `running`, resumeAvailable `False`.
+- Contract: date `2014-01-01` to `2026-06-02`, collector `all`, preset `custom`, exact 18 keys `True`.
+- Source ledger: total `22912`, counts `{"complete": 23, "pending": 22888, "running": 1}`.
+- Current target/source: `n/a` / `n/a`.
+- Totals/status fields: articles `884`, mentions `1322`, stories `1322`, publishedAt `2026-06-04T23:38:56.455415+00:00`.
+- Website asset: generatedAt `04/06/2026 23:38 UTC`, stories `1485`, articles `1964`, targets `27`.
+- Live results: latest `2026-06-04T23:39:51.509987+00:00`, count `60`.
+- Viewer profile/login: login ok `True`, profile `{'found': True, 'label': 'Voluntários-Lab-Políticas-Públicas', 'hasPassword': True, 'targetKeysCount': 18, 'defaultTargetsCount': 18, 'missing': [], 'extra': [], 'defaultsMissing': [], 'defaultsExtra': [], 'targetKeys': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica'], 'defaultTargets': ['seguranca_presente', 'programa_seguranca_presente', 'operacao_seguranca_presente', 'seguranca', 'inseguranca', 'crime', 'criminalidade', 'violencia', 'assalto', 'roubo', 'furto', 'medo', 'policiamento', 'patrulhamento', 'percepcao_de_seguranca', 'sensacao_de_seguranca', 'reforco_no_policiamento', 'ordem_publica']}`.
+- Target contract: `{'count': 18, 'missing': [], 'extra': [], 'primaryExact': True}`.
+- Memory: VmRSS `534.66` MiB, VmHWM `721.84` MiB, limit `512` MiB.
+- Disk: free `71634.28` MiB, DB `256.57` MiB.
+- Storage diagnostic: enabled `False`, reason `supabase_env_not_available_locally`.
+- HTTP timings/status: `{"asset": {"elapsed": 0.68, "status": 200}, "disk": {"elapsed": 0.36, "status": 200}, "events": {"elapsed": 0.24, "status": 200}, "health": {"elapsed": 1.99, "status": 200}, "live": {"elapsed": 0.45, "status": 200}, "memory": {"elapsed": 0.24, "status": 200}, "sqlite": {"elapsed": 0.64, "status": 200}, "status": {"elapsed": 1.73, "status": 200}, "targets": {"elapsed": 0.25, "status": 200}, "viewers": {"elapsed": 0.25, "status": 200}}`.
+- Recent source events: `[{"at": "2026-06-04T23:39:08.007887+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-04T23:38:36.035642+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:36:52.646575+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-04T23:36:19.672268+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:34:27.390700+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-04T23:33:59.096683+00:00", "event": "source_run_checkpoint", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "pending", "error": ""}, {"at": "2026-06-04T23:32:16.043928+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Agenda do Poder", "status": "running", "error": ""}, {"at": "2026-06-03T01:41:53.755590+00:00", "event": "source_run_started", "target": "seguranca_presente", "source": "Veja Rio", "status": "running", "error": ""}]`.
+- Barriers: `["memory_rss_danger:534.66"]`.

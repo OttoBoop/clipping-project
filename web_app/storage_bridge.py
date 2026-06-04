@@ -147,10 +147,16 @@ class ArtifactStore:
         return True
 
     def upload_sqlite_snapshot(self, local_path: Path, remote_path: str) -> bool:
-        payload = sqlite_snapshot_bytes(local_path)
-        if not payload:
+        gz_path = sqlite_snapshot_gzip_file(local_path)
+        if gz_path is None:
             return False
-        return self.upload_bytes(gzip.compress(payload, compresslevel=6), remote_path, "application/gzip")
+        try:
+            return self.upload_path(gz_path, remote_path, "application/gzip", timeout=90)
+        finally:
+            try:
+                gz_path.unlink()
+            except OSError:
+                pass
 
     def backup_current_artifacts(self, label: str) -> Path:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -175,11 +181,9 @@ class ArtifactStore:
     def upload_file(self, local_path: Path, remote_path: str) -> bool:
         if not self.enabled:
             return False
-        payload = local_path.read_bytes()
         if local_path.suffix.lower() == ".db":
-            payload = sqlite_snapshot_bytes(local_path)
-            if not payload:
-                return False
+            return self.upload_sqlite_snapshot(local_path, remote_path)
+        payload = local_path.read_bytes()
         content_type = _content_type(local_path)
         try:
             response = requests.post(
@@ -189,6 +193,21 @@ class ArtifactStore:
                 timeout=60,
             )
         except requests.RequestException:
+            return False
+        return response.status_code in {200, 201}
+
+    def upload_path(self, local_path: Path, remote_path: str, content_type: str, *, timeout: int = 60) -> bool:
+        if not self.enabled:
+            return False
+        try:
+            with local_path.open("rb") as handle:
+                response = requests.post(
+                    self._object_url(remote_path),
+                    headers={**self._headers(content_type), "x-upsert": "true"},
+                    data=handle,
+                    timeout=timeout,
+                )
+        except (OSError, requests.RequestException):
             return False
         return response.status_code in {200, 201}
 
@@ -240,6 +259,38 @@ def sqlite_snapshot_bytes(path: Path) -> bytes:
         if tmp_name:
             try:
                 Path(tmp_name).unlink()
+            except OSError:
+                pass
+
+
+def sqlite_snapshot_gzip_file(path: Path) -> Path | None:
+    """Write a consistent gzipped SQLite snapshot to disk without large buffers."""
+    if not path.is_file():
+        return None
+    snapshot_name = ""
+    gzip_name = ""
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as snapshot:
+            snapshot_name = snapshot.name
+        with sqlite3.connect(path) as source, sqlite3.connect(snapshot_name) as dest:
+            source.execute("PRAGMA busy_timeout = 5000")
+            source.backup(dest)
+        with tempfile.NamedTemporaryFile(suffix=".db.gz", delete=False) as gzipped:
+            gzip_name = gzipped.name
+        with Path(snapshot_name).open("rb") as source_file, gzip.open(gzip_name, "wb", compresslevel=6) as gzip_file:
+            shutil.copyfileobj(source_file, gzip_file, length=1024 * 1024)
+        return Path(gzip_name)
+    except (OSError, sqlite3.Error):
+        if gzip_name:
+            try:
+                Path(gzip_name).unlink()
+            except OSError:
+                pass
+        return None
+    finally:
+        if snapshot_name:
+            try:
+                Path(snapshot_name).unlink()
             except OSError:
                 pass
 
