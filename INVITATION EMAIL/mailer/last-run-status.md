@@ -1,10 +1,10 @@
 # Last send-invites run
 
-- run_id: 26918711241
-- run_number: 10
-- trigger sha: 104d9ad4bda1b7c9a0d09d73a013527537719f5a
+- run_id: 26963967383
+- run_number: 11
+- trigger sha: a186313c45ea6ab6a805eba2fb4cada0f786aab3
 - script exit code: 0
-- timestamp (UTC): 2026-06-03T23:09:50Z
+- timestamp (UTC): 2026-06-04T16:16:08Z
 
 ## Run output (stdout + stderr)
 
@@ -12,7 +12,7 @@
 [diag] event=push
 [diag] source=push_trigger_file
 [diag] template=INVITATION EMAIL/campaigns/programadores-cariocas-survey/invite_body.txt
-[diag] recipients=INVITATION EMAIL/campaigns/programadores-cariocas-survey/recipients_batch1_remaining139.txt
+[diag] recipients=INVITATION EMAIL/campaigns/programadores-cariocas-survey/recipients_batch2_owner_authorized.txt
 [diag] from_name=Equipe Programadores Cariocas
 [diag] subject=<from template>
 [diag] dry_run=false
@@ -21,146 +21,405 @@
 [ots] retrieved secret from us.onetimesecret.com (HTTP 200)
 [plan] from        : Equipe Programadores Cariocas <issneutro@gmail.com>
 [plan] subject     : Questionário Programadores Cariocas
-[plan] recipients  : 139
-         - gigitata199427@gmail.com
-         - gimenez9422@gmail.com
-         - gmarquesp@outlook.com
-         - gomesdavid9@gmail.com
-         - gomesmarianasantos78@gmail.com
-         - gorilzaum@gmail.com
-         - grazifirmino15@gmail.com
-         - grgds11@gmail.com
-         - gsouza1088@gmail.com
-         - guilherme_profissional@yahoo.com.br
-         - guilhermealbuquerques02@gmail.com
-         - guilhermememedon@gmail.com
-         - guilhermemoraes228@gmail.com
-         - gustavoraguiar35@gmail.com
-         - gustavoresende3e@gmail.com
-         - gustavovasco89@gmail.com
-         - guttenbergjunior@hotmail.com
-         - henriqueengenhariaele@gmail.com
-         - henriquemagsz@gmail.com
-         - henriqueoliveira2011@live.com
-         - herbertmengo@hotmail.com
-         - hostoluis@gmail.com
-         - hudoliversilva@gmail.com
-         - hugobrigido59@gmail.com
-         - hugoramosjan@gmail.com
-         - iagomb991@gmail.com
-         - igor02b1@gmail.com
-         - igorcrodrigues94@gmail.com
-         - igornaspereira@hotmail.com
-         - igorngonzalez@gmail.com
-         - igorsantfer@gmail.com
-         - igorslv17@gmail.com
-         - igorvieira2805@gmail.com
-         - igorzpqd2@hotmail.com
-         - indianematos@gmail.com
-         - indilllashoow54@gmail.com
-         - ingridcassia0@gmail.com
-         - ionarasantana32@gmail.com
-         - iraphaelfelix@hotmail.com
-         - irismachado666@gmail.com
-         - isabelaalvesc17@gmail.com
-         - isabelabmoura@hotmail.com
-         - isabellaffb@hotmail.com
-         - isabellamoreira570@gmail.com
-         - isabellessmelo@gmail.com
-         - isacarvalho2450@gmail.com
-         - ismaeldj1234567@gmail.com
-         - ismaelmelo9469@hotmail.com
-         - ismaelwadejr07@gmail.com
-         - iuryfreitas961@gmail.com
-         - ivanilsonsillva2020@gmail.com
-         - jacmendesm45@gmail.com
-         - jaco157_hogro@hotmail.com
-         - jadiribeiro20@gmail.com
-         - jainemonique35@gmail.com
-         - jandersonoliveira16@hotmail.com
-         - jaynandes@gmail.com
-         - jean118877@hotmail.com
-         - jeandiniz09@hotmail.com
-         - jefersonpaixaojp@gmail.com
-         - jenifer_pinheiro@hotmail.com
-         - jeniferarruda@outlook.com
-         - jenifermattei@outlook.com
-         - jessicacosima@gmail.com
-         - jessicadasilvasoares2017@gmail.com
-         - jessyka_carolina_2010@hotmail.com
-         - jessymuniz13@gmail.com
-         - jesusjuliana93@gmail.com
-         - jfs21210@gmail.com
-         - jhonatanpmp@gmail.com
-         - jjuansimo@gmail.com
-         - jlmoraes13@gmail.com
-         - joanarband123@gmail.com
-         - joaoguilheerm19@gmail.com
-         - joaoochotorena@gmail.com
-         - joaopedro1415@gmail.com
-         - joaophvt@gmail.com
-         - joaov301@gmail.com
-         - joaovictorconta20@gmail.com
-         - joaovictorczs20@gmail.com
-         - jonasandradesw@gmail.com
-         - jonasdanova@gmail.com
-         - jonassousagtr@gmail.com
-         - jonathancfalcao@gmail.com
-         - jonmendes7803@gmail.com
-         - jordanlimasilva@gmail.com
-         - jorge_menezess@hotmail.com
-         - jorge_rufino@outlook.com
-         - jorgemarcosfc@outlook.com
-         - jorgeyurilima@gmail.com
-         - josafaferraz1@gmail.com
-         - joseanepacheco56@gmail.com
-         - joseelguesabal@gmail.com
-         - joseg081@gmail.com
-         - jozisrfm@gmail.com
-         - jpsilvamedeiros@gmail.com
-         - jr_marcosantonio@hotmail.com
-         - jrnjrn124@gmail.com
-         - js073158@gmail.com
-         - juangomessales@gmail.com
-         - juanurgelles92@gmail.com
-         - jubsju31@gmail.com
-         - jujuatrevidaanna@gmail.com
-         - jukiloo9988@gmail.com
-         - julialmartins2002@gmail.com
-         - julianarodriguesnogueira@gmail.com
-         - julianasoucs@gmail.com
-         - julianecoutinhoprado@gmail.com
-         - juliapaulinerangel@gmail.com
-         - juliocgcj@hotmail.com
-         - juliohenriquee2004@gmail.com
-         - julioxlima626@gmail.com
-         - juninhojr2003@hotmail.com
-         - juniormoreira10@outlook.com
-         - juniorsousa73@gmail.com
-         - kaiolimadecarvalho@gmail.com
-         - kaiomelo1998@gmail.com
-         - kaiquemelo6@hotmail.com
-         - kamillypereiracostaifrj@gmail.com
-         - karenkdb@live.com
-         - karenlmoraes@gmail.com
-         - karinamachado2298@gmail.com
-         - karinemelo843@gmail.com
-         - karinevasconcelos7@gmail.com
-         - karollayneerod@gmail.com
-         - katarinelucas1@gmail.com
-         - kauasoarres@icloud.com
-         - kayllanefs19@gmail.com
-         - kayllanesa4@gmail.com
-         - kaymattos21@gmail.com
-         - kcristine947@gmail.com
-         - kelymsn@live.com
-         - kemillyvitoriacc@gmail.com
-         - kesiaabrahao8@gmail.com
-         - kevintor20506@gmail.com
-         - kkarlanalimaa@gmail.com
-         - kr09@outlook.com
-         - laffrontoliveira@gmail.com
-         - laisafigueiredo60@gmail.com
+[plan] recipients  : 398
+         - laisbenvindo@gmail.com
+         - laissoaresleao@gmail.com
+         - laranayt14@gmail.com
+         - larislvmach@gmail.com
+         - larissa98pereira@gmail.com
+         - larissafabrahao@gmail.com
+         - larissagabriele96@gmail.com
+         - larissaperrout2016@gmail.com
+         - larissasilvafarias72@gmail.com
+         - lariza_soares@hotmail.com
+         - lary_2802@hotmail.com
+         - larycarsilva@gmail.com
+         - layonaraujosilva@hotmail.com
+         - lcaduduflamenguista@gmail.com
+         - lcdayane49@gmail.com
+         - lcrodrigues1996@hotmail.com
+         - lcsantospedro@gmail.com
+         - leandroarielnascimento@gmail.com
+         - leehmoretti@gmail.com
+         - leilakessiasantana@gmail.com
+         - leon102011@live.com
+         - leonardo10bns@yahoo.com.br
+         - leonardo_garcia_96@hotmail.com
+         - leonardocorrealcs4@gmail.com
+         - leonardogxcv@gmail.com
+         - leonardovianaaquino@gmail.com
+         - leonardovillar70@gmail.com
+         - leticiaalmeida75@hotmail.com
+         - leticiamattosilva@gmail.com
+         - leticiapaeslcp@gmail.com
+         - leticiapereiradasilvalps@gmail.com
+         - leticinhahelennna@gmail.com
+         - levylima1510@gmail.com
+         - liannafeiht@gmail.com
+         - licerodrigues50@gmail.com
+         - lilianesecunha@gmail.com
+         - lilianmguima@gmail.com
+         - lincolnfern4ndes@gmail.com
+         - linkamorim2@gmail.com
+         - lipebarreiro3@gmail.com
+         - llansr07@gmail.com
+         - llopes660@gmail.com
+         - lopesbruna646@gmail.com
+         - loretopedro20@gmail.com
+         - lorhanabrandao@hotmail.com
+         - lorrany23012004@gmail.com
+         - lowcomanche@gmail.com
+         - lp797060@gmail.com
+         - lsousaah@gmail.com
+         - luagp33@gmail.com
+         - luan92silva@gmail.com
+         - luanamiguel02@hotmail.com
+         - luangracine@gmail.com
+         - luanmartins9406@gmail.com
+         - lucas2sales@hotmail.com
+         - lucasamaro2014la@gmail.com
+         - lucasbenmendonca@gmail.com
+         - lucascardoso1302@gmail.com
+         - lucascg102@gmail.com
+         - lucaschristian76@gmail.com
+         - lucascovv@gmail.com
+         - lucasdelfino2511@gmail.com
+         - lucasdossantossilva74@gmail.com
+         - lucaselli4n@gmail.com
+         - lucasoliveirasilvap@gmail.com
+         - lucasqzoliver@gmail.com
+         - lucassa1901@gmail.com
+         - lucassfernandosantos@gmail.com
+         - luceldo2010@hotmail.com
+         - lucianoramos218lr@gmail.com
+         - lucineiaduram@gmail.com
+         - luckassouza1997@hotmail.com
+         - luisfelipebsj@gmail.com
+         - luisfelipesl@live.com
+         - luisguilhermerj@gmail.com
+         - luishenriquelimarj@gmail.com
+         - luissoaresx7@gmail.com
+         - luizcaboclo2013@gmail.com
+         - luizfelliperocha44@gmail.com
+         - luizfernandoduartevidal1@gmail.com
+         - luizfsouzacontato@gmail.com
+         - lunaclark2002@gmail.com
+         - lunanvelloso@gmail.com
+         - luuuanwinck@gmail.com
+         - lyncolnnegao7@gmail.com
+         - lyzademaria@gmail.com
+         - macedogsp@gmail.com
+         - maduvarellah@gmail.com
+         - maiararibeiro388@gmail.com
+         - maichaelsilva2001@gmail.com
+         - maiconbre27@gmail.com
+         - maiolinogm@hotmail.com
+         - majuhsouza18@gmail.com
+         - manoeligoralves@gmail.com
+         - manubrito322@gmail.com
+         - manuop@outlook.com
+         - marcelafigueiredo44@gmail.com
+         - marcellemedeiroslm@gmail.com
+         - marcelosouto676@gmail.com
+         - marceloydm@gmail.com
+         - marcos10esperto@gmail.com
+         - marcosantonio788@hotmail.com
+         - marcospaulosilvasiqueira105@gmail.com
+         - marcosponts@hotmail.com
+         - marcossgoficial@hotmail.com.br
+         - marcusviniciusg100@gmail.com
+         - marcusvrga@gmail.com
+         - mariaalicebalbino@hotmail.com
+         - mariadutra2305@gmail.com
+         - mariajaciara1996@gmail.com
+         - mariajulial2514@gmail.com
+         - marianadepinho@gmail.com
+         - marianaherbst31@gmail.com
+         - marianamedeiros100@gmail.com
+         - marianasouzaeco@gmail.com
+         - markfonsecaa@gmail.com
+         - marlonsouzadantas@gmail.com
+         - marthalb2@hotmail.com
+         - maryfb1031@gmail.com
+         - mateusaffonso99@gmail.com
+         - mateusribrodrigues@gmail.com
+         - mateustransf@gmail.com
+         - mateusvalviesse@gmail.com
+         - matheusadm02@hotmail.com
+         - matheusdscardoso1@gmail.com
+         - matheusduarte_99@hotmail.com
+         - matheuselh@gmail.com
+         - matheusfreire097@gmail.com
+         - matheushonorio88@gmail.com
+         - matheusjbk@gmail.com
+         - matheuslisboabr@gmail.com
+         - matheusoutros@hotmail.com
+         - matheusrmalta@gmail.com
+         - maxwilliansabinorj@gmail.com
+         - mayara12367@hotmail.com
+         - mayarajjeronymo@gmail.com
+         - mayconxd11@gmail.com
+         - mcarvalhojb@gmail.com
+         - mcssl@outlook.com
+         - meirelleslari@gmail.com
+         - melmartinsfire@gmail.com
+         - mendy3255@gmail.com
+         - miguelraimundodemelo1997@gmail.com
+         - miihmars14@gmail.com
+         - miihvyeyra06@gmail.com
+         - milebarros@hotmail.com
+         - milenacarlosrocha@gmail.com
+         - millenameira12@gmail.com
+         - millenasilva99999@gmail.com
+         - miobashanele@gmail.com
+         - misamonterocha020@gmail.com
+         - misterbeta@hotmail.com
+         - mjuniorlima@hotmail.com
+         - mmg95@hotmail.com
+         - moniquesacreia4@gmail.com
+         - monnysousa@hotmail.com
+         - monteirompt84@gmail.com
+         - monyckxuxinhaguto@hotmail.com
+         - mortalbraga@gmail.com
+         - motaale631@gmail.com
+         - motodavi22@gmail.com
+         - mtmaicon1@gmail.com
+         - murilojesus659@gmail.com
+         - murilomenezez@gmail.com
+         - naianemoon@gmail.com
+         - nandasilvafv900@gmail.com
+         - natalianery23@gmail.com
+         - natanjfsantos@gmail.com
+         - nathaliaamorimlucio@gmail.com
+         - nathaliadacunhaoliveira@gmail.com
+         - nathangomesc@hotmail.com
+         - natianesardinhasarto02@gmail.com
+         - nayanefelixmm@gmail.com
+         - nicolasmfs9@gmail.com
+         - nicolenascimento961@gmail.com
+         - niellcg@gmail.com
+         - niltondemaria@gmail.com
+         - nogueirakassi17@gmail.com
+         - nxtxlixlc@gmail.com
+         - oliveiraamandacardoso@gmail.com
+         - opseua@gmail.com
+         - pablosmiceli@gmail.com
+         - paivagaby0@gmail.com
+         - pallonemsilva@yahoo.com.br
+         - palomaavh@gmail.com
+         - pamelabr27@gmail.com
+         - pamelafioc@gmail.com
+         - pamelafreirerita@gmail.com
+         - patrickarchanjo002@gmail.com
+         - patrickdc28@gmail.com
+         - patrickjapuanga@gmail.com
+         - patricklimadacruze@gmail.com
+         - patrickvfortunato@gmail.com
+         - patrickwarley@gmail.com
+         - patryckbrun@gmail.com
+         - paulaldinucci@gmail.com
+         - pauloalfredoambiental@gmail.com
+         - paulobrazileiroluiz@gmail.com
+         - paulolucas5000@gmail.com
+         - pedrodantaskr@gmail.com
+         - pedrohenriquevaillant@gmail.com
+         - pedroreflexo15@hotmail.com
+         - pedrosouza160@hotmail.com
+         - pereiracarina764@gmail.com
+         - ph0414044@gmail.com
+         - phhalmeida01@gmail.com
+         - pireslima004@gmail.com
+         - plfmoura96@gmail.com
+         - polianapessoa2001@gmail.com
+         - priscilaalicsirp17@gmail.com
+         - priscilabarbosafer@gmail.com
+         - procha1305@gmail.com
+         - quaresmacont@gmail.com
+         - quinguaia@gmail.com
+         - raamcarvalho@hotmail.com
+         - racrisouza410@gmail.com
+         - rafaelaochotorena@gmail.com
+         - rafaelessv@gmail.com
+         - rafaelguiguo@gmail.com
+         - rafaelle3112@gmail.com
+         - rafaelnet@hotmail.com.br
+         - rafaelvalemtim@icloud.com
+         - raianegms573@gmail.com
+         - raishatinoco@gmail.com
+         - ramonmarinho00@hotmail.com
+         - ramonsouzaferreira08@gmail.com
+         - raphaelavargas@hotmail.com
+         - raphaelbjj8@gmail.com
+         - raphaelhonorato@hotmail.com
+         - raphaelporque@gmail.com
+         - raquel_1805_93@hotmail.com
+         - raquelmachadosantos18@gmail.com
+         - raquelresende1904@gmail.com
+         - rayanemoraes1705@hotmail.com
+         - rayanevitelbo23@gmail.com
+         - rayanpetros2@gmail.com
+         - raycadilhe@hotmail.com
+         - raysareis17@gmail.com
+         - rayssasilvadealmeida567@gmail.com
+         - razevedomil@gmail.com
+         - rdalves96@gmail.com
+         - regieleo2013@hotmail.com.br
+         - reinaldonicacio@hotmail.com
+         - reinatovr@gmail.com
+         - rejanequeiroz24@gmail.com
+         - renanbdsantos@hotmail.com
+         - renandeandrade2@gmail.com
+         - rfknzg@gmail.com
+         - rgrenantd3@gmail.com
+         - riansouza589@gmail.com
+         - ribeirodonascimentomiqueias8@gmail.com
+         - ribeirojonatan757@gmail.com
+         - ricardobubel@gmail.com
+         - ricardochiraski@gmail.com
+         - ricardomoraesd2@gmail.com
+         - riccardovitor96@gmail.com
+         - rjmanuelaandrade@gmail.com
+         - rmmers6@gmail.com
+         - robertabueri@gmail.com
+         - rodrigoeufrasio2@gmail.com
+         - rodrigoiapc2@gmail.com
+         - rodrigokcarlos@gmail.com
+         - rodrigues96@live.com
+         - rodriguesadrianorj@gmail.com
+         - rogeriosouzajunior94@gmail.com
+         - romuloksxd@gmail.com
+         - ronaldluiznascimento@gmail.com
+         - ronaldocontami@gmail.com
+         - ronaldtavares190@gmail.com
+         - roseanemelo17@outlook.com
+         - rozendo9927@gmail.com
+         - rp19991103@gmail.com
+         - ruannatanfsilva@gmail.com
+         - ruanthow3@gmail.com
+         - russelmytho@gmail.com
+         - russo25101996@gmail.com
+         - rutefsilveira08@gmail.com
+         - salustrianodeterminadorj@gmail.com
+         - samym811@outlook.com
+         - sandrinhoomonteiroo@gmail.com
+         - santos789ingrid@gmail.com
+         - santosramonmaia@gmail.com
+         - saraayramnsp@gmail.com
+         - saranobrega28@hotmail.com
+         - sararosa0705@gmail.com
+         - scamille614@gmail.com
+         - sdaniloscofield@gmail.com
+         - sergiohenqueri@gmail.com
+         - sergioluiz2912@gmail.com
+         - sergioluiz852@gmail.com
+         - silastavares07@gmail.com
+         - silvia_sc03@yahoo.com.br
+         - siqueiracode@gmail.com
+         - soadlanpil@gmail.com
+         - sorayanunes19@gmail.com
+         - srpaulovictor@outlook.com
+         - steffanepfigueiredo@gmail.com
+         - stefhanyflabatista@gmail.com
+         - stephanierannyelle73@gmail.com
+         - suannyrsantos@gmail.com
+         - suelendapenha2@gmail.com
+         - suelenmooura101@gmail.com
+         - suellenilha@hotmail.com
+         - suzanabarbosa413@hotmail.com
+         - tadyello@hotmail.com
+         - taiana1koda@outlook.com
+         - taiscampos2011@gmail.com
+         - tallyson95@gmail.com
+         - tamiressilveiraporto@gmail.com
+         - tassiofelipeers@gmail.com
+         - tatianapenna05@gmail.com
+         - tauanealvesg@gmail.com
+         - thaicxx9@gmail.com
+         - thaiscoliveira1@gmail.com
+         - thaislira016@gmail.com
+         - thalmath22@gmail.com
+         - thalytario@gmail.com
+         - thamaraevelyn2012@gmail.com
+         - thamillizbaylleck@gmail.com
+         - thamiresstsantos@gmail.com
+         - thamirisgonb@gmail.com
+         - tharlesjcp12@gmail.com
+         - thaymaramouradossantos@gmail.com
+         - thaynakthayna@gmail.com
+         - thaynalopesrj@hotmail.com
+         - thayssagarcia107@gmail.com
+         - thematheuscris@gmail.com
+         - theusheringer@gmail.com
+         - thiagohistoriador@outlook.com.br
+         - thiagojaimebarb@gmail.com
+         - thiagolessa53@gmail.com
+         - thiagomaximo2794@gmail.com
+         - thiagooliveira745@gmail.com
+         - thiagopereira_cmm@hotmail.com
+         - thiagotos33@gmail.com
+         - thiagoviana2405@gmail.com
+         - thigsbomfim@gmail.com
+         - thomalmeida19@gmail.com
+         - tiagonv97@gmail.com
+         - tiagorq310320@hotmail.com
+         - trizsales7@gmail.com
+         - uathalie@gmail.com
+         - usertt1997@gmail.com
+         - valdeilsonsouzac@gmail.com
+         - vanessadossantoslopes75@gmail.com
+         - vazjade@yahoo.com.br
+         - vergilioiury@gmail.com
+         - vicpav052002@gmail.com
+         - victorantonino12@gmail.com
+         - victorbatista2002vb@gmail.com
+         - victoriacarvalho868@outlook.com
+         - victoriafeitoza19@gmail.com
+         - victorpetry2@hotmail.com
+         - victorrobsonlima@gmail.com
+         - vilhenayasmim@gmail.com
+         - vinciuspark@gmail.com
+         - viniciujorge@hotmail.com
+         - vinicius51667321@gmail.com
+         - viniciuspereira2018@outlook.com.br
+         - vitodaleste@gmail.com
+         - vitorborgatte@icloud.com
+         - vitoriadasilvatavares@gmail.com
+         - vitoriafontessilva32@gmail.com
+         - vitorjordaoabra2002@outlook.com
+         - vivianefreitas8318@gmail.com
+         - vrebelo60@gmail.com
+         - wallacehostile94@gmail.com
+         - wallacenogueira17@gmail.com
+         - wanderson10silva@hotmail.com
+         - wandobarros49@gmail.com
+         - washingtonlsjrr@gmail.com
+         - weeslleeyy635@gmail.com
+         - wellingtonronil@gmail.com
+         - wendel00762@gmail.com
+         - wendeluizs@gmail.com
+         - wendewly@gmail.com
+         - wesleiferreira407@gmail.com
+         - wesleycaju2019@gmail.com
+         - wesleygomes222@hotmail.com
+         - wesleypaiva943@gmail.com
+         - wesleyraivds@gmail.com
+         - weslley_mattosibf@hotmail.com
+         - wilianmine789@gmail.com
+         - willianmw@hotmail.com
+         - wndmleticia@gmail.com
+         - worldklein@gmail.com
+         - xandriellepessanhax@gmail.com
+         - xdanrj@gmail.com
+         - yaahalves1234@gmail.com
+         - yagojo80@gmail.com
+         - yanalves1000@hotmail.com
+         - yasmincarolyne11@gmail.com
+         - yasmincarregal39@gmail.com
+         - ygorpiresrdsp@gmail.com
+         - ysmaelmarkss@gmail.com
+         - yuri_nunes85@outlook.com
+         - yuribrito654@gmail.com
+         - zezeuma@gmail.com
 [plan] body preview:
 ---
 Olá!
@@ -178,146 +437,405 @@ Atenciosamente,
 Equipe Programadores Cariocas
 ---
 [smtp] connecting to smtp.gmail.com:465 ...
-[ok]    gigitata199427@gmail.com
-[ok]    gimenez9422@gmail.com
-[ok]    gmarquesp@outlook.com
-[ok]    gomesdavid9@gmail.com
-[ok]    gomesmarianasantos78@gmail.com
-[ok]    gorilzaum@gmail.com
-[ok]    grazifirmino15@gmail.com
-[ok]    grgds11@gmail.com
-[ok]    gsouza1088@gmail.com
-[ok]    guilherme_profissional@yahoo.com.br
-[ok]    guilhermealbuquerques02@gmail.com
-[ok]    guilhermememedon@gmail.com
-[ok]    guilhermemoraes228@gmail.com
-[ok]    gustavoraguiar35@gmail.com
-[ok]    gustavoresende3e@gmail.com
-[ok]    gustavovasco89@gmail.com
-[ok]    guttenbergjunior@hotmail.com
-[ok]    henriqueengenhariaele@gmail.com
-[ok]    henriquemagsz@gmail.com
-[ok]    henriqueoliveira2011@live.com
-[ok]    herbertmengo@hotmail.com
-[ok]    hostoluis@gmail.com
-[ok]    hudoliversilva@gmail.com
-[ok]    hugobrigido59@gmail.com
-[ok]    hugoramosjan@gmail.com
-[ok]    iagomb991@gmail.com
-[ok]    igor02b1@gmail.com
-[ok]    igorcrodrigues94@gmail.com
-[ok]    igornaspereira@hotmail.com
-[ok]    igorngonzalez@gmail.com
-[ok]    igorsantfer@gmail.com
-[ok]    igorslv17@gmail.com
-[ok]    igorvieira2805@gmail.com
-[ok]    igorzpqd2@hotmail.com
-[ok]    indianematos@gmail.com
-[ok]    indilllashoow54@gmail.com
-[ok]    ingridcassia0@gmail.com
-[ok]    ionarasantana32@gmail.com
-[ok]    iraphaelfelix@hotmail.com
-[ok]    irismachado666@gmail.com
-[ok]    isabelaalvesc17@gmail.com
-[ok]    isabelabmoura@hotmail.com
-[ok]    isabellaffb@hotmail.com
-[ok]    isabellamoreira570@gmail.com
-[ok]    isabellessmelo@gmail.com
-[ok]    isacarvalho2450@gmail.com
-[ok]    ismaeldj1234567@gmail.com
-[ok]    ismaelmelo9469@hotmail.com
-[ok]    ismaelwadejr07@gmail.com
-[ok]    iuryfreitas961@gmail.com
-[ok]    ivanilsonsillva2020@gmail.com
-[ok]    jacmendesm45@gmail.com
-[ok]    jaco157_hogro@hotmail.com
-[ok]    jadiribeiro20@gmail.com
-[ok]    jainemonique35@gmail.com
-[ok]    jandersonoliveira16@hotmail.com
-[ok]    jaynandes@gmail.com
-[ok]    jean118877@hotmail.com
-[ok]    jeandiniz09@hotmail.com
-[ok]    jefersonpaixaojp@gmail.com
-[ok]    jenifer_pinheiro@hotmail.com
-[ok]    jeniferarruda@outlook.com
-[ok]    jenifermattei@outlook.com
-[ok]    jessicacosima@gmail.com
-[ok]    jessicadasilvasoares2017@gmail.com
-[ok]    jessyka_carolina_2010@hotmail.com
-[ok]    jessymuniz13@gmail.com
-[ok]    jesusjuliana93@gmail.com
-[ok]    jfs21210@gmail.com
-[ok]    jhonatanpmp@gmail.com
-[ok]    jjuansimo@gmail.com
-[ok]    jlmoraes13@gmail.com
-[ok]    joanarband123@gmail.com
-[ok]    joaoguilheerm19@gmail.com
-[ok]    joaoochotorena@gmail.com
-[ok]    joaopedro1415@gmail.com
-[ok]    joaophvt@gmail.com
-[ok]    joaov301@gmail.com
-[ok]    joaovictorconta20@gmail.com
-[ok]    joaovictorczs20@gmail.com
-[ok]    jonasandradesw@gmail.com
-[ok]    jonasdanova@gmail.com
-[ok]    jonassousagtr@gmail.com
-[ok]    jonathancfalcao@gmail.com
-[ok]    jonmendes7803@gmail.com
-[ok]    jordanlimasilva@gmail.com
-[ok]    jorge_menezess@hotmail.com
-[ok]    jorge_rufino@outlook.com
-[ok]    jorgemarcosfc@outlook.com
-[ok]    jorgeyurilima@gmail.com
-[ok]    josafaferraz1@gmail.com
-[ok]    joseanepacheco56@gmail.com
-[ok]    joseelguesabal@gmail.com
-[ok]    joseg081@gmail.com
-[ok]    jozisrfm@gmail.com
-[ok]    jpsilvamedeiros@gmail.com
-[ok]    jr_marcosantonio@hotmail.com
-[ok]    jrnjrn124@gmail.com
-[ok]    js073158@gmail.com
-[ok]    juangomessales@gmail.com
-[ok]    juanurgelles92@gmail.com
-[ok]    jubsju31@gmail.com
-[ok]    jujuatrevidaanna@gmail.com
-[ok]    jukiloo9988@gmail.com
-[ok]    julialmartins2002@gmail.com
-[ok]    julianarodriguesnogueira@gmail.com
-[ok]    julianasoucs@gmail.com
-[ok]    julianecoutinhoprado@gmail.com
-[ok]    juliapaulinerangel@gmail.com
-[ok]    juliocgcj@hotmail.com
-[ok]    juliohenriquee2004@gmail.com
-[ok]    julioxlima626@gmail.com
-[ok]    juninhojr2003@hotmail.com
-[ok]    juniormoreira10@outlook.com
-[ok]    juniorsousa73@gmail.com
-[ok]    kaiolimadecarvalho@gmail.com
-[ok]    kaiomelo1998@gmail.com
-[ok]    kaiquemelo6@hotmail.com
-[ok]    kamillypereiracostaifrj@gmail.com
-[ok]    karenkdb@live.com
-[ok]    karenlmoraes@gmail.com
-[ok]    karinamachado2298@gmail.com
-[ok]    karinemelo843@gmail.com
-[ok]    karinevasconcelos7@gmail.com
-[ok]    karollayneerod@gmail.com
-[ok]    katarinelucas1@gmail.com
-[ok]    kauasoarres@icloud.com
-[ok]    kayllanefs19@gmail.com
-[ok]    kayllanesa4@gmail.com
-[ok]    kaymattos21@gmail.com
-[ok]    kcristine947@gmail.com
-[ok]    kelymsn@live.com
-[ok]    kemillyvitoriacc@gmail.com
-[ok]    kesiaabrahao8@gmail.com
-[ok]    kevintor20506@gmail.com
-[ok]    kkarlanalimaa@gmail.com
-[ok]    kr09@outlook.com
-[ok]    laffrontoliveira@gmail.com
-[ok]    laisafigueiredo60@gmail.com
+[ok]    laisbenvindo@gmail.com
+[ok]    laissoaresleao@gmail.com
+[ok]    laranayt14@gmail.com
+[ok]    larislvmach@gmail.com
+[ok]    larissa98pereira@gmail.com
+[ok]    larissafabrahao@gmail.com
+[ok]    larissagabriele96@gmail.com
+[ok]    larissaperrout2016@gmail.com
+[ok]    larissasilvafarias72@gmail.com
+[ok]    lariza_soares@hotmail.com
+[ok]    lary_2802@hotmail.com
+[ok]    larycarsilva@gmail.com
+[ok]    layonaraujosilva@hotmail.com
+[ok]    lcaduduflamenguista@gmail.com
+[ok]    lcdayane49@gmail.com
+[ok]    lcrodrigues1996@hotmail.com
+[ok]    lcsantospedro@gmail.com
+[ok]    leandroarielnascimento@gmail.com
+[ok]    leehmoretti@gmail.com
+[ok]    leilakessiasantana@gmail.com
+[ok]    leon102011@live.com
+[ok]    leonardo10bns@yahoo.com.br
+[ok]    leonardo_garcia_96@hotmail.com
+[ok]    leonardocorrealcs4@gmail.com
+[ok]    leonardogxcv@gmail.com
+[ok]    leonardovianaaquino@gmail.com
+[ok]    leonardovillar70@gmail.com
+[ok]    leticiaalmeida75@hotmail.com
+[ok]    leticiamattosilva@gmail.com
+[ok]    leticiapaeslcp@gmail.com
+[ok]    leticiapereiradasilvalps@gmail.com
+[ok]    leticinhahelennna@gmail.com
+[ok]    levylima1510@gmail.com
+[ok]    liannafeiht@gmail.com
+[ok]    licerodrigues50@gmail.com
+[ok]    lilianesecunha@gmail.com
+[ok]    lilianmguima@gmail.com
+[ok]    lincolnfern4ndes@gmail.com
+[ok]    linkamorim2@gmail.com
+[ok]    lipebarreiro3@gmail.com
+[ok]    llansr07@gmail.com
+[ok]    llopes660@gmail.com
+[ok]    lopesbruna646@gmail.com
+[ok]    loretopedro20@gmail.com
+[ok]    lorhanabrandao@hotmail.com
+[ok]    lorrany23012004@gmail.com
+[ok]    lowcomanche@gmail.com
+[ok]    lp797060@gmail.com
+[ok]    lsousaah@gmail.com
+[ok]    luagp33@gmail.com
+[ok]    luan92silva@gmail.com
+[ok]    luanamiguel02@hotmail.com
+[ok]    luangracine@gmail.com
+[ok]    luanmartins9406@gmail.com
+[ok]    lucas2sales@hotmail.com
+[ok]    lucasamaro2014la@gmail.com
+[ok]    lucasbenmendonca@gmail.com
+[ok]    lucascardoso1302@gmail.com
+[ok]    lucascg102@gmail.com
+[ok]    lucaschristian76@gmail.com
+[ok]    lucascovv@gmail.com
+[ok]    lucasdelfino2511@gmail.com
+[ok]    lucasdossantossilva74@gmail.com
+[ok]    lucaselli4n@gmail.com
+[ok]    lucasoliveirasilvap@gmail.com
+[ok]    lucasqzoliver@gmail.com
+[ok]    lucassa1901@gmail.com
+[ok]    lucassfernandosantos@gmail.com
+[ok]    luceldo2010@hotmail.com
+[ok]    lucianoramos218lr@gmail.com
+[ok]    lucineiaduram@gmail.com
+[ok]    luckassouza1997@hotmail.com
+[ok]    luisfelipebsj@gmail.com
+[ok]    luisfelipesl@live.com
+[ok]    luisguilhermerj@gmail.com
+[ok]    luishenriquelimarj@gmail.com
+[ok]    luissoaresx7@gmail.com
+[ok]    luizcaboclo2013@gmail.com
+[ok]    luizfelliperocha44@gmail.com
+[ok]    luizfernandoduartevidal1@gmail.com
+[ok]    luizfsouzacontato@gmail.com
+[ok]    lunaclark2002@gmail.com
+[ok]    lunanvelloso@gmail.com
+[ok]    luuuanwinck@gmail.com
+[ok]    lyncolnnegao7@gmail.com
+[ok]    lyzademaria@gmail.com
+[ok]    macedogsp@gmail.com
+[ok]    maduvarellah@gmail.com
+[ok]    maiararibeiro388@gmail.com
+[ok]    maichaelsilva2001@gmail.com
+[ok]    maiconbre27@gmail.com
+[ok]    maiolinogm@hotmail.com
+[ok]    majuhsouza18@gmail.com
+[ok]    manoeligoralves@gmail.com
+[ok]    manubrito322@gmail.com
+[ok]    manuop@outlook.com
+[ok]    marcelafigueiredo44@gmail.com
+[ok]    marcellemedeiroslm@gmail.com
+[ok]    marcelosouto676@gmail.com
+[ok]    marceloydm@gmail.com
+[ok]    marcos10esperto@gmail.com
+[ok]    marcosantonio788@hotmail.com
+[ok]    marcospaulosilvasiqueira105@gmail.com
+[ok]    marcosponts@hotmail.com
+[ok]    marcossgoficial@hotmail.com.br
+[ok]    marcusviniciusg100@gmail.com
+[ok]    marcusvrga@gmail.com
+[ok]    mariaalicebalbino@hotmail.com
+[ok]    mariadutra2305@gmail.com
+[ok]    mariajaciara1996@gmail.com
+[ok]    mariajulial2514@gmail.com
+[ok]    marianadepinho@gmail.com
+[ok]    marianaherbst31@gmail.com
+[ok]    marianamedeiros100@gmail.com
+[ok]    marianasouzaeco@gmail.com
+[ok]    markfonsecaa@gmail.com
+[ok]    marlonsouzadantas@gmail.com
+[ok]    marthalb2@hotmail.com
+[ok]    maryfb1031@gmail.com
+[ok]    mateusaffonso99@gmail.com
+[ok]    mateusribrodrigues@gmail.com
+[ok]    mateustransf@gmail.com
+[ok]    mateusvalviesse@gmail.com
+[ok]    matheusadm02@hotmail.com
+[ok]    matheusdscardoso1@gmail.com
+[ok]    matheusduarte_99@hotmail.com
+[ok]    matheuselh@gmail.com
+[ok]    matheusfreire097@gmail.com
+[ok]    matheushonorio88@gmail.com
+[ok]    matheusjbk@gmail.com
+[ok]    matheuslisboabr@gmail.com
+[ok]    matheusoutros@hotmail.com
+[ok]    matheusrmalta@gmail.com
+[ok]    maxwilliansabinorj@gmail.com
+[ok]    mayara12367@hotmail.com
+[ok]    mayarajjeronymo@gmail.com
+[ok]    mayconxd11@gmail.com
+[ok]    mcarvalhojb@gmail.com
+[ok]    mcssl@outlook.com
+[ok]    meirelleslari@gmail.com
+[ok]    melmartinsfire@gmail.com
+[ok]    mendy3255@gmail.com
+[ok]    miguelraimundodemelo1997@gmail.com
+[ok]    miihmars14@gmail.com
+[ok]    miihvyeyra06@gmail.com
+[ok]    milebarros@hotmail.com
+[ok]    milenacarlosrocha@gmail.com
+[ok]    millenameira12@gmail.com
+[ok]    millenasilva99999@gmail.com
+[ok]    miobashanele@gmail.com
+[ok]    misamonterocha020@gmail.com
+[ok]    misterbeta@hotmail.com
+[ok]    mjuniorlima@hotmail.com
+[ok]    mmg95@hotmail.com
+[ok]    moniquesacreia4@gmail.com
+[ok]    monnysousa@hotmail.com
+[ok]    monteirompt84@gmail.com
+[ok]    monyckxuxinhaguto@hotmail.com
+[ok]    mortalbraga@gmail.com
+[ok]    motaale631@gmail.com
+[ok]    motodavi22@gmail.com
+[ok]    mtmaicon1@gmail.com
+[ok]    murilojesus659@gmail.com
+[ok]    murilomenezez@gmail.com
+[ok]    naianemoon@gmail.com
+[ok]    nandasilvafv900@gmail.com
+[ok]    natalianery23@gmail.com
+[ok]    natanjfsantos@gmail.com
+[ok]    nathaliaamorimlucio@gmail.com
+[ok]    nathaliadacunhaoliveira@gmail.com
+[ok]    nathangomesc@hotmail.com
+[ok]    natianesardinhasarto02@gmail.com
+[ok]    nayanefelixmm@gmail.com
+[ok]    nicolasmfs9@gmail.com
+[ok]    nicolenascimento961@gmail.com
+[ok]    niellcg@gmail.com
+[ok]    niltondemaria@gmail.com
+[ok]    nogueirakassi17@gmail.com
+[ok]    nxtxlixlc@gmail.com
+[ok]    oliveiraamandacardoso@gmail.com
+[ok]    opseua@gmail.com
+[ok]    pablosmiceli@gmail.com
+[ok]    paivagaby0@gmail.com
+[ok]    pallonemsilva@yahoo.com.br
+[ok]    palomaavh@gmail.com
+[ok]    pamelabr27@gmail.com
+[ok]    pamelafioc@gmail.com
+[ok]    pamelafreirerita@gmail.com
+[ok]    patrickarchanjo002@gmail.com
+[ok]    patrickdc28@gmail.com
+[ok]    patrickjapuanga@gmail.com
+[ok]    patricklimadacruze@gmail.com
+[ok]    patrickvfortunato@gmail.com
+[ok]    patrickwarley@gmail.com
+[ok]    patryckbrun@gmail.com
+[ok]    paulaldinucci@gmail.com
+[ok]    pauloalfredoambiental@gmail.com
+[ok]    paulobrazileiroluiz@gmail.com
+[ok]    paulolucas5000@gmail.com
+[ok]    pedrodantaskr@gmail.com
+[ok]    pedrohenriquevaillant@gmail.com
+[ok]    pedroreflexo15@hotmail.com
+[ok]    pedrosouza160@hotmail.com
+[ok]    pereiracarina764@gmail.com
+[ok]    ph0414044@gmail.com
+[ok]    phhalmeida01@gmail.com
+[ok]    pireslima004@gmail.com
+[ok]    plfmoura96@gmail.com
+[ok]    polianapessoa2001@gmail.com
+[ok]    priscilaalicsirp17@gmail.com
+[ok]    priscilabarbosafer@gmail.com
+[ok]    procha1305@gmail.com
+[ok]    quaresmacont@gmail.com
+[ok]    quinguaia@gmail.com
+[ok]    raamcarvalho@hotmail.com
+[ok]    racrisouza410@gmail.com
+[ok]    rafaelaochotorena@gmail.com
+[ok]    rafaelessv@gmail.com
+[ok]    rafaelguiguo@gmail.com
+[ok]    rafaelle3112@gmail.com
+[ok]    rafaelnet@hotmail.com.br
+[ok]    rafaelvalemtim@icloud.com
+[ok]    raianegms573@gmail.com
+[ok]    raishatinoco@gmail.com
+[ok]    ramonmarinho00@hotmail.com
+[ok]    ramonsouzaferreira08@gmail.com
+[ok]    raphaelavargas@hotmail.com
+[ok]    raphaelbjj8@gmail.com
+[ok]    raphaelhonorato@hotmail.com
+[ok]    raphaelporque@gmail.com
+[ok]    raquel_1805_93@hotmail.com
+[ok]    raquelmachadosantos18@gmail.com
+[ok]    raquelresende1904@gmail.com
+[ok]    rayanemoraes1705@hotmail.com
+[ok]    rayanevitelbo23@gmail.com
+[ok]    rayanpetros2@gmail.com
+[ok]    raycadilhe@hotmail.com
+[ok]    raysareis17@gmail.com
+[ok]    rayssasilvadealmeida567@gmail.com
+[ok]    razevedomil@gmail.com
+[ok]    rdalves96@gmail.com
+[ok]    regieleo2013@hotmail.com.br
+[ok]    reinaldonicacio@hotmail.com
+[ok]    reinatovr@gmail.com
+[ok]    rejanequeiroz24@gmail.com
+[ok]    renanbdsantos@hotmail.com
+[ok]    renandeandrade2@gmail.com
+[ok]    rfknzg@gmail.com
+[ok]    rgrenantd3@gmail.com
+[ok]    riansouza589@gmail.com
+[ok]    ribeirodonascimentomiqueias8@gmail.com
+[ok]    ribeirojonatan757@gmail.com
+[ok]    ricardobubel@gmail.com
+[ok]    ricardochiraski@gmail.com
+[ok]    ricardomoraesd2@gmail.com
+[ok]    riccardovitor96@gmail.com
+[ok]    rjmanuelaandrade@gmail.com
+[ok]    rmmers6@gmail.com
+[ok]    robertabueri@gmail.com
+[ok]    rodrigoeufrasio2@gmail.com
+[ok]    rodrigoiapc2@gmail.com
+[ok]    rodrigokcarlos@gmail.com
+[ok]    rodrigues96@live.com
+[ok]    rodriguesadrianorj@gmail.com
+[ok]    rogeriosouzajunior94@gmail.com
+[ok]    romuloksxd@gmail.com
+[ok]    ronaldluiznascimento@gmail.com
+[ok]    ronaldocontami@gmail.com
+[ok]    ronaldtavares190@gmail.com
+[ok]    roseanemelo17@outlook.com
+[ok]    rozendo9927@gmail.com
+[ok]    rp19991103@gmail.com
+[ok]    ruannatanfsilva@gmail.com
+[ok]    ruanthow3@gmail.com
+[ok]    russelmytho@gmail.com
+[ok]    russo25101996@gmail.com
+[ok]    rutefsilveira08@gmail.com
+[ok]    salustrianodeterminadorj@gmail.com
+[ok]    samym811@outlook.com
+[ok]    sandrinhoomonteiroo@gmail.com
+[ok]    santos789ingrid@gmail.com
+[ok]    santosramonmaia@gmail.com
+[ok]    saraayramnsp@gmail.com
+[ok]    saranobrega28@hotmail.com
+[ok]    sararosa0705@gmail.com
+[ok]    scamille614@gmail.com
+[ok]    sdaniloscofield@gmail.com
+[ok]    sergiohenqueri@gmail.com
+[ok]    sergioluiz2912@gmail.com
+[ok]    sergioluiz852@gmail.com
+[ok]    silastavares07@gmail.com
+[ok]    silvia_sc03@yahoo.com.br
+[ok]    siqueiracode@gmail.com
+[ok]    soadlanpil@gmail.com
+[ok]    sorayanunes19@gmail.com
+[ok]    srpaulovictor@outlook.com
+[ok]    steffanepfigueiredo@gmail.com
+[ok]    stefhanyflabatista@gmail.com
+[ok]    stephanierannyelle73@gmail.com
+[ok]    suannyrsantos@gmail.com
+[ok]    suelendapenha2@gmail.com
+[ok]    suelenmooura101@gmail.com
+[ok]    suellenilha@hotmail.com
+[ok]    suzanabarbosa413@hotmail.com
+[ok]    tadyello@hotmail.com
+[ok]    taiana1koda@outlook.com
+[ok]    taiscampos2011@gmail.com
+[ok]    tallyson95@gmail.com
+[ok]    tamiressilveiraporto@gmail.com
+[ok]    tassiofelipeers@gmail.com
+[ok]    tatianapenna05@gmail.com
+[ok]    tauanealvesg@gmail.com
+[ok]    thaicxx9@gmail.com
+[ok]    thaiscoliveira1@gmail.com
+[ok]    thaislira016@gmail.com
+[ok]    thalmath22@gmail.com
+[ok]    thalytario@gmail.com
+[ok]    thamaraevelyn2012@gmail.com
+[ok]    thamillizbaylleck@gmail.com
+[ok]    thamiresstsantos@gmail.com
+[ok]    thamirisgonb@gmail.com
+[ok]    tharlesjcp12@gmail.com
+[ok]    thaymaramouradossantos@gmail.com
+[ok]    thaynakthayna@gmail.com
+[ok]    thaynalopesrj@hotmail.com
+[ok]    thayssagarcia107@gmail.com
+[ok]    thematheuscris@gmail.com
+[ok]    theusheringer@gmail.com
+[ok]    thiagohistoriador@outlook.com.br
+[ok]    thiagojaimebarb@gmail.com
+[ok]    thiagolessa53@gmail.com
+[ok]    thiagomaximo2794@gmail.com
+[ok]    thiagooliveira745@gmail.com
+[ok]    thiagopereira_cmm@hotmail.com
+[ok]    thiagotos33@gmail.com
+[ok]    thiagoviana2405@gmail.com
+[ok]    thigsbomfim@gmail.com
+[ok]    thomalmeida19@gmail.com
+[ok]    tiagonv97@gmail.com
+[ok]    tiagorq310320@hotmail.com
+[ok]    trizsales7@gmail.com
+[ok]    uathalie@gmail.com
+[ok]    usertt1997@gmail.com
+[ok]    valdeilsonsouzac@gmail.com
+[ok]    vanessadossantoslopes75@gmail.com
+[ok]    vazjade@yahoo.com.br
+[ok]    vergilioiury@gmail.com
+[ok]    vicpav052002@gmail.com
+[ok]    victorantonino12@gmail.com
+[ok]    victorbatista2002vb@gmail.com
+[ok]    victoriacarvalho868@outlook.com
+[ok]    victoriafeitoza19@gmail.com
+[ok]    victorpetry2@hotmail.com
+[ok]    victorrobsonlima@gmail.com
+[ok]    vilhenayasmim@gmail.com
+[ok]    vinciuspark@gmail.com
+[ok]    viniciujorge@hotmail.com
+[ok]    vinicius51667321@gmail.com
+[ok]    viniciuspereira2018@outlook.com.br
+[ok]    vitodaleste@gmail.com
+[ok]    vitorborgatte@icloud.com
+[ok]    vitoriadasilvatavares@gmail.com
+[ok]    vitoriafontessilva32@gmail.com
+[ok]    vitorjordaoabra2002@outlook.com
+[ok]    vivianefreitas8318@gmail.com
+[ok]    vrebelo60@gmail.com
+[ok]    wallacehostile94@gmail.com
+[ok]    wallacenogueira17@gmail.com
+[ok]    wanderson10silva@hotmail.com
+[ok]    wandobarros49@gmail.com
+[ok]    washingtonlsjrr@gmail.com
+[ok]    weeslleeyy635@gmail.com
+[ok]    wellingtonronil@gmail.com
+[ok]    wendel00762@gmail.com
+[ok]    wendeluizs@gmail.com
+[ok]    wendewly@gmail.com
+[ok]    wesleiferreira407@gmail.com
+[ok]    wesleycaju2019@gmail.com
+[ok]    wesleygomes222@hotmail.com
+[ok]    wesleypaiva943@gmail.com
+[ok]    wesleyraivds@gmail.com
+[ok]    weslley_mattosibf@hotmail.com
+[ok]    wilianmine789@gmail.com
+[ok]    willianmw@hotmail.com
+[ok]    wndmleticia@gmail.com
+[ok]    worldklein@gmail.com
+[ok]    xandriellepessanhax@gmail.com
+[ok]    xdanrj@gmail.com
+[ok]    yaahalves1234@gmail.com
+[ok]    yagojo80@gmail.com
+[ok]    yanalves1000@hotmail.com
+[ok]    yasmincarolyne11@gmail.com
+[ok]    yasmincarregal39@gmail.com
+[ok]    ygorpiresrdsp@gmail.com
+[ok]    ysmaelmarkss@gmail.com
+[ok]    yuri_nunes85@outlook.com
+[ok]    yuribrito654@gmail.com
+[ok]    zezeuma@gmail.com
 
-[done] 139 sent, 0 failed.
+[done] 398 sent, 0 failed.
 [diag] mailer exit code: 0
 ```
