@@ -588,6 +588,9 @@ def detect_barriers(summary: dict[str, Any], previous: dict[str, Any] | None = N
 
 
 def markdown_entry(title: str, summary: dict[str, Any]) -> str:
+    if "ui" in summary and not summary.get("status"):
+        return ui_markdown_entry(title, summary)
+
     status = summary.get("status") or {}
     asset = summary.get("asset") or {}
     live = summary.get("live") or {}
@@ -615,6 +618,26 @@ def markdown_entry(title: str, summary: dict[str, Any]) -> str:
         f"- Storage diagnostic: enabled `{storage.get('enabled')}`, reason `{storage.get('reason', '')}`.",
         f"- HTTP timings/status: `{json.dumps(summary.get('http') or {}, ensure_ascii=False, sort_keys=True)}`.",
         f"- Recent source events: `{json.dumps((summary.get('events') or {}).get('latest') or [], ensure_ascii=False)}`.",
+        f"- Barriers: `{json.dumps(summary.get('barriers') or [], ensure_ascii=False)}`.",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def ui_markdown_entry(title: str, summary: dict[str, Any]) -> str:
+    ui = summary.get("ui") if isinstance(summary.get("ui"), dict) else {}
+    lines = [
+        "",
+        f"## {summary.get('sampledAt', now_label())} - {title}",
+        "",
+        f"- Profile listed: `{ui.get('profileListed')}`.",
+        f"- Viewer login HTTP: `{ui.get('loginHttp')}`; `/api/targets` HTTP: `{ui.get('targetsHttp')}`.",
+        f"- Target contract: `{ui.get('targetContract')}`.",
+        f"- Primary keys exact: `{ui.get('primaryExact')}`; default-checked exact: `{ui.get('checkedPrimaryExact')}`.",
+        f"- Primary keys: `{json.dumps(ui.get('primaryKeys') or [], ensure_ascii=False)}`.",
+        f"- Checked primary keys: `{json.dumps(ui.get('checkedPrimary') or [], ensure_ascii=False)}`.",
+        f"- Secondary keys: `{json.dumps(ui.get('secondaryKeys') or [], ensure_ascii=False)}`; secondary empty `{ui.get('secondaryEmpty')}`.",
+        f"- Runner status: `{ui.get('runnerStatus')}`.",
+        f"- Browser errors/warnings: `{json.dumps(ui.get('errors') or [], ensure_ascii=False)}`.",
         f"- Barriers: `{json.dumps(summary.get('barriers') or [], ensure_ascii=False)}`.",
     ]
     return "\n".join(lines) + "\n"

@@ -82,6 +82,46 @@ This is intentionally large. Do not start a duplicate full job. If the job
 fails, becomes resumable, or reports source failures, inspect and resume/fix
 from the recorded state.
 
+## Active Recovery Loop - 2026-06-04
+
+Treat the current run as an incident recovery, not a new backfill.
+
+- active production job id: `0b36e332911a`
+- success condition: all `22912` source-runs complete for the exact 18 primary
+  targets from `2014-01-01` through `2026-06-02`
+- do not call `/api/update/start` for this task unless the user explicitly
+  revokes the one-job rule
+- use `/api/update/resume` only for job `0b36e332911a` when production reports
+  `interrupted_resumable`
+- current documented recovery floor after deploy/storage interruption:
+  `complete=23`; no newer verified checkpoint was available from the safe
+  operator surface
+- Render connector visibility is limited unless the user selects a workspace;
+  deployment state must be inferred from production endpoints when the connector
+  reports `no workspace set`
+
+Dedicated operator script:
+
+- `python3 tools/voluntarios_backfill_operator.py audit`
+- `python3 tools/voluntarios_backfill_operator.py repair-password`
+- `python3 tools/voluntarios_backfill_operator.py resume-same-job`
+- `python3 tools/voluntarios_backfill_operator.py monitor --cycles 4 --interval 60 --stall-cycles 3 --memory-danger-cycles 2`
+- `.venv_playwright/bin/python tools/voluntarios_backfill_operator.py ui-check`
+
+The script must read credentials without printing them and write append-only
+entries to `LOGS.md`. Password drift is repaired by resetting only the
+`voluntarios_lab_politicas` viewer password and saving the plaintext only in
+`/home/otavio/Documents/clipping-project senhas.md`.
+
+Current production fix deployed for this incident:
+
+- commit `d6e8dc6 fix(storage): stream sqlite checkpoint uploads`
+- purpose: avoid materializing the full SQLite snapshot and gzipped DB in memory
+  during live/current artifact uploads
+- post-deploy monitoring evidence: live results, asset timestamps, and source
+  events advanced while RSS stayed below the danger band across monitored
+  checkpoint cycles
+
 ## Monitoring Protocol
 
 Before starting the job, verify:

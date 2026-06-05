@@ -1676,6 +1676,115 @@ def test_durable_runner_processes_source_units_and_exposes_coverage(monkeypatch,
     assert observed["progress"]["storiesTouched"] == 1
 
 
+def test_durable_runner_throttles_empty_source_checkpoints(monkeypatch, tmp_path):
+    import threading
+    from pipeline import ingest
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs, "RSS_FEEDS", [{"source_name": "Fonte RSS", "url": "https://example.com/rss.xml"}])
+    monkeypatch.setenv("CLIPPING_SOURCE_RUN_YIELD_SECONDS", "0")
+    spec = {
+        "preset": "custom",
+        "collector": "rss",
+        "target_keys": ["shakira"],
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "export": False,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+        "durable": True,
+    }
+    jobs.create_job("durable-empty-checkpoint", "update", spec, started_by="coworker")
+    checkpoint_calls = []
+
+    monkeypatch.setattr(jobs, "collect_rss", lambda **_kwargs: [])
+    monkeypatch.setattr(
+        jobs,
+        "process_candidates",
+        lambda source_name, source_type, candidates, **_kwargs: ingest.IngestionResult(
+            source_name,
+            source_type,
+            len(candidates),
+            0,
+            0,
+            0,
+            [],
+        ),
+    )
+    monkeypatch.setattr(jobs, "publish_incremental_snapshot", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        jobs,
+        "upload_live_checkpoint",
+        lambda job_id, *, reason, force=False: checkpoint_calls.append((job_id, reason, force)) or [],
+    )
+
+    jobs.run_durable_update("durable-empty-checkpoint", spec, threading.Event())
+
+    assert checkpoint_calls == [("durable-empty-checkpoint", "source-run-checkpoint", False)]
+
+
+def test_durable_runner_forces_checkpoint_when_source_saves(monkeypatch, tmp_path):
+    import threading
+    from pipeline import ingest
+    from pipeline.collectors import CandidateArticle
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs, "RSS_FEEDS", [{"source_name": "Fonte RSS", "url": "https://example.com/rss.xml"}])
+    monkeypatch.setenv("CLIPPING_SOURCE_RUN_YIELD_SECONDS", "0")
+    spec = {
+        "preset": "custom",
+        "collector": "rss",
+        "target_keys": ["shakira"],
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "export": False,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+        "durable": True,
+    }
+    jobs.create_job("durable-saved-checkpoint", "update", spec, started_by="coworker")
+    checkpoint_calls = []
+
+    monkeypatch.setattr(
+        jobs,
+        "collect_rss",
+        lambda **_kwargs: [
+            CandidateArticle(
+                title="Shakira canta em Copacabana",
+                url="https://example.com/shakira",
+                source_name="Fonte RSS",
+                source_type="rss",
+                published_at="2026-05-05T12:00:00+00:00",
+                snippet="Shakira no Rio.",
+                metadata={},
+            )
+        ],
+    )
+    monkeypatch.setattr(
+        jobs,
+        "process_candidates",
+        lambda source_name, source_type, candidates, **_kwargs: ingest.IngestionResult(
+            source_name,
+            source_type,
+            len(candidates),
+            1,
+            1,
+            1,
+            [],
+        ),
+    )
+    monkeypatch.setattr(jobs, "publish_incremental_snapshot", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        jobs,
+        "upload_live_checkpoint",
+        lambda job_id, *, reason, force=False: checkpoint_calls.append((job_id, reason, force)) or [],
+    )
+
+    jobs.run_durable_update("durable-saved-checkpoint", spec, threading.Event())
+
+    assert checkpoint_calls == [("durable-saved-checkpoint", "source-run-saved-checkpoint", True)]
+
+
 def test_job_runner_passes_cancel_check_into_ingestion(monkeypatch, tmp_path):
     import threading
 

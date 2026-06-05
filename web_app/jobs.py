@@ -108,6 +108,7 @@ CUSTOM_MAX_CANDIDATES = 90000
 CUSTOM_MAX_PROCESS_SECONDS = 90000
 DEFAULT_CANDIDATE_WORKERS = 4
 LIVE_CHECKPOINT_MIN_SECONDS = 30
+DEFAULT_SOURCE_RUN_YIELD_SECONDS = 0.05
 _CHECKPOINT_LOCK = threading.Lock()
 _LAST_CHECKPOINT_UPLOAD: dict[str, float] = {}
 _LAST_INCREMENTAL_EXPORT: dict[str, float] = {}
@@ -121,6 +122,20 @@ def effective_candidate_workers(spec: dict[str, Any]) -> int:
     except ValueError:
         limit = 1
     return max(1, min(requested, limit))
+
+
+def durable_source_run_yield_seconds() -> float:
+    raw = str(os.environ.get("CLIPPING_SOURCE_RUN_YIELD_SECONDS") or DEFAULT_SOURCE_RUN_YIELD_SECONDS).strip()
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return DEFAULT_SOURCE_RUN_YIELD_SECONDS
+
+
+def cooperative_source_run_yield(cancel_event: threading.Event) -> None:
+    delay = durable_source_run_yield_seconds()
+    if delay > 0:
+        cancel_event.wait(delay)
 
 
 @dataclass(slots=True)
@@ -717,7 +732,10 @@ def run_durable_update(job_id: str, spec: dict[str, Any], cancel_event: threadin
             update_job(job_id, **totals)
             if result.get("saved"):
                 publish_incremental_snapshot(job_id, reason="source-run-saved")
-            upload_live_checkpoint(job_id, reason="source-run-checkpoint", force=True)
+                upload_live_checkpoint(job_id, reason="source-run-saved-checkpoint", force=True)
+            else:
+                upload_live_checkpoint(job_id, reason="source-run-checkpoint")
+            cooperative_source_run_yield(cancel_event)
     if cancel_event.is_set():
         return {**totals, "coverage_state": "cancel_requested", "failed_sources": []}
     failed = failed_source_runs(job_id)

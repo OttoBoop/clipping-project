@@ -116,3 +116,33 @@ def test_markdown_entry_does_not_require_secrets() -> None:
 
     assert "Baseline" in entry
     assert "Production viewer password" not in entry
+
+
+def test_ui_markdown_entry_records_playwright_contract() -> None:
+    entry = op.markdown_entry(
+        "Playwright UI Contract Check",
+        {
+            "sampledAt": "2026-06-04 10:30:00 -03",
+            "ui": {
+                "profileListed": True,
+                "loginHttp": 200,
+                "targetsHttp": 200,
+                "targetContract": {"count": 18, "primaryExact": True},
+                "primaryKeys": op.EXPECTED_TARGET_KEYS,
+                "checkedPrimary": op.EXPECTED_TARGET_KEYS,
+                "secondaryKeys": [],
+                "primaryExact": True,
+                "checkedPrimaryExact": True,
+                "secondaryEmpty": True,
+                "runnerStatus": "Atualizando",
+                "errors": [],
+            },
+            "barriers": [],
+        },
+    )
+
+    assert "Profile listed: `True`" in entry
+    assert "Viewer login HTTP: `200`" in entry
+    assert "Primary keys exact: `True`; default-checked exact: `True`" in entry
+    assert "Secondary keys: `[]`; secondary empty `True`" in entry
+    assert "Production viewer password" not in entry
