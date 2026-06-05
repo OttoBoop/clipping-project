@@ -12,6 +12,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from pipeline.collectors import (
@@ -1192,19 +1193,46 @@ def run_source_run(
             archive_full_text=True,
             candidate_workers=effective_candidate_workers(spec),
         )
-        result = process_candidates(
-            source_name,
-            source_type,
-            candidates,
-            options=options,
-            progress_callback=lambda event, data, jid=job_id, tk=target_key, tl=target_label, tks=source_target_keys: record_progress(
-                jid,
-                event,
-                {**data, "target_keys": list(tks)},
-                target_key=tk,
-                target_label=tl,
-            ),
-        )
+        if source_type == "google_news" and target_key == GROUPED_SOURCE_RUN_TARGET_KEY:
+            record_progress(
+                job_id,
+                "source_progress",
+                {
+                    "source_name": source_name,
+                    "source_type": source_type,
+                    "candidates_total": candidate_total,
+                    "candidates_seen": candidate_total,
+                    "articles_inserted": 0,
+                    "mentions_inserted": 0,
+                    "stories_touched": 0,
+                    "status": "google_news_grouped_circuit_breaker",
+                    "reason": "skip_google_news_full_ingest_for_grouped_backfill",
+                    "target_keys": source_target_keys,
+                },
+                target_key=target_key,
+                target_label=target_label,
+            )
+            result = SimpleNamespace(
+                candidates_seen=candidate_total,
+                articles_inserted=0,
+                mentions_inserted=0,
+                stories_touched=0,
+                errors=[],
+            )
+        else:
+            result = process_candidates(
+                source_name,
+                source_type,
+                candidates,
+                options=options,
+                progress_callback=lambda event, data, jid=job_id, tk=target_key, tl=target_label, tks=source_target_keys: record_progress(
+                    jid,
+                    event,
+                    {**data, "target_keys": list(tks)},
+                    target_key=tk,
+                    target_label=tl,
+                ),
+            )
         if cancel_event.is_set():
             mark_source_run_interrupted(source_run_id, reason="cancel_requested")
             return {
