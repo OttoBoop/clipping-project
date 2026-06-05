@@ -762,6 +762,21 @@ def process_candidates(
         must_fetch_article = bool(force_full_fetch or exact_body_only or not hits or needs_published_extraction)
         # [END RECONSTRUCTED]
 
+        if candidate_source_type == "google_news" and is_google_news_redirect(candidate.url):
+            emit_candidate(
+                candidate=candidate,
+                status="skipped",
+                reason="google_redirect_unresolved",
+                final_url=final_url,
+                hits_for_candidate=hits,
+                title_value=clean_title(candidate.title or ""),
+                published_value=published_at,
+                stage="fetch",
+            )
+            if progress_callback and (seen == 1 or seen % 5 == 0):
+                emit_source_progress("google_redirect_unresolved")
+            continue
+
         if must_fetch_article:
             try:
                 final_url, raw_html, full_text, extracted_title, extracted_published = fetch_article_text(

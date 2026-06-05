@@ -2360,6 +2360,55 @@ def test_process_candidates_times_out_stuck_prefetch_future(monkeypatch, tmp_pat
     )
 
 
+def test_process_candidates_skips_unresolved_google_news_redirect(monkeypatch, tmp_path):
+    from pipeline import ingest
+    from pipeline.matcher import Target
+
+    db_file = tmp_path / "google-redirect-skip.db"
+    events: list[tuple[str, dict]] = []
+
+    def unexpected_fetch(*args, **kwargs):
+        raise AssertionError("unresolved Google News redirects should not be fetched during ingestion")
+
+    monkeypatch.setattr(ingest, "fetch_full_article_text", unexpected_fetch)
+    monkeypatch.setattr(
+        ingest,
+        "get_active_targets",
+        lambda: [Target(key="crime", display_name="crime", keywords=["crime"], primary=True)],
+    )
+    candidate = ingest.CandidateArticle(
+        title="Crime mobiliza autoridades",
+        url="https://news.google.com/rss/articles/CBMi-test-token",
+        source_name="Google News",
+        source_type="google_news",
+        published_at="2026-05-17T12:00:00+00:00",
+        snippet="Crime foi citado no boletim.",
+        metadata={"force_full_fetch": True, "redirect_resolution_skipped": True},
+    )
+
+    result = ingest.process_candidates(
+        "Google News",
+        "google_news",
+        [candidate],
+        options=ingest.IngestionOptions(
+            target_keys=["crime"],
+            date_from="2026-05-17",
+            date_to="2026-05-17",
+            db_path=str(db_file),
+            archive_full_text=False,
+        ),
+        progress_callback=lambda event, payload: events.append((event, payload)),
+    )
+
+    assert result.candidates_seen == 1
+    assert result.articles_inserted == 0
+    assert result.mentions_inserted == 0
+    assert any(
+        event == "candidate_evaluated" and payload.get("reason") == "google_redirect_unresolved"
+        for event, payload in events
+    )
+
+
 def test_process_candidates_tags_duplicate_article_for_new_secondary_target(monkeypatch, tmp_path):
     from pipeline import ingest
     from pipeline.matcher import Target
