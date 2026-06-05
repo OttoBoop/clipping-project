@@ -777,6 +777,21 @@ def process_candidates(
                 emit_source_progress("google_redirect_unresolved")
             continue
 
+        if candidate_source_type == "google_news" and not hits:
+            emit_candidate(
+                candidate=candidate,
+                status="skipped",
+                reason="google_news_preview_no_match",
+                final_url=final_url,
+                hits_for_candidate=[],
+                title_value=clean_title(candidate.title or ""),
+                published_value=published_at,
+                stage="preview_match",
+            )
+            if progress_callback and (seen == 1 or seen % 5 == 0):
+                emit_source_progress("google_news_preview_no_match")
+            continue
+
         if must_fetch_article:
             try:
                 final_url, raw_html, full_text, extracted_title, extracted_published = fetch_article_text(
@@ -857,7 +872,11 @@ def process_candidates(
             continue
         # [END RECONSTRUCTED]
 
-        should_archive_full_text = options.archive_full_text and (time.monotonic() - started_at) <= archive_cutoff
+        should_archive_full_text = (
+            options.archive_full_text
+            and candidate_source_type != "google_news"
+            and (time.monotonic() - started_at) <= archive_cutoff
+        )
         if not full_text and should_archive_full_text:
             try:
                 final_url, raw_html, full_text, extracted_title, extracted_published = fetch_article_text(

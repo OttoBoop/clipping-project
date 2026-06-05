@@ -2325,17 +2325,17 @@ def test_process_candidates_times_out_stuck_prefetch_future(monkeypatch, tmp_pat
     )
     candidate = ingest.CandidateArticle(
         title="Texto sem alvo visivel",
-        url="https://example.com/stuck-google-redirect",
-        source_name="Google News",
-        source_type="google_news",
+        url="https://example.com/stuck-article",
+        source_name="Fonte Lenta",
+        source_type="rss",
         published_at="2026-05-17T12:00:00+00:00",
         snippet="Resumo sem correspondencia para forcar fetch.",
         metadata={"force_full_fetch": True},
     )
 
     result = ingest.process_candidates(
-        "Google News",
-        "google_news",
+        "Fonte Lenta",
+        "rss",
         [candidate],
         options=ingest.IngestionOptions(
             target_keys=["alpha"],
@@ -2407,6 +2407,52 @@ def test_process_candidates_skips_unresolved_google_news_redirect(monkeypatch, t
         event == "candidate_evaluated" and payload.get("reason") == "google_redirect_unresolved"
         for event, payload in events
     )
+
+
+def test_process_candidates_saves_google_news_preview_match_without_fetch(monkeypatch, tmp_path):
+    from pipeline import ingest
+    from pipeline.matcher import Target
+
+    db_file = tmp_path / "google-preview-match.db"
+    events: list[tuple[str, dict]] = []
+
+    def unexpected_fetch(*args, **kwargs):
+        raise AssertionError("Google News preview matches should not fetch full articles")
+
+    monkeypatch.setattr(ingest, "fetch_full_article_text", unexpected_fetch)
+    monkeypatch.setattr(
+        ingest,
+        "get_active_targets",
+        lambda: [Target(key="crime", display_name="crime", keywords=["crime"], primary=True)],
+    )
+    candidate = ingest.CandidateArticle(
+        title="Crime mobiliza autoridades no Rio",
+        url="https://example.com/crime-rio",
+        source_name="Google News",
+        source_type="google_news",
+        published_at="2026-05-17T12:00:00+00:00",
+        snippet="A reportagem cita crime e policiamento.",
+        metadata={},
+    )
+
+    result = ingest.process_candidates(
+        "Google News",
+        "google_news",
+        [candidate],
+        options=ingest.IngestionOptions(
+            target_keys=["crime"],
+            date_from="2026-05-17",
+            date_to="2026-05-17",
+            db_path=str(db_file),
+            archive_full_text=True,
+        ),
+        progress_callback=lambda event, payload: events.append((event, payload)),
+    )
+
+    assert result.candidates_seen == 1
+    assert result.articles_inserted == 1
+    assert result.mentions_inserted == 1
+    assert any(event == "article_saved" for event, _ in events)
 
 
 def test_process_candidates_tags_duplicate_article_for_new_secondary_target(monkeypatch, tmp_path):
