@@ -1430,6 +1430,15 @@ def test_grouped_durable_source_units_keep_one_ledger_per_source_window(monkeypa
     assert all(cursor["queries"] == ["Alpha", "Beta"] or cursor["queries"] == ['"Alpha"', '"Beta"'] for cursor in query_cursors)
 
 
+def test_sitemap_query_prefilter_is_case_accent_and_slug_insensitive():
+    from pipeline.collectors import _matches_queries
+
+    assert _matches_queries("Segurança pública no Rio", ["seguranca"])
+    assert _matches_queries("Crime mobiliza autoridades", ["crime"])
+    assert _matches_queries("https://g1.globo.com/rio/reforco-no-policiamento.ghtml", ["reforço no policiamento"])
+    assert _matches_queries("Operação Segurança Presente chega ao Centro", ["operacao seguranca presente"])
+
+
 def test_grouped_durable_runner_migrates_legacy_rows_and_ingests_all_targets(monkeypatch, tmp_path):
     import threading
     from pipeline import ingest

@@ -6,6 +6,7 @@ import logging
 import random
 import re
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import xml.etree.ElementTree as ET
@@ -1182,8 +1183,16 @@ def _slug_title_from_url(url: str) -> str:
     return re.sub(r"[-_]+", " ", slug).strip().title() or ""
 
 
+def _fold_search_text(value: str) -> str:
+    text = normalize_text(value).casefold()
+    text = "".join(ch for ch in unicodedata.normalize("NFKD", text) if not unicodedata.combining(ch))
+    text = text.strip("\"'“”‘’")
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def _normalize_query_values(queries: list[str] | None) -> list[str]:
-    return [normalize_text(q) for q in (queries or []) if normalize_text(q)]
+    return [folded for q in (queries or []) if (folded := _fold_search_text(str(q or "")))]
 
 
 def _canonicalize_search_page_url(url: str) -> str:
@@ -1232,7 +1241,7 @@ def _matches_queries(text: str, queries: list[str] | None) -> bool:
     normalized_queries = _normalize_query_values(queries)
     if not normalized_queries:
         return True
-    searchable = normalize_text(text)
+    searchable = _fold_search_text(text)
     if not searchable:
         return False
     return any(query in searchable for query in normalized_queries)
