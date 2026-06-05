@@ -1501,8 +1501,6 @@ def test_grouped_durable_runner_migrates_legacy_rows_and_ingests_all_targets(mon
 
 
 def test_grouped_google_news_source_run_circuit_breaker_skips_ingest(monkeypatch, tmp_path):
-    from pipeline.collectors import CandidateArticle
-
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     monkeypatch.setenv("CLIPPING_SOURCE_RUN_YIELD_SECONDS", "0")
     spec = {
@@ -1518,22 +1516,13 @@ def test_grouped_google_news_source_run_circuit_breaker_skips_ingest(monkeypatch
         "export": False,
         "durable": True,
     }
+    collect_calls = []
 
-    monkeypatch.setattr(
-        jobs,
-        "collect_google_news",
-        lambda **_kwargs: [
-            CandidateArticle(
-                title="Alpha aparece no Google News",
-                url="https://news.google.com/rss/articles/test",
-                source_name="Google News",
-                source_type="google_news",
-                published_at="2026-04-01T12:00:00+00:00",
-                snippet="Alpha",
-                metadata={"force_full_fetch": True},
-            )
-        ],
-    )
+    def unexpected_collect_google_news(**kwargs):
+        collect_calls.append(kwargs)
+        raise AssertionError("grouped Google News should not enter collection")
+
+    monkeypatch.setattr(jobs, "collect_google_news", unexpected_collect_google_news)
 
     def unexpected_process_candidates(*_args, **_kwargs):
         raise AssertionError("grouped Google News should not enter full ingestion")
@@ -1549,8 +1538,9 @@ def test_grouped_google_news_source_run_circuit_breaker_skips_ingest(monkeypatch
     assert len(rows) == 1
     assert rows[0]["target_key"] == jobs.GROUPED_SOURCE_RUN_TARGET_KEY
     assert rows[0]["status"] == "complete"
-    assert rows[0]["candidates_seen"] == 1
+    assert rows[0]["candidates_seen"] == 0
     assert rows[0]["articles_inserted"] == 0
+    assert collect_calls == []
     assert any(
         event["event"] == "source_progress"
         and (event.get("payload") or {}).get("status") == "google_news_grouped_circuit_breaker"

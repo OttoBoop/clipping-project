@@ -1346,6 +1346,8 @@ def collect_source_run_candidates(
         return candidates, cursor, True
 
     if source_type == "google_news":
+        if str(row.get("target_key") or "") == GROUPED_SOURCE_RUN_TARGET_KEY:
+            return [], cursor, True
         queries = source_run_queries(cursor) or [str(cursor.get("query") or "")]
         candidates = collect_google_news(
             queries=queries,
