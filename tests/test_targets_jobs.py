@@ -1741,6 +1741,51 @@ def test_late_wordpress_hard_timeout_completes_source_run(monkeypatch, tmp_path)
     assert next_cursor["page"] == 25
 
 
+def test_late_grouped_wordpress_502_completes_query(monkeypatch, tmp_path):
+    import urllib.error
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "preset": "custom",
+        "collector": "wordpress_api",
+        "target_keys": ["crime", "seguranca"],
+        "date_from": "2014-01-01",
+        "date_to": "2026-06-02",
+        "export": True,
+        "max_candidates": 90000,
+        "max_process_seconds": 90000,
+        "durable": True,
+    }
+    monkeypatch.setattr(jobs, "WORDPRESS_API_SITES", [{"source_name": "Diario do Rio", "base_url": "https://diariodorio.com"}])
+
+    def bad_gateway_wordpress_api(*_args, **_kwargs):
+        raise urllib.error.HTTPError(
+            "https://diariodorio.com/wp-json/wp/v2/posts?page=16",
+            502,
+            "Bad Gateway",
+            {},
+            None,
+        )
+
+    monkeypatch.setattr(jobs, "collect_wordpress_api", bad_gateway_wordpress_api)
+
+    candidates, next_cursor, complete = jobs.collect_source_run_candidates(
+        spec,
+        {
+            "source_type": "wordpress_api",
+            "source_name": "Diario do Rio",
+            "candidates_seen": 379,
+            "candidates_total": 379,
+        },
+        {"site_index": 0, "queries": ["crime"], "page": 16, "complete_queries": []},
+    )
+
+    assert candidates == []
+    assert complete is True
+    assert next_cursor["page"] == 16
+    assert next_cursor["complete_queries"] == ["crime"]
+
+
 def test_early_wordpress_hard_timeout_still_fails_source_run(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     spec = {

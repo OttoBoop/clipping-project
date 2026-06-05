@@ -8,6 +8,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
@@ -1381,6 +1382,11 @@ def collect_source_run_candidates(
             if page >= 5 and seen_before >= WORDPRESS_PAGE_SIZE * 4 and "hard timeout" in str(exc):
                 return [], cursor, True
             raise
+        except urllib.error.HTTPError as exc:
+            seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total")))
+            if is_late_wordpress_transient_http_error(exc, page=page, seen_before=seen_before):
+                return [], cursor, True
+            raise
         complete = len(candidates) < WORDPRESS_PAGE_SIZE or page >= WORDPRESS_MAX_PAGES
         next_cursor = dict(cursor)
         next_cursor["page"] = page + 1 if not complete else page
@@ -1514,6 +1520,12 @@ def collect_grouped_wordpress_source_run(
                 complete_queries.add(query)
                 continue
             raise
+        except urllib.error.HTTPError as exc:
+            seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total")))
+            if is_late_wordpress_transient_http_error(exc, page=page, seen_before=seen_before):
+                complete_queries.add(query)
+                continue
+            raise
         candidates.extend(batch)
         if len(batch) < WORDPRESS_PAGE_SIZE:
             complete_queries.add(query)
@@ -1523,6 +1535,11 @@ def collect_grouped_wordpress_source_run(
     next_cursor["page_size"] = WORDPRESS_PAGE_SIZE
     next_cursor["complete_queries"] = sorted(complete_queries)
     return dedupe_source_run_candidates(candidates), next_cursor, complete
+
+
+def is_late_wordpress_transient_http_error(exc: BaseException, *, page: int, seen_before: int) -> bool:
+    status = int(getattr(exc, "code", 0) or 0)
+    return status in {502, 503, 504} and page >= 5 and seen_before >= WORDPRESS_PAGE_SIZE * 4
 
 
 def dedupe_source_run_candidates(candidates: list[CandidateArticle]) -> list[CandidateArticle]:
