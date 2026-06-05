@@ -650,6 +650,8 @@ def process_candidates(
 
     def candidate_needs_prefetch(candidate: CandidateArticle) -> bool:
         candidate_source_type = (candidate.source_type or source_type or "").strip().lower()
+        if candidate_source_type == "google_news":
+            return False
         candidate_metadata = dict(candidate.metadata or {})
         force_full_fetch = bool(candidate_metadata.get("force_full_fetch"))
         exact_body_only = bool(candidate_metadata.get("exact_body_only"))
@@ -727,6 +729,8 @@ def process_candidates(
         force_full_fetch = bool(candidate_metadata.get("force_full_fetch"))
         exact_body_only = bool(candidate_metadata.get("exact_body_only"))
         require_published_extraction = bool(candidate_metadata.get("require_published_extraction"))
+        if candidate_source_type == "google_news":
+            force_full_fetch = False
         # Direct-scrape candidates do not have reliable published_at; only enforce strict windows
         # after fetching the article and extracting a real date.
         needs_published_extraction = bool(

@@ -2428,6 +2428,11 @@ def test_process_candidates_saves_google_news_preview_match_without_fetch(monkey
     def unexpected_fetch(*args, **kwargs):
         raise AssertionError("Google News preview matches should not fetch full articles")
 
+    class UnexpectedExecutor:
+        def __init__(self, *args, **kwargs):
+            raise AssertionError("Google News candidates should not be scheduled for prefetch")
+
+    monkeypatch.setattr(ingest, "ThreadPoolExecutor", UnexpectedExecutor)
     monkeypatch.setattr(ingest, "fetch_full_article_text", unexpected_fetch)
     monkeypatch.setattr(
         ingest,
@@ -2441,7 +2446,7 @@ def test_process_candidates_saves_google_news_preview_match_without_fetch(monkey
         source_type="google_news",
         published_at="2026-05-17T12:00:00+00:00",
         snippet="A reportagem cita crime e policiamento.",
-        metadata={},
+        metadata={"force_full_fetch": True},
     )
 
     result = ingest.process_candidates(
@@ -2453,6 +2458,7 @@ def test_process_candidates_saves_google_news_preview_match_without_fetch(monkey
             date_from="2026-05-17",
             date_to="2026-05-17",
             db_path=str(db_file),
+            candidate_workers=2,
             archive_full_text=True,
         ),
         progress_callback=lambda event, payload: events.append((event, payload)),
