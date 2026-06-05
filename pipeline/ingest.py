@@ -17,7 +17,7 @@ import json
 import html
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from difflib import SequenceMatcher
@@ -697,7 +697,11 @@ def process_candidates(
             future = prefetch_futures.pop(key, None)
             if future is not None:
                 try:
-                    return future.result()
+                    hard_limit = max(1, int(request_timeout) + 5)
+                    return future.result(timeout=hard_limit)
+                except FuturesTimeoutError:
+                    future.cancel()
+                    raise TimeoutError(f"article_prefetch hard timeout ({hard_limit}s): {str(url or '')[:120]}")
                 finally:
                     schedule_prefetch()
         return fetch_full_article_text(url, request_timeout=request_timeout)

@@ -2289,6 +2289,77 @@ def test_process_candidates_prefetches_articles_with_serial_db_writes(monkeypatc
         assert conn.execute("SELECT COUNT(*) FROM mentions").fetchone()[0] == 3
 
 
+def test_process_candidates_times_out_stuck_prefetch_future(monkeypatch, tmp_path):
+    from concurrent.futures import TimeoutError as FuturesTimeoutError
+    from pipeline import ingest
+    from pipeline.matcher import Target
+
+    db_file = tmp_path / "prefetch-timeout.db"
+    observed_timeouts: list[int] = []
+    cancelled: list[bool] = []
+    events: list[tuple[str, dict]] = []
+
+    class StuckFuture:
+        def result(self, timeout=None):
+            observed_timeouts.append(timeout)
+            raise FuturesTimeoutError()
+
+        def cancel(self):
+            cancelled.append(True)
+
+    class FakeExecutor:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def submit(self, *args, **kwargs):
+            return StuckFuture()
+
+        def shutdown(self, *args, **kwargs):
+            pass
+
+    monkeypatch.setattr(ingest, "ThreadPoolExecutor", FakeExecutor)
+    monkeypatch.setattr(
+        ingest,
+        "get_active_targets",
+        lambda: [Target(key="alpha", display_name="Alpha", keywords=["Alpha"], primary=True)],
+    )
+    candidate = ingest.CandidateArticle(
+        title="Texto sem alvo visivel",
+        url="https://example.com/stuck-google-redirect",
+        source_name="Google News",
+        source_type="google_news",
+        published_at="2026-05-17T12:00:00+00:00",
+        snippet="Resumo sem correspondencia para forcar fetch.",
+        metadata={"force_full_fetch": True},
+    )
+
+    result = ingest.process_candidates(
+        "Google News",
+        "google_news",
+        [candidate],
+        options=ingest.IngestionOptions(
+            target_keys=["alpha"],
+            date_from="2026-05-17",
+            date_to="2026-05-17",
+            db_path=str(db_file),
+            request_timeout_seconds=3,
+            candidate_workers=2,
+            archive_full_text=False,
+        ),
+        progress_callback=lambda event, payload: events.append((event, payload)),
+    )
+
+    assert observed_timeouts == [8]
+    assert cancelled == [True]
+    assert result.candidates_seen == 1
+    assert result.articles_inserted == 0
+    assert any("article_prefetch hard timeout" in error for error in result.errors)
+    assert any(
+        event == "candidate_evaluated" and payload.get("reason", "").startswith("fetch_fail:article_prefetch hard timeout")
+        for event, payload in events
+    )
+
+
 def test_process_candidates_tags_duplicate_article_for_new_secondary_target(monkeypatch, tmp_path):
     from pipeline import ingest
     from pipeline.matcher import Target
