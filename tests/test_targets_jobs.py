@@ -1387,6 +1387,159 @@ def test_source_observability_reports_counts_and_incremental_publish_time(monkey
     assert observed["publishedAt"] > "2026-05-06T00:00:00+00:00"
 
 
+def test_grouped_durable_source_units_keep_one_ledger_per_source_window(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs, "RSS_FEEDS", [{"source_name": "Fonte RSS", "url": "https://example.com/rss.xml"}])
+    monkeypatch.setattr(jobs, "WORDPRESS_API_SITES", [{"source_name": "WP", "base_url": "https://example.com"}])
+    monkeypatch.setattr(
+        jobs,
+        "FLAVIO_INTERNAL_SEARCH_TARGETS",
+        [SimpleNamespace(source_name="Busca Interna", page_size=10)],
+    )
+    monkeypatch.setattr(
+        jobs,
+        "SITEMAP_DAILY_SOURCES",
+        [{"source_name": "Sitemap", "host": "example.com", "sitemap_url_template": "https://example.com/{yyyy}/{mm}/{dd}.xml"}],
+    )
+    monkeypatch.setattr(jobs, "VEJARIO_ARCHIVE_TARGETS", [])
+    monkeypatch.setattr(jobs, "CAMARA_MAX_PAGES", 0)
+    spec = {
+        "preset": "custom",
+        "collector": "all",
+        "target_keys": ["alpha", "beta"],
+        "target_snapshots": [
+            {"key": "alpha", "display_name": "Alpha", "keywords": ["Alpha"], "primary": True},
+            {"key": "beta", "display_name": "Beta", "keywords": ["Beta"], "primary": True},
+        ],
+        "date_from": "2026-04-01",
+        "date_to": "2026-04-01",
+        "export": False,
+        "durable": True,
+    }
+
+    units = jobs.build_grouped_source_units(spec)
+
+    assert [unit.source_type for unit in units] == [
+        "rss",
+        "google_news",
+        "wordpress_api",
+        "internal_search",
+        "sitemap_daily",
+    ]
+    query_cursors = [unit.cursor for unit in units if unit.source_type != "rss"]
+    assert all(cursor["queries"] == ["Alpha", "Beta"] or cursor["queries"] == ['"Alpha"', '"Beta"'] for cursor in query_cursors)
+
+
+def test_grouped_durable_runner_migrates_legacy_rows_and_ingests_all_targets(monkeypatch, tmp_path):
+    import threading
+    from pipeline import ingest
+    from pipeline.collectors import CandidateArticle
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setenv("CLIPPING_SOURCE_RUN_YIELD_SECONDS", "0")
+    monkeypatch.setattr(jobs, "RSS_FEEDS", [{"source_name": "Fonte RSS", "url": "https://example.com/rss.xml"}])
+    spec = {
+        "preset": "custom",
+        "collector": "rss",
+        "target_keys": ["alpha", "beta"],
+        "target_snapshots": [
+            {"key": "alpha", "display_name": "Alpha", "keywords": ["Alpha"], "primary": True},
+            {"key": "beta", "display_name": "Beta", "keywords": ["Beta"], "primary": True},
+        ],
+        "date_from": "2026-04-01",
+        "date_to": "2026-04-01",
+        "export": False,
+        "durable": True,
+    }
+    jobs.create_job("grouped-runner", "update", spec, started_by="coworker")
+    jobs.ensure_source_runs("grouped-runner", spec, "alpha")
+    assert {row["target_key"] for row in jobs.source_run_rows("grouped-runner")} == {"alpha"}
+    observed_options: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        jobs,
+        "collect_rss",
+        lambda **_kwargs: [
+            CandidateArticle(
+                title="Alpha e Beta aparecem no mesmo texto",
+                url="https://example.com/alpha-beta",
+                source_name="Fonte RSS",
+                source_type="rss",
+                published_at="2026-04-01T12:00:00+00:00",
+                snippet="Alpha Beta",
+                metadata={},
+            )
+        ],
+    )
+
+    def fake_process_candidates(source_name, source_type, candidates, *, options=None, progress_callback=None):
+        observed_options["target_keys"] = list(options.target_keys or [])
+        observed_options["snapshots"] = [item["key"] for item in list(options.target_snapshots or [])]
+        return ingest.IngestionResult(source_name, source_type, len(candidates), 1, 2, 1, [])
+
+    monkeypatch.setattr(jobs, "process_candidates", fake_process_candidates)
+
+    result = jobs.run_durable_update("grouped-runner", spec, threading.Event())
+    rows = jobs.source_run_rows("grouped-runner")
+    observed = jobs.get_job("grouped-runner")
+
+    assert result["coverage_state"] == "complete"
+    assert len(rows) == 1
+    assert rows[0]["target_key"] == jobs.GROUPED_SOURCE_RUN_TARGET_KEY
+    assert observed_options["target_keys"] == ["alpha", "beta"]
+    assert observed_options["snapshots"] == ["alpha", "beta"]
+    assert any(event["event"] == "source_run_ledger_migrated" for event in observed["events"])
+
+
+def test_grouped_wordpress_source_run_tracks_completed_queries(monkeypatch, tmp_path):
+    from pipeline.collectors import CandidateArticle
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs, "WORDPRESS_API_SITES", [{"source_name": "WP", "base_url": "https://example.com"}])
+    calls: list[tuple[str, int]] = []
+
+    def fake_collect_wordpress_api(query, **kwargs):
+        page = int(kwargs["start_page"])
+        calls.append((query, page))
+        if query == "Alpha" and page == 1:
+            return [
+                CandidateArticle(
+                    title=f"Alpha {idx}",
+                    url=f"https://example.com/alpha-{idx}",
+                    source_name="WP",
+                    source_type="wordpress_api",
+                    published_at="2026-04-01T12:00:00+00:00",
+                    snippet="Alpha",
+                    metadata={},
+                )
+                for idx in range(jobs.WORDPRESS_PAGE_SIZE)
+            ]
+        return []
+
+    monkeypatch.setattr(jobs, "collect_wordpress_api", fake_collect_wordpress_api)
+    spec = {"date_from": "2026-04-01", "date_to": "2026-04-01"}
+
+    candidates, next_cursor, complete = jobs.collect_source_run_candidates(
+        spec,
+        {"source_type": "wordpress_api", "source_name": "WP", "candidates_seen": 0, "candidates_total": 0},
+        {"site_index": 0, "queries": ["Alpha", "Beta"], "page": 1, "complete_queries": []},
+    )
+    assert len(candidates) == jobs.WORDPRESS_PAGE_SIZE
+    assert complete is False
+    assert next_cursor["page"] == 2
+    assert next_cursor["complete_queries"] == ["Beta"]
+
+    candidates, next_cursor, complete = jobs.collect_source_run_candidates(
+        spec,
+        {"source_type": "wordpress_api", "source_name": "WP", "candidates_seen": 25, "candidates_total": 25},
+        next_cursor,
+    )
+    assert candidates == []
+    assert complete is True
+    assert next_cursor["complete_queries"] == ["Alpha", "Beta"]
+    assert calls == [("Alpha", 1), ("Beta", 1), ("Alpha", 2)]
+
+
 def test_disabled_source_units_are_reconciled_out_of_resumed_jobs(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     spec = {

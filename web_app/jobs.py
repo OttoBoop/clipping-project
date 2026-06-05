@@ -70,6 +70,7 @@ ACTIVE_JOB_STATUSES = ("queued", "running", "exporting")
 RESUMABLE_JOB_STATUSES = ("interrupted_resumable", "failed_needs_fix")
 SOURCE_ACTIVE_STATUSES = {"pending", "running", "retrying", "interrupted_resumable"}
 SOURCE_TERMINAL_STATUSES = {"complete", "failed_needs_fix"}
+GROUPED_SOURCE_RUN_TARGET_KEY = "__all_targets__"
 DEFAULT_COLLECTOR = "all"
 EXPORT_TIMEOUT_SECONDS = 300
 INCREMENTAL_EXPORT_MIN_SECONDS = 90
@@ -717,13 +718,12 @@ def run_durable_update(job_id: str, spec: dict[str, Any], cancel_event: threadin
     labels = target_labels()
     labels.update(target_labels_from_spec(spec))
     totals = {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0}
-    for target_key in list(spec.get("target_keys") or []):
-        if cancel_event.is_set():
-            break
-        target_label = labels.get(target_key, target_key)
-        ensure_source_runs(job_id, spec, str(target_key))
+    if grouped_source_runs_enabled(spec):
+        target_keys = update_spec_target_keys(spec)
+        ensure_grouped_source_runs(job_id, spec)
+        target_label = f"{len(target_keys)} targets selecionados"
         while not cancel_event.is_set():
-            row = next_pending_source_run(job_id, str(target_key))
+            row = next_pending_source_run(job_id, GROUPED_SOURCE_RUN_TARGET_KEY)
             if not row:
                 break
             result = run_source_run(job_id, spec, row, target_label=target_label, cancel_event=cancel_event)
@@ -736,6 +736,26 @@ def run_durable_update(job_id: str, spec: dict[str, Any], cancel_event: threadin
             else:
                 upload_live_checkpoint(job_id, reason="source-run-checkpoint")
             cooperative_source_run_yield(cancel_event)
+    else:
+        for target_key in list(spec.get("target_keys") or []):
+            if cancel_event.is_set():
+                break
+            target_label = labels.get(target_key, target_key)
+            ensure_source_runs(job_id, spec, str(target_key))
+            while not cancel_event.is_set():
+                row = next_pending_source_run(job_id, str(target_key))
+                if not row:
+                    break
+                result = run_source_run(job_id, spec, row, target_label=target_label, cancel_event=cancel_event)
+                for key in totals:
+                    totals[key] += int(result.get(key) or 0)
+                update_job(job_id, **totals)
+                if result.get("saved"):
+                    publish_incremental_snapshot(job_id, reason="source-run-saved")
+                    upload_live_checkpoint(job_id, reason="source-run-saved-checkpoint", force=True)
+                else:
+                    upload_live_checkpoint(job_id, reason="source-run-checkpoint")
+                cooperative_source_run_yield(cancel_event)
     if cancel_event.is_set():
         return {**totals, "coverage_state": "cancel_requested", "failed_sources": []}
     failed = failed_source_runs(job_id)
@@ -755,6 +775,42 @@ def run_durable_update(job_id: str, spec: dict[str, Any], cancel_event: threadin
 
 def ensure_source_runs(job_id: str, spec: dict[str, Any], target_key: str) -> None:
     units = build_source_units(spec, target_key)
+    ensure_source_run_units(job_id, target_key, units)
+
+
+def ensure_grouped_source_runs(job_id: str, spec: dict[str, Any]) -> None:
+    units = build_grouped_source_units(spec)
+    legacy_rows_removed = 0
+    with connect(db_path()) as conn:
+        row = conn.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM job_source_runs
+            WHERE job_id = ? AND target_key != ?
+            """,
+            (job_id, GROUPED_SOURCE_RUN_TARGET_KEY),
+        ).fetchone()
+        legacy_rows_removed = int(row["count"] if row else 0)
+        if legacy_rows_removed:
+            conn.execute("DELETE FROM job_source_runs WHERE job_id = ?", (job_id,))
+    if legacy_rows_removed:
+        append_event(
+            job_id,
+            "source_run_ledger_migrated",
+            {
+                "status": "complete",
+                "reason": "multi_target_grouped_source_runs",
+                "source_run_mode": "grouped",
+                "legacy_source_runs_removed": legacy_rows_removed,
+                "source_runs_inserted": len(units),
+                "target_count": len(update_spec_target_keys(spec)),
+                "target_keys": update_spec_target_keys(spec),
+            },
+        )
+    ensure_source_run_units(job_id, GROUPED_SOURCE_RUN_TARGET_KEY, units)
+
+
+def ensure_source_run_units(job_id: str, target_key: str, units: list[SourceUnit]) -> None:
     now = datetime.now(timezone.utc).isoformat()
     with connect(db_path()) as conn:
         active_keys = {unit.source_key for unit in units}
@@ -810,11 +866,19 @@ def ensure_source_runs(job_id: str, spec: dict[str, Any], target_key: str) -> No
 
 
 def build_source_units(spec: dict[str, Any], target_key: str) -> list[SourceUnit]:
-    collector = str(spec.get("collector") or DEFAULT_COLLECTOR)
     targets = selected_targets_from_spec(spec, [target_key])
+    return build_source_units_for_targets(spec, targets, grouped=False)
+
+
+def build_grouped_source_units(spec: dict[str, Any]) -> list[SourceUnit]:
+    targets = selected_targets_from_spec(spec, update_spec_target_keys(spec))
+    return build_source_units_for_targets(spec, targets, grouped=True)
+
+
+def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], *, grouped: bool) -> list[SourceUnit]:
+    collector = str(spec.get("collector") or DEFAULT_COLLECTOR)
     if not targets:
         return []
-    target = targets[0]
     units: list[SourceUnit] = []
     order = 0
 
@@ -837,66 +901,118 @@ def build_source_units(spec: dict[str, Any], target_key: str) -> list[SourceUnit
             order += 1
 
     if include("google_news"):
-        for idx, query in enumerate(build_google_queries_for_target(target)):
-            units.append(
-                SourceUnit(
-                    source_key=f"google_news:{idx}",
-                    source_name="Google News",
-                    source_type="google_news",
-                    cursor={"query_index": idx, "query": query},
-                    order=order,
+        google_queries = build_google_queries_for_targets(targets)
+        if grouped:
+            if google_queries:
+                units.append(
+                    SourceUnit(
+                        source_key="google_news:0",
+                        source_name="Google News",
+                        source_type="google_news",
+                        cursor={"query_index": 0, "queries": google_queries},
+                        order=order,
+                    )
                 )
-            )
-            order += 1
+                order += 1
+        else:
+            for idx, query in enumerate(google_queries):
+                units.append(
+                    SourceUnit(
+                        source_key=f"google_news:{idx}",
+                        source_name="Google News",
+                        source_type="google_news",
+                        cursor={"query_index": idx, "query": query},
+                        order=order,
+                    )
+                )
+                order += 1
 
     if include("wordpress_api"):
-        queries = build_wordpress_queries_for_target(target)
         for site_idx, site in enumerate(WORDPRESS_API_SITES):
             site_name = str(site.get("source_name") or "WordPress").strip() or "WordPress"
-            site_queries = site.get("query_variants") if target.key == "flavio_valle" and isinstance(site.get("query_variants"), list) else queries
-            for query_idx, query in enumerate(ordered_unique([str(item or "").strip() for item in site_queries if str(item or "").strip()])):
-                units.append(
-                    SourceUnit(
-                        source_key=f"wordpress_api_{WORDPRESS_SOURCE_VERSION}:{site_idx}:{query_idx}",
-                        source_name=site_name,
-                        source_type="wordpress_api",
-                        cursor={
-                            "site_index": site_idx,
-                            "query_index": query_idx,
-                            "query": query,
-                            "page": 1,
-                            "page_size": WORDPRESS_PAGE_SIZE,
-                        },
-                        order=order,
+            site_queries = build_wordpress_queries_for_targets(targets, site=site)
+            if grouped:
+                if site_queries:
+                    units.append(
+                        SourceUnit(
+                            source_key=f"wordpress_api_{WORDPRESS_SOURCE_VERSION}:{site_idx}:all",
+                            source_name=site_name,
+                            source_type="wordpress_api",
+                            cursor={
+                                "site_index": site_idx,
+                                "query_index": 0,
+                                "queries": site_queries,
+                                "page": 1,
+                                "page_size": WORDPRESS_PAGE_SIZE,
+                                "complete_queries": [],
+                            },
+                            order=order,
+                        )
                     )
-                )
-                order += 1
+                    order += 1
+            else:
+                for query_idx, query in enumerate(site_queries):
+                    units.append(
+                        SourceUnit(
+                            source_key=f"wordpress_api_{WORDPRESS_SOURCE_VERSION}:{site_idx}:{query_idx}",
+                            source_name=site_name,
+                            source_type="wordpress_api",
+                            cursor={
+                                "site_index": site_idx,
+                                "query_index": query_idx,
+                                "query": query,
+                                "page": 1,
+                                "page_size": WORDPRESS_PAGE_SIZE,
+                            },
+                            order=order,
+                        )
+                    )
+                    order += 1
 
     if include("internal_search"):
-        queries = build_internal_search_queries_for_target(target)
+        queries = build_internal_search_queries_for_targets(targets)
         for adapter_idx, adapter in enumerate(FLAVIO_INTERNAL_SEARCH_TARGETS):
-            for query_idx, query in enumerate(queries):
-                page_size = max(1, int(getattr(adapter, "page_size", 10) or 10))
-                units.append(
-                    SourceUnit(
-                        source_key=f"internal_search_{INTERNAL_SEARCH_SOURCE_VERSION}:{adapter_idx}:{query_idx}",
-                        source_name=str(adapter.source_name),
-                        source_type="internal_search",
-                        cursor={
-                            "adapter_index": adapter_idx,
-                            "query_index": query_idx,
-                            "query": query,
-                            "page": 1,
-                            "page_size": page_size,
-                        },
-                        order=order,
+            page_size = max(1, int(getattr(adapter, "page_size", 10) or 10))
+            if grouped:
+                if queries:
+                    units.append(
+                        SourceUnit(
+                            source_key=f"internal_search_{INTERNAL_SEARCH_SOURCE_VERSION}:{adapter_idx}:all",
+                            source_name=str(adapter.source_name),
+                            source_type="internal_search",
+                            cursor={
+                                "adapter_index": adapter_idx,
+                                "query_index": 0,
+                                "queries": queries,
+                                "page": 1,
+                                "page_size": page_size,
+                            },
+                            order=order,
+                        )
                     )
-                )
-                order += 1
+                    order += 1
+            else:
+                for query_idx, query in enumerate(queries):
+                    units.append(
+                        SourceUnit(
+                            source_key=f"internal_search_{INTERNAL_SEARCH_SOURCE_VERSION}:{adapter_idx}:{query_idx}",
+                            source_name=str(adapter.source_name),
+                            source_type="internal_search",
+                            cursor={
+                                "adapter_index": adapter_idx,
+                                "query_index": query_idx,
+                                "query": query,
+                                "page": 1,
+                                "page_size": page_size,
+                            },
+                            order=order,
+                        )
+                    )
+                    order += 1
 
     if include("sitemap_daily"):
         days = source_window_days(str(spec.get("date_from") or ""), str(spec.get("date_to") or ""))
-        queries = build_internal_search_queries_for_target(target)
+        queries = build_internal_search_queries_for_targets(targets)
         for source_idx, source in enumerate(SITEMAP_DAILY_SOURCES):
             for day_idx, day in enumerate(days):
                 units.append(
@@ -938,6 +1054,39 @@ def build_source_units(spec: dict[str, Any], target_key: str) -> list[SourceUnit
             order += 1
 
     return units
+
+
+def grouped_source_runs_enabled(spec: dict[str, Any]) -> bool:
+    return len(update_spec_target_keys(spec)) > 1
+
+
+def update_spec_target_keys(spec: dict[str, Any]) -> list[str]:
+    return ordered_unique([str(item or "").strip() for item in list(spec.get("target_keys") or []) if str(item or "").strip()])
+
+
+def build_google_queries_for_targets(targets: list[Target]) -> list[str]:
+    queries: list[str] = []
+    for target in targets:
+        queries.extend(build_google_queries_for_target(target))
+    return ordered_unique(queries)
+
+
+def build_wordpress_queries_for_targets(targets: list[Target], *, site: dict[str, Any]) -> list[str]:
+    queries: list[str] = []
+    site_queries = site.get("query_variants")
+    for target in targets:
+        if target.key == "flavio_valle" and isinstance(site_queries, list):
+            queries.extend([str(item or "").strip() for item in site_queries if str(item or "").strip()])
+        else:
+            queries.extend(build_wordpress_queries_for_target(target))
+    return ordered_unique(queries)
+
+
+def build_internal_search_queries_for_targets(targets: list[Target]) -> list[str]:
+    queries: list[str] = []
+    for target in targets:
+        queries.extend(build_internal_search_queries_for_target(target))
+    return ordered_unique(queries)
 
 
 def source_window_days(date_from: str, date_to: str) -> list[str]:
@@ -983,6 +1132,7 @@ def run_source_run(
 ) -> dict[str, Any]:
     source_run_id = int(row["id"])
     target_key = str(row["target_key"])
+    source_target_keys = source_run_target_keys(spec, row)
     source_name = str(row["source_name"])
     source_type = str(row["source_type"])
     cursor = safe_json_dict(row.get("cursor_json"))
@@ -1002,6 +1152,7 @@ def run_source_run(
             "source_type": source_type,
             "target_key": target_key,
             "target_label": target_label,
+            "target_keys": source_target_keys,
             "status": "running",
             "rss_mib_before": rss_before,
         },
@@ -1017,13 +1168,19 @@ def run_source_run(
         record_progress(
             job_id,
             "source_collected",
-            {"source_name": source_name, "source_type": source_type, "candidates_total": candidate_total},
+            {
+                "source_name": source_name,
+                "source_type": source_type,
+                "candidates_total": candidate_total,
+                "target_keys": source_target_keys,
+            },
             target_key=target_key,
             target_label=target_label,
         )
+        source_targets = selected_targets_from_spec(spec, source_target_keys)
         options = IngestionOptions(
-            target_keys=[target_key],
-            target_snapshots=[target_to_snapshot(target) for target in selected_targets_from_spec(spec, [target_key])],
+            target_keys=source_target_keys,
+            target_snapshots=[target_to_snapshot(target) for target in source_targets],
             date_from=str(spec.get("date_from") or ""),
             date_to=str(spec.get("date_to") or ""),
             request_timeout_seconds=10,
@@ -1040,10 +1197,10 @@ def run_source_run(
             source_type,
             candidates,
             options=options,
-            progress_callback=lambda event, data, jid=job_id, tk=target_key, tl=target_label: record_progress(
+            progress_callback=lambda event, data, jid=job_id, tk=target_key, tl=target_label, tks=source_target_keys: record_progress(
                 jid,
                 event,
-                data,
+                {**data, "target_keys": list(tks)},
                 target_key=tk,
                 target_label=tl,
             ),
@@ -1082,6 +1239,7 @@ def run_source_run(
                 "source_type": source_type,
                 "target_key": target_key,
                 "target_label": target_label,
+                "target_keys": source_target_keys,
                 "candidates_seen": result.candidates_seen,
                 "candidates_total": candidate_total,
                 "articles_inserted": result.articles_inserted,
@@ -1116,6 +1274,7 @@ def run_source_run(
                 "source_type": source_type,
                 "target_key": target_key,
                 "target_label": target_label,
+                "target_keys": source_target_keys,
                 "status": "failed_needs_fix",
                 "error": message,
             },
@@ -1124,6 +1283,13 @@ def run_source_run(
     finally:
         candidates.clear()
         gc.collect()
+
+
+def source_run_target_keys(spec: dict[str, Any], row: dict[str, Any]) -> list[str]:
+    row_target_key = str(row.get("target_key") or "").strip()
+    if row_target_key == GROUPED_SOURCE_RUN_TARGET_KEY:
+        return update_spec_target_keys(spec)
+    return [row_target_key] if row_target_key else []
 
 
 def collect_source_run_candidates(
@@ -1151,9 +1317,9 @@ def collect_source_run_candidates(
         return candidates, cursor, True
 
     if source_type == "google_news":
-        query = str(cursor.get("query") or "")
+        queries = source_run_queries(cursor) or [str(cursor.get("query") or "")]
         candidates = collect_google_news(
-            queries=[query],
+            queries=queries,
             date_from=date_from,
             date_to=date_to,
             limit_per_query=max_candidates,
@@ -1163,6 +1329,9 @@ def collect_source_run_candidates(
         return candidates, cursor, True
 
     if source_type == "wordpress_api":
+        queries = source_run_queries(cursor)
+        if queries:
+            return collect_grouped_wordpress_source_run(spec, row, cursor, queries)
         site = WORDPRESS_API_SITES[max(0, int(cursor.get("site_index") or 0))]
         page = max(1, int(cursor.get("page") or 1))
         try:
@@ -1193,6 +1362,24 @@ def collect_source_run_candidates(
         adapter = FLAVIO_INTERNAL_SEARCH_TARGETS[max(0, int(cursor.get("adapter_index") or 0))]
         page = max(1, int(cursor.get("page") or 1))
         page_size = max(1, int(getattr(adapter, "page_size", 10) or 10))
+        queries = source_run_queries(cursor)
+        if queries:
+            limit = page_size * len(queries)
+            candidates = collect_internal_site_search(
+                queries=queries,
+                adapters=[adapter],
+                date_from=date_from,
+                date_to=date_to,
+                limit_per_adapter=limit,
+                max_pages_per_adapter=1,
+                start_page=page,
+                request_timeout=request_timeout,
+            )
+            complete = len(candidates) < limit or page >= INTERNAL_SEARCH_MAX_PAGES
+            next_cursor = dict(cursor)
+            next_cursor["page"] = page + 1 if not complete else page
+            next_cursor["page_size"] = page_size
+            return candidates, next_cursor, complete
         candidates = collect_internal_site_search(
             queries=[str(cursor.get("query") or "")],
             adapters=[adapter],
@@ -1212,7 +1399,7 @@ def collect_source_run_candidates(
     if source_type == "sitemap_daily":
         source = SITEMAP_DAILY_SOURCES[max(0, int(cursor.get("source_index") or 0))]
         day = str(cursor.get("day") or date_from or date_to)
-        queries = [str(item or "").strip() for item in list(cursor.get("queries") or []) if str(item or "").strip()]
+        queries = source_run_queries(cursor)
         candidates = collect_sitemap_daily(
             queries=queries,
             sources=[source],
@@ -1253,6 +1440,73 @@ def collect_source_run_candidates(
         return candidates, cursor, True
 
     raise ValueError(f"unknown_source_type:{source_type}")
+
+
+def source_run_queries(cursor: dict[str, Any]) -> list[str]:
+    return ordered_unique([str(item or "").strip() for item in list(cursor.get("queries") or []) if str(item or "").strip()])
+
+
+def collect_grouped_wordpress_source_run(
+    spec: dict[str, Any],
+    row: dict[str, Any],
+    cursor: dict[str, Any],
+    queries: list[str],
+) -> tuple[list[CandidateArticle], dict[str, Any], bool]:
+    request_timeout = 10
+    date_from = str(spec.get("date_from") or "")
+    date_to = str(spec.get("date_to") or "")
+    site = WORDPRESS_API_SITES[max(0, int(cursor.get("site_index") or 0))]
+    page = max(1, int(cursor.get("page") or 1))
+    complete_queries = {
+        str(item or "").strip()
+        for item in list(cursor.get("complete_queries") or [])
+        if str(item or "").strip()
+    }
+    candidates: list[CandidateArticle] = []
+    for query in queries:
+        if query in complete_queries:
+            continue
+        try:
+            batch = collect_wordpress_api(
+                query,
+                source_name=str(site.get("source_name") or "WordPress"),
+                base_url=str(site.get("base_url") or ""),
+                date_from=date_from,
+                date_to=date_to,
+                per_site_limit=WORDPRESS_PAGE_SIZE,
+                per_page=WORDPRESS_PAGE_SIZE,
+                request_timeout=request_timeout,
+                start_page=page,
+                max_pages=1,
+                raise_on_error=True,
+            )
+        except TimeoutError as exc:
+            seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total")))
+            if page >= 5 and seen_before >= WORDPRESS_PAGE_SIZE * 4 and "hard timeout" in str(exc):
+                complete_queries.add(query)
+                continue
+            raise
+        candidates.extend(batch)
+        if len(batch) < WORDPRESS_PAGE_SIZE:
+            complete_queries.add(query)
+    complete = len(complete_queries) >= len(queries) or page >= WORDPRESS_MAX_PAGES
+    next_cursor = dict(cursor)
+    next_cursor["page"] = page + 1 if not complete else page
+    next_cursor["page_size"] = WORDPRESS_PAGE_SIZE
+    next_cursor["complete_queries"] = sorted(complete_queries)
+    return dedupe_source_run_candidates(candidates), next_cursor, complete
+
+
+def dedupe_source_run_candidates(candidates: list[CandidateArticle]) -> list[CandidateArticle]:
+    deduped: list[CandidateArticle] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        url = str(candidate.url or "").strip()
+        if not url or url in seen:
+            continue
+        seen.add(url)
+        deduped.append(candidate)
+    return deduped
 
 
 def paged_url(base_url: str, page: int) -> str:
@@ -1910,15 +2164,25 @@ def source_runs_observability(job_id: str, job_status: str = "") -> dict[str, An
     priority = {"failed_needs_fix": 0, "running": 1, "retrying": 2, "interrupted_resumable": 3, "pending": 4, "complete": 5}
     visible_rows = sorted(rows, key=lambda row: (priority.get(str(row.get("status") or ""), 6), str(row.get("updatedAt") or "")))[:80]
     status_counts: dict[str, int] = {}
+    target_counts: dict[str, int] = {}
+    source_type_counts: dict[str, int] = {}
     for row in rows:
         status = str(row.get("status") or "unknown")
         status_counts[status] = status_counts.get(status, 0) + 1
+        target_key = str(row.get("targetKey") or "")
+        source_type = str(row.get("sourceType") or "")
+        if target_key:
+            target_counts[target_key] = target_counts.get(target_key, 0) + 1
+        if source_type:
+            source_type_counts[source_type] = source_type_counts.get(source_type, 0) + 1
     return {
         "coverageState": coverage,
         "sourceRuns": visible_rows,
         "sourceRunCount": len(rows),
         "sourceRunVisibleCount": len(visible_rows),
         "sourceRunCounts": status_counts,
+        "sourceRunTargetCounts": target_counts,
+        "sourceRunSourceTypeCounts": source_type_counts,
         "failedSources": failed[:20],
         "resumeAvailable": bool(job_status in RESUMABLE_JOB_STATUSES and rows and any(row.get("status") != "complete" for row in rows)),
         "publishedAt": latest_publish_time(job_id),
@@ -1931,7 +2195,12 @@ def progress_summary(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[
     run_candidates_seen = 0
     sources_total = 0
     latest_by_source: dict[tuple[str, str, str], dict[str, Any]] = {}
-    targets: dict[str, str] = {}
+    labels = target_labels()
+    targets: dict[str, str] = {
+        key: labels.get(key, key)
+        for key in parse_target_keys(job.get("target_keys"))
+        if key
+    }
     current_target_key = ""
     current_source = ""
 
@@ -1942,8 +2211,12 @@ def progress_summary(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[
         target_key = str(payload.get("target_key") or "")
         target_label = str(payload.get("target_label") or target_key)
         if target_key:
-            targets[target_key] = target_label
+            if target_key != GROUPED_SOURCE_RUN_TARGET_KEY:
+                targets[target_key] = target_label
             current_target_key = target_key
+        for payload_key in event_target_keys(payload):
+            if payload_key and payload_key != GROUPED_SOURCE_RUN_TARGET_KEY:
+                targets.setdefault(payload_key, labels.get(payload_key, payload_key))
         source_label = str(payload.get("source_name") or payload.get("source") or "")
         if source_label:
             current_source = source_label
@@ -2395,6 +2668,10 @@ def sanitize_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "rss_mib_after",
         "rss_mib_delta",
         "returncode",
+        "source_run_mode",
+        "legacy_source_runs_removed",
+        "source_runs_inserted",
+        "target_count",
     }
     safe: dict[str, Any] = {}
     for key, value in payload.items():

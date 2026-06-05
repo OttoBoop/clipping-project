@@ -118,6 +118,35 @@ def test_markdown_entry_does_not_require_secrets() -> None:
     assert "Production viewer password" not in entry
 
 
+def test_summarize_events_keeps_source_run_insert_metrics() -> None:
+    summary = op.summarize_events(
+        {
+            "events": [
+                {
+                    "created_at": "2026-06-05T12:13:06+00:00",
+                    "event": "source_run_checkpoint",
+                    "payload": {
+                        "target_key": "seguranca_presente",
+                        "source_name": "Agenda do Poder",
+                        "status": "pending",
+                        "candidates_seen": 25,
+                        "candidates_total": 25,
+                        "articles_inserted": 9,
+                        "mentions_inserted": 9,
+                        "stories_touched": 9,
+                    },
+                }
+            ]
+        }
+    )
+
+    event = summary["latest"][0]
+    assert event["candidatesTotal"] == 25
+    assert event["articlesInserted"] == 9
+    assert event["mentionsInserted"] == 9
+    assert event["storiesTouched"] == 9
+
+
 def test_ui_markdown_entry_records_playwright_contract() -> None:
     entry = op.markdown_entry(
         "Playwright UI Contract Check",

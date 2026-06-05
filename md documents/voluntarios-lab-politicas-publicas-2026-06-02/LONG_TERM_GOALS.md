@@ -121,6 +121,32 @@ Current production fix deployed for this incident:
 - post-deploy monitoring evidence: live results, asset timestamps, and source
   events advanced while RSS stayed below the danger band across monitored
   checkpoint cycles
+- commit `97e75c1 fix(jobs): throttle empty source checkpoints`
+- purpose: avoid forcing live checkpoint uploads after empty source-runs and
+  give the single-process web service a small cooperative yield between durable
+  source-runs
+- operational rule: source-runs with saved articles may force checkpoint
+  durability; empty source-runs must use the normal checkpoint throttle unless
+  an explicit repair action overrides it
+- post-deploy evidence: after resume and password repair, 4 monitor cycles had
+  no barriers, HTTP endpoints stayed responsive, live/assets advanced when
+  saved articles appeared, and Playwright verified the exact viewer contract
+
+Backend scheduler correction prepared after low-volume review:
+
+- durable jobs with more than one `target_key` must be treated as grouped
+  source coverage, not as a serial queue of one full source plan per target
+- grouped source-runs use target key `__all_targets__` and must ingest against
+  every selected target snapshot from the job spec
+- the source ledger for this task should remain approximately one row per
+  source/window/query-page family, not 18 duplicated source ledgers
+- if job `0b36e332911a` resumes with legacy per-target source-run rows, the
+  backend may migrate those rows to the grouped ledger for the same job id; this
+  is not a duplicate job and must be logged as `source_run_ledger_migrated`
+- after deploying this correction, acceptance monitoring must verify
+  `sourceRunTargetCounts` is grouped under `__all_targets__`, source type counts
+  match the grouped plan, events include all 18 `target_keys`, and live results
+  advance from broad targets as well as `seguranca_presente`
 
 ## Monitoring Protocol
 

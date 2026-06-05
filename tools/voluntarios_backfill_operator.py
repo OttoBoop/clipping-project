@@ -375,6 +375,13 @@ def summarize_events(payload: Any) -> dict[str, Any]:
                 "target": details.get("target_key") or event.get("target_key"),
                 "source": details.get("source_name") or event.get("source_name"),
                 "status": details.get("status") or event.get("status"),
+                "candidatesSeen": details.get("candidates_seen"),
+                "candidatesTotal": details.get("candidates_total"),
+                "articlesInserted": details.get("articles_inserted"),
+                "mentionsInserted": details.get("mentions_inserted"),
+                "storiesTouched": details.get("stories_touched"),
+                "rssBefore": details.get("rss_mib_before"),
+                "rssAfter": details.get("rss_mib_after"),
                 "error": str(details.get("error") or details.get("message") or "")[:220],
             }
         )
