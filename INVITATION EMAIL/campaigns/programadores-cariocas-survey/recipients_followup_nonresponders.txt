@@ -1,6 +1,6 @@
-# Programadores Cariocas survey - FOLLOW-UP to non-responders (687 alumni)
-# Computed: original 798 sent - 107 form responders matched via roster xlsx.
-# Conservative over-exclusion on ambiguous "Felipe" alone (6 matched, all excluded).
+# Programadores Cariocas survey - FOLLOW-UP to non-responders (693 alumni)
+# v2: per data owner instruction, the 6 ambiguous "Felipe" emails are kept IN
+# the list (1 may be a duplicate to the Felipe Vieira responder - accepted cost).
 07fabian83@gmail.com
 acountslima@gmail.com
 adma_nog@hotmail.com
@@ -192,8 +192,13 @@ fabianohorta@hotmail.com
 fabiellerodrigues35@gmail.com
 fabioelgin@gmail.com
 fademmorpg@gmail.com
+fcfelipecosta@hotmail.com
 fcggg170392@gmail.com
+fcostaveiga@gmail.com
 fdscamilla@gmail.com
+felipebarros1111@gmail.com
+felipepuido@gmail.com
+felipevieirapvn@gmail.com
 felippegerrad@gmail.com
 felipperibeiro2511@gmail.com
 fellipeguilherme37@gmail.com
@@ -382,6 +387,7 @@ licerodrigues50@gmail.com
 lilianmguima@gmail.com
 lincolnfern4ndes@gmail.com
 linkamorim2@gmail.com
+lipebarreiro3@gmail.com
 llansr07@gmail.com
 llopes660@gmail.com
 lopesbruna646@gmail.com
