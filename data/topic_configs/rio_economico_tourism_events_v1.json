@@ -1,5 +1,5 @@
 {
-  "version": "rio_economico_tourism_events_v5",
+  "version": "rio_economico_tourism_events_v6",
   "scope": "rio_economico",
   "topic": "tourism_events",
   "dimension": "tourism_events",
@@ -177,6 +177,7 @@
     "Bom dia Amazonas",
     "Bom dia Amazônia",
     "Bom dia Amazonia",
+    "Baixada Fluminense",
     "Nota A do Tesouro Nacional",
     "transparência fiscal",
     "transparencia fiscal",
@@ -189,7 +190,9 @@
     "Alerj",
     "benefícios fiscais",
     "beneficios fiscais",
-    "ICMS"
+    "ICMS",
+    "Movimentação de passageiros em aeroportos",
+    "Movimentacao de passageiros em aeroportos"
   ],
   "exclude_body_terms": [],
   "source_queries": [

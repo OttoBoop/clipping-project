@@ -62,6 +62,7 @@ SEARCH_NOISE_RE = re.compile(r"(resultado[s]?\s+da\s+pesquisa|wp-content|comment
 RELATED_MATCH_NOISE_RE = re.compile(
     r"(?is)\b(not[ií]cias?\s+relacionadas?|leia\s+tamb[eé]m|veja\s+tamb[eé]m|textos?\s+relacionados?|links?\s+relacionados?)\b.*"
 )
+TOPIC_TERM_NOISE_RE = re.compile(r"\b(?:d[oó]lar|euro)\s+turismo\b", re.IGNORECASE)
 
 POSITIVE_MARKERS = {
     "apoio",
@@ -164,6 +165,7 @@ def safe_target_match_surface(*parts: str) -> str:
         text = html.unescape(TAG_RE.sub(" ", str(part or "")))
         text = URL_RE.sub(" ", text)
         text = RELATED_MATCH_NOISE_RE.sub(" ", text)
+        text = TOPIC_TERM_NOISE_RE.sub(" ", text)
         text = re.sub(r"\s+", " ", text).strip()
         if text:
             cleaned_parts.append(text)
@@ -964,7 +966,10 @@ def process_candidates(
                     emit_source_progress()
                 continue
             hits = filtered_hits
-        combined_text = " ".join([candidate.title or "", candidate.snippet or "", full_text or "", summary or ""])
+        combined_text = TOPIC_TERM_NOISE_RE.sub(
+            " ",
+            " ".join([candidate.title or "", candidate.snippet or "", full_text or "", summary or ""]),
+        )
         if not passes_forced_terms(combined_text, forced_terms, forced_mode):
             emit_candidate(
                 candidate=candidate,
