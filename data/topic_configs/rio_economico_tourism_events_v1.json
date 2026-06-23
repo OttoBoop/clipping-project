@@ -1,5 +1,5 @@
 {
-  "version": "rio_economico_tourism_events_v4",
+  "version": "rio_economico_tourism_events_v5",
   "scope": "rio_economico",
   "topic": "tourism_events",
   "dimension": "tourism_events",
@@ -185,7 +185,11 @@
     "colocada a venda",
     "pontos de luz",
     "desemprego",
-    "homem baleado"
+    "homem baleado",
+    "Alerj",
+    "benefícios fiscais",
+    "beneficios fiscais",
+    "ICMS"
   ],
   "exclude_body_terms": [],
   "source_queries": [

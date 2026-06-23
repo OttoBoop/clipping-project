@@ -186,7 +186,7 @@ def normalize_forced_terms(terms: list[str] | None) -> list[str]:
         return []
     normalized: list[str] = []
     for term in terms:
-        value = normalize_text(term)
+        value = normalize_text(term).casefold()
         if len(value) >= 3:
             normalized.append(value)
     return normalized
@@ -195,7 +195,7 @@ def normalize_forced_terms(terms: list[str] | None) -> list[str]:
 def passes_forced_terms(text: str, terms: list[str], mode: str) -> bool:
     if not terms:
         return True
-    normalized_text = normalize_text(text)
+    normalized_text = normalize_text(text).casefold()
     hits = [t for t in terms if t in normalized_text]
     if mode == "all":
         return len(hits) == len(terms)
@@ -205,7 +205,7 @@ def passes_forced_terms(text: str, terms: list[str], mode: str) -> bool:
 def contains_any_term(text: str, terms: list[str]) -> bool:
     if not terms:
         return False
-    normalized_text = normalize_text(text)
+    normalized_text = normalize_text(text).casefold()
     return any(term in normalized_text for term in terms)
 
 
