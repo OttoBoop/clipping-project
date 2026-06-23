@@ -847,23 +847,104 @@ def test_rio_tourism_process_candidates_filters_city_scope_and_keeps_metadata(mo
             snippet="Preparação para receber turistas: espaços para visitantes estão sendo finalizados.",
             metadata={},
         ),
+        CandidateArticle(
+            title="Nova Iguaçu conquista Nota A do Tesouro Nacional e entra no grupo de elite da transparência fiscal",
+            url="https://example.com/nova-iguacu-transparencia",
+            source_name="Tempo Real RJ",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Rio de Janeiro aparece no breadcrumb, mas a noticia e de outro municipio.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="Avaliada em R$ 115 milhões, casa de luxo no Joá com jardim projetado por Burle Marx é colocada à venda",
+            url="https://example.com/casa-luxo-joa",
+            source_name="Tempo Real RJ",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Imovel residencial no Rio de Janeiro sem relacao com turismo.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="SAARA ganha modernização em 112 pontos de luz no Centro do Rio",
+            url="https://example.com/saara-luz",
+            source_name="Diario do Rio",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Melhoria de iluminacao publica no centro comercial.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="Desemprego no Rio cai para 5,8% e atinge menor taxa em 10 anos",
+            url="https://example.com/desemprego-rio",
+            source_name="Diario do Rio",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Indicador geral de mercado de trabalho da cidade do Rio.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="Operação na zona sul do Rio tem 6 presos e homem baleado em ônibus",
+            url="https://example.com/operacao-zona-sul",
+            source_name="Agencia Brasil",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Tiroteio no Morro Dona Marta assustou moradores, mas o titulo nao trata de turistas.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="Justiça decreta falência do hotel LSH Barra",
+            url="https://example.com/hotel-lsh-barra",
+            source_name="Tempo Real RJ",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Hotel na Barra da Tijuca, cidade do Rio, teve falencia decretada.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="Marcas transformam quiosques da Orla Rio em pontos de torcida durante torneio de futebol",
+            url="https://example.com/orla-rio-torcida",
+            source_name="Diario do Rio",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Quiosques em Copacabana, Barra, Leblon e Leme recebem ativacoes de marcas durante grande evento.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="Turistas deitam no chão em mirante durante tiroteio no Rio",
+            url="https://example.com/turistas-tiroteio",
+            source_name="Band",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Cerca de 60 turistas estavam no Mirante Dona Marta, em Botafogo.",
+            metadata={},
+        ),
     ]
 
     result = ingest.process_candidates("Fonte Rio", "rss", candidates, options=options)
 
-    assert result.articles_inserted == 2
-    assert result.mentions_inserted == 2
+    assert result.articles_inserted == 5
+    assert result.mentions_inserted == 5
     with sqlite3.connect(db_file) as conn:
         rows = conn.execute("SELECT title, metadata FROM articles ORDER BY id").fetchall()
         mentions = conn.execute("SELECT target_key, target_name FROM mentions").fetchall()
     assert rows[0][0] == "Cidade do Rio recebe turistas internacionais no inverno"
     assert rows[1][0] == "Buenos Aires no Rio: Posto 3 vira arquibancada argentina"
+    assert rows[2][0] == "Justiça decreta falência do hotel LSH Barra"
+    assert rows[3][0] == "Marcas transformam quiosques da Orla Rio em pontos de torcida durante torneio de futebol"
+    assert rows[4][0] == "Turistas deitam no chão em mirante durante tiroteio no Rio"
     metadata = json.loads(rows[0][1])
     assert metadata["scope"] == "rio_economico"
     assert metadata["topic"] == "tourism_events"
     assert metadata["dimension"] == "tourism_events"
     assert metadata["query"] == '"cidade do Rio" "turistas"'
-    assert mentions == [("rio_economico", "Turismo Rio"), ("rio_economico", "Turismo Rio")]
+    assert mentions == [
+        ("rio_economico", "Turismo Rio"),
+        ("rio_economico", "Turismo Rio"),
+        ("rio_economico", "Turismo Rio"),
+        ("rio_economico", "Turismo Rio"),
+        ("rio_economico", "Turismo Rio"),
+    ]
 
 
 def test_live_results_include_rio_topic_key_without_active_target(monkeypatch, tmp_path):
