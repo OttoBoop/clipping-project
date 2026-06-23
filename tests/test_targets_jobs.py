@@ -793,22 +793,68 @@ def test_rio_tourism_process_candidates_filters_city_scope_and_keeps_metadata(mo
             snippet="Rio de Janeiro e turismo aparecem no texto, mas o destino da noticia e Buzios.",
             metadata={},
         ),
+        CandidateArticle(
+            title="Buenos Aires no Rio: Posto 3 vira arquibancada argentina",
+            url="https://example.com/argentinos-copacabana",
+            source_name="Fonte Rio",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Argentinos lideram o ranking de turistas estrangeiros e lotam quiosque no Posto 3, em Copacabana.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="Tainá de Paula participa de debate sobre os desafios ambientais do Rio",
+            url="https://example.com/taina-ambiental",
+            source_name="Fonte Rio",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Fórum Veja Rio + Verde discute meio ambiente e clima na cidade.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="Previsão do tempo durante o jogo do Brasil em São Paulo e no Rio",
+            url="https://example.com/previsao-tempo-jogo",
+            source_name="Fonte Nacional",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Torcida acompanha a partida em Copacabana, mas a noticia e apenas sobre clima.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="Petrobras e estatal mexicana Pemex assinam acordo de cooperação em petróleo e gás",
+            url="https://example.com/petrobras-pemex",
+            source_name="G1",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Dólar Turismo R$ 5,397. Euro Turismo R$ 6,155. B3 Ibovespa.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="VÍDEOS: Bom dia Amazônia desta terça-feira, 23 de junho de 2026",
+            url="https://example.com/bom-dia-amazonia",
+            source_name="G1",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Autoridades debatem fluxo migratório no Acre. Espaços para visitantes e serviços locais.",
+            metadata={},
+        ),
     ]
 
     result = ingest.process_candidates("Fonte Rio", "rss", candidates, options=options)
 
-    assert result.articles_inserted == 1
-    assert result.mentions_inserted == 1
+    assert result.articles_inserted == 2
+    assert result.mentions_inserted == 2
     with sqlite3.connect(db_file) as conn:
         rows = conn.execute("SELECT title, metadata FROM articles ORDER BY id").fetchall()
         mentions = conn.execute("SELECT target_key, target_name FROM mentions").fetchall()
     assert rows[0][0] == "Cidade do Rio recebe turistas internacionais no inverno"
+    assert rows[1][0] == "Buenos Aires no Rio: Posto 3 vira arquibancada argentina"
     metadata = json.loads(rows[0][1])
     assert metadata["scope"] == "rio_economico"
     assert metadata["topic"] == "tourism_events"
     assert metadata["dimension"] == "tourism_events"
     assert metadata["query"] == '"cidade do Rio" "turistas"'
-    assert mentions == [("rio_economico", "Turismo Rio")]
+    assert mentions == [("rio_economico", "Turismo Rio"), ("rio_economico", "Turismo Rio")]
 
 
 def test_live_results_include_rio_topic_key_without_active_target(monkeypatch, tmp_path):
