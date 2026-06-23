@@ -838,6 +838,15 @@ def test_rio_tourism_process_candidates_filters_city_scope_and_keeps_metadata(mo
             snippet="Autoridades debatem fluxo migratório no Acre. Espaços para visitantes e serviços locais.",
             metadata={},
         ),
+        CandidateArticle(
+            title="VÍDEOS: Bom dia Amazonas desta terça-feira, 23 de junho de 2026",
+            url="https://example.com/bom-dia-amazonas",
+            source_name="G1",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Preparação para receber turistas: espaços para visitantes estão sendo finalizados.",
+            metadata={},
+        ),
     ]
 
     result = ingest.process_candidates("Fonte Rio", "rss", candidates, options=options)
