@@ -1,5 +1,5 @@
 {
-  "version": "rio_economico_tourism_events_v1",
+  "version": "rio_economico_tourism_events_v2",
   "scope": "rio_economico",
   "topic": "tourism_events",
   "dimension": "tourism_events",
