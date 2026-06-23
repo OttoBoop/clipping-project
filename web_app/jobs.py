@@ -54,6 +54,15 @@ from .db_admin import (
     validate_configured_db_file,
     validate_target_keys,
 )
+from .rio_topics import (
+    RIO_ECONOMICO_SCOPE,
+    RIO_TOURISM_TOPIC,
+    is_rio_tourism_request,
+    load_rio_tourism_config,
+    rio_topic_labels,
+    rio_topic_target_snapshot,
+    rio_tourism_source_query_texts,
+)
 from .storage_bridge import ArtifactStore, artifact_store
 
 
@@ -115,6 +124,70 @@ DEFAULT_SOURCE_RUN_YIELD_SECONDS = 0.05
 _CHECKPOINT_LOCK = threading.Lock()
 _LAST_CHECKPOINT_UPLOAD: dict[str, float] = {}
 _LAST_INCREMENTAL_EXPORT: dict[str, float] = {}
+
+
+def is_rio_tourism_spec(spec: dict[str, Any]) -> bool:
+    return (
+        str(spec.get("scope") or "") == RIO_ECONOMICO_SCOPE
+        and str(spec.get("topic") or "") == RIO_TOURISM_TOPIC
+    )
+
+
+def topic_queries_from_spec(spec: dict[str, Any], *, source_type: str = "google_news") -> list[str]:
+    raw_values = spec.get("topic_queries") or []
+    if source_type != "google_news" and spec.get("topic_source_queries"):
+        raw_values = spec.get("topic_source_queries") or []
+    return ordered_unique(
+        [
+            str(item.get("query") if isinstance(item, dict) else item).strip()
+            for item in list(raw_values)
+            if str(item.get("query") if isinstance(item, dict) else item).strip()
+        ]
+    )
+
+
+def topic_query_meta(spec: dict[str, Any], query: str = "") -> dict[str, Any]:
+    meta = {
+        "scope": str(spec.get("scope") or ""),
+        "topic": str(spec.get("topic") or ""),
+        "dimension": str(spec.get("topic_dimension") or spec.get("topic") or ""),
+        "topic_config_version": str(spec.get("topic_config_version") or ""),
+    }
+    if query:
+        meta["query"] = query
+        for row in list(spec.get("topic_queries") or []):
+            if isinstance(row, dict) and str(row.get("query") or "").strip() == query:
+                meta.update(
+                    {
+                        "query_group": str(row.get("group") or ""),
+                        "query_weight": row.get("weight", ""),
+                        "query_why": str(row.get("why") or ""),
+                    }
+                )
+                break
+    return {key: value for key, value in meta.items() if value != ""}
+
+
+def annotate_topic_candidates(
+    spec: dict[str, Any],
+    candidates: list[CandidateArticle],
+    *,
+    cursor: dict[str, Any],
+) -> list[CandidateArticle]:
+    if not is_rio_tourism_spec(spec):
+        return candidates
+    query = str(cursor.get("query") or "").strip()
+    query_list = source_run_queries(cursor)
+    if not query and len(query_list) == 1:
+        query = query_list[0]
+    meta = topic_query_meta(spec, query=query)
+    if query_list:
+        meta["queries"] = query_list
+    for candidate in candidates:
+        if not isinstance(candidate.metadata, dict):
+            candidate.metadata = {}
+        candidate.metadata.update(meta)
+    return candidates
 
 
 def effective_candidate_workers(spec: dict[str, Any]) -> int:
@@ -553,30 +626,59 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
     max_candidates = CUSTOM_MAX_CANDIDATES
     max_process_seconds = CUSTOM_MAX_PROCESS_SECONDS
 
-    if preset in PRESETS:
+    if is_rio_tourism_request(payload):
+        config = load_rio_tourism_config()
+        date_from_raw = str(payload.get("date_from") or payload.get("dateFrom") or "")
+        date_to_raw = str(payload.get("date_to") or payload.get("dateTo") or "")
+        date_from = validate_date(date_from_raw) if date_from_raw else (today - timedelta(days=30)).isoformat()
+        date_to = validate_date(date_to_raw) if date_to_raw else today.isoformat()
+        collector = str(payload.get("collector") or DEFAULT_COLLECTOR).strip() or DEFAULT_COLLECTOR
+        target_keys = [RIO_ECONOMICO_SCOPE]
+        target_snapshots = [rio_topic_target_snapshot(config)]
+        preset = "rio_tourism"
+        topic_queries = [dict(row) for row in config.queries]
+        topic_source_queries = rio_tourism_source_query_texts(config)
+        forced_terms = list(config.forced_terms)
+        required_terms = list(config.required_terms)
+        exclude_title_terms = list(config.exclude_title_terms)
+        exclude_body_terms = list(config.exclude_body_terms)
+    elif preset in PRESETS:
         preset_spec = PRESETS[preset]
         target_keys = validate_target_keys(list(preset_spec["target_keys"]))
         date_from = (today - timedelta(days=int(preset_spec["days"]))).isoformat()
         date_to = today.isoformat()
         max_candidates = int(preset_spec["max_candidates"])
         max_process_seconds = int(preset_spec["max_process_seconds"])
+        target_snapshots = frozen_target_snapshots(target_keys)
+        topic_queries = []
+        topic_source_queries = []
+        forced_terms = []
+        required_terms = []
+        exclude_title_terms = []
+        exclude_body_terms = []
     elif preset == "custom":
         target_keys = validate_target_keys(payload_list(payload, "target_keys", "targetKeys"))
         date_from = validate_date(str(payload.get("date_from") or payload.get("dateFrom") or ""))
         date_to = validate_date(str(payload.get("date_to") or payload.get("dateTo") or ""))
         collector = str(payload.get("collector") or DEFAULT_COLLECTOR).strip() or DEFAULT_COLLECTOR
+        target_snapshots = frozen_target_snapshots(target_keys)
+        topic_queries = []
+        topic_source_queries = []
+        forced_terms = []
+        required_terms = []
+        exclude_title_terms = []
+        exclude_body_terms = []
     else:
         raise ValueError("preset_invalido")
 
-    if preset != "custom":
+    if preset not in {"custom", "rio_tourism"}:
         collector = DEFAULT_COLLECTOR
     if collector not in SAFE_COLLECTORS:
         raise ValueError("coletor_invalido")
     if date_from > date_to:
         raise ValueError("periodo_invalido")
-    target_snapshots = frozen_target_snapshots(target_keys)
 
-    return {
+    spec = {
         "preset": preset,
         "collector": collector,
         "target_keys": target_keys,
@@ -590,6 +692,24 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
         "skip_direct_scrape": True,
         "durable": True,
     }
+    if topic_queries:
+        config = load_rio_tourism_config()
+        spec.update(
+            {
+                "scope": RIO_ECONOMICO_SCOPE,
+                "topic": RIO_TOURISM_TOPIC,
+                "topic_dimension": config.dimension,
+                "topic_config_version": config.version,
+                "topic_queries": topic_queries,
+                "topic_source_queries": topic_source_queries,
+                "forced_terms": forced_terms,
+                "forced_terms_mode": "any",
+                "required_terms": required_terms,
+                "exclude_title_terms": exclude_title_terms,
+                "exclude_body_terms": exclude_body_terms,
+            }
+        )
+    return spec
 
 
 def validate_date(raw: str) -> str:
@@ -881,6 +1001,7 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
     collector = str(spec.get("collector") or DEFAULT_COLLECTOR)
     if not targets:
         return []
+    topic_mode = is_rio_tourism_spec(spec)
     units: list[SourceUnit] = []
     order = 0
 
@@ -903,7 +1024,7 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
             order += 1
 
     if include("google_news"):
-        google_queries = build_google_queries_for_targets(targets)
+        google_queries = topic_queries_from_spec(spec, source_type="google_news") if topic_mode else build_google_queries_for_targets(targets)
         if grouped:
             if google_queries:
                 units.append(
@@ -932,7 +1053,7 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
     if include("wordpress_api"):
         for site_idx, site in enumerate(WORDPRESS_API_SITES):
             site_name = str(site.get("source_name") or "WordPress").strip() or "WordPress"
-            site_queries = build_wordpress_queries_for_targets(targets, site=site)
+            site_queries = topic_queries_from_spec(spec, source_type="wordpress_api") if topic_mode else build_wordpress_queries_for_targets(targets, site=site)
             if grouped:
                 if site_queries:
                     units.append(
@@ -972,7 +1093,7 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
                     order += 1
 
     if include("internal_search"):
-        queries = build_internal_search_queries_for_targets(targets)
+        queries = topic_queries_from_spec(spec, source_type="internal_search") if topic_mode else build_internal_search_queries_for_targets(targets)
         for adapter_idx, adapter in enumerate(FLAVIO_INTERNAL_SEARCH_TARGETS):
             page_size = max(1, int(getattr(adapter, "page_size", 10) or 10))
             if grouped:
@@ -1014,7 +1135,7 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
 
     if include("sitemap_daily"):
         days = source_window_days(str(spec.get("date_from") or ""), str(spec.get("date_to") or ""))
-        queries = build_internal_search_queries_for_targets(targets)
+        queries = topic_queries_from_spec(spec, source_type="sitemap_daily") if topic_mode else build_internal_search_queries_for_targets(targets)
         for source_idx, source in enumerate(SITEMAP_DAILY_SOURCES):
             for day_idx, day in enumerate(days):
                 units.append(
@@ -1180,6 +1301,7 @@ def run_source_run(
             target_label=target_label,
         )
         source_targets = selected_targets_from_spec(spec, source_target_keys)
+        metadata_extra = topic_query_meta(spec) if is_rio_tourism_spec(spec) else {}
         options = IngestionOptions(
             target_keys=source_target_keys,
             target_snapshots=[target_to_snapshot(target) for target in source_targets],
@@ -1192,6 +1314,12 @@ def run_source_run(
             db_path=str(db_path()),
             cancel_check=cancel_event.is_set,
             archive_full_text=True,
+            forced_terms=list(spec.get("forced_terms") or []),
+            forced_terms_mode=str(spec.get("forced_terms_mode") or "any"),
+            required_terms=list(spec.get("required_terms") or []),
+            exclude_title_terms=list(spec.get("exclude_title_terms") or []),
+            exclude_body_terms=list(spec.get("exclude_body_terms") or []),
+            metadata_extra=metadata_extra,
             candidate_workers=effective_candidate_workers(spec),
         )
         if source_type == "google_news" and target_key == GROUPED_SOURCE_RUN_TARGET_KEY:
@@ -1343,7 +1471,7 @@ def collect_source_run_candidates(
             collection_timeout=max(20, request_timeout + 10),
             raise_on_error=True,
         )
-        return candidates, cursor, True
+        return annotate_topic_candidates(spec, candidates, cursor=cursor), cursor, True
 
     if source_type == "google_news":
         if str(row.get("target_key") or "") == GROUPED_SOURCE_RUN_TARGET_KEY:
@@ -1357,7 +1485,7 @@ def collect_source_run_candidates(
             request_timeout=request_timeout,
             resolve_timeout=max(2, request_timeout - 2),
         )
-        return candidates, cursor, True
+        return annotate_topic_candidates(spec, candidates, cursor=cursor), cursor, True
 
     if source_type == "wordpress_api":
         queries = source_run_queries(cursor)
@@ -1392,7 +1520,7 @@ def collect_source_run_candidates(
         complete = len(candidates) < WORDPRESS_PAGE_SIZE or page >= WORDPRESS_MAX_PAGES
         next_cursor = dict(cursor)
         next_cursor["page"] = page + 1 if not complete else page
-        return candidates, next_cursor, complete
+        return annotate_topic_candidates(spec, candidates, cursor=cursor), next_cursor, complete
 
     if source_type == "internal_search":
         adapter = FLAVIO_INTERNAL_SEARCH_TARGETS[max(0, int(cursor.get("adapter_index") or 0))]
@@ -1415,7 +1543,7 @@ def collect_source_run_candidates(
             next_cursor = dict(cursor)
             next_cursor["page"] = page + 1 if not complete else page
             next_cursor["page_size"] = page_size
-            return candidates, next_cursor, complete
+            return annotate_topic_candidates(spec, candidates, cursor=cursor), next_cursor, complete
         candidates = collect_internal_site_search(
             queries=[str(cursor.get("query") or "")],
             adapters=[adapter],
@@ -1430,7 +1558,7 @@ def collect_source_run_candidates(
         next_cursor = dict(cursor)
         next_cursor["page"] = page + 1 if not complete else page
         next_cursor["page_size"] = page_size
-        return candidates, next_cursor, complete
+        return annotate_topic_candidates(spec, candidates, cursor=cursor), next_cursor, complete
 
     if source_type == "sitemap_daily":
         source = SITEMAP_DAILY_SOURCES[max(0, int(cursor.get("source_index") or 0))]
@@ -1445,7 +1573,7 @@ def collect_source_run_candidates(
             request_timeout=request_timeout,
             collection_timeout=max(30, request_timeout * 4),
         )
-        return candidates, cursor, True
+        return annotate_topic_candidates(spec, candidates, cursor=cursor), cursor, True
 
     if source_type == "vejario_archive":
         target = dict(VEJARIO_ARCHIVE_TARGETS[max(0, int(cursor.get("target_index") or 0))])
@@ -1460,7 +1588,7 @@ def collect_source_run_candidates(
             max_pages_per_target=1,
             request_timeout=request_timeout,
         )
-        return candidates, cursor, True
+        return annotate_topic_candidates(spec, candidates, cursor=cursor), cursor, True
 
     if source_type == "camara_archive":
         page = max(1, int(cursor.get("page") or 1))
@@ -1473,7 +1601,7 @@ def collect_source_run_candidates(
             request_timeout=request_timeout,
             start_offset=(page - 1) * page_size,
         )
-        return candidates, cursor, True
+        return annotate_topic_candidates(spec, candidates, cursor=cursor), cursor, True
 
     raise ValueError(f"unknown_source_type:{source_type}")
 
@@ -1536,7 +1664,7 @@ def collect_grouped_wordpress_source_run(
     next_cursor["page"] = page + 1 if not complete else page
     next_cursor["page_size"] = WORDPRESS_PAGE_SIZE
     next_cursor["complete_queries"] = sorted(complete_queries)
-    return dedupe_source_run_candidates(candidates), next_cursor, complete
+    return annotate_topic_candidates(spec, dedupe_source_run_candidates(candidates), cursor=cursor), next_cursor, complete
 
 
 def is_late_wordpress_transient_http_error(exc: BaseException, *, page: int, seen_before: int) -> bool:
@@ -2469,6 +2597,7 @@ def live_items_from_event_rows(
     published_cutoff: str = "",
 ) -> list[dict[str, Any]]:
     labels = target_labels()
+    labels.update(rio_topic_labels())
     active_keys = set(labels)
     merged: dict[int, dict[str, Any]] = {}
     order: list[int] = []

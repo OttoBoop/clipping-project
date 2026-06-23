@@ -673,6 +673,210 @@ def test_build_update_spec_accepts_safe_custom_collector_and_long_dates(monkeypa
         raise AssertionError("expected data_futura")
 
 
+def test_build_update_spec_accepts_rio_tourism_topic_without_target_row(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+
+    def fail_validate_target_keys(_values):
+        raise AssertionError("rio_economico topic jobs must not validate against data/targets.json")
+
+    monkeypatch.setattr(jobs, "validate_target_keys", fail_validate_target_keys)
+
+    spec = jobs.build_update_spec(
+        {
+            "scope": "rio_economico",
+            "topic": "tourism_events",
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-02",
+            "collector": "google_news",
+            "export": False,
+        }
+    )
+
+    assert spec["preset"] == "rio_tourism"
+    assert spec["scope"] == "rio_economico"
+    assert spec["topic"] == "tourism_events"
+    assert spec["topic_dimension"] == "tourism_events"
+    assert spec["collector"] == "google_news"
+    assert spec["target_keys"] == ["rio_economico"]
+    assert spec["target_snapshots"][0]["key"] == "rio_economico"
+    assert spec["target_snapshots"][0]["topic"] == "tourism_events"
+    assert any(row["query"] == '"Rio recebe" "turistas internacionais"' for row in spec["topic_queries"])
+    assert "cidade do Rio" in spec["required_terms"]
+    assert "Búzios" in spec["exclude_title_terms"]
+
+
+def test_rio_tourism_source_units_use_topic_queries_by_collector(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs, "RSS_FEEDS", [{"source_name": "RSS", "url": "https://example.com/rss.xml"}])
+    monkeypatch.setattr(jobs, "WORDPRESS_API_SITES", [{"source_name": "WP", "base_url": "https://example.com"}])
+    monkeypatch.setattr(
+        jobs,
+        "FLAVIO_INTERNAL_SEARCH_TARGETS",
+        [SimpleNamespace(source_name="Busca Interna", page_size=10)],
+    )
+    monkeypatch.setattr(
+        jobs,
+        "SITEMAP_DAILY_SOURCES",
+        [{"source_name": "Sitemap", "host": "example.com", "sitemap_url_template": "https://example.com/{yyyy}/{mm}/{dd}.xml"}],
+    )
+    monkeypatch.setattr(jobs, "VEJARIO_ARCHIVE_TARGETS", [])
+    monkeypatch.setattr(jobs, "CAMARA_MAX_PAGES", 0)
+    spec = jobs.build_update_spec(
+        {
+            "scope": "rio_economico",
+            "topic": "tourism_events",
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-01",
+            "collector": "all",
+            "export": False,
+        }
+    )
+
+    units = jobs.build_source_units(spec, "rio_economico")
+    by_type: dict[str, list] = {}
+    for unit in units:
+        by_type.setdefault(unit.source_type, []).append(unit)
+
+    assert by_type["rss"][0].cursor == {"feed_index": 0}
+    assert any('("cidade do Rio" OR "capital fluminense" OR "economia carioca") turismo' == unit.cursor.get("query") for unit in by_type["google_news"])
+    assert any(unit.cursor.get("query") == "turismo" for unit in by_type["wordpress_api"])
+    assert any(unit.cursor.get("query") == "turismo" for unit in by_type["internal_search"])
+    assert by_type["sitemap_daily"][0].cursor["queries"][0] == "turismo"
+    assert all("site:" not in str(unit.cursor.get("query") or "") for unit in by_type["wordpress_api"])
+
+
+def test_rio_tourism_process_candidates_filters_city_scope_and_keeps_metadata(monkeypatch, tmp_path):
+    from pipeline import ingest
+    from pipeline.collectors import CandidateArticle
+
+    _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    spec = jobs.build_update_spec(
+        {
+            "scope": "rio_economico",
+            "topic": "tourism_events",
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-02",
+            "collector": "rss",
+            "export": False,
+        }
+    )
+    source_targets = jobs.selected_targets_from_spec(spec, ["rio_economico"])
+    options = ingest.IngestionOptions(
+        target_keys=["rio_economico"],
+        target_snapshots=[jobs.target_to_snapshot(target) for target in source_targets],
+        date_from="2026-06-01",
+        date_to="2026-06-02",
+        db_path=str(db_file),
+        archive_full_text=False,
+        forced_terms=list(spec["forced_terms"]),
+        required_terms=list(spec["required_terms"]),
+        exclude_title_terms=list(spec["exclude_title_terms"]),
+        exclude_body_terms=list(spec["exclude_body_terms"]),
+        metadata_extra=jobs.topic_query_meta(spec, query='"cidade do Rio" "turistas"'),
+    )
+    candidates = [
+        CandidateArticle(
+            title="Cidade do Rio recebe turistas internacionais no inverno",
+            url="https://example.com/rio-turistas",
+            source_name="Fonte Rio",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="A capital fluminense amplia a hotelaria e a recepcao de visitantes.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="Búzios registra ocupação hoteleira elevada",
+            url="https://example.com/buzios-hotelaria",
+            source_name="Fonte Estado",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Rio de Janeiro e turismo aparecem no texto, mas o destino da noticia e Buzios.",
+            metadata={},
+        ),
+    ]
+
+    result = ingest.process_candidates("Fonte Rio", "rss", candidates, options=options)
+
+    assert result.articles_inserted == 1
+    assert result.mentions_inserted == 1
+    with sqlite3.connect(db_file) as conn:
+        rows = conn.execute("SELECT title, metadata FROM articles ORDER BY id").fetchall()
+        mentions = conn.execute("SELECT target_key, target_name FROM mentions").fetchall()
+    assert rows[0][0] == "Cidade do Rio recebe turistas internacionais no inverno"
+    metadata = json.loads(rows[0][1])
+    assert metadata["scope"] == "rio_economico"
+    assert metadata["topic"] == "tourism_events"
+    assert metadata["dimension"] == "tourism_events"
+    assert metadata["query"] == '"cidade do Rio" "turistas"'
+    assert mentions == [("rio_economico", "Turismo Rio")]
+
+
+def test_live_results_include_rio_topic_key_without_active_target(monkeypatch, tmp_path):
+    _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs, "target_labels", lambda include_archived=False: {})
+    job_id = "rio-live-topic"
+    jobs.create_job(
+        job_id,
+        "update",
+        {
+            "preset": "rio_tourism",
+            "collector": "rss",
+            "scope": "rio_economico",
+            "topic": "tourism_events",
+            "target_keys": ["rio_economico"],
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-02",
+        },
+        started_by="coworker",
+    )
+    jobs.update_job(job_id, status="running")
+    with ClippingDB(db_file) as db:
+        article_id = db.insert_article(
+            url="https://example.com/rio-live-tourism",
+            title="Rio recebe nova leva de turistas internacionais",
+            source_name="Fonte Rio",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Turismo na cidade do Rio.",
+            full_text="Turismo na cidade do Rio.",
+        )
+        db.insert_mention(article_id, "rio_economico", "Turismo Rio", "turistas")
+        story_id = db.create_story(
+            title="Rio recebe nova leva de turistas internacionais",
+            summary="Turismo na cidade do Rio.",
+            temperature=34.0,
+            target_keys=["rio_economico"],
+        )
+        db.attach_article_to_story(story_id, article_id)
+
+    jobs.record_progress(
+        job_id,
+        "article_saved",
+        {
+            "article_id": article_id,
+            "story_id": story_id,
+            "title": "Rio recebe nova leva de turistas internacionais",
+            "url": "https://example.com/rio-live-tourism",
+            "published_at": "2026-06-01T12:00:00+00:00",
+            "source_name": "Fonte Rio",
+            "source_type": "rss",
+            "target_keys": ["rio_economico"],
+            "articles_inserted_delta": 1,
+            "mentions_inserted_delta": 1,
+            "stories_touched_delta": 1,
+            "publication_state": "saved",
+        },
+        target_key="rio_economico",
+        target_label="Turismo Rio",
+    )
+
+    live = jobs.live_results_for_job(job_id, target_key="rio_economico", limit=20)
+
+    assert live["count"] == 1
+    assert live["items"][0]["targetKeys"] == ["rio_economico"]
+    assert live["items"][0]["targetLabels"] == {"rio_economico": "Turismo na cidade do Rio"}
+
+
 def test_update_spec_freezes_target_snapshot_for_active_job(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     from pipeline.matcher import Target

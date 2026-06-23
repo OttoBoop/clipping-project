@@ -1,0 +1,270 @@
+{
+  "version": "rio_economico_tourism_events_v1",
+  "scope": "rio_economico",
+  "topic": "tourism_events",
+  "dimension": "tourism_events",
+  "label": "Turismo na cidade do Rio",
+  "description": "Noticias sobre turismo, visitantes, hotelaria e grandes eventos com impacto turistico na cidade do Rio de Janeiro.",
+  "target": {
+    "key": "rio_economico",
+    "label": "Rio Economico",
+    "display_name": "Turismo Rio",
+    "primary": false,
+    "priority": 2,
+    "keywords": [
+      "Rio",
+      "Rio de Janeiro",
+      "cidade do Rio",
+      "capital fluminense",
+      "municipio do Rio",
+      "município do Rio",
+      "economia carioca",
+      "turismo",
+      "turistas",
+      "visitantes",
+      "hotelaria",
+      "ocupacao hoteleira",
+      "ocupação hoteleira",
+      "turistas internacionais",
+      "turistas estrangeiros",
+      "Copacabana",
+      "Ipanema",
+      "Barra da Tijuca",
+      "Cristo Redentor",
+      "Pao de Acucar",
+      "Pão de Açúcar",
+      "Riotur",
+      "HoteisRIO",
+      "HotéisRIO",
+      "Maratona do Rio",
+      "Rock in Rio",
+      "Rio2C",
+      "Web Summit Rio",
+      "Todo Mundo no Rio"
+    ]
+  },
+  "required_terms": [
+    "Rio",
+    "Rio de Janeiro",
+    "cidade do Rio",
+    "capital fluminense",
+    "municipio do Rio",
+    "município do Rio",
+    "economia carioca",
+    "carioca",
+    "Copacabana",
+    "Ipanema",
+    "Barra da Tijuca",
+    "Cristo Redentor",
+    "Pao de Acucar",
+    "Pão de Açúcar",
+    "Riotur",
+    "Maratona do Rio",
+    "Rock in Rio",
+    "Rio2C",
+    "Web Summit Rio",
+    "Todo Mundo no Rio"
+  ],
+  "forced_terms": [
+    "turismo",
+    "turista",
+    "turistas",
+    "visitante",
+    "visitantes",
+    "hotel",
+    "hoteis",
+    "hotéis",
+    "hotelaria",
+    "hoteleira",
+    "hospedagem",
+    "ocupacao hoteleira",
+    "ocupação hoteleira",
+    "impacto economico",
+    "impacto econômico",
+    "destino turistico",
+    "destino turístico",
+    "evento",
+    "eventos",
+    "viagem",
+    "visit Rio",
+    "Riotur"
+  ],
+  "exclude_title_terms": [
+    "Angra dos Reis",
+    "Arraial do Cabo",
+    "Buzios",
+    "Búzios",
+    "Cabo Frio",
+    "Campos dos Goytacazes",
+    "Costa Verde",
+    "Ilha Grande",
+    "Ipiabas",
+    "Macae",
+    "Macaé",
+    "Mangaratiba",
+    "Marica",
+    "Maricá",
+    "Niteroi",
+    "Niterói",
+    "Paraty",
+    "Petropolis",
+    "Petrópolis",
+    "Regiao Serrana",
+    "Região Serrana",
+    "Rio das Ostras",
+    "Saquarema",
+    "Teresopolis",
+    "Teresópolis",
+    "Vale do Cafe",
+    "Vale do Café"
+  ],
+  "exclude_body_terms": [],
+  "source_queries": [
+    "turismo",
+    "turistas",
+    "visitantes",
+    "hotelaria",
+    "ocupacao hoteleira",
+    "ocupação hoteleira",
+    "turistas internacionais",
+    "turistas estrangeiros",
+    "impacto economico turismo",
+    "impacto econômico turismo",
+    "destino turistico",
+    "destino turístico",
+    "cidade do Rio turismo",
+    "capital fluminense turismo",
+    "economia carioca turismo",
+    "Riotur",
+    "HoteisRIO",
+    "HotéisRIO",
+    "Copacabana turismo",
+    "Maratona do Rio",
+    "Rock in Rio",
+    "Rio2C",
+    "Web Summit Rio",
+    "Todo Mundo no Rio"
+  ],
+  "queries": [
+    {
+      "group": "city_core",
+      "query": "(\"cidade do Rio\" OR \"capital fluminense\" OR \"economia carioca\") turismo",
+      "weight": 1.0,
+      "why": "Nucleo urbano com sinal economico/turistico da cidade."
+    },
+    {
+      "group": "city_core",
+      "query": "\"cidade do Rio\" (turismo OR turistas OR visitantes OR hotelaria)",
+      "weight": 1.0,
+      "why": "Cobertura geral de turismo, visitantes e hotelaria da cidade."
+    },
+    {
+      "group": "city_core",
+      "query": "\"capital fluminense\" (turismo OR turistas OR visitantes OR hotelaria)",
+      "weight": 0.95,
+      "why": "Formula comum em imprensa nacional para a cidade do Rio."
+    },
+    {
+      "group": "city_core",
+      "query": "\"município do Rio\" turismo",
+      "weight": 0.8,
+      "why": "Ancora municipal para evitar outras cidades do estado."
+    },
+    {
+      "group": "visitor_demand",
+      "query": "\"Rio recebe\" \"turistas internacionais\"",
+      "weight": 1.0,
+      "why": "Fluxo e demanda internacional."
+    },
+    {
+      "group": "visitor_demand",
+      "query": "\"cidade do Rio\" \"turistas internacionais\"",
+      "weight": 1.0,
+      "why": "Turistas internacionais com ancora explicita na cidade."
+    },
+    {
+      "group": "visitor_demand",
+      "query": "\"cidade do Rio\" \"turistas\"",
+      "weight": 0.9,
+      "why": "Sinal amplo de visitantes e vontade de visitar."
+    },
+    {
+      "group": "visitor_demand",
+      "query": "\"Rio de Janeiro\" \"turistas estrangeiros\" \"crescimento\"",
+      "weight": 0.75,
+      "why": "Crescimento de demanda estrangeira, sujeito a filtro de cidade."
+    },
+    {
+      "group": "events_impact",
+      "query": "(Copacabana OR \"Maratona do Rio\" OR \"Rock in Rio\" OR Rio2C OR \"Web Summit Rio\") (turismo OR turistas OR hotelaria OR \"impacto econômico\")",
+      "weight": 1.0,
+      "why": "Grandes eventos com efeito turistico e economico."
+    },
+    {
+      "group": "events_impact",
+      "query": "\"cidade do Rio\" \"impacto econômico\" evento",
+      "weight": 0.9,
+      "why": "Impacto economico de eventos na cidade."
+    },
+    {
+      "group": "events_impact",
+      "query": "\"economia carioca\" turismo",
+      "weight": 0.9,
+      "why": "Sinal economico local ligado ao turismo."
+    },
+    {
+      "group": "events_impact",
+      "query": "\"Rio de Janeiro\" \"Todo Mundo no Rio\" turismo",
+      "weight": 0.85,
+      "why": "Politica/evento de grande escala em Copacabana."
+    },
+    {
+      "group": "events_impact",
+      "query": "\"Rio de Janeiro\" \"Maratona do Rio\" turismo",
+      "weight": 0.85,
+      "why": "Evento recorrente com efeito turistico."
+    },
+    {
+      "group": "hospitality",
+      "query": "\"cidade do Rio\" \"ocupação hoteleira\"",
+      "weight": 1.0,
+      "why": "Indicador direto de hotelaria na cidade."
+    },
+    {
+      "group": "hospitality",
+      "query": "\"Rio de Janeiro\" \"hotelaria carioca\"",
+      "weight": 0.9,
+      "why": "Hotelaria local com marcador carioca."
+    },
+    {
+      "group": "hospitality",
+      "query": "\"Rio de Janeiro\" \"taxa de ocupação\" hotéis",
+      "weight": 0.75,
+      "why": "Taxa de ocupacao em hoteis, exige filtro contra destinos do estado."
+    },
+    {
+      "group": "source_reinforcement",
+      "query": "site:riotur.rio \"turistas\"",
+      "weight": 0.8,
+      "why": "Sinal oficial da Riotur."
+    },
+    {
+      "group": "source_reinforcement",
+      "query": "site:diariodorio.com turismo \"Rio\"",
+      "weight": 0.75,
+      "why": "Fonte local recorrente sobre cidade e turismo."
+    },
+    {
+      "group": "source_reinforcement",
+      "query": "site:panrotas.com.br \"Rio de Janeiro\" turismo",
+      "weight": 0.6,
+      "why": "Trade turistico, sujeito a filtro de cidade."
+    },
+    {
+      "group": "source_reinforcement",
+      "query": "site:mercadoeeventos.com.br \"Rio de Janeiro\" turismo",
+      "weight": 0.6,
+      "why": "Trade de eventos/turismo, sujeito a filtro de cidade."
+    }
+  ]
+}

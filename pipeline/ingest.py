@@ -112,6 +112,10 @@ class IngestionOptions:
     archive_full_text: bool = True
     forced_terms: list[str] | None = None
     forced_terms_mode: str = "any"
+    required_terms: list[str] | None = None
+    exclude_title_terms: list[str] | None = None
+    exclude_body_terms: list[str] | None = None
+    metadata_extra: dict[str, Any] | None = None
     target_keys: list[str] | None = None
     target_snapshots: list[Any] | None = None
     db_path: str = ""
@@ -196,6 +200,20 @@ def passes_forced_terms(text: str, terms: list[str], mode: str) -> bool:
     if mode == "all":
         return len(hits) == len(terms)
     return len(hits) > 0
+
+
+def contains_any_term(text: str, terms: list[str]) -> bool:
+    if not terms:
+        return False
+    normalized_text = normalize_text(text)
+    return any(term in normalized_text for term in terms)
+
+
+def metadata_with_extra(candidate: CandidateArticle, extra: dict[str, Any] | None) -> dict[str, Any]:
+    metadata = dict(candidate.metadata or {})
+    if extra:
+        metadata.update({str(key): value for key, value in extra.items() if str(key).strip()})
+    return metadata
 
 
 def infer_sentiment(text: str) -> str:
@@ -529,6 +547,9 @@ def process_candidates(
     archive_cutoff = max_process_seconds * 0.8
     forced_terms = normalize_forced_terms(options.forced_terms)
     forced_mode = (options.forced_terms_mode or "any").strip().lower()
+    required_terms = normalize_forced_terms(options.required_terms)
+    exclude_title_terms = normalize_forced_terms(options.exclude_title_terms)
+    exclude_body_terms = normalize_forced_terms(options.exclude_body_terms)
     strict_window = bool(date_from or date_to)
     cancelled = False
     limited_candidates = candidates[:max_candidates]
@@ -959,6 +980,52 @@ def process_candidates(
             if progress_callback and (seen == 1 or seen % 5 == 0):
                 emit_source_progress()
             continue
+        if required_terms and not contains_any_term(combined_text, required_terms):
+            emit_candidate(
+                candidate=candidate,
+                status="skipped",
+                reason="required_terms_not_matched",
+                final_url=final_url,
+                hits_for_candidate=hits,
+                title_value=title_for_article,
+                published_value=published_at,
+                summary_value=summary,
+                stage="required_terms",
+            )
+            if progress_callback and (seen == 1 or seen % 5 == 0):
+                emit_source_progress()
+            continue
+        if exclude_title_terms and contains_any_term(title_for_article, exclude_title_terms):
+            emit_candidate(
+                candidate=candidate,
+                status="skipped",
+                reason="exclude_title_terms_matched",
+                final_url=final_url,
+                hits_for_candidate=hits,
+                title_value=title_for_article,
+                published_value=published_at,
+                summary_value=summary,
+                stage="topic_exclusions",
+            )
+            if progress_callback and (seen == 1 or seen % 5 == 0):
+                emit_source_progress()
+            continue
+        body_for_exclusion = " ".join([candidate.snippet or "", full_text or "", summary or ""])
+        if exclude_body_terms and contains_any_term(body_for_exclusion, exclude_body_terms):
+            emit_candidate(
+                candidate=candidate,
+                status="skipped",
+                reason="exclude_body_terms_matched",
+                final_url=final_url,
+                hits_for_candidate=hits,
+                title_value=title_for_article,
+                published_value=published_at,
+                summary_value=summary,
+                stage="topic_exclusions",
+            )
+            if progress_callback and (seen == 1 or seen % 5 == 0):
+                emit_source_progress()
+            continue
         if not is_recent_enough(published_at, date_from=date_from, date_to=date_to):
             emit_candidate(
                 candidate=candidate,
@@ -1036,7 +1103,7 @@ def process_candidates(
             full_text=full_text[:60000],
             raw_html=raw_html[:120000],
             summary=summary,
-            metadata_json=json.dumps(candidate.metadata or {}, ensure_ascii=False),
+            metadata_json=json.dumps(metadata_with_extra(candidate, options.metadata_extra), ensure_ascii=False),
         )
         if not is_new:
             duplicate_mentions, duplicate_story_touched, story_id = sync_existing_article_targets(
