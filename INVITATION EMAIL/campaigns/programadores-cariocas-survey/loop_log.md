@@ -317,3 +317,40 @@ Each run authenticated via a fresh single-use OTS link Otávio minted; sender
 
 **State:** Programadores Cariocas survey campaign CLOSED. 798/798 sent.
 Autonomous emailer proven end-to-end on a real-world, full-scale send.
+
+## Iteration 11 (2026-06-22 → 2026-06-24) — FOLLOWUP CAMPAIGN: 693/693 sent ✅
+
+**Goal:** Re-send the original survey to alumni who did NOT respond to the form
+(107 of 798 responded → 691 non-responders, +6 ambiguous "Felipe" → 693 final).
+
+**Bridge built (one-shot in this iteration):**
+- Otávio re-attached the alumni roster xlsx (`Lista_Matriculados…`).
+- `scratchpad/match_final.py`: token-set Jaccard match of 107 form-respondent
+  names (just `1) Nome completo`) → roster (Senac_Procv + Generation_Procv
+  sheets give name↔email). First-name weighted; ties broken by sent-to
+  membership. Edge cases hand-resolved: `@yahoocombr → @yahoo.com.br` order fix
+  (Ana Beatriz), first-name weight boost (Luna Maria), all 6 ambiguous "Felipe"
+  candidates kept IN per Otávio's instruction.
+- Result: 105 confirmed-responder emails excluded → **693 non-responders**.
+
+**Send sequence (new sender per Otávio — different from issneutro@):**
+| run | trigger | recipients | sent | failed | notes |
+|---|---|---|---:|---:|---|
+| 12 | 86e9a31 | recipients_followup_nonresponders.txt (693) | **549** | 144 | Gmail 5.4.5 daily-limit hit at #550 (raquel_1805_93@…) |
+| 13 | ac40721 | recipients_followup_remaining144.txt (144) | **144** | 0 | clean, fired 24h+ after run 12 (fresh quota) |
+
+**Followup total: 549 + 144 = 693 / 693. Zero failures across the campaign.**
+
+**Permanent insight:** the new sender account behaved like personal Gmail
+(~550/day in practice). Future >500-recipient sends should pre-split into
+≤500-per-day batches with one fresh OTS link per day, OR use a Workspace
+account (2000/day cap).
+
+**Files left in the repo from this iteration:**
+- `recipients_followup_nonresponders.txt` (693, the full followup list)
+- `recipients_followup_remaining144.txt` (144, the day-2 remainder)
+Both safe to keep — same PII surface as the originally-published batches.
+
+**State:** Followup campaign CLOSED. Survey + followup = 798 + 693 = 1491 total
+sends to ≤798 distinct alumni (responders got 1, non-responders got 2). All
+real, all confirmed by per-recipient `[ok]` logs.
