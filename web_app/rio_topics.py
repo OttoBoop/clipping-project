@@ -13,7 +13,7 @@ from .config import ROOT
 RIO_ECONOMICO_SCOPE = "rio_economico"
 RIO_CITY_TOPIC = "rio_city_corpus"
 RIO_TOURISM_TOPIC = "tourism_events"
-RIO_CITY_CONFIG_PATH = ROOT / "data" / "topic_configs" / "rio_economico_city_corpus_v1.json"
+RIO_CITY_CONFIG_PATH = ROOT / "data" / "topic_configs" / "rio_economico_city_corpus_v2.json"
 RIO_TOURISM_CONFIG_PATH = ROOT / "data" / "topic_configs" / "rio_economico_tourism_events_v1.json"
 RIO_TOPIC_CONFIG_PATHS = {
     RIO_CITY_TOPIC: RIO_CITY_CONFIG_PATH,

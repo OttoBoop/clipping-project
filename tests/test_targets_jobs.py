@@ -729,14 +729,20 @@ def test_build_update_spec_accepts_rio_city_corpus_without_target_row(monkeypatc
     assert spec["scope"] == "rio_economico"
     assert spec["topic"] == "rio_city_corpus"
     assert spec["topic_dimension"] == "rio_city_corpus"
+    assert spec["topic_config_version"] == "rio_economico_city_corpus_v2"
     assert spec["collector"] == "google_news"
     assert spec["target_keys"] == ["rio_economico"]
     assert spec["target_snapshots"][0]["key"] == "rio_economico"
     assert spec["target_snapshots"][0]["topic"] == "rio_city_corpus"
     assert spec["forced_terms"] == []
     assert "prefeitura do Rio" in spec["required_terms"]
+    assert "Rio de Janeiro" not in spec["required_terms"]
+    assert "carioca" not in spec["required_terms"]
+    assert "Rio de Janeiro" not in spec["target_snapshots"][0]["keywords"]
+    assert "carioca" not in spec["target_snapshots"][0]["keywords"]
     assert "Niterói" in spec["exclude_title_terms"]
     assert any(row["query"] == '"cidade do Rio"' for row in spec["topic_queries"])
+    assert "Rio de Janeiro cidade" in spec["topic_source_queries"]
     assert "turismo Rio de Janeiro" in spec["topic_source_queries"]
 
 
