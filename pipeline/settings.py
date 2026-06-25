@@ -93,7 +93,12 @@ RSS_FEEDS: list[dict[str, str]] = [
     {"source_name": "Tempo Real RJ", "url": "https://temporealrj.com/feed/"},
     {"source_name": "Agenda do Poder", "url": "https://agendadopoder.com.br/feed/"},
     {"source_name": "Conib", "url": "https://www.conib.org.br/feed/", "disabled": "true"},
-    {"source_name": "Tribuna da Serra", "url": "https://tribunadaserra.com.br/feed/"},
+    {
+        "source_name": "Tribuna da Serra",
+        "url": "https://tribunadaserra.com.br/feed/",
+        "disabled": "true",
+        "disabled_reason": "Production RSS returned malformed XML during rio_city_corpus canaries; source remains covered by WordPress API.",
+    },
 ]
 
 # WordPress sites where RSS is shallow (usually ~30 most recent) but the REST API can backfill
