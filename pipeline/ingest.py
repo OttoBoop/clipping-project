@@ -605,20 +605,39 @@ def process_candidates(
         if not progress_callback:
             return
         hit_list = hits_for_candidate or []
+        metadata = dict(candidate.metadata or {})
+        resolved_url = final_url or candidate.url
+        matched_targets = sorted({h.target_key for h in hit_list})
+        matched_keywords = sorted({h.keyword_matched for h in hit_list})
+        text_chars = len((summary_value or "").strip())
+        canonical_date = published_value or candidate.published_at or ""
         progress_callback(
             "candidate_evaluated",
             {
                 "source_name": source_name,
                 "source_type": source_type,
-                "candidate_url": final_url or candidate.url,
+                "candidate_url": candidate.url,
+                "final_url": resolved_url,
+                "url_resolved": bool(resolved_url),
+                "final_url_changed": bool(resolved_url and candidate.url and resolved_url != candidate.url),
                 "candidate_title": title_value or candidate.title or "",
-                "published_at": published_value or candidate.published_at or "",
+                "published_at": canonical_date,
                 "status": status,
                 "reason": reason,
                 "stage": stage or "processing",
-                "matched_targets": sorted({h.target_key for h in hit_list}),
-                "matched_keywords": sorted({h.keyword_matched for h in hit_list}),
+                "matched_targets": matched_targets,
+                "matched_keywords": matched_keywords,
+                "municipal_match": bool("rio_economico" in matched_targets),
                 "summary_excerpt": (summary_value or "").strip()[:320],
+                "text_chars": text_chars,
+                "has_text": bool(text_chars),
+                "canonical_date_status": "ok" if canonical_date else "missing",
+                "has_canonical_date": bool(canonical_date),
+                "scope": str(metadata.get("scope") or ""),
+                "topic": str(metadata.get("topic") or ""),
+                "dimension": str(metadata.get("dimension") or ""),
+                "topic_config_version": str(metadata.get("topic_config_version") or ""),
+                "query": str(metadata.get("query") or ""),
             },
         )
 

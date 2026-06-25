@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Authenticated operator for Rio tourism topic jobs.
+"""Authenticated operator for Rio topic jobs.
 
-The script starts or resumes `rio_economico/tourism_events` jobs and polls the
+The script starts or resumes `rio_economico` topic jobs and polls the
 same production endpoints an operator uses in the browser. It writes JSONL to
 stdout so long backfills can be tailed or archived.
 """
@@ -118,12 +118,13 @@ def start_topic_job(client: Client, args: argparse.Namespace) -> dict[str, Any]:
     if not date_from or not date_to:
         date_from, date_to = default_canary_window()
     payload = {
-        "scope": "rio_economico",
-        "topic": "tourism_events",
+        "scope": args.scope,
+        "topic": args.topic,
+        "preset": args.preset or args.topic,
         "date_from": date_from,
         "date_to": date_to,
         "collector": args.collector,
-        "export": True,
+        "export": not args.no_export,
     }
     status, body = client.request("POST", "/api/update/start", payload, csrf=True, timeout=60)
     if status == 409 and args.resume_on_conflict:
@@ -168,6 +169,13 @@ def summarize_endpoint(status: int, body: Any) -> dict[str, Any]:
     for key in (
         "current",
         "count",
+        "funnel",
+        "candidates_observed",
+        "urls_resolved",
+        "text_extracted",
+        "canonical_dates_ok",
+        "articles_saved",
+        "skipped_by_reason",
         "sourceRunCounts",
         "sourceRunCount",
         "rssMiB",
@@ -242,11 +250,15 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--password-env", default="CLIPPING_ADMIN_PASSWORD")
+    parser.add_argument("--scope", default="rio_economico")
+    parser.add_argument("--topic", default="rio_city_corpus")
+    parser.add_argument("--preset", default="")
     parser.add_argument("--date-from", default="")
     parser.add_argument("--date-to", default="")
     parser.add_argument("--backfill-start-year", type=int, default=0)
     parser.add_argument("--backfill-end-year", type=int, default=0)
     parser.add_argument("--collector", default="all")
+    parser.add_argument("--no-export", action="store_true")
     parser.add_argument("--resume-job-id", default="")
     parser.add_argument("--resume-on-conflict", action="store_true")
     parser.add_argument("--no-start", action="store_true")

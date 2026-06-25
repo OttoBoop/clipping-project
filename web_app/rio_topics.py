@@ -11,8 +11,21 @@ from .config import ROOT
 
 
 RIO_ECONOMICO_SCOPE = "rio_economico"
+RIO_CITY_TOPIC = "rio_city_corpus"
 RIO_TOURISM_TOPIC = "tourism_events"
+RIO_CITY_CONFIG_PATH = ROOT / "data" / "topic_configs" / "rio_economico_city_corpus_v1.json"
 RIO_TOURISM_CONFIG_PATH = ROOT / "data" / "topic_configs" / "rio_economico_tourism_events_v1.json"
+RIO_TOPIC_CONFIG_PATHS = {
+    RIO_CITY_TOPIC: RIO_CITY_CONFIG_PATH,
+    RIO_TOURISM_TOPIC: RIO_TOURISM_CONFIG_PATH,
+}
+RIO_TOPIC_PRESET_ALIASES = {
+    "rio_city": RIO_CITY_TOPIC,
+    "rio_city_canary": RIO_CITY_TOPIC,
+    RIO_CITY_TOPIC: RIO_CITY_TOPIC,
+    "rio_tourism": RIO_TOURISM_TOPIC,
+    "rio_tourism_canary": RIO_TOURISM_TOPIC,
+}
 
 
 @dataclass(frozen=True)
@@ -37,18 +50,22 @@ def _clean_list(values: Any) -> tuple[str, ...]:
     return tuple(str(item).strip() for item in values if str(item).strip())
 
 
-def _load_config_payload(path: Path = RIO_TOURISM_CONFIG_PATH) -> dict[str, Any]:
+def _load_config_payload(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("rio_topic_config_invalid")
     return payload
 
 
-def load_rio_tourism_config(path: Path = RIO_TOURISM_CONFIG_PATH) -> RioTopicConfig:
-    payload = _load_config_payload(path)
+def load_rio_topic_config(topic: str = RIO_CITY_TOPIC, path: Path | None = None) -> RioTopicConfig:
+    topic = str(topic or "").strip()
+    config_path = path or RIO_TOPIC_CONFIG_PATHS.get(topic)
+    if config_path is None:
+        raise ValueError("rio_topic_config_unknown")
+    payload = _load_config_payload(config_path)
     scope = str(payload.get("scope") or "").strip()
-    topic = str(payload.get("topic") or "").strip()
-    if scope != RIO_ECONOMICO_SCOPE or topic != RIO_TOURISM_TOPIC:
+    payload_topic = str(payload.get("topic") or "").strip()
+    if scope != RIO_ECONOMICO_SCOPE or payload_topic != topic:
         raise ValueError("rio_topic_config_scope_mismatch")
 
     target_payload = payload.get("target") if isinstance(payload.get("target"), dict) else {}
@@ -70,7 +87,7 @@ def load_rio_tourism_config(path: Path = RIO_TOURISM_CONFIG_PATH) -> RioTopicCon
         queries.append(
             {
                 "index": index,
-                "group": str(row.get("group") or "tourism").strip() or "tourism",
+                "group": str(row.get("group") or payload_topic).strip() or payload_topic,
                 "query": query,
                 "weight": float(row.get("weight") or 1.0),
                 "why": str(row.get("why") or "").strip(),
@@ -90,10 +107,10 @@ def load_rio_tourism_config(path: Path = RIO_TOURISM_CONFIG_PATH) -> RioTopicCon
         priority=int(target_payload.get("priority") or 2),
     )
     return RioTopicConfig(
-        version=str(payload.get("version") or path.stem).strip(),
+        version=str(payload.get("version") or config_path.stem).strip(),
         scope=scope,
-        topic=topic,
-        dimension=str(payload.get("dimension") or topic).strip(),
+        topic=payload_topic,
+        dimension=str(payload.get("dimension") or payload_topic).strip(),
         label=label,
         target=target,
         queries=tuple(queries),
@@ -105,24 +122,47 @@ def load_rio_tourism_config(path: Path = RIO_TOURISM_CONFIG_PATH) -> RioTopicCon
     )
 
 
-def is_rio_tourism_request(payload: dict[str, Any]) -> bool:
+def load_rio_tourism_config(path: Path = RIO_TOURISM_CONFIG_PATH) -> RioTopicConfig:
+    return load_rio_topic_config(RIO_TOURISM_TOPIC, path=path)
+
+
+def resolve_rio_topic_request(payload: dict[str, Any]) -> RioTopicConfig | None:
     scope = str(payload.get("scope") or payload.get("target_scope") or "").strip()
     topic = str(payload.get("topic") or payload.get("topic_key") or "").strip()
     preset = str(payload.get("preset") or "").strip()
-    return bool(
-        (scope == RIO_ECONOMICO_SCOPE and topic == RIO_TOURISM_TOPIC)
-        or preset in {"rio_tourism", "rio_tourism_canary"}
-    )
+    alias_topic = RIO_TOPIC_PRESET_ALIASES.get(preset)
+    if alias_topic:
+        return load_rio_topic_config(alias_topic)
+    if scope == RIO_ECONOMICO_SCOPE and topic in RIO_TOPIC_CONFIG_PATHS:
+        return load_rio_topic_config(topic)
+    return None
 
 
-def rio_tourism_query_texts(config: RioTopicConfig | None = None) -> list[str]:
-    cfg = config or load_rio_tourism_config()
+def is_rio_topic_request(payload: dict[str, Any]) -> bool:
+    return resolve_rio_topic_request(payload) is not None
+
+
+def is_rio_tourism_request(payload: dict[str, Any]) -> bool:
+    config = resolve_rio_topic_request(payload)
+    return bool(config and config.topic == RIO_TOURISM_TOPIC)
+
+
+def rio_topic_query_texts(config: RioTopicConfig | None = None) -> list[str]:
+    cfg = config or load_rio_topic_config()
     return [str(row["query"]) for row in cfg.queries]
 
 
+def rio_topic_source_query_texts(config: RioTopicConfig | None = None) -> list[str]:
+    cfg = config or load_rio_topic_config()
+    return list(cfg.source_queries or rio_topic_query_texts(cfg))
+
+
+def rio_tourism_query_texts(config: RioTopicConfig | None = None) -> list[str]:
+    return rio_topic_query_texts(config or load_rio_tourism_config())
+
+
 def rio_tourism_source_query_texts(config: RioTopicConfig | None = None) -> list[str]:
-    cfg = config or load_rio_tourism_config()
-    return list(cfg.source_queries or rio_tourism_query_texts(cfg))
+    return rio_topic_source_query_texts(config or load_rio_tourism_config())
 
 
 def rio_topic_target_snapshot(config: RioTopicConfig | None = None) -> dict[str, Any]:
@@ -145,5 +185,8 @@ def rio_topic_target_snapshot(config: RioTopicConfig | None = None) -> dict[str,
 
 
 def rio_topic_labels() -> dict[str, str]:
-    cfg = load_rio_tourism_config()
+    try:
+        cfg = load_rio_topic_config(RIO_CITY_TOPIC)
+    except Exception:
+        cfg = load_rio_tourism_config()
     return {cfg.scope: cfg.label}

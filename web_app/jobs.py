@@ -55,13 +55,14 @@ from .db_admin import (
     validate_target_keys,
 )
 from .rio_topics import (
+    RIO_CITY_TOPIC,
     RIO_ECONOMICO_SCOPE,
     RIO_TOURISM_TOPIC,
-    is_rio_tourism_request,
-    load_rio_tourism_config,
+    load_rio_topic_config,
     rio_topic_labels,
+    rio_topic_source_query_texts,
     rio_topic_target_snapshot,
-    rio_tourism_source_query_texts,
+    resolve_rio_topic_request,
 )
 from .storage_bridge import ArtifactStore, artifact_store
 
@@ -126,11 +127,15 @@ _LAST_CHECKPOINT_UPLOAD: dict[str, float] = {}
 _LAST_INCREMENTAL_EXPORT: dict[str, float] = {}
 
 
-def is_rio_tourism_spec(spec: dict[str, Any]) -> bool:
+def is_rio_topic_spec(spec: dict[str, Any]) -> bool:
     return (
         str(spec.get("scope") or "") == RIO_ECONOMICO_SCOPE
-        and str(spec.get("topic") or "") == RIO_TOURISM_TOPIC
+        and str(spec.get("topic") or "") in {RIO_CITY_TOPIC, RIO_TOURISM_TOPIC}
     )
+
+
+def is_rio_tourism_spec(spec: dict[str, Any]) -> bool:
+    return is_rio_topic_spec(spec) and str(spec.get("topic") or "") == RIO_TOURISM_TOPIC
 
 
 def topic_queries_from_spec(spec: dict[str, Any], *, source_type: str = "google_news") -> list[str]:
@@ -174,7 +179,7 @@ def annotate_topic_candidates(
     *,
     cursor: dict[str, Any],
 ) -> list[CandidateArticle]:
-    if not is_rio_tourism_spec(spec):
+    if not is_rio_topic_spec(spec):
         return candidates
     query = str(cursor.get("query") or "").strip()
     query_list = source_run_queries(cursor)
@@ -625,9 +630,10 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
     today = date.today()
     max_candidates = CUSTOM_MAX_CANDIDATES
     max_process_seconds = CUSTOM_MAX_PROCESS_SECONDS
+    topic_config = resolve_rio_topic_request(payload)
 
-    if is_rio_tourism_request(payload):
-        config = load_rio_tourism_config()
+    if topic_config is not None:
+        config = topic_config
         date_from_raw = str(payload.get("date_from") or payload.get("dateFrom") or "")
         date_to_raw = str(payload.get("date_to") or payload.get("dateTo") or "")
         date_from = validate_date(date_from_raw) if date_from_raw else (today - timedelta(days=30)).isoformat()
@@ -635,9 +641,9 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
         collector = str(payload.get("collector") or DEFAULT_COLLECTOR).strip() or DEFAULT_COLLECTOR
         target_keys = [RIO_ECONOMICO_SCOPE]
         target_snapshots = [rio_topic_target_snapshot(config)]
-        preset = "rio_tourism"
+        preset = "rio_tourism" if config.topic == RIO_TOURISM_TOPIC else config.topic
         topic_queries = [dict(row) for row in config.queries]
-        topic_source_queries = rio_tourism_source_query_texts(config)
+        topic_source_queries = rio_topic_source_query_texts(config)
         forced_terms = list(config.forced_terms)
         required_terms = list(config.required_terms)
         exclude_title_terms = list(config.exclude_title_terms)
@@ -671,7 +677,7 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
     else:
         raise ValueError("preset_invalido")
 
-    if preset not in {"custom", "rio_tourism"}:
+    if preset not in {"custom", "rio_tourism", RIO_CITY_TOPIC}:
         collector = DEFAULT_COLLECTOR
     if collector not in SAFE_COLLECTORS:
         raise ValueError("coletor_invalido")
@@ -693,11 +699,11 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
         "durable": True,
     }
     if topic_queries:
-        config = load_rio_tourism_config()
+        config = topic_config or load_rio_topic_config(RIO_CITY_TOPIC)
         spec.update(
             {
                 "scope": RIO_ECONOMICO_SCOPE,
-                "topic": RIO_TOURISM_TOPIC,
+                "topic": config.topic,
                 "topic_dimension": config.dimension,
                 "topic_config_version": config.version,
                 "topic_queries": topic_queries,
@@ -1001,7 +1007,7 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
     collector = str(spec.get("collector") or DEFAULT_COLLECTOR)
     if not targets:
         return []
-    topic_mode = is_rio_tourism_spec(spec)
+    topic_mode = is_rio_topic_spec(spec)
     units: list[SourceUnit] = []
     order = 0
 
@@ -1301,7 +1307,7 @@ def run_source_run(
             target_label=target_label,
         )
         source_targets = selected_targets_from_spec(spec, source_target_keys)
-        metadata_extra = topic_query_meta(spec) if is_rio_tourism_spec(spec) else {}
+        metadata_extra = topic_query_meta(spec) if is_rio_topic_spec(spec) else {}
         options = IngestionOptions(
             target_keys=source_target_keys,
             target_snapshots=[target_to_snapshot(target) for target in source_targets],
@@ -1354,10 +1360,10 @@ def run_source_run(
                 source_type,
                 candidates,
                 options=options,
-                progress_callback=lambda event, data, jid=job_id, tk=target_key, tl=target_label, tks=source_target_keys: record_progress(
+                progress_callback=lambda event, data, jid=job_id, tk=target_key, tl=target_label, tks=source_target_keys, sri=source_run_id, sk=str(row.get("source_key") or ""): record_progress(
                     jid,
                     event,
-                    {**data, "target_keys": list(tks)},
+                    {**data, "target_keys": list(tks), "source_run_id": sri, "source_key": sk},
                     target_key=tk,
                     target_label=tl,
                 ),
@@ -1991,6 +1997,101 @@ def append_event(job_id: str, event: str, payload: dict[str, Any]) -> None:
         )
 
 
+def payload_flag(value: Any) -> int:
+    if isinstance(value, str):
+        return 1 if value.strip().lower() in {"1", "true", "yes", "ok"} else 0
+    return 1 if value else 0
+
+
+def candidate_decision(payload: dict[str, Any]) -> str:
+    status = str(payload.get("status") or "").strip().lower()
+    reason = str(payload.get("reason") or "").strip().lower()
+    if status == "selected":
+        return "saved"
+    if status == "duplicate" or reason.startswith("already_in_database"):
+        return "duplicate"
+    if reason.startswith("fetch_fail") or reason.startswith("google_redirect"):
+        return "source_error"
+    if reason in {
+        "no_match_exact_name",
+        "target_only_in_page_boilerplate",
+        "required_terms_not_matched",
+        "forced_terms_not_matched",
+        "exclude_title_terms_matched",
+        "exclude_body_terms_matched",
+    }:
+        return "outside_city"
+    if reason == "outside_date_window":
+        return "outside_date"
+    if reason == "missing_published_at":
+        return "missing_date"
+    return "discarded"
+
+
+def first_payload_value(value: Any) -> str:
+    if isinstance(value, list):
+        for item in value:
+            text = str(item or "").strip()
+            if text:
+                return text
+        return ""
+    return str(value or "").strip()
+
+
+def record_candidate_audit(job_id: str, payload: dict[str, Any]) -> None:
+    ensure_app_tables(db_path())
+    matched_targets = [str(item) for item in list(payload.get("matched_targets") or []) if str(item).strip()]
+    matched_keywords = [str(item) for item in list(payload.get("matched_keywords") or []) if str(item).strip()]
+    target_key = str(payload.get("target_key") or first_payload_value(payload.get("target_keys")) or "").strip()
+    final_url = str(payload.get("final_url") or payload.get("candidate_url") or "").strip()
+    published_at = str(payload.get("published_at") or "").strip()
+    text_chars = safe_int(payload.get("text_chars")) or len(str(payload.get("summary_excerpt") or "").strip())
+    query = str(payload.get("query") or first_payload_value(payload.get("queries")) or "").strip()
+    municipal_match = payload_flag(payload.get("municipal_match")) or (1 if RIO_ECONOMICO_SCOPE in matched_targets else 0)
+    with connect(db_path()) as conn:
+        conn.execute(
+            """
+            INSERT INTO job_candidate_audit (
+                job_id, created_at, source_run_id, source_key, source_name, source_type,
+                target_key, target_label, scope, topic, dimension, query,
+                candidate_url, final_url, title, published_at, status, reason, decision,
+                stage, matched_targets_json, matched_keywords_json, url_resolved,
+                text_chars, has_text, has_canonical_date, municipal_match
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                job_id,
+                datetime.now(timezone.utc).isoformat(),
+                safe_int(payload.get("source_run_id")),
+                str(payload.get("source_key") or ""),
+                str(payload.get("source_name") or ""),
+                str(payload.get("source_type") or ""),
+                target_key,
+                str(payload.get("target_label") or ""),
+                str(payload.get("scope") or ""),
+                str(payload.get("topic") or ""),
+                str(payload.get("dimension") or ""),
+                query,
+                str(payload.get("candidate_url") or ""),
+                final_url,
+                str(payload.get("candidate_title") or payload.get("title") or "")[:500],
+                published_at,
+                str(payload.get("status") or ""),
+                str(payload.get("reason") or "")[:500],
+                candidate_decision(payload),
+                str(payload.get("stage") or ""),
+                json.dumps(matched_targets, ensure_ascii=False),
+                json.dumps(matched_keywords, ensure_ascii=False),
+                payload_flag(payload.get("url_resolved")) or (1 if final_url else 0),
+                text_chars,
+                payload_flag(payload.get("has_text")) or (1 if text_chars > 0 else 0),
+                payload_flag(payload.get("has_canonical_date")) or (1 if published_at else 0),
+                municipal_match,
+            ),
+        )
+
+
 def record_progress(
     job_id: str,
     event: str,
@@ -2000,6 +2101,7 @@ def record_progress(
     target_label: str = "",
 ) -> None:
     if event == "candidate_evaluated":
+        record_candidate_audit(job_id, enrich_progress_payload(payload, target_key=target_key, target_label=target_label))
         return
     append_event(job_id, event, enrich_progress_payload(payload, target_key=target_key, target_label=target_label))
     if event in {"article_saved", "source_progress", "source_complete", "run_complete", "run_cancelled"}:
@@ -2313,6 +2415,18 @@ def job_observability_from_events(job: dict[str, Any], events: list[dict[str, An
     data["recentEvents"] = recent_events
     data["progress"] = progress_summary(job, events)
     data.update(source_runs_observability(str(job.get("id") or ""), str(job.get("status") or "")))
+    funnel = candidate_funnel_summary(str(job.get("id") or ""))
+    data["funnel"] = funnel
+    data.update(
+        {
+            "candidates_observed": funnel["candidates_observed"],
+            "urls_resolved": funnel["urls_resolved"],
+            "text_extracted": funnel["text_extracted"],
+            "canonical_dates_ok": funnel["canonical_dates_ok"],
+            "articles_saved": funnel["articles_saved"],
+            "skipped_by_reason": funnel["skipped_by_reason"],
+        }
+    )
     return data
 
 
@@ -2362,6 +2476,101 @@ def source_runs_observability(job_id: str, job_status: str = "") -> dict[str, An
         "resumeAvailable": bool(job_status in RESUMABLE_JOB_STATUSES and rows and any(row.get("status") != "complete" for row in rows)),
         "publishedAt": latest_publish_time(job_id),
     }
+
+
+def candidate_funnel_summary(job_id: str) -> dict[str, Any]:
+    empty = {
+        "candidates_observed": 0,
+        "candidates_evaluated": 0,
+        "urls_resolved": 0,
+        "text_extracted": 0,
+        "canonical_dates_ok": 0,
+        "municipal_matches": 0,
+        "articles_saved": 0,
+        "duplicates": 0,
+        "skipped_by_reason": {},
+        "decisions": {},
+        "by_source_type": {},
+        "source_failures": [],
+    }
+    if not job_id:
+        return empty
+    try:
+        ensure_app_tables(db_path())
+        with connect(db_path()) as conn:
+            totals = conn.execute(
+                """
+                SELECT
+                    COUNT(*) AS candidates_evaluated,
+                    SUM(CASE WHEN final_url IS NOT NULL AND final_url != '' THEN 1 ELSE 0 END) AS urls_resolved,
+                    SUM(CASE WHEN has_text = 1 OR text_chars > 0 THEN 1 ELSE 0 END) AS text_extracted,
+                    SUM(CASE WHEN has_canonical_date = 1 THEN 1 ELSE 0 END) AS canonical_dates_ok,
+                    SUM(CASE WHEN municipal_match = 1 THEN 1 ELSE 0 END) AS municipal_matches,
+                    SUM(CASE WHEN decision = 'saved' THEN 1 ELSE 0 END) AS articles_saved,
+                    SUM(CASE WHEN decision = 'duplicate' THEN 1 ELSE 0 END) AS duplicates
+                FROM job_candidate_audit
+                WHERE job_id = ?
+                """,
+                (job_id,),
+            ).fetchone()
+            reason_rows = conn.execute(
+                """
+                SELECT COALESCE(NULLIF(reason, ''), 'unknown') AS reason, COUNT(*) AS total
+                FROM job_candidate_audit
+                WHERE job_id = ? AND COALESCE(status, '') != 'selected'
+                GROUP BY COALESCE(NULLIF(reason, ''), 'unknown')
+                ORDER BY total DESC, reason ASC
+                LIMIT 25
+                """,
+                (job_id,),
+            ).fetchall()
+            decision_rows = conn.execute(
+                """
+                SELECT COALESCE(NULLIF(decision, ''), 'unknown') AS decision, COUNT(*) AS total
+                FROM job_candidate_audit
+                WHERE job_id = ?
+                GROUP BY COALESCE(NULLIF(decision, ''), 'unknown')
+                ORDER BY total DESC, decision ASC
+                """,
+                (job_id,),
+            ).fetchall()
+            source_rows = conn.execute(
+                """
+                SELECT COALESCE(NULLIF(source_type, ''), 'unknown') AS source_type, COUNT(*) AS total
+                FROM job_candidate_audit
+                WHERE job_id = ?
+                GROUP BY COALESCE(NULLIF(source_type, ''), 'unknown')
+                ORDER BY total DESC, source_type ASC
+                """,
+                (job_id,),
+            ).fetchall()
+        observed_from_runs = sum(max(safe_int(row.get("candidates_total")), safe_int(row.get("candidates_seen"))) for row in source_run_rows(job_id))
+        evaluated = safe_int(totals["candidates_evaluated"] if totals else 0)
+        return {
+            "candidates_observed": max(observed_from_runs, evaluated),
+            "candidates_evaluated": evaluated,
+            "urls_resolved": safe_int(totals["urls_resolved"] if totals else 0),
+            "text_extracted": safe_int(totals["text_extracted"] if totals else 0),
+            "canonical_dates_ok": safe_int(totals["canonical_dates_ok"] if totals else 0),
+            "municipal_matches": safe_int(totals["municipal_matches"] if totals else 0),
+            "articles_saved": safe_int(totals["articles_saved"] if totals else 0),
+            "duplicates": safe_int(totals["duplicates"] if totals else 0),
+            "skipped_by_reason": {str(row["reason"]): safe_int(row["total"]) for row in reason_rows},
+            "decisions": {str(row["decision"]): safe_int(row["total"]) for row in decision_rows},
+            "by_source_type": {str(row["source_type"]): safe_int(row["total"]) for row in source_rows},
+            "source_failures": [
+                {
+                    "sourceName": str(row.get("sourceName") or ""),
+                    "sourceType": str(row.get("sourceType") or ""),
+                    "lastError": str(row.get("lastError") or ""),
+                }
+                for row in source_runs_observability(job_id).get("failedSources", [])
+            ][:20],
+        }
+    except Exception as exc:
+        data = dict(empty)
+        data["error"] = sanitize_error(exc)
+        return data
 
 
 def progress_summary(job: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:
@@ -2561,7 +2770,13 @@ def live_results_for_job(
         limit=limit,
         published_cutoff=latest_publish_time(job_id),
     )
-    return {"jobId": job_id, "status": str(job.get("status") or ""), "items": items, "count": len(items)}
+    return {
+        "jobId": job_id,
+        "status": str(job.get("status") or ""),
+        "items": items,
+        "count": len(items),
+        "funnel": candidate_funnel_summary(job_id),
+    }
 
 
 def live_results_for_base(*, target_key: str = "", limit: int = 240) -> dict[str, Any]:

@@ -705,6 +705,41 @@ def test_build_update_spec_accepts_rio_tourism_topic_without_target_row(monkeypa
     assert "Búzios" in spec["exclude_title_terms"]
 
 
+def test_build_update_spec_accepts_rio_city_corpus_without_target_row(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+
+    def fail_validate_target_keys(_values):
+        raise AssertionError("rio_economico topic jobs must not validate against data/targets.json")
+
+    monkeypatch.setattr(jobs, "validate_target_keys", fail_validate_target_keys)
+
+    spec = jobs.build_update_spec(
+        {
+            "preset": "rio_city_corpus",
+            "scope": "rio_economico",
+            "topic": "rio_city_corpus",
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-02",
+            "collector": "google_news",
+            "export": False,
+        }
+    )
+
+    assert spec["preset"] == "rio_city_corpus"
+    assert spec["scope"] == "rio_economico"
+    assert spec["topic"] == "rio_city_corpus"
+    assert spec["topic_dimension"] == "rio_city_corpus"
+    assert spec["collector"] == "google_news"
+    assert spec["target_keys"] == ["rio_economico"]
+    assert spec["target_snapshots"][0]["key"] == "rio_economico"
+    assert spec["target_snapshots"][0]["topic"] == "rio_city_corpus"
+    assert spec["forced_terms"] == []
+    assert "prefeitura do Rio" in spec["required_terms"]
+    assert "Niterói" in spec["exclude_title_terms"]
+    assert any(row["query"] == '"cidade do Rio"' for row in spec["topic_queries"])
+    assert "turismo Rio de Janeiro" in spec["topic_source_queries"]
+
+
 def test_rio_tourism_source_units_use_topic_queries_by_collector(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     monkeypatch.setattr(jobs, "RSS_FEEDS", [{"source_name": "RSS", "url": "https://example.com/rss.xml"}])
@@ -743,6 +778,82 @@ def test_rio_tourism_source_units_use_topic_queries_by_collector(monkeypatch, tm
     assert any(unit.cursor.get("query") == "turismo" for unit in by_type["internal_search"])
     assert by_type["sitemap_daily"][0].cursor["queries"][0] == "turismo"
     assert all("site:" not in str(unit.cursor.get("query") or "") for unit in by_type["wordpress_api"])
+
+
+def test_rio_city_corpus_process_candidates_keeps_non_tourism_municipal_news(monkeypatch, tmp_path):
+    from pipeline import ingest
+    from pipeline.collectors import CandidateArticle
+
+    _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    spec = jobs.build_update_spec(
+        {
+            "scope": "rio_economico",
+            "topic": "rio_city_corpus",
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-02",
+            "collector": "rss",
+            "export": False,
+        }
+    )
+    source_targets = jobs.selected_targets_from_spec(spec, ["rio_economico"])
+    options = ingest.IngestionOptions(
+        target_keys=["rio_economico"],
+        target_snapshots=[jobs.target_to_snapshot(target) for target in source_targets],
+        date_from="2026-06-01",
+        date_to="2026-06-02",
+        db_path=str(db_file),
+        archive_full_text=False,
+        forced_terms=list(spec["forced_terms"]),
+        required_terms=list(spec["required_terms"]),
+        exclude_title_terms=list(spec["exclude_title_terms"]),
+        exclude_body_terms=list(spec["exclude_body_terms"]),
+        metadata_extra=jobs.topic_query_meta(spec, query='"cidade do Rio"'),
+    )
+    candidates = [
+        CandidateArticle(
+            title="Prefeitura do Rio anuncia obras no BRT em Bangu",
+            url="https://example.com/prefeitura-rio-brt-bangu",
+            source_name="Fonte Rio",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="A cidade do Rio reforca a operacao do corredor na Zona Oeste.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="Cidade do Rio recebe turistas internacionais no inverno",
+            url="https://example.com/rio-turistas",
+            source_name="Fonte Rio",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="A capital fluminense amplia a recepcao de visitantes.",
+            metadata={},
+        ),
+        CandidateArticle(
+            title="Niterói abre novo calendario de eventos",
+            url="https://example.com/niteroi-eventos",
+            source_name="Fonte Estado",
+            source_type="rss",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Rio de Janeiro aparece no texto, mas a noticia e sobre outro municipio.",
+            metadata={},
+        ),
+    ]
+
+    result = ingest.process_candidates("Fonte Rio", "rss", candidates, options=options)
+
+    assert result.articles_inserted == 2
+    assert result.mentions_inserted == 2
+    with sqlite3.connect(db_file) as conn:
+        rows = conn.execute("SELECT title, metadata FROM articles ORDER BY id").fetchall()
+    assert [row[0] for row in rows] == [
+        "Prefeitura do Rio anuncia obras no BRT em Bangu",
+        "Cidade do Rio recebe turistas internacionais no inverno",
+    ]
+    metadata = json.loads(rows[0][1])
+    assert metadata["scope"] == "rio_economico"
+    assert metadata["topic"] == "rio_city_corpus"
+    assert metadata["dimension"] == "rio_city_corpus"
+    assert metadata["query"] == '"cidade do Rio"'
 
 
 def test_rio_tourism_process_candidates_filters_city_scope_and_keeps_metadata(monkeypatch, tmp_path):
@@ -1028,7 +1139,92 @@ def test_live_results_include_rio_topic_key_without_active_target(monkeypatch, t
 
     assert live["count"] == 1
     assert live["items"][0]["targetKeys"] == ["rio_economico"]
-    assert live["items"][0]["targetLabels"] == {"rio_economico": "Turismo na cidade do Rio"}
+    assert live["items"][0]["targetLabels"] == {"rio_economico": "Corpus municipio do Rio"}
+
+
+def test_candidate_audit_funnel_counts_candidate_evaluations(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    job_id = "rio-funnel"
+    jobs.create_job(
+        job_id,
+        "update",
+        {
+            "preset": "rio_city_corpus",
+            "collector": "rss",
+            "scope": "rio_economico",
+            "topic": "rio_city_corpus",
+            "target_keys": ["rio_economico"],
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-02",
+        },
+        started_by="coworker",
+    )
+    jobs.update_job(job_id, status="running")
+
+    jobs.record_progress(
+        job_id,
+        "candidate_evaluated",
+        {
+            "source_run_id": 7,
+            "source_key": "rss:0",
+            "source_name": "Fonte Rio",
+            "source_type": "rss",
+            "candidate_url": "https://example.com/rio",
+            "final_url": "https://example.com/rio-final",
+            "candidate_title": "Cidade do Rio amplia programa municipal",
+            "published_at": "2026-06-01T12:00:00+00:00",
+            "status": "selected",
+            "reason": "new_article",
+            "stage": "stored",
+            "matched_targets": ["rio_economico"],
+            "matched_keywords": ["cidade do Rio"],
+            "url_resolved": True,
+            "text_chars": 240,
+            "has_text": True,
+            "has_canonical_date": True,
+            "municipal_match": True,
+            "scope": "rio_economico",
+            "topic": "rio_city_corpus",
+            "dimension": "rio_city_corpus",
+            "query": "\"cidade do Rio\"",
+        },
+        target_key="rio_economico",
+        target_label="Corpus Rio",
+    )
+    jobs.record_progress(
+        job_id,
+        "candidate_evaluated",
+        {
+            "source_run_id": 7,
+            "source_key": "rss:0",
+            "source_name": "Fonte Rio",
+            "source_type": "rss",
+            "candidate_url": "https://example.com/niteroi",
+            "candidate_title": "Niterói abre agenda cultural",
+            "published_at": "2026-06-01T12:00:00+00:00",
+            "status": "skipped",
+            "reason": "exclude_title_terms_matched",
+            "stage": "topic_exclusions",
+            "matched_targets": ["rio_economico"],
+            "matched_keywords": ["Rio de Janeiro"],
+            "has_canonical_date": True,
+            "municipal_match": True,
+        },
+        target_key="rio_economico",
+        target_label="Corpus Rio",
+    )
+
+    job = jobs.get_job(job_id)
+
+    assert job is not None
+    assert job["funnel"]["candidates_observed"] == 2
+    assert job["funnel"]["candidates_evaluated"] == 2
+    assert job["funnel"]["urls_resolved"] == 2
+    assert job["funnel"]["text_extracted"] == 1
+    assert job["funnel"]["canonical_dates_ok"] == 2
+    assert job["funnel"]["articles_saved"] == 1
+    assert job["funnel"]["decisions"] == {"outside_city": 1, "saved": 1}
+    assert job["funnel"]["skipped_by_reason"] == {"exclude_title_terms_matched": 1}
 
 
 def test_update_spec_freezes_target_snapshot_for_active_job(monkeypatch, tmp_path):

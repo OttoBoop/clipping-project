@@ -135,6 +135,37 @@ def ensure_app_tables(db_file: Path) -> None:
                 UNIQUE(job_id, target_key, source_key)
             );
 
+            CREATE TABLE IF NOT EXISTS job_candidate_audit (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_id TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                source_run_id INTEGER DEFAULT 0,
+                source_key TEXT,
+                source_name TEXT,
+                source_type TEXT,
+                target_key TEXT,
+                target_label TEXT,
+                scope TEXT,
+                topic TEXT,
+                dimension TEXT,
+                query TEXT,
+                candidate_url TEXT,
+                final_url TEXT,
+                title TEXT,
+                published_at TEXT,
+                status TEXT,
+                reason TEXT,
+                decision TEXT,
+                stage TEXT,
+                matched_targets_json TEXT,
+                matched_keywords_json TEXT,
+                url_resolved INTEGER DEFAULT 0,
+                text_chars INTEGER DEFAULT 0,
+                has_text INTEGER DEFAULT 0,
+                has_canonical_date INTEGER DEFAULT 0,
+                municipal_match INTEGER DEFAULT 0
+            );
+
             CREATE TABLE IF NOT EXISTS manual_entries (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 article_id INTEGER NOT NULL,
@@ -174,6 +205,15 @@ def ensure_app_tables(db_file: Path) -> None:
 
             CREATE INDEX IF NOT EXISTS idx_job_source_runs_source
                 ON job_source_runs(source_type, source_name);
+
+            CREATE INDEX IF NOT EXISTS idx_job_candidate_audit_job
+                ON job_candidate_audit(job_id, id);
+
+            CREATE INDEX IF NOT EXISTS idx_job_candidate_audit_job_reason
+                ON job_candidate_audit(job_id, reason);
+
+            CREATE INDEX IF NOT EXISTS idx_job_candidate_audit_job_decision
+                ON job_candidate_audit(job_id, decision);
 
             CREATE UNIQUE INDEX IF NOT EXISTS idx_manual_entries_article
                 ON manual_entries(article_id);
