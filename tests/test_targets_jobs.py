@@ -739,6 +739,8 @@ def test_build_update_spec_accepts_rio_city_corpus_without_target_row(monkeypatc
     assert spec["target_snapshots"][0]["topic"] == "rio_city_corpus"
     assert spec["candidate_worker_limit"] == 2
     assert spec["wordpress_pages_per_slice"] == 4
+    assert spec["group_topic_queries_by_source"] is True
+    assert spec["topic_query_chunk_size"] == 8
     assert spec["archive_full_text"] is True
     assert spec["archive_raw_html"] is False
     assert spec["full_text_max_chars"] == 30000
@@ -793,6 +795,52 @@ def test_rio_tourism_source_units_use_topic_queries_by_collector(monkeypatch, tm
     assert any(unit.cursor.get("query") == "turismo" for unit in by_type["internal_search"])
     assert by_type["sitemap_daily"][0].cursor["queries"][0] == "turismo"
     assert all("site:" not in str(unit.cursor.get("query") or "") for unit in by_type["wordpress_api"])
+
+
+def test_rio_city_corpus_source_units_group_topic_queries_by_source(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs, "RSS_FEEDS", [{"source_name": "RSS", "url": "https://example.com/rss.xml"}])
+    monkeypatch.setattr(jobs, "WORDPRESS_API_SITES", [{"source_name": "WP", "base_url": "https://example.com"}])
+    monkeypatch.setattr(
+        jobs,
+        "FLAVIO_INTERNAL_SEARCH_TARGETS",
+        [SimpleNamespace(source_name="Busca Interna", page_size=10)],
+    )
+    monkeypatch.setattr(
+        jobs,
+        "SITEMAP_DAILY_SOURCES",
+        [{"source_name": "Sitemap", "host": "example.com", "sitemap_url_template": "https://example.com/{yyyy}/{mm}/{dd}.xml"}],
+    )
+    monkeypatch.setattr(jobs, "VEJARIO_ARCHIVE_TARGETS", [])
+    monkeypatch.setattr(jobs, "CAMARA_MAX_PAGES", 0)
+    spec = jobs.build_update_spec(
+        {
+            "scope": "rio_economico",
+            "topic": "rio_city_corpus",
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-01",
+            "collector": "all",
+            "export": False,
+        }
+    )
+
+    units = jobs.build_source_units(spec, "rio_economico")
+    by_type: dict[str, list] = {}
+    for unit in units:
+        by_type.setdefault(unit.source_type, []).append(unit)
+
+    source_query_count = len(spec["topic_source_queries"])
+    google_query_count = len(spec["topic_queries"])
+    chunk_size = spec["topic_query_chunk_size"]
+
+    assert len(by_type["google_news"]) == (google_query_count + chunk_size - 1) // chunk_size
+    assert len(by_type["wordpress_api"]) == (source_query_count + chunk_size - 1) // chunk_size
+    assert len(by_type["internal_search"]) == (source_query_count + chunk_size - 1) // chunk_size
+    assert all(unit.source_key.startswith("wordpress_api_v2:0:chunk:") for unit in by_type["wordpress_api"])
+    assert all(1 <= len(unit.cursor["queries"]) <= chunk_size for unit in by_type["wordpress_api"])
+    assert all("query" not in unit.cursor for unit in by_type["wordpress_api"])
+    assert by_type["sitemap_daily"][0].cursor["queries"] == spec["topic_source_queries"]
+    assert len(units) < 30
 
 
 def test_rio_city_corpus_process_candidates_keeps_non_tourism_municipal_news(monkeypatch, tmp_path):

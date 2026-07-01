@@ -124,6 +124,7 @@ DEFAULT_CANDIDATE_WORKER_LIMIT = 1
 RIO_CANDIDATE_WORKER_LIMIT = 2
 RIO_WORDPRESS_PAGES_PER_SLICE = 4
 RIO_WORDPRESS_SOFT_FAIL_AFTER_PAGE = 3
+RIO_TOPIC_QUERY_CHUNK_SIZE = 8
 RIO_FULL_TEXT_MAX_CHARS = 30000
 RIO_RAW_HTML_MAX_CHARS = 0
 LIVE_CHECKPOINT_MIN_SECONDS = 30
@@ -237,6 +238,24 @@ def wordpress_max_pages(spec: dict[str, Any]) -> int:
 def wordpress_soft_fail_after_page(spec: dict[str, Any]) -> int:
     default = RIO_WORDPRESS_SOFT_FAIL_AFTER_PAGE if is_rio_topic_spec(spec) else 5
     return safe_positive_int(spec.get("wordpress_soft_fail_after_page"), default, minimum=1, maximum=WORDPRESS_MAX_PAGES)
+
+
+def rio_city_query_grouping_enabled(spec: dict[str, Any]) -> bool:
+    if not is_rio_topic_spec(spec) or str(spec.get("topic") or "") != RIO_CITY_TOPIC:
+        return False
+    raw = spec.get("group_topic_queries_by_source")
+    if raw is None:
+        return True
+    return str(raw).strip().lower() not in {"0", "false", "no", "off"}
+
+
+def topic_query_chunk_size(spec: dict[str, Any]) -> int:
+    return safe_positive_int(spec.get("topic_query_chunk_size"), RIO_TOPIC_QUERY_CHUNK_SIZE, minimum=1, maximum=25)
+
+
+def chunk_queries(queries: list[str], chunk_size: int) -> list[list[str]]:
+    size = max(1, int(chunk_size or 1))
+    return [queries[index : index + size] for index in range(0, len(queries), size)] or []
 
 
 def should_soft_complete_wordpress_timeout(
@@ -786,6 +805,8 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
                 "wordpress_pages_per_slice": RIO_WORDPRESS_PAGES_PER_SLICE,
                 "wordpress_max_pages": WORDPRESS_MAX_PAGES,
                 "wordpress_soft_fail_after_page": RIO_WORDPRESS_SOFT_FAIL_AFTER_PAGE,
+                "group_topic_queries_by_source": config.topic == RIO_CITY_TOPIC,
+                "topic_query_chunk_size": RIO_TOPIC_QUERY_CHUNK_SIZE if config.topic == RIO_CITY_TOPIC else 1,
                 "archive_full_text": True,
                 "archive_raw_html": False,
                 "full_text_max_chars": RIO_FULL_TEXT_MAX_CHARS,
@@ -1090,6 +1111,7 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
     if not targets:
         return []
     topic_mode = is_rio_topic_spec(spec)
+    group_topic_queries = rio_city_query_grouping_enabled(spec)
     units: list[SourceUnit] = []
     order = 0
 
@@ -1113,14 +1135,15 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
 
     if include("google_news"):
         google_queries = topic_queries_from_spec(spec, source_type="google_news") if topic_mode else build_google_queries_for_targets(targets)
-        if grouped:
-            if google_queries:
+        if grouped or group_topic_queries:
+            chunks = chunk_queries(google_queries, topic_query_chunk_size(spec) if group_topic_queries else len(google_queries))
+            for chunk_idx, query_chunk in enumerate(chunks):
                 units.append(
                     SourceUnit(
-                        source_key="google_news:0",
+                        source_key="google_news:0" if grouped and not group_topic_queries else f"google_news:chunk:{chunk_idx}",
                         source_name="Google News",
                         source_type="google_news",
-                        cursor={"query_index": 0, "queries": google_queries},
+                        cursor={"query_index": chunk_idx * max(1, topic_query_chunk_size(spec)), "queries": query_chunk},
                         order=order,
                     )
                 )
@@ -1142,17 +1165,24 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
         for site_idx, site in enumerate(WORDPRESS_API_SITES):
             site_name = str(site.get("source_name") or "WordPress").strip() or "WordPress"
             site_queries = topic_queries_from_spec(spec, source_type="wordpress_api") if topic_mode else build_wordpress_queries_for_targets(targets, site=site)
-            if grouped:
-                if site_queries:
+            if grouped or group_topic_queries:
+                chunks = chunk_queries(site_queries, topic_query_chunk_size(spec) if group_topic_queries else len(site_queries))
+                for chunk_idx, query_chunk in enumerate(chunks):
+                    query_index = chunk_idx * max(1, topic_query_chunk_size(spec))
                     units.append(
                         SourceUnit(
-                            source_key=f"wordpress_api_{WORDPRESS_SOURCE_VERSION}:{site_idx}:all",
+                            source_key=(
+                                f"wordpress_api_{WORDPRESS_SOURCE_VERSION}:{site_idx}:all"
+                                if grouped and not group_topic_queries
+                                else f"wordpress_api_{WORDPRESS_SOURCE_VERSION}:{site_idx}:chunk:{chunk_idx}"
+                            ),
                             source_name=site_name,
                             source_type="wordpress_api",
                             cursor={
                                 "site_index": site_idx,
-                                "query_index": 0,
-                                "queries": site_queries,
+                                "query_index": query_index,
+                                "queries": query_chunk,
+                                "query_chunk_index": chunk_idx,
                                 "page": 1,
                                 "page_size": WORDPRESS_PAGE_SIZE,
                                 "complete_queries": [],
@@ -1184,17 +1214,24 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
         queries = topic_queries_from_spec(spec, source_type="internal_search") if topic_mode else build_internal_search_queries_for_targets(targets)
         for adapter_idx, adapter in enumerate(FLAVIO_INTERNAL_SEARCH_TARGETS):
             page_size = max(1, int(getattr(adapter, "page_size", 10) or 10))
-            if grouped:
-                if queries:
+            if grouped or group_topic_queries:
+                chunks = chunk_queries(queries, topic_query_chunk_size(spec) if group_topic_queries else len(queries))
+                for chunk_idx, query_chunk in enumerate(chunks):
+                    query_index = chunk_idx * max(1, topic_query_chunk_size(spec))
                     units.append(
                         SourceUnit(
-                            source_key=f"internal_search_{INTERNAL_SEARCH_SOURCE_VERSION}:{adapter_idx}:all",
+                            source_key=(
+                                f"internal_search_{INTERNAL_SEARCH_SOURCE_VERSION}:{adapter_idx}:all"
+                                if grouped and not group_topic_queries
+                                else f"internal_search_{INTERNAL_SEARCH_SOURCE_VERSION}:{adapter_idx}:chunk:{chunk_idx}"
+                            ),
                             source_name=str(adapter.source_name),
                             source_type="internal_search",
                             cursor={
                                 "adapter_index": adapter_idx,
-                                "query_index": 0,
-                                "queries": queries,
+                                "query_index": query_index,
+                                "queries": query_chunk,
+                                "query_chunk_index": chunk_idx,
                                 "page": 1,
                                 "page_size": page_size,
                             },

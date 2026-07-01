@@ -79,7 +79,12 @@ RSS_FEEDS: list[dict[str, str]] = [
         "disabled": "true",
         "disabled_reason": "Production RSS returned non-XML during durable backfill; O Globo remains covered by sitemap/internal search.",
     },
-    {"source_name": "Extra", "url": "https://extra.globo.com/rss.xml"},
+    {
+        "source_name": "Extra",
+        "url": "https://extra.globo.com/rss.xml",
+        "disabled": "true",
+        "disabled_reason": "Production RSS returned HTTP 404 during rio_city_corpus canary; Extra remains covered by sitemap/internal search.",
+    },
     {"source_name": "Folha", "url": "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml"},
     {"source_name": "UOL", "url": "https://rss.uol.com.br/feed/noticias.xml"},
     {"source_name": "R7", "url": "https://noticias.r7.com/rss.xml", "disabled": "true"},
