@@ -9,6 +9,7 @@ stdout so long backfills can be tailed or archived.
 from __future__ import annotations
 
 import argparse
+import calendar
 import json
 import os
 import sys
@@ -113,6 +114,43 @@ def year_window(year: int) -> tuple[str, str]:
     return start.isoformat(), end.isoformat()
 
 
+def month_window(year: int, month: int, *, today: date | None = None) -> tuple[str, str]:
+    today = today or date.today()
+    start = date(int(year), int(month), 1)
+    last_day = calendar.monthrange(start.year, start.month)[1]
+    end = date(start.year, start.month, last_day)
+    if end > today:
+        end = today
+    if start > end:
+        raise ValueError(f"backfill_month_in_future:{year}-{month:02d}")
+    return start.isoformat(), end.isoformat()
+
+
+def backfill_windows(
+    start_year: int,
+    end_year: int,
+    *,
+    mode: str,
+    today: date | None = None,
+) -> list[tuple[str, str, str]]:
+    if start_year > end_year:
+        start_year, end_year = end_year, start_year
+    if mode == "year":
+        return [(str(year), *year_window(year)) for year in range(start_year, end_year + 1)]
+    if mode != "month":
+        raise ValueError(f"invalid_backfill_window:{mode}")
+    today = today or date.today()
+    windows: list[tuple[str, str, str]] = []
+    for year in range(start_year, end_year + 1):
+        for month in range(1, 13):
+            try:
+                date_from, date_to = month_window(year, month, today=today)
+            except ValueError:
+                continue
+            windows.append((f"{year}-{month:02d}", date_from, date_to))
+    return windows
+
+
 def start_topic_job(client: Client, args: argparse.Namespace) -> dict[str, Any]:
     date_from, date_to = args.date_from, args.date_to
     if not date_from or not date_to:
@@ -166,8 +204,9 @@ def summarize_endpoint(status: int, body: Any) -> dict[str, Any]:
     if status != 200:
         return {"status": status, "detail": safe_detail(body)}
     summary = {"status": status}
+    if isinstance(body.get("current"), dict):
+        summary["current"] = summarize_current_job(body["current"])
     for key in (
-        "current",
         "count",
         "funnel",
         "candidates_observed",
@@ -178,6 +217,15 @@ def summarize_endpoint(status: int, body: Any) -> dict[str, Any]:
         "skipped_by_reason",
         "sourceRunCounts",
         "sourceRunCount",
+        "sourceRunSourceTypeCounts",
+        "failedSources",
+        "uploadedArtifacts",
+        "uploadedArtifactCount",
+        "limit_mib",
+        "vm_rss_mib",
+        "vm_hwm_mib",
+        "filesystem",
+        "db_files",
         "rssMiB",
         "diskFreeBytes",
         "disk_free_bytes",
@@ -208,9 +256,72 @@ def summarize_endpoint(status: int, body: Any) -> dict[str, Any]:
     return summary
 
 
+def summarize_current_job(current: dict[str, Any]) -> dict[str, Any]:
+    keep = (
+        "id",
+        "kind",
+        "status",
+        "coverageState",
+        "preset",
+        "target_keys",
+        "collector",
+        "date_from",
+        "date_to",
+        "started_at",
+        "finished_at",
+        "articles_inserted",
+        "mentions_inserted",
+        "stories_touched",
+        "sourceRunCount",
+        "sourceRunCounts",
+        "sourceRunSourceTypeCounts",
+        "failedSources",
+        "resumeAvailable",
+        "uploadedArtifactCount",
+        "uploadedArtifacts",
+        "publishedAt",
+        "candidates_observed",
+        "urls_resolved",
+        "text_extracted",
+        "canonical_dates_ok",
+        "articles_saved",
+        "skipped_by_reason",
+        "funnel",
+    )
+    return {key: current.get(key) for key in keep if key in current}
+
+
 def current_job_id(payload: dict[str, Any]) -> str:
     current = payload.get("current") if isinstance(payload.get("current"), dict) else {}
     return str(current.get("id") or payload.get("id") or "")
+
+
+def resource_barriers(snapshot: dict[str, Any], args: argparse.Namespace) -> list[str]:
+    barriers: list[str] = []
+    memory = snapshot.get("memory") if isinstance(snapshot.get("memory"), dict) else {}
+    disk = snapshot.get("disk") if isinstance(snapshot.get("disk"), dict) else {}
+    max_rss = float(getattr(args, "memory_rss_max_mib", 0) or 0)
+    min_disk = float(getattr(args, "disk_free_min_mib", 0) or 0)
+    if max_rss:
+        rss = float(memory.get("vm_rss_mib") or 0)
+        if rss and rss > max_rss:
+            barriers.append(f"memory_rss_mib:{rss:.2f}>{max_rss:.2f}")
+    if min_disk:
+        fs = disk.get("filesystem") if isinstance(disk.get("filesystem"), dict) else {}
+        free = float(fs.get("free_mib") or 0)
+        if free and free < min_disk:
+            barriers.append(f"disk_free_mib:{free:.2f}<{min_disk:.2f}")
+    return barriers
+
+
+def guard_resources_before_start(client: Client, args: argparse.Namespace, label: str) -> int:
+    snapshot = poll_once(client, "")
+    barriers = resource_barriers(snapshot, args)
+    emit("preflight", {"label": label, "barriers": barriers, "snapshot": snapshot})
+    if barriers and not getattr(args, "ignore_resource_guards", False):
+        emit("preflight_blocked", {"label": label, "barriers": barriers})
+        return 3
+    return 0
 
 
 def poll_until_done(client: Client, job_id: str, args: argparse.Namespace) -> int:
@@ -218,7 +329,8 @@ def poll_until_done(client: Client, job_id: str, args: argparse.Namespace) -> in
     while True:
         cycles += 1
         snapshot = poll_once(client, job_id)
-        emit("poll", {"cycle": cycles, "job_id": job_id, "snapshot": snapshot})
+        barriers = resource_barriers(snapshot, args)
+        emit("poll", {"cycle": cycles, "job_id": job_id, "barriers": barriers, "snapshot": snapshot})
         current = snapshot.get("status", {}).get("current", {})
         current_status = str(current.get("status") or "")
         if current_status in {"succeeded", "failed_needs_fix", "cancelled", "interrupted_resumable"}:
@@ -231,16 +343,19 @@ def poll_until_done(client: Client, job_id: str, args: argparse.Namespace) -> in
 def run_backfill_years(client: Client, args: argparse.Namespace) -> int:
     start_year = int(args.backfill_start_year)
     end_year = int(args.backfill_end_year or args.backfill_start_year)
-    if start_year > end_year:
-        start_year, end_year = end_year, start_year
-    for year in range(start_year, end_year + 1):
-        args.date_from, args.date_to = year_window(year)
-        emit("backfill_window_start", {"year": year, "date_from": args.date_from, "date_to": args.date_to})
+    windows = backfill_windows(start_year, end_year, mode=str(args.backfill_window))
+    emit("backfill_plan", {"window": args.backfill_window, "windows": len(windows), "start_year": start_year, "end_year": end_year})
+    for label, date_from, date_to in windows:
+        guard = guard_resources_before_start(client, args, label)
+        if guard:
+            return guard
+        args.date_from, args.date_to = date_from, date_to
+        emit("backfill_window_start", {"label": label, "date_from": args.date_from, "date_to": args.date_to})
         started = start_topic_job(client, args)
         job_id = current_job_id(started)
-        emit("start_ok", {"job_id": job_id, "status": started.get("status"), "year": year})
+        emit("start_ok", {"job_id": job_id, "status": started.get("status"), "label": label})
         result = poll_until_done(client, job_id, args)
-        emit("backfill_window_done", {"year": year, "job_id": job_id, "exit_code": result})
+        emit("backfill_window_done", {"label": label, "job_id": job_id, "exit_code": result})
         if result != 0:
             return result
     return 0
@@ -257,6 +372,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--date-to", default="")
     parser.add_argument("--backfill-start-year", type=int, default=0)
     parser.add_argument("--backfill-end-year", type=int, default=0)
+    parser.add_argument("--backfill-window", choices=["year", "month"], default="year")
     parser.add_argument("--collector", default="all")
     parser.add_argument("--no-export", action="store_true")
     parser.add_argument("--resume-job-id", default="")
@@ -264,6 +380,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-start", action="store_true")
     parser.add_argument("--interval", type=int, default=60)
     parser.add_argument("--max-cycles", type=int, default=0)
+    parser.add_argument("--memory-rss-max-mib", type=float, default=0)
+    parser.add_argument("--disk-free-min-mib", type=float, default=0)
+    parser.add_argument("--ignore-resource-guards", action="store_true")
     args = parser.parse_args(argv)
 
     password = os.environ.get(args.password_env, "").strip()
