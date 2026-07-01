@@ -741,6 +741,7 @@ def test_build_update_spec_accepts_rio_city_corpus_without_target_row(monkeypatc
     assert spec["wordpress_pages_per_slice"] == 4
     assert spec["group_topic_queries_by_source"] is True
     assert spec["topic_query_chunk_size"] == 8
+    assert spec["recent_archive_max_pages"] == 5
     assert spec["archive_full_text"] is True
     assert spec["archive_raw_html"] is False
     assert spec["full_text_max_chars"] == 30000
@@ -841,6 +842,62 @@ def test_rio_city_corpus_source_units_group_topic_queries_by_source(monkeypatch,
     assert all("query" not in unit.cursor for unit in by_type["wordpress_api"])
     assert by_type["sitemap_daily"][0].cursor["queries"] == spec["topic_source_queries"]
     assert len(units) < 30
+
+
+def test_rio_city_recent_windows_cap_archive_source_units(monkeypatch, tmp_path):
+    from datetime import date
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs, "RSS_FEEDS", [])
+    monkeypatch.setattr(jobs, "WORDPRESS_API_SITES", [])
+    monkeypatch.setattr(jobs, "FLAVIO_INTERNAL_SEARCH_TARGETS", [])
+    monkeypatch.setattr(jobs, "SITEMAP_DAILY_SOURCES", [])
+    monkeypatch.setattr(
+        jobs,
+        "VEJARIO_ARCHIVE_TARGETS",
+        [
+            {"source_name": "Veja Rio A", "start_url": "https://example.com/a"},
+            {"source_name": "Veja Rio B", "start_url": "https://example.com/b"},
+        ],
+    )
+    monkeypatch.setattr(jobs, "VEJARIO_MAX_PAGES", 50)
+    monkeypatch.setattr(jobs, "CAMARA_MAX_PAGES", 100)
+    today = date.today().isoformat()
+    recent_spec = jobs.build_update_spec(
+        {
+            "scope": "rio_economico",
+            "topic": "rio_city_corpus",
+            "date_from": today,
+            "date_to": today,
+            "collector": "all",
+            "export": False,
+        }
+    )
+    recent_units = jobs.build_source_units(recent_spec, "rio_economico")
+    recent_by_type: dict[str, list] = {}
+    for unit in recent_units:
+        recent_by_type.setdefault(unit.source_type, []).append(unit)
+
+    assert len(recent_by_type["vejario_archive"]) == 2 * recent_spec["recent_archive_max_pages"]
+    assert len(recent_by_type["camara_archive"]) == recent_spec["recent_archive_max_pages"]
+
+    historical_spec = jobs.build_update_spec(
+        {
+            "scope": "rio_economico",
+            "topic": "rio_city_corpus",
+            "date_from": "2011-01-01",
+            "date_to": "2011-12-31",
+            "collector": "all",
+            "export": False,
+        }
+    )
+    historical_units = jobs.build_source_units(historical_spec, "rio_economico")
+    historical_by_type: dict[str, list] = {}
+    for unit in historical_units:
+        historical_by_type.setdefault(unit.source_type, []).append(unit)
+
+    assert len(historical_by_type["vejario_archive"]) == 2 * jobs.VEJARIO_MAX_PAGES
+    assert len(historical_by_type["camara_archive"]) == jobs.CAMARA_MAX_PAGES
 
 
 def test_rio_city_corpus_process_candidates_keeps_non_tourism_municipal_news(monkeypatch, tmp_path):

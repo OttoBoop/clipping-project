@@ -125,6 +125,7 @@ RIO_CANDIDATE_WORKER_LIMIT = 2
 RIO_WORDPRESS_PAGES_PER_SLICE = 4
 RIO_WORDPRESS_SOFT_FAIL_AFTER_PAGE = 3
 RIO_TOPIC_QUERY_CHUNK_SIZE = 8
+RIO_RECENT_ARCHIVE_MAX_PAGES = 5
 RIO_FULL_TEXT_MAX_CHARS = 30000
 RIO_RAW_HTML_MAX_CHARS = 0
 LIVE_CHECKPOINT_MIN_SECONDS = 30
@@ -256,6 +257,29 @@ def topic_query_chunk_size(spec: dict[str, Any]) -> int:
 def chunk_queries(queries: list[str], chunk_size: int) -> list[list[str]]:
     size = max(1, int(chunk_size or 1))
     return [queries[index : index + size] for index in range(0, len(queries), size)] or []
+
+
+def recent_short_window(spec: dict[str, Any], *, max_days: int = 31, max_age_days: int = 120) -> bool:
+    try:
+        start = date.fromisoformat(str(spec.get("date_from") or ""))
+        end = date.fromisoformat(str(spec.get("date_to") or ""))
+    except ValueError:
+        return False
+    if start > end:
+        return False
+    return (end - start).days + 1 <= max_days and (date.today() - end).days <= max_age_days
+
+
+def archive_page_limit(spec: dict[str, Any], default: int) -> int:
+    if not is_rio_topic_spec(spec) or not recent_short_window(spec):
+        return default
+    recent_limit = safe_positive_int(
+        spec.get("recent_archive_max_pages"),
+        RIO_RECENT_ARCHIVE_MAX_PAGES,
+        minimum=1,
+        maximum=default,
+    )
+    return min(default, recent_limit)
 
 
 def should_soft_complete_wordpress_timeout(
@@ -807,6 +831,7 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
                 "wordpress_soft_fail_after_page": RIO_WORDPRESS_SOFT_FAIL_AFTER_PAGE,
                 "group_topic_queries_by_source": config.topic == RIO_CITY_TOPIC,
                 "topic_query_chunk_size": RIO_TOPIC_QUERY_CHUNK_SIZE if config.topic == RIO_CITY_TOPIC else 1,
+                "recent_archive_max_pages": RIO_RECENT_ARCHIVE_MAX_PAGES,
                 "archive_full_text": True,
                 "archive_raw_html": False,
                 "full_text_max_chars": RIO_FULL_TEXT_MAX_CHARS,
@@ -1275,8 +1300,9 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
                 order += 1
 
     if include("vejario_archive"):
+        max_pages = archive_page_limit(spec, VEJARIO_MAX_PAGES)
         for target_idx, archive_target in enumerate(VEJARIO_ARCHIVE_TARGETS):
-            for page in range(1, VEJARIO_MAX_PAGES + 1):
+            for page in range(1, max_pages + 1):
                 units.append(
                     SourceUnit(
                         source_key=f"vejario_archive:{target_idx}:{page}",
@@ -1289,7 +1315,8 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
                 order += 1
 
     if include("camara_archive"):
-        for page in range(1, CAMARA_MAX_PAGES + 1):
+        max_pages = archive_page_limit(spec, CAMARA_MAX_PAGES)
+        for page in range(1, max_pages + 1):
             units.append(
                 SourceUnit(
                     source_key=f"camara_archive:0:{page}",
