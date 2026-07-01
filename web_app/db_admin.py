@@ -995,20 +995,8 @@ def delete_articles_by_urls(db_file: Path, urls: list[str], *, target_key: str =
         ).fetchall()
         article_ids = [int(row["id"]) for row in rows]
         removed_urls = [str(row["url"]) for row in rows]
-        if not article_ids:
-            return {
-                "requested": len(clean_urls),
-                "articlesRemoved": 0,
-                "mentionsRemoved": 0,
-                "storiesRemoved": 0,
-                "storyLinksRemoved": 0,
-                "eventsRemoved": 0,
-                "removedUrls": [],
-                "notFoundUrls": clean_urls,
-            }
-
-        article_placeholders = ",".join("?" for _ in article_ids)
         article_id_set = set(article_ids)
+        clean_url_set = set(clean_urls)
         event_rows = conn.execute(
             "SELECT id, payload_json FROM job_events WHERE event = 'article_saved'",
         ).fetchall()
@@ -1018,12 +1006,31 @@ def delete_articles_by_urls(db_file: Path, urls: list[str], *, target_key: str =
                 payload = json.loads(str(row["payload_json"] or "{}"))
             except json.JSONDecodeError:
                 continue
-            if int(payload.get("article_id") or 0) in article_id_set:
+            payload_url = canonicalize_url(str(payload.get("url") or ""))
+            payload_keys = {str(key) for key in list(payload.get("target_keys") or [])}
+            payload_key = str(payload.get("target_key") or "")
+            if payload_key:
+                payload_keys.add(payload_key)
+            if target_key and target_key not in payload_keys:
+                continue
+            if int(payload.get("article_id") or 0) in article_id_set or payload_url in clean_url_set:
                 event_ids.append(int(row["id"]))
         if event_ids:
             event_placeholders = ",".join("?" for _ in event_ids)
             conn.execute(f"DELETE FROM job_events WHERE id IN ({event_placeholders})", event_ids)
+        if not article_ids:
+            return {
+                "requested": len(clean_urls),
+                "articlesRemoved": 0,
+                "mentionsRemoved": 0,
+                "storiesRemoved": 0,
+                "storyLinksRemoved": 0,
+                "eventsRemoved": len(event_ids),
+                "removedUrls": [],
+                "notFoundUrls": clean_urls,
+            }
 
+        article_placeholders = ",".join("?" for _ in article_ids)
         story_rows = conn.execute(
             f"SELECT DISTINCT story_id FROM story_articles WHERE article_id IN ({article_placeholders})",
             article_ids,

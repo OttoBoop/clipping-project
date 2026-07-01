@@ -1063,6 +1063,47 @@ def test_delete_articles_by_urls_is_scoped_to_requested_target(monkeypatch, tmp_
     assert remaining_events == 1
 
 
+def test_delete_articles_by_urls_removes_stale_live_event_by_url(monkeypatch, tmp_path):
+    db_admin, _, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    url = "https://www.furg.br/noticias/noticias-institucional/furg-e-prefeitura-do-rio-grande"
+    with db_admin.connect(db_file) as conn:
+        conn.execute(
+            "INSERT INTO job_events (job_id, created_at, event, payload_json) VALUES (?, ?, ?, ?)",
+            (
+                "cleanup-test",
+                "2026-01-01T12:00:00+00:00",
+                "article_saved",
+                json.dumps(
+                    {
+                        "article_id": 999,
+                        "url": url,
+                        "target_key": "rio_economico",
+                        "target_keys": ["rio_economico"],
+                    },
+                    ensure_ascii=False,
+                ),
+            ),
+        )
+        conn.execute(
+            "INSERT INTO job_events (job_id, created_at, event, payload_json) VALUES (?, ?, ?, ?)",
+            (
+                "cleanup-test",
+                "2026-01-01T12:00:00+00:00",
+                "article_saved",
+                json.dumps({"article_id": 1000, "url": url, "target_key": "shakira", "target_keys": ["shakira"]}),
+            ),
+        )
+
+    result = db_admin.delete_articles_by_urls(db_file, [url], target_key="rio_economico")
+
+    assert result["articlesRemoved"] == 0
+    assert result["eventsRemoved"] == 1
+    with sqlite3.connect(db_file) as conn:
+        remaining_payloads = [row[0] for row in conn.execute("SELECT payload_json FROM job_events")]
+    assert len(remaining_payloads) == 1
+    assert json.loads(remaining_payloads[0])["target_key"] == "shakira"
+
+
 def test_rio_tourism_process_candidates_filters_city_scope_and_keeps_metadata(monkeypatch, tmp_path):
     from pipeline import ingest
     from pipeline.collectors import CandidateArticle
