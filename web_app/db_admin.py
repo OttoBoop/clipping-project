@@ -959,6 +959,7 @@ def delete_articles_by_urls(db_file: Path, urls: list[str], *, target_key: str =
             "mentionsRemoved": 0,
             "storiesRemoved": 0,
             "storyLinksRemoved": 0,
+            "eventsRemoved": 0,
             "removedUrls": [],
             "notFoundUrls": [],
         }
@@ -1001,11 +1002,28 @@ def delete_articles_by_urls(db_file: Path, urls: list[str], *, target_key: str =
                 "mentionsRemoved": 0,
                 "storiesRemoved": 0,
                 "storyLinksRemoved": 0,
+                "eventsRemoved": 0,
                 "removedUrls": [],
                 "notFoundUrls": clean_urls,
             }
 
         article_placeholders = ",".join("?" for _ in article_ids)
+        article_id_set = set(article_ids)
+        event_rows = conn.execute(
+            "SELECT id, payload_json FROM job_events WHERE event = 'article_saved'",
+        ).fetchall()
+        event_ids: list[int] = []
+        for row in event_rows:
+            try:
+                payload = json.loads(str(row["payload_json"] or "{}"))
+            except json.JSONDecodeError:
+                continue
+            if int(payload.get("article_id") or 0) in article_id_set:
+                event_ids.append(int(row["id"]))
+        if event_ids:
+            event_placeholders = ",".join("?" for _ in event_ids)
+            conn.execute(f"DELETE FROM job_events WHERE id IN ({event_placeholders})", event_ids)
+
         story_rows = conn.execute(
             f"SELECT DISTINCT story_id FROM story_articles WHERE article_id IN ({article_placeholders})",
             article_ids,
@@ -1055,6 +1073,7 @@ def delete_articles_by_urls(db_file: Path, urls: list[str], *, target_key: str =
         "mentionsRemoved": mentions_removed,
         "storiesRemoved": stories_removed,
         "storyLinksRemoved": max(0, int(story_links_removed or 0)),
+        "eventsRemoved": len(event_ids),
         "removedUrls": removed_urls,
         "notFoundUrls": [url for url in clean_urls if url not in set(removed_urls)],
     }

@@ -1033,6 +1033,15 @@ def test_delete_articles_by_urls_is_scoped_to_requested_target(monkeypatch, tmp_
                 """,
                 (article_id, target_key, target_key, target_key, "neutral", "", ""),
             )
+            conn.execute(
+                "INSERT INTO job_events (job_id, created_at, event, payload_json) VALUES (?, ?, ?, ?)",
+                (
+                    "cleanup-test",
+                    now,
+                    "article_saved",
+                    json.dumps({"article_id": article_id, "target_keys": [target_key]}, ensure_ascii=False),
+                ),
+            )
 
     result = db_admin.delete_articles_by_urls(
         db_file,
@@ -1045,10 +1054,13 @@ def test_delete_articles_by_urls_is_scoped_to_requested_target(monkeypatch, tmp_
 
     assert result["articlesRemoved"] == 1
     assert result["mentionsRemoved"] == 1
+    assert result["eventsRemoved"] == 1
     assert result["removedUrls"] == ["https://www.furg.br/noticias/municipio-do-rio-grande"]
     with sqlite3.connect(db_file) as conn:
         remaining_urls = [row[0] for row in conn.execute("SELECT url FROM articles ORDER BY url")]
+        remaining_events = conn.execute("SELECT COUNT(*) FROM job_events").fetchone()[0]
     assert remaining_urls == ["https://example.com/noticia-shakira"]
+    assert remaining_events == 1
 
 
 def test_rio_tourism_process_candidates_filters_city_scope_and_keeps_metadata(monkeypatch, tmp_path):
