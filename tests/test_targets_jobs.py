@@ -753,6 +753,8 @@ def test_build_update_spec_accepts_rio_city_corpus_without_target_row(monkeypatc
     assert "Rio de Janeiro" not in spec["target_snapshots"][0]["keywords"]
     assert "carioca" not in spec["target_snapshots"][0]["keywords"]
     assert "Niterói" in spec["exclude_title_terms"]
+    assert "Rio Grande/RS" in spec["exclude_title_terms"]
+    assert "Município do Rio Grande" in spec["exclude_title_terms"]
     assert any(row["query"] == '"cidade do Rio"' for row in spec["topic_queries"])
     assert "Rio de Janeiro cidade" in spec["topic_source_queries"]
     assert "turismo Rio de Janeiro" in spec["topic_source_queries"]
@@ -957,6 +959,15 @@ def test_rio_city_corpus_process_candidates_keeps_non_tourism_municipal_news(mon
             snippet="Rio de Janeiro aparece no texto, mas a noticia e sobre outro municipio.",
             metadata={},
         ),
+        CandidateArticle(
+            title="Boletim Epidemiológico da Dengue - Município do Rio Grande/RS",
+            url="https://example.com/rio-grande-rs-dengue",
+            source_name="Google News",
+            source_type="google_news",
+            published_at="2026-06-01T12:00:00+00:00",
+            snippet="Prefeitura Municipal de Rio Grande divulga boletim no Rio Grande do Sul.",
+            metadata={},
+        ),
     ]
 
     result = ingest.process_candidates("Fonte Rio", "rss", candidates, options=options)
@@ -974,6 +985,70 @@ def test_rio_city_corpus_process_candidates_keeps_non_tourism_municipal_news(mon
     assert metadata["topic"] == "rio_city_corpus"
     assert metadata["dimension"] == "rio_city_corpus"
     assert metadata["query"] == '"cidade do Rio"'
+
+
+def test_delete_articles_by_urls_is_scoped_to_requested_target(monkeypatch, tmp_path):
+    db_admin, _, db_file = reload_admin_modules(monkeypatch, tmp_path)
+    now = "2026-01-01T12:00:00+00:00"
+    with db_admin.connect(db_file) as conn:
+        for idx, (url, target_key) in enumerate(
+            [
+                ("https://www.furg.br/noticias/municipio-do-rio-grande", "rio_economico"),
+                ("https://example.com/noticia-shakira", "shakira"),
+            ],
+            start=1,
+        ):
+            article_id = conn.execute(
+                """
+                INSERT INTO articles (
+                    url, title, source_name, source_type, published_at, discovered_at,
+                    snippet, full_text, raw_html, summary, metadata
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    url,
+                    f"Materia {idx}",
+                    "Google News",
+                    "google_news",
+                    now,
+                    now,
+                    "",
+                    "",
+                    "",
+                    "",
+                    "{}",
+                ),
+            ).lastrowid
+            story_id = conn.execute(
+                "INSERT INTO stories (title, summary, temperature, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+                (f"Historia {idx}", "", 0.0, now, now),
+            ).lastrowid
+            conn.execute("INSERT INTO story_articles (story_id, article_id) VALUES (?, ?)", (story_id, article_id))
+            conn.execute("INSERT INTO story_targets (story_id, target_key) VALUES (?, ?)", (story_id, target_key))
+            conn.execute(
+                """
+                INSERT INTO mentions (
+                    article_id, target_key, target_name, keyword_matched, sentiment, sentiment_reason, context
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (article_id, target_key, target_key, target_key, "neutral", "", ""),
+            )
+
+    result = db_admin.delete_articles_by_urls(
+        db_file,
+        [
+            "https://www.furg.br/noticias/municipio-do-rio-grande",
+            "https://example.com/noticia-shakira",
+        ],
+        target_key="rio_economico",
+    )
+
+    assert result["articlesRemoved"] == 1
+    assert result["mentionsRemoved"] == 1
+    assert result["removedUrls"] == ["https://www.furg.br/noticias/municipio-do-rio-grande"]
+    with sqlite3.connect(db_file) as conn:
+        remaining_urls = [row[0] for row in conn.execute("SELECT url FROM articles ORDER BY url")]
+    assert remaining_urls == ["https://example.com/noticia-shakira"]
 
 
 def test_rio_tourism_process_candidates_filters_city_scope_and_keeps_metadata(monkeypatch, tmp_path):

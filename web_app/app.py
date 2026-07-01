@@ -32,6 +32,7 @@ from .db_admin import (
     ValidationError,
     archive_known_test_targets,
     archive_secondary_target,
+    delete_articles_by_urls,
     ensure_app_tables,
     insert_manual_story,
     load_targets,
@@ -1713,6 +1714,41 @@ def admin_gc_smoke_residue(request: Request) -> dict[str, Any]:
         details={"deleted_count": len(deleted), "deleted_keys": deleted[:20], **_request_meta(request)},
     )
     return {"deleted": deleted, "count": len(deleted)}
+
+
+@app.post("/api/admin/rio-economico/cleanup-urls")
+async def admin_rio_economic_cleanup_urls(request: Request) -> dict[str, Any]:
+    session = require_admin(request)
+    require_csrf(request)
+    payload = await read_json(request)
+    urls = payload.get("urls")
+    if not isinstance(urls, list) or not urls:
+        raise HTTPException(status_code=400, detail="urls_required")
+    if len(urls) > 50:
+        raise HTTPException(status_code=400, detail="urls_limit_50")
+    result = delete_articles_by_urls(db_path(), [str(url) for url in urls], target_key="rio_economico")
+    uploaded: list[str] = []
+    if result.get("articlesRemoved") and artifact_store.enabled:
+        uploaded = artifact_store.upload_current_artifacts(
+            manifest={"kind": "rio-economico-cleanup-urls", "result": result},
+            job_id="rio-economico-cleanup-urls",
+        )
+    activity.record(
+        "rio_economico.cleanup_urls",
+        session=session,
+        target_key="rio_economico",
+        details={
+            "requested": result.get("requested"),
+            "articlesRemoved": result.get("articlesRemoved"),
+            "removedUrls": list(result.get("removedUrls") or [])[:20],
+            **_request_meta(request),
+        },
+    )
+    return {
+        **result,
+        "uploadedArtifactCount": len(uploaded),
+        "uploadedArtifacts": uploaded,
+    }
 
 
 @app.post("/api/categories")

@@ -658,6 +658,65 @@ def test_cancel_update_returns_409_when_no_active_job(monkeypatch, tmp_path):
     assert response.json()["detail"] == "no_active_job"
 
 
+def test_rio_economic_cleanup_urls_requires_admin_and_removes_scoped_article(monkeypatch, tmp_path):
+    app, db_file = load_test_app(monkeypatch, tmp_path)
+    now = "2026-01-01T12:00:00+00:00"
+    url = "https://www.furg.br/noticias/municipio-do-rio-grande"
+    with sqlite3.connect(db_file) as conn:
+        article_id = conn.execute(
+            """
+            INSERT INTO articles (
+                url, title, source_name, source_type, published_at, discovered_at,
+                snippet, full_text, raw_html, summary, metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                url,
+                "FURG e Prefeitura do Rio Grande assinam protocolo",
+                "Google News",
+                "google_news",
+                now,
+                now,
+                "",
+                "",
+                "",
+                "",
+                "{}",
+            ),
+        ).lastrowid
+        story_id = conn.execute(
+            "INSERT INTO stories (title, summary, temperature, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            ("FURG e Prefeitura do Rio Grande assinam protocolo", "", 0.0, now, now),
+        ).lastrowid
+        conn.execute("INSERT INTO story_articles (story_id, article_id) VALUES (?, ?)", (story_id, article_id))
+        conn.execute("INSERT INTO story_targets (story_id, target_key) VALUES (?, ?)", (story_id, "rio_economico"))
+        conn.execute(
+            """
+            INSERT INTO mentions (
+                article_id, target_key, target_name, keyword_matched, sentiment, sentiment_reason, context
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (article_id, "rio_economico", "Corpus Rio", "Município do Rio", "neutral", "", ""),
+        )
+
+    with TestClient(app) as client:
+        unauth = client.post("/api/admin/rio-economico/cleanup-urls", json={"urls": [url]})
+        csrf = login(client)
+        response = client.post(
+            "/api/admin/rio-economico/cleanup-urls",
+            headers=csrf_header(csrf),
+            json={"urls": [url]},
+        )
+
+    assert unauth.status_code == 401
+    assert response.status_code == 200
+    body = response.json()
+    assert body["articlesRemoved"] == 1
+    assert body["removedUrls"] == [url]
+    with sqlite3.connect(db_file) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0] == 0
+
+
 def test_resume_update_is_admin_endpoint(monkeypatch, tmp_path):
     app, _ = load_test_app(monkeypatch, tmp_path)
     app_module = importlib.import_module("web_app.app")

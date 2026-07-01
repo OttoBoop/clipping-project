@@ -941,6 +941,125 @@ def cleanup_synthetic_smoke_artifacts(db_file: Path) -> dict[str, Any]:
     }
 
 
+def delete_articles_by_urls(db_file: Path, urls: list[str], *, target_key: str = "") -> dict[str, Any]:
+    db_file = validate_configured_db_file(db_file)
+    ensure_app_tables(db_file)
+    clean_urls = []
+    seen_urls: set[str] = set()
+    for raw in urls:
+        url = canonicalize_url(str(raw or "").strip())
+        if not url or url in seen_urls:
+            continue
+        seen_urls.add(url)
+        clean_urls.append(url)
+    if not clean_urls:
+        return {
+            "requested": 0,
+            "articlesRemoved": 0,
+            "mentionsRemoved": 0,
+            "storiesRemoved": 0,
+            "storyLinksRemoved": 0,
+            "removedUrls": [],
+            "notFoundUrls": [],
+        }
+
+    with connect(db_file) as conn:
+        placeholders = ",".join("?" for _ in clean_urls)
+        params: list[Any] = list(clean_urls)
+        target_clause = ""
+        if target_key:
+            target_clause = """
+              AND (
+                EXISTS (
+                  SELECT 1 FROM mentions m
+                  WHERE m.article_id = a.id AND m.target_key = ?
+                )
+                OR EXISTS (
+                  SELECT 1
+                  FROM story_articles sa
+                  JOIN story_targets st ON st.story_id = sa.story_id
+                  WHERE sa.article_id = a.id AND st.target_key = ?
+                )
+              )
+            """
+            params.extend([target_key, target_key])
+        rows = conn.execute(
+            f"""
+            SELECT DISTINCT a.id, a.url
+            FROM articles a
+            WHERE a.url IN ({placeholders})
+            {target_clause}
+            """,
+            params,
+        ).fetchall()
+        article_ids = [int(row["id"]) for row in rows]
+        removed_urls = [str(row["url"]) for row in rows]
+        if not article_ids:
+            return {
+                "requested": len(clean_urls),
+                "articlesRemoved": 0,
+                "mentionsRemoved": 0,
+                "storiesRemoved": 0,
+                "storyLinksRemoved": 0,
+                "removedUrls": [],
+                "notFoundUrls": clean_urls,
+            }
+
+        article_placeholders = ",".join("?" for _ in article_ids)
+        story_rows = conn.execute(
+            f"SELECT DISTINCT story_id FROM story_articles WHERE article_id IN ({article_placeholders})",
+            article_ids,
+        ).fetchall()
+        story_ids = [int(row["story_id"]) for row in story_rows]
+
+        mention_rows = conn.execute(
+            f"SELECT id FROM mentions WHERE article_id IN ({article_placeholders})",
+            article_ids,
+        ).fetchall()
+        mention_ids = [int(row["id"]) for row in mention_rows]
+        mentions_removed = len(mention_ids)
+        if mention_ids:
+            mention_placeholders = ",".join("?" for _ in mention_ids)
+            classification_rows = conn.execute(
+                f"SELECT id FROM classifications WHERE mention_id IN ({mention_placeholders})",
+                mention_ids,
+            ).fetchall()
+            classification_ids = [int(row["id"]) for row in classification_rows]
+            if classification_ids:
+                classification_placeholders = ",".join("?" for _ in classification_ids)
+                conn.execute(
+                    f"DELETE FROM classification_categories WHERE classification_id IN ({classification_placeholders})",
+                    classification_ids,
+                )
+            conn.execute(f"DELETE FROM classifications WHERE mention_id IN ({mention_placeholders})", mention_ids)
+
+        conn.execute(f"DELETE FROM mentions WHERE article_id IN ({article_placeholders})", article_ids)
+        story_links_removed = conn.execute(
+            f"DELETE FROM story_articles WHERE article_id IN ({article_placeholders})",
+            article_ids,
+        ).rowcount
+        conn.execute(f"DELETE FROM articles WHERE id IN ({article_placeholders})", article_ids)
+
+        stories_removed = 0
+        for story_id in story_ids:
+            remaining = conn.execute("SELECT 1 FROM story_articles WHERE story_id = ? LIMIT 1", (story_id,)).fetchone()
+            if remaining:
+                continue
+            conn.execute("DELETE FROM story_targets WHERE story_id = ?", (story_id,))
+            deleted = conn.execute("DELETE FROM stories WHERE id = ?", (story_id,)).rowcount
+            stories_removed += max(0, int(deleted or 0))
+
+    return {
+        "requested": len(clean_urls),
+        "articlesRemoved": len(article_ids),
+        "mentionsRemoved": mentions_removed,
+        "storiesRemoved": stories_removed,
+        "storyLinksRemoved": max(0, int(story_links_removed or 0)),
+        "removedUrls": removed_urls,
+        "notFoundUrls": [url for url in clean_urls if url not in set(removed_urls)],
+    }
+
+
 def validate_url(value: str) -> str:
     url = canonicalize_url(value)
     parsed = urlparse(url)
