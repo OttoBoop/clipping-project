@@ -94,7 +94,12 @@ RSS_FEEDS: list[dict[str, str]] = [
         "url": "https://www.estadao.com.br/arc/outboundfeeds/feeds/rss/sections/geral/?body=%7B%22layout%22:%22google-news%22%7D",
     },
     {"source_name": "Agencia Brasil", "url": "https://agenciabrasil.ebc.com.br/rss/geral/feed.xml"},
-    {"source_name": "Diario do Rio", "url": "https://diariodorio.com/feed/"},
+    {
+        "source_name": "Diario do Rio",
+        "url": "https://diariodorio.com/feed/",
+        "disabled": "true",
+        "disabled_reason": "Production RSS hard-timed-out during rio_city_corpus 30-day canary; source remains covered at scale by WordPress API.",
+    },
     {"source_name": "Tempo Real RJ", "url": "https://temporealrj.com/feed/"},
     {"source_name": "Agenda do Poder", "url": "https://agendadopoder.com.br/feed/"},
     {"source_name": "Conib", "url": "https://www.conib.org.br/feed/", "disabled": "true"},
