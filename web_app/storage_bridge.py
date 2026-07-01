@@ -25,6 +25,7 @@ RUNTIME_FILES = (
     ("assets/clipping-raw-texts.json", lambda: ASSETS_DIR / "clipping-raw-texts.json"),
 )
 CURRENT_FILES = RUNTIME_FILES
+DEFAULT_SQLITE_UPLOAD_CHUNK_BYTES = 20 * 1024 * 1024
 
 
 class ArtifactStore:
@@ -130,6 +131,19 @@ class ArtifactStore:
     def download_gzip_file(self, remote_path: str, local_path: Path) -> bool:
         if not self.enabled:
             return False
+        manifest = self.download_json(self._sqlite_manifest_remote(remote_path))
+        if manifest:
+            mode = str(manifest.get("mode") or "").strip()
+            if mode == "chunks":
+                return self.download_chunked_gzip_file(manifest, local_path)
+            if mode == "single":
+                return self.download_single_gzip_file(remote_path, local_path)
+            return False
+        return self.download_single_gzip_file(remote_path, local_path)
+
+    def download_single_gzip_file(self, remote_path: str, local_path: Path) -> bool:
+        if not self.enabled:
+            return False
         try:
             response = requests.get(self._object_url(remote_path), headers=self._headers(), timeout=45)
         except requests.RequestException:
@@ -138,20 +152,144 @@ class ArtifactStore:
             return False
         if not response.ok:
             return False
+        return self.write_gzip_payload(response.content, local_path)
+
+    def download_json(self, remote_path: str) -> dict[str, Any]:
+        if not self.enabled:
+            return {}
         try:
-            payload = gzip.decompress(response.content)
+            response = requests.get(self._object_url(remote_path), headers=self._headers(), timeout=30)
+        except requests.RequestException:
+            return {}
+        if response.status_code == 404 or not response.ok:
+            return {}
+        try:
+            payload = response.json()
+        except ValueError:
+            return {}
+        return payload if isinstance(payload, dict) else {}
+
+    def download_chunked_gzip_file(self, manifest: dict[str, Any], local_path: Path) -> bool:
+        chunks = manifest.get("chunks")
+        if not isinstance(chunks, list) or not chunks:
+            return False
+        gzip_name = ""
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".db.gz", delete=False) as gzipped:
+                gzip_name = gzipped.name
+                for item in chunks:
+                    chunk_path = str(item.get("path") or "") if isinstance(item, dict) else ""
+                    if not chunk_path:
+                        return False
+                    response = requests.get(self._object_url(chunk_path), headers=self._headers(), timeout=60)
+                    if response.status_code == 404 or not response.ok:
+                        return False
+                    gzipped.write(response.content)
+            return self.write_gzip_file(Path(gzip_name), local_path)
+        except (OSError, requests.RequestException):
+            return False
+        finally:
+            if gzip_name:
+                try:
+                    Path(gzip_name).unlink()
+                except OSError:
+                    pass
+
+    def write_gzip_payload(self, payload: bytes, local_path: Path) -> bool:
+        gzip_name = ""
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".db.gz", delete=False) as gzipped:
+                gzip_name = gzipped.name
+                gzipped.write(payload)
+            return self.write_gzip_file(Path(gzip_name), local_path)
         except OSError:
             return False
-        local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_bytes(payload)
+        finally:
+            if gzip_name:
+                try:
+                    Path(gzip_name).unlink()
+                except OSError:
+                    pass
+
+    def write_gzip_file(self, gzip_path: Path, local_path: Path) -> bool:
+        try:
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            with gzip.open(gzip_path, "rb") as source, local_path.open("wb") as target:
+                shutil.copyfileobj(source, target, length=1024 * 1024)
+        except (OSError, EOFError):
+            return False
         return True
+
+    def _sqlite_manifest_remote(self, remote_path: str) -> str:
+        return remote_path.rstrip("/") + ".manifest.json"
+
+    def sqlite_upload_chunk_bytes(self) -> int:
+        raw = os.environ.get("CLIPPING_SQLITE_UPLOAD_CHUNK_BYTES", "").strip()
+        try:
+            value = int(raw) if raw else DEFAULT_SQLITE_UPLOAD_CHUNK_BYTES
+        except ValueError:
+            value = DEFAULT_SQLITE_UPLOAD_CHUNK_BYTES
+        return max(1024 * 1024, value)
+
+    def upload_sqlite_manifest(self, remote_path: str, manifest: dict[str, Any]) -> bool:
+        payload = json.dumps(
+            {
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                **manifest,
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+        ).encode("utf-8")
+        return self.upload_bytes(payload, self._sqlite_manifest_remote(remote_path), "application/json")
+
+    def upload_chunked_file(self, local_path: Path, remote_path: str, *, content_type: str = "application/octet-stream") -> bool:
+        if not self.enabled or not local_path.is_file():
+            return False
+        chunk_size = self.sqlite_upload_chunk_bytes()
+        chunks: list[dict[str, Any]] = []
+        try:
+            with local_path.open("rb") as source:
+                index = 0
+                while True:
+                    payload = source.read(chunk_size)
+                    if not payload:
+                        break
+                    chunk_remote = f"{remote_path}.part{index:04d}"
+                    if not self.upload_bytes(payload, chunk_remote, content_type):
+                        return False
+                    chunks.append({"path": chunk_remote, "size": len(payload)})
+                    index += 1
+        except OSError:
+            return False
+        if not chunks:
+            return False
+        return self.upload_sqlite_manifest(
+            remote_path,
+            {
+                "mode": "chunks",
+                "remote_path": remote_path,
+                "size": local_path.stat().st_size,
+                "chunk_size": chunk_size,
+                "chunk_count": len(chunks),
+                "chunks": chunks,
+            },
+        )
 
     def upload_sqlite_snapshot(self, local_path: Path, remote_path: str) -> bool:
         gz_path = sqlite_snapshot_gzip_file(local_path)
         if gz_path is None:
             return False
         try:
-            return self.upload_path(gz_path, remote_path, "application/gzip", timeout=90)
+            if self.upload_path(gz_path, remote_path, "application/gzip", timeout=90):
+                return self.upload_sqlite_manifest(
+                    remote_path,
+                    {
+                        "mode": "single",
+                        "remote_path": remote_path,
+                        "size": gz_path.stat().st_size,
+                    },
+                )
+            return self.upload_chunked_file(gz_path, remote_path, content_type="application/gzip")
         finally:
             try:
                 gz_path.unlink()
