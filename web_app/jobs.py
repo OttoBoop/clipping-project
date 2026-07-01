@@ -120,6 +120,12 @@ PRESETS: dict[str, dict[str, Any]] = {
 CUSTOM_MAX_CANDIDATES = 90000
 CUSTOM_MAX_PROCESS_SECONDS = 90000
 DEFAULT_CANDIDATE_WORKERS = 4
+DEFAULT_CANDIDATE_WORKER_LIMIT = 1
+RIO_CANDIDATE_WORKER_LIMIT = 2
+RIO_WORDPRESS_PAGES_PER_SLICE = 4
+RIO_WORDPRESS_SOFT_FAIL_AFTER_PAGE = 3
+RIO_FULL_TEXT_MAX_CHARS = 30000
+RIO_RAW_HTML_MAX_CHARS = 0
 LIVE_CHECKPOINT_MIN_SECONDS = 30
 DEFAULT_SOURCE_RUN_YIELD_SECONDS = 0.05
 _CHECKPOINT_LOCK = threading.Lock()
@@ -197,12 +203,76 @@ def annotate_topic_candidates(
 
 def effective_candidate_workers(spec: dict[str, Any]) -> int:
     requested = max(1, int(spec.get("candidate_workers") or DEFAULT_CANDIDATE_WORKERS))
-    raw_limit = str(os.environ.get("CLIPPING_MAX_CANDIDATE_WORKERS") or "1").strip()
+    default_limit = RIO_CANDIDATE_WORKER_LIMIT if is_rio_topic_spec(spec) else DEFAULT_CANDIDATE_WORKER_LIMIT
+    if spec.get("candidate_worker_limit") is not None:
+        default_limit = safe_positive_int(spec.get("candidate_worker_limit"), default_limit)
+    raw_limit = str(os.environ.get("CLIPPING_MAX_CANDIDATE_WORKERS") or default_limit).strip()
     try:
         limit = max(1, int(raw_limit))
     except ValueError:
-        limit = 1
+        limit = default_limit
     return max(1, min(requested, limit))
+
+
+def safe_positive_int(value: Any, default: int, *, minimum: int = 1, maximum: int | None = None) -> int:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        parsed = int(default)
+    parsed = max(minimum, parsed)
+    if maximum is not None:
+        parsed = min(parsed, maximum)
+    return parsed
+
+
+def wordpress_pages_per_slice(spec: dict[str, Any]) -> int:
+    default = RIO_WORDPRESS_PAGES_PER_SLICE if is_rio_topic_spec(spec) else 1
+    return safe_positive_int(spec.get("wordpress_pages_per_slice"), default, minimum=1, maximum=12)
+
+
+def wordpress_max_pages(spec: dict[str, Any]) -> int:
+    return safe_positive_int(spec.get("wordpress_max_pages"), WORDPRESS_MAX_PAGES, minimum=1, maximum=WORDPRESS_MAX_PAGES)
+
+
+def wordpress_soft_fail_after_page(spec: dict[str, Any]) -> int:
+    default = RIO_WORDPRESS_SOFT_FAIL_AFTER_PAGE if is_rio_topic_spec(spec) else 5
+    return safe_positive_int(spec.get("wordpress_soft_fail_after_page"), default, minimum=1, maximum=WORDPRESS_MAX_PAGES)
+
+
+def should_soft_complete_wordpress_timeout(
+    spec: dict[str, Any],
+    exc: BaseException,
+    *,
+    page: int,
+    seen_before: int,
+) -> bool:
+    if "hard timeout" not in str(exc):
+        return False
+    threshold_page = wordpress_soft_fail_after_page(spec)
+    threshold_seen = WORDPRESS_PAGE_SIZE * max(1, threshold_page - 1)
+    return page >= threshold_page and seen_before >= threshold_seen
+
+
+def should_soft_complete_wordpress_http_error(
+    spec: dict[str, Any],
+    exc: BaseException,
+    *,
+    page: int,
+    seen_before: int,
+) -> bool:
+    status = int(getattr(exc, "code", 0) or 0)
+    if is_rio_topic_spec(spec):
+        return status in {429, 500, 502, 503, 504}
+    return is_late_wordpress_transient_http_error(exc, page=page, seen_before=seen_before)
+
+
+def wordpress_soft_error_cursor(cursor: dict[str, Any], *, page: int, exc: BaseException) -> dict[str, Any]:
+    next_cursor = dict(cursor)
+    next_cursor["page"] = max(1, int(page or 1))
+    next_cursor["page_size"] = WORDPRESS_PAGE_SIZE
+    next_cursor["soft_error"] = sanitize_error(exc)
+    next_cursor["soft_error_at"] = datetime.now(timezone.utc).isoformat()
+    return next_cursor
 
 
 def durable_source_run_yield_seconds() -> float:
@@ -556,6 +626,10 @@ class JobManager:
                             max_process_seconds=int(spec["max_process_seconds"]),
                             db_path=str(db_path()),
                             cancel_check=cancel_event.is_set,
+                            archive_full_text=bool(spec.get("archive_full_text", True)),
+                            archive_raw_html=bool(spec.get("archive_raw_html", True)),
+                            full_text_max_chars=safe_positive_int(spec.get("full_text_max_chars"), 60000, minimum=0),
+                            raw_html_max_chars=safe_positive_int(spec.get("raw_html_max_chars"), 120000, minimum=0),
                             candidate_workers=effective_candidate_workers(spec),
                         )
                         results = run_ingestion(
@@ -708,6 +782,14 @@ def build_update_spec(payload: dict[str, Any]) -> dict[str, Any]:
                 "topic_config_version": config.version,
                 "topic_queries": topic_queries,
                 "topic_source_queries": topic_source_queries,
+                "candidate_worker_limit": RIO_CANDIDATE_WORKER_LIMIT,
+                "wordpress_pages_per_slice": RIO_WORDPRESS_PAGES_PER_SLICE,
+                "wordpress_max_pages": WORDPRESS_MAX_PAGES,
+                "wordpress_soft_fail_after_page": RIO_WORDPRESS_SOFT_FAIL_AFTER_PAGE,
+                "archive_full_text": True,
+                "archive_raw_html": False,
+                "full_text_max_chars": RIO_FULL_TEXT_MAX_CHARS,
+                "raw_html_max_chars": RIO_RAW_HTML_MAX_CHARS,
                 "forced_terms": forced_terms,
                 "forced_terms_mode": "any",
                 "required_terms": required_terms,
@@ -1319,7 +1401,10 @@ def run_source_run(
             max_process_seconds=max(10, int(spec.get("max_process_seconds") or CUSTOM_MAX_PROCESS_SECONDS)),
             db_path=str(db_path()),
             cancel_check=cancel_event.is_set,
-            archive_full_text=True,
+            archive_full_text=bool(spec.get("archive_full_text", True)),
+            archive_raw_html=bool(spec.get("archive_raw_html", True)),
+            full_text_max_chars=safe_positive_int(spec.get("full_text_max_chars"), 60000, minimum=0),
+            raw_html_max_chars=safe_positive_int(spec.get("raw_html_max_chars"), 120000, minimum=0),
             forced_terms=list(spec.get("forced_terms") or []),
             forced_terms_mode=str(spec.get("forced_terms_mode") or "any"),
             required_terms=list(spec.get("required_terms") or []),
@@ -1394,25 +1479,29 @@ def run_source_run(
             rss_after = rss_mib()
         except Exception:
             rss_after = 0.0
+        completion_payload = {
+            "source_name": source_name,
+            "source_type": source_type,
+            "target_key": target_key,
+            "target_label": target_label,
+            "target_keys": source_target_keys,
+            "candidates_seen": result.candidates_seen,
+            "candidates_total": candidate_total,
+            "articles_inserted": result.articles_inserted,
+            "mentions_inserted": result.mentions_inserted,
+            "stories_touched": result.stories_touched,
+            "status": next_status,
+            "rss_mib_before": rss_before,
+            "rss_mib_after": rss_after,
+            "rss_mib_delta": round(rss_after - rss_before, 2),
+        }
+        if next_cursor.get("soft_error"):
+            completion_payload["soft_error"] = str(next_cursor.get("soft_error") or "")
+            completion_payload["soft_error_at"] = str(next_cursor.get("soft_error_at") or "")
         append_event(
             job_id,
             "source_run_complete" if complete else "source_run_checkpoint",
-            {
-                "source_name": source_name,
-                "source_type": source_type,
-                "target_key": target_key,
-                "target_label": target_label,
-                "target_keys": source_target_keys,
-                "candidates_seen": result.candidates_seen,
-                "candidates_total": candidate_total,
-                "articles_inserted": result.articles_inserted,
-                "mentions_inserted": result.mentions_inserted,
-                "stories_touched": result.stories_touched,
-                "status": next_status,
-                "rss_mib_before": rss_before,
-                "rss_mib_after": rss_after,
-                "rss_mib_delta": round(rss_after - rss_before, 2),
-            },
+            completion_payload,
         )
         return {
             "articles_inserted": result.articles_inserted,
@@ -1498,35 +1587,57 @@ def collect_source_run_candidates(
         if queries:
             return collect_grouped_wordpress_source_run(spec, row, cursor, queries)
         site = WORDPRESS_API_SITES[max(0, int(cursor.get("site_index") or 0))]
-        page = max(1, int(cursor.get("page") or 1))
-        try:
-            candidates = collect_wordpress_api(
-                str(cursor.get("query") or ""),
-                source_name=str(site.get("source_name") or "WordPress"),
-                base_url=str(site.get("base_url") or ""),
-                date_from=date_from,
-                date_to=date_to,
-                per_site_limit=WORDPRESS_PAGE_SIZE,
-                per_page=WORDPRESS_PAGE_SIZE,
-                request_timeout=request_timeout,
-                start_page=page,
-                max_pages=1,
-                raise_on_error=True,
-            )
-        except TimeoutError as exc:
-            seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total")))
-            if page >= 5 and seen_before >= WORDPRESS_PAGE_SIZE * 4 and "hard timeout" in str(exc):
-                return [], cursor, True
-            raise
-        except urllib.error.HTTPError as exc:
-            seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total")))
-            if is_late_wordpress_transient_http_error(exc, page=page, seen_before=seen_before):
-                return [], cursor, True
-            raise
-        complete = len(candidates) < WORDPRESS_PAGE_SIZE or page >= WORDPRESS_MAX_PAGES
+        start_page = max(1, int(cursor.get("page") or 1))
+        max_pages = wordpress_max_pages(spec)
+        pages_per_slice = wordpress_pages_per_slice(spec)
+        query = str(cursor.get("query") or "")
+        candidates: list[CandidateArticle] = []
+        complete = False
+        next_page = start_page
+        last_page = start_page
+        for _ in range(pages_per_slice):
+            page = next_page
+            last_page = page
+            if page > max_pages:
+                complete = True
+                last_page = max_pages
+                break
+            try:
+                batch = collect_wordpress_api(
+                    query,
+                    source_name=str(site.get("source_name") or "WordPress"),
+                    base_url=str(site.get("base_url") or ""),
+                    date_from=date_from,
+                    date_to=date_to,
+                    per_site_limit=WORDPRESS_PAGE_SIZE,
+                    per_page=WORDPRESS_PAGE_SIZE,
+                    request_timeout=request_timeout,
+                    start_page=page,
+                    max_pages=1,
+                    raise_on_error=True,
+                )
+            except TimeoutError as exc:
+                seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total"))) + len(candidates)
+                if should_soft_complete_wordpress_timeout(spec, exc, page=page, seen_before=seen_before):
+                    next_cursor = wordpress_soft_error_cursor(cursor, page=page, exc=exc)
+                    return annotate_topic_candidates(spec, dedupe_source_run_candidates(candidates), cursor=cursor), next_cursor, True
+                raise
+            except urllib.error.HTTPError as exc:
+                seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total"))) + len(candidates)
+                if should_soft_complete_wordpress_http_error(spec, exc, page=page, seen_before=seen_before):
+                    next_cursor = wordpress_soft_error_cursor(cursor, page=page, exc=exc)
+                    return annotate_topic_candidates(spec, dedupe_source_run_candidates(candidates), cursor=cursor), next_cursor, True
+                raise
+            candidates.extend(batch)
+            if len(batch) < WORDPRESS_PAGE_SIZE or page >= max_pages:
+                complete = True
+                break
+            next_page = page + 1
         next_cursor = dict(cursor)
-        next_cursor["page"] = page + 1 if not complete else page
-        return annotate_topic_candidates(spec, candidates, cursor=cursor), next_cursor, complete
+        next_cursor["page"] = next_page if not complete else last_page
+        next_cursor["page_size"] = WORDPRESS_PAGE_SIZE
+        next_cursor["pages_per_slice"] = pages_per_slice
+        return annotate_topic_candidates(spec, dedupe_source_run_candidates(candidates), cursor=cursor), next_cursor, complete
 
     if source_type == "internal_search":
         adapter = FLAVIO_INTERNAL_SEARCH_TARGETS[max(0, int(cursor.get("adapter_index") or 0))]
@@ -1627,6 +1738,7 @@ def collect_grouped_wordpress_source_run(
     date_to = str(spec.get("date_to") or "")
     site = WORDPRESS_API_SITES[max(0, int(cursor.get("site_index") or 0))]
     page = max(1, int(cursor.get("page") or 1))
+    max_pages = wordpress_max_pages(spec)
     complete_queries = {
         str(item or "").strip()
         for item in list(cursor.get("complete_queries") or [])
@@ -1652,20 +1764,20 @@ def collect_grouped_wordpress_source_run(
             )
         except TimeoutError as exc:
             seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total")))
-            if page >= 5 and seen_before >= WORDPRESS_PAGE_SIZE * 4 and "hard timeout" in str(exc):
+            if should_soft_complete_wordpress_timeout(spec, exc, page=page, seen_before=seen_before):
                 complete_queries.add(query)
                 continue
             raise
         except urllib.error.HTTPError as exc:
             seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total")))
-            if is_late_wordpress_transient_http_error(exc, page=page, seen_before=seen_before):
+            if should_soft_complete_wordpress_http_error(spec, exc, page=page, seen_before=seen_before):
                 complete_queries.add(query)
                 continue
             raise
         candidates.extend(batch)
         if len(batch) < WORDPRESS_PAGE_SIZE:
             complete_queries.add(query)
-    complete = len(complete_queries) >= len(queries) or page >= WORDPRESS_MAX_PAGES
+    complete = len(complete_queries) >= len(queries) or page >= max_pages
     next_cursor = dict(cursor)
     next_cursor["page"] = page + 1 if not complete else page
     next_cursor["page_size"] = WORDPRESS_PAGE_SIZE

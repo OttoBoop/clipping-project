@@ -111,6 +111,9 @@ class IngestionOptions:
     date_from: str = ""
     date_to: str = ""
     archive_full_text: bool = True
+    archive_raw_html: bool = True
+    full_text_max_chars: int = 60000
+    raw_html_max_chars: int = 120000
     forced_terms: list[str] | None = None
     forced_terms_mode: str = "any"
     required_terms: list[str] | None = None
@@ -1117,6 +1120,10 @@ def process_candidates(
             )
             continue
 
+        full_text_limit = max(0, int(options.full_text_max_chars or 0))
+        raw_html_limit = max(0, int(options.raw_html_max_chars or 0))
+        stored_full_text = (full_text or "")[:full_text_limit] if full_text_limit else ""
+        stored_raw_html = (raw_html or "")[:raw_html_limit] if options.archive_raw_html and raw_html_limit else ""
         article_id, is_new = db.insert_article_if_new(
             url=final_url,
             title=(title_for_article or "(sem titulo)")[:500],
@@ -1124,8 +1131,8 @@ def process_candidates(
             source_type=candidate.source_type,
             published_at=published_at,
             snippet=(candidate.snippet or "")[:3000],
-            full_text=full_text[:60000],
-            raw_html=raw_html[:120000],
+            full_text=stored_full_text,
+            raw_html=stored_raw_html,
             summary=summary,
             metadata_json=json.dumps(metadata_with_extra(candidate, options.metadata_extra), ensure_ascii=False),
         )

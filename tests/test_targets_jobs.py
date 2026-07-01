@@ -57,6 +57,9 @@ def test_effective_candidate_workers_clamps_to_safe_default(monkeypatch, tmp_pat
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
 
     assert jobs.effective_candidate_workers({"candidate_workers": 4}) == 1
+    assert jobs.effective_candidate_workers(
+        {"candidate_workers": 4, "scope": "rio_economico", "topic": "rio_city_corpus"}
+    ) == 2
 
     monkeypatch.setenv("CLIPPING_MAX_CANDIDATE_WORKERS", "2")
     assert jobs.effective_candidate_workers({"candidate_workers": 4}) == 2
@@ -734,6 +737,12 @@ def test_build_update_spec_accepts_rio_city_corpus_without_target_row(monkeypatc
     assert spec["target_keys"] == ["rio_economico"]
     assert spec["target_snapshots"][0]["key"] == "rio_economico"
     assert spec["target_snapshots"][0]["topic"] == "rio_city_corpus"
+    assert spec["candidate_worker_limit"] == 2
+    assert spec["wordpress_pages_per_slice"] == 4
+    assert spec["archive_full_text"] is True
+    assert spec["archive_raw_html"] is False
+    assert spec["full_text_max_chars"] == 30000
+    assert spec["raw_html_max_chars"] == 0
     assert spec["forced_terms"] == []
     assert "prefeitura do Rio" in spec["required_terms"]
     assert "Rio de Janeiro" not in spec["required_terms"]
@@ -2253,6 +2262,89 @@ def test_durable_wordpress_source_runs_use_small_api_pages(monkeypatch, tmp_path
     assert observed["per_page"] == 25
     assert observed["start_page"] == 3
     assert observed["max_pages"] == 1
+
+
+def test_rio_city_wordpress_source_run_fetches_multiple_pages_per_slice(monkeypatch, tmp_path):
+    from pipeline.collectors import CandidateArticle
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "scope": "rio_economico",
+        "topic": "rio_city_corpus",
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "max_candidates": 90000,
+        "wordpress_pages_per_slice": 3,
+    }
+    monkeypatch.setattr(jobs, "WORDPRESS_API_SITES", [{"source_name": "Diario", "base_url": "https://example.com"}])
+    observed_pages: list[int] = []
+
+    def fake_collect_wordpress_api(query, **kwargs):
+        page = int(kwargs["start_page"])
+        observed_pages.append(page)
+        size = jobs.WORDPRESS_PAGE_SIZE if page < 3 else 7
+        return [
+            CandidateArticle(
+                title=f"Cidade do Rio page {page} item {idx}",
+                url=f"https://example.com/rio-{page}-{idx}",
+                source_name="Diario",
+                source_type="wordpress_api",
+                published_at="2026-04-01T12:00:00+00:00",
+                snippet=query,
+                metadata={},
+            )
+            for idx in range(size)
+        ]
+
+    monkeypatch.setattr(jobs, "collect_wordpress_api", fake_collect_wordpress_api)
+
+    candidates, next_cursor, complete = jobs.collect_source_run_candidates(
+        spec,
+        {"source_type": "wordpress_api", "source_name": "Diario", "candidates_seen": 0, "candidates_total": 0},
+        {"site_index": 0, "query_index": 0, "query": "cidade do Rio", "page": 1},
+    )
+
+    assert observed_pages == [1, 2, 3]
+    assert len(candidates) == jobs.WORDPRESS_PAGE_SIZE * 2 + 7
+    assert complete is True
+    assert next_cursor["page"] == 3
+    assert next_cursor["pages_per_slice"] == 3
+
+
+def test_rio_city_wordpress_500_soft_completes_source_run(monkeypatch, tmp_path):
+    import urllib.error
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    spec = {
+        "scope": "rio_economico",
+        "topic": "rio_city_corpus",
+        "date_from": "2026-04-01",
+        "date_to": "2026-05-05",
+        "max_candidates": 90000,
+    }
+    monkeypatch.setattr(jobs, "WORDPRESS_API_SITES", [{"source_name": "Diario do Rio", "base_url": "https://diariodorio.com"}])
+
+    def bad_wordpress_api(*_args, **_kwargs):
+        raise urllib.error.HTTPError(
+            "https://diariodorio.com/wp-json/wp/v2/posts?search=Maracana",
+            500,
+            "Internal Server Error",
+            {},
+            None,
+        )
+
+    monkeypatch.setattr(jobs, "collect_wordpress_api", bad_wordpress_api)
+
+    candidates, next_cursor, complete = jobs.collect_source_run_candidates(
+        spec,
+        {"source_type": "wordpress_api", "source_name": "Diario do Rio", "candidates_seen": 0, "candidates_total": 0},
+        {"site_index": 0, "query_index": 20, "query": "Maracanã", "page": 1},
+    )
+
+    assert candidates == []
+    assert complete is True
+    assert next_cursor["page"] == 1
+    assert "soft_error" in next_cursor
 
 
 def test_late_wordpress_hard_timeout_completes_source_run(monkeypatch, tmp_path):
