@@ -1728,7 +1728,7 @@ async def admin_rio_economic_cleanup_urls(request: Request) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="urls_limit_50")
     result = delete_articles_by_urls(db_path(), [str(url) for url in urls], target_key="rio_economico")
     uploaded: list[str] = []
-    if result.get("articlesRemoved") and artifact_store.enabled:
+    if (result.get("articlesRemoved") or result.get("eventsRemoved")) and artifact_store.enabled:
         uploaded = artifact_store.upload_current_artifacts(
             manifest={"kind": "rio-economico-cleanup-urls", "result": result},
             job_id="rio-economico-cleanup-urls",
