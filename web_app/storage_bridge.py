@@ -280,7 +280,7 @@ class ArtifactStore:
         if gz_path is None:
             return False
         try:
-            if self.upload_path(gz_path, remote_path, "application/gzip", timeout=90):
+            if gz_path.stat().st_size <= self.sqlite_upload_chunk_bytes() and self.upload_path(gz_path, remote_path, "application/gzip", timeout=90):
                 return self.upload_sqlite_manifest(
                     remote_path,
                     {
