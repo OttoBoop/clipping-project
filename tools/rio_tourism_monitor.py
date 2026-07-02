@@ -12,6 +12,7 @@ import argparse
 import calendar
 import json
 import os
+import socket
 import sys
 import time
 import urllib.error
@@ -63,6 +64,8 @@ class Client:
         except urllib.error.HTTPError as exc:
             raw = exc.read().decode("utf-8", errors="replace")
             return exc.code, parse_body(raw, exc.headers.get("content-type", ""))
+        except (urllib.error.URLError, TimeoutError, socket.timeout, OSError) as exc:
+            return 0, {"error": "request_failed", "detail": str(exc)}
 
     def login(self, password: str) -> dict[str, Any]:
         status, body = self.request("POST", "/api/login", {"password": password})

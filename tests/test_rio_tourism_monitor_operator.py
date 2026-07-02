@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import urllib.error
 from datetime import date
 from types import SimpleNamespace
 
@@ -65,3 +66,18 @@ def test_summarize_endpoint_trims_verbose_current_job_spec() -> None:
         "status": "succeeded",
         "funnel": {"articles_saved": 10},
     }
+
+
+def test_client_request_returns_structured_network_failure(monkeypatch) -> None:
+    client = mon.Client("https://example.test")
+
+    def fail_open(_request, timeout=0):
+        raise urllib.error.URLError("[Errno -3] Temporary failure in name resolution")
+
+    monkeypatch.setattr(client.opener, "open", fail_open)
+
+    status, body = client.request("GET", "/api/update/status")
+
+    assert status == 0
+    assert body["error"] == "request_failed"
+    assert "Temporary failure" in body["detail"]
