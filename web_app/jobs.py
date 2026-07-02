@@ -1801,50 +1801,65 @@ def collect_grouped_wordpress_source_run(
     date_from = str(spec.get("date_from") or "")
     date_to = str(spec.get("date_to") or "")
     site = WORDPRESS_API_SITES[max(0, int(cursor.get("site_index") or 0))]
-    page = max(1, int(cursor.get("page") or 1))
+    start_page = max(1, int(cursor.get("page") or 1))
     max_pages = wordpress_max_pages(spec)
+    pages_per_slice = wordpress_pages_per_slice(spec)
     complete_queries = {
         str(item or "").strip()
         for item in list(cursor.get("complete_queries") or [])
         if str(item or "").strip()
     }
     candidates: list[CandidateArticle] = []
-    for query in queries:
-        if query in complete_queries:
-            continue
-        try:
-            batch = collect_wordpress_api(
-                query,
-                source_name=str(site.get("source_name") or "WordPress"),
-                base_url=str(site.get("base_url") or ""),
-                date_from=date_from,
-                date_to=date_to,
-                per_site_limit=WORDPRESS_PAGE_SIZE,
-                per_page=WORDPRESS_PAGE_SIZE,
-                request_timeout=request_timeout,
-                start_page=page,
-                max_pages=1,
-                raise_on_error=True,
-            )
-        except TimeoutError as exc:
-            seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total")))
-            if should_soft_complete_wordpress_timeout(spec, exc, page=page, seen_before=seen_before):
-                complete_queries.add(query)
+    next_page = start_page
+    last_page = start_page
+    complete = len(complete_queries) >= len(queries)
+    for _ in range(pages_per_slice):
+        page = next_page
+        if page > max_pages:
+            complete = True
+            last_page = max_pages
+            break
+        last_page = page
+        for query in queries:
+            if query in complete_queries:
                 continue
-            raise
-        except urllib.error.HTTPError as exc:
-            seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total")))
-            if should_soft_complete_wordpress_http_error(spec, exc, page=page, seen_before=seen_before):
+            try:
+                batch = collect_wordpress_api(
+                    query,
+                    source_name=str(site.get("source_name") or "WordPress"),
+                    base_url=str(site.get("base_url") or ""),
+                    date_from=date_from,
+                    date_to=date_to,
+                    per_site_limit=WORDPRESS_PAGE_SIZE,
+                    per_page=WORDPRESS_PAGE_SIZE,
+                    request_timeout=request_timeout,
+                    start_page=page,
+                    max_pages=1,
+                    raise_on_error=True,
+                )
+            except TimeoutError as exc:
+                seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total"))) + len(candidates)
+                if should_soft_complete_wordpress_timeout(spec, exc, page=page, seen_before=seen_before):
+                    complete_queries.add(query)
+                    continue
+                raise
+            except urllib.error.HTTPError as exc:
+                seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total"))) + len(candidates)
+                if should_soft_complete_wordpress_http_error(spec, exc, page=page, seen_before=seen_before):
+                    complete_queries.add(query)
+                    continue
+                raise
+            candidates.extend(batch)
+            if len(batch) < WORDPRESS_PAGE_SIZE:
                 complete_queries.add(query)
-                continue
-            raise
-        candidates.extend(batch)
-        if len(batch) < WORDPRESS_PAGE_SIZE:
-            complete_queries.add(query)
-    complete = len(complete_queries) >= len(queries) or page >= max_pages
+        complete = len(complete_queries) >= len(queries) or page >= max_pages
+        if complete:
+            break
+        next_page = page + 1
     next_cursor = dict(cursor)
-    next_cursor["page"] = page + 1 if not complete else page
+    next_cursor["page"] = next_page if not complete else last_page
     next_cursor["page_size"] = WORDPRESS_PAGE_SIZE
+    next_cursor["pages_per_slice"] = pages_per_slice
     next_cursor["complete_queries"] = sorted(complete_queries)
     return annotate_topic_candidates(spec, dedupe_source_run_candidates(candidates), cursor=cursor), next_cursor, complete
 

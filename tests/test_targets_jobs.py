@@ -2399,6 +2399,54 @@ def test_grouped_wordpress_source_run_tracks_completed_queries(monkeypatch, tmp_
     assert calls == [("Alpha", 1), ("Beta", 1), ("Alpha", 2)]
 
 
+def test_rio_city_grouped_wordpress_source_run_fetches_multiple_pages_per_slice(monkeypatch, tmp_path):
+    from pipeline.collectors import CandidateArticle
+
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs, "WORDPRESS_API_SITES", [{"source_name": "WP", "base_url": "https://example.com"}])
+    calls: list[tuple[str, int]] = []
+
+    def fake_collect_wordpress_api(query, **kwargs):
+        page = int(kwargs["start_page"])
+        calls.append((query, page))
+        if query == "Beta":
+            return []
+        return [
+            CandidateArticle(
+                title=f"Alpha page {page} item {idx}",
+                url=f"https://example.com/alpha-{page}-{idx}",
+                source_name="WP",
+                source_type="wordpress_api",
+                published_at="2026-04-01T12:00:00+00:00",
+                snippet=query,
+                metadata={},
+            )
+            for idx in range(jobs.WORDPRESS_PAGE_SIZE)
+        ]
+
+    monkeypatch.setattr(jobs, "collect_wordpress_api", fake_collect_wordpress_api)
+    spec = {
+        "scope": "rio_economico",
+        "topic": "rio_city_corpus",
+        "date_from": "2026-04-01",
+        "date_to": "2026-04-01",
+        "wordpress_pages_per_slice": 3,
+    }
+
+    candidates, next_cursor, complete = jobs.collect_source_run_candidates(
+        spec,
+        {"source_type": "wordpress_api", "source_name": "WP", "candidates_seen": 0, "candidates_total": 0},
+        {"site_index": 0, "queries": ["Alpha", "Beta"], "page": 1, "complete_queries": []},
+    )
+
+    assert calls == [("Alpha", 1), ("Beta", 1), ("Alpha", 2), ("Alpha", 3)]
+    assert len(candidates) == jobs.WORDPRESS_PAGE_SIZE * 3
+    assert complete is False
+    assert next_cursor["page"] == 4
+    assert next_cursor["pages_per_slice"] == 3
+    assert next_cursor["complete_queries"] == ["Beta"]
+
+
 def test_disabled_source_units_are_reconciled_out_of_resumed_jobs(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     spec = {
