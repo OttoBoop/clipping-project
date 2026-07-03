@@ -168,6 +168,156 @@ class ArtifactStore:
             return {}
         return payload if isinstance(payload, dict) else {}
 
+    def list_objects(self, path_prefix: str, *, limit: int = 1000, offset: int = 0) -> list[dict[str, Any]]:
+        if not self.enabled:
+            return []
+        endpoint = f"{self.url}/storage/v1/object/list/{quote(self.bucket, safe='')}"
+        body = {
+            "prefix": path_prefix.strip("/"),
+            "limit": max(1, min(limit, 1000)),
+            "offset": max(0, offset),
+            "sortBy": {"column": "updated_at", "order": "desc"},
+        }
+        try:
+            response = requests.post(endpoint, headers=self._headers("application/json"), json=body, timeout=45)
+        except requests.RequestException:
+            return []
+        if not response.ok:
+            return []
+        try:
+            payload = response.json()
+        except ValueError:
+            return []
+        return [row for row in payload if isinstance(row, dict)] if isinstance(payload, list) else []
+
+    def list_objects_recursive(self, path_prefix: str, *, limit: int = 1000, max_depth: int = 6) -> list[dict[str, Any]]:
+        if not self.enabled:
+            return []
+        objects: list[dict[str, Any]] = []
+        queue: list[tuple[str, int]] = [(path_prefix.strip("/"), 0)]
+        seen_prefixes: set[str] = set()
+        seen_objects: set[str] = set()
+        while queue and len(objects) < limit:
+            prefix, depth = queue.pop(0)
+            if prefix in seen_prefixes:
+                continue
+            seen_prefixes.add(prefix)
+            offset = 0
+            while len(objects) < limit:
+                rows = self.list_objects(prefix, limit=min(1000, limit - len(objects)), offset=offset)
+                if not rows:
+                    break
+                for row in rows:
+                    remote_path = self._remote_from_list_row(prefix, row)
+                    if not remote_path:
+                        continue
+                    metadata = row.get("metadata") if isinstance(row.get("metadata"), dict) else {}
+                    is_file = bool(metadata) or bool(row.get("id")) or bool(row.get("updated_at") or row.get("updatedAt"))
+                    if is_file:
+                        if remote_path in seen_objects:
+                            continue
+                        seen_objects.add(remote_path)
+                        objects.append(
+                            {
+                                "remotePath": remote_path,
+                                "name": row.get("name"),
+                                "updatedAt": row.get("updated_at") or row.get("updatedAt"),
+                                "createdAt": row.get("created_at") or row.get("createdAt"),
+                                "size": metadata.get("size") or row.get("size"),
+                            }
+                        )
+                    elif depth < max_depth:
+                        queue.append(remote_path)
+                if len(rows) < 1000:
+                    break
+                offset += len(rows)
+        return objects
+
+    def _remote_from_list_row(self, prefix: str, row: dict[str, Any]) -> str:
+        name = str(row.get("name") or "").strip("/")
+        if not name:
+            return ""
+        clean_prefix = prefix.strip("/")
+        if name == clean_prefix or name.startswith(clean_prefix + "/"):
+            return name
+        return f"{clean_prefix}/{name}"
+
+    def remote_storage_report(self, *, limit: int = 100) -> dict[str, Any]:
+        if not self.enabled:
+            return {"enabled": False, "prefix": self.prefix, "bucket": ""}
+        current = self.list_objects_recursive(f"{self.prefix}/current", limit=limit, max_depth=3)
+        backups = self.list_objects_recursive(f"{self.prefix}/backups", limit=limit, max_depth=6)
+        runs = self.list_objects_recursive(f"{self.prefix}/runs", limit=limit, max_depth=2)
+        return {
+            "enabled": True,
+            "bucket": self.bucket,
+            "prefix": self.prefix,
+            "current": {"count": len(current), "objects": current[:limit]},
+            "backups": {"count": len(backups), "objects": backups[:limit]},
+            "runs": {"count": len(runs), "objects": runs[:limit]},
+            "sqliteBackupCandidates": self.remote_sqlite_backup_candidates(objects=backups)[:limit],
+        }
+
+    def remote_sqlite_backup_candidates(self, *, objects: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+        rows = objects if objects is not None else self.list_objects_recursive(f"{self.prefix}/backups", limit=1000, max_depth=6)
+        candidates: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            remote_path = str(row.get("remotePath") or "")
+            if not remote_path or ".part" in remote_path:
+                continue
+            base = ""
+            if remote_path.endswith("/data/clipping.db") or remote_path.endswith("/data/clipping.db.gz"):
+                base = remote_path
+            elif remote_path.endswith("/data/clipping.db.manifest.json"):
+                base = remote_path[: -len(".manifest.json")]
+            elif remote_path.endswith("/data/clipping.db.gz.manifest.json"):
+                base = remote_path[: -len(".manifest.json")]
+            if not base:
+                continue
+            current = candidates.get(base, {})
+            updated = str(row.get("updatedAt") or current.get("updatedAt") or "")
+            candidates[base] = {
+                "remotePath": base,
+                "updatedAt": updated,
+                "size": row.get("size") or current.get("size"),
+                "listedPath": remote_path,
+            }
+        return sorted(candidates.values(), key=lambda item: str(item.get("updatedAt") or ""), reverse=True)
+
+    def restore_latest_remote_sqlite_backup(self, local_path: Path, *, limit: int = 1000) -> dict[str, Any]:
+        checked: list[dict[str, Any]] = []
+        candidates = self.remote_sqlite_backup_candidates()[:limit]
+        for candidate in candidates:
+            remote_path = str(candidate.get("remotePath") or "")
+            if not remote_path:
+                continue
+            temp_name = ""
+            try:
+                local_path.parent.mkdir(parents=True, exist_ok=True)
+                with tempfile.NamedTemporaryFile(suffix=".db", dir=local_path.parent, delete=False) as temp:
+                    temp_name = temp.name
+                temp_path = Path(temp_name)
+                ok = self.download_gzip_file(remote_path, temp_path)
+                mode = "gzip"
+                if not ok and not remote_path.endswith(".gz"):
+                    ok = self.download_file(remote_path, temp_path)
+                    mode = "raw"
+                summary = sqlite_file_summary(temp_path) if ok else {"ok": False, "error": "download_failed"}
+                item = {**candidate, "downloadMode": mode, "summary": summary}
+                checked.append(item)
+                if summary.get("ok") and int(summary.get("contentRows") or 0) > 0:
+                    os.replace(temp_path, local_path)
+                    temp_name = ""
+                    remove_sqlite_sidecars(local_path)
+                    return {"ok": True, "restored": item, "checked": checked}
+            finally:
+                if temp_name:
+                    try:
+                        Path(temp_name).unlink()
+                    except OSError:
+                        pass
+        return {"ok": False, "checked": checked, "candidateCount": len(candidates)}
+
     def download_chunked_gzip_file(self, manifest: dict[str, Any], local_path: Path) -> bool:
         chunks = manifest.get("chunks")
         if not isinstance(chunks, list) or not chunks:
@@ -425,14 +575,44 @@ def write_artifact_payload(payload: bytes, local_path: Path) -> bool:
 
 
 def sqlite_file_is_valid(path: Path) -> bool:
+    return bool(sqlite_file_summary(path).get("ok"))
+
+
+def sqlite_file_summary(path: Path) -> dict[str, Any]:
+    summary: dict[str, Any] = {"ok": False}
     if not path.is_file():
-        return False
+        summary["error"] = "not_found"
+        return summary
     try:
         with sqlite3.connect(path) as conn:
+            summary["size_bytes"] = path.stat().st_size
             row = conn.execute("PRAGMA quick_check").fetchone()
+            check = str(row[0]) if row else ""
+            summary["quickCheck"] = check
+            if check.lower() != "ok":
+                summary["error"] = "quick_check_failed"
+                return summary
+            tables = {
+                str(item[0])
+                for item in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'").fetchall()
+            }
+            summary["tablesCount"] = len(tables)
+            content_rows = 0
+            for table in ("articles", "jobs", "job_events", "mentions", "stories"):
+                if table not in tables:
+                    continue
+                count = int(conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+                summary[f"{table}Count"] = count
+                content_rows += count
+            summary["contentRows"] = content_rows
     except sqlite3.Error:
-        return False
-    return bool(row and str(row[0]).lower() == "ok")
+        summary["error"] = "sqlite_error"
+        return summary
+    except OSError:
+        summary["error"] = "stat_error"
+        return summary
+    summary["ok"] = True
+    return summary
 
 
 def remove_sqlite_sidecars(path: Path) -> None:

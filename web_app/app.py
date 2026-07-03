@@ -1547,6 +1547,39 @@ def _restore_sqlite_from_latest_backup() -> dict[str, Any]:
                 pass
 
 
+def _restore_sqlite_from_latest_remote_backup() -> dict[str, Any]:
+    import os
+    from datetime import datetime, timezone
+
+    if not artifact_store.enabled:
+        raise HTTPException(status_code=503, detail="artifact_store_not_enabled")
+    db = db_path()
+    restored = artifact_store.restore_latest_remote_sqlite_backup(db)
+    if not restored.get("ok"):
+        raise HTTPException(status_code=404, detail={"error": "valid_remote_sqlite_backup_not_found", **restored})
+    sidecars = _clear_sqlite_sidecars()
+    _forget_sqlite_schema_cache()
+    ensure_app_tables(db)
+    recent_jobs(include_observability=False)
+    uploaded = artifact_store.upload_database_checkpoint(
+        manifest={
+            "kind": "sqlite-restore-latest-remote-backup",
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+            "restored": restored.get("restored") or {},
+            "pid": os.getpid(),
+        },
+        job_id="sqlite-restore-latest-remote-backup",
+    )
+    return {
+        "ok": True,
+        "sidecars": sidecars,
+        "uploadedArtifacts": uploaded,
+        "uploadedArtifactCount": len(uploaded),
+        "restore": restored,
+        "postRepair": _sqlite_debug_probe(),
+    }
+
+
 def _sqlite_rebuild_from_current() -> dict[str, Any]:
     import os
     import sqlite3
@@ -1629,6 +1662,17 @@ async def admin_debug_sqlite(request: Request) -> dict[str, Any]:
         if str(payload.get("confirm") or "") != "restore_latest_backup":
             raise HTTPException(status_code=400, detail="confirm_restore_latest_backup_required")
         return {"action": action, **_restore_sqlite_from_latest_backup()}
+    if action == "remote_storage":
+        limit_raw = payload.get("limit") or 100
+        try:
+            limit = int(limit_raw)
+        except (TypeError, ValueError):
+            limit = 100
+        return {"ok": True, "action": action, "storage": artifact_store.remote_storage_report(limit=max(1, min(limit, 1000)))}
+    if action == "restore_latest_remote_backup":
+        if str(payload.get("confirm") or "") != "restore_latest_remote_backup":
+            raise HTTPException(status_code=400, detail="confirm_restore_latest_remote_backup_required")
+        return {"action": action, **_restore_sqlite_from_latest_remote_backup()}
     raise HTTPException(status_code=400, detail="unknown_sqlite_debug_action")
 
 
