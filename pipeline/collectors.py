@@ -51,6 +51,9 @@ class CandidateArticle:
     published_at: str
     snippet: str
     metadata: dict
+    full_text: str = ""
+    raw_html: str = ""
+    resolved_url: str = ""
 
 
 def _safe_text(node: ET.Element | None) -> str:
@@ -797,7 +800,7 @@ def collect_wordpress_api(
             "page": str(page),
             "orderby": "date",
             "order": "desc",
-            "_fields": "link,title,excerpt,date_gmt,date",
+            "_fields": "link,title,excerpt,content,date_gmt,date",
         }
         if q:
             params["search"] = q
@@ -861,6 +864,13 @@ def collect_wordpress_api(
             excerpt = html.unescape(excerpt_rendered)
             excerpt = WS_RE.sub(" ", TAG_RE.sub(" ", excerpt)).strip()
 
+            content_obj = item.get("content") or {}
+            if isinstance(content_obj, dict):
+                content_rendered = str(content_obj.get("rendered") or "")
+            else:
+                content_rendered = str(content_obj or "")
+            api_full_text = html_to_text(content_rendered)
+
             published_raw = str(item.get("date_gmt") or item.get("date") or "").strip()
             published_at = _parse_datetime(published_raw)
 
@@ -878,6 +888,9 @@ def collect_wordpress_api(
                         "endpoint": endpoint,
                         "collection_mode": "search" if q else "date_scan",
                     },
+                    full_text=api_full_text,
+                    raw_html=content_rendered if api_full_text else "",
+                    resolved_url=canon,
                 )
             )
             accepted += 1

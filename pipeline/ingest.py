@@ -701,6 +701,7 @@ def process_candidates(
         force_full_fetch = bool(candidate_metadata.get("force_full_fetch"))
         exact_body_only = bool(candidate_metadata.get("exact_body_only"))
         require_published_extraction = bool(candidate_metadata.get("require_published_extraction"))
+        cached_full_text = str(getattr(candidate, "full_text", "") or "")
         needs_published_extraction = bool(
             require_published_extraction
             or (strict_window and candidate_source_type == "scrape")
@@ -710,6 +711,8 @@ def process_candidates(
             return False
         searchable = "" if exact_body_only else " ".join([candidate.title or "", candidate.snippet or ""])
         hits = [] if exact_body_only else matcher.find_hits(searchable)
+        if cached_full_text and not needs_published_extraction:
+            return False
         return bool(force_full_fetch or exact_body_only or not hits or needs_published_extraction)
 
     if candidate_workers > 1:
@@ -801,14 +804,23 @@ def process_candidates(
         hits = [] if exact_body_only else matcher.find_hits(searchable)
         hits_from_preview = bool(hits)
         # [END RECONSTRUCTED]
-        full_text = ""
-        raw_html = ""
-        final_url = candidate.url
+        full_text = str(getattr(candidate, "full_text", "") or "")
+        raw_html = str(getattr(candidate, "raw_html", "") or "")
+        final_url = str(getattr(candidate, "resolved_url", "") or "") or candidate.url
         extracted_title = candidate.title or ""
         published_at = candidate.published_at
         extracted_published = ""
         # [RECONSTRUCTED] must_fetch_article from patch at offset 6453777
-        must_fetch_article = bool(force_full_fetch or exact_body_only or not hits or needs_published_extraction)
+        has_cached_article_text = bool(full_text.strip())
+        if has_cached_article_text:
+            if exact_body_only:
+                hits = matcher.find_hits(full_text)
+            elif not hits:
+                hits = matcher.find_hits(" ".join([candidate.title, candidate.snippet, full_text]))
+        must_fetch_article = bool(
+            (force_full_fetch or exact_body_only or not hits or needs_published_extraction)
+            and not has_cached_article_text
+        )
         # [END RECONSTRUCTED]
 
         if candidate_source_type == "google_news" and is_google_news_redirect(candidate.url):

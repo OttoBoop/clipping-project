@@ -123,6 +123,7 @@ def test_wordpress_api_date_scan_omits_search_param(monkeypatch):
                     "link": "https://example.com/rio",
                     "title": {"rendered": "Prefeitura do Rio anuncia acao"},
                     "excerpt": {"rendered": "Resumo"},
+                    "content": {"rendered": "<p>A cidade do Rio amplia a fiscalizacao na orla.</p>"},
                     "date_gmt": "2026-05-18T12:00:00",
                 }
             ]
@@ -140,10 +141,13 @@ def test_wordpress_api_date_scan_omits_search_param(monkeypatch):
 
     params = parse_qs(urlparse(observed["url"]).query)
     assert "search" not in params
+    assert "content" in params["_fields"][0]
     assert params["per_page"] == ["5"]
     assert len(results) == 1
     assert results[0].metadata["collection_mode"] == "date_scan"
     assert results[0].metadata["query"] == ""
+    assert "cidade do Rio amplia" in results[0].full_text
+    assert results[0].resolved_url == "https://example.com/rio"
 
 
 def test_wordpress_api_retries_slow_sites_with_larger_timeout(monkeypatch):

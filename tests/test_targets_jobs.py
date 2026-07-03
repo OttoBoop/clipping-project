@@ -3443,6 +3443,64 @@ def test_process_candidates_prefetches_articles_with_serial_db_writes(monkeypatc
         assert conn.execute("SELECT COUNT(*) FROM mentions").fetchone()[0] == 3
 
 
+def test_process_candidates_uses_cached_candidate_full_text_without_fetch(monkeypatch, tmp_path):
+    from pipeline import ingest
+    from pipeline.matcher import Target
+
+    db_file = tmp_path / "cached-wordpress-full-text.db"
+    events: list[tuple[str, dict]] = []
+
+    def unexpected_fetch(*_args, **_kwargs):
+        raise AssertionError("cached WordPress content should avoid article fetch")
+
+    monkeypatch.setattr(ingest, "fetch_full_article_text", unexpected_fetch)
+    monkeypatch.setattr(
+        ingest,
+        "get_active_targets",
+        lambda: [Target(key="flavio_valle", display_name="Flavio Valle", keywords=["Flavio Valle"], primary=True)],
+    )
+    candidate = ingest.CandidateArticle(
+        title="Agenda cultural no Rio",
+        url="https://example.com/agenda-cultural",
+        source_name="Fonte WordPress",
+        source_type="wordpress_api",
+        published_at="2026-05-17T12:00:00+00:00",
+        snippet="Resumo sem nome monitorado.",
+        metadata={},
+        full_text=(
+            "Flavio Valle acompanhou uma agenda cultural no Rio de Janeiro com "
+            "programacao publica e planejamento para moradores. A iniciativa reuniu "
+            "representantes locais, produtores culturais e equipes tecnicas para organizar "
+            "novas entregas, divulgar servicos e ampliar a circulacao de publico no bairro."
+        ),
+        raw_html="<p>Flavio Valle acompanhou uma agenda cultural no Rio de Janeiro.</p>",
+        resolved_url="https://example.com/agenda-cultural",
+    )
+
+    result = ingest.process_candidates(
+        "Fonte WordPress",
+        "wordpress_api",
+        [candidate],
+        options=ingest.IngestionOptions(
+            target_keys=["flavio_valle"],
+            date_from="2026-05-17",
+            date_to="2026-05-17",
+            db_path=str(db_file),
+            archive_full_text=True,
+            archive_raw_html=True,
+        ),
+        progress_callback=lambda event, payload: events.append((event, payload)),
+    )
+
+    assert result.candidates_seen == 1
+    assert result.articles_inserted == 1
+    assert any(event == "article_saved" for event, _ in events)
+    with sqlite3.connect(db_file) as conn:
+        row = conn.execute("SELECT full_text, raw_html FROM articles").fetchone()
+    assert "Flavio Valle acompanhou" in row[0]
+    assert "Flavio Valle acompanhou" in row[1]
+
+
 def test_process_candidates_times_out_stuck_prefetch_future(monkeypatch, tmp_path):
     from concurrent.futures import TimeoutError as FuturesTimeoutError
     from pipeline import ingest
