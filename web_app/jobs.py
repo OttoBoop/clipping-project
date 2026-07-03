@@ -1424,7 +1424,7 @@ def next_pending_source_run(job_id: str, target_key: str) -> dict[str, Any] | No
             """
             SELECT * FROM job_source_runs
             WHERE job_id = ? AND target_key = ? AND status IN ('pending', 'retrying', 'interrupted_resumable')
-            ORDER BY id ASC
+            ORDER BY CASE WHEN source_key LIKE '%:date_scan' THEN 0 ELSE 1 END, id ASC
             LIMIT 1
             """,
             (job_id, target_key),

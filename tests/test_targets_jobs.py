@@ -893,6 +893,40 @@ def test_rio_city_local_wordpress_uses_date_scan_unit(monkeypatch, tmp_path):
     assert all(unit.source_key.startswith("wordpress_api_v2:1:chunk:") for unit in query_chunks)
 
 
+def test_next_pending_source_run_prioritizes_date_scan(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    jobs.create_job(
+        "date-scan-priority",
+        "update",
+        {"preset": "custom", "collector": "wordpress_api", "target_keys": ["rio_economico"], "durable": True},
+        started_by="admin",
+    )
+    jobs.ensure_source_run_units(
+        "date-scan-priority",
+        "rio_economico",
+        [
+            jobs.SourceUnit(
+                source_key="wordpress_api_v2:2:chunk:0",
+                source_name="Agenda do Poder",
+                source_type="wordpress_api",
+                cursor={"site_index": 2, "queries": ["cidade do Rio"], "page": 1},
+                order=1,
+            ),
+            jobs.SourceUnit(
+                source_key="wordpress_api_v2:0:date_scan",
+                source_name="Diario do Rio",
+                source_type="wordpress_api",
+                cursor={"site_index": 0, "date_scan": True, "page": 1},
+                order=2,
+            ),
+        ],
+    )
+
+    row = jobs.next_pending_source_run("date-scan-priority", "rio_economico")
+
+    assert row["source_key"] == "wordpress_api_v2:0:date_scan"
+
+
 def test_rio_city_recent_windows_cap_archive_source_units(monkeypatch, tmp_path):
     from datetime import date
 
