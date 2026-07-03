@@ -1673,6 +1673,11 @@ async def admin_debug_sqlite(request: Request) -> dict[str, Any]:
         if str(payload.get("confirm") or "") != "restore_latest_remote_backup":
             raise HTTPException(status_code=400, detail="confirm_restore_latest_remote_backup_required")
         return {"action": action, **_restore_sqlite_from_latest_remote_backup()}
+    if action == "mark_orphaned_jobs":
+        if str(payload.get("confirm") or "") != "mark_orphaned_jobs":
+            raise HTTPException(status_code=400, detail="confirm_mark_orphaned_jobs_required")
+        count = mark_orphaned_active_jobs_interrupted("manual_restore_recovered_active_job")
+        return {"ok": True, "action": action, "interruptedJobs": count, "postRepair": _sqlite_debug_probe()}
     raise HTTPException(status_code=400, detail="unknown_sqlite_debug_action")
 
 
