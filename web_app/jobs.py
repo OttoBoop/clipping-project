@@ -121,7 +121,7 @@ CUSTOM_MAX_CANDIDATES = 90000
 CUSTOM_MAX_PROCESS_SECONDS = 90000
 DEFAULT_CANDIDATE_WORKERS = 4
 DEFAULT_CANDIDATE_WORKER_LIMIT = 1
-RIO_CANDIDATE_WORKER_LIMIT = 2
+RIO_CANDIDATE_WORKER_LIMIT = 4
 RIO_WORDPRESS_PAGES_PER_SLICE = 4
 RIO_WORDPRESS_SOFT_FAIL_AFTER_PAGE = 3
 RIO_TOPIC_QUERY_CHUNK_SIZE = 8
@@ -208,6 +208,8 @@ def effective_candidate_workers(spec: dict[str, Any]) -> int:
     default_limit = RIO_CANDIDATE_WORKER_LIMIT if is_rio_topic_spec(spec) else DEFAULT_CANDIDATE_WORKER_LIMIT
     if spec.get("candidate_worker_limit") is not None:
         default_limit = safe_positive_int(spec.get("candidate_worker_limit"), default_limit)
+        if str(spec.get("scope") or "") == RIO_ECONOMICO_SCOPE and str(spec.get("topic") or "") == RIO_CITY_TOPIC:
+            default_limit = max(default_limit, RIO_CANDIDATE_WORKER_LIMIT)
     raw_limit = str(os.environ.get("CLIPPING_MAX_CANDIDATE_WORKERS") or default_limit).strip()
     try:
         limit = max(1, int(raw_limit))

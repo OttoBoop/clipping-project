@@ -59,7 +59,15 @@ def test_effective_candidate_workers_clamps_to_safe_default(monkeypatch, tmp_pat
     assert jobs.effective_candidate_workers({"candidate_workers": 4}) == 1
     assert jobs.effective_candidate_workers(
         {"candidate_workers": 4, "scope": "rio_economico", "topic": "rio_city_corpus"}
-    ) == 2
+    ) == 4
+    assert jobs.effective_candidate_workers(
+        {
+            "candidate_workers": 4,
+            "candidate_worker_limit": 2,
+            "scope": "rio_economico",
+            "topic": "rio_city_corpus",
+        }
+    ) == 4
 
     monkeypatch.setenv("CLIPPING_MAX_CANDIDATE_WORKERS", "2")
     assert jobs.effective_candidate_workers({"candidate_workers": 4}) == 2
@@ -737,7 +745,7 @@ def test_build_update_spec_accepts_rio_city_corpus_without_target_row(monkeypatc
     assert spec["target_keys"] == ["rio_economico"]
     assert spec["target_snapshots"][0]["key"] == "rio_economico"
     assert spec["target_snapshots"][0]["topic"] == "rio_city_corpus"
-    assert spec["candidate_worker_limit"] == 2
+    assert spec["candidate_worker_limit"] == 4
     assert spec["wordpress_pages_per_slice"] == 4
     assert spec["group_topic_queries_by_source"] is True
     assert spec["topic_query_chunk_size"] == 8
