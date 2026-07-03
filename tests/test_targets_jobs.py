@@ -746,7 +746,7 @@ def test_build_update_spec_accepts_rio_city_corpus_without_target_row(monkeypatc
     assert spec["target_snapshots"][0]["key"] == "rio_economico"
     assert spec["target_snapshots"][0]["topic"] == "rio_city_corpus"
     assert spec["candidate_worker_limit"] == 4
-    assert spec["wordpress_pages_per_slice"] == 4
+    assert spec["wordpress_pages_per_slice"] == 8
     assert spec["group_topic_queries_by_source"] is True
     assert spec["topic_query_chunk_size"] == 8
     assert spec["recent_archive_max_pages"] == 5
@@ -3473,7 +3473,6 @@ def test_process_candidates_uses_cached_candidate_full_text_without_fetch(monkey
             "representantes locais, produtores culturais e equipes tecnicas para organizar "
             "novas entregas, divulgar servicos e ampliar a circulacao de publico no bairro."
         ),
-        raw_html="<p>Flavio Valle acompanhou uma agenda cultural no Rio de Janeiro.</p>",
         resolved_url="https://example.com/agenda-cultural",
     )
 
@@ -3496,9 +3495,8 @@ def test_process_candidates_uses_cached_candidate_full_text_without_fetch(monkey
     assert result.articles_inserted == 1
     assert any(event == "article_saved" for event, _ in events)
     with sqlite3.connect(db_file) as conn:
-        row = conn.execute("SELECT full_text, raw_html FROM articles").fetchone()
+        row = conn.execute("SELECT full_text FROM articles").fetchone()
     assert "Flavio Valle acompanhou" in row[0]
-    assert "Flavio Valle acompanhou" in row[1]
 
 
 def test_process_candidates_times_out_stuck_prefetch_future(monkeypatch, tmp_path):

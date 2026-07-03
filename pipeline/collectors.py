@@ -869,7 +869,7 @@ def collect_wordpress_api(
                 content_rendered = str(content_obj.get("rendered") or "")
             else:
                 content_rendered = str(content_obj or "")
-            api_full_text = html_to_text(content_rendered)
+            api_full_text = html_to_text(content_rendered)[:60000]
 
             published_raw = str(item.get("date_gmt") or item.get("date") or "").strip()
             published_at = _parse_datetime(published_raw)
@@ -889,7 +889,6 @@ def collect_wordpress_api(
                         "collection_mode": "search" if q else "date_scan",
                     },
                     full_text=api_full_text,
-                    raw_html=content_rendered if api_full_text else "",
                     resolved_url=canon,
                 )
             )
