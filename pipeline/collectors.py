@@ -771,9 +771,6 @@ def collect_wordpress_api(
     raise_on_error: bool = False,
 ) -> list[CandidateArticle]:
     q = (query or "").strip()
-    if not q:
-        return []
-
     base = (base_url or "").strip().rstrip("/")
     if not base:
         return []
@@ -796,13 +793,14 @@ def collect_wordpress_api(
         if accepted >= site_limit:
             break
         params: dict[str, str] = {
-            "search": q,
             "per_page": str(per_page),
             "page": str(page),
             "orderby": "date",
             "order": "desc",
             "_fields": "link,title,excerpt,date_gmt,date",
         }
+        if q:
+            params["search"] = q
         if date_from:
             params["after"] = f"{date_from}T00:00:00Z"
         if date_to:
@@ -874,7 +872,12 @@ def collect_wordpress_api(
                     source_type="wordpress_api",
                     published_at=published_at,
                     snippet=excerpt,
-                    metadata={"query": q, "wp_base_url": base, "endpoint": endpoint},
+                    metadata={
+                        "query": q,
+                        "wp_base_url": base,
+                        "endpoint": endpoint,
+                        "collection_mode": "search" if q else "date_scan",
+                    },
                 )
             )
             accepted += 1

@@ -854,6 +854,45 @@ def test_rio_city_corpus_source_units_group_topic_queries_by_source(monkeypatch,
     assert len(units) < 30
 
 
+def test_rio_city_local_wordpress_uses_date_scan_unit(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs, "RSS_FEEDS", [])
+    monkeypatch.setattr(
+        jobs,
+        "WORDPRESS_API_SITES",
+        [
+            {"source_name": "Diario do Rio", "base_url": "https://diariodorio.com", "rio_city_date_scan": "true"},
+            {"source_name": "VEJA", "base_url": "https://veja.abril.com.br"},
+        ],
+    )
+    monkeypatch.setattr(jobs, "FLAVIO_INTERNAL_SEARCH_TARGETS", [])
+    monkeypatch.setattr(jobs, "SITEMAP_DAILY_SOURCES", [])
+    monkeypatch.setattr(jobs, "VEJARIO_ARCHIVE_TARGETS", [])
+    monkeypatch.setattr(jobs, "CAMARA_MAX_PAGES", 0)
+    spec = jobs.build_update_spec(
+        {
+            "scope": "rio_economico",
+            "topic": "rio_city_corpus",
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-01",
+            "collector": "wordpress_api",
+            "export": False,
+        }
+    )
+
+    units = jobs.build_source_units(spec, "rio_economico")
+    date_scan = [unit for unit in units if unit.cursor.get("date_scan")]
+    query_chunks = [unit for unit in units if unit.cursor.get("queries")]
+    chunk_size = spec["topic_query_chunk_size"]
+    source_query_count = len(spec["topic_source_queries"])
+
+    assert len(date_scan) == 1
+    assert date_scan[0].source_key == "wordpress_api_v2:0:date_scan"
+    assert date_scan[0].cursor == {"site_index": 0, "date_scan": True, "page": 1, "page_size": jobs.WORDPRESS_PAGE_SIZE}
+    assert len(query_chunks) == (source_query_count + chunk_size - 1) // chunk_size
+    assert all(unit.source_key.startswith("wordpress_api_v2:1:chunk:") for unit in query_chunks)
+
+
 def test_rio_city_recent_windows_cap_archive_source_units(monkeypatch, tmp_path):
     from datetime import date
 

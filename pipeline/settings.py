@@ -114,15 +114,15 @@ RSS_FEEDS: list[dict[str, str]] = [
 # WordPress sites where RSS is shallow (usually ~30 most recent) but the REST API can backfill
 # older content reliably by date window + search term.
 WORDPRESS_API_SITES: list[dict[str, str]] = [
-    {"source_name": "Diario do Rio", "base_url": "https://diariodorio.com"},
-    {"source_name": "Tempo Real RJ", "base_url": "https://temporealrj.com"},
+    {"source_name": "Diario do Rio", "base_url": "https://diariodorio.com", "rio_city_date_scan": "true"},
+    {"source_name": "Tempo Real RJ", "base_url": "https://temporealrj.com", "rio_city_date_scan": "true"},
     {
         "source_name": "Agenda do Poder",
         "base_url": "https://agendadopoder.com.br",
         "query_variants": ["Flavio Valle", "Flávio Valle", "Valle"],
     },
     {"source_name": "Tribuna da Serra", "base_url": "https://tribunadaserra.com.br"},
-    {"source_name": "Veja Rio", "base_url": "https://vejario.abril.com.br"},
+    {"source_name": "Veja Rio", "base_url": "https://vejario.abril.com.br", "rio_city_date_scan": "true"},
     {"source_name": "VEJA", "base_url": "https://veja.abril.com.br"},
 ]
 

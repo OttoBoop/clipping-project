@@ -110,6 +110,42 @@ def test_wordpress_api_caps_page_size_to_requested_limit(monkeypatch):
     assert len(results) == 1
 
 
+def test_wordpress_api_date_scan_omits_search_param(monkeypatch):
+    from pipeline import collectors
+
+    observed = {}
+
+    def fake_fetch_url(url, timeout=10):
+        observed["url"] = url
+        return url, json.dumps(
+            [
+                {
+                    "link": "https://example.com/rio",
+                    "title": {"rendered": "Prefeitura do Rio anuncia acao"},
+                    "excerpt": {"rendered": "Resumo"},
+                    "date_gmt": "2026-05-18T12:00:00",
+                }
+            ]
+        )
+
+    monkeypatch.setattr(collectors, "fetch_url", fake_fetch_url)
+
+    results = collectors.collect_wordpress_api(
+        "",
+        source_name="Diario do Rio",
+        base_url="https://example.com",
+        per_site_limit=5,
+        per_page=100,
+    )
+
+    params = parse_qs(urlparse(observed["url"]).query)
+    assert "search" not in params
+    assert params["per_page"] == ["5"]
+    assert len(results) == 1
+    assert results[0].metadata["collection_mode"] == "date_scan"
+    assert results[0].metadata["query"] == ""
+
+
 def test_wordpress_api_retries_slow_sites_with_larger_timeout(monkeypatch):
     from pipeline import collectors
 

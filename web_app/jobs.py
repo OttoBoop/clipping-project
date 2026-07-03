@@ -256,6 +256,14 @@ def topic_query_chunk_size(spec: dict[str, Any]) -> int:
     return safe_positive_int(spec.get("topic_query_chunk_size"), RIO_TOPIC_QUERY_CHUNK_SIZE, minimum=1, maximum=25)
 
 
+def rio_city_wordpress_date_scan_enabled(spec: dict[str, Any], site: dict[str, Any]) -> bool:
+    return (
+        str(spec.get("scope") or "") == RIO_ECONOMICO_SCOPE
+        and str(spec.get("topic") or "") == RIO_CITY_TOPIC
+        and str(site.get("rio_city_date_scan") or "").strip().lower() in {"1", "true", "yes", "on"}
+    )
+
+
 def chunk_queries(queries: list[str], chunk_size: int) -> list[list[str]]:
     size = max(1, int(chunk_size or 1))
     return [queries[index : index + size] for index in range(0, len(queries), size)] or []
@@ -1191,6 +1199,23 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
     if include("wordpress_api"):
         for site_idx, site in enumerate(WORDPRESS_API_SITES):
             site_name = str(site.get("source_name") or "WordPress").strip() or "WordPress"
+            if rio_city_wordpress_date_scan_enabled(spec, site):
+                units.append(
+                    SourceUnit(
+                        source_key=f"wordpress_api_{WORDPRESS_SOURCE_VERSION}:{site_idx}:date_scan",
+                        source_name=site_name,
+                        source_type="wordpress_api",
+                        cursor={
+                            "site_index": site_idx,
+                            "date_scan": True,
+                            "page": 1,
+                            "page_size": WORDPRESS_PAGE_SIZE,
+                        },
+                        order=order,
+                    )
+                )
+                order += 1
+                continue
             site_queries = topic_queries_from_spec(spec, source_type="wordpress_api") if topic_mode else build_wordpress_queries_for_targets(targets, site=site)
             if grouped or group_topic_queries:
                 chunks = chunk_queries(site_queries, topic_query_chunk_size(spec) if group_topic_queries else len(site_queries))
