@@ -227,7 +227,7 @@ class ArtifactStore:
                             }
                         )
                     elif depth < max_depth:
-                        queue.append(remote_path)
+                        queue.append((remote_path, depth + 1))
                 if len(rows) < 1000:
                     break
                 offset += len(rows)

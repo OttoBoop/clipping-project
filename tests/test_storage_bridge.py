@@ -186,6 +186,47 @@ def test_download_gzip_file_prefers_chunk_manifest(monkeypatch, tmp_path: Path) 
         assert conn.execute("SELECT name FROM sample").fetchone()[0] == "ok"
 
 
+def test_recursive_storage_listing_descends_into_directory_rows(monkeypatch) -> None:
+    store = configured_store()
+    calls: list[str] = []
+
+    def fake_list(prefix: str, *, limit: int = 1000, offset: int = 0) -> list[dict[str, Any]]:
+        calls.append(prefix)
+        if prefix == "clipping-project/backups":
+            return [{"name": "20260703T010000Z-backup"}]
+        if prefix == "clipping-project/backups/20260703T010000Z-backup":
+            return [{"name": "data"}]
+        if prefix == "clipping-project/backups/20260703T010000Z-backup/data":
+            return [
+                {
+                    "id": "object-id",
+                    "name": "clipping.db.manifest.json",
+                    "updated_at": "2026-07-03T01:00:00Z",
+                    "metadata": {"size": 200},
+                }
+            ]
+        return []
+
+    monkeypatch.setattr(store, "list_objects", fake_list)
+
+    objects = store.list_objects_recursive("clipping-project/backups", limit=10)
+
+    assert calls == [
+        "clipping-project/backups",
+        "clipping-project/backups/20260703T010000Z-backup",
+        "clipping-project/backups/20260703T010000Z-backup/data",
+    ]
+    assert objects == [
+        {
+            "remotePath": "clipping-project/backups/20260703T010000Z-backup/data/clipping.db.manifest.json",
+            "name": "clipping.db.manifest.json",
+            "updatedAt": "2026-07-03T01:00:00Z",
+            "createdAt": None,
+            "size": 200,
+        }
+    ]
+
+
 def test_write_gzip_file_restores_valid_sqlite_atomically_and_removes_sidecars(tmp_path: Path) -> None:
     current = tmp_path / "clipping.db"
     replacement = tmp_path / "replacement.db"
