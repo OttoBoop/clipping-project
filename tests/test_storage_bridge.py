@@ -6,7 +6,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from web_app.storage_bridge import ArtifactStore, sqlite_snapshot_gzip_file
+from web_app.storage_bridge import ArtifactStore, sqlite_snapshot_gzip_file, write_artifact_payload
 
 
 class FakeResponse:
@@ -25,6 +25,23 @@ def make_db(path: Path) -> None:
     with sqlite3.connect(path) as conn:
         conn.execute("CREATE TABLE sample (id INTEGER PRIMARY KEY, name TEXT)")
         conn.execute("INSERT INTO sample (name) VALUES ('ok')")
+
+
+def make_marker_db(path: Path, value: str) -> None:
+    with sqlite3.connect(path) as conn:
+        conn.execute("CREATE TABLE marker(value TEXT)")
+        conn.execute("INSERT INTO marker(value) VALUES (?)", (value,))
+
+
+def read_marker(path: Path) -> str:
+    with sqlite3.connect(path) as conn:
+        row = conn.execute("SELECT value FROM marker").fetchone()
+    return str(row[0])
+
+
+def gzip_file(source: Path, target: Path) -> None:
+    with source.open("rb") as source_file, gzip.open(target, "wb") as gzip_file:
+        gzip_file.write(source_file.read())
 
 
 def configured_store() -> ArtifactStore:
@@ -167,3 +184,52 @@ def test_download_gzip_file_prefers_chunk_manifest(monkeypatch, tmp_path: Path) 
     assert store.download_gzip_file(remote, restored) is True
     with sqlite3.connect(restored) as conn:
         assert conn.execute("SELECT name FROM sample").fetchone()[0] == "ok"
+
+
+def test_write_gzip_file_restores_valid_sqlite_atomically_and_removes_sidecars(tmp_path: Path) -> None:
+    current = tmp_path / "clipping.db"
+    replacement = tmp_path / "replacement.db"
+    gzipped = tmp_path / "replacement.db.gz"
+    make_marker_db(current, "old")
+    make_marker_db(replacement, "new")
+    Path(str(current) + "-wal").write_bytes(b"stale wal")
+    Path(str(current) + "-shm").write_bytes(b"stale shm")
+    gzip_file(replacement, gzipped)
+
+    assert ArtifactStore().write_gzip_file(gzipped, current) is True
+
+    assert read_marker(current) == "new"
+    assert not Path(str(current) + "-wal").exists()
+    assert not Path(str(current) + "-shm").exists()
+
+
+def test_write_gzip_file_rejects_corrupt_gzip_without_clobbering_db(tmp_path: Path) -> None:
+    current = tmp_path / "clipping.db"
+    gzipped = tmp_path / "broken.db.gz"
+    make_marker_db(current, "old")
+    gzipped.write_bytes(b"not a gzip")
+
+    assert ArtifactStore().write_gzip_file(gzipped, current) is False
+
+    assert read_marker(current) == "old"
+
+
+def test_write_gzip_file_rejects_invalid_sqlite_without_clobbering_db(tmp_path: Path) -> None:
+    current = tmp_path / "clipping.db"
+    gzipped = tmp_path / "invalid.db.gz"
+    make_marker_db(current, "old")
+    with gzip.open(gzipped, "wb") as gzip_file_handle:
+        gzip_file_handle.write(b"not a sqlite database")
+
+    assert ArtifactStore().write_gzip_file(gzipped, current) is False
+
+    assert read_marker(current) == "old"
+
+
+def test_raw_sqlite_artifact_rejects_invalid_payload_without_clobbering_db(tmp_path: Path) -> None:
+    current = tmp_path / "clipping.db"
+    make_marker_db(current, "old")
+
+    assert write_artifact_payload(b"not a sqlite database", current) is False
+
+    assert read_marker(current) == "old"

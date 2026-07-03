@@ -6,6 +6,7 @@ import shutil
 import sqlite3
 import tempfile
 import gzip
+import zlib
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -89,9 +90,7 @@ class ArtifactStore:
             return False
         if not response.ok:
             return False
-        local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_bytes(response.content)
-        return True
+        return write_artifact_payload(response.content, local_path)
 
     def upload_current_artifacts(self, *, manifest: dict[str, Any] | None = None, job_id: str | None = None) -> list[str]:
         uploaded: list[str] = []
@@ -212,12 +211,27 @@ class ArtifactStore:
                     pass
 
     def write_gzip_file(self, gzip_path: Path, local_path: Path) -> bool:
+        tmp_name = ""
         try:
             local_path.parent.mkdir(parents=True, exist_ok=True)
-            with gzip.open(gzip_path, "rb") as source, local_path.open("wb") as target:
+            with tempfile.NamedTemporaryFile(suffix=local_path.suffix or ".tmp", dir=local_path.parent, delete=False) as tmp:
+                tmp_name = tmp.name
+            with gzip.open(gzip_path, "rb") as source, Path(tmp_name).open("wb") as target:
                 shutil.copyfileobj(source, target, length=1024 * 1024)
-        except (OSError, EOFError):
+            if local_path.suffix.lower() == ".db" and not sqlite_file_is_valid(Path(tmp_name)):
+                return False
+            os.replace(tmp_name, local_path)
+            tmp_name = ""
+            if local_path.suffix.lower() == ".db":
+                remove_sqlite_sidecars(local_path)
+        except (OSError, EOFError, zlib.error):
             return False
+        finally:
+            if tmp_name:
+                try:
+                    Path(tmp_name).unlink()
+                except OSError:
+                    pass
         return True
 
     def _sqlite_manifest_remote(self, remote_path: str) -> str:
@@ -377,6 +391,58 @@ def _content_type(path: Path) -> str:
     if suffix == ".db":
         return "application/octet-stream"
     return "application/octet-stream"
+
+
+def write_artifact_payload(payload: bytes, local_path: Path) -> bool:
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+    if local_path.suffix.lower() != ".db":
+        try:
+            local_path.write_bytes(payload)
+        except OSError:
+            return False
+        return True
+
+    tmp_name = ""
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".db", dir=local_path.parent, delete=False) as tmp:
+            tmp_name = tmp.name
+            tmp.write(payload)
+        tmp_path = Path(tmp_name)
+        if not sqlite_file_is_valid(tmp_path):
+            return False
+        os.replace(tmp_path, local_path)
+        tmp_name = ""
+        remove_sqlite_sidecars(local_path)
+        return True
+    except OSError:
+        return False
+    finally:
+        if tmp_name:
+            try:
+                Path(tmp_name).unlink()
+            except OSError:
+                pass
+
+
+def sqlite_file_is_valid(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    try:
+        with sqlite3.connect(path) as conn:
+            row = conn.execute("PRAGMA quick_check").fetchone()
+    except sqlite3.Error:
+        return False
+    return bool(row and str(row[0]).lower() == "ok")
+
+
+def remove_sqlite_sidecars(path: Path) -> None:
+    for suffix in ("-wal", "-shm"):
+        try:
+            Path(str(path) + suffix).unlink()
+        except FileNotFoundError:
+            pass
+        except OSError:
+            pass
 
 
 def sqlite_snapshot_bytes(path: Path) -> bytes:
