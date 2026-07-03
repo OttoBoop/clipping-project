@@ -365,7 +365,10 @@ class JobManager:
     def current_status(self) -> dict[str, Any]:
         active = self._active_job_id
         if active:
-            return get_job(active) or {"id": active, "status": "running"}
+            job = get_job(active)
+            if job and str(job.get("status") or "") in ACTIVE_JOB_STATUSES:
+                return job
+            self._active_job_id = None
         active_job = get_active_job()
         if active_job:
             self._active_job_id = str(active_job["id"])
@@ -407,7 +410,12 @@ class JobManager:
             raise RuntimeError("persistent_storage_not_configured")
         ensure_app_tables(db_path())
         with self._lock:
-            if self._active_job_id or get_active_job():
+            if self._active_job_id:
+                active_job = get_job(self._active_job_id)
+                if active_job and str(active_job.get("status") or "") in ACTIVE_JOB_STATUSES:
+                    raise JobConflict("job_already_running")
+                self._active_job_id = None
+            if get_active_job():
                 raise JobConflict("job_already_running")
             job = get_resumable_job(job_id)
             if not job:

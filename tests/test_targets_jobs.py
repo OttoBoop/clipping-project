@@ -2112,6 +2112,44 @@ def test_cancel_active_ignores_terminal_job_still_uploading(monkeypatch, tmp_pat
     assert not manager._cancel_events["terminal-uploading"].is_set()
 
 
+def test_resume_update_clears_stale_in_memory_inactive_job(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    jobs.create_job(
+        "resume-stale",
+        "update",
+        {
+            "preset": "custom",
+            "collector": "all",
+            "target_keys": ["flavio_valle"],
+            "date_from": "2026-04-01",
+            "date_to": "2026-04-30",
+            "durable": True,
+        },
+        started_by="coworker",
+    )
+    jobs.update_job("resume-stale", status="interrupted_resumable")
+    starts = []
+
+    class FakeThread:
+        def __init__(self, **kwargs):
+            starts.append(kwargs)
+
+        def start(self):
+            starts.append({"started": True})
+
+    monkeypatch.setattr(jobs.threading, "Thread", FakeThread)
+    manager = jobs.JobManager(SimpleNamespace(writes_available=True))
+    manager._active_job_id = "resume-stale"
+
+    resumed = manager.resume_update("resume-stale", started_by="admin")
+
+    assert resumed["status"] == "queued"
+    assert manager._active_job_id == "resume-stale"
+    assert starts[-1] == {"started": True}
+    events = jobs.get_job("resume-stale")["events"]
+    assert any(event["event"] == "job_resumed" for event in events)
+
+
 def test_startup_marks_orphaned_active_jobs_interrupted_not_cancelled(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     jobs.create_job(
