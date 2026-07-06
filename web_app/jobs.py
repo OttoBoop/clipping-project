@@ -991,7 +991,7 @@ def run_durable_update(job_id: str, spec: dict[str, Any], cancel_event: threadin
     ensure_app_tables(db_path())
     labels = target_labels()
     labels.update(target_labels_from_spec(spec))
-    totals = {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0}
+    totals = current_job_totals(job_id)
     if grouped_source_runs_enabled(spec):
         target_keys = update_spec_target_keys(spec)
         ensure_grouped_source_runs(job_id, spec)
@@ -2211,6 +2211,72 @@ def update_job(job_id: str, **fields: Any) -> None:
         conn.execute(f"UPDATE jobs SET {sql} WHERE id = ?", [value for _, value in updates] + [job_id])
 
 
+def current_job_totals(job_id: str) -> dict[str, int]:
+    with connect(db_path()) as conn:
+        row = conn.execute(
+            "SELECT articles_inserted, mentions_inserted, stories_touched FROM jobs WHERE id = ?",
+            (job_id,),
+        ).fetchone()
+    if not row:
+        return {"articles_inserted": 0, "mentions_inserted": 0, "stories_touched": 0}
+    return {
+        "articles_inserted": safe_int(row["articles_inserted"]),
+        "mentions_inserted": safe_int(row["mentions_inserted"]),
+        "stories_touched": safe_int(row["stories_touched"]),
+    }
+
+
+def bump_job_totals_from_article_saved(job_id: str, payload: dict[str, Any]) -> None:
+    articles_delta = safe_int(payload.get("articles_inserted_delta"))
+    mentions_delta = safe_int(payload.get("mentions_inserted_delta"))
+    stories_delta = safe_int(payload.get("stories_touched_delta"))
+    if not articles_delta and not mentions_delta and not stories_delta:
+        return
+    with connect(db_path()) as conn:
+        conn.execute(
+            """
+            UPDATE jobs
+            SET articles_inserted = MAX(COALESCE(articles_inserted, 0) + ?, 0),
+                mentions_inserted = MAX(COALESCE(mentions_inserted, 0) + ?, 0),
+                stories_touched = MAX(COALESCE(stories_touched, 0) + ?, 0)
+            WHERE id = ?
+            """,
+            (articles_delta, mentions_delta, stories_delta, job_id),
+        )
+
+
+def apply_job_totals_floor_from_source_progress(job_id: str, payload: dict[str, Any]) -> None:
+    next_totals = {
+        "articles_inserted": safe_int(payload.get("articles_inserted")),
+        "mentions_inserted": safe_int(payload.get("mentions_inserted")),
+        "stories_touched": safe_int(payload.get("stories_touched")),
+    }
+    if not any(next_totals.values()):
+        return
+    with connect(db_path()) as conn:
+        row = conn.execute(
+            "SELECT articles_inserted, mentions_inserted, stories_touched FROM jobs WHERE id = ?",
+            (job_id,),
+        ).fetchone()
+        if not row:
+            return
+        conn.execute(
+            """
+            UPDATE jobs
+            SET articles_inserted = ?,
+                mentions_inserted = ?,
+                stories_touched = ?
+            WHERE id = ?
+            """,
+            (
+                max(safe_int(row["articles_inserted"]), next_totals["articles_inserted"]),
+                max(safe_int(row["mentions_inserted"]), next_totals["mentions_inserted"]),
+                max(safe_int(row["stories_touched"]), next_totals["stories_touched"]),
+                job_id,
+            ),
+        )
+
+
 def append_event(job_id: str, event: str, payload: dict[str, Any]) -> None:
     safe_payload = sanitize_payload(payload)
     with connect(db_path()) as conn:
@@ -2326,11 +2392,16 @@ def record_progress(
     target_key: str = "",
     target_label: str = "",
 ) -> None:
+    enriched = enrich_progress_payload(payload, target_key=target_key, target_label=target_label)
     if event == "candidate_evaluated":
-        record_candidate_audit(job_id, enrich_progress_payload(payload, target_key=target_key, target_label=target_label))
+        record_candidate_audit(job_id, enriched)
         return
-    append_event(job_id, event, enrich_progress_payload(payload, target_key=target_key, target_label=target_label))
-    if event in {"article_saved", "source_progress", "source_complete", "run_complete", "run_cancelled"}:
+    append_event(job_id, event, enriched)
+    if event == "article_saved":
+        bump_job_totals_from_article_saved(job_id, enriched)
+    elif event == "source_progress":
+        apply_job_totals_floor_from_source_progress(job_id, enriched)
+    elif event in {"source_complete", "run_complete", "run_cancelled"}:
         sync_live_progress_totals(job_id)
     if event == "article_saved":
         upload_live_checkpoint(job_id, reason="article-saved")

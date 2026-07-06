@@ -1780,6 +1780,57 @@ def test_article_saved_events_drive_live_results_and_totals(monkeypatch, tmp_pat
     assert live["items"][0]["publicationState"] == "saved"
 
 
+def test_article_saved_updates_totals_without_full_progress_scan(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    monkeypatch.setattr(jobs.artifact_store, "enabled", False)
+    monkeypatch.setattr(
+        jobs,
+        "sync_live_progress_totals",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("full sync should not run")),
+    )
+    job_id = "incremental-live-totals"
+    jobs.create_job(
+        job_id,
+        "update",
+        {
+            "preset": "custom",
+            "collector": "all",
+            "target_keys": ["shakira"],
+            "date_from": "2026-04-01",
+            "date_to": "2026-05-04",
+        },
+        started_by="coworker",
+    )
+    jobs.update_job(job_id, status="running", articles_inserted=5, mentions_inserted=7, stories_touched=9)
+
+    jobs.record_progress(
+        job_id,
+        "article_saved",
+        {
+            "article_id": 123,
+            "story_id": 456,
+            "url": "https://example.com/novo",
+            "title": "Nova materia",
+            "published_at": "2026-05-01T12:00:00+00:00",
+            "source_name": "Fonte Teste",
+            "source_type": "test",
+            "target_keys": ["shakira"],
+            "articles_inserted_delta": 2,
+            "mentions_inserted_delta": 3,
+            "stories_touched_delta": 4,
+            "publication_state": "saved",
+        },
+        target_key="shakira",
+        target_label="shakira",
+    )
+
+    observed = jobs.get_job(job_id)
+
+    assert observed["articles_inserted"] == 7
+    assert observed["mentions_inserted"] == 10
+    assert observed["stories_touched"] == 13
+
+
 def test_base_live_results_return_recent_saved_articles_after_export_job(monkeypatch, tmp_path):
     _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
     monkeypatch.setattr(jobs.artifact_store, "enabled", False)
