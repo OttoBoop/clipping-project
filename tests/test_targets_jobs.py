@@ -1831,6 +1831,36 @@ def test_article_saved_updates_totals_without_full_progress_scan(monkeypatch, tm
     assert observed["stories_touched"] == 13
 
 
+def test_durable_article_saved_checkpoint_uses_longer_interval(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    jobs.create_job(
+        "normal-checkpoint-interval",
+        "update",
+        {
+            "preset": "custom",
+            "collector": "rss",
+            "target_keys": ["shakira"],
+        },
+        started_by="coworker",
+    )
+    jobs.create_job(
+        "durable-checkpoint-interval",
+        "update",
+        {
+            "preset": "custom",
+            "collector": "rss",
+            "target_keys": ["shakira"],
+            "durable": True,
+        },
+        started_by="coworker",
+        enforce_single_active=False,
+    )
+
+    assert jobs.live_checkpoint_min_seconds("normal-checkpoint-interval", reason="article-saved") == 30
+    assert jobs.live_checkpoint_min_seconds("durable-checkpoint-interval", reason="article-saved") == 600
+    assert jobs.live_checkpoint_min_seconds("durable-checkpoint-interval", reason="source-run-checkpoint") == 30
+
+
 def test_base_live_results_return_recent_saved_articles_after_export_job(monkeypatch, tmp_path):
     _, jobs, db_file = reload_admin_modules(monkeypatch, tmp_path)
     monkeypatch.setattr(jobs.artifact_store, "enabled", False)

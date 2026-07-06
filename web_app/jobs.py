@@ -129,10 +129,12 @@ RIO_RECENT_ARCHIVE_MAX_PAGES = 5
 RIO_FULL_TEXT_MAX_CHARS = 30000
 RIO_RAW_HTML_MAX_CHARS = 0
 LIVE_CHECKPOINT_MIN_SECONDS = 30
+DURABLE_LIVE_CHECKPOINT_MIN_SECONDS = 600
 DEFAULT_SOURCE_RUN_YIELD_SECONDS = 0.05
 _CHECKPOINT_LOCK = threading.Lock()
 _LAST_CHECKPOINT_UPLOAD: dict[str, float] = {}
 _LAST_INCREMENTAL_EXPORT: dict[str, float] = {}
+_JOB_CHECKPOINT_INTERVALS: dict[str, float] = {}
 
 
 def is_rio_topic_spec(spec: dict[str, Any]) -> bool:
@@ -2413,7 +2415,8 @@ def upload_live_checkpoint(job_id: str, *, reason: str, force: bool = False) -> 
     now = time.monotonic()
     with _CHECKPOINT_LOCK:
         previous = _LAST_CHECKPOINT_UPLOAD.get(job_id, 0.0)
-        if not force and now - previous < LIVE_CHECKPOINT_MIN_SECONDS:
+        min_seconds = live_checkpoint_min_seconds(job_id, reason=reason) if not force else 0
+        if not force and now - previous < min_seconds:
             return []
         _LAST_CHECKPOINT_UPLOAD[job_id] = now
     manifest = {
@@ -2426,6 +2429,25 @@ def upload_live_checkpoint(job_id: str, *, reason: str, force: bool = False) -> 
     if uploaded:
         append_event(job_id, "live_checkpoint_uploaded", artifact_upload_summary(uploaded))
     return uploaded
+
+
+def live_checkpoint_min_seconds(job_id: str, *, reason: str = "") -> float:
+    if str(reason or "") != "article-saved":
+        return float(LIVE_CHECKPOINT_MIN_SECONDS)
+    cached = _JOB_CHECKPOINT_INTERVALS.get(job_id)
+    if cached is not None:
+        return cached
+    interval = float(LIVE_CHECKPOINT_MIN_SECONDS)
+    try:
+        with connect(db_path()) as conn:
+            row = conn.execute("SELECT spec_json FROM jobs WHERE id = ?", (job_id,)).fetchone()
+        spec = safe_json_dict(row["spec_json"]) if row else {}
+        if bool(spec.get("durable")):
+            interval = float(DURABLE_LIVE_CHECKPOINT_MIN_SECONDS)
+    except Exception:
+        interval = float(LIVE_CHECKPOINT_MIN_SECONDS)
+    _JOB_CHECKPOINT_INTERVALS[job_id] = interval
+    return interval
 
 
 def record_target_sync(target_key: str, *, reason: str, cleanup: bool = False, started_by: str = "coworker") -> dict[str, Any]:
