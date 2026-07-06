@@ -69,7 +69,7 @@ from .segmentation import (
     viewer_profiles,
     viewer_profiles_configured,
 )
-from .storage_bridge import artifact_store
+from .storage_bridge import artifact_store, sqlite_file_summary
 from pipeline.database import ClippingDB
 
 VALID_SENTIMENTS = {"positive", "negative", "neutral"}
@@ -89,6 +89,29 @@ BASE_CATEGORIES = (
     "Segurança",
     "Turismo",
 )
+
+
+def restore_remote_sqlite_if_local_empty() -> dict[str, Any]:
+    """Protect production boot from publishing an empty downloaded/current DB."""
+    if not artifact_store.enabled:
+        return {"enabled": False, "restored": False, "localDbWasEmpty": False}
+    db = db_path()
+    summary = sqlite_file_summary(db) if db.is_file() else {"ok": False, "missing": True}
+    content_rows = int(summary.get("contentRows") or 0)
+    if content_rows > 0:
+        return {"enabled": True, "restored": False, "localDbWasEmpty": False, "summary": summary}
+    restored = artifact_store.restore_latest_remote_sqlite_backup(db)
+    if restored.get("ok"):
+        _forget_sqlite_schema_cache()
+        ensure_app_tables(db)
+    return {
+        "enabled": True,
+        "restored": bool(restored.get("ok")),
+        "localDbWasEmpty": True,
+        "summary": summary,
+        "restore": restored,
+        "suppressCurrentUpload": not bool(restored.get("ok")),
+    }
 
 
 ACTIVE_TARGET_MUTATION_STATUSES = {"queued", "running", "exporting", "cancel_requested"}
@@ -335,6 +358,7 @@ def _classification_db() -> ClippingDB:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     artifact_store.download_current_artifacts()
+    startup_remote_restore = restore_remote_sqlite_if_local_empty()
     target_cleanup = archive_known_test_targets()
     targets_normalized = normalize_targets_file()
     ensure_app_tables(db_path())
@@ -356,7 +380,15 @@ async def lifespan(_: FastAPI):
     newly_seeded = [n for n in BASE_CATEGORIES if n not in existing_names]
     for name in newly_seeded:
         cdb.get_or_create_category(name, created_by="system")
-    if (newly_seeded or targets_normalized or interrupted_jobs or resumed_jobs or activity_purged) and artifact_store.enabled:
+    suppress_startup_upload = bool(startup_remote_restore.get("suppressCurrentUpload"))
+    if (
+        newly_seeded
+        or targets_normalized
+        or interrupted_jobs
+        or resumed_jobs
+        or activity_purged
+        or startup_remote_restore.get("restored")
+    ) and artifact_store.enabled and not suppress_startup_upload:
         artifact_store.upload_current_artifacts(
             manifest={
                 "kind": "startup-normalization",
@@ -366,10 +398,11 @@ async def lifespan(_: FastAPI):
                 "resumedJobs": resumed_jobs,
                 "autoResumeJobs": auto_resume_jobs,
                 "activityPurged": activity_purged,
+                "remoteSqliteRestore": startup_remote_restore,
             },
             job_id="startup-runtime-normalization",
         )
-    if target_cleanup.get("archivedCount") and artifact_store.enabled:
+    if target_cleanup.get("archivedCount") and artifact_store.enabled and not suppress_startup_upload:
         artifact_store.upload_current_artifacts(
             manifest={"kind": "targets-auto-archived", "result": target_cleanup},
             job_id="targets-auto-archived",

@@ -24,6 +24,59 @@ def reload_admin_modules(monkeypatch, tmp_path):
     return db_admin, jobs, db_file
 
 
+def reload_app_module(monkeypatch, tmp_path):
+    db_file = tmp_path / "clipping.db"
+    monkeypatch.setenv("CLIPPING_DB_PATH", str(db_file))
+    for name in list(sys.modules):
+        if name in {"web_app.app", "web_app.db_admin", "web_app.jobs"}:
+            del sys.modules[name]
+    return importlib.import_module("web_app.app"), db_file
+
+
+def test_startup_restores_remote_sqlite_when_local_db_is_empty(monkeypatch, tmp_path):
+    app_module, db_file = reload_app_module(monkeypatch, tmp_path)
+    restore_calls = []
+    ensure_calls = []
+    forget_calls = []
+    monkeypatch.setattr(app_module.artifact_store, "enabled", True)
+    monkeypatch.setattr(app_module, "sqlite_file_summary", lambda path: {"ok": True, "contentRows": 0})
+    monkeypatch.setattr(
+        app_module.artifact_store,
+        "restore_latest_remote_sqlite_backup",
+        lambda path: restore_calls.append(path) or {"ok": True, "restored": {"remotePath": "backup"}},
+    )
+    monkeypatch.setattr(app_module, "ensure_app_tables", lambda path: ensure_calls.append(path))
+    monkeypatch.setattr(app_module, "_forget_sqlite_schema_cache", lambda: forget_calls.append(True))
+
+    result = app_module.restore_remote_sqlite_if_local_empty()
+
+    assert result["restored"] is True
+    assert result["localDbWasEmpty"] is True
+    assert restore_calls == [db_file]
+    assert ensure_calls == [db_file]
+    assert forget_calls == [True]
+    assert "suppressCurrentUpload" not in result or result["suppressCurrentUpload"] is False
+
+
+def test_startup_keeps_non_empty_local_sqlite(monkeypatch, tmp_path):
+    app_module, db_file = reload_app_module(monkeypatch, tmp_path)
+    db_file.write_bytes(b"placeholder")
+    restore_calls = []
+    monkeypatch.setattr(app_module.artifact_store, "enabled", True)
+    monkeypatch.setattr(app_module, "sqlite_file_summary", lambda path: {"ok": True, "contentRows": 12})
+    monkeypatch.setattr(
+        app_module.artifact_store,
+        "restore_latest_remote_sqlite_backup",
+        lambda path: restore_calls.append(path) or {"ok": True},
+    )
+
+    result = app_module.restore_remote_sqlite_if_local_empty()
+
+    assert result["restored"] is False
+    assert result["localDbWasEmpty"] is False
+    assert restore_calls == []
+
+
 def test_connect_falls_back_when_wal_mode_hits_disk_io(monkeypatch, tmp_path):
     db_admin, _, db_file = reload_admin_modules(monkeypatch, tmp_path)
     calls: list[str] = []
