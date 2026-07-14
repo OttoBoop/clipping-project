@@ -75,8 +75,11 @@ articles, 85% with real body, 90% direct URL resolution, 80% page/API dates and
   application connections.
 - The existing web service predates the Blueprint. Pushing `render.yaml` did
   not create or attach the declared worker and cron automatically. They must be
-  created by applying the Blueprint or from the Render dashboard, with the
-  database and existing Supabase secrets linked to the worker.
+  created by applying the Blueprint. Its resource names and immutable database
+  fields match the live web service and database. The worker references the
+  existing web service's Supabase variables, and a generated environment group
+  shares one scheduler token with the web service and cron; no secret is stored
+  in Git.
 - No new Rio corpus job, source-run, observation or article has been created.
   This is intentional: the infrastructure and password gates remain closed.
 - The logged-out production boundary passed all 32 checks, including every new
@@ -85,6 +88,9 @@ articles, 85% with real body, 90% direct URL resolution, 80% page/API dates and
 - The admin password change/relogin/restoration smoke remains pending because
   no current plaintext admin credential is available in the operator shell.
 
-The next valid action is infrastructure attachment, followed by the password
-smoke and the three canaries. Do not infer collection progress from deployed
-code alone.
+The next valid action is to create/sync the Blueprint from this repository and
+review that `clipping-project` and `clipping-rio-corpus` are shown as existing
+matches while the worker, cron and shared environment group are shown as new.
+Do not approve a review that proposes suffixed duplicate web/database names.
+After attachment, run the password smoke and the three canaries. Do not infer
+collection progress from deployed code alone.

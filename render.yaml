@@ -12,26 +12,13 @@ services:
         value: "1"
       - key: PYTHON_VERSION
         value: 3.14.3
-      - key: CLIPPING_ADMIN_PASSWORD
-        sync: false
-      - key: CLIPPING_SESSION_SECRET
-        sync: false
-      - key: CLIPPING_VIEWER_PASSWORDS
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
-      - key: SUPABASE_BUCKET
-        sync: false
       - key: CLIPPING_STORAGE_PREFIX
         value: clipping-project
       - key: RIO_CORPUS_DATABASE_URL
         fromDatabase:
           name: clipping-rio-corpus
           property: connectionString
-      - key: RIO_CORPUS_CRON_TOKEN
-        sync: false
+      - fromGroup: clipping-rio-corpus-shared
 
   - type: worker
     name: clipping-rio-corpus-worker
@@ -50,11 +37,20 @@ services:
           name: clipping-rio-corpus
           property: connectionString
       - key: SUPABASE_URL
-        sync: false
+        fromService:
+          name: clipping-project
+          type: web
+          envVarKey: SUPABASE_URL
       - key: SUPABASE_SERVICE_KEY
-        sync: false
+        fromService:
+          name: clipping-project
+          type: web
+          envVarKey: SUPABASE_SERVICE_KEY
       - key: SUPABASE_BUCKET
-        sync: false
+        fromService:
+          name: clipping-project
+          type: web
+          envVarKey: SUPABASE_BUCKET
       - key: CLIPPING_STORAGE_PREFIX
         value: clipping-project
       - key: RIO_CORPUS_FETCH_WORKERS
@@ -76,14 +72,20 @@ services:
         value: 3.14.3
       - key: CLIPPING_BASE_URL
         value: https://clipping-project.onrender.com
-      - key: RIO_CORPUS_CRON_TOKEN
-        sync: false
+      - fromGroup: clipping-rio-corpus-shared
 
 databases:
   - name: clipping-rio-corpus
     databaseName: clipping_rio_corpus
-    user: clipping_rio_corpus
+    user: clipping_rio_corpus_user
+    postgresMajorVersion: "16"
     plan: basic-1gb
     diskSizeGB: 10
     region: virginia
     ipAllowList: []
+
+envVarGroups:
+  - name: clipping-rio-corpus-shared
+    envVars:
+      - key: RIO_CORPUS_CRON_TOKEN
+        generateValue: true
