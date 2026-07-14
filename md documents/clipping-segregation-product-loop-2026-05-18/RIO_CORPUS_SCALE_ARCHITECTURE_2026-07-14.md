@@ -65,3 +65,26 @@ hospitality and visit intent are dimensions assigned after collection.
 The current operational target is 200,000 unique `confirmed + probable`
 articles, 85% with real body, 90% direct URL resolution, 80% page/API dates and
 90% geography precision/recall on a stratified human sample.
+
+## Live Deployment State - 2026-07-14
+
+- Commits `423273e` and `bc35294` are live on the existing Render web service.
+- Managed PostgreSQL `clipping-rio-corpus` is available in Virginia, but the
+  web service does not yet have `RIO_CORPUS_DATABASE_URL`; `/healthz` therefore
+  reports `rioCorpus.configured=false` and database metrics show zero active
+  application connections.
+- The existing web service predates the Blueprint. Pushing `render.yaml` did
+  not create or attach the declared worker and cron automatically. They must be
+  created by applying the Blueprint or from the Render dashboard, with the
+  database and existing Supabase secrets linked to the worker.
+- No new Rio corpus job, source-run, observation or article has been created.
+  This is intentional: the infrastructure and password gates remain closed.
+- The logged-out production boundary passed all 32 checks, including every new
+  Rio API. A public demo session received `403 rio_economic_profile_required`
+  from status, source, corpus, coverage and audit endpoints.
+- The admin password change/relogin/restoration smoke remains pending because
+  no current plaintext admin credential is available in the operator shell.
+
+The next valid action is infrastructure attachment, followed by the password
+smoke and the three canaries. Do not infer collection progress from deployed
+code alone.

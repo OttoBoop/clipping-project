@@ -14228,3 +14228,31 @@ Do not start the historical backfill until the web service has the managed
 database link, the standard worker and cron are running, the password smoke has
 restored the original credential, and the three canaries have clean or explicit
 coverage states.
+
+### Live Deploy And Boundary Proof
+
+Commits `423273e` and `bc35294` were pushed to `master`; Render deploy
+`dep-d9b8lhfaqgkc73c5eho0` finished `live` at 2026-07-14T19:17:31Z.
+
+The production logged-out smoke passed 32/32 checks. It proved `401` on all
+private Rio reads, `401` on the unauthenticated scheduler, `404` on raw data
+paths and rejection of every anonymous mutation. A public demo login also
+received `403 rio_economic_profile_required` from all five Rio corpus reads.
+
+Current `/healthz` truth:
+
+```text
+rioCorpus.configured=false
+schemaVersion=rio_corpus_v1
+sourceRegistryVersion=rio_corpus_sources_v1
+enabledSources=10
+storage.enabled=true
+```
+
+The managed PostgreSQL is `available`, but metrics show zero active application
+connections. The pre-existing standalone web service was not Blueprint-linked,
+so the committed `render.yaml` did not attach the database or create the worker
+and cron. No corpus job or canary was started, and no candidate/article count
+is being claimed. The remaining external actions are to attach the internal
+database URL, create the standard worker and five-minute cron with shared
+secrets, then run the real admin password smoke using the current credential.
