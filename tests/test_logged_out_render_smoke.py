@@ -52,7 +52,7 @@ def test_default_logged_out_smoke_passes_expected_boundary():
         (endpoint.method, endpoint.path): (
             endpoint.status,
             {"detail": endpoint.detail} if endpoint.detail else {},
-            "Acessar clipping Senha de acesso" if endpoint.path == "/" else "{}",
+            'Acessar clipping id="loginButton"' if endpoint.path == "/" else "{}",
             "application/json",
         )
         for endpoint in smoke.DEFAULT_ENDPOINTS
@@ -63,7 +63,7 @@ def test_default_logged_out_smoke_passes_expected_boundary():
             "loginConfigured": True,
             "viewerAuthConfigured": True,
             "viewerProfilesConfigured": True,
-            "demoViewerConfigured": False,
+            "demoViewerConfigured": True,
             "missingConfig": [],
         },
         "{}",
@@ -107,7 +107,7 @@ def test_health_requires_viewer_configuration():
                     "loginConfigured": True,
                     "viewerAuthConfigured": False,
                     "viewerProfilesConfigured": True,
-                    "demoViewerConfigured": False,
+                    "demoViewerConfigured": True,
                     "missingConfig": ["CLIPPING_VIEWER_PASSWORDS"],
                 },
                 "{}",
@@ -127,7 +127,7 @@ def test_login_page_requires_expected_markers():
 
     check = quiet_check(
         client,
-        smoke.ExpectedEndpoint("/", 200, markers=("Acessar clipping", "Senha de acesso")),
+        smoke.ExpectedEndpoint("/", 200, markers=("Acessar clipping", 'id="loginButton"')),
     )
 
     assert check.ok is False
@@ -171,6 +171,19 @@ def test_logged_out_operator_mutation_rejection_is_checked():
         "/api/export": "admin_login_required",
         "/api/categories": "viewer_login_required",
         "/api/classifications": "viewer_login_required",
+    }
+
+
+def test_logged_out_rio_corpus_boundary_is_checked():
+    rio_checks = [endpoint for endpoint in smoke.DEFAULT_ENDPOINTS if endpoint.path.startswith("/api/rio/")]
+
+    assert {endpoint.path: (endpoint.method, endpoint.detail) for endpoint in rio_checks} == {
+        "/api/rio/status": ("GET", "viewer_login_required"),
+        "/api/rio/sources": ("GET", "viewer_login_required"),
+        "/api/rio/corpus": ("GET", "viewer_login_required"),
+        "/api/rio/coverage": ("GET", "viewer_login_required"),
+        "/api/rio/audit": ("GET", "viewer_login_required"),
+        "/api/rio/schedule": ("POST", "rio_corpus_scheduler_auth_required"),
     }
 
 
@@ -225,7 +238,7 @@ def test_preflight_retries_transient_health_before_smoke(monkeypatch=None):
                         "loginConfigured": True,
                         "viewerAuthConfigured": True,
                         "viewerProfilesConfigured": True,
-                        "demoViewerConfigured": False,
+                        "demoViewerConfigured": True,
                         "missingConfig": [],
                     },
                     "{}",

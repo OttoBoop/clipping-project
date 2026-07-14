@@ -51,7 +51,7 @@ class CheckResult:
 
 DEFAULT_ENDPOINTS = (
     ExpectedEndpoint("/healthz", 200),
-    ExpectedEndpoint("/", 200, markers=("Acessar clipping", "Senha de acesso")),
+    ExpectedEndpoint("/", 200, markers=("Acessar clipping", 'id="loginButton"')),
     ExpectedEndpoint(
         "/api/login",
         401,
@@ -72,6 +72,11 @@ DEFAULT_ENDPOINTS = (
     ExpectedEndpoint("/api/reports/rio-economic-topic", 401, "viewer_login_required"),
     ExpectedEndpoint("/api/update/status", 401, "viewer_login_required"),
     ExpectedEndpoint("/api/update/live-results?scope=base&limit=240", 401, "viewer_login_required"),
+    ExpectedEndpoint("/api/rio/status", 401, "viewer_login_required"),
+    ExpectedEndpoint("/api/rio/sources", 401, "viewer_login_required"),
+    ExpectedEndpoint("/api/rio/corpus", 401, "viewer_login_required"),
+    ExpectedEndpoint("/api/rio/coverage", 401, "viewer_login_required"),
+    ExpectedEndpoint("/api/rio/audit", 401, "viewer_login_required"),
     ExpectedEndpoint("/api/targets", 401, "viewer_login_required"),
     ExpectedEndpoint("/api/categories", 401, "viewer_login_required"),
     ExpectedEndpoint("/api/classifications", 401, "viewer_login_required"),
@@ -84,6 +89,13 @@ DEFAULT_ENDPOINTS = (
     ExpectedEndpoint("/api/update/cancel", 401, "admin_login_required", method="POST", body={}),
     ExpectedEndpoint("/api/update/resume", 401, "admin_login_required", method="POST", body={"job_id": "logged-out-smoke"}),
     ExpectedEndpoint("/api/export", 401, "admin_login_required", method="POST", body={}),
+    ExpectedEndpoint(
+        "/api/rio/schedule",
+        401,
+        "rio_corpus_scheduler_auth_required",
+        method="POST",
+        body={},
+    ),
     ExpectedEndpoint(
         "/api/targets",
         401,
@@ -173,7 +185,7 @@ def health_flags_ok(body: Any) -> tuple[bool, str]:
         "loginConfigured": True,
         "viewerAuthConfigured": True,
         "viewerProfilesConfigured": True,
-        "demoViewerConfigured": False,
+        "demoViewerConfigured": True,
         "missingConfig": [],
     }
     mismatches = {
@@ -185,7 +197,7 @@ def health_flags_ok(body: Any) -> tuple[bool, str]:
         return False, f"health mismatches={mismatches}"
     return True, (
         "loginConfigured=true viewerAuthConfigured=true "
-        "viewerProfilesConfigured=true demoViewerConfigured=false missingConfig=[]"
+        "viewerProfilesConfigured=true demoViewerConfigured=true missingConfig=[]"
     )
 
 
