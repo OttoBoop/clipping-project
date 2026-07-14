@@ -461,25 +461,25 @@ def test_viewer_cannot_widen_live_results_or_write_admin_actions(monkeypatch, tm
         login_viewer(client, "viewer-shakira")
         all_results = client.get("/api/update/live-results")
         widened = client.get("/api/update/live-results?target_key=flavio_valle")
-        # Admin-only ops (job control, exports, categories, classifications,
-        # manual-story): still require_admin → viewer hits 401.
+        # Admin-only ops (job control, exports, manual-story): still
+        # require_admin → viewer hits 401.
         admin_only_attempts = [
             client.post("/api/update/start", json={"preset": "rapido"}),
             client.post("/api/update/resume", json={"job_id": "job"}),
             client.post("/api/update/cancel"),
             client.post("/api/export"),
-            client.post("/api/categories", json={"name": "Teste"}),
-            client.post("/api/classifications", json={"article_id": 1, "target_key": "shakira"}),
             client.post("/api/manual-story", json=manual_story_payload(target_keys=["shakira"])),
         ]
-        # Target mutation endpoints (Goal 5 phase 2, 2026-05-20):
+        # Target + classification mutation endpoints:
         # - require_viewer now passes for authenticated viewers
         # - CSRF is missing in this test client → 403 csrf_check_failed
-        target_attempts_without_csrf = [
+        viewer_write_attempts_without_csrf = [
             client.post("/api/targets", json={"display_name": "Ana Teste"}),
             client.patch("/api/targets/ana_teste", json={"display_name": "Ana Nova"}),
             client.post("/api/targets/ana_teste/archive", json={"reason": "Duplicado."}),
             client.post("/api/targets/ana_teste/restore"),
+            client.post("/api/categories", json={"name": "Teste"}),
+            client.post("/api/classifications", json={"article_id": 1, "target_key": "shakira"}),
         ]
 
     assert all_results.status_code == 200
@@ -489,14 +489,132 @@ def test_viewer_cannot_widen_live_results_or_write_admin_actions(monkeypatch, tm
     # Admin-only endpoints: viewer rejected before CSRF check.
     assert [r.status_code for r in admin_only_attempts] == [401] * len(admin_only_attempts)
     assert [r.json()["detail"] for r in admin_only_attempts] == ["admin_login_required"] * len(admin_only_attempts)
-    # Target endpoints: viewer is authenticated, but mutations require CSRF.
-    # Without a CSRF token in this client, all four return 403 csrf_check_failed,
+    # Viewer write endpoints are authenticated, but mutations require CSRF.
+    # Without a CSRF token in this client, all return 403 csrf_check_failed,
     # which still prevents any write — verified by assert_empty_db below.
-    assert [r.status_code for r in target_attempts_without_csrf] == [403] * len(target_attempts_without_csrf), (
-        f"target write attempts without CSRF should all be 403, got "
-        f"{[r.status_code for r in target_attempts_without_csrf]}"
+    assert [r.status_code for r in viewer_write_attempts_without_csrf] == [403] * len(viewer_write_attempts_without_csrf), (
+        f"viewer write attempts without CSRF should all be 403, got "
+        f"{[r.status_code for r in viewer_write_attempts_without_csrf]}"
     )
-    assert [r.json()["detail"] for r in target_attempts_without_csrf] == ["csrf_check_failed"] * 4
+    assert [r.json()["detail"] for r in viewer_write_attempts_without_csrf] == ["csrf_check_failed"] * 6
+    assert_empty_db(db_file)
+
+
+def test_viewer_can_classify_own_target_and_create_categories(monkeypatch, tmp_path):
+    app, db_file = load_test_app(monkeypatch, tmp_path)
+
+    with TestClient(app) as client:
+        login_viewer(client, "viewer-shakira")
+        csrf = client.get("/api/csrf").json()["csrf"]
+        category = client.post(
+            "/api/categories",
+            headers=csrf_header(csrf),
+            json={"name": "Relevante"},
+        )
+        saved = client.post(
+            "/api/classifications",
+            headers=csrf_header(csrf),
+            json={
+                "article_id": 20,
+                "target_key": "shakira",
+                "target_name": "Shakira",
+                "article_sentiment": "positive",
+                "target_sentiment": "neutral",
+                "categories": ["Relevante", "Show"],
+            },
+        )
+        listed = client.get("/api/classifications")
+
+    assert category.status_code == 200
+    assert category.json()["name"] == "Relevante"
+    assert saved.status_code == 200
+    saved_payload = saved.json()
+    assert saved_payload["target_key"] == "shakira"
+    assert saved_payload["article_sentiment"] == "positive"
+    assert saved_payload["target_sentiment"] == "neutral"
+    assert saved_payload["categories"] == ["Relevante", "Show"]
+    assert listed.status_code == 200
+    listed_rows = listed.json()["classifications"]
+    assert len(listed_rows) == 1
+    listed_row = listed_rows[0]
+    assert listed_row["article_id"] == 20
+    assert listed_row["target_key"] == "shakira"
+    assert listed_row["article_sentiment"] == "positive"
+    assert listed_row["target_sentiment"] == "neutral"
+    assert listed_row["centimetragem"] is None
+    assert sorted(listed_row["categories"]) == ["Relevante", "Show"]
+    with sqlite3.connect(db_file) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM mentions WHERE target_key = 'shakira'").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM classifications").fetchone()[0] == 1
+        names = [row[0] for row in conn.execute("SELECT name FROM categories ORDER BY name COLLATE NOCASE")]
+    assert {"Relevante", "Show"} <= set(names)
+
+
+def test_category_options_hide_legacy_political_labels_but_keep_saved_history(monkeypatch, tmp_path):
+    app, _ = load_test_app(monkeypatch, tmp_path)
+
+    with TestClient(app) as client:
+        login_viewer(client, "viewer-shakira")
+        csrf = client.get("/api/csrf").json()["csrf"]
+        saved = client.post(
+            "/api/classifications",
+            headers=csrf_header(csrf),
+            json={
+                "article_id": 20,
+                "target_key": "shakira",
+                "target_name": "Shakira",
+                "categories": ["Gabinete", "Mandato"],
+            },
+        )
+        category_options = client.get("/api/categories")
+        classifications = client.get("/api/classifications")
+
+    assert saved.status_code == 200
+    assert category_options.status_code == 200
+    option_names = {row["name"] for row in category_options.json()["categories"]}
+    assert {"Institucional", "Reputação"} <= option_names
+    assert "Gabinete" not in option_names
+    assert "Mandato" not in option_names
+    assert classifications.status_code == 200
+    assert set(classifications.json()["classifications"][0]["categories"]) == {"Gabinete", "Mandato"}
+
+
+def test_admin_can_classify_any_target(monkeypatch, tmp_path):
+    app, db_file = load_test_app(monkeypatch, tmp_path)
+
+    with TestClient(app) as client:
+        csrf = login(client)
+        response = client.post(
+            "/api/classifications",
+            headers=csrf_header(csrf),
+            json={
+                "article_id": 10,
+                "target_key": "flavio_valle",
+                "target_name": "Flavio Valle",
+                "target_sentiment": "positive",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["target_key"] == "flavio_valle"
+    with sqlite3.connect(db_file) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM classifications").fetchone()[0] == 1
+
+
+def test_viewer_classification_rejects_out_of_scope_target(monkeypatch, tmp_path):
+    app, db_file = load_test_app(monkeypatch, tmp_path)
+
+    with TestClient(app) as client:
+        login_viewer(client, "viewer-shakira")
+        csrf = client.get("/api/csrf").json()["csrf"]
+        response = client.post(
+            "/api/classifications",
+            headers=csrf_header(csrf),
+            json={"article_id": 10, "target_key": "flavio_valle", "target_name": "Flavio Valle"},
+        )
+
+    assert response.status_code == 403
+    assert response.json()["detail"]["error"] == "target_out_of_scope"
     assert_empty_db(db_file)
 
 
@@ -504,6 +622,23 @@ def test_rio_economic_topic_report_is_scoped_to_rio_profile(monkeypatch, tmp_pat
     app, _ = load_test_app(monkeypatch, tmp_path)
     app_module = importlib.import_module("web_app.app")
     monkeypatch.setattr(app_module, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        app_module,
+        "live_results_for_job",
+        lambda **_kwargs: {
+            "jobId": "",
+            "status": "base",
+            "items": [
+                {
+                    "articleId": 99,
+                    "title": "Rio recebe turistas internacionais",
+                    "targetKeys": ["rio_economico"],
+                    "targetLabels": {"rio_economico": "Turismo na cidade do Rio"},
+                }
+            ],
+            "count": 1,
+        },
+    )
     report_path = write_rio_topic_report_fixture(tmp_path)
 
     with TestClient(app) as client:
@@ -527,6 +662,8 @@ def test_rio_economic_topic_report_is_scoped_to_rio_profile(monkeypatch, tmp_pat
     assert rio_payload["meta"]["target_row_approved"] is False
     assert rio_payload["meta"]["writes_production_db"] is False
     assert rio_payload["stories"][0]["title"] == "Prestacao de contas da Prefeitura do Rio"
+    assert rio_payload["live"]["count"] == 1
+    assert rio_payload["live"]["items"][0]["targetKeys"] == ["rio_economico"]
     assert admin.status_code == 200
     assert admin.json()["meta"]["viewerProfile"] == "admin"
 
@@ -1070,6 +1207,7 @@ def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
         "viewerProfilesConfigured",
         "missingConfig",
         "storage",
+        "rioCorpus",
         "localWritesAllowed",
         "job",
         "shakiraLoopVersion",
@@ -1136,6 +1274,33 @@ def test_empty_demo_viewer_login_works_without_viewer_password_env(monkeypatch, 
     # endpoint but CSRF is missing).
     assert write_response.status_code == 403
     assert write_response.json()["detail"] == "csrf_check_failed"
+
+
+def test_public_demo_cannot_write_classifications_or_categories(monkeypatch, tmp_path):
+    app, db_file = load_test_app(monkeypatch, tmp_path)
+    monkeypatch.setenv("CLIPPING_DEMO_PUBLIC", "1")
+
+    with TestClient(app) as client:
+        login_response = client.post("/api/login", json={"password": "demo-cliente"})
+        csrf = client.get("/api/csrf").json()["csrf"]
+        category = client.post(
+            "/api/categories",
+            headers=csrf_header(csrf),
+            json={"name": "Demo"},
+        )
+        classification = client.post(
+            "/api/classifications",
+            headers=csrf_header(csrf),
+            json={"article_id": 10, "target_key": "flavio_valle", "target_name": "Flavio Valle"},
+        )
+
+    assert login_response.status_code == 200
+    assert login_response.json() == {"ok": True, "role": "viewer", "profile": "demo_cliente"}
+    assert category.status_code == 403
+    assert category.json()["detail"]["error"] == "demo_readonly"
+    assert classification.status_code == 403
+    assert classification.json()["detail"]["error"] == "demo_readonly"
+    assert_empty_db(db_file)
 
 
 def test_empty_demo_password_disabled_when_real_viewer_passwords_exist(monkeypatch, tmp_path):
@@ -1647,7 +1812,13 @@ def test_manual_story_export_bundle_can_be_parsed_for_merge_compatibility(monkey
 
 def test_public_dashboard_wording_contract():
     html = Path("index.html").read_text(encoding="utf-8")
-    assert "Clipping do gabinete" in html
+    assert "<title>Clipping multi-cliente</title>" in html
+    assert "Painel de monitoramento" in html
+    assert "Use os filtros para incluir ou remover nomes do acompanhamento deste cliente." in html
+    assert "Clipping do gabinete" not in html
+    assert "Flávio Valle" not in html
+    assert "flavio" not in html.lower()
+    assert "Gabinete" not in html
     assert "Rodar atualização" in html
     assert "Notícias disponíveis para consulta" in html
     assert "Textos completos" in html
@@ -1657,7 +1828,7 @@ def test_public_dashboard_wording_contract():
     assert "Ajustar busca" in html
     assert "Termos relacionados" in html
     assert "Correspondências exatas" in html
-    assert "Gerenciar nomes secundários" in html
+    assert "Gerenciar nomes acompanhados" in html
     assert 'type="date"' not in html
     assert "Data inicial (DD/MM/AAAA)" in html
     assert "Data final (DD/MM/AAAA)" in html
@@ -1682,3 +1853,12 @@ def test_public_runner_javascript_contract():
     assert "refreshManageTargets" in script
     assert "disabled = target.primary" not in script
     assert "+ checked + disabled" not in script
+    for script_path in (Path("assets/clipping.js"), Path("tools/pages_assets/clipping.js")):
+        js = script_path.read_text(encoding="utf-8")
+        assert "let classificationVisible = true;" in js
+        assert "let classificationWritable = apiAvailable;" in js
+        assert 'if (!classificationVisible) return "";' in js
+        assert "classificationWritable = apiAvailable && canMutate;" in js
+        assert 'disabled title="Modo somente leitura"' in js
+        assert '<details class="cls-editor"><summary>Classificar este artigo</summary>' in js
+        assert "if (!editorEnabled)" not in js

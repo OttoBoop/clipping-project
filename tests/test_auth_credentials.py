@@ -176,3 +176,75 @@ def test_change_password_endpoint_viewer_happy_path(monkeypatch, tmp_path):
     assert auth._verify_password("nova-flavio-2026", auth.viewer_passwords()["flavio"]) is True
     # Other viewers still present (from env migration), now stored as hashes.
     assert auth._verify_password("viewer-shakira", auth.viewer_passwords()["shakira"]) is True
+
+
+def test_change_password_endpoint_rejects_without_durable_storage(monkeypatch, tmp_path):
+    auth, app_module, creds_path = reload_auth_and_app(monkeypatch, tmp_path)
+    monkeypatch.delenv("CLIPPING_ALLOW_LOCAL_WRITES", raising=False)
+    monkeypatch.setattr(app_module.artifact_store, "enabled", False)
+    client = TestClient(app_module.app)
+    csrf = login_and_csrf(client, "test-password")
+
+    resp = client.post(
+        "/api/change-password",
+        headers={"X-CSRF-Token": csrf},
+        json={"old_password": "test-password", "new_password": "nova-admin-2026"},
+    )
+
+    assert resp.status_code == 503
+    body = resp.json()
+    assert body["error"] == "password_change_not_persisted"
+    assert "armazenamento durável" in body["message"]
+    assert not creds_path.exists(), "failed durable change must not leave a local shadow password"
+    assert auth.check_password("test-password") is True
+    assert auth.check_password("nova-admin-2026") is False
+
+
+def test_change_password_endpoint_requires_credentials_artifact_upload(monkeypatch, tmp_path):
+    auth, app_module, creds_path = reload_auth_and_app(monkeypatch, tmp_path)
+    monkeypatch.delenv("CLIPPING_ALLOW_LOCAL_WRITES", raising=False)
+    monkeypatch.setattr(app_module.artifact_store, "enabled", True)
+    upload_calls = []
+
+    def fake_upload_current_artifacts(*, manifest=None, job_id=None):
+        upload_calls.append({"manifest": manifest, "job_id": job_id})
+        return [app_module.CREDENTIALS_ARTIFACT_PATH]
+
+    monkeypatch.setattr(app_module.artifact_store, "upload_current_artifacts", fake_upload_current_artifacts)
+    client = TestClient(app_module.app)
+    csrf = login_and_csrf(client, "test-password")
+
+    resp = client.post(
+        "/api/change-password",
+        headers={"X-CSRF-Token": csrf},
+        json={"old_password": "test-password", "new_password": "nova-admin-2026"},
+    )
+
+    assert resp.status_code == 200, resp.text
+    assert upload_calls[0]["manifest"]["kind"] == "credentials-changed"
+    assert auth.check_password("nova-admin-2026") is True
+    assert auth.check_password("test-password") is False
+    assert creds_path.exists()
+
+
+def test_change_password_endpoint_restores_when_credentials_upload_missing(monkeypatch, tmp_path):
+    auth, app_module, creds_path = reload_auth_and_app(monkeypatch, tmp_path)
+    monkeypatch.delenv("CLIPPING_ALLOW_LOCAL_WRITES", raising=False)
+    monkeypatch.setattr(app_module.artifact_store, "enabled", True)
+    monkeypatch.setattr(app_module.artifact_store, "upload_current_artifacts", lambda **_kwargs: ["data/targets.json"])
+    client = TestClient(app_module.app)
+    csrf = login_and_csrf(client, "test-password")
+
+    resp = client.post(
+        "/api/change-password",
+        headers={"X-CSRF-Token": csrf},
+        json={"old_password": "test-password", "new_password": "nova-admin-2026"},
+    )
+
+    assert resp.status_code == 503
+    body = resp.json()
+    assert body["error"] == "password_change_not_persisted"
+    assert "credenciais" in body["message"]
+    assert not creds_path.exists(), "upload failure should restore the previous credentials file state"
+    assert auth.check_password("test-password") is True
+    assert auth.check_password("nova-admin-2026") is False

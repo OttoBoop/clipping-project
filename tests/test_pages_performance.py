@@ -405,7 +405,7 @@ class TestFunctionalSanity:
         try:
             page.goto(f"{local_server}/index.html", wait_until="domcontentloaded")
             page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)
-            page.locator("details.add-target-box").evaluate("el => { el.open = true; }")
+            page.locator("details.add-target-box:has(#addTargetForm)").evaluate("el => { el.open = true; }")
             page.fill('#addTargetForm input[name="display_name"]', "Ana Teste")
             page.click('#addTargetForm button[type="submit"]')
             page.wait_for_selector("#addTargetMessage.is-error", timeout=10000)
@@ -459,7 +459,7 @@ class TestFunctionalSanity:
         try:
             page.goto(f"{local_server}/index.html", wait_until="domcontentloaded")
             page.wait_for_function("document.getElementById('loadingState')?.hidden === true", timeout=30000)
-            page.locator("details.add-target-box").evaluate("el => { el.open = true; }")
+            page.locator("details.add-target-box:has(#addTargetForm)").evaluate("el => { el.open = true; }")
             page.fill('#addTargetForm input[name="display_name"]', "ab")
             page.click('#addTargetForm button[type="submit"]')
             page.wait_for_selector("#addTargetMessage.is-error", timeout=10000)

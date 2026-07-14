@@ -1,71 +1,76 @@
-# Current Short-Term Loop - Functional Password-Gated Segregation
+# Current Short-Term Loop - Corpus Rio Em Escala
 
-_Created 2026-05-18 by Atlas/Codex. This loop is derived from
+_Superseded 2026-07-14. This loop is derived from the Rio corpus decision in
 `LONG_TERM_GOALS.md`._
 
 ## Purpose
 
-Create the first real segregation layer on the existing Render/FastAPI app.
-Do not create a new repo or new site in this loop.
+Keep the existing Render/FastAPI site and `rio_economico` profile while moving
+`rio_city_corpus` to a durable, high-volume corpus subsystem. Do not start a
+full historical backfill until the online funnel reports truthful URL, body,
+date and coverage states.
 
-The user-visible failures this loop addresses:
+The failures this loop addresses:
 
-- the public dashboard and JSON payloads can mix unrelated projects;
-- growing target/filter lists create visual pollution;
-- a sellable product cannot expose one client's data to another;
-- UI controls for targets and updates must not pretend to be connected if they
-  are not safe for a scoped client profile.
+- query terms currently gate sitemap ingestion before article bodies are read;
+- snippets, feed dates and unresolved URLs inflate success counters;
+- collectors can stop early and still appear complete;
+- a year-long job runs inside the web service and checkpoints the full SQLite;
+- the Rio dashboard depends on a static export capped below the corpus target.
 
 ## Required System Connections To Prove
 
-Use `SYSTEM_REVIEW_CHECKLIST.md` before and after any patch. A fix is not
-accepted until the loop proves:
+This loop is not accepted until it proves:
 
-1. logged-out users cannot fetch private dashboard data or raw texts;
-2. login creates a viewer profile with explicit scope;
-3. the server filters target metadata, stories, articles, raw texts, live
-   results, and classifications by that scope;
-4. direct API calls cannot widen scope by changing query params;
-5. client profiles see only relevant filters and a reduced visual surface;
-6. operator/admin workflows remain available for Otavio;
-7. unsupported client actions are hidden or rejected server-side;
-8. tests cover at least Flavio, Shakira, and Rio economic profile boundaries.
+1. only admin and `rio_economico` can read Rio corpus APIs;
+2. `POST /api/update/start` enqueues source windows in PostgreSQL instead of a
+   daemon thread when scope/topic is `rio_economico/rio_city_corpus`;
+3. workers claim rows with leases and `FOR UPDATE SKIP LOCKED`, retry safely,
+   and never call partial/capped work complete;
+4. source observations, fetch attempts, content hashes, dates, geography and
+   dimensions are independently auditable;
+5. city-focused archives are not keyword-filtered before body extraction;
+6. the panel uses paginated Rio APIs and shows throughput, last progress,
+   retries, caps and failures;
+7. password change is proven live by change, relogin and restoration;
+8. a recent day, a 2011 day and a 2011 month are monitored on Render before the
+   2011 annual replay is accepted.
 
 ## Initial Technical Sprint
 
-Implement the simplest functional version:
+Implementation order:
 
-- keep the existing FastAPI app as the entrypoint;
-- add viewer-profile sessions alongside the existing admin session;
-- serve `assets/clipping-data.json` and `assets/clipping-raw-texts.json`
-  through authenticated, scoped handlers instead of open static JSON;
-- gate read APIs behind a logged-in session and filter them by profile;
-- gate update, export, target mutation, category creation, and classification
-  writes to admin/operator sessions;
-- hide runner, target management, and classification editor controls for
-  non-admin viewer profiles;
-- add focused regression tests for auth and scoping.
+- version the source registry and geographic evidence rules;
+- add PostgreSQL schema, queue, worker and authenticated scheduler;
+- add content-addressed gzip objects in the existing Supabase Storage;
+- intercept only the Rio city topic, preserving the legacy profiles;
+- expose paginated corpus, coverage, audit and truthful status endpoints;
+- import existing Rio SQLite rows idempotently as `legacy_sqlite`;
+- update the Rio panel and add focused contract tests;
+- deploy, run the real password smoke and then run monitored canaries.
 
 ## Expected Commit Shape
 
-Use small, path-limited commits:
+Use path-limited commits that preserve inherited dirty work:
 
-1. docs-only loop memory;
-2. auth/profile and scoped payload implementation;
-3. frontend hide/relabel for viewer profiles;
-4. tests and work-log update.
+1. docs, source registry and evidence model;
+2. PostgreSQL queue/storage/worker;
+3. API and profile segregation;
+4. panel and tests;
+5. Render resources, canaries and work-log evidence.
 
 Do not include inherited pycache, screenshots, moved legacy docs, or unrelated
 dirty files.
 
 ## Stop Conditions
 
-Stop only if:
+Do not start broad backfill if:
 
-- a dirty file required for the loop contains conflicting uncommitted work that
-  cannot be safely merged;
-- another active agent owns the exact file and a coordination note is required;
-- tests reveal that scoped payloads cannot be produced without a broader data
-  model migration.
+- PostgreSQL/worker/storage is not configured on Render;
+- the password smoke cannot restore the original credential;
+- any source window can record partial work as exhausted;
+- final URL, body and page/API date cannot be sampled independently;
+- no useful checkpoint has appeared for 15 minutes.
 
-If blocked, write the block in `WORK_LOG.md` and preserve all unblocked work.
+If blocked, record the exact source/window/state in `WORK_LOG.md` and preserve
+all observations already collected.

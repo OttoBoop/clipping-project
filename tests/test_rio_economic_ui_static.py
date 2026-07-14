@@ -22,7 +22,12 @@ def test_rio_economic_panel_fetch_is_profile_gated():
 
     assert 'app.dataset.clippingSessionProfile' in js
     assert 'sessionProfile() === "rio_economico"' in js
-    assert 'apiFetch("/api/reports/rio-economic-topic"' in js
+    assert 'getJson("/api/rio/status")' in js
+    assert 'getJson("/api/rio/corpus?page=1&page_size=8")' in js
+    assert 'getJson("/api/rio/coverage?page=1&page_size=8")' in js
+    assert "renderRioEconomicLiveItem" in js
+    assert "report.live.items" in js
+    assert "Monitoramento vivo" in js
     assert "meta.indicator_policy_counts || meta.date_quality_policy_counts" in js
     assert "story.indicator_policy || story.date_quality_policy" in js
     assert "viewerCanSeeRioReport()" in js

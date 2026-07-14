@@ -136,13 +136,13 @@ def main():
     expect(s, 200, "list classifications")
     print(f"     count: {len(body.get('classifications', [])) if isinstance(body, dict) else 'n/a'}")
 
-    print("\n8. viewer POST — espera 401")
+    print("\n8. viewer POST fora do escopo — espera 403")
     viewer = make_opener()
     request(viewer, "POST", f"{base}/api/login", {"password": "flavio-gabinete-2026"})
     v_csrf = request(viewer, "GET", f"{base}/api/csrf")[1].get("csrf", "")
     s, body = request(viewer, "POST", f"{base}/api/classifications",
                        {"article_id": 1, "target_key": "shakira"}, csrf=v_csrf)
-    expect(s, 401, "viewer cannot upsert classification")
+    expect(s, 403, "viewer cannot classify out-of-scope target")
 
     print("\nSmoke OK — /api/classifications input gates verified.")
     print("(no classification was actually upserted; this smoke is non-destructive)")

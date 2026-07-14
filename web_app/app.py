@@ -70,9 +70,12 @@ from .segmentation import (
     viewer_profiles_configured,
 )
 from .storage_bridge import artifact_store, sqlite_file_summary
+from .rio_corpus import RioCorpusNotConfigured, rio_corpus
+from .rio_topics import RIO_CITY_TOPIC, RIO_ECONOMICO_SCOPE, resolve_rio_topic_request
 from pipeline.database import ClippingDB
 
 VALID_SENTIMENTS = {"positive", "negative", "neutral"}
+HIDDEN_CATEGORY_NAMES = {"Gabinete", "Mandato"}
 
 BASE_CATEGORIES = (
     "Causa Animal",
@@ -80,10 +83,10 @@ BASE_CATEGORIES = (
     "Conservação",
     "Economia",
     "Esporte e Lazer",
-    "Gabinete",
-    "Mandato",
+    "Institucional",
     "Meio Ambiente",
     "Ordenamento",
+    "Reputação",
     "Sancionado",
     "Saúde",
     "Segurança",
@@ -117,6 +120,7 @@ def restore_remote_sqlite_if_local_empty() -> dict[str, Any]:
 ACTIVE_TARGET_MUTATION_STATUSES = {"queued", "running", "exporting", "cancel_requested"}
 RIO_ECONOMIC_TOPIC_PROFILE = "rio_economico"
 RIO_ECONOMIC_TOPIC_REPORT_GLOB = "rio_economic_topic_report_*.json"
+CREDENTIALS_ARTIFACT_PATH = "data/clipping_credentials.json"
 
 
 def public_targets(*, include_archived: bool = False) -> dict[str, Any] | list[dict[str, Any]]:
@@ -187,6 +191,37 @@ def upload_targets_artifacts(kind: str, result: dict[str, Any], key: str) -> lis
     return artifact_store.upload_current_artifacts(
         manifest={"kind": kind, "result": result},
         job_id=f"{kind}-{safe_key}",
+    )
+
+
+def _credentials_file_snapshot(path) -> bytes | None:
+    try:
+        return path.read_bytes() if path.is_file() else None
+    except OSError:
+        return None
+
+
+def _restore_credentials_file_snapshot(path, snapshot: bytes | None) -> None:
+    try:
+        if snapshot is None:
+            if path.exists():
+                path.unlink()
+            return
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(snapshot)
+    except OSError:
+        pass
+
+
+def password_change_storage_error(message: str, suggestion: str) -> JSONResponse:
+    return JSONResponse(
+        status_code=503,
+        content={
+            "error": "password_change_not_persisted",
+            "message": message,
+            "field": "new_password",
+            "suggestion": suggestion,
+        },
     )
 
 
@@ -457,6 +492,18 @@ def effective_session_for(request: Request, session: dict[str, Any]) -> dict[str
     return {"sub": target, "role": "viewer", "profile": target, "exp": session.get("exp")}
 
 
+def require_rio_corpus_viewer(request: Request) -> dict[str, Any]:
+    session = require_viewer(request)
+    effective = effective_session_for(request, session)
+    if not is_admin_session(effective) and session_profile_key(effective) != RIO_ECONOMICO_SCOPE:
+        raise HTTPException(status_code=403, detail="rio_economic_profile_required")
+    return effective
+
+
+def is_rio_corpus_session(session: dict[str, Any]) -> bool:
+    return not is_admin_session(session) and session_profile_key(session) == RIO_ECONOMICO_SCOPE
+
+
 def read_json_file(path) -> dict[str, Any]:
     # OOM mitigation (2026-05-22): json.load(open(...)) avoids the
     # intermediate Python str that path.read_text() would build before
@@ -496,6 +543,7 @@ def scoped_rio_economic_topic_report(session: dict[str, Any]) -> dict[str, Any]:
                 "reportFile": report_path.name,
             }
         )
+    payload["live"] = live_results_for_job(scope="base", target_key=RIO_ECONOMIC_TOPIC_PROFILE, limit=40)
     return payload
 
 
@@ -662,14 +710,18 @@ async def change_password(request: Request) -> JSONResponse:
                 "suggestion": "Confira a senha atual e tente de novo.",
             },
         )
+    from . import auth as auth_module
+
+    if not artifact_store.enabled and not local_writes_allowed():
+        return password_change_storage_error(
+            "Senha não alterada: armazenamento durável de credenciais indisponível.",
+            "Configure o backup do Supabase ou habilite CLIPPING_ALLOW_LOCAL_WRITES=1 apenas para teste local.",
+        )
+    credentials_snapshot = _credentials_file_snapshot(auth_module.CREDENTIALS_PATH)
     try:
         if role == "admin":
-            from . import auth as auth_module
-
             auth_module.set_admin_password(new_password)
         else:
-            from . import auth as auth_module
-
             auth_module.set_viewer_password(profile, new_password)
     except ValueError as exc:
         return JSONResponse(
@@ -683,12 +735,18 @@ async def change_password(request: Request) -> JSONResponse:
         )
     if artifact_store.enabled:
         try:
-            artifact_store.upload_current_artifacts(
+            uploaded = artifact_store.upload_current_artifacts(
                 manifest={"kind": "credentials-changed", "role": role, "profile": profile},
                 job_id=f"credentials-{role}-{profile or 'admin'}",
             )
         except Exception:  # noqa: BLE001
-            pass
+            uploaded = []
+        if CREDENTIALS_ARTIFACT_PATH not in uploaded:
+            _restore_credentials_file_snapshot(auth_module.CREDENTIALS_PATH, credentials_snapshot)
+            return password_change_storage_error(
+                "Senha não alterada: o arquivo de credenciais não foi confirmado no backup.",
+                "Tente novamente; se repetir, verifique a configuração de storage antes de trocar senhas.",
+            )
     activity.record(
         "change_password",
         session=session,
@@ -719,6 +777,7 @@ def healthz() -> dict[str, Any]:
         "viewerProfilesConfigured": viewer_profiles_configured(),
         "missingConfig": missing_auth_config(),
         "storage": artifact_store.status(),
+        "rioCorpus": rio_corpus.health(check_database=False),
         "localWritesAllowed": local_writes_allowed(),
         "job": safe_current_status().get("status", "idle"),
         "shakiraLoopVersion": "2026-05-06-durable-source-ledger-wp-internal-v2",
@@ -726,9 +785,14 @@ def healthz() -> dict[str, Any]:
 
 
 @app.get("/api/update/status")
-def update_status(request: Request) -> dict[str, Any]:
+def update_status(request: Request, scope: str = "", job_id: str = "") -> dict[str, Any]:
     session = require_viewer(request)
     effective = effective_session_for(request, session)
+    if scope == RIO_ECONOMICO_SCOPE or is_rio_corpus_session(effective):
+        if not is_admin_session(effective) and session_profile_key(effective) != RIO_ECONOMICO_SCOPE:
+            raise HTTPException(status_code=403, detail="rio_economic_profile_required")
+        current = rio_corpus.status(job_id=job_id)
+        return {"current": current, "recent": [], "backend": "rio_corpus"}
     try:
         recent = recent_jobs(include_observability=False)
     except Exception:
@@ -756,6 +820,18 @@ def safe_current_status() -> dict[str, Any]:
 def update_live_results(request: Request, job_id: str = "", target_key: str = "", scope: str = "", limit: int = 60) -> dict[str, Any]:
     session = require_viewer(request)
     effective = effective_session_for(request, session)
+    if scope == RIO_ECONOMICO_SCOPE or target_key == RIO_ECONOMICO_SCOPE or is_rio_corpus_session(effective):
+        if not is_admin_session(effective) and session_profile_key(effective) != RIO_ECONOMICO_SCOPE:
+            raise HTTPException(status_code=403, detail="rio_economic_profile_required")
+        articles = rio_corpus.list_articles(page=1, page_size=max(1, min(limit, 200))) if rio_corpus.configured else {"items": [], "total": 0}
+        return {
+            "jobId": job_id,
+            "status": rio_corpus.status(job_id=job_id).get("status", "not_configured"),
+            "backend": "rio_corpus",
+            "count": len(articles.get("items") or []),
+            "total": articles.get("total", 0),
+            "items": articles.get("items") or [],
+        }
     data = live_results_for_job(job_id, target_key=target_key, scope=scope, limit=limit)
     return scoped_live_results(data, effective, requested_target_key=target_key)
 
@@ -773,7 +849,11 @@ async def start_update(request: Request) -> JSONResponse:
     require_csrf(request)
     payload = await read_json(request)
     try:
-        job = job_manager.start_update(payload, started_by="admin")
+        topic_config = resolve_rio_topic_request(payload)
+        if topic_config and topic_config.topic == RIO_CITY_TOPIC:
+            job = rio_corpus.start_job(payload, started_by="admin")
+        else:
+            job = job_manager.start_update(payload, started_by="admin")
     except JobConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
@@ -783,17 +863,106 @@ async def start_update(request: Request) -> JSONResponse:
     return JSONResponse(job)
 
 
+@app.get("/api/rio/status")
+def rio_corpus_status(request: Request, job_id: str = "") -> dict[str, Any]:
+    require_rio_corpus_viewer(request)
+    return rio_corpus.status(job_id=job_id)
+
+
+@app.get("/api/rio/sources")
+def rio_corpus_sources(request: Request) -> dict[str, Any]:
+    require_rio_corpus_viewer(request)
+    return rio_corpus.sources()
+
+
+@app.get("/api/rio/corpus")
+def rio_corpus_articles(
+    request: Request,
+    page: int = 1,
+    page_size: int = 50,
+    year: int | None = None,
+    source: str = "",
+    geography: str = "",
+    download_status: str = "",
+    dimension: str = "",
+) -> dict[str, Any]:
+    require_rio_corpus_viewer(request)
+    try:
+        return rio_corpus.list_articles(
+            page=page,
+            page_size=page_size,
+            year=year,
+            source=source,
+            geography=geography,
+            download_status=download_status,
+            dimension=dimension,
+        )
+    except RioCorpusNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/api/rio/coverage")
+def rio_corpus_coverage(
+    request: Request,
+    job_id: str = "",
+    page: int = 1,
+    page_size: int = 100,
+    year: int | None = None,
+    source_key: str = "",
+    status: str = "",
+) -> dict[str, Any]:
+    require_rio_corpus_viewer(request)
+    try:
+        return rio_corpus.coverage(
+            job_id=job_id,
+            page=page,
+            page_size=page_size,
+            year=year,
+            source_key=source_key,
+            status=status,
+        )
+    except RioCorpusNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/api/rio/audit")
+def rio_corpus_audit(request: Request, job_id: str = "", limit: int = 50) -> dict[str, Any]:
+    require_rio_corpus_viewer(request)
+    try:
+        return rio_corpus.audit_samples(job_id=job_id, limit=limit)
+    except RioCorpusNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.post("/api/rio/schedule")
+def rio_corpus_schedule(request: Request) -> JSONResponse:
+    expected = str(os.environ.get("RIO_CORPUS_CRON_TOKEN") or "").strip()
+    provided = str(request.headers.get("authorization") or "")
+    if not expected or not provided.startswith("Bearer ") or not hmac.compare_digest(provided[7:], expected):
+        raise HTTPException(status_code=401, detail="rio_corpus_scheduler_auth_required")
+    try:
+        return JSONResponse(rio_corpus.schedule_realtime(started_by="render_cron"))
+    except RioCorpusNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
 @app.post("/api/update/resume")
 async def resume_update(request: Request) -> JSONResponse:
     require_admin(request)
     require_csrf(request)
     payload = await read_json(request)
     try:
-        job = job_manager.resume_update(str(payload.get("job_id") or payload.get("jobId") or ""), started_by="admin")
+        requested_job_id = str(payload.get("job_id") or payload.get("jobId") or "")
+        if requested_job_id and rio_corpus.has_job(requested_job_id):
+            job = rio_corpus.resume_job(requested_job_id)
+        else:
+            job = job_manager.resume_update(requested_job_id, started_by="admin")
     except JobConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return JSONResponse(job)
 
 
@@ -802,11 +971,17 @@ async def cancel_update(request: Request) -> JSONResponse:
     require_admin(request)
     require_csrf(request)
     try:
-        cancel_helper = getattr(job_manager, "cancel_active", None) or getattr(job_manager, "cancel_update", None)
-        if not cancel_helper:
-            raise JobConflict("no_active_job")
-        job = cancel_helper()
+        payload = await read_json(request)
+        if str(payload.get("scope") or "") == RIO_ECONOMICO_SCOPE:
+            job = rio_corpus.cancel_job(str(payload.get("job_id") or payload.get("jobId") or ""))
+        else:
+            cancel_helper = getattr(job_manager, "cancel_active", None) or getattr(job_manager, "cancel_update", None)
+            if not cancel_helper:
+                raise JobConflict("no_active_job")
+            job = cancel_helper()
     except JobConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return JSONResponse(job)
 
@@ -865,7 +1040,12 @@ def get_csrf(request: Request) -> dict[str, Any]:
 @app.get("/api/categories")
 def list_classification_categories(request: Request) -> dict[str, Any]:
     require_viewer(request)
-    return {"categories": _classification_db().list_categories()}
+    categories = [
+        row
+        for row in _classification_db().list_categories()
+        if str(row.get("name") or "") not in HIDDEN_CATEGORY_NAMES
+    ]
+    return {"categories": categories}
 
 
 @app.get("/api/targets")
@@ -1316,7 +1496,7 @@ def list_own_activity(
 
     Admin authenticated as admin (without ?as_profile) sees nothing useful
     here — admin should use /api/admin/activity for the global view. This
-    endpoint exists for clients (Flávio, Shakira, Rio, demo) to audit
+    endpoint exists for clients and demo profiles to audit
     their own actions without depending on the dono.
     """
     session = require_viewer(request)
@@ -1343,6 +1523,8 @@ def admin_source_run_events(job_id: str, request: Request, limit: int = 100) -> 
     during long-running update jobs.
     """
     require_admin(request)
+    if rio_corpus.has_job(job_id):
+        return rio_corpus.source_run_events(job_id, limit=max(1, min(int(limit or 0) or 100, 500)))
     import sqlite3
     from .config import db_path
     capped = max(1, min(int(limit or 0) or 100, 500))
@@ -1835,8 +2017,9 @@ async def admin_rio_economic_cleanup_urls(request: Request) -> dict[str, Any]:
 
 @app.post("/api/categories")
 async def create_classification_category(request: Request) -> dict[str, Any]:
-    require_admin(request)
+    session = require_viewer(request)
     require_csrf(request)
+    require_not_demo(session)
     payload = await read_json(request)
     name = str(payload.get("name") or "").strip()
     if not name:
@@ -1881,8 +2064,9 @@ def list_classifications_bulk(request: Request) -> dict[str, Any]:
 
 @app.post("/api/classifications")
 async def upsert_classification(request: Request) -> dict[str, Any]:
-    require_admin(request)
+    session = require_viewer(request)
     require_csrf(request)
+    require_not_demo(session)
     payload = await read_json(request)
 
     try:
@@ -1893,6 +2077,7 @@ async def upsert_classification(request: Request) -> dict[str, Any]:
     target_name = str(payload.get("target_name") or target_key).strip() or target_key
     if not article_id or not target_key:
         raise HTTPException(status_code=400, detail="article_id and target_key are required")
+    _validate_target_scope(session, target_key)
 
     art_sent = payload.get("article_sentiment")
     tgt_sent = payload.get("target_sentiment")
@@ -2149,7 +2334,7 @@ def admin_html(token: str) -> str:
 <body class="admin-body">
   <main class="admin-shell">
     <header class="admin-hero">
-      <p class="eyebrow">Mandato Flavio Valle</p>
+      <p class="eyebrow">Painel de monitoramento</p>
       <h1>Atualizacao do clipping</h1>
       <p>Escolha um fluxo, acompanhe a coleta e publique a base atualizada sem abrir o terminal.</p>
       <a href="/" class="plain-link">Ver painel publico</a>
@@ -2164,7 +2349,7 @@ def admin_html(token: str) -> str:
         <button type="button" id="refreshStatus">Atualizar status</button>
       </div>
       <div class="preset-grid">
-        <button class="preset active" data-preset="rapido"><strong>Rapido</strong><span>Flavio Valle, hoje e ontem</span></button>
+        <button class="preset active" data-preset="rapido"><strong>Rapido</strong><span>Nomes selecionados, hoje e ontem</span></button>
         <button class="preset" data-preset="completo"><strong>Completo</strong><span>Circulo principal, ultimos 7 dias</span></button>
         <button class="preset" data-preset="custom"><strong>Personalizado</strong><span>Escolha nomes e periodo</span></button>
       </div>

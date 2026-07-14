@@ -46,7 +46,9 @@ VIEWER_CSS_MARKERS = (
 
 VIEWER_JS_MARKERS = (
     "function applyViewerControls",
-    "document.body.classList.toggle(\"viewer-readonly\", !isAdmin)",
+    "classificationVisible",
+    "classificationWritable",
+    "document.body.classList.toggle(\"viewer-readonly\", !canMutate)",
     "addTargetForm.closest(\"details\").hidden = true",
     "manageTargetsBox.hidden = true",
     "viewerCanSeeRioReport()",

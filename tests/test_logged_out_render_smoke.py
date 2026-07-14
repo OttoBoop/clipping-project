@@ -147,7 +147,7 @@ def test_logged_out_target_mutation_rejection_is_checked():
         "/api/targets/shakira/archive",
         "/api/targets/shakira/restore",
     }
-    assert all(endpoint.detail == "admin_login_required" for endpoint in target_mutations)
+    assert all(endpoint.detail == "viewer_login_required" for endpoint in target_mutations)
 
 
 def test_logged_out_operator_mutation_rejection_is_checked():
@@ -164,8 +164,14 @@ def test_logged_out_operator_mutation_rejection_is_checked():
         }
     ]
 
-    assert len(operator_mutations) == 6
-    assert all(endpoint.detail == "admin_login_required" for endpoint in operator_mutations)
+    assert {endpoint.path: endpoint.detail for endpoint in operator_mutations} == {
+        "/api/update/start": "admin_login_required",
+        "/api/update/cancel": "admin_login_required",
+        "/api/update/resume": "admin_login_required",
+        "/api/export": "admin_login_required",
+        "/api/categories": "viewer_login_required",
+        "/api/classifications": "viewer_login_required",
+    }
 
 
 def test_invalid_login_rejection_forbids_profile_leaks():

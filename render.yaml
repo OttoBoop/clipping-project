@@ -3,6 +3,8 @@ services:
   - type: web
     name: clipping-project
     runtime: python
+    plan: standard
+    region: virginia
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn web_app.app:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -24,3 +26,64 @@ services:
         sync: false
       - key: CLIPPING_STORAGE_PREFIX
         value: clipping-project
+      - key: RIO_CORPUS_DATABASE_URL
+        fromDatabase:
+          name: clipping-rio-corpus
+          property: connectionString
+      - key: RIO_CORPUS_CRON_TOKEN
+        sync: false
+
+  - type: worker
+    name: clipping-rio-corpus-worker
+    runtime: python
+    plan: standard
+    region: virginia
+    buildCommand: pip install -r requirements.txt
+    startCommand: python tools/rio_corpus_worker.py
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHON_VERSION
+        value: 3.14.3
+      - key: RIO_CORPUS_DATABASE_URL
+        fromDatabase:
+          name: clipping-rio-corpus
+          property: connectionString
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        sync: false
+      - key: CLIPPING_STORAGE_PREFIX
+        value: clipping-project
+      - key: RIO_CORPUS_FETCH_WORKERS
+        value: "8"
+      - key: RIO_CORPUS_RUN_WORKERS
+        value: "3"
+
+  - type: cron
+    name: clipping-rio-corpus-realtime
+    runtime: python
+    region: virginia
+    schedule: "*/5 * * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python tools/rio_corpus_scheduler.py
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHON_VERSION
+        value: 3.14.3
+      - key: CLIPPING_BASE_URL
+        value: https://clipping-project.onrender.com
+      - key: RIO_CORPUS_CRON_TOKEN
+        sync: false
+
+databases:
+  - name: clipping-rio-corpus
+    databaseName: clipping_rio_corpus
+    user: clipping_rio_corpus
+    plan: basic-1gb
+    diskSizeGB: 10
+    region: virginia
+    ipAllowList: []

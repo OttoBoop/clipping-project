@@ -14171,3 +14171,60 @@ logged-out helper, log the deploy, then re-open the docs.
 The smoke helper is more resilient, but it still does not create authenticated
 viewer proof, admin CSRF-positive proof, buyer evidence, measured costs, or Rio
 manual approvals.
+## 2026-07-14 - Corpus Rio Em Escala: architecture implementation
+
+### Objective
+
+Replace the indicator-first, query-gated Rio flow with an online, auditable
+municipal corpus from 2011 onward without adding `rio_economico` to
+`data/targets.json`.
+
+### Implemented
+
+- superseded the old long-term "future project track" instruction;
+- versioned a source registry and evidence-based geography/dimension registry;
+- added PostgreSQL schema and queue leases with `FOR UPDATE SKIP LOCKED`;
+- added source-run retries, caps, recursive Google date splitting and explicit
+  coverage states;
+- added content-addressed gzip HTML/text storage through the existing Supabase
+  bridge;
+- added parallel, rate-limited worker and authenticated five-minute scheduler;
+- routed only `rio_economico/rio_city_corpus` away from the legacy web thread;
+- added Rio-only status, corpus, source census, coverage and audit APIs;
+- replaced the static Rio report panel with paginated corpus/funnel reads;
+- preserved legacy SQLite profiles and added an idempotent Rio importer;
+- updated the authenticated monitor to use the new online endpoints.
+
+### Evidence Before Deploy
+
+```text
+173 passed: Rio corpus + jobs + admin UI + auth
+23 passed: operator + logged-out/authenticated smoke helpers
+3 passed: targeted Playwright regressions after UI refresh/selectors fix
+full suite: 472 passed; 5 failed initially
+  - 3 fixed and rerun green
+  - 2 inherited failures are the unexported noozra_api dirty target/snapshot
+```
+
+Source census probes on 2026-07-14:
+
+```text
+prefeitura.rio/sitemap.xml -> 200, redirected to wp-sitemap.xml
+riotur.rio/sitemap.xml -> redirect followed by timeout
+camara.rio/sitemap.xml -> TLS chain failure
+diariodorio.com/wp-json/wp/v2/posts -> 403
+vejario.abril.com.br/wp-json/wp/v2/posts -> 200
+```
+
+Render PostgreSQL `clipping-rio-corpus` was provisioned in Virginia with plan
+`basic_1gb`, 10 GB disk and PostgreSQL 16. No corpus job was enqueued during
+provisioning. The Render read-only connector currently fails its own database
+connection because it does not negotiate the required TLS; schema proof must
+therefore come from the deployed web/worker connection.
+
+### Production Gate Still Open
+
+Do not start the historical backfill until the web service has the managed
+database link, the standard worker and cron are running, the password smoke has
+restored the original credential, and the three canaries have clean or explicit
+coverage states.

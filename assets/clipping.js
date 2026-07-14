@@ -15,7 +15,8 @@
   const initialSimulating = (app.dataset.clippingSimulating || "").trim();
   const initialSimulatingLabel = (app.dataset.clippingSimulatingLabel || initialSimulating).trim();
   const apiAvailable = Boolean(apiUrl) || !staticBundle;
-  let editorEnabled = apiAvailable;
+  let classificationVisible = true;
+  let classificationWritable = apiAvailable;
   let csrfToken = "";
   let csrfPromise = null;
   let categoriesCache = [];
@@ -211,7 +212,7 @@
       {
         anchor: "#sessionBar",
         title: "Você está em modo demo",
-        body: "Esta é a visão do <strong>Flávio Valle</strong> (cliente real, vereador do RJ). Aqui você navega exatamente como ele veria — só leitura, suas alterações não persistem.",
+        body: "Esta é uma demonstração de cliente isolado. Você navega em modo somente leitura com os nomes liberados para este perfil; suas alterações não persistem.",
       },
       {
         anchor: "#targetFilters",
@@ -469,7 +470,7 @@
     // "Uma tela de registros também seria muito bom"). Visível para:
     // - admin (real ou em simulação): vê tudo via /api/admin/activity
     //   com filtros completos (ação + cliente).
-    // - viewer autenticado-como-viewer (ex: flavio): vê só os próprios
+    // - viewer autenticado-como-viewer (ex: cliente_a): vê só os próprios
     //   eventos via /api/me/activity. Filtro de cliente fica escondido
     //   (já é auto-scope). Read-only.
     var box = document.getElementById("manageActivityBox");
@@ -1413,17 +1414,15 @@
   }
 
   function applyViewerControls() {
-    var isAdmin = viewerIsAdmin();
-    var simulating = inSimulation();
-    var authViewer = isAuthenticatedViewer();
     var isDemo = isDemoSession();
     // Phase 2 (2026-05-20): mutation capability extends to authenticated
     // viewers — they manage targets within their own target_keys scope.
     // viewer-readonly body class is dropped for anyone with mutation rights;
     // backend _validate_target_scope enforces per-target authorisation.
     // Demo público (2026-05-22): forçado a read-only mesmo sendo viewer.
-    var canMutate = (isAdmin || simulating || authViewer) && !isDemo;
-    editorEnabled = canMutate && !(payload && payload.meta && payload.meta.editorEnabled === false);
+    var canMutate = canUseRunnerControls();
+    classificationVisible = true;
+    classificationWritable = apiAvailable && canMutate;
     document.body.classList.toggle("viewer-readonly", !canMutate);
     document.body.classList.toggle("is-demo", isDemo);
     if (isDemo) {
@@ -1520,11 +1519,70 @@
     );
   }
 
+  function renderRioEconomicLiveItem(item) {
+    var title = escapeHtml(item.title || "Sem título");
+    var url = item.url || "";
+    var titleHtml = url ? '<a href="' + escapeHtml(url) + '" target="_blank" rel="noreferrer">' + title + "</a>" : title;
+    return (
+      '<article class="rio-report-item">' +
+      '<div><strong>' + titleHtml + "</strong>" +
+      '<span>' + escapeHtml(item.source || item.sourceName || "Fonte não identificada") + " · " + escapeHtml(formatDate(item.publishedAt || item.savedAt || "")) + "</span></div>" +
+      '<div class="chips">' +
+      '<span class="chip chip--live">' + escapeHtml(item.geographyStatus || (item.publicationState === "published" ? "Publicado" : "Salvo agora")) + "</span>" +
+      (item.dateStatus ? '<span class="chip">' + escapeHtml(item.dateStatus) + "</span>" : "") +
+      "</div>" +
+      "</article>"
+    );
+  }
+
+  function renderRioCorpusDashboard(status, corpus, coverage) {
+    status = status || {};
+    corpus = corpus || {};
+    coverage = coverage || {};
+    var metrics = status.metrics || {};
+    var observations = Number(metrics.observation_events || 0);
+    var articleTotal = Number(corpus.total || metrics.corpus_articles || 0);
+    var bodies = Number(metrics.body_extracted || 0);
+    var dates = Number(metrics.page_date_verified || 0);
+    if (rioEconomicStoryCount) rioEconomicStoryCount.textContent = String(observations);
+    if (rioEconomicArticleCount) rioEconomicArticleCount.textContent = String(articleTotal);
+    if (rioEconomicCurrentCount) rioEconomicCurrentCount.textContent = String(bodies);
+    if (rioEconomicManualCount) rioEconomicManualCount.textContent = String(dates);
+    if (rioEconomicManualStatus) {
+      rioEconomicManualStatus.textContent = [
+        Number(metrics.windows_exhausted || 0) + " exaurida(s)",
+        Number(metrics.windows_retryable || 0) + " retry(s)",
+        Number(metrics.windows_capped || 0) + " cap(s)",
+        Number(metrics.windows_failed || 0) + " falha(s)",
+      ].join(" · ");
+    }
+    if (rioEconomicTargetGate) {
+      var throughput = Number(status.throughputPerHour || 0).toFixed(0);
+      rioEconomicTargetGate.textContent = status.staleAlert
+        ? "Alerta: mais de 15 min sem checkpoint útil"
+        : throughput + " observações/h · " + (status.lastActivity ? "atividade " + formatDate(status.lastActivity) : "worker aguardando");
+    }
+    if (rioEconomicReportMessage) {
+      rioEconomicReportMessage.textContent = "Job " + String(status.status || "idle") +
+        " · " + Number(metrics.final_url_resolved || 0) + " URLs de veículo" +
+        " · " + Number(metrics.city_confirmed || 0) + " confirmadas" +
+        " · " + Number(metrics.city_probable || 0) + " prováveis";
+    }
+    if (rioEconomicReportList) {
+      var items = Array.isArray(corpus.items) ? corpus.items : [];
+      rioEconomicReportList.innerHTML = items.length
+        ? items.slice(0, 8).map(renderRioEconomicLiveItem).join("")
+        : '<p class="filter-note">O corpus ainda não tem artigos para esta visão.</p>';
+    }
+  }
+
   function renderRioEconomicReport(report) {
     var meta = report && report.meta ? report.meta : {};
+    var liveItems = report && report.live && Array.isArray(report.live.items) ? report.live.items : [];
+    var liveCount = Number(report && report.live ? report.live.count || liveItems.length : 0);
     var policyCounts = meta.indicator_policy_counts || meta.date_quality_policy_counts || {};
     if (rioEconomicStoryCount) rioEconomicStoryCount.textContent = String(meta.story_count || 0);
-    if (rioEconomicArticleCount) rioEconomicArticleCount.textContent = String(meta.article_count || 0);
+    if (rioEconomicArticleCount) rioEconomicArticleCount.textContent = String(Math.max(Number(meta.article_count || 0), liveCount));
     if (rioEconomicCurrentCount) rioEconomicCurrentCount.textContent = String(policyCounts.count_current_period || 0);
     if (rioEconomicManualCount) rioEconomicManualCount.textContent = String(policyCounts.manual_review_before_counting || 0);
     if (rioEconomicManualStatus) {
@@ -1536,15 +1594,19 @@
         : "Target de produção bloqueado";
     }
     if (rioEconomicReportMessage) {
-      rioEconomicReportMessage.textContent = meta.reportFile
+      rioEconomicReportMessage.textContent = liveItems.length
+        ? "Monitoramento vivo: " + liveItems.length + " notícia(s) recentes de turismo no Rio."
+        : meta.reportFile
         ? "Artefato atual: " + meta.reportFile
         : "Relatório econômico disponível.";
     }
     if (rioEconomicReportList) {
       var stories = Array.isArray(report && report.stories) ? report.stories.slice(0, 8) : [];
-      rioEconomicReportList.innerHTML = stories.length
+      rioEconomicReportList.innerHTML = liveItems.length
+        ? liveItems.slice(0, 8).map(renderRioEconomicLiveItem).join("")
+        : stories.length
         ? stories.map(renderRioEconomicStory).join("")
-        : '<p class="filter-note">Nenhuma história econômica disponível.</p>';
+        : '<p class="filter-note">Nenhuma notícia de turismo do Rio disponível.</p>';
     }
   }
 
@@ -1555,22 +1617,28 @@
       return Promise.resolve();
     }
     rioEconomicReportPanel.hidden = false;
-    if (rioEconomicReportMessage) rioEconomicReportMessage.textContent = "Carregando recorte econômico...";
-    return apiFetch("/api/reports/rio-economic-topic", { cache: "no-store" })
-      .then(function (resp) {
+    if (rioEconomicReportMessage) rioEconomicReportMessage.textContent = "Carregando o funil de coleta...";
+    function getJson(url) {
+      return apiFetch(url, { cache: "no-store" }).then(function (resp) {
         return resp.json().catch(function () { return {}; }).then(function (data) {
           if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
           return data;
         });
-      })
-      .then(renderRioEconomicReport)
+      });
+    }
+    return Promise.all([
+      getJson("/api/rio/status"),
+      getJson("/api/rio/corpus?page=1&page_size=8"),
+      getJson("/api/rio/coverage?page=1&page_size=8"),
+    ])
+      .then(function (parts) { renderRioCorpusDashboard(parts[0], parts[1], parts[2]); })
       .catch(function (error) {
         if (!viewerCanSeeRioReport()) {
           rioEconomicReportPanel.hidden = true;
           return;
         }
         if (rioEconomicReportMessage) {
-          rioEconomicReportMessage.textContent = friendlyError(error, "Não foi possível carregar o relatório econômico.");
+          rioEconomicReportMessage.textContent = friendlyError(error, "Não foi possível carregar o corpus municipal.");
         }
         if (rioEconomicReportList) rioEconomicReportList.innerHTML = "";
       });
@@ -1869,6 +1937,12 @@
     if (status === "exporting") return "Publicando";
     if (status === "cancel_requested") return "Cancelando";
     if (status === "succeeded") return "Concluído";
+    if (status === "completed_with_gaps") return "Concluído com lacunas";
+    if (status === "exhausted") return "Janela exaurida";
+    if (status === "empty_verified") return "Vazio verificado";
+    if (status === "capped") return "Limite atingido";
+    if (status === "retryable") return "Nova tentativa pendente";
+    if (status === "blocked") return "Fonte bloqueada";
     if (status === "complete") return "Fonte concluída";
     if (status === "pending") return "Aguardando fonte";
     if (status === "retrying") return "Tentando novamente";
@@ -2200,7 +2274,8 @@
       renderStaticBundleStatus();
       return Promise.resolve();
     }
-    return apiFetch("/api/update/status", { cache: "no-store" })
+    var statusUrl = sessionProfile() === "rio_economico" ? "/api/update/status?scope=rio_economico" : "/api/update/status";
+    return apiFetch(statusUrl, { cache: "no-store" })
       .then(function (resp) {
         if (!resp.ok) throw new Error("HTTP " + resp.status);
         return resp.json();
@@ -2223,6 +2298,7 @@
   function pollLiveResults(statusPayload) {
     if (!apiAvailable) return Promise.resolve();
     if (!payload) return Promise.resolve();
+    if (sessionProfile() === "rio_economico") return loadRioEconomicReport();
     var current = (statusPayload && statusPayload.current) || {};
     var recent = statusPayload && statusPayload.recent && statusPayload.recent.length ? statusPayload.recent[0] : {};
     var job = current.status === "idle" && recent.id ? recent : current;
@@ -2344,11 +2420,15 @@
     return null;
   }
 
-  function sentimentSelectHtml(field, current) {
+  function classificationReadonlyAttrs() {
+    return classificationWritable ? "" : ' disabled title="Modo somente leitura"';
+  }
+
+  function sentimentSelectHtml(field, current, readonlyAttrs) {
     var opts = ["", "positive", "negative", "neutral"];
     var labels = { "": "—", positive: "Positivo", negative: "Negativo", neutral: "Neutro" };
     return (
-      '<select data-cls-field="' + field + '">' +
+      '<select data-cls-field="' + field + '"' + (readonlyAttrs || "") + ">" +
       opts.map(function (v) {
         var sel = (current || "") === v ? " selected" : "";
         return '<option value="' + v + '"' + sel + ">" + labels[v] + "</option>";
@@ -2370,10 +2450,11 @@
   }
 
   function classificationEditorHtml(article) {
-    if (!editorEnabled) return "";
+    if (!classificationVisible) return "";
     var aid = article.articleId;
     var targetKeys = activeTargetKeysFrom(article.targetKeys || []);
     if (!targetKeys.length) return "";
+    var readonlyAttrs = classificationReadonlyAttrs();
     var clsByTarget = {};
     (article.classifications || []).forEach(function (c) {
       clsByTarget[c.target_key] = c;
@@ -2401,14 +2482,14 @@
       '<div class="cls-article-section" data-article-id="' + escapeHtml(String(aid)) + '">' +
       '<div class="cls-row">' +
       '<label class="cls-field">Sentimento da notícia ' +
-      sentimentSelectHtml("article_sentiment", artSentCurrent) +
+      sentimentSelectHtml("article_sentiment", artSentCurrent, readonlyAttrs) +
       "</label>" +
       '<div class="cls-field">' +
       '<span class="cls-field-label">Categorias</span>' +
-      '<select multiple class="cls-cat-select" size="4">' + catOptionsHtml + "</select>" +
+      '<select multiple class="cls-cat-select" size="4"' + readonlyAttrs + ">" + catOptionsHtml + "</select>" +
       '<div class="cls-add-cat-row">' +
-      '<input type="text" class="cls-new-cat-input" placeholder="Nova categoria…">' +
-      '<button type="button" class="cls-add-cat-btn">Adicionar</button>' +
+      '<input type="text" class="cls-new-cat-input" placeholder="Nova categoria…"' + readonlyAttrs + ">" +
+      '<button type="button" class="cls-add-cat-btn"' + readonlyAttrs + ">Adicionar</button>" +
       "</div>" +
       "</div>" +
       "</div>" +
@@ -2423,7 +2504,7 @@
         "<legend>" + escapeHtml(tLabel) + "</legend>" +
         '<div class="cls-row">' +
         '<label class="cls-field">Sentimento sobre ' + escapeHtml(tLabel) + " " +
-        sentimentSelectHtml("target_sentiment", cur.target_sentiment) +
+        sentimentSelectHtml("target_sentiment", cur.target_sentiment, readonlyAttrs) +
         "</label>" +
         "</div>" +
         "</fieldset>"
@@ -2435,7 +2516,7 @@
       articleSection +
       fieldsets +
       '<div class="cls-row cls-actions-row">' +
-      '<button type="button" class="cls-save-btn">Salvar</button>' +
+      '<button type="button" class="cls-save-btn"' + readonlyAttrs + ">Salvar</button>" +
       '<span class="cls-save-status"></span>' +
       "</div>" +
       "</details>"
@@ -3175,8 +3256,9 @@
     updateRunForm.addEventListener("submit", async function (event) {
       event.preventDefault();
       setMessage(runFormMessage, "Iniciando atualização...", "");
+      var isRioCorpus = sessionProfile() === "rio_economico";
       var keys = selectedRunTargetKeys();
-      if (!keys.length) {
+      if (!keys.length && !isRioCorpus) {
         showFriendlyProblem("Selecione pelo menos um nome para acompanhar.");
         return;
       }
@@ -3190,7 +3272,15 @@
         showFriendlyProblem("Confira as datas: a inicial precisa vir antes da final.");
         return;
       }
-      var body = {
+      var body = isRioCorpus ? {
+        preset: "rio_city_corpus",
+        scope: "rio_economico",
+        topic: "rio_city_corpus",
+        collector: "all",
+        date_from: dateFromIso,
+        date_to: dateToIso,
+        export: false,
+      } : {
         preset: "custom",
         target_keys: keys,
         date_from: dateFromIso,
@@ -3222,7 +3312,10 @@
       if (button) button.disabled = true;
     });
     try {
-      var resp = await apiPost("/api/update/cancel", {});
+      var cancelBody = sessionProfile() === "rio_economico"
+        ? { scope: "rio_economico", job_id: latestStatus && latestStatus.current ? latestStatus.current.id || "" : "" }
+        : {};
+      var resp = await apiPost("/api/update/cancel", cancelBody);
       var data = await resp.json().catch(function () { return {}; });
       if (!resp.ok) throw new Error(apiErrorMessage(data, resp.status));
       var nextCurrent = Object.assign({}, latestStatus && latestStatus.current ? latestStatus.current : {}, data);
@@ -3439,6 +3532,7 @@
   async function onSaveArticleClassifications(editor) {
     var btn = editor.querySelector(".cls-save-btn");
     var status = editor.querySelector(".cls-save-status");
+    if (!classificationWritable) return;
     btn.disabled = true;
     status.textContent = "Salvando...";
     status.className = "cls-save-status";
@@ -3470,11 +3564,12 @@
       status.textContent = "Erro: " + (e && e.message ? e.message : e);
       status.classList.add("cls-save-status--err");
     } finally {
-      btn.disabled = false;
+      btn.disabled = !classificationWritable;
     }
   }
 
   async function onAddCategory(editor) {
+    if (!classificationWritable) return;
     var input = editor.querySelector(".cls-new-cat-input");
     var name = (input ? input.value : "").trim();
     if (!name) return;
@@ -3503,10 +3598,10 @@
   }
 
   app.addEventListener("click", function (event) {
-    if (!editorEnabled) return;
     var saveBtn = event.target.closest(".cls-save-btn");
     if (saveBtn) {
       event.preventDefault();
+      if (!classificationWritable) return;
       var editor = saveBtn.closest(".cls-editor");
       if (editor) onSaveArticleClassifications(editor);
       return;
@@ -3514,6 +3609,7 @@
     var addBtn = event.target.closest(".cls-add-cat-btn");
     if (addBtn) {
       event.preventDefault();
+      if (!classificationWritable) return;
       var editor2 = addBtn.closest(".cls-editor");
       if (editor2) onAddCategory(editor2);
       return;
@@ -3605,6 +3701,9 @@
         // root cause of the 512Mi OOM kill on Render free
         // (2026-05-21 09:21). Reduced to 60s — admin still sees live
         // changes via pollStatus's pollLiveResults during active jobs.
+        // One bounded follow-up catches the common save -> publish transition
+        // without restoring the old 5-second all-client polling loop.
+        window.setTimeout(pollBaseLiveResults, 3000);
         window.setInterval(pollBaseLiveResults, 60000);
       } else {
         renderStaticBundleStatus();

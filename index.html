@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="clipping-snapshot-sentinel" content="WIX_CLIPPING_SNAPSHOT_ROOT">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Clipping do gabinete | Flávio Valle</title>
+  <title>Clipping multi-cliente</title>
   <link rel="stylesheet" href="assets/clipping.css?v=live-results-20260505">
 </head>
 <body>
@@ -63,7 +63,7 @@
       <div class="runner-panel" id="runTabPanel" data-tab-panel="run">
         <div class="runner-head">
           <div>
-            <p class="eyebrow">Clipping do gabinete</p>
+            <p class="eyebrow">Painel de monitoramento</p>
             <h1>Atualizar notícias acompanhadas</h1>
             <p>Use as datas sugeridas, confirme os nomes e inicie uma atualização.</p>
           </div>
@@ -117,7 +117,7 @@
           <p class="add-target-note">Adicione um novo nome principal ao clipping. Nomes principais definem o foco do monitoramento.</p>
           <form id="addPrimaryTargetForm" class="add-target-form" novalidate>
             <label>Nome para buscar
-              <input type="text" name="display_name" autocomplete="off" required minlength="3" placeholder="Ex.: Maria Silva, Gabinete Alfa">
+              <input type="text" name="display_name" autocomplete="off" required minlength="3" placeholder="Ex.: Maria Silva, Projeto Alfa">
             </label>
             <details class="advanced-search-box">
               <summary>Ajustar busca</summary>
@@ -183,7 +183,7 @@
                 <span class="field-help">Letras minúsculas, números e _. Usado em URLs internas e logs.</span>
               </label>
               <label>Nome para exibir
-                <input type="text" name="label" required minlength="2" placeholder="Ex.: Maria Silva (Gabinete)">
+                <input type="text" name="label" required minlength="2" placeholder="Ex.: Maria Silva (Projeto)">
               </label>
               <label>Senha inicial
                 <input type="text" name="password" required minlength="3" autocomplete="new-password" placeholder="Ex.: maria-silva-2026">
@@ -216,7 +216,7 @@
               </select>
             </label>
             <label id="activityProfileFilterLabel">Filtrar por cliente
-              <input type="text" id="activityProfileFilter" placeholder="ex.: flavio">
+              <input type="text" id="activityProfileFilter" placeholder="ex.: cliente_a">
             </label>
             <button type="button" class="secondary-action" id="activityRefreshButton">Atualizar lista</button>
           </div>
@@ -297,23 +297,23 @@
         </div>
         <p class="filter-note" id="baseUpdatedText">Base atualizada em: 13/04/2026 17:28 UTC</p>
 
-        <section class="rio-report-panel" id="rioEconomicReportPanel" aria-label="Indicador econômico do Rio" hidden>
+        <section class="rio-report-panel" id="rioEconomicReportPanel" aria-label="Corpus de notícias do município do Rio" hidden>
           <div class="section-head">
             <div>
               <p class="eyebrow">Rio econômico</p>
-              <h2>Relatório de tópicos</h2>
+              <h2>Corpus municipal ao vivo</h2>
             </div>
           </div>
-          <p class="filter-note" id="rioEconomicReportMessage">Carregando recorte econômico...</p>
+          <p class="filter-note" id="rioEconomicReportMessage">Carregando o funil de coleta...</p>
           <div class="update-grid rio-report-grid">
-            <div><span>Histórias</span><strong id="rioEconomicStoryCount">0</strong></div>
-            <div><span>Matérias</span><strong id="rioEconomicArticleCount">0</strong></div>
-            <div><span>Contagem atual</span><strong id="rioEconomicCurrentCount">0</strong></div>
-            <div><span>Revisão manual</span><strong id="rioEconomicManualCount">0</strong></div>
+            <div><span>Observações</span><strong id="rioEconomicStoryCount">0</strong></div>
+            <div><span>Artigos únicos</span><strong id="rioEconomicArticleCount">0</strong></div>
+            <div><span>Corpo real</span><strong id="rioEconomicCurrentCount">0</strong></div>
+            <div><span>Data verificada</span><strong id="rioEconomicManualCount">0</strong></div>
           </div>
           <div class="rio-report-status">
-            <span id="rioEconomicManualStatus">Aguardando status de revisão.</span>
-            <span id="rioEconomicTargetGate">Aguardando gate de produção.</span>
+            <span id="rioEconomicManualStatus">Aguardando cobertura por fonte.</span>
+            <span id="rioEconomicTargetGate">Aguardando atividade do worker.</span>
           </div>
           <div class="rio-report-list" id="rioEconomicReportList"></div>
         </section>
@@ -327,7 +327,7 @@
           <h2>Nomes acompanhados</h2>
         </div>
       </div>
-      <p class="filter-note">O painel abre com foco em Flávio Valle. Toque para incluir ou remover nomes do acompanhamento.</p>
+      <p class="filter-note">Use os filtros para incluir ou remover nomes do acompanhamento deste cliente.</p>
       <div class="filter-row" id="targetFilters"></div>
       <p class="filter-note">Monitoramento ativo: <strong id="activeFilterText">Carregando...</strong></p>
       <div class="filter-row" style="margin-top:12px">

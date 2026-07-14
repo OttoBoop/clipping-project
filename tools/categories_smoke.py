@@ -119,12 +119,12 @@ def main():
     assert body.get("id") == first_id, f"expected same id {first_id}, got {body.get('id')}"
     print(f"     id={body.get('id')} (matches first) ✅")
 
-    print("\n6. viewer tenta POST — espera 401")
+    print("\n6. viewer tenta POST — espera 200 (coworker pode categorizar)")
     viewer = make_opener()
     request(viewer, "POST", f"{base}/api/login", {"password": "flavio-gabinete-2026"})
     v_csrf = request(viewer, "GET", f"{base}/api/csrf")[1].get("csrf", "")
-    s, body = request(viewer, "POST", f"{base}/api/categories", {"name": "x"}, csrf=v_csrf)
-    expect(s, 401, "viewer cannot create category")
+    s, body = request(viewer, "POST", f"{base}/api/categories", {"name": SMOKE_CATEGORY_NAME}, csrf=v_csrf)
+    expect(s, 200, "viewer can create category")
 
     print("\nSmoke OK — /api/categories contract verified.")
     print(f"(left behind: idempotent '{SMOKE_CATEGORY_NAME}' — single row reused across runs)")

@@ -1,0 +1,85 @@
+{
+  "version": "rio_geography_v1",
+  "scope": "rio_economico",
+  "strong_city_phrases": [
+    "cidade do rio", "municipio do rio", "município do rio",
+    "prefeitura do rio", "camara do rio", "câmara do rio",
+    "capital fluminense", "rio prefeitura", "rio capital",
+    "guarda municipal do rio", "secretaria municipal do rio",
+    "diario oficial do municipio do rio", "diário oficial do município do rio"
+  ],
+  "city_institutions": [
+    "riotur", "comlurb", "riosaude", "rio saúde", "cor rio",
+    "brt rio", "metro rio", "metrôrio", "supervia", "porto maravilha",
+    "aeroporto do galeao", "aeroporto do galeão", "aeroporto santos dumont"
+  ],
+  "city_landmarks": [
+    "cristo redentor", "pao de acucar", "pão de açúcar", "sambodromo",
+    "sambódromo", "maracana", "maracanã", "museu do amanha",
+    "museu do amanhã", "aquario", "aquário", "aquario rio", "aquário rio",
+    "parque olimpico", "parque olímpico", "riocentro", "marina da gloria",
+    "marina da glória", "quinta da boa vista", "jardim botanico",
+    "jardim botânico", "floresta da tijuca", "aterro do flamengo"
+  ],
+  "neighborhoods": [
+    "Abolicao", "Acari", "Agua Santa", "Alto da Boa Vista", "Anchieta",
+    "Andarai", "Anil", "Bancarios", "Bangu", "Barra da Tijuca",
+    "Barra de Guaratiba", "Barros Filho", "Benfica", "Bento Ribeiro",
+    "Bonsucesso", "Botafogo", "Bras de Pina", "Cachambi", "Cacuia",
+    "Caju", "Camorim", "Campinho", "Campo Grande", "Campo dos Afonsos",
+    "Cascadura", "Catete", "Catumbi", "Cavalcanti", "Centro do Rio",
+    "Cidade de Deus", "Cidade Nova", "Cocota", "Coelho Neto", "Colegio",
+    "Complexo do Alemao", "Copacabana", "Cordovil", "Cosme Velho",
+    "Cosmos", "Costa Barros", "Curicica", "Del Castilho", "Deodoro",
+    "Encantado", "Engenheiro Leal", "Engenho da Rainha", "Engenho de Dentro",
+    "Engenho Novo", "Estacio", "Flamengo", "Freguesia de Jacarepagua",
+    "Freguesia da Ilha", "Galeao", "Gamboa", "Gardenia Azul", "Gavea",
+    "Gericino", "Gloria", "Graca", "Grumari", "Guadalupe", "Guaratiba",
+    "Higienopolis", "Honorio Gurgel", "Humaita", "Ilha de Guaratiba",
+    "Inhauma", "Inhoaiba", "Ipanema", "Iraja", "Itanhanga", "Jacare",
+    "Jacarepagua", "Jacarezinho", "Jardim America", "Jardim Carioca",
+    "Jardim Guanabara", "Jardim Sulacap", "Joá", "Lagoa", "Lapa",
+    "Laranjeiras", "Leblon", "Leme", "Lins de Vasconcelos", "Madureira",
+    "Magalhaes Bastos", "Mangueira", "Manguinhos", "Maracana", "Mare",
+    "Marechal Hermes", "Maria da Graca", "Meier", "Monero", "Olaria",
+    "Oswaldo Cruz", "Paciencia", "Padre Miguel", "Paqueta", "Parada de Lucas",
+    "Parque Anchieta", "Parque Columbia", "Pavuna", "Pechincha", "Pedra de Guaratiba",
+    "Penha", "Penha Circular", "Piedade", "Pilares", "Pitangueiras",
+    "Portuguesa", "Praca da Bandeira", "Praca Seca", "Praia da Bandeira",
+    "Quintino Bocaiuva", "Ramos", "Realengo", "Recreio dos Bandeirantes",
+    "Riachuelo", "Ribeira", "Ricardo de Albuquerque", "Rio Comprido",
+    "Rocha", "Rocha Miranda", "Rocinha", "Sampaio", "Santa Cruz",
+    "Santa Teresa", "Santissimo", "Santo Cristo", "Sao Conrado",
+    "Sao Cristovao", "Sao Francisco Xavier", "Saude", "Senador Camara",
+    "Senador Vasconcelos", "Sepetiba", "Tanque", "Taquara", "Taua",
+    "Tijuca", "Todos os Santos", "Tomas Coelho", "Turiaçu", "Urca",
+    "Vargem Grande", "Vargem Pequena", "Vasco da Gama", "Vaz Lobo",
+    "Vicente de Carvalho", "Vidigal", "Vigario Geral", "Vila Isabel",
+    "Vila Kosmos", "Vila Militar", "Vila Valqueire", "Vista Alegre",
+    "Zumbi"
+  ],
+  "ambiguous_locations": [
+    "Bangu", "Botafogo", "Campo Grande", "Centro", "Flamengo", "Lapa",
+    "Santa Cruz", "Santos Dumont", "Zona Norte", "Zona Oeste", "Zona Sul"
+  ],
+  "other_municipalities": [
+    "Angra dos Reis", "Araruama", "Armação dos Búzios", "Belford Roxo",
+    "Búzios", "Cabo Frio", "Campos dos Goytacazes", "Duque de Caxias",
+    "Itaboraí", "Itaguaí", "Japeri", "Macaé", "Magé", "Mangaratiba",
+    "Maricá", "Mesquita", "Nilópolis", "Niterói", "Nova Friburgo",
+    "Nova Iguaçu", "Paraty", "Petrópolis", "Queimados", "Resende",
+    "Rio das Ostras", "São Gonçalo", "São João de Meriti", "Saquarema",
+    "Teresópolis", "Volta Redonda"
+  ],
+  "state_only_phrases": [
+    "estado do rio", "governo do estado do rio", "governo fluminense",
+    "assembleia legislativa do rio", "alerj", "regiao serrana",
+    "região serrana", "baixada fluminense", "costa verde"
+  ],
+  "dimensions": {
+    "tourism": ["turismo", "turista", "turistas", "visitante", "visitantes", "viajante", "viajantes", "destino turistico", "destino turístico"],
+    "events": ["evento", "eventos", "rock in rio", "rio2c", "web summit rio", "maratona do rio", "todo mundo no rio", "reveillon", "réveillon", "carnaval"],
+    "hospitality": ["hotelaria", "hotel", "hoteis", "hotéis", "ocupacao hoteleira", "ocupação hoteleira", "diaria media", "diária média"],
+    "visit_intent": ["visitar o rio", "viagem ao rio", "viajar para o rio", "destino mais desejado", "intencao de viagem", "intenção de viagem"]
+  }
+}

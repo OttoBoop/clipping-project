@@ -186,11 +186,13 @@ def resume_topic_job(client: Client, job_id: str) -> dict[str, Any]:
 
 def poll_once(client: Client, job_id: str = "") -> dict[str, Any]:
     endpoints: dict[str, tuple[str, str]] = {
-        "status": ("GET", "/api/update/status"),
+        "status": ("GET", "/api/update/status?scope=rio_economico" + (f"&job_id={urllib.parse.quote(job_id)}" if job_id else "")),
         "memory": ("GET", "/api/admin/debug/memory"),
         "disk": ("GET", "/api/admin/debug/disk"),
-        "live": ("GET", "/api/update/live-results?scope=base&target_key=rio_economico&limit=20"),
-        "rio_report": ("GET", "/api/reports/rio-economic-topic"),
+        "corpus": ("GET", "/api/rio/corpus?page=1&page_size=20"),
+        "sources": ("GET", "/api/rio/sources"),
+        "coverage": ("GET", "/api/rio/coverage?page=1&page_size=80" + (f"&job_id={urllib.parse.quote(job_id)}" if job_id else "")),
+        "audit": ("GET", "/api/rio/audit?limit=20" + (f"&job_id={urllib.parse.quote(job_id)}" if job_id else "")),
     }
     if job_id:
         endpoints["source_runs"] = ("GET", f"/api/admin/jobs/{urllib.parse.quote(job_id)}/source-run-events?limit=80")
@@ -235,6 +237,14 @@ def summarize_endpoint(status: int, body: Any) -> dict[str, Any]:
         "jobId",
         "live",
         "meta",
+        "metrics",
+        "throughputPerHour",
+        "etaSeconds",
+        "lastActivity",
+        "staleAlert",
+        "total",
+        "page",
+        "pageSize",
     ):
         if key in body:
             summary[key] = body[key]
@@ -290,6 +300,15 @@ def summarize_current_job(current: dict[str, Any]) -> dict[str, Any]:
         "articles_saved",
         "skipped_by_reason",
         "funnel",
+        "batchId",
+        "jobId",
+        "dateFrom",
+        "dateTo",
+        "lastActivity",
+        "throughputPerHour",
+        "etaSeconds",
+        "staleAlert",
+        "metrics",
     )
     return {key: current.get(key) for key in keep if key in current}
 
@@ -336,7 +355,7 @@ def poll_until_done(client: Client, job_id: str, args: argparse.Namespace) -> in
         emit("poll", {"cycle": cycles, "job_id": job_id, "barriers": barriers, "snapshot": snapshot})
         current = snapshot.get("status", {}).get("current", {})
         current_status = str(current.get("status") or "")
-        if current_status in {"succeeded", "failed_needs_fix", "cancelled", "interrupted_resumable"}:
+        if current_status in {"succeeded", "completed_with_gaps", "failed", "failed_needs_fix", "cancelled", "interrupted_resumable"}:
             return 0 if current_status == "succeeded" else 2
         if args.max_cycles and cycles >= args.max_cycles:
             return 0

@@ -55,10 +55,12 @@ These are the human instructions that define the loop:
    target config, ingestion, matcher, SQLite, live results, and payload
    rendering. If not connected, hide it or mark it unavailable.
 
-7. **The Rio economic indicator is a future project track.**
-   It needs careful term design, source selection, validation, and methodology.
-   It should be documented as a separate project/profile without blocking the
-   first segregation sprint.
+7. **The Rio corpus is an active production track (superseded 2026-07-14).**
+   The old goal of deriving a precise economic indicator from a small set of
+   stories is no longer the ingestion objective. `rio_economico` now owns a
+   high-recall, auditable municipal corpus from 2011 onward. Tourism, events,
+   hotelaria and a future economic indicator are dimensions derived after
+   collection; they must never be gates that discard the broad corpus.
 
 8. **Docs and logs precede implementation.**
    Each technical loop starts with memory docs, a current short-term loop,
@@ -97,3 +99,40 @@ name:
 
 If a sprint discovers a new long-term concern, append it here or record it in
 `WORK_LOG.md` with a clear "promote to long-term" note.
+
+## Superseding Rio Corpus Decision - 2026-07-14
+
+This section supersedes every older Rio document where the project is called a
+"future track", a dry run, a six-story sample, or an indicator-first workflow.
+Those files remain historical evidence, not current operating instructions.
+
+The durable contract is:
+
+1. `rio_economico` remains an isolated viewer profile and is not a row in
+   `data/targets.json`.
+2. `rio_city_corpus` is collected into a dedicated PostgreSQL ledger and queue.
+   Existing political profiles remain on the legacy SQLite pipeline while the
+   migration is staged.
+3. Discovery observations, fetch attempts, canonical articles, content
+   objects, geographic evidence, dimensions, and source-window coverage are
+   separate records. Re-runs add observations without duplicating articles.
+4. A source window is successful only when it is demonstrably exhausted or
+   empty. Caps, partial pagination, blocked access and swallowed errors are not
+   `complete`.
+5. `body_extracted` requires article/API body text, `final_url_resolved`
+   requires a vehicle URL, and `page_date_verified` requires page/API evidence.
+   Feed dates and snippets remain explicitly weaker evidence.
+6. City-focused sources are collected broadly. State sections are collected by
+   editorial path and classified after body download. Other Rio de Janeiro
+   municipalities provide negative evidence but are never automatic title
+   blacklists.
+7. Backfill work runs in a background worker with PostgreSQL leases and
+   checkpoints. The web process starts and observes work; it does not own a
+   year-long thread or upload the whole SQLite database on every checkpoint.
+8. The Rio panel reads paginated corpus and coverage APIs, not a static JSON
+   export capped at 20,000 articles.
+9. Local tests protect implementation. Acceptance requires authenticated live
+   Render evidence, including login/CSRF and the real password-change contract.
+10. The operating target is at least 200,000 unique `confirmed + probable`
+    municipal articles. A smaller exhausted universe is reported honestly and
+    expanded with additional sources; duplicates never count toward the goal.
