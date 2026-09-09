@@ -15,6 +15,7 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from web_app.political_corpus import political_corpus
 from web_app.political_metrics import configure_logging, reporting_loop, task_metrics
+from web_app.political_worker_limits import fetch_concurrency
 
 log = logging.getLogger("political_worker")
 
@@ -93,7 +94,7 @@ def main() -> int:
 
     threads = [threading.Thread(target=supervised, args=(kind, f"{identity}:{kind}:{i}"),
                                 daemon=True, name=f"political-{kind}-{i}")
-               for kind, count in (("discovery", 1 if args.once else 2), ("fetch", 1 if args.once else 4))
+               for kind, count in (("discovery", 1 if args.once else 2), ("fetch", 1 if args.once else fetch_concurrency()))
                for i in range(count)]
     for thread in threads:
         thread.start()

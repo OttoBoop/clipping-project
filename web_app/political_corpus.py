@@ -40,6 +40,7 @@ from .publisher_tls import publisher_verify
 from .storage_bridge import ArtifactStore, artifact_store
 from .political_body_batches import BatchBodyUnavailable, WordPressBodyBatches
 from .political_record_types import non_news_reason
+from .political_worker_limits import fetch_concurrency
 
 START_DATE = date(2026, 6, 1)
 ZONE = ZoneInfo("America/Sao_Paulo")
@@ -666,7 +667,7 @@ class PoliticalCorpusService:
             raise ValueError("invalid_worker_kind")
         self.ensure_schema()
         kinds = ["discovery", "review"] if kind == "discovery" else ["fetch"]
-        maximum = 2 if kind == "discovery" else 4
+        maximum = 2 if kind == "discovery" else fetch_concurrency()
         with self._connect() as conn:
             conn.execute("SELECT pg_advisory_xact_lock(%s)", (734892102 if kind == "discovery" else 734892103,))
             blocked_sources = []

@@ -206,15 +206,29 @@
         "wordpress",
         "google_news"
       ],
-      "known_constraint": "WordPress date scans discover body-only mentions; HTTP and parser failures remain gaps. Existing API configuration requires production canary. Domain Google queries are queued only for explicit terminal direct-discovery gaps.",
+      "known_constraint": "Publisher-advertised WordPress posts and blog_post APIs support shared publication-window discovery before body matching. Columns such as Lu Lacerda use blog_post and are absent from posts. HTTP and parsing failures remain explicit gaps; domain Google fallback follows terminal direct-discovery gaps.",
       "evidence": [
         {
           "url": "https://vejario.abril.com.br/wp-json/wp/v2/posts",
           "basis": "existing WordPress collector configuration"
+        },
+        {
+          "url": "https://vejario.abril.com.br/coluna/lu-lacerda/lapa-a-escadaria-selaron-vai-ficar-tinindo-de-nova/",
+          "basis": "Actual HTTP200 Link alternate advertises /wp-json/wp/v2/blog_post/519449; article published July3,2026 at11:09:56 SãoPaulo.",
+          "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://vejario.abril.com.br/wp-json/wp/v2/blog_post?after=2026-06-29T00%3A00%3A00&before=2026-07-06T00%3A00%3A00&per_page=100&page=1",
+          "basis": "Actual public date-filtered collection returned HTTP200,72posts,onepage for June29–July5, including the Lu Lacerda article omitted by the posts endpoint. UTC publication metadata agrees with the article page.",
+          "verified_at": "2026-09-09"
         }
       ],
       "enabled": true,
-      "google_policy": "on_direct_gap"
+      "google_policy": "on_direct_gap",
+      "wordpress_rest_bases": [
+        "posts",
+        "blog_post"
+      ]
     },
     {
       "key": "camara_rio",

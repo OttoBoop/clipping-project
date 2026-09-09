@@ -162,9 +162,15 @@ def build_tasks(target_snapshots: list[dict[str, Any]], date_from: str, date_to:
                 for url in source.get("sitemap_urls", []):
                     tasks.append({**base, "strategy": strategy, "url": url, "depth": 0, "ancestors": []})
             elif strategy == "wordpress":
-                for start, stop in windows:
-                    tasks.append({**base, "strategy": strategy, "date_from": start, "date_to": stop,
-                                  "cursor": {"page": 1}})
+                for rest_base in source.get("wordpress_rest_bases") or ["posts"]:
+                    if not re.fullmatch(r"[a-z][a-z0-9_-]{0,63}", str(rest_base)):
+                        raise ValueError("invalid publisher WordPress REST base")
+                    for start, stop in windows:
+                        # Keep existing /posts task identities byte-compatible.
+                        # Other advertised post types need distinct durable tasks.
+                        endpoint = {"rest_base": rest_base} if rest_base != "posts" else {}
+                        tasks.append({**base, **endpoint, "strategy": strategy, "date_from": start, "date_to": stop,
+                                      "cursor": {"page": 1}})
             elif strategy == "diario_archive":
                 tasks.append({**base, "strategy": strategy, "url": source["archive_url"],
                               "cursor": {"page": 1}})
@@ -524,6 +530,9 @@ def _sitemap(task, source, fetch):
 
 def _wordpress(task, source, fetch):
     from .political_body_batches import WORDPRESS_BODY_SOURCES
+    rest_base = task.get("rest_base") or "posts"
+    if rest_base not in (source.get("wordpress_rest_bases") or ["posts"]) or not re.fullmatch(r"[a-z][a-z0-9_-]{0,63}", str(rest_base)):
+        raise DiscoveryError("unadvertised WordPress REST base", retryable=False)
     include_body = source["key"] in WORDPRESS_BODY_SOURCES
     page = max(1, int((task.get("cursor") or {}).get("page") or 1))
     params = {"page": page, "per_page": 100, "orderby": "date", "order": "desc",
@@ -532,7 +541,7 @@ def _wordpress(task, source, fetch):
     if include_body:
         params["_fields"] += ",content,modified_gmt"
     # No title/name search: date scans discover people mentioned only in bodies.
-    endpoint = source["base_url"].rstrip("/") + "/wp-json/wp/v2/posts?"
+    endpoint = source["base_url"].rstrip("/") + "/wp-json/wp/v2/" + rest_base + "?"
     body_batch_fallback = ""
     try:
         response = _get(fetch, endpoint + urlencode(params), allowed_statuses=(400,))
@@ -577,6 +586,8 @@ def _wordpress(task, source, fetch):
         rendered = lambda value: (value or {}).get("rendered", "") if isinstance(value, dict) else str(value or "")
         candidates.append(_candidate(source, row["link"], rendered(row.get("title")), published,
                                      rendered(row.get("excerpt")), {"wordpress_id": row.get("id"), "collection_mode": "date_scan"}))
+        if rest_base != "posts":
+            candidates[-1]["metadata"]["wordpress_rest_base"] = rest_base
         content = row.get("content")
         if include_body and published and isinstance(content, dict) and isinstance(content.get("rendered"), str) and type(row.get("id")) is int:
             body_records.append({"post_id": row["id"], "url": candidates[-1]["url"], "published_at": published,

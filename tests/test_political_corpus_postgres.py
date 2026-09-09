@@ -171,6 +171,23 @@ def test_google_wrappers_cannot_occupy_all_fetch_slots(service, monkeypatch):
     assert service.claim_task("fetch", worker_id="three") is None
 
 
+def test_six_fetch_claims_are_global_and_keep_google_single_slot(service, monkeypatch):
+    monkeypatch.setenv("POLITICAL_FETCH_CONCURRENCY", "6")
+    job = start(service, monkeypatch)
+    with service._connect() as conn:
+        for number in range(8):
+            service._insert_task(conn, job["id"], "fetch", {"source_key": "google_news",
+                "url": f"https://news.google.com/rss/articles/{number}"})
+            service._insert_task(conn, job["id"], "fetch", {"source_key": f"direct{number}",
+                "url": f"https://publisher{number}.example/story"})
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        tasks=list(pool.map(lambda n:service.claim_task("fetch",worker_id=f"six-capacity-{n}"),range(8)))
+    claimed=[task for task in tasks if task]
+    assert len(claimed)==6
+    assert sum(task["source_key"]=="google_news" for task in claimed)==1
+    assert service.claim_task("fetch",worker_id="seventh") is None
+
+
 def test_full_fetch_backlog_does_not_lease_or_churn_discovery_tasks(service, monkeypatch):
     job = start(service, monkeypatch)
     with service._connect() as conn:
