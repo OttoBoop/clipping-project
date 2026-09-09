@@ -635,6 +635,12 @@ class PoliticalCorpusService:
         maximum = 2 if kind == "discovery" else 4
         with self._connect() as conn:
             conn.execute("SELECT pg_advisory_xact_lock(%s)", (734892102 if kind == "discovery" else 734892103,))
+            # Check capacity before leasing any source. Requeueing hundreds of
+            # separate discovery tasks on a delay still creates a busy loop while
+            # the fetch backlog is full, even when each individual delay works.
+            if kind == "discovery" and conn.execute("""SELECT COUNT(*) AS n FROM political_tasks
+                    WHERE kind='fetch' AND status=ANY(%s)""", (list(ACTIVE),)).fetchone()["n"] >= 2000:
+                return None
             count = conn.execute("""SELECT COUNT(*) AS n FROM political_tasks WHERE kind=ANY(%s)
                 AND status='running' AND leased_until>NOW()""", (kinds,)).fetchone()["n"]
             if count >= maximum:

@@ -170,6 +170,20 @@ def test_google_wrappers_cannot_occupy_all_fetch_slots(service, monkeypatch):
     assert service.claim_task("fetch", worker_id="three") is None
 
 
+def test_full_fetch_backlog_does_not_lease_or_churn_discovery_tasks(service, monkeypatch):
+    job = start(service, monkeypatch)
+    with service._connect() as conn:
+        conn.execute("""INSERT INTO political_tasks(job_id,kind,source_key,dedupe_key,payload)
+            SELECT %s,'fetch','example','backlog-' || n,'{}'::jsonb FROM generate_series(1,2000) AS n""", (job['id'],))
+    for _ in range(3):
+        assert service.claim_task('discovery', worker_id='d') is None
+    with service._connect() as conn:
+        discovery = conn.execute("SELECT status,attempts FROM political_tasks WHERE kind='discovery'").fetchone()
+        assert discovery['status'] == 'queued' and discovery['attempts'] == 0
+        conn.execute("UPDATE political_tasks SET status='complete' WHERE dedupe_key='backlog-1'")
+    assert service.claim_task('discovery', worker_id='d') is not None
+
+
 def test_lease_expiry_recovery_fences_old_worker(service, monkeypatch):
     start(service, monkeypatch)
     old = service.claim_task("discovery", worker_id="old")
