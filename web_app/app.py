@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hmac
 import json
+import logging
 import os
 from contextlib import asynccontextmanager
 from html import escape
@@ -55,11 +56,13 @@ from .jobs import (
 from . import activity
 from . import legacy_fence
 from .segmentation import (
+    PSD_PROFILE,
     ViewerProfileError,
     add_target_to_profile,
     allowed_target_keys,
     archive_viewer_profile,
     is_admin_session,
+    psd_target_keys,
     remove_target_from_profile,
     scoped_classifications,
     scoped_dashboard_payload,
@@ -189,14 +192,34 @@ def demote_target_to_secondary(key: str) -> dict[str, Any]:
     return helper(key)
 
 
-def upload_targets_artifacts(kind: str, result: dict[str, Any], key: str) -> list[str]:
+def upload_targets_artifacts(kind: str, result: dict[str, Any], key: str, *, configuration_only: bool = False) -> list[str]:
     if not artifact_store.enabled:
         return []
     safe_key = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in key)[:80] or "target"
-    return artifact_store.upload_current_artifacts(
+    upload = artifact_store.upload_configuration_artifacts if configuration_only else artifact_store.upload_current_artifacts
+    return upload(
         manifest={"kind": kind, "result": result},
         job_id=f"{kind}-{safe_key}",
     )
+
+
+def profile_artifact_uploader(profile: str):
+    return (artifact_store.upload_configuration_artifacts if profile == PSD_PROFILE
+            else artifact_store.upload_current_artifacts)
+
+
+def profile_configuration_error(profile: str) -> JSONResponse:
+    return JSONResponse(status_code=503, content={
+        "error": "profile_configuration_not_persisted", "profile": profile,
+        "message": "A alteração foi salva localmente, mas o backup do cliente não foi confirmado.",
+        "suggestion": "Verifique o armazenamento e salve o cliente novamente antes de compartilhar o acesso.",
+    })
+
+
+def psd_configuration_request(request: Request, session: dict[str, Any], target_key: str = "") -> bool:
+    effective = effective_session_for(request, session)
+    return (session_profile_key(effective) == PSD_PROFILE or
+            (is_admin_session(effective) and bool(target_key) and target_key in psd_target_keys()))
 
 
 def _credentials_file_snapshot(path) -> bytes | None:
@@ -341,16 +364,17 @@ def target_mutation_response(
     sync_reason: str = "",
     cleanup: bool = False,
     assigned_profile: str = "",
+    configuration_only: bool = False,
 ) -> JSONResponse:
     target_sync: dict[str, Any] = {}
     warning: dict[str, Any] | None = None
     warnings: list[dict[str, Any]] = []
-    if sync_reason:
+    if sync_reason and not configuration_only:
         target_sync, warning = sync_target_after_mutation(target_key, reason=sync_reason, cleanup=cleanup)
         if warning:
             warnings.append(warning)
     try:
-        uploaded = upload_targets_artifacts(kind, result, target_key)
+        uploaded = upload_targets_artifacts(kind, result, target_key, configuration_only=True) if configuration_only else upload_targets_artifacts(kind, result, target_key)
     except Exception as exc:  # noqa: BLE001 - post-save artifact upload must not invert a successful mutation.
         uploaded = []
         warnings.append(
@@ -362,7 +386,7 @@ def target_mutation_response(
             }
         )
     try:
-        active_notice = target_mutation_notice()
+        active_notice = {} if configuration_only else target_mutation_notice()
     except Exception as exc:  # noqa: BLE001 - status notice is advisory after the mutation is persisted.
         active_notice = {}
         warnings.append(
@@ -379,7 +403,9 @@ def target_mutation_response(
         "uploadedArtifacts": uploaded,
         **active_notice,
     }
-    if sync_reason:
+    if configuration_only:
+        response["futureCollectionOnly"] = True
+    if sync_reason and not configuration_only:
         response["targetSync"] = target_sync
         if warning:
             response["warning"] = warning
@@ -432,7 +458,6 @@ async def lifespan(_: FastAPI):
     suppress_startup_upload = bool(startup_remote_restore.get("suppressCurrentUpload"))
     if (
         newly_seeded
-        or political_roster_merge.get("changed")
         or targets_normalized
         or interrupted_jobs
         or resumed_jobs
@@ -453,6 +478,14 @@ async def lifespan(_: FastAPI):
             },
             job_id="startup-runtime-normalization",
         )
+    if political_roster_merge.get("changed") and artifact_store.enabled:
+        try:
+            artifact_store.upload_configuration_artifacts(
+                manifest={"kind": "political-roster-merged", "politicalRosterMerge": political_roster_merge},
+                job_id="political-roster-merged",
+            )
+        except Exception as exc:
+            logging.getLogger(__name__).warning("Political roster backup pending: %s", type(exc).__name__)
     if target_cleanup.get("archivedCount") and artifact_store.enabled and not suppress_startup_upload:
         artifact_store.upload_current_artifacts(
             manifest={"kind": "targets-auto-archived", "result": target_cleanup},
@@ -649,6 +682,7 @@ def dashboard_html_for_session(index_path, session: dict[str, Any], simulating: 
     permitted = allowed_target_keys(effective)
     political_keys = {r["key"] for r in public_targets_response().get("targets", [])
                       if r.get("political_roster_version") or r.get("key") in {"flavio_valle", "pedro_duarte"}}
+    political_keys.update(psd_target_keys())
     if permitted is None or permitted.intersection(political_keys):
         from urllib.parse import urlencode
         suffix = "?" + urlencode({"as_profile": simulating}) if simulating else ""
@@ -679,7 +713,8 @@ def public_dashboard(request: Request) -> Response:
     if not session:
         return HTMLResponse(login_html(), status_code=200)
     simulating = simulating_profile(request, session)
-    if (os.environ.get("POLITICAL_DASHBOARD_DEFAULT") == "1"
+    effective = effective_session_for(request, session)
+    if ((session_profile_key(effective) == PSD_PROFILE or os.environ.get("POLITICAL_DASHBOARD_DEFAULT") == "1")
             and political_corpus.configured and request.query_params.get("view") != "legacy"):
         try:
             political_routes.access(request)
@@ -809,7 +844,7 @@ async def change_password(request: Request) -> JSONResponse:
         )
     if artifact_store.enabled:
         try:
-            uploaded = artifact_store.upload_current_artifacts(
+            uploaded = profile_artifact_uploader(profile)(
                 manifest={"kind": "credentials-changed", "role": role, "profile": profile},
                 job_id=f"credentials-{role}-{profile or 'admin'}",
             )
@@ -843,6 +878,7 @@ async def change_password(request: Request) -> JSONResponse:
 def healthz() -> dict[str, Any]:
     return {
         "ok": True,
+        "deploymentCommit": os.environ.get("RENDER_GIT_COMMIT", ""),
         "dbExists": db_path().is_file(),
         "authConfigured": auth_configured(),
         "loginConfigured": login_configured(),
@@ -1297,7 +1333,7 @@ async def add_target(request: Request) -> JSONResponse:
     key = str(result.get("key") or "created")
     assigned = _apply_target_assignment(request, session, key, "add")
     activity.record("target.create", session=session, target_key=key, details={"primary": False, "assignedTo": assigned})
-    return target_mutation_response("targets-created", result, key, sync_reason="target-created", assigned_profile=assigned)
+    return target_mutation_response("targets-created", result, key, sync_reason="target-created", assigned_profile=assigned, configuration_only=psd_configuration_request(request, session, key))
 
 
 @app.post("/api/targets/primary")
@@ -1315,7 +1351,7 @@ async def add_primary_target(request: Request) -> JSONResponse:
     key = str(result.get("key") or "created")
     assigned = _apply_target_assignment(request, session, key, "add")
     activity.record("target.create_primary", session=session, target_key=key, details={"primary": True, "assignedTo": assigned})
-    return target_mutation_response("targets-created", result, key, sync_reason="target-created", assigned_profile=assigned)
+    return target_mutation_response("targets-created", result, key, sync_reason="target-created", assigned_profile=assigned, configuration_only=psd_configuration_request(request, session, key))
 
 
 @app.patch("/api/targets/{target_key}")
@@ -1333,7 +1369,7 @@ async def update_target(target_key: str, request: Request) -> JSONResponse:
         return target_operation_error_response("update", exc)
     key = str(result.get("key") or target_key)
     activity.record("target.update", session=session, target_key=key)
-    return target_mutation_response("targets-updated", result, key, sync_reason="target-updated", cleanup=True)
+    return target_mutation_response("targets-updated", result, key, sync_reason="target-updated", cleanup=True, configuration_only=psd_configuration_request(request, session, key))
 
 
 @app.post("/api/targets/{target_key}/promote")
@@ -1350,7 +1386,7 @@ async def promote_target(target_key: str, request: Request) -> JSONResponse:
         return target_operation_error_response("update", exc)
     key = str(result.get("key") or target_key)
     activity.record("target.promote", session=session, target_key=key)
-    return target_mutation_response("targets-promoted", result, key, sync_reason="target-promoted")
+    return target_mutation_response("targets-promoted", result, key, sync_reason="target-promoted", configuration_only=psd_configuration_request(request, session, key))
 
 
 @app.post("/api/targets/{target_key}/demote")
@@ -1367,7 +1403,7 @@ async def demote_target(target_key: str, request: Request) -> JSONResponse:
         return target_operation_error_response("update", exc)
     key = str(result.get("key") or target_key)
     activity.record("target.demote", session=session, target_key=key)
-    return target_mutation_response("targets-demoted", result, key, sync_reason="target-demoted")
+    return target_mutation_response("targets-demoted", result, key, sync_reason="target-demoted", configuration_only=psd_configuration_request(request, session, key))
 
 
 @app.post("/api/targets/{target_key}/archive")
@@ -1386,7 +1422,7 @@ async def archive_target(target_key: str, request: Request) -> JSONResponse:
         return target_operation_error_response("archive", exc)
     assigned = _apply_target_assignment(request, session, target_key, "remove")
     activity.record("target.archive", session=session, target_key=target_key, details={"reason": reason, "removedFrom": assigned})
-    return target_mutation_response("targets-archived", result, target_key, assigned_profile=assigned)
+    return target_mutation_response("targets-archived", result, target_key, assigned_profile=assigned, configuration_only=psd_configuration_request(request, session, target_key))
 
 
 @app.post("/api/targets/{target_key}/restore")
@@ -1408,7 +1444,7 @@ def restore_target(target_key: str, request: Request) -> JSONResponse:
     key = str(result.get("key") or target_key)
     assigned = _apply_target_assignment(request, session, key, "add")
     activity.record("target.restore", session=session, target_key=key, details={"assignedTo": assigned})
-    return target_mutation_response("targets-restored", result, key, sync_reason="target-restored", assigned_profile=assigned)
+    return target_mutation_response("targets-restored", result, key, sync_reason="target-restored", assigned_profile=assigned, configuration_only=psd_configuration_request(request, session, key))
 
 
 def _viewer_profile_error_response(exc: ViewerProfileError) -> JSONResponse:
@@ -1504,12 +1540,13 @@ async def create_admin_viewer(request: Request) -> JSONResponse:
 
     if artifact_store.enabled:
         try:
-            artifact_store.upload_current_artifacts(
+            profile_artifact_uploader(record["profile"])(
                 manifest={"kind": "viewer-created", "profile": profile},
                 job_id=f"viewer-created-{profile}",
             )
         except Exception:  # noqa: BLE001
-            pass
+            if record["profile"] == PSD_PROFILE:
+                return profile_configuration_error(record["profile"])
 
     record["has_password"] = True
     activity.record("viewer.create", session=session, target_key=profile, details={"label": label, "target_keys": list(target_keys)})
@@ -1575,12 +1612,13 @@ async def update_admin_viewer(profile_key: str, request: Request) -> JSONRespons
 
     if artifact_store.enabled:
         try:
-            artifact_store.upload_current_artifacts(
+            profile_artifact_uploader(profile_key)(
                 manifest={"kind": "viewer-updated", "profile": profile_key},
                 job_id=f"viewer-updated-{profile_key}",
             )
         except Exception:  # noqa: BLE001
-            pass
+            if profile_key == PSD_PROFILE:
+                return profile_configuration_error(profile_key)
 
     from . import auth as auth_module
 
@@ -1604,12 +1642,13 @@ def archive_admin_viewer(profile_key: str, request: Request) -> JSONResponse:
 
     if artifact_store.enabled:
         try:
-            artifact_store.upload_current_artifacts(
+            profile_artifact_uploader(profile_key)(
                 manifest={"kind": "viewer-archived", "profile": profile_key},
                 job_id=f"viewer-archived-{profile_key}",
             )
         except Exception:  # noqa: BLE001
-            pass
+            if profile_key == PSD_PROFILE:
+                return profile_configuration_error(profile_key)
 
     activity.record("viewer.archive", session=session, target_key=profile_key)
     return JSONResponse({"ok": True, "archived": removed["profile"], "viewer": removed})

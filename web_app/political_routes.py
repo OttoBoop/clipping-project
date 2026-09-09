@@ -16,7 +16,7 @@ from starlette.concurrency import run_in_threadpool
 from .auth import require_admin, require_csrf, require_not_demo, require_viewer
 from .config import ROOT
 from .political_corpus import PoliticalAccessDenied, PoliticalNotFound, political_corpus
-from .segmentation import allowed_target_keys, is_admin_session
+from .segmentation import PSD_PROFILE, allowed_target_keys, is_admin_session, psd_target_keys, viewer_profiles
 
 SCOPE = "politica_rj_2026"
 router = APIRouter()
@@ -34,8 +34,18 @@ def access(request: Request, *, mutation: bool = False, admin: bool = False):
         if effective is not session:
             raise HTTPException(403, "simulation_is_read_only")
     allowed = allowed_target_keys(effective)
+    client = request.query_params.get("client", "")
+    if client:
+        if not is_admin_session(effective):
+            raise HTTPException(403, "political_client_admin_required")
+        if client != PSD_PROFILE or client not in viewer_profiles():
+            raise HTTPException(404, "political_client_not_found")
+        # Keep the real administrator identity while restricting every read and
+        # mutation to this client's roster. This is an operating context, not simulation.
+        allowed = psd_target_keys()
     rows = public_targets_response(include_archived=True).get("targets", [])
-    political = [r for r in rows if r.get("political_roster_version") or r.get("key") in {
+    client_keys = psd_target_keys()
+    political = [r for r in rows if r.get("political_roster_version") or PSD_PROFILE in (r.get("collection_profiles") or []) or r.get("key") in client_keys or r.get("key") in {
         "flavio_valle", "pedro_duarte", "pedro_angelito", "bernardo_rubiao"
     }]
     keys = sorted({str(r["key"]) for r in political if allowed is None or r["key"] in allowed})
@@ -113,9 +123,21 @@ def page(request: Request):
 @router.get("/api/political/meta")
 def meta(request: Request):
     session, _, targets = access(request)
+    active = [row for row in targets if not row.get("archived")]
+    profile = request.query_params.get("client") or str(session.get("profile") or "")
+    config = viewer_profiles().get(profile, {})
+    available = {row["key"] for row in active}
+    defaults = [key for key in config.get("default_targets", []) if key in available]
+    if not defaults:
+        defaults = [row["key"] for row in active if row.get("preferred_for_political_run")]
+    if not defaults:
+        defaults = [row["key"] for row in active]
     return {"scope": SCOPE, "configured": political_corpus.configured,
             "canRun": is_admin_session(session), "dateFrom": "2026-06-01",
-            "targets": [row for row in targets if not row.get("archived")],
+            "defaultTargets": defaults, "clientProfile": profile,
+            "clientLabel": config.get("label") or profile,
+            "psdClientAvailable": is_admin_session(require_viewer(request)) and PSD_PROFILE in viewer_profiles(),
+            "targets": active,
             "archivedTargets": [row for row in targets if row.get("archived")]}
 
 

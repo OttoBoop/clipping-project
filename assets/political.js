@@ -1,8 +1,9 @@
 (() => {
   "use strict";
   const $ = id => document.getElementById(id);
-  const state = {targets: [], sources: [], selected: new Set(), items: [], cursor: "", previous: [], next: "", storyId: "", job: null, csrf: "", configured: false, canRun: false, sequence: 0, article: null, classifications: []};
+  const state = {targets: [], defaultTargets: [], sources: [], selected: new Set(), items: [], cursor: "", previous: [], next: "", storyId: "", job: null, csrf: "", configured: false, canRun: false, sequence: 0, article: null, classifications: []};
   const simulation = new URLSearchParams(location.search).get("as_profile");
+  const clientProfile = new URLSearchParams(location.search).get("client");
   const activeStates = new Set(["queued", "running", "cancel_requested", "reviewing"]);
   const labels = {queued: "Na fila", running: "Coleta em andamento", reviewing: "Revisão em andamento", succeeded: "Concluída", completed: "Concluída", complete: "Concluída", completed_with_gaps: "Concluída com pendências", cancelled: "Cancelada", cancel_requested: "Cancelamento solicitado", failed: "Falha na coleta", interrupted: "Interrompida", retryable: "Aguardando nova tentativa", blocked: "Fonte indisponível", exhausted: "Consulta concluída", empty_verified: "Sem resultados no período", empty_unverified: "Resultado vazio sem confirmação", capped: "Limite de resultados atingido", available: "Texto disponível", metadata_only: "Somente referência", legacy_body: "Texto preservado do arquivo", pending: "Texto pendente"};
   const text = (tag, value, cls) => {const e = document.createElement(tag); e.textContent = value == null ? "" : String(value); if (cls) e.className = cls; return e;};
@@ -27,6 +28,7 @@
   async function api(path, options = {}) {
     const url = new URL(path, location.origin);
     if (simulation) url.searchParams.set("as_profile", simulation);
+    if (clientProfile) url.searchParams.set("client", clientProfile);
     const headers = {...options.headers};
     if (options.body) {headers["Content-Type"] = "application/json"; headers["X-CSRF-Token"] = state.csrf;}
     if (options.method && options.method !== "GET") headers["X-CSRF-Token"] = state.csrf;
@@ -175,8 +177,8 @@
   $("classification-target").addEventListener("change", populateClassification);
   $("close-article").addEventListener("click", () => {state.article = null; $("article-dialog").close();});
   $("filters").addEventListener("submit", event => {event.preventDefault(); state.storyId = ""; loadResults(true);});
-  $("select-requested").addEventListener("click", () => {state.selected = new Set(state.targets.filter(t => t.preferred_for_political_run).map(t => t.key)); renderGroups();});
-  $("select-all").addEventListener("click", () => {state.selected = new Set(state.targets.filter(t => t.political_roster_version).map(t => t.key)); renderGroups();});
+  $("select-requested").addEventListener("click", () => {state.selected = new Set(state.defaultTargets); renderGroups();});
+  $("select-all").addEventListener("click", () => {state.selected = new Set(state.targets.map(t => t.key)); renderGroups();});
   $("select-none").addEventListener("click", () => {state.selected.clear(); renderGroups();});
   $("all-dates").addEventListener("click", () => {$("date-from").value = ""; $("date-to").value = ""; loadResults(true);});
   $("next").addEventListener("click", () => {state.previous.push(state.cursor); state.cursor = state.next; loadResults();});
@@ -199,13 +201,20 @@
     try {
       const [meta, token, sourceData] = await Promise.all([api("/api/political/meta"), api("/api/csrf"), api("/api/political/sources")]);
       state.csrf = token.csrf; state.targets = meta.targets || []; state.sources = sourceData.sources || []; state.configured = Boolean(meta.configured); state.canRun = Boolean(meta.canRun) && !simulation;
-      state.selected = new Set(state.targets.filter(t => t.preferred_for_political_run).map(t => t.key));
+      state.defaultTargets = (meta.defaultTargets || []).filter(key => state.targets.some(t => t.key === key));
+      if (!state.defaultTargets.length) state.defaultTargets = state.targets.map(t => t.key);
+      state.selected = new Set(state.defaultTargets);
       if (!state.selected.size) state.selected = new Set(state.targets.map(t => t.key));
       const parts = new Intl.DateTimeFormat("en-CA", {timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit"}).formatToParts(new Date());
       const part = name => parts.find(p => p.type === name).value; $("date-to").value = `${part("year")}-${part("month")}-${part("day")}`;
       for (const source of sourceData.sources || []) {const option = text("option", source.name || source.key); option.value = source.key; $("source").append(option);}
       renderGroups(); $("run-controls").hidden = !state.canRun; $("start").disabled = $("review").disabled = !state.configured;
-      $("select-all").textContent = `Todos os ${state.targets.filter(t => t.political_roster_version).length} nomes da lista`;
+      $("select-all").textContent = `Todos os ${state.targets.length} nomes da lista`;
+      $("account-label").textContent = meta.clientLabel || meta.clientProfile || "";
+      $("psd-client-link").hidden = !meta.psdClientAvailable || Boolean(clientProfile);
+      const management = new URL("/?view=legacy", location.origin);
+      if (clientProfile || simulation) management.searchParams.set("as_profile", clientProfile || simulation);
+      $("manage-account").href = management.pathname + management.search;
       if (!state.configured) {message("Os nomes estão organizados. A nova coleta estará disponível quando o serviço de armazenamento for conectado."); renderResults(); return;}
       await refreshStatus(); await loadResults(); poll();
     } catch (error) {message(error.message, true);}

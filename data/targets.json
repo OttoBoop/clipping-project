@@ -30,7 +30,10 @@
         "note": "Identidade, cargo ou filiação partidária; consultado em 09/09/2026."
       }
     ],
-    "preferred_for_political_run": true
+    "preferred_for_political_run": true,
+    "collection_profiles": [
+      "psd_rj_2026"
+    ]
   },
   {
     "key": "pedro_duarte",
@@ -84,7 +87,10 @@
         "Pedro Duarte dos Santos Soares Junior"
       ],
       "window_chars": 220
-    }
+    },
+    "collection_profiles": [
+      "psd_rj_2026"
+    ]
   },
   {
     "key": "pedro_angelito",
@@ -161,6 +167,9 @@
         "url": "https://psd.org.br/noticias/rio-convencao-confirma-candidatura-de-eduardo-paes/",
         "note": "Convenção do PSD em 20/07/2026 confirmou a candidatura ao Governo do Rio."
       }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
     ]
   },
   {
@@ -225,7 +234,10 @@
         "Renan Ferreirinha"
       ],
       "window_chars": 220
-    }
+    },
+    "collection_profiles": [
+      "psd_rj_2026"
+    ]
   },
   {
     "key": "pedro_paulo",
@@ -287,7 +299,10 @@
         "Pedro Paulo Carvalho Teixeira"
       ],
       "window_chars": 220
-    }
+    },
+    "collection_profiles": [
+      "psd_rj_2026"
+    ]
   },
   {
     "key": "eduardo_cavaliere",
@@ -318,6 +333,9 @@
         "url": "https://www.camara.rio/comunicacao/noticias/3138-decana-da-camara-rosa-fernandes-e-ovacionada-em-homenagem-no-plenario",
         "note": "Câmara identifica o prefeito como PSD em maio de 2026."
       }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
     ]
   },
   {
@@ -346,6 +364,9 @@
         "url": "https://www.camara.leg.br/deputados/220614?ano=2026",
         "note": "Identidade, cargo ou filiação partidária; consultado em 09/09/2026."
       }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
     ]
   },
   {
@@ -373,6 +394,9 @@
         "url": "https://www.camara.leg.br/deputados/74856",
         "note": "Identidade, cargo ou filiação partidária; consultado em 09/09/2026."
       }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
     ]
   },
   {
@@ -400,6 +424,9 @@
         "url": "https://psd.org.br/noticias/congresso-psd-agora-tem-13-senadores-e-49-deputados/",
         "note": "Lista de bancada publicada pelo PSD em 06/04/2026."
       }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
     ]
   },
   {
@@ -427,6 +454,9 @@
         "url": "https://www.camara.rio/vereadores/carlo-caiado",
         "note": "Identidade, cargo ou filiação partidária; consultado em 09/09/2026."
       }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
     ]
   },
   {
@@ -454,6 +484,9 @@
         "url": "https://www.camara.rio/vereadores/rosa-fernandes",
         "note": "Identidade, cargo ou filiação partidária; consultado em 09/09/2026."
       }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
     ]
   },
   {
@@ -486,6 +519,9 @@
         "url": "https://www.diariodorio.com/politica/2026/08/29/quem-e-o-candidato-a-deputado-estadual-do-eduardo-paes.html",
         "note": "Entrevista de 29/08/2026 descreve os cargos anteriores e relação com Paes."
       }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
     ]
   },
   {
@@ -869,5 +905,596 @@
       "exempt_aliases": [],
       "window_chars": 80
     }
+  },
+  {
+    "key": "sergio_fernandes",
+    "label": "Sergio Fernandes",
+    "display_name": "Sergio Fernandes",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "Sergio Fernandes"
+    ],
+    "exact_aliases": [],
+    "political_roster_version": "rio_2026_v1",
+    "group": "rio_psd",
+    "group_label": "PSD no Rio",
+    "preferred_for_political_run": false,
+    "party": "PSD",
+    "role": "Deputado estadual/RJ; candidato a deputado estadual em 2026",
+    "verified_at": "2026-09-09",
+    "sources": [
+      {
+        "url": "https://campanha.sergiofernandes.com.br/",
+        "note": "Site da campanha de 2026: deputado estadual e candidatura 55000; consultado em 09/09/2026."
+      },
+      {
+        "url": "https://correiopetropolitano.com.br/2026/07/22/psd-confirma-sergio-fernandes-como-candidato/",
+        "note": "Reportagem de 22/07/2026 confirma convenção do PSD. Registra candidatura pelo PDT em 2018; preservar filiação histórica."
+      }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
+    ],
+    "match_context": {
+      "required_for": [
+        "Sergio Fernandes"
+      ],
+      "any_of": [
+        "Rio de Janeiro",
+        "RJ",
+        "carioca",
+        "fluminense",
+        "Eduardo Paes",
+        "Câmara do Rio",
+        "Câmara Municipal do Rio",
+        "Alerj",
+        "Assembleia Legislativa",
+        "PSD",
+        "Petrópolis",
+        "Rosa Fernandes",
+        "subúrbio"
+      ],
+      "none_of": [],
+      "exempt_aliases": [],
+      "window_chars": 260
+    }
+  },
+  {
+    "key": "junior_da_lucinha",
+    "label": "Junior da Lucinha",
+    "display_name": "Junior da Lucinha",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "Junior da Lucinha"
+    ],
+    "exact_aliases": [
+      "Tadeu Amorim de Barros Junior"
+    ],
+    "political_roster_version": "rio_2026_v1",
+    "group": "rio_psd",
+    "group_label": "PSD no Rio",
+    "preferred_for_political_run": false,
+    "party": "PSD",
+    "role": "Vereador do Rio; candidato a deputado estadual em 2026",
+    "verified_at": "2026-09-09",
+    "sources": [
+      {
+        "url": "https://camara.rio/vereadores/liderancas-blocos-e-partidos",
+        "note": "Câmara do Rio lista Junior da Lucinha no PSD; consultado em 09/09/2026."
+      },
+      {
+        "url": "https://candidatos.nexojornal.com.br/2026/rj/junior-da-lucinha-190002538006/",
+        "note": "Cadastro eleitoral de 2026 publicado pelo Nexo com dados do TSE; cargo pretendido e PSD, consultado em 09/09/2026. Não implica deferimento definitivo."
+      }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
+    ]
+  },
+  {
+    "key": "joyce_trindade",
+    "label": "Joyce Trindade",
+    "display_name": "Joyce Trindade",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "Joyce Trindade"
+    ],
+    "exact_aliases": [
+      "Joyce Trindade de Faria Gama"
+    ],
+    "political_roster_version": "rio_2026_v1",
+    "group": "rio_psd",
+    "group_label": "PSD no Rio",
+    "preferred_for_political_run": false,
+    "party": "PSD",
+    "role": "Vereadora do Rio; candidata a deputada estadual em 2026",
+    "verified_at": "2026-09-09",
+    "sources": [
+      {
+        "url": "https://www.camara.rio/vereadores/joyce-trindade",
+        "note": "Perfil oficial: nome civil, PSD e primeiro mandato de vereadora; ex-secretária de Políticas e Promoção da Mulher (2021–2024)."
+      },
+      {
+        "url": "https://candidatos.nexojornal.com.br/2026/rj/joyce-trindade-190002538000/",
+        "note": "Cadastro eleitoral de 2026 publicado pelo Nexo com dados do TSE; cargo pretendido e PSD, consultado em 09/09/2026. Não implica deferimento definitivo."
+      }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
+    ]
+  },
+  {
+    "key": "rafael_aloisio_freitas",
+    "label": "Rafael Aloisio Freitas",
+    "display_name": "Rafael Aloisio Freitas",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "Rafael Aloisio Freitas"
+    ],
+    "exact_aliases": [],
+    "political_roster_version": "rio_2026_v1",
+    "group": "rio_psd",
+    "group_label": "PSD no Rio",
+    "preferred_for_political_run": false,
+    "party": "PSD",
+    "role": "Vereador do Rio; candidato a deputado federal em 2026",
+    "verified_at": "2026-09-09",
+    "sources": [
+      {
+        "url": "https://camara.rio/vereadores/liderancas-blocos-e-partidos",
+        "note": "Câmara do Rio lista Rafael Aloisio Freitas no PSD; consultado em 09/09/2026."
+      },
+      {
+        "url": "https://rafaelaloisiofreitas.com.br/",
+        "note": "Site da campanha para deputado federal em 2026; candidatura não é exercício do cargo."
+      },
+      {
+        "url": "https://www.camara.rio/i-ciclo-de-palestras-nocoes-do-processo-legislativo",
+        "note": "Mesa da 11ª legislatura (2021–2024) identifica Cidadania; preservar notícias com essa filiação histórica."
+      }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
+    ]
+  },
+  {
+    "key": "marcelo_diniz",
+    "label": "Marcelo Diniz",
+    "display_name": "Marcelo Diniz",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "Marcelo Diniz"
+    ],
+    "exact_aliases": [
+      "Marcelo Diniz Anastacio da Silva"
+    ],
+    "political_roster_version": "rio_2026_v1",
+    "group": "rio_psd",
+    "group_label": "PSD no Rio",
+    "preferred_for_political_run": false,
+    "party": "PSD",
+    "role": "Vereador do Rio; candidato a deputado federal em 2026",
+    "verified_at": "2026-09-09",
+    "sources": [
+      {
+        "url": "https://camara.rio/vereadores/liderancas-blocos-e-partidos",
+        "note": "Câmara do Rio lista Marcelo Diniz no PSD; consultado em 09/09/2026."
+      },
+      {
+        "url": "https://candidatos.nexojornal.com.br/2026/rj/marcelo-diniz-190002540174/",
+        "note": "Cadastro eleitoral de 2026 publicado pelo Nexo com dados do TSE; cargo pretendido e PSD, consultado em 09/09/2026. Não implica deferimento definitivo."
+      }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
+    ],
+    "match_context": {
+      "required_for": [
+        "Marcelo Diniz"
+      ],
+      "any_of": [
+        "Rio de Janeiro",
+        "RJ",
+        "carioca",
+        "fluminense",
+        "Eduardo Paes",
+        "Câmara do Rio",
+        "Câmara Municipal do Rio",
+        "Alerj",
+        "Assembleia Legislativa",
+        "PSD",
+        "vereador",
+        "deputado federal"
+      ],
+      "none_of": [],
+      "exempt_aliases": [
+        "Marcelo Diniz Anastacio da Silva"
+      ],
+      "window_chars": 260
+    }
+  },
+  {
+    "key": "luiz_paulo",
+    "label": "Luiz Paulo",
+    "display_name": "Luiz Paulo",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "Luiz Paulo"
+    ],
+    "exact_aliases": [
+      "Luiz Paulo Corrêa da Rocha"
+    ],
+    "political_roster_version": "rio_2026_v1",
+    "group": "rio_psd",
+    "group_label": "PSD no Rio",
+    "preferred_for_political_run": false,
+    "party": "PSD",
+    "role": "Deputado estadual/RJ; ex-vice-governador do Rio",
+    "verified_at": "2026-09-09",
+    "sources": [
+      {
+        "url": "https://www.luizpaulo.net/",
+        "note": "Site próprio: nome civil, deputado estadual, ex-vice-governador; publicação de 16/08/2026 declara candidatura pelo PSD. Não altera filiações de matérias anteriores."
+      }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
+    ],
+    "match_context": {
+      "required_for": [
+        "Luiz Paulo"
+      ],
+      "any_of": [
+        "Rio de Janeiro",
+        "RJ",
+        "carioca",
+        "fluminense",
+        "Eduardo Paes",
+        "Câmara do Rio",
+        "Câmara Municipal do Rio",
+        "Alerj",
+        "Assembleia Legislativa",
+        "PSD",
+        "deputado estadual",
+        "vice-governador"
+      ],
+      "none_of": [
+        "Luiz Paulo Conde",
+        "Luiz Paulo Vellozo Lucas"
+      ],
+      "exempt_aliases": [
+        "Luiz Paulo Corrêa da Rocha"
+      ],
+      "window_chars": 260
+    }
+  },
+  {
+    "key": "atila_nunes",
+    "label": "Átila Nunes",
+    "display_name": "Átila Nunes",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "Átila Nunes"
+    ],
+    "exact_aliases": [
+      "Átila Nunes Pereira Filho",
+      "Átila Nunes Filho"
+    ],
+    "political_roster_version": "rio_2026_v1",
+    "group": "rio_psd",
+    "group_label": "PSD no Rio",
+    "preferred_for_political_run": false,
+    "party": "PSD",
+    "role": "Político estadual/RJ, nascido em 1948; atuação na ALERJ; distinto do vereador homônimo",
+    "verified_at": "2026-09-09",
+    "sources": [
+      {
+        "url": "https://www.alerj.rj.gov.br/Deputados/PerfilDeputado/510?Legislatura=20",
+        "note": "Perfil da ALERJ: PSD, nascimento em 14/12/1948. A página biográfica não garante exercício atual de suplência."
+      },
+      {
+        "url": "https://www.meuvoto.org.br/candidato/190002538039.html",
+        "note": "Dados eleitorais: Atila Nunes Pereira Filho, 14/12/1948, candidatura estadual PSD em 2026; histórico MDB em 2018 e PSD em 2022. Não confundir com Átila Alexandre Nunes Pereira."
+      }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
+    ],
+    "match_context": {
+      "required_for": [
+        "Átila Nunes"
+      ],
+      "any_of": [
+        "Alerj",
+        "Assembleia Legislativa",
+        "deputado estadual",
+        "1948"
+      ],
+      "none_of": [
+        "vereador Átila Nunes",
+        "Átila Nunes vereador",
+        "Átila Alexandre",
+        "Átila Nunes Neto"
+      ],
+      "exempt_aliases": [
+        "Átila Nunes Pereira Filho",
+        "Átila Nunes Filho"
+      ],
+      "window_chars": 260
+    }
+  },
+  {
+    "key": "otoni_de_paula",
+    "label": "Otoni de Paula",
+    "display_name": "Otoni de Paula",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "Otoni de Paula"
+    ],
+    "exact_aliases": [
+      "Otoni Moura de Paulo Junior"
+    ],
+    "political_roster_version": "rio_2026_v1",
+    "group": "rio_psd",
+    "group_label": "PSD no Rio",
+    "preferred_for_political_run": false,
+    "party": "PSD",
+    "role": "Deputado federal/RJ; candidato à reeleição em 2026",
+    "verified_at": "2026-09-09",
+    "sources": [
+      {
+        "url": "https://www.camara.leg.br/deputados/204441?ano=2024",
+        "note": "Perfil oficial consultado em 09/09/2026: nome civil e PSD-RJ. O parâmetro ano seleciona atividades, não congela a filiação histórica."
+      },
+      {
+        "url": "https://candidatos.nexojornal.com.br/2026/rj/otoni-de-paula-190002540158/",
+        "note": "Cadastro eleitoral de 2026 publicado pelo Nexo com dados do TSE; cargo pretendido e PSD, consultado em 09/09/2026. Não implica deferimento definitivo."
+      },
+      {
+        "url": "https://imagem.camara.leg.br/Imagem/d/pdf/DCD0020251010001940000.PDF",
+        "note": "Diário da Câmara de 10/10/2025 registra MDB; preservar essa filiação em notícias da época."
+      }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
+    ],
+    "match_context": {
+      "required_for": [
+        "Otoni de Paula"
+      ],
+      "any_of": [
+        "Rio de Janeiro",
+        "RJ",
+        "carioca",
+        "fluminense",
+        "Eduardo Paes",
+        "Câmara do Rio",
+        "Câmara Municipal do Rio",
+        "Alerj",
+        "Assembleia Legislativa",
+        "PSD",
+        "deputado federal",
+        "Congresso",
+        "Câmara dos Deputados"
+      ],
+      "none_of": [
+        "Otoni de Paula Pai"
+      ],
+      "exempt_aliases": [
+        "Otoni Moura de Paulo Junior"
+      ],
+      "window_chars": 260
+    }
+  },
+  {
+    "key": "joao_pires",
+    "label": "João Pires",
+    "display_name": "João Pires",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "João Pires"
+    ],
+    "exact_aliases": [
+      "João Vitor Pires Nascimento"
+    ],
+    "political_roster_version": "rio_2026_v1",
+    "group": "rio_psd",
+    "group_label": "PSD no Rio",
+    "preferred_for_political_run": false,
+    "party": "PSD",
+    "role": "Ex-secretário de Proteção e Defesa do Consumidor do Rio; candidato a deputado estadual em 2026",
+    "verified_at": "2026-09-09",
+    "sources": [
+      {
+        "url": "https://joaopiresrj.com.br/",
+        "note": "Site da campanha: São Gonçalo, trabalho com Renan Ferreirinha, defesa do consumidor e candidatura estadual 55021."
+      },
+      {
+        "url": "https://candidatos.nexojornal.com.br/2026/rj/joao-pires-190002538031/",
+        "note": "Cadastro eleitoral de 2026 publicado pelo Nexo com dados do TSE; cargo pretendido e PSD, consultado em 09/09/2026. Não implica deferimento definitivo."
+      }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
+    ],
+    "match_context": {
+      "required_for": [
+        "João Pires"
+      ],
+      "any_of": [
+        "Procon",
+        "defesa do consumidor",
+        "proteção do consumidor",
+        "consumidor",
+        "consumidores",
+        "Renan Ferreirinha",
+        "São Gonçalo",
+        "Alcântara",
+        "Cara do Posto",
+        "Posto Sem Roubo",
+        "55021"
+      ],
+      "none_of": [],
+      "exempt_aliases": [
+        "João Vitor Pires Nascimento"
+      ],
+      "window_chars": 260
+    }
+  },
+  {
+    "key": "felipe_boro",
+    "label": "Felipe Boró",
+    "display_name": "Felipe Boró",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "Felipe Boró"
+    ],
+    "exact_aliases": [
+      "Felipe Bezerra da Costa"
+    ],
+    "political_roster_version": "rio_2026_v1",
+    "group": "rio_psd",
+    "group_label": "PSD no Rio",
+    "preferred_for_political_run": false,
+    "party": "PSD",
+    "role": "Vereador do Rio; renúncia ao registro de candidatura a deputado federal em 2026",
+    "verified_at": "2026-09-09",
+    "sources": [
+      {
+        "url": "https://camara.rio/vereadores/liderancas-blocos-e-partidos",
+        "note": "Câmara do Rio lista Felipe Boró no PSD; consultado em 09/09/2026."
+      },
+      {
+        "url": "https://candidatos.nexojornal.com.br/2026/rj/felipe-boro-190002540183/",
+        "note": "Cadastro de 2026 informa PSD e situação Renúncia; consultado em 09/09/2026. Permanece no monitoramento aprovado, sem tratar candidatura como ativa."
+      },
+      {
+        "url": "https://www.camara.rio/comunicacao/noticias/330-felipe-boro-toma-posse-na-camara-do-rio",
+        "note": "Notícia oficial de 07/06/2021: Felipe Bezerra da Costa, conhecido como Felipe Boró, era suplente do Patriota. Preservar essa filiação histórica."
+      },
+      {
+        "url": "https://www.camara.rio/vereadores/anteriores",
+        "note": "Histórico oficial: 11ª legislatura PATRIOTA/PRD, 12ª PSD; não reescrever notícias anteriores."
+      }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
+    ]
+  },
+  {
+    "key": "marcio_ribeiro",
+    "label": "Márcio Ribeiro",
+    "display_name": "Márcio Ribeiro",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "Márcio Ribeiro"
+    ],
+    "exact_aliases": [
+      "Marcio Cesar Gomes Ribeiro Junior"
+    ],
+    "political_roster_version": "rio_2026_v1",
+    "group": "rio_psd",
+    "group_label": "PSD no Rio",
+    "preferred_for_political_run": false,
+    "party": "PSD",
+    "role": "Vereador do Rio; candidato a deputado federal em 2026",
+    "verified_at": "2026-09-09",
+    "sources": [
+      {
+        "url": "https://camara.rio/vereadores/marcio-ribeiro",
+        "note": "Perfil oficial: nome civil, vereador, PSD; consultado em 09/09/2026."
+      },
+      {
+        "url": "https://marcioribeiro.rio/",
+        "note": "Site da campanha para deputado federal em 2026. A biografia declara exercício atual de vereador, não de deputado federal."
+      }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
+    ],
+    "match_context": {
+      "required_for": [
+        "Márcio Ribeiro"
+      ],
+      "any_of": [
+        "Rio de Janeiro",
+        "RJ",
+        "carioca",
+        "fluminense",
+        "Eduardo Paes",
+        "Câmara do Rio",
+        "Câmara Municipal do Rio",
+        "Alerj",
+        "Assembleia Legislativa",
+        "PSD",
+        "Grande Méier",
+        "Grande Tijuca",
+        "vereador"
+      ],
+      "none_of": [
+        "comediante Márcio Ribeiro",
+        "humorista Márcio Ribeiro"
+      ],
+      "exempt_aliases": [
+        "Marcio Cesar Gomes Ribeiro Junior"
+      ],
+      "window_chars": 260
+    }
+  },
+  {
+    "key": "salvino_oliveira",
+    "label": "Salvino Oliveira",
+    "display_name": "Salvino Oliveira",
+    "className": "",
+    "primary": false,
+    "archived": false,
+    "keywords": [
+      "Salvino Oliveira"
+    ],
+    "exact_aliases": [
+      "Salvino Oliveira Barbosa"
+    ],
+    "political_roster_version": "rio_2026_v1",
+    "group": "rio_psd",
+    "group_label": "PSD no Rio",
+    "preferred_for_political_run": false,
+    "party": "PSD",
+    "role": "Vereador do Rio; candidato a deputado federal em 2026",
+    "verified_at": "2026-09-09",
+    "sources": [
+      {
+        "url": "https://camara.rio/vereadores/liderancas-blocos-e-partidos",
+        "note": "Câmara do Rio lista Salvino Oliveira no PSD; consultado em 09/09/2026."
+      },
+      {
+        "url": "https://candidatos.nexojornal.com.br/2026/rj/salvino-oliveira-190002540180/",
+        "note": "Cadastro eleitoral de 2026 publicado pelo Nexo com dados do TSE; cargo pretendido e PSD, consultado em 09/09/2026. Não implica deferimento definitivo."
+      }
+    ],
+    "collection_profiles": [
+      "psd_rj_2026"
+    ]
   }
 ]

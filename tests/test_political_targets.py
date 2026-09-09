@@ -27,15 +27,15 @@ def roster_matcher():
     ], exact_names_only=True)
 
 
-def test_roster_has_25_people_separate_affiliations_and_five_preferences():
+def test_roster_preserves_original_groups_and_adds_approved_psd_profile():
     rows = roster_rows()
     by_key = {r["key"]: r for r in rows}
-    assert len(rows) == len(by_key) == 25
+    assert len(rows) == len(by_key) == 37
     assert {r["key"] for r in rows if r["preferred_for_political_run"]} == {
         "flavio_valle", "pedro_duarte", "eduardo_paes", "pedro_paulo", "renan_ferreirinha",
     }
     assert sum(r["group"] == "rio_governor_opponents" for r in rows) == 8
-    assert sum(r["group"] == "rio_psd" for r in rows) == 7
+    assert sum(r["group"] == "rio_psd" for r in rows) == 19
     assert by_key["pedro_duarte"]["party"] == "PSD"
     assert by_key["jane_reis"]["party"] == "MDB"
     assert by_key["jane_reis"]["group"] == "coalition_partners"
@@ -45,6 +45,22 @@ def test_roster_has_25_people_separate_affiliations_and_five_preferences():
     assert inherited["pedro_angelito"]["primary"] is True
     assert inherited["pedro_duarte"]["primary"] is False
     assert {"bernardo_rubiao", "shakira", "noozra_api"} <= inherited.keys()
+    approved = json.loads((ROOT / "data" / "psd_rj_2026_profile.json").read_text())
+    expected = {
+        "eduardo_paes", "flavio_valle", "pedro_duarte", "renan_ferreirinha", "pedro_paulo",
+        "eduardo_cavaliere", "daniel_soranz", "laura_carneiro", "hugo_leal", "carlo_caiado",
+        "rosa_fernandes", "guilherme_schleder", "sergio_fernandes", "junior_da_lucinha",
+        "joyce_trindade", "rafael_aloisio_freitas", "marcelo_diniz", "luiz_paulo", "atila_nunes",
+        "otoni_de_paula", "joao_pires", "felipe_boro", "marcio_ribeiro", "salvino_oliveira",
+    }
+    assert len(approved["target_keys"]) == approved["target_count"] == 24
+    assert set(approved["target_keys"]) == expected
+    assert {r["key"] for r in rows if "psd_rj_2026" in r.get("collection_profiles", [])} == expected
+    assert {r["key"] for r in inherited.values() if "psd_rj_2026" in r.get("collection_profiles", [])} == expected
+    assert all(by_key[key]["party"] == "PSD" for key in expected)
+    assert "1948" in by_key["atila_nunes"]["role"]
+    assert "renúncia" in by_key["felipe_boro"]["role"]
+    assert any("Patriota" in s["note"] for s in by_key["felipe_boro"]["sources"])
 
 
 @pytest.mark.parametrize("text,expected", [
@@ -65,6 +81,25 @@ def test_roster_has_25_people_separate_affiliations_and_five_preferences():
     ("Ronaldo Caiado disputa a Presidência.", {"ronaldo_caiado"}),
     ("Caiado deu entrevista.", set()),
     ("Otto Alencar Filho participou da reunião.", set()),
+    ("Sérgio Fernandes debate educação em Petrópolis.", {"sergio_fernandes"}),
+    ("Sergio Fernandes apresentou um concerto em Lisboa.", set()),
+    ("Junior da Lucinha visitou a escola.", {"junior_da_lucinha"}),
+    ("Joyce Trindade e Rafael Aloísio Freitas debatem orçamento.", {"joyce_trindade", "rafael_aloisio_freitas"}),
+    ("Marcelo Diniz Anastacio da Silva compareceu.", {"marcelo_diniz"}),
+    ("Luiz Paulo Corrêa da Rocha compareceu.", {"luiz_paulo"}),
+    ("Luiz Paulo Conde foi prefeito do Rio de Janeiro.", set()),
+    ("Átila Nunes, deputado estadual, discursou na ALERJ.", {"atila_nunes"}),
+    ("O vereador Átila Nunes visitou a ALERJ.", set()),
+    ("Átila Alexandre Nunes Pereira compareceu.", set()),
+    ("Átila Nunes Pereira Filho compareceu.", {"atila_nunes"}),
+    ("Otoni de Paula, deputado federal pelo PSD, discursou.", {"otoni_de_paula"}),
+    ("Otoni de Paula Pai deu entrevista no Rio de Janeiro.", set()),
+    ("João Pires fiscalizou postos pelo Procon.", {"joao_pires"}),
+    ("João Pires, jogador, chegou ao Rio de Janeiro.", set()),
+    ("João Vitor Pires Nascimento compareceu.", {"joao_pires"}),
+    ("O humorista Márcio Ribeiro fez uma apresentação no Rio de Janeiro.", set()),
+    ("Márcio Ribeiro, vereador do Rio de Janeiro, apresentou projeto.", {"marcio_ribeiro"}),
+    ("Felipe Boró e Salvino Oliveira concederam entrevistas.", {"felipe_boro", "salvino_oliveira"}),
 ])
 def test_roster_matches_names_with_boundaries_and_context(text, expected):
     assert {h.target_key for h in roster_matcher().find_hits(text)} == expected
@@ -104,7 +139,7 @@ def test_bootstrap_merge_preserves_archives_user_edits_permissions_and_is_idempo
     monkeypatch.setattr(db_admin, "POLITICAL_ROSTER_PATH", MANIFEST)
     result = db_admin.merge_political_roster()
     actual = {r["key"]: r for r in json.loads(path.read_text())}
-    assert len(result["added"]) == 23
+    assert len(result["added"]) == 35
     assert all(actual["pedro_duarte"][k] == v for k, v in archived.items())
     assert all(actual["flavio_valle"][k] == v for k, v in protected.items())
     assert actual["meu_assunto"] == unrelated
@@ -112,6 +147,14 @@ def test_bootstrap_merge_preserves_archives_user_edits_permissions_and_is_idempo
     before = path.read_bytes()
     assert db_admin.merge_political_roster()["changed"] is False
     assert path.read_bytes() == before
+
+
+def test_collection_profile_metadata_is_a_bounded_unique_identifier_list():
+    assert target_metadata({"collection_profiles": ["psd_rj_2026", " psd_rj_2026 ", "other_2", None, {}, "<script>"]}) == {
+        "collection_profiles": ["psd_rj_2026", "other_2"]
+    }
+    assert target_metadata({"collection_profiles": "psd_rj_2026"}) == {"collection_profiles": []}
+    assert len(target_metadata({"collection_profiles": [f"profile_{i}" for i in range(80)]})["collection_profiles"]) == 50
 
 
 def review_db(monkeypatch, tmp_path, count=1):

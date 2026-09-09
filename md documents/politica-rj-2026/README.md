@@ -2,7 +2,9 @@
 
 Cadastro verificado em **9 de setembro de 2026**. O recorte de novas buscas começa em **1º de junho de 2026**, inclusive. A disputa acompanhada é a eleição para governador do Rio; não se trata de uma disputa interna de indicação do PSD.
 
-O cadastro reúne 25 pessoas. Os seis registros herdados foram preservados; Flávio Valle e Pedro Duarte já estavam cadastrados, portanto a base local passa a 29 registros. A seleção sugerida para uma nova coleta política contém apenas os cinco nomes solicitados. Preferência de coleta não concede permissões nem altera a marca de nome principal.
+O perfil de conta **PSD RJ 2026**, aprovado em 09/09/2026, acompanha **24 pessoas**: os 12 nomes inicialmente discutidos e os 12 acréscimos abaixo. Sua chave é `psd_rj_2026`; a lista exata está em [data/psd_rj_2026_profile.json](../../data/psd_rj_2026_profile.json). Novas buscas partem de 1º de junho e terminam no dia da execução, inclusive, no fuso de São Paulo; dependem de uma solicitação manual. A inclusão no cadastro não inicia coletas nem revisão do arquivo.
+
+O manifesto completo passa a 37 pessoas e preserva os 25 nomes políticos anteriores, inclusive adversários, aliados e referências nacionais. Com os registros herdados, `data/targets.json` contém 41 entradas. O marcador `collection_profiles: ["psd_rj_2026"]` identifica os 24 nomes aprovados; ele não concede permissões. As associações de acesso pertencem ao perfil de conta. As cinco preferências originais e as marcas de nome principal permanecem intactas.
 
 Os grupos são filtros sobre o mesmo acervo. Uma notícia com várias pessoas deve ter um único registro de artigo e várias associações. Coleções anteriores e seus filtros continuam disponíveis.
 
@@ -13,7 +15,7 @@ Os grupos são filtros sobre o mesmo acervo. Uma notícia com várias pessoas de
 - [Operação: implantação, importação, canários e reversão](OPERACAO.md).
 - [Relatório local de escala](validation/political-scale-benchmark.json) e [relatório local de navegador](validation/political-browser-smoke.json). Os limites das simulações estão descritos no checklist; os caminhos de screenshots no relatório apontam para arquivos temporários da sessão.
 
-**Estado remoto em 09/09/2026:** o health público respondeu HTTP 200, informou `rioCorpus.configured=false` e armazenamento habilitado; o campo `politicalCorpus` estava ausente. A seleção do workspace Render solicitada pelo conector ainda está pendente. Não houve migração nem coleta política remota. A implementação e os resultados locais abaixo não equivalem a uma implantação validada.
+Este README descreve o cadastro aprovado e sua implementação local. O estado operacional deve ser registrado no [runbook de operação](OPERACAO.md); adicionar nomes aqui não comprova implantação nem coleta concluída.
 
 | Grupo | Nome | Partido verificado | Papel público | Evidência |
 |---|---|---|---|---|
@@ -29,6 +31,18 @@ Os grupos são filtros sobre o mesmo acervo. Uma notícia com várias pessoas de
 | PSD no Rio | Carlo Caiado | PSD | Presidente da Câmara Municipal do Rio | [Fonte 1](https://www.camara.rio/vereadores/carlo-caiado) |
 | PSD no Rio | Rosa Fernandes | PSD | Vereadora do Rio de Janeiro | [Fonte 1](https://www.camara.rio/vereadores/rosa-fernandes) |
 | PSD no Rio | Guilherme Schleder | PSD | Deputado estadual/RJ; ex-secretário municipal de Esportes | [Fonte 1](https://www.alerj.rj.gov.br/Deputados/PerfilDeputado/495?AspxAutoDetectCookieSupport=1&Legislatura=20); [Fonte 2](https://www.diariodorio.com/politica/2026/08/29/quem-e-o-candidato-a-deputado-estadual-do-eduardo-paes.html) |
+| PSD no Rio | Sergio Fernandes | PSD | Deputado estadual/RJ; candidato a deputado estadual em 2026 | [Fonte 1](https://campanha.sergiofernandes.com.br/); [Fonte 2](https://correiopetropolitano.com.br/2026/07/22/psd-confirma-sergio-fernandes-como-candidato/) |
+| PSD no Rio | Junior da Lucinha | PSD | Vereador do Rio; candidato a deputado estadual em 2026 | [Fonte 1](https://camara.rio/vereadores/liderancas-blocos-e-partidos); [Fonte 2](https://candidatos.nexojornal.com.br/2026/rj/junior-da-lucinha-190002538006/) |
+| PSD no Rio | Joyce Trindade | PSD | Vereadora do Rio; candidata a deputada estadual em 2026 | [Fonte 1](https://www.camara.rio/vereadores/joyce-trindade); [Fonte 2](https://candidatos.nexojornal.com.br/2026/rj/joyce-trindade-190002538000/) |
+| PSD no Rio | Rafael Aloisio Freitas | PSD | Vereador do Rio; candidato a deputado federal em 2026 | [Fonte 1](https://camara.rio/vereadores/liderancas-blocos-e-partidos); [Fonte 2](https://rafaelaloisiofreitas.com.br/); [Fonte 3](https://www.camara.rio/i-ciclo-de-palestras-nocoes-do-processo-legislativo) |
+| PSD no Rio | Marcelo Diniz | PSD | Vereador do Rio; candidato a deputado federal em 2026 | [Fonte 1](https://camara.rio/vereadores/liderancas-blocos-e-partidos); [Fonte 2](https://candidatos.nexojornal.com.br/2026/rj/marcelo-diniz-190002540174/) |
+| PSD no Rio | Luiz Paulo | PSD | Deputado estadual/RJ; ex-vice-governador do Rio | [Fonte 1](https://www.luizpaulo.net/) |
+| PSD no Rio | Átila Nunes | PSD | Político estadual/RJ, nascido em 1948; atuação na ALERJ; distinto do vereador homônimo | [Fonte 1](https://www.alerj.rj.gov.br/Deputados/PerfilDeputado/510?Legislatura=20); [Fonte 2](https://www.meuvoto.org.br/candidato/190002538039.html) |
+| PSD no Rio | Otoni de Paula | PSD | Deputado federal/RJ; candidato à reeleição em 2026 | [Fonte 1](https://www.camara.leg.br/deputados/204441?ano=2024); [Fonte 2](https://candidatos.nexojornal.com.br/2026/rj/otoni-de-paula-190002540158/); [Fonte 3](https://imagem.camara.leg.br/Imagem/d/pdf/DCD0020251010001940000.PDF) |
+| PSD no Rio | João Pires | PSD | Ex-secretário de Proteção e Defesa do Consumidor do Rio; candidato a deputado estadual em 2026 | [Fonte 1](https://joaopiresrj.com.br/); [Fonte 2](https://candidatos.nexojornal.com.br/2026/rj/joao-pires-190002538031/) |
+| PSD no Rio | Felipe Boró | PSD | Vereador do Rio; renúncia ao registro de candidatura a deputado federal em 2026 | [Fonte 1](https://camara.rio/vereadores/liderancas-blocos-e-partidos); [Fonte 2](https://candidatos.nexojornal.com.br/2026/rj/felipe-boro-190002540183/); [Fonte 3](https://www.camara.rio/comunicacao/noticias/330-felipe-boro-toma-posse-na-camara-do-rio); [Fonte 4](https://www.camara.rio/vereadores/anteriores) |
+| PSD no Rio | Márcio Ribeiro | PSD | Vereador do Rio; candidato a deputado federal em 2026 | [Fonte 1](https://camara.rio/vereadores/marcio-ribeiro); [Fonte 2](https://marcioribeiro.rio/) |
+| PSD no Rio | Salvino Oliveira | PSD | Vereador do Rio; candidato a deputado federal em 2026 | [Fonte 1](https://camara.rio/vereadores/liderancas-blocos-e-partidos); [Fonte 2](https://candidatos.nexojornal.com.br/2026/rj/salvino-oliveira-190002540180/) |
 | Aliados de outros partidos | Jane Reis | MDB | Candidata a vice-governadora na chapa de Eduardo Paes | [Fonte 1](https://psd.org.br/noticias/rio-convencao-confirma-candidatura-de-eduardo-paes/) |
 | Disputa pelo Governo do Rio | Douglas Ruas | PL | Candidato ao Governo do Rio em 2026 | [Fonte 1](https://noticias.uol.com.br/eleicoes/2026/09/07/veja-lista-dos-candidatos-a-governador-do-rio-de-janeiro-em-2026.ghtm); [Fonte 2](https://www.cnnbrasil.com.br/eleicoes/quem-sao-os-candidatos-a-governador-do-rio-de-janeiro-em-2026/) |
 | Disputa pelo Governo do Rio | Anthony Garotinho | Republicanos | Candidato ao Governo do Rio em 2026 | [Fonte 1](https://noticias.uol.com.br/eleicoes/2026/09/07/veja-lista-dos-candidatos-a-governador-do-rio-de-janeiro-em-2026.ghtm); [Fonte 2](https://www.cnnbrasil.com.br/eleicoes/quem-sao-os-candidatos-a-governador-do-rio-de-janeiro-em-2026/) |
@@ -45,6 +59,12 @@ Os grupos são filtros sobre o mesmo acervo. Uma notícia com várias pessoas de
 
 ## Interpretação e manutenção
 
+- O perfil PSD RJ 2026 reúne os cinco nomes prioritários e os 19 nomes do grupo PSD no Rio. Adversários, Jane Reis e os quatro nomes do PSD nacional continuam no cadastro geral, fora desta seleção aprovada.
+- Átila Nunes é **Átila Nunes Pereira Filho, nascido em 1948**, com atuação estadual na ALERJ. O vereador Átila Alexandre Nunes Pereira é outra pessoa e não foi acrescentado à seleção. O perfil biográfico da ALERJ não confirma sozinho o exercício atual de uma suplência.
+- Felipe Boró permanece no monitoramento como vereador, embora o registro de sua candidatura federal de 2026 conste como **Renúncia**. Patriota e PRD aparecem em seu histórico oficial; notícias antigas conservam essas filiações.
+- Candidaturas a deputado não são exercício desse cargo: Joyce Trindade e Junior da Lucinha disputam vaga estadual; Rafael Aloisio Freitas, Marcelo Diniz, Márcio Ribeiro e Salvino Oliveira disputam vaga federal. João Pires é candidato estadual e ex-secretário municipal de defesa do consumidor.
+- Luiz Paulo, João Pires, Márcio Ribeiro, Marcelo Diniz e Sergio Fernandes exigem contexto pertinente quando o nome abreviado é usado. João Pires requer pistas de defesa do consumidor, Procon, São Gonçalo ou seu trabalho com Renan Ferreirinha. Átila Nunes exige contexto estadual e exclui identificações explícitas do vereador homônimo. Nomes civis verificados dispensam essas pistas.
+
 - Jane Reis pertence ao MDB e fica no grupo de aliados de outros partidos. Os oito adversários disputam o Governo do Rio; eles não são membros do PSD por estarem neste cadastro.
 - Pedro Duarte é identificado como PSD pela Câmara do Rio. Matérias antigas que o identificam como Novo não devem ser reescritas.
 - Eduardo Paes é ex-prefeito; Eduardo Cavaliere é o prefeito do Rio. Renan Ferreirinha é ex-secretário de Educação. Cargos e filiações devem ser reconferidos antes de futuras atualizações.
@@ -57,4 +77,4 @@ Os grupos são filtros sobre o mesmo acervo. Uma notícia com várias pessoas de
 
 `merge_political_roster()` deve rodar depois da restauração de artefatos e antes da normalização do cadastro. O manifesto adiciona registros ausentes e apenas campos de metadados que ainda não existem. Valores já salvos pela equipe, inclusive campos vazios, aliases, nomes alterados, arquivamento e marcações de principal, prevalecem. A operação é idempotente e não reativa nomes arquivados.
 
-**Implantação em produção e importação do acervo remoto ainda não verificadas.** Este documento registra a implementação local e o recorte aceito; não afirma que notícias novas já foram coletadas.
+**Validação deste cadastro:** seleção, preservação dos registros existentes, limites de nomes e regras de homônimos são verificados localmente. Nenhuma notícia nova é contabilizada por esta alteração de cadastro.

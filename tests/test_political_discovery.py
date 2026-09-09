@@ -55,6 +55,98 @@ def test_source_scoped_history_queries_and_registry_capabilities():
     assert "https://odia.ig.com.br/sitemap/sitemap.xml" in sources["odia"]["sitemap_urls"]
 
 
+def test_google_fanout_is_global_plus_four_historical_domains_for_all_24_names():
+    snapshots = [{"key": f"person_{i}", "display_name": f"Pessoa {i}"} for i in range(24)]
+    tasks = discovery.build_tasks(snapshots, "2026-06-01", "2026-06-07")
+    google = [row for row in tasks if row["strategy"] == "google_news"]
+    assert len(google) == 24 * 5
+    assert {row["source_key"] for row in google} == {"google_news", "metropoles", "rc24h", "j3news", "diario_do_rio"}
+    assert {row["target_ids"][0] for row in google if row["source_key"] == "google_news"} == {row["key"] for row in snapshots}
+
+
+def test_aliases_share_queries_across_case_accents_spacing_and_targets():
+    snapshots = [{"key": "one", "display_name": "Flávio Valle", "exact_aliases": ["Flavio Valle", "FLÁVIO  VALLE"]},
+                 {"key": "two", "display_name": "flavio valle"}]
+    tasks = discovery.build_tasks(snapshots, "2026-06-01", "2026-06-01", ["google_news"])
+    assert len(tasks) == 1
+    assert tasks[0]["target_ids"] == ["one", "two"]
+
+
+def test_explicit_direct_gaps_generate_stable_scoped_fallbacks_without_recursion():
+    snapshots = [{"key": "paes", "display_name": "Eduardo Paes"}]
+    direct = task("g1", "daily_sitemap", day="2026-06-03")
+    fallback = discovery.fallback_tasks(direct, snapshots)
+    assert len(fallback) == 1
+    assert fallback[0]["query"] == '"Eduardo Paes" site:g1.globo.com'
+    assert fallback[0]["date_from"] == fallback[0]["date_to"] == "2026-06-03"
+    assert discovery.fallback_tasks(fallback[0], snapshots) == []
+    assert discovery.fallback_tasks({**direct, "cursor": {"page": 2}}, snapshots) == fallback
+
+
+def test_tupi_annual_index_skips_years_outside_requested_period():
+    urls = [f"https://www.tupi.fm/sitemap-posttype-post.{year}.xml" for year in [2026, 2025, 2024, 2023]]
+    xml = "<sitemapindex>" + "".join(f"<sitemap><loc>{url}</loc></sitemap>" for url in urls) + "</sitemapindex>"
+    result = discovery.discover(task("tupi", "sitemap", url="https://www.tupi.fm/sitemap.xml"), lambda _: Response(xml))
+    assert [row["url"] for row in result["child_tasks"]] == urls[:1]
+    assert result["child_tasks"][0]["partition_status"] == "requested_year_partition"
+
+
+def _stream_response(tmp_path, xml):
+    import hashlib
+    digest = hashlib.sha256(xml.encode()).hexdigest()
+    path = tmp_path / (digest + ".xml")
+    path.write_text(xml)
+    response = Response("")
+    response.sitemap_path, response.sitemap_snapshot = str(path), digest
+    return response
+
+
+def test_tupi_stream_uses_seekable_snapshot_cursor_and_builds_index_once(tmp_path, monkeypatch):
+    xml = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + ''.join(
+        f'<url><loc>https://www.tupi.fm/politica/noticia-politica-numero-{i}</loc><lastmod>2026-06-01</lastmod></url>' for i in range(5)) + '</urlset>'
+    response = _stream_response(tmp_path, xml)
+    monkeypatch.setattr(discovery, "MAX_CANDIDATES", 2)
+    seen = []
+    def fetch(url, **kwargs):
+        seen.append(kwargs)
+        return response
+    current = task("tupi", "sitemap", url="https://www.tupi.fm/sitemap-posttype-post.2026.xml")
+    first = discovery.discover(current, fetch)
+    assert first["raw_count"] == 2 and first["next_cursor"]["offset"] > 0
+    assert first["candidates"][0]["published_at"] == ""
+    monkeypatch.setattr(discovery, "_stream_sitemap_entries", lambda _: pytest.fail("snapshot parsed twice"))
+    second = discovery.discover({**current, "cursor": first["next_cursor"]}, fetch)
+    third = discovery.discover({**current, "cursor": second["next_cursor"]}, fetch)
+    assert third["outcome"] == "complete"
+    assert [row["url"] for page in [first, second, third] for row in page["candidates"]] == [f"https://www.tupi.fm/politica/noticia-politica-numero-{i}" for i in range(5)]
+    assert seen[1]["sitemap_snapshot"] == response.sitemap_snapshot
+
+
+def test_tupi_lost_snapshot_restarts_changed_content_without_skipping_entries(tmp_path, monkeypatch):
+    monkeypatch.setattr(discovery, "MAX_CANDIDATES", 1)
+    current = task("tupi", "sitemap", url="https://www.tupi.fm/sitemap-posttype-post.2026.xml")
+    old = _stream_response(tmp_path, '<urlset><url><loc>https://www.tupi.fm/politica/old-political-story</loc></url></urlset>')
+    first = discovery.discover(current, lambda *args, **kw: old)
+    changed = _stream_response(tmp_path, '<urlset><url><loc>https://www.tupi.fm/politica/new-first-political-story</loc></url></urlset>')
+    resumed = discovery.discover({**current, "cursor": first["next_cursor"]}, lambda *args, **kw: changed)
+    assert resumed["candidates"][0]["url"].endswith("/new-first-political-story")
+
+
+@pytest.mark.parametrize("xml", ['<!DOCTYPE urlset [<!ENTITY bad "unsafe">]><urlset/>', '<urlset><url><loc>https://www.tupi.fm/politica/test</loc></url>'])
+def test_tupi_stream_rejects_entity_declarations_and_truncated_xml_before_committing(tmp_path, xml):
+    response = _stream_response(tmp_path, xml)
+    current = task("tupi", "sitemap", url="https://www.tupi.fm/sitemap-posttype-post.2026.xml")
+    with pytest.raises(discovery.DiscoveryError):
+        discovery.discover(current, lambda *args, **kw: response)
+    assert not list(tmp_path.glob("*.entries.jsonl"))
+
+
+def test_sitemap_image_caption_is_not_used_as_article_title():
+    xml = '<urlset xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"><url><loc>https://www.tupi.fm/rio/noticia-politica-da-cidade</loc><image:image><image:title>Foto de Lula na Sapucaí</image:title></image:image></url></urlset>'
+    result = discovery.discover(task("tupi", "sitemap", url="https://www.tupi.fm/sitemap-news.xml"), lambda _: Response(xml))
+    assert result["candidates"][0]["title"] == ""
+
+
 def test_odia_advertised_daily_index_only_schedules_requested_calendar_days():
     urls = [f"https://odia.ig.com.br/sitemap/{day}.xml" for day in [
         "2014/01/01", "2026/06/01", "2026/08/08", "2026/08/09", "2026/08/10", "2026/09/09"]]

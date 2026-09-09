@@ -1147,6 +1147,7 @@
   }
 
   function targetMutationMessage(base, data) {
+    if (data && data.futureCollectionOnly) base = "Nome salvo para as próximas coletas deste cliente.";
     var message = base;
     var sync = data && data.targetSync ? data.targetSync : null;
     if (sync) {

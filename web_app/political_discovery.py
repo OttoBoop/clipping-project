@@ -9,7 +9,10 @@ from __future__ import annotations
 import gzip
 import html
 import json
+import os
 import re
+import tempfile
+import unicodedata
 import xml.etree.ElementTree as ET
 from datetime import date, datetime, time, timedelta, timezone
 from email.utils import parsedate_to_datetime
@@ -94,6 +97,36 @@ def _target_queries(snapshot: dict[str, Any]) -> list[str]:
     return list(dict.fromkeys('"' + str(name).strip().replace('"', '') + '"' for name in names if str(name or "").strip()))
 
 
+def _google_tasks(snapshots: list[dict], source: dict, date_from: str, date_to: str) -> list[dict]:
+    queries = {}
+    for row in snapshots:
+        target_id = str(row.get("key") or row.get("id") or "")
+        for query in _target_queries(row):
+            identity = " ".join("".join(char for char in unicodedata.normalize("NFKD", query)
+                                       if not unicodedata.combining(char)).casefold().split())
+            shared = queries.setdefault(identity, {"query": query, "target_ids": []})
+            if target_id not in shared["target_ids"]:
+                shared["target_ids"].append(target_id)
+    return [{"source_key": source["key"], "strategy": "google_news", "cursor": {},
+             "query": item["query"] + (" site:" + source["domain"] if source.get("domain") else ""),
+             "target_ids": item["target_ids"], "date_from": start, "date_to": stop}
+            for item in queries.values() for start, stop in date_windows(date_from, date_to)]
+
+
+def fallback_tasks(task: dict, target_snapshots: list[dict]) -> list[dict]:
+    """Called only when a direct discovery task records a terminal explicit gap.
+
+    Stable task payloads let PostgreSQL deduplicate fallback requests caused by
+    several failed direct mechanisms for the same source and time window.
+    """
+    source = next((row for row in load_sources() if row["key"] == task["source_key"]), None)
+    if not source or source.get("google_policy") != "on_direct_gap" or task.get("strategy") == "google_news":
+        return []
+    start = task.get("day") or task["date_from"]
+    stop = task.get("day") or task["date_to"]
+    return _google_tasks(target_snapshots, source, start, stop)
+
+
 def build_tasks(target_snapshots: list[dict[str, Any]], date_from: str, date_to: str,
                 source_keys: list[str] | None = None) -> list[dict[str, Any]]:
     windows = date_windows(date_from, date_to)
@@ -105,22 +138,14 @@ def build_tasks(target_snapshots: list[dict[str, Any]], date_from: str, date_to:
     target_ids = [str(row.get("key") or row.get("id") or "") for row in target_snapshots]
     tasks: list[dict[str, Any]] = []
     for source in sources:
-        if source["key"] not in selected:
+        if source["key"] not in selected or not source.get("enabled", True):
             continue
         base = {"source_key": source["key"], "date_from": date_from, "date_to": date_to,
                 "target_ids": target_ids, "cursor": {}}
         for strategy in source["strategies"]:
             if strategy == "google_news":
-                queries: dict[str, list[str]] = {}
-                for row, target_id in zip(target_snapshots, target_ids):
-                    for query in _target_queries(row):
-                        if source.get("domain"):
-                            query += " site:" + source["domain"]
-                        queries.setdefault(query, []).append(target_id)
-                for query, ids in queries.items():
-                    for start, stop in windows:
-                        tasks.append({**base, "strategy": strategy, "query": query,
-                                      "date_from": start, "date_to": stop, "target_ids": ids})
+                if source.get("google_policy", "always") == "always":
+                    tasks.extend(_google_tasks(target_snapshots, source, date_from, date_to))
             elif strategy == "daily_sitemap":
                 for start, _ in date_windows(date_from, date_to, 1):
                     tasks.append({**base, "strategy": strategy, "day": start, "cursor": {"page": 1}})
@@ -200,6 +225,13 @@ def _child_text(node, name: str) -> str:
     return next(((child.text or "").strip() for child in node.iter() if _local(child.tag) == name), "")
 
 
+def _sitemap_title(node) -> str:
+    # Image captions use image:title in real Tupi sitemaps. They are not an
+    # article headline; accept a direct title or the Google News namespace only.
+    return next(((child.text or "").strip() for child in node.iter()
+                 if child.tag in {"title", "{http://www.google.com/schemas/sitemap-news/0.9}title"}), "")
+
+
 def _allowed_url(url: str, source: dict, *, article=False) -> bool:
     parsed = urlparse(url)
     domain = source.get("domain", "")
@@ -268,6 +300,96 @@ def _google(task, source, fetch):
     return _result(results, raw_count=raw_count)
 
 
+def _stream_sitemap_entries(stream):
+    """Yield and release direct URL children; neither XML nor entries accumulate."""
+    parser = ET.XMLPullParser(events=("start", "end"))
+    root, depth, tail, entry_bytes = None, 0, b"", 0
+    try:
+        while chunk := stream.read(65536):
+            probe = (tail + chunk).upper()
+            if b"<!DOCTYPE" in probe or b"<!ENTITY" in probe:
+                raise DiscoveryError("unsupported XML entity declaration", retryable=False)
+            tail = probe[-16:]
+            entry_bytes += len(chunk)
+            if entry_bytes > 2 * 1024 * 1024:
+                raise DiscoveryError("sitemap entry byte limit reached", retryable=False)
+            parser.feed(chunk)
+            for event, node in parser.read_events():
+                if event == "start":
+                    depth += 1
+                    if root is None:
+                        root = node
+                        if _local(node.tag) != "urlset":
+                            raise DiscoveryError("streaming sitemap response is not urlset")
+                else:
+                    if depth == 2:
+                        if _local(node.tag) != "url":
+                            raise DiscoveryError("unexpected streaming sitemap entry")
+                        yield node
+                        root.remove(node)
+                        node.clear()
+                        entry_bytes = 0
+                    depth -= 1
+        parser.close()
+        if root is None:
+            raise DiscoveryError("empty sitemap response")
+    except ET.ParseError as exc:
+        raise DiscoveryError("malformed XML response") from exc
+
+
+def _stream_sitemap(task, source, fetch):
+    cursor = dict(task.get("cursor") or {})
+    response = _get(fetch, task["url"], stream_sitemap=True, sitemap_snapshot=cursor.get("snapshot", ""))
+    snapshot = str(getattr(response, "sitemap_snapshot", ""))
+    # A cache lost during a worker restart can be reconstructed. If the publisher
+    # changed the content, restart its index; canonical fetch dedupe protects saves.
+    offset = int(cursor.get("offset") or 0) if snapshot and snapshot == cursor.get("snapshot") else 0
+    path = getattr(response, "sitemap_path", None)
+    if not path or not snapshot:
+        raise DiscoveryError("streaming sitemap transport unavailable", retryable=False)
+    # Build a bounded disk index once per immutable snapshot. Byte cursors then
+    # seek directly to the next entry instead of downloading/parsing a huge annual
+    # map again for every 500 URLs. Missing worker-local files are reconstructible.
+    index_path = Path(str(path) + ".entries.jsonl")
+    if not index_path.exists():
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(dir=index_path.parent, mode="wb", delete=False) as output:
+                temporary = output.name
+                with Path(path).open("rb") as stream:
+                    for node in _stream_sitemap_entries(stream):
+                        row = {"url": _child_text(node, "loc"), "title": _sitemap_title(node),
+                               "published": _child_text(node, "publication_date")}
+                        output.write((json.dumps(row, ensure_ascii=False) + "\n").encode("utf-8"))
+                output.flush()
+                os.fsync(output.fileno())
+            os.replace(temporary, index_path)
+            temporary = None
+        finally:
+            if temporary:
+                Path(temporary).unlink(missing_ok=True)
+    candidates, raw_count, malformed = [], 0, int(cursor.get("malformed") or 0) if offset else 0
+    with index_path.open("rb") as stream:
+        if offset > index_path.stat().st_size:
+            raise DiscoveryError("invalid sitemap snapshot cursor", retryable=False)
+        stream.seek(offset)
+        while line := stream.readline(2 * 1024 * 1024 + 1):
+            if len(line) > 2 * 1024 * 1024:
+                raise DiscoveryError("sitemap entry byte limit reached", retryable=False)
+            row = json.loads(line)
+            raw_count += 1
+            if not row["url"]:
+                malformed += 1
+            elif _allowed_url(row["url"], source, article=True) and in_window(row["published"], task["date_from"], task["date_to"]):
+                candidates.append(_candidate(source, row["url"], row["title"], row["published"],
+                    metadata={"sitemap_url": task["url"], "needs_date_review": not bool(row["published"])}))
+            if raw_count >= MAX_CANDIDATES:
+                return _result(candidates, raw_count=raw_count,
+                               next_cursor={"offset": stream.tell(), "snapshot": snapshot, "malformed": malformed})
+    return _result(candidates, raw_count=raw_count, outcome="gap" if malformed else "complete",
+                   gap_reason=f"sitemap_missing_locations:{malformed}" if malformed else "")
+
+
 def _sitemap(task, source, fetch):
     cursor = dict(task.get("cursor") or {})
     page = int(cursor.get("page") or 1)
@@ -278,6 +400,8 @@ def _sitemap(task, source, fetch):
         url = task["url"]
     if not _allowed_url(url, source):
         raise DiscoveryError("sitemap URL outside source domain", retryable=False)
+    if source.get("stream_sitemap_pattern") and re.fullmatch(source["stream_sitemap_pattern"], url):
+        return _stream_sitemap({**task, "url": url}, source, fetch)
     sitemap_url = url
     root = _xml(_get(fetch, url))
     kind = _local(root.tag)
@@ -291,6 +415,7 @@ def _sitemap(task, source, fetch):
         unsafe = 0
         partition_gap = bool(cursor.get("partition_gap"))
         calendar_pattern = source.get("sitemap_index_date_pattern")
+        year_pattern = source.get("sitemap_index_year_pattern")
         for node in entries[offset:offset + MAX_INDEX_CHILDREN]:
             child_url = _child_text(node, "loc")
             if child_url in ancestors:
@@ -299,6 +424,12 @@ def _sitemap(task, source, fetch):
                 unsafe += 1
             elif child_url:
                 partition_status = ""
+                if year_pattern:
+                    year_match = re.fullmatch(year_pattern, child_url)
+                    if year_match:
+                        if not date.fromisoformat(task["date_from"]).year <= int(year_match["year"]) <= date.fromisoformat(task["date_to"]).year:
+                            continue
+                        partition_status = "requested_year_partition"
                 if calendar_pattern:
                     match = re.fullmatch(calendar_pattern, child_url)
                     try:
@@ -344,7 +475,7 @@ def _sitemap(task, source, fetch):
         published = _child_text(node, "publication_date")
         if not in_window(published, task["date_from"], task["date_to"]):
             continue
-        candidates.append(_candidate(source, url, _child_text(node, "title"), published,
+        candidates.append(_candidate(source, url, _sitemap_title(node), published,
                                      metadata={"sitemap_url": sitemap_url,
                                                "discovery_day": task.get("day", ""), "needs_date_review": not bool(published)}))
     next_cursor = None

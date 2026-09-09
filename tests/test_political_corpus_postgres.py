@@ -81,6 +81,30 @@ def fake_response(url, body=BODY, status=200):
     return response
 
 
+@pytest.mark.parametrize("raises", [True, False])
+def test_direct_source_gaps_enqueue_deduplicated_google_fallback_with_job_scope(service, monkeypatch, raises):
+    from web_app import political_discovery
+    direct = {"source_key": "g1", "strategy": "daily_sitemap", "day": "2026-06-01",
+              "date_from": "2026-06-01", "date_to": "2026-06-02", "cursor": {"page": 1}}
+    job = start(service, monkeypatch, tasks=[direct, {**direct, "cursor": {"page": 2}}])
+    def fail(task, fetch):
+        if raises:
+            raise political_discovery.DiscoveryError("HTTP 403 at publisher", retryable=False, status_code=403)
+        return {"outcome": "gap", "gap_reason": "sitemap_page_cap", "candidates": [], "child_tasks": [], "raw_count": 0}
+    monkeypatch.setattr(political_discovery, "discover", fail)
+    for _ in range(2):
+        task = service.claim_task("discovery", worker_id="direct-fallback-check")
+        assert task["payload"]["strategy"] == "daily_sitemap"
+        assert service.process_task(task)["status"] == "gap"
+    with service._connect() as conn:
+        rows = conn.execute("SELECT payload FROM political_tasks WHERE job_id=%s AND payload->>'strategy'='google_news'", (job["id"],)).fetchall()
+        gaps = conn.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE job_id=%s AND status='gap'", (job["id"],)).fetchone()["n"]
+    assert gaps == 2 and len(rows) == 2
+    assert {row["payload"]["query"] for row in rows} == {'"Eduardo Paes" site:g1.globo.com', '"Pedro Duarte" site:g1.globo.com'}
+    assert all(row["payload"]["date_from"] == row["payload"]["date_to"] == "2026-06-01" for row in rows)
+    assert all("private" not in row["payload"]["target_ids"] for row in rows)
+
+
 def test_complete_flow_deduplicates_matches_body_and_keeps_scope(service, monkeypatch):
     job = start(service, monkeypatch)
     enqueue(service, monkeypatch)

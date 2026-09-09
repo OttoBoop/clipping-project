@@ -8,12 +8,12 @@
   <script src="/assets/political.js" defer></script>
 </head>
 <body data-role="{{ROLE}}">
-  <header class="topbar"><a class="brand" href="/politica">Clipping <span>Política RJ</span></a><nav aria-label="Conta"><span>{{PROFILE}}</span><a href="/?view=legacy">Nomes, clientes e arquivo anterior</a><button id="logout" class="quiet">Sair</button></nav></header>
+  <header class="topbar"><a class="brand" href="/politica">Clipping <span>Política RJ</span></a><nav aria-label="Conta"><span id="account-label">{{PROFILE}}</span><a id="psd-client-link" href="/politica?client=psd_rj_2026" hidden>Coletar para PSD</a><a id="manage-account" href="/?view=legacy">Gerenciar nomes e conta</a><button id="logout" class="quiet">Sair</button></nav></header>
   <main>
     <section class="intro"><p class="eyebrow">RIO DE JANEIRO · ELEIÇÕES 2026</p><h1>Acompanhe os nomes.<br>Encontre as notícias.</h1><p>Notícias, entrevistas e registros públicos sobre o governo do Rio e os nomes que você acompanha.</p></section>
     <p id="message" role="status" aria-live="polite">Carregando nomes acompanhados…</p>
     <section class="panel" aria-labelledby="names-title">
-      <div class="section-head"><div><h2 id="names-title">Nomes acompanhados</h2><p>Selecione nomes ou grupos para consultar e atualizar o clipping.</p></div><div class="actions"><button id="select-requested" class="quiet">Cinco nomes iniciais</button><button id="select-all" class="quiet">Todos os nomes</button><button id="select-none" class="quiet">Limpar seleção</button></div></div>
+      <div class="section-head"><div><h2 id="names-title">Nomes acompanhados</h2><p>Selecione nomes ou grupos para consultar e atualizar o clipping.</p></div><div class="actions"><button id="select-requested" class="quiet">Seleção inicial</button><button id="select-all" class="quiet">Todos os nomes</button><button id="select-none" class="quiet">Limpar seleção</button></div></div>
       <div id="groups" class="groups"></div>
     </section>
     <section class="panel" aria-labelledby="search-title">

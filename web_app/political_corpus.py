@@ -12,12 +12,14 @@ import ipaddress
 import json
 import os
 import socket
+import tempfile
 import threading
 import time
 import uuid
 from dataclasses import fields
 from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
@@ -28,12 +30,15 @@ from pipeline.matcher import CitationMatcher, Target
 from pipeline.normalization import canonicalize_url, clean_title
 from .config import DATA_DIR
 from .political_schema import SCHEMA_SQL, SCHEMA_UPGRADES, SCHEMA_VERSION
+from .publisher_tls import publisher_verify
 from .storage_bridge import ArtifactStore, artifact_store
 
 START_DATE = date(2026, 6, 1)
 ZONE = ZoneInfo("America/Sao_Paulo")
 LEASE_SECONDS = 180
 MAX_RESPONSE_BYTES = 8 * 1024 * 1024
+MAX_SITEMAP_RESPONSE_BYTES = 128 * 1024 * 1024
+MAX_SITEMAP_RESPONSE_SECONDS = 120
 BODY_MIN_CHARS = 200
 TERMINAL = {"complete", "gap", "failed", "cancelled", "split"}
 ACTIVE = {"queued", "running", "retryable"}
@@ -709,6 +714,22 @@ class PoliticalCorpusService:
             raise FetchProblem("private_article_url", retryable=False)
 
     def fetch(self, url: str, **kwargs) -> requests.Response:
+        large_sitemap = bool(kwargs.get("stream_sitemap"))
+        snapshot = str(kwargs.get("sitemap_snapshot") or "")
+        cache = Path(os.environ.get("POLITICAL_SITEMAP_CACHE_DIR") or (Path(tempfile.gettempdir()) / "clipping-political-sitemaps"))
+        if large_sitemap:
+            # Only discovery opts into disk-backed XML; article responses keep the
+            # original 8 MiB budget. Cursor snapshot names are content hashes.
+            cache.mkdir(parents=True, exist_ok=True)
+            if len(snapshot) == 64 and all(char in "0123456789abcdef" for char in snapshot):
+                cached = cache / (snapshot + ".xml")
+                if cached.is_file():
+                    response = requests.Response()
+                    response.status_code, response.url = 200, url
+                    response._content = b""
+                    response.sitemap_path, response.sitemap_snapshot = str(cached), snapshot
+                    cached.touch()
+                    return response
         current = url
         for _ in range(8):
             self._public_url(current)
@@ -723,7 +744,8 @@ class PoliticalCorpusService:
             if method not in {"GET", "POST"}:
                 raise FetchProblem("invalid_fetch_method", retryable=False)
             response = session.request(method, current, data=kwargs.get("data"), headers=kwargs.get("headers"),
-                                       timeout=(8, 20), allow_redirects=False, stream=True)
+                                       timeout=(8, 60 if large_sitemap else 20), allow_redirects=False, stream=True,
+                                       verify=publisher_verify(current))
             if response.is_redirect or response.is_permanent_redirect:
                 location = response.headers.get("Location")
                 response.close()
@@ -733,14 +755,42 @@ class PoliticalCorpusService:
                 continue
             chunks, size = [], 0
             started = time.monotonic()
+            temporary = None
             try:
-                for chunk in response.iter_content(65536):
-                    size += len(chunk)
-                    if size > MAX_RESPONSE_BYTES or time.monotonic() - started > 35:
-                        raise FetchProblem("response_budget_exceeded")
-                    chunks.append(chunk)
+                if large_sitemap and response.status_code < 400:
+                    digest = hashlib.sha256()
+                    with tempfile.NamedTemporaryFile(dir=cache, mode="wb", delete=False) as output:
+                        temporary = output.name
+                        for chunk in response.iter_content(65536):
+                            size += len(chunk)
+                            if size > MAX_SITEMAP_RESPONSE_BYTES or time.monotonic() - started > MAX_SITEMAP_RESPONSE_SECONDS:
+                                raise FetchProblem("sitemap_download_budget_exceeded", retryable=False)
+                            digest.update(chunk)
+                            output.write(chunk)
+                        output.flush()
+                        os.fsync(output.fileno())
+                    snapshot = digest.hexdigest()
+                    cached = cache / (snapshot + ".xml")
+                    os.replace(temporary, cached)
+                    temporary = None
+                    response.sitemap_path, response.sitemap_snapshot = str(cached), snapshot
+                    response.sitemap_bytes = size
+                    # Cache is reconstructible, capped on disk as well as in RAM.
+                    entries = sorted(cache.glob("*.xml"), key=lambda item: item.stat().st_mtime, reverse=True)
+                    for expired in entries[4:]:
+                        if expired != cached:
+                            expired.unlink(missing_ok=True)
+                            Path(str(expired) + ".entries.jsonl").unlink(missing_ok=True)
+                else:
+                    for chunk in response.iter_content(65536):
+                        size += len(chunk)
+                        if size > MAX_RESPONSE_BYTES or time.monotonic() - started > 35:
+                            raise FetchProblem("response_budget_exceeded")
+                        chunks.append(chunk)
             finally:
                 response.close()
+                if temporary:
+                    Path(temporary).unlink(missing_ok=True)
             response._content = b"".join(chunks)
             response._content_consumed = True
             return response
@@ -795,8 +845,16 @@ class PoliticalCorpusService:
                 except LeaseLost:
                     return {"taskId": task["id"], "status": "lease_lost"}
             with self._connect() as conn:
+                if task["kind"] == "discovery" and status == "gap":
+                    self._enqueue_discovery_fallback(conn, task)
                 self._finish(conn, task, status, error_type=error_type, delay=delay if status == "retryable" else 0)
             return {"taskId": task["id"], "status": status, "errorType": error_type}
+
+    def _enqueue_discovery_fallback(self, conn, task: dict) -> None:
+        from .political_discovery import fallback_tasks
+        job = self._lock_task(conn, task)
+        for child in fallback_tasks(task["payload"], job["target_snapshots"]):
+            self._insert_task(conn, task["job_id"], "discovery", child)
 
     def _discover(self, task: dict) -> dict:
         from .political_discovery import discover
@@ -828,6 +886,8 @@ class PoliticalCorpusService:
                 self._insert_task(conn, task["job_id"], "fetch", candidate)
             for child in result.get("child_tasks") or []:
                 self._insert_task(conn, task["job_id"], "discovery", child)
+            if outcome == "gap":
+                self._enqueue_discovery_fallback(conn, task)
             self._finish(conn, task, "queued" if outcome == "continue" else outcome,
                          cursor=result.get("next_cursor") or task["cursor"], raw_count=int(result.get("raw_count") or 0),
                          error_type=str(result.get("gap_reason") or ""))
@@ -888,7 +948,7 @@ class PoliticalCorpusService:
             candidate = _confirmed_publisher(candidate, final_url)
             insufficient_body = len(body.strip()) < BODY_MIN_CHARS or extracted.get("extraction_state") == "metadata_only"
             sample = int(hashlib.sha256(final_url.encode()).hexdigest()[:8], 16) % 100 < 5
-            if insufficient_body or sample:
+            if insufficient_body or (sample and match_targets(job["target_snapshots"], title, body)):
                 html_hash, html_key = self._store_html(response.text)
                 candidate = {**candidate, "html_hash": html_hash, "html_object_key": html_key}
                 with self._connect() as conn:
@@ -899,7 +959,6 @@ class PoliticalCorpusService:
                 problem = FetchProblem("body_missing")
                 self._save_metadata_attempt(task, job, {**candidate, "url": final_url, "title": candidate.get("title") or title}, problem)
                 raise problem
-            digest, key = self._store_text(body)
         if published and not job["date_from"] <= published.astimezone(ZONE).date() <= job["date_to"]:
             with self._connect() as conn:
                 self._lock_task(conn, task)
@@ -914,6 +973,10 @@ class PoliticalCorpusService:
                 old_hits = conn.execute("SELECT target_key,target_name,keyword_matched FROM political_mentions WHERE article_id=%s",
                                         (existing["id"],)).fetchall()
             hits = [dict(hit) for hit in old_hits]
+        # Publisher discovery deliberately fetches stories before matching their
+        # bodies. Only relevant, in-window stories need durable body objects.
+        if hits and body and not digest:
+            digest, key = self._store_text(body)
         with self._connect() as conn:
             self._lock_task(conn, task)
             article_id = None

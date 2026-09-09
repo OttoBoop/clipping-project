@@ -92,6 +92,29 @@ class ArtifactStore:
             return False
         return write_artifact_payload(response.content, local_path)
 
+    def upload_configuration_artifacts(self, *, manifest: dict[str, Any] | None = None, job_id: str | None = None) -> list[str]:
+        """Persist account/target configuration without reading or publishing news."""
+        from .auth import CREDENTIALS_PATH
+        from .db_admin import TARGETS_PATH
+        from .segmentation import viewer_profiles_path
+
+        files = (("data/targets.json", TARGETS_PATH),
+                 ("data/clipping_credentials.json", CREDENTIALS_PATH),
+                 ("data/viewer_profiles.json", Path(viewer_profiles_path())))
+        uploaded = []
+        for relative, local_path in files:
+            if not local_path.is_file():
+                continue
+            if not self.upload_file(local_path, self._remote(relative)):
+                raise RuntimeError("configuration_storage_failed")
+            uploaded.append(relative)
+        if manifest and job_id:
+            remote = f"{self.prefix}/runs/{job_id}.json"
+            payload = json.dumps(manifest, ensure_ascii=False, indent=2).encode("utf-8")
+            if self.upload_bytes(payload, remote, "application/json"):
+                uploaded.append(f"runs/{job_id}.json")
+        return uploaded
+
     def upload_current_artifacts(self, *, manifest: dict[str, Any] | None = None, job_id: str | None = None) -> list[str]:
         uploaded: list[str] = []
         for relative, local_factory in RUNTIME_FILES:

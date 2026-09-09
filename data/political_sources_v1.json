@@ -16,7 +16,8 @@
           "basis": "existing collector"
         }
       ],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "always"
     },
     {
       "key": "oglobo",
@@ -30,14 +31,15 @@
       "section_patterns": [
         "/(?:politica|rio|rj|brasil|eleicoes|blogs|colunas|economia|sao-paulo|sp)/"
       ],
-      "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only.",
+      "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only. Domain Google queries are queued only for explicit terminal direct-discovery gaps.",
       "evidence": [
         {
           "url": "https://oglobo.globo.com/robots.txt",
           "basis": "existing daily sitemap collector configuration; live capability requires canary"
         }
       ],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "on_direct_gap"
     },
     {
       "key": "g1",
@@ -51,14 +53,15 @@
       "section_patterns": [
         "/(?:politica|rio|rj|brasil|eleicoes|blogs|colunas|economia|sao-paulo|sp)/"
       ],
-      "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only.",
+      "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only. Domain Google queries are queued only for explicit terminal direct-discovery gaps.",
       "evidence": [
         {
           "url": "https://g1.globo.com/robots.txt",
           "basis": "existing daily sitemap collector configuration; live capability requires canary"
         }
       ],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "on_direct_gap"
     },
     {
       "key": "extra",
@@ -72,14 +75,15 @@
       "section_patterns": [
         "/(?:politica|rio|rj|brasil|eleicoes|blogs|colunas|economia|sao-paulo|sp)/"
       ],
-      "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only.",
+      "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only. Domain Google queries are queued only for explicit terminal direct-discovery gaps.",
       "evidence": [
         {
           "url": "https://extra.globo.com/robots.txt",
           "basis": "existing daily sitemap collector configuration; live capability requires canary"
         }
       ],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "on_direct_gap"
     },
     {
       "key": "cbn",
@@ -93,14 +97,15 @@
       "section_patterns": [
         "/(?:politica|rio|rj|brasil|eleicoes|blogs|colunas|economia|sao-paulo|sp)/"
       ],
-      "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only.",
+      "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only. Domain Google queries are queued only for explicit terminal direct-discovery gaps.",
       "evidence": [
         {
           "url": "https://cbn.globo.com/robots.txt",
           "basis": "existing daily sitemap collector configuration; live capability requires canary"
         }
       ],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "on_direct_gap"
     },
     {
       "key": "diario_do_rio",
@@ -108,17 +113,26 @@
       "domain": "diariodorio.com",
       "base_url": "https://diariodorio.com",
       "strategies": [
-        "wordpress",
+        "sitemap",
         "google_news"
       ],
-      "known_constraint": "WordPress date scans discover body-only mentions; HTTP and parser failures remain gaps. Existing API configuration requires production canary.",
+      "known_constraint": "Current sitemap returned HTTP 200 on 2026-09-09. Historical completeness remains unverified, so domain Google history stays enabled. The former WordPress API returned HTTP 403 and is no longer scheduled.",
       "evidence": [
         {
           "url": "https://diariodorio.com/wp-json/wp/v2/posts",
           "basis": "existing WordPress collector configuration"
+        },
+        {
+          "url": "https://www.diariodorio.com/sitemap.xml",
+          "basis": "Direct public HTTP 200 with an XML urlset, 315,075 bytes; not advertised by robots.txt.",
+          "verified_at": "2026-09-09"
         }
       ],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "always",
+      "sitemap_urls": [
+        "https://www.diariodorio.com/sitemap.xml"
+      ]
     },
     {
       "key": "tempo_real_rj",
@@ -129,14 +143,15 @@
         "wordpress",
         "google_news"
       ],
-      "known_constraint": "WordPress date scans discover body-only mentions; HTTP and parser failures remain gaps. Existing API configuration requires production canary.",
+      "known_constraint": "WordPress date scans discover body-only mentions; HTTP and parser failures remain gaps. Existing API configuration requires production canary. Domain Google queries are queued only for explicit terminal direct-discovery gaps.",
       "evidence": [
         {
           "url": "https://temporealrj.com/wp-json/wp/v2/posts",
           "basis": "existing WordPress collector configuration"
         }
       ],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "on_direct_gap"
     },
     {
       "key": "agenda_do_poder",
@@ -147,14 +162,15 @@
         "wordpress",
         "google_news"
       ],
-      "known_constraint": "WordPress date scans discover body-only mentions; HTTP and parser failures remain gaps. Existing API configuration requires production canary.",
+      "known_constraint": "WordPress date scans discover body-only mentions; HTTP and parser failures remain gaps. Existing API configuration requires production canary. Domain Google queries are queued only for explicit terminal direct-discovery gaps.",
       "evidence": [
         {
           "url": "https://agendadopoder.com.br/wp-json/wp/v2/posts",
           "basis": "existing WordPress collector configuration"
         }
       ],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "on_direct_gap"
     },
     {
       "key": "veja_rio",
@@ -165,14 +181,15 @@
         "wordpress",
         "google_news"
       ],
-      "known_constraint": "WordPress date scans discover body-only mentions; HTTP and parser failures remain gaps. Existing API configuration requires production canary.",
+      "known_constraint": "WordPress date scans discover body-only mentions; HTTP and parser failures remain gaps. Existing API configuration requires production canary. Domain Google queries are queued only for explicit terminal direct-discovery gaps.",
       "evidence": [
         {
           "url": "https://vejario.abril.com.br/wp-json/wp/v2/posts",
           "basis": "existing WordPress collector configuration"
         }
       ],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "on_direct_gap"
     },
     {
       "key": "camara_rio",
@@ -185,14 +202,15 @@
       "archive_urls": [
         "https://camara.rio/comunicacao/noticias"
       ],
-      "known_constraint": "HTML archive pagination depends on advertised next links; unrecognized markup remains a gap.",
+      "known_constraint": "HTML archive pagination depends on advertised next links; unrecognized markup remains a gap. Domain Google queries are queued only for explicit terminal direct-discovery gaps.",
       "evidence": [
         {
           "url": "https://camara.rio/comunicacao/noticias",
           "basis": "existing Câmara archive adapter"
         }
       ],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "on_direct_gap"
     },
     {
       "key": "odia",
@@ -211,7 +229,7 @@
         "/(?:rio-de-janeiro|politica|eleicoes|colunas|brasil|economia)/",
         "^/(?!(?:diversao|esporte|esoterismo|dmulher|stories|_midias|apostas|balancos-e-editais)/)[a-z0-9-]+/\\d{4}/\\d{2}/"
       ],
-      "known_constraint": "Advertised daily-index children are restricted to the requested calendar partition; article publication dates still require page extraction. Unknown partition URLs run with an explicit gap. Statewide regional sections are discovered before body matching.",
+      "known_constraint": "Advertised daily-index children are restricted to the requested calendar partition; article publication dates still require page extraction. Unknown partition URLs run with an explicit gap. Statewide regional sections are discovered before body matching. Domain Google queries are queued only for explicit terminal direct-discovery gaps.",
       "evidence": [
         {
           "url": "https://odia.ig.com.br/robots.txt",
@@ -230,7 +248,8 @@
         }
       ],
       "enabled": true,
-      "sitemap_index_date_pattern": "https://odia\\.ig\\.com\\.br/sitemap/(?P<year>\\d{4})/(?P<month>\\d{2})/(?P<day>\\d{2})\\.xml"
+      "sitemap_index_date_pattern": "https://odia\\.ig\\.com\\.br/sitemap/(?P<year>\\d{4})/(?P<month>\\d{2})/(?P<day>\\d{2})\\.xml",
+      "google_policy": "on_direct_gap"
     },
     {
       "key": "tupi",
@@ -247,7 +266,7 @@
       "section_patterns": [
         "/(?:rio|rio-de-janeiro|politica|brasil|sentinelas|eleicoes|economia|capital-fluminense)/"
       ],
-      "known_constraint": "Recent news sitemap works. The advertised 2026 annual sitemap exceeded 20 MiB and took over 33 seconds in a public probe on 2026-09-09; current bounded worker cannot traverse it and must retain an explicit source gap. Domain-specific Google queries remain the historical fallback. No unadvertised API or pagination capability assumed.",
+      "known_constraint": "Annual post sitemaps use bounded disk streaming and persistent snapshot byte cursors; old years are skipped. Publication dates require article extraction when only modification dates exist. Download cap: 128 MiB, 120 seconds after headers, 60-second read timeout. Larger maps remain explicit gaps with domain Google fallback. The live 2026 map was verified at 113,595,181 bytes and 42,502 entries; later batches reused the snapshot without HTTP requests.",
       "evidence": [
         {
           "url": "https://www.tupi.fm/robots.txt",
@@ -258,9 +277,17 @@
           "url": "https://www.tupi.fm/sitemap-posttype-post.2026.xml",
           "basis": "Advertised annual sitemap timed out at15seconds; bounded45second retry returnedHTTP200 after33seconds but exceeded20MiB. Current transport limit prevents traversal; retained as a visible gap with domain Google fallback.",
           "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://www.tupi.fm/sitemap-posttype-post.2026.xml",
+          "basis": "Repaired transport verified real HTTP 200: 113,595,181 bytes, 42,502 URL entries, 35.419 seconds for the initial index; subsequent 500-entry cursor batches took 0.016 and 0.015 seconds with no further HTTP. No articles saved.",
+          "verified_at": "2026-09-09"
         }
       ],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "on_direct_gap",
+      "sitemap_index_year_pattern": "https://(?:www\\.)?tupi\\.fm/sitemap-posttype-post\\.(?P<year>\\d{4})\\.xml",
+      "stream_sitemap_pattern": "https://(?:www\\.)?tupi\\.fm/sitemap-posttype-post\\.\\d{4}\\.xml"
     },
     {
       "key": "metropoles",
@@ -284,7 +311,8 @@
           "verified_at": "2026-09-09"
         }
       ],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "always"
     },
     {
       "key": "rc24h",
@@ -295,7 +323,8 @@
       ],
       "known_constraint": "Domain-specific Google discovery only; no direct API/archive capability claimed.",
       "evidence": [],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "always"
     },
     {
       "key": "j3news",
@@ -306,7 +335,8 @@
       ],
       "known_constraint": "Domain-specific Google discovery only; no direct API/archive capability claimed.",
       "evidence": [],
-      "enabled": true
+      "enabled": true,
+      "google_policy": "always"
     }
   ]
 }

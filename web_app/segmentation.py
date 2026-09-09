@@ -361,6 +361,14 @@ def profile_config(session: dict[str, Any] | None) -> dict[str, Any]:
     return viewer_profiles().get(key, {"label": key or "Viewer", "target_keys": [], "default_targets": []})
 
 
+PSD_PROFILE = "psd_rj_2026"
+
+
+def psd_target_keys() -> set[str]:
+    """Political membership follows the normal client's current assignments."""
+    return {str(key) for key in viewer_profiles().get(PSD_PROFILE, {}).get("target_keys", [])}
+
+
 def allowed_target_keys(session: dict[str, Any] | None) -> set[str] | None:
     if is_admin_session(session):
         return None
