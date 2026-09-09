@@ -332,6 +332,34 @@ def test_sitemap_candidate_batches_are_bounded_even_with_filtered_empty_first_pa
     assert len(resumed["candidates"]) == 1 and resumed["outcome"] == "complete"
 
 
+@pytest.mark.parametrize("end_day", ["2026-06-01", "2026-06-07"])
+def test_diario_narrow_window_defers_undated_entries_with_persistent_gap(monkeypatch, end_day):
+    monkeypatch.setattr(discovery, "MAX_CANDIDATES", 2)
+    xml = '<urlset><url><loc>https://www.diariodorio.com/sem-data.html</loc><lastmod>2026-06-01</lastmod></url>' \
+          '<url><loc>https://www.diariodorio.com/data-invalida.html</loc><publication_date>invalid</publication_date></url>' \
+          '<url><loc>https://www.diariodorio.com/data-verificada.html</loc><publication_date>2026-06-01T12:00:00-03:00</publication_date></url></urlset>'
+    current = task("diario_do_rio", "sitemap", date_to=end_day, url="https://www.diariodorio.com/sitemap.xml")
+    first = discovery.discover(current, lambda _: Response(xml))
+    assert first["candidates"] == [] and first["raw_count"] == 2
+    assert first["next_cursor"] == {"offset": 2, "undated_deferred": 2}
+    last = discovery.discover({**current, "cursor": first["next_cursor"]}, lambda _: Response(xml))
+    assert len(last["candidates"]) == 1 and last["raw_count"] == 1
+    assert last["outcome"] == "gap"
+    assert last["gap_reason"] == "undated_sitemap_deferred_for_narrow_window:2"
+    # This domain already has historical Google tasks; a gap must not duplicate them.
+    assert discovery.fallback_tasks(current, [{"key": "paes", "display_name": "Eduardo Paes"}]) == []
+    planned = discovery.build_tasks([{"key": "paes", "display_name": "Eduardo Paes"}], "2026-06-01", end_day, ["diario_do_rio"])
+    assert len([row for row in planned if row["strategy"] == "google_news"]) == 1
+
+
+def test_diario_wider_window_keeps_unknown_dates_for_body_review():
+    xml = '<urlset><url><loc>https://www.diariodorio.com/sem-data.html</loc><lastmod>2026-06-01</lastmod></url></urlset>'
+    result = discovery.discover(task("diario_do_rio", "sitemap", date_to="2026-06-08", url="https://www.diariodorio.com/sitemap.xml"), lambda _: Response(xml))
+    assert result["outcome"] == "complete" and len(result["candidates"]) == 1
+    assert result["candidates"][0]["published_at"] == ""
+    assert result["candidates"][0]["metadata"]["needs_date_review"] is True
+
+
 @pytest.mark.parametrize("text", ["<html>captcha</html>", "<rss>broken", '<!DOCTYPE rss [<!ENTITY x "y">]><rss/>'])
 def test_malformed_or_non_feed_google_responses_are_failures(text):
     with pytest.raises(discovery.DiscoveryError):
@@ -377,6 +405,18 @@ def test_google_resolver_uses_injected_fetch_for_post_and_get():
         return Response('<div data-n-a-sg="signature" data-n-a-ts="123"></div>', url=url)
     assert discovery.resolve_google_redirect(url, fetch) == "https://example.com/article-story"
     assert len(observed) == 2 and observed[1][1]["method"] == "POST"
+
+
+def test_google_resolver_reuses_landing_response_without_duplicate_get():
+    url = "https://news.google.com/rss/articles/token"
+    observed = []
+    initial = Response('<div data-n-a-sg="signature" data-n-a-ts="123"></div>', url=url)
+    def fetch(current, **kwargs):
+        observed.append((current, kwargs))
+        assert kwargs.get("method") == "POST"
+        return Response(")]}'\n\n" + json.dumps([["wrb.fr", "Fbv4je", json.dumps(["garturlres", "https://example.com/article-story"])]]))
+    assert discovery.resolve_google_redirect(url, fetch, initial_response=initial) == "https://example.com/article-story"
+    assert len(observed) == 1
 
 
 def test_legacy_google_propagates_rate_limits_for_durable_runner(monkeypatch):

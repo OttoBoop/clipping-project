@@ -116,7 +116,7 @@
         "sitemap",
         "google_news"
       ],
-      "known_constraint": "Current sitemap returned HTTP 200 on 2026-09-09. Historical completeness remains unverified, so domain Google history stays enabled. The former WordPress API returned HTTP 403 and is no longer scheduled.",
+      "known_constraint": "Current sitemap returned HTTP 200 on 2026-09-09 with 1,000 entries, all lacking publication_date; URL paths covered August 25–September 9. For windows up to seven days, undated sitemap entries are deferred with an explicit coverage gap so current archive fetches do not swamp historical canaries. Wider jobs retain the supplemental body scan. Domain Google history always runs; historical completeness remains unverified. The former WordPress API returned HTTP 403 and is no longer scheduled. lastmod is never treated as publication date.",
       "evidence": [
         {
           "url": "https://diariodorio.com/wp-json/wp/v2/posts",
@@ -126,13 +126,19 @@
           "url": "https://www.diariodorio.com/sitemap.xml",
           "basis": "Direct public HTTP 200 with an XML urlset, 315,075 bytes; not advertised by robots.txt.",
           "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://www.diariodorio.com/sitemap.xml",
+          "basis": "Canary readiness recheck: HTTP 200, 315,061 bytes, 1,000 URL entries with loc/lastmod and zero publication_date fields; captured /tmp/diario-canary-sitemap-live.xml.",
+          "verified_at": "2026-09-09"
         }
       ],
       "enabled": true,
       "google_policy": "always",
       "sitemap_urls": [
         "https://www.diariodorio.com/sitemap.xml"
-      ]
+      ],
+      "defer_undated_sitemap_up_to_days": 7
     },
     {
       "key": "tempo_real_rj",

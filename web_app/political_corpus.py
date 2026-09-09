@@ -283,8 +283,7 @@ class PoliticalCorpusService:
         conn.execute("""INSERT INTO political_tasks(job_id,kind,source_key,dedupe_key,payload,cursor)
                         VALUES (%s,%s,%s,%s,%s::jsonb,%s::jsonb) ON CONFLICT(job_id,kind,dedupe_key) DO NOTHING""",
                      (job_id, kind, source_key, dedupe, _json(payload), _json(payload.get("cursor") or {})))
-        if kind != "fetch":
-            conn.execute("INSERT INTO political_source_leases(source_key) VALUES (%s) ON CONFLICT DO NOTHING", (source_key,))
+        conn.execute("INSERT INTO political_source_leases(source_key) VALUES (%s) ON CONFLICT DO NOTHING", (source_key,))
 
     @staticmethod
     def _authorize_job(row: dict | None, allowed: list[str]) -> None:
@@ -633,12 +632,21 @@ class PoliticalCorpusService:
             if count >= maximum:
                 return None
             row = conn.execute("""SELECT t.* FROM political_tasks t JOIN political_jobs j ON j.id=t.job_id
+                LEFT JOIN political_source_leases scheduling ON scheduling.source_key=t.source_key
                 WHERE t.kind=ANY(%s) AND j.status IN ('queued','running')
                 AND (t.status IN ('queued','retryable') OR (t.status='running' AND t.leased_until<NOW()))
                 AND (t.next_attempt_at IS NULL OR t.next_attempt_at<=NOW())
                 AND (t.kind='fetch' OR NOT EXISTS (SELECT 1 FROM political_source_leases s
                     WHERE s.source_key=t.source_key AND s.leased_until>NOW()))
-                ORDER BY t.priority DESC,t.id FOR UPDATE OF t SKIP LOCKED LIMIT 1""", (kinds,)).fetchone()
+                AND (t.kind<>'fetch' OR t.payload->>'url' NOT LIKE 'https://news.google.com/%%'
+                    OR NOT EXISTS (SELECT 1 FROM political_tasks active
+                        WHERE active.kind='fetch' AND active.status='running' AND active.leased_until>NOW()
+                        AND active.payload->>'url' LIKE 'https://news.google.com/%%'))
+                ORDER BY CASE WHEN t.kind='fetch' THEN scheduling.fetch_claimed_at
+                              ELSE scheduling.discovery_claimed_at END ASC NULLS FIRST,
+                    t.priority DESC,
+                    CASE WHEN t.kind='fetch' AND COALESCE(t.payload->>'published_at','')<>'' THEN 0 ELSE 1 END,
+                    t.id FOR UPDATE OF t SKIP LOCKED LIMIT 1""", (kinds,)).fetchone()
             if not row:
                 return None
             token = uuid.uuid4().hex
@@ -647,8 +655,12 @@ class PoliticalCorpusService:
                 WHERE id=%s RETURNING *""", (worker_id, token, lease_seconds, row["id"])).fetchone()
             if kind == "discovery":
                 conn.execute("""UPDATE political_source_leases SET task_id=%s,lease_token=%s,
+                    discovery_claimed_at=NOW(),
                     leased_until=NOW()+(%s*INTERVAL '1 second') WHERE source_key=%s""",
                              (row["id"], token, lease_seconds, row["source_key"]))
+            else:
+                conn.execute("UPDATE political_source_leases SET fetch_claimed_at=NOW() WHERE source_key=%s",
+                             (row["source_key"],))
             conn.execute("UPDATE political_jobs SET status='running',updated_at=NOW() WHERE id=%s", (row["job_id"],))
         return dict(row)
 
@@ -926,7 +938,7 @@ class PoliticalCorpusService:
             if urlparse(final_url).hostname == "news.google.com":
                 from . import political_discovery
                 resolver = getattr(political_discovery, "resolve_google_redirect", None)
-                resolved = resolver(final_url, self.fetch) if resolver else None
+                resolved = resolver(final_url, self.fetch, initial_response=response) if resolver else None
                 if resolved and urlparse(resolved).hostname != "news.google.com":
                     response = self.fetch(resolved)
                     if response.status_code >= 400:

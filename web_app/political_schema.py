@@ -27,6 +27,8 @@ CREATE INDEX IF NOT EXISTS political_tasks_job ON political_tasks(job_id,status)
 CREATE TABLE IF NOT EXISTS political_source_leases (
  source_key TEXT PRIMARY KEY, task_id BIGINT, lease_token TEXT, leased_until TIMESTAMPTZ
 );
+ALTER TABLE political_source_leases ADD COLUMN IF NOT EXISTS discovery_claimed_at TIMESTAMPTZ;
+ALTER TABLE political_source_leases ADD COLUMN IF NOT EXISTS fetch_claimed_at TIMESTAMPTZ;
 CREATE TABLE IF NOT EXISTS political_domain_limits (
  domain TEXT PRIMARY KEY, next_request_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

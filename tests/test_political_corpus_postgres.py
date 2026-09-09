@@ -141,6 +141,35 @@ def test_same_source_cannot_be_claimed_twice_and_global_capacity_enforced(servic
     assert {row["source_key"] for row in claims if row} == {"one", "two"}
 
 
+def test_source_rotation_prevents_large_discovery_cursor_starvation(service, monkeypatch):
+    tasks = [{"source_key": key, "strategy": "sitemap", "cursor": {}}
+             for key in ("large", "second", "third")]
+    start(service, monkeypatch, tasks=tasks)
+    first = service.claim_task("discovery", worker_id="first")
+    assert first["source_key"] == "large"
+    with service._connect() as conn:
+        service._finish(conn, first, "queued", cursor={"page": 2})
+    second = service.claim_task("discovery", worker_id="second")
+    assert second["source_key"] == "second"
+    third = service.claim_task("discovery", worker_id="third")
+    assert third["source_key"] == "third"
+
+
+def test_google_wrappers_cannot_occupy_all_fetch_slots(service, monkeypatch):
+    job = start(service, monkeypatch)
+    with service._connect() as conn:
+        for number in range(5):
+            service._insert_task(conn, job["id"], "fetch", {
+                "source_key": "google_news", "url": f"https://news.google.com/rss/articles/{number}"})
+        service._insert_task(conn, job["id"], "fetch", {
+            "source_key": "direct", "url": "https://publisher.example/story"})
+    first = service.claim_task("fetch", worker_id="one")
+    second = service.claim_task("fetch", worker_id="two")
+    assert first["source_key"] == "google_news"
+    assert second["source_key"] == "direct"
+    assert service.claim_task("fetch", worker_id="three") is None
+
+
 def test_lease_expiry_recovery_fences_old_worker(service, monkeypatch):
     start(service, monkeypatch)
     old = service.claim_task("discovery", worker_id="old")
@@ -488,7 +517,7 @@ def test_google_discovery_is_attributed_to_resolved_publisher_without_losing_pro
     candidate = {"url": "https://news.google.com/articles/publisher-fixture" if wrapped else canonical, "title": "Eduardo Paes",
                  "source_key": "google_news", "source_name": "Google News", "metadata": {"google_redirect": wrapped}}
     enqueue(service, monkeypatch, candidate)
-    monkeypatch.setattr(political_discovery, "resolve_google_redirect", lambda url, fetch: canonical)
+    monkeypatch.setattr(political_discovery, "resolve_google_redirect", lambda url, fetch, **kwargs: canonical)
     monkeypatch.setattr(service, "fetch", lambda url, **kwargs: fake_response(url))
     task = service.claim_task("fetch", worker_id="publisher-worker")
     result = service.process_task(task)

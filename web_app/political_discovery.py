@@ -469,12 +469,18 @@ def _sitemap(task, source, fetch):
     if kind != "urlset":
         raise DiscoveryError("sitemap response is neither urlset nor sitemapindex")
     candidates = []
+    window_days = (date.fromisoformat(task["date_to"]) - date.fromisoformat(task["date_from"])).days + 1
+    defer_undated = 0 < window_days <= int(source.get("defer_undated_sitemap_up_to_days") or 0)
+    deferred = int(cursor.get("undated_deferred") or 0)
     for node in entries[offset:offset + MAX_CANDIDATES]:
         url = _child_text(node, "loc")
         if not _allowed_url(url, source, article=True):
             continue
         # lastmod is a modification date, never an article publication date.
         published = _child_text(node, "publication_date")
+        if defer_undated and not parse_publication_date(published):
+            deferred += 1
+            continue
         if not in_window(published, task["date_from"], task["date_to"]):
             continue
         candidates.append(_candidate(source, url, _sitemap_title(node), published,
@@ -483,11 +489,15 @@ def _sitemap(task, source, fetch):
     next_cursor = None
     if offset + MAX_CANDIDATES < len(entries):
         next_cursor = {**cursor, "offset": offset + MAX_CANDIDATES}
+        if deferred:
+            next_cursor["undated_deferred"] = deferred
     elif task["strategy"] == "daily_sitemap" and entries:
         if page >= int(source.get("max_pages") or MAX_PAGES):
             return _result(candidates, outcome="gap", raw_count=len(entries), gap_reason="sitemap_page_cap")
         next_cursor = {"page": page + 1}
-    return _result(candidates, next_cursor=next_cursor, raw_count=len(entries[offset:offset + MAX_CANDIDATES]))
+    return _result(candidates, next_cursor=next_cursor, raw_count=len(entries[offset:offset + MAX_CANDIDATES]),
+                   outcome="gap" if deferred and not next_cursor else None,
+                   gap_reason=f"undated_sitemap_deferred_for_narrow_window:{deferred}" if deferred and not next_cursor else "")
 
 
 def _wordpress(task, source, fetch):
@@ -674,14 +684,16 @@ def extract_article(raw_html: str) -> dict[str, str]:
             "extraction_state": "full_text" if len(body.split()) >= 40 else "metadata_only"}
 
 
-def resolve_google_redirect(url: str, fetch: Callable) -> str:
+def resolve_google_redirect(url: str, fetch: Callable, *, initial_response=None) -> str:
     """Resolve using the injected limiter for GET and the existing Google RPC."""
     if urlparse(url).hostname != "news.google.com":
         return url
     direct = (parse_qs(urlparse(url).query).get("url") or [""])[0]
     if direct.startswith(("https://", "http://")):
         return canonicalize_url(direct)
-    response = _get(fetch, url)
+    # The fetch worker already retrieved this landing page. Reusing it avoids a
+    # second Google request and keeps the one-request-per-second budget useful.
+    response = initial_response if initial_response is not None else _get(fetch, url)
     if urlparse(response.url).hostname != "news.google.com":
         return canonicalize_url(response.url)
     token_match = re.search(r'/(?:rss/)?(?:articles|read)/([^/?#]+)', response.url)
