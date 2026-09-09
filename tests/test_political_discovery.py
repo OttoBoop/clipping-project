@@ -91,6 +91,24 @@ def test_tupi_annual_index_skips_years_outside_requested_period():
     assert result["child_tasks"][0]["partition_status"] == "requested_year_partition"
 
 
+def test_tupi_default_uses_verified_publication_date_api_instead_of_undated_annual_scan():
+    tasks = discovery.build_tasks([{"key": "paes", "display_name": "Eduardo Paes"}],
+                                  "2026-08-09", "2026-08-09", ["tupi"])
+    assert [row["strategy"] for row in tasks] == ["wordpress"]
+    assert discovery.fallback_tasks(tasks[0], [{"key": "paes", "display_name": "Eduardo Paes"}])[0]["query"] == '"Eduardo Paes" site:tupi.fm'
+
+
+def test_tupi_known_nonarticle_sitemap_branches_are_not_scheduled():
+    names = ['posttype-post.2026', 'posttype-post.2025', 'posttype-webstories.2026',
+             'posttype-webstories.2025', 'taxonomy-category', 'taxonomy-post_tag', 'author', 'news']
+    urls = [f'https://www.tupi.fm/sitemap-{name}.xml' for name in names]
+    xml = '<sitemapindex>' + ''.join(f'<sitemap><loc>{url}</loc></sitemap>' for url in urls) + '</sitemapindex>'
+    current = task('tupi', 'sitemap', url='https://www.tupi.fm/sitemap.xml')
+    result = discovery.discover(current, lambda _: Response(xml))
+    assert [row['url'] for row in result['child_tasks']] == [urls[0], urls[-1]]
+    assert result['outcome'] == 'complete'
+
+
 def _stream_response(tmp_path, xml):
     import hashlib
     digest = hashlib.sha256(xml.encode()).hexdigest()

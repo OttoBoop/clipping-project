@@ -256,7 +256,7 @@
       "name": "Super Rádio Tupi",
       "domain": "tupi.fm",
       "strategies": [
-        "sitemap",
+        "wordpress",
         "google_news"
       ],
       "sitemap_urls": [
@@ -266,7 +266,7 @@
       "section_patterns": [
         "/(?:rio|rio-de-janeiro|politica|brasil|sentinelas|eleicoes|economia|capital-fluminense)/"
       ],
-      "known_constraint": "Annual post sitemaps use bounded disk streaming and persistent snapshot byte cursors; old years are skipped. Publication dates require article extraction when only modification dates exist. Download cap: 128 MiB, 120 seconds after headers, 60-second read timeout. Larger maps remain explicit gaps with domain Google fallback. The live 2026 map was verified at 113,595,181 bytes and 42,502 entries; later batches reused the snapshot without HTTP requests.",
+      "known_constraint": "The publisher advertises its WordPress REST API. Default collection scans publication dates through that API; a live August 9 request reported 175 posts in two pages. Explicit API gaps queue domain Google fallback. Annual sitemap streaming remains available for supplemental backfill, with persistent snapshot cursors, but is not automatically scheduled because its entries lack publication dates. Nonarticle sitemap branches and old post years are skipped.",
       "evidence": [
         {
           "url": "https://www.tupi.fm/robots.txt",
@@ -282,12 +282,30 @@
           "url": "https://www.tupi.fm/sitemap-posttype-post.2026.xml",
           "basis": "Repaired transport verified real HTTP 200: 113,595,181 bytes, 42,502 URL entries, 35.419 seconds for the initial index; subsequent 500-entry cursor batches took 0.016 and 0.015 seconds with no further HTTP. No articles saved.",
           "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://www.tupi.fm/",
+          "basis": "Live HTTP 200 homepage Link header and HTML advertise https://www.tupi.fm/wp-json/ with rel=https://api.w.org/.",
+          "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://www.tupi.fm/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=100&page=1&orderby=date&order=desc&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt",
+          "basis": "Live HTTP 200,175 posts,two pages; first100 records all have August 9 publication dates and explicit UTC date_gmt. No articles saved.",
+          "verified_at": "2026-09-09"
         }
       ],
       "enabled": true,
       "google_policy": "on_direct_gap",
       "sitemap_index_year_pattern": "https://(?:www\\.)?tupi\\.fm/sitemap-posttype-post\\.(?P<year>\\d{4})\\.xml",
-      "stream_sitemap_pattern": "https://(?:www\\.)?tupi\\.fm/sitemap-posttype-post\\.\\d{4}\\.xml"
+      "stream_sitemap_pattern": "https://(?:www\\.)?tupi\\.fm/sitemap-posttype-post\\.\\d{4}\\.xml",
+      "base_url": "https://www.tupi.fm",
+      "supplemental_strategies": [
+        "sitemap"
+      ],
+      "sitemap_index_exclude_patterns": [
+        "https://(?:www\\.)?tupi\\.fm/sitemap-posttype-webstories\\.\\d{4}\\.xml",
+        "https://(?:www\\.)?tupi\\.fm/sitemap-(?:taxonomy-category|taxonomy-post_tag|author)\\.xml"
+      ]
     },
     {
       "key": "metropoles",

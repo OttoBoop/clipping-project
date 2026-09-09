@@ -418,6 +418,8 @@ def _sitemap(task, source, fetch):
         year_pattern = source.get("sitemap_index_year_pattern")
         for node in entries[offset:offset + MAX_INDEX_CHILDREN]:
             child_url = _child_text(node, "loc")
+            if any(re.fullmatch(pattern, child_url) for pattern in source.get("sitemap_index_exclude_patterns", [])):
+                continue  # Explicit publisher branches for taxonomies/authors/webstories.
             if child_url in ancestors:
                 unsafe += 1
             elif not _allowed_url(child_url, source):
