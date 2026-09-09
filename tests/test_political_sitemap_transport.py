@@ -76,3 +76,18 @@ def test_rate_limited_error_response_does_not_become_a_cached_sitemap(tmp_path, 
     assert result.status_code == 429 and result.headers["Retry-After"] == "60"
     assert not hasattr(result, "sitemap_path")
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("declaration", ['<meta charset="utf-8">', ''])
+def test_html_without_http_charset_preserves_publisher_utf8(tmp_path, monkeypatch, declaration):
+    import requests
+    response = requests.Response()
+    response.status_code = 200
+    response.url = "https://publisher.example/article"
+    response.headers["Content-Type"] = "text/html"
+    response.encoding = "ISO-8859-1"
+    response._content = (declaration + '<article>Eleição no Rio: Flávio Valle.</article>').encode('utf-8')
+    response._content_consumed = True
+    service, _, _ = service_with_response(tmp_path, monkeypatch, response)
+    result = service.fetch(response.url)
+    assert 'Eleição' in result.text and 'Flávio Valle' in result.text

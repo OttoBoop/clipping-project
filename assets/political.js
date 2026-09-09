@@ -2,8 +2,9 @@
   "use strict";
   const $ = id => document.getElementById(id);
   const state = {targets: [], defaultTargets: [], sources: [], selected: new Set(), items: [], cursor: "", previous: [], next: "", storyId: "", job: null, csrf: "", configured: false, canRun: false, sequence: 0, article: null, classifications: []};
-  const simulation = new URLSearchParams(location.search).get("as_profile");
-  const clientProfile = new URLSearchParams(location.search).get("client");
+  const pageParams = new URLSearchParams(location.search);
+  const simulation = pageParams.get("as_profile");
+  const clientProfile = pageParams.get("client");
   const activeStates = new Set(["queued", "running", "cancel_requested", "reviewing"]);
   const labels = {queued: "Na fila", running: "Coleta em andamento", reviewing: "Revisão em andamento", succeeded: "Concluída", completed: "Concluída", complete: "Concluída", completed_with_gaps: "Concluída com pendências", cancelled: "Cancelada", cancel_requested: "Cancelamento solicitado", failed: "Falha na coleta", interrupted: "Interrompida", retryable: "Aguardando nova tentativa", blocked: "Fonte indisponível", exhausted: "Consulta concluída", empty_verified: "Sem resultados no período", empty_unverified: "Resultado vazio sem confirmação", capped: "Limite de resultados atingido", available: "Texto disponível", metadata_only: "Somente referência", legacy_body: "Texto preservado do arquivo", pending: "Texto pendente"};
   const text = (tag, value, cls) => {const e = document.createElement(tag); e.textContent = value == null ? "" : String(value); if (cls) e.className = cls; return e;};
@@ -36,7 +37,7 @@
     if (response.status === 401) {location.assign("/"); throw new Error("Entre novamente para continuar.");}
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const known = {political_service_unavailable: "A coleta ainda não está disponível. Tente novamente após a configuração do serviço.", political_scope_denied: "Este registro não está disponível para o seu perfil.", select_allowed_targets: "Selecione pelo menos um nome disponível.", archived_target: "Um nome selecionado foi arquivado. Atualize a página.", simulation_is_read_only: "Saia da simulação para alterar dados."};
+      const known = {political_service_unavailable: "A coleta ainda não está disponível. Tente novamente após a configuração do serviço.", political_scope_denied: "Este registro não está disponível para o seu perfil.", political_record_not_found: "Esta notícia não foi encontrada ou não está disponível para o seu perfil.", select_allowed_targets: "Selecione pelo menos um nome disponível.", archived_target: "Um nome selecionado foi arquivado. Atualize a página.", simulation_is_read_only: "Saia da simulação para alterar dados."};
       throw new Error(known[data.detail] || (response.status === 403 ? "Seu perfil não pode realizar esta ação." : "Não foi possível concluir esta ação. Tente novamente."));
     }
     return data;
@@ -158,12 +159,38 @@
     $("article-sentiment").value = record.article_sentiment || ""; $("target-sentiment").value = record.target_sentiment || "";
     $("categories").value = (record.categories || []).join(", "); $("centimetragem").value = record.centimetragem ?? "";
   }
+  function setArticleLink(id = null) {
+    const url = new URL(location.href);
+    if (id === null) url.searchParams.delete("article");
+    else url.searchParams.set("article", String(id));
+    history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+  }
+  async function openLinkedArticle() {
+    if (!pageParams.has("article")) return;
+    const rawId = pageParams.get("article"), id = Number(rawId);
+    if (pageParams.getAll("article").length !== 1 || !/^[1-9]\d*$/.test(rawId) || !Number.isSafeInteger(id)) {
+      message("O link da notícia é inválido.", true); return;
+    }
+    try {
+      const article = await api(`/api/political/articles/${id}`);
+      if (article.id !== id) throw new Error("Não foi possível abrir esta notícia.");
+      await openArticle(article);
+    } catch (error) {message(error.message, true);}
+  }
   async function openArticle(article) {
     state.article = article; state.classifications = []; $("article-title").textContent = article.title || "Notícia";
     $("article-text").textContent = "Carregando texto…"; $("article-message").textContent = ""; $("classification-message").textContent = "";
+    try {
+      const url = new URL(article.url);
+      if (["https:", "http:"].includes(url.protocol)) {
+        const source = text("a", "Abrir publicação original"); source.href = url.href; source.target = "_blank"; source.rel = "noopener noreferrer";
+        $("article-message").append(source);
+      }
+    } catch (_) { /* A missing publisher URL does not prevent reading saved text. */ }
     $("classification-target").replaceChildren(...(article.targetKeys || []).map(key => {const o = text("option", displayName(key)); o.value = key; return o;}));
     $("classification").hidden = Boolean(simulation); populateClassification(); $("article-dialog").showModal();
     const id = article.id || article.articleId;
+    if (Number.isSafeInteger(id) && id > 0) setArticleLink(id);
     const results = await Promise.allSettled([api(`/api/political/articles/${id}/text`), api(`/api/political/articles/${id}/classifications`)]);
     if (state.article !== article) return;
     const body = results[0]; $("article-text").textContent = body.status === "fulfilled" ? body.value.text || "Texto indisponível. Consulte a publicação original pelo link da notícia." : body.reason.message;
@@ -175,7 +202,8 @@
     try {const saved = await api(`/api/political/articles/${state.article.id || state.article.articleId}/classifications`, {method: "POST", body: JSON.stringify({target_key: $("classification-target").value, article_sentiment: $("article-sentiment").value || null, target_sentiment: $("target-sentiment").value || null, categories: $("categories").value.split(",").map(v => v.trim()).filter(Boolean), centimetragem: $("centimetragem").value ? Number($("centimetragem").value) : null})}); state.classifications = classificationRows(saved); $("classification-message").textContent = "Classificação salva.";} catch (error) {$("classification-message").textContent = error.message;}
   });
   $("classification-target").addEventListener("change", populateClassification);
-  $("close-article").addEventListener("click", () => {state.article = null; $("article-dialog").close();});
+  $("close-article").addEventListener("click", () => $("article-dialog").close());
+  $("article-dialog").addEventListener("close", () => {state.article = null; state.classifications = []; setArticleLink();});
   $("filters").addEventListener("submit", event => {event.preventDefault(); state.storyId = ""; loadResults(true);});
   $("select-requested").addEventListener("click", () => {state.selected = new Set(state.defaultTargets); renderGroups();});
   $("select-all").addEventListener("click", () => {state.selected = new Set(state.targets.map(t => t.key)); renderGroups();});
@@ -216,7 +244,7 @@
       if (clientProfile || simulation) management.searchParams.set("as_profile", clientProfile || simulation);
       $("manage-account").href = management.pathname + management.search;
       if (!state.configured) {message("Os nomes estão organizados. A nova coleta estará disponível quando o serviço de armazenamento for conectado."); renderResults(); return;}
-      await refreshStatus(); await loadResults(); poll();
+      await refreshStatus(); await loadResults(); await openLinkedArticle(); poll();
     } catch (error) {message(error.message, true);}
   }
   init();

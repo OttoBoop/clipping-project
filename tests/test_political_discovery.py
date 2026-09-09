@@ -407,12 +407,38 @@ def test_short_primary_body_remains_metadata_only_even_with_long_later_article()
     assert result["full_text"] == "Assine para continuar."
 
 
+def test_empty_placeholder_article_does_not_hide_the_first_editorial_body():
+    primary = "Eduardo Paes não compareceu ao debate. " * 12
+    raw = '<article><script>placeholder()</script></article><div class="article-body">' + primary + '</div>'
+    assert discovery.extract_article(raw)["full_text"] == primary.strip()
+
+
+def test_boolean_html_attributes_do_not_crash_article_extraction():
+    body = "Eduardo Paes não compareceu ao debate. " * 12
+    raw = '<meta property content><link rel href><article class id><div class="entry-content" id>' \
+          '<p itemprop>' + body + '</p></div></article>'
+    result = discovery.extract_article(raw)
+    assert result["extraction_state"] == "full_text"
+    assert result["full_text"] == body.strip()
+
+
 def test_structured_body_for_another_canonical_article_is_not_selected():
     primary = "Eduardo Paes não compareceu ao debate. " * 12
     raw = '<link rel="canonical" href="https://example.com/debate"><div class="entry-content">' + primary + '</div>'
     other = {"@type": "NewsArticle", "url": "https://example.com/outra-noticia", "articleBody": "Hugo Leal " * 200}
     raw += '<script type="application/ld+json">' + json.dumps(other) + '</script>'
     assert discovery.extract_article(raw)["full_text"] == primary.strip()
+
+
+def test_syndicated_article_structured_body_matches_document_even_with_external_canonical():
+    body = "Eduardo Paes não compareceu ao debate. " * 12
+    raw = '<meta property="og:url" content="https://publisher.example/debate-copy">' \
+          '<link rel="canonical" href="https://original.example/debate">'
+    data = {"@type": "NewsArticle", "mainEntityOfPage": "https://publisher.example/debate-copy", "articleBody": body}
+    raw += '<script type="application/ld+json">' + json.dumps(data) + '</script>'
+    result = discovery.extract_article(raw)
+    assert result["extraction_state"] == "full_text"
+    assert result["full_text"] == body.strip()
 
 
 def test_structured_article_body_and_date_are_usable_without_html_body():

@@ -601,16 +601,21 @@ class _ArticleParser(HTMLParser):
         self.title = ""
         self.published = ""
         self.canonical = ""
+        self.document_url = ""
         self.json_ld = []
         self.script = None
         self.head_title = []
 
     def handle_starttag(self, tag, attrs):
-        attrs = dict(attrs)
+        # HTML permits valueless attributes (for example <div class>), which
+        # HTMLParser represents as None. Real Globo pages contain these.
+        attrs = {key: value or "" for key, value in attrs}
         if tag == "meta":
             key = attrs.get("property") or attrs.get("name")
             if key in {"og:title", "twitter:title"} and not self.title:
                 self.title = attrs.get("content", "")
+            if key == "og:url" and not self.document_url:
+                self.document_url = attrs.get("content", "")
             if key in {"article:published_time", "pubdate", "datePublished"} and not self.published:
                 self.published = parse_publication_date(attrs.get("content", ""))
         if tag == "link" and "canonical" in attrs.get("rel", "").split():
@@ -683,8 +688,9 @@ def extract_article(raw_html: str) -> dict[str, str]:
             identity = item.get("url") or item.get("mainEntityOfPage") or item.get("@id") or ""
             if isinstance(identity, dict):
                 identity = identity.get("@id") or identity.get("url") or ""
-            if isinstance(identity, str) and identity.startswith(("http://", "https://")) and parser.canonical:
-                if canonicalize_url(identity.split("#", 1)[0]).rstrip("/") != canonicalize_url(parser.canonical).rstrip("/"):
+            document_identity = parser.document_url or parser.canonical
+            if isinstance(identity, str) and identity.startswith(("http://", "https://")) and document_identity:
+                if canonicalize_url(identity.split("#", 1)[0]).rstrip("/") != canonicalize_url(document_identity).rstrip("/"):
                     continue
             parser.title = parser.title or str(item.get("headline") or "")
             parser.published = parser.published or parse_publication_date(item.get("datePublished") or "")
@@ -693,7 +699,7 @@ def extract_article(raw_html: str) -> dict[str, str]:
     # Infinite-scroll feeds can embed whole, longer stories after the requested
     # article. Only compare nested containers within the first article/body root.
     # A short primary/paywall body must never be replaced by an unrelated story.
-    primary_scope = min((scope for scope, _ in parser.scoped_blocks), default=0)
+    primary_scope = min((scope for scope, block in parser.scoped_blocks if block.strip()), default=0)
     primary_blocks = [block for scope, block in parser.scoped_blocks if scope == primary_scope]
     blocks = [re.sub(r'[ \t\r\f\v]+', ' ', block).strip() for block in primary_blocks + structured_bodies]
     body = max(blocks, key=len) if blocks else ""

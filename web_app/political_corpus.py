@@ -327,11 +327,13 @@ class PoliticalCorpusService:
         counters = conn.execute("SELECT articles_inserted,mentions_inserted,fetch_attempted FROM political_jobs WHERE id=%s", (job_id,)).fetchone()
         tasks = conn.execute("""SELECT kind,status,COUNT(*) AS count,COALESCE(SUM(raw_count),0) AS raw_count
                                 FROM political_tasks WHERE job_id=%s GROUP BY kind,status""", (job_id,)).fetchall()
-        observed = conn.execute("""SELECT COUNT(*) AS unique_candidates,COUNT(DISTINCT article_id) AS articles_saved,
+        observed = conn.execute("""SELECT COUNT(*) AS unique_candidates,
+            COUNT(DISTINCT article_id) FILTER(WHERE EXISTS (SELECT 1 FROM political_mentions m
+                WHERE m.article_id=o.article_id AND m.target_key=ANY(j.target_keys))) AS articles_saved,
             COUNT(*) FILTER (WHERE disposition='duplicate') AS duplicates,
             COUNT(*) FILTER (WHERE disposition='no_match') AS no_match,
             COUNT(*) FILTER (WHERE disposition='outside_window') AS outside_window
-            FROM political_observations WHERE job_id=%s""", (job_id,)).fetchone()
+            FROM political_observations o JOIN political_jobs j ON j.id=o.job_id WHERE o.job_id=%s""", (job_id,)).fetchone()
         quality = conn.execute("""SELECT COUNT(*) FILTER (WHERE a.body_status='body_extracted') AS body_extracted,
             COUNT(*) FILTER (WHERE a.published_at IS NULL) AS unknown_dates,
             COUNT(*) FILTER (WHERE a.body_status<>'body_extracted' OR a.date_status NOT IN ('page_verified','api_verified')) AS needs_review,
@@ -563,6 +565,9 @@ class PoliticalCorpusService:
                 raise ValueError("invalid_sentiment")
         with self._connect() as conn:
             conn.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s,0))", (f"political-classification:{article_id}:{target_key}",))
+            if not conn.execute("SELECT 1 FROM political_mentions WHERE article_id=%s AND target_key=%s",
+                                (int(article_id), target_key)).fetchone():
+                raise PoliticalNotFound("political_article_not_found")
             previous = conn.execute("SELECT * FROM political_classifications WHERE article_id=%s AND target_key=%s FOR UPDATE",
                                     (int(article_id), target_key)).fetchone()
             if previous and previous["payload"] != content:
@@ -812,6 +817,17 @@ class PoliticalCorpusService:
                 record_timing("http_body", time.monotonic() - started, status_code=response.status_code)
             response._content = b"".join(chunks)
             response._content_consumed = True
+            if "text/html" in response.headers.get("Content-Type", "").lower() and "charset=" not in response.headers.get("Content-Type", "").lower():
+                declared = requests.utils.get_encodings_from_content(response.content[:8192].decode("ascii", errors="ignore"))
+                if declared:
+                    response.encoding = declared[0]
+                else:
+                    try:
+                        response.content.decode("utf-8")
+                    except UnicodeDecodeError:
+                        pass
+                    else:
+                        response.encoding = "utf-8"
             return response
         raise FetchProblem("redirect_limit", retryable=False)
 
