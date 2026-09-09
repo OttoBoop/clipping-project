@@ -188,8 +188,20 @@ def test_six_fetch_claims_are_global_and_keep_google_single_slot(service, monkey
     assert service.claim_task("fetch",worker_id="seventh") is None
 
 
+def wait_for_claim_job_lock(conn):
+    deadline = time.monotonic() + 2
+    while time.monotonic() < deadline:
+        conn.execute("SELECT pg_stat_clear_snapshot()")
+        if conn.execute("""SELECT 1 FROM pg_stat_activity WHERE datname=current_database()
+            AND pid<>pg_backend_pid() AND wait_event_type='Lock'
+            AND query LIKE '%%SELECT id FROM political_jobs%%' LIMIT 1""").fetchone():
+            return
+        time.sleep(.01)
+    pytest.fail("claim did not reach the expected job-row wait")
+
+
 @pytest.mark.parametrize("kind", ["fetch", "discovery"])
-def test_claim_skips_busy_job_before_locking_task_or_source(service, monkeypatch, kind):
+def test_claim_waits_for_busy_job_without_locking_task_or_source(service, monkeypatch, kind):
     job = start(service, monkeypatch)
     with service._connect() as conn:
         service._insert_task(conn, job["id"], "fetch", {
@@ -201,14 +213,33 @@ def test_claim_skips_busy_job_before_locking_task_or_source(service, monkeypatch
             try:
                 # Previously the claim held the source row while waiting for
                 # this job. Inserting the next discovery page then deadlocked.
-                assert pending.result(timeout=2) is None
+                wait_for_claim_job_lock(finishing)
+                assert not pending.done()
                 finishing.execute("SET LOCAL lock_timeout='500ms'")
                 service._insert_task(finishing, job["id"], "fetch", {
                     "source_key": "example", "url": "https://example.com/next-page-story"})
                 assert finishing.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE attempts>0").fetchone()["n"] == 0
+                finishing.commit()
+                claimed = pending.result(timeout=2)
+                assert claimed and claimed["job_id"] == job["id"] and claimed["kind"] == kind
             finally:
                 finishing.rollback()
-    assert service.claim_task(kind, worker_id="after-save") is not None
+
+
+def test_claim_rechecks_cancellation_after_waiting_for_job_lock(service, monkeypatch):
+    job = start(service, monkeypatch)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with service._connect() as cancelling:
+            cancelling.execute("SELECT id FROM political_jobs WHERE id=%s FOR UPDATE", (job["id"],))
+            pending = pool.submit(service.claim_task, "discovery", worker_id="cancel-race")
+            try:
+                wait_for_claim_job_lock(cancelling)
+                cancelling.execute("UPDATE political_jobs SET status='cancelled' WHERE id=%s", (job["id"],))
+                cancelling.commit()
+                assert pending.result(timeout=2) is None
+                assert cancelling.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE attempts>0").fetchone()["n"] == 0
+            finally:
+                cancelling.rollback()
 
 
 def test_claim_keeps_skip_locked_for_busy_candidate_task(service, monkeypatch):

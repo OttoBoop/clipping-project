@@ -528,6 +528,30 @@ def _sitemap(task, source, fetch):
                    gap_reason=f"undated_sitemap_deferred_for_narrow_window:{deferred}" if deferred and not next_cursor else "")
 
 
+def _wordpress_numeric_permalink(row, source, published):
+    """J3 advertises dated numeric post permalinks through its public API.
+
+    Keep the general article URL heuristic unchanged. This exception requires
+    the publisher's exact post ID and local publication day to agree with its
+    own URL, so arbitrary numeric paths cannot enter through other discovery.
+    """
+    if source.get("key") != "j3news" or type(row.get("id")) is not int or row["id"] <= 0 or not published:
+        return False
+    url = str(row.get("link") or "")
+    if not _allowed_url(url, source):
+        return False
+    parsed = urlparse(url)
+    match = re.fullmatch(r"/(\d{4})/(\d{2})/(\d{2})/(\d+)/?", parsed.path)
+    if not match or parsed.query or parsed.fragment or int(match[4]) != row["id"]:
+        return False
+    try:
+        permalink_day = date(int(match[1]), int(match[2]), int(match[3]))
+        publication_day = datetime.fromisoformat(published).astimezone(SAO_PAULO).date()
+    except (ValueError, TypeError):
+        return False
+    return permalink_day == publication_day
+
+
 def _wordpress(task, source, fetch):
     from .political_body_batches import WORDPRESS_BODY_SOURCES
     rest_base = task.get("rest_base") or "posts"
@@ -577,15 +601,20 @@ def _wordpress(task, source, fetch):
     candidates = []
     body_records = []
     for row in payload:
-        if not isinstance(row, dict) or not _allowed_url(str(row.get("link") or ""), source, article=True):
+        if not isinstance(row, dict):
             continue
         raw_date = row.get("date_gmt") or row.get("date") or ""
         published = parse_publication_date(raw_date, naive_zone=timezone.utc if row.get("date_gmt") else SAO_PAULO)
+        numeric_permalink = _wordpress_numeric_permalink(row, source, published)
+        if not _allowed_url(str(row.get("link") or ""), source, article=True) and not numeric_permalink:
+            continue
         if not in_window(published, task["date_from"], task["date_to"]):
             continue
         rendered = lambda value: (value or {}).get("rendered", "") if isinstance(value, dict) else str(value or "")
         candidates.append(_candidate(source, row["link"], rendered(row.get("title")), published,
                                      rendered(row.get("excerpt")), {"wordpress_id": row.get("id"), "collection_mode": "date_scan"}))
+        if numeric_permalink:
+            candidates[-1]["metadata"]["wordpress_numeric_permalink_verified"] = True
         if rest_base != "posts":
             candidates[-1]["metadata"]["wordpress_rest_base"] = rest_base
         content = row.get("content")
@@ -689,14 +718,19 @@ class _RCArchiveCards(HTMLParser):
         inside = self.block_id is None or bool(self.stack and self.stack[-1][1]) or attrs.get("id") == self.block_id
         self.root_found |= inside
         classes = attrs.get("class", "").split()
-        if inside and any(value == "tdb_module_loop" or value.startswith("tdb_module_loop_") for value in classes):
+        is_module = any(value == "tdb_module_loop" or value.startswith("tdb_module_loop_") for value in classes)
+        post_card = bool(self.stack and self.stack[-1][2])
+        if inside and is_module:
             self.raw_count += 1
+            post_card = "td-cpt-post" in classes
         if inside and tag == "h3" and "entry-title" in classes:
-            self.heading = {"url": "", "title": ""}
+            self.heading = {"url": "", "title": "", "publisher_post_card": post_card,
+                            "publisher_bookmark": False}
         if self.heading is not None and tag == "a" and not self.heading["url"]:
             self.heading["url"] = attrs.get("href", "")
+            self.heading["publisher_bookmark"] = "bookmark" in attrs.get("rel", "").split()
         if tag not in _VOID_TAGS:
-            self.stack.append((tag, inside))
+            self.stack.append((tag, inside, post_card))
 
     def handle_data(self, data):
         if self.heading is not None:
@@ -711,6 +745,24 @@ class _RCArchiveCards(HTMLParser):
             if self.stack[index][0] == tag:
                 del self.stack[index:]
                 break
+
+
+def _rc24h_card_url_allowed(row, source):
+    if _allowed_url(row["url"], source, article=True):
+        return True
+    # RC's actual June archive advertises a valid /__trashed-3/ news article.
+    # Accept short slugs only from an explicit publisher post card's bookmark;
+    # keep arbitrary URLs, taxonomy links, assets and other sources unchanged.
+    if source.get("key") != "rc24h" or not row.get("publisher_post_card") or not row.get("publisher_bookmark"):
+        return False
+    if not _allowed_url(row["url"], source):
+        return False
+    parsed = urlparse(row["url"])
+    slug = parsed.path.strip("/")
+    reserved = {"feed", "rss", "tag", "tags", "author", "category", "page", "search",
+                "login", "logout", "wp-admin", "wp-login", "robots", "sitemap"}
+    return bool(not parsed.query and not parsed.fragment and slug not in reserved
+                and re.fullmatch(r"/[a-zA-Z0-9_-]{1,11}/?", parsed.path))
 
 
 def _rc24h_archive(task, source, fetch):
@@ -796,10 +848,13 @@ def _rc24h_archive(task, source, fetch):
     parse_gap |= parsed.raw_count != len(parsed.rows)
     candidates = []
     for row in recovered + parsed.rows:
-        if _allowed_url(row["url"], source, article=True):
+        if _rc24h_card_url_allowed(row, source):
             candidates.append(_candidate(source, row["url"], row["title"], metadata={
                 "archive_month": task["month"], "archive_url": archive_url, "needs_date_review": True,
-                "collection_mode": "public_monthly_archive"}))
+                "collection_mode": "public_monthly_archive",
+                "publisher_post_card": bool(row.get("publisher_post_card")),
+                "publisher_bookmark": bool(row.get("publisher_bookmark")),
+                "discovery_short_permalink": not _allowed_url(row["url"], source, article=True)}))
         else:
             parse_gap = True
     page_fingerprint = fingerprint(parsed.rows)
@@ -940,13 +995,21 @@ class _ArticleParser(HTMLParser):
         publisher_host = (urlparse(self.document_url or self.canonical).hostname or "").lower().rstrip(".")
         classes = set(attrs.get("class", "").split())
         publisher_author_box = "m-a-box" in classes and publisher_host in {"rc24h.com.br", "www.rc24h.com.br"}
+        diario_navigation = publisher_host in {"diariodorio.com", "www.diariodorio.com"} and bool(
+            classes & {"ddr-author-box", "td-category", "td-post-sharing", "td-post-sharing-top", "td-a-rec"})
         publisher_recommendations = publisher_host in _GLOBO_ARTICLE_HOSTS and "you-need-to-know-theme" in classes
-        related = bool(_RELATED.search(attrs.get("class", "") + " " + attrs.get("id", ""))) or publisher_author_box or publisher_recommendations
+        related = bool(_RELATED.search(attrs.get("class", "") + " " + attrs.get("id", ""))) or publisher_author_box or publisher_recommendations or diario_navigation
         blocked = (bool(self.stack) and self.stack[-1][1]) or tag in {"script", "style", "nav", "aside", "footer", "header", "form"} or related
         body = tag == "article" or bool(_BODY.search(attrs.get("class", "") + " " + attrs.get("itemprop", "")))
         # Exact tokens from RC24h's public article templates. Its enclosing
         # <article> also contains unrelated current headlines and navigation.
         publisher_editorial = {"tdb_single_content", "td-post-content"}.issubset(attrs.get("class", "").split())
+        # Diário's migrated template puts tags and its author card inside this
+        # editorial container; retain every paragraph while excluding those DOM
+        # widgets above. Repeated prose inside the actual content is preserved.
+        publisher_editorial = publisher_editorial or (
+            publisher_host in {"diariodorio.com", "www.diariodorio.com"}
+            and {"td-post-content", "tagdiv-type"}.issubset(classes))
         scope = self.stack[-1][4] if self.stack else 0
         if body and not blocked and not scope:
             self.body_scope += 1
@@ -1051,7 +1114,7 @@ def extract_article(raw_html: str) -> dict[str, str]:
     # A short primary/paywall body must never be replaced by an unrelated story.
     publisher_host = (urlparse(parser.document_url or parser.canonical).hostname or "").lower().rstrip(".")
     primary_candidates = {scope for scope, block in parser.scoped_blocks if block.strip()}
-    if publisher_host in _GLOBO_ARTICLE_HOSTS | {"odia.ig.com.br"}:
+    if publisher_host in _GLOBO_ARTICLE_HOSTS | {"odia.ig.com.br", "diariodorio.com", "www.diariodorio.com"}:
         # Removing the only related cards can leave an empty primary body.
         # That absence must not select a later story or polluted JSON-LD.
         primary_candidates.update(parser.cleaned_scopes)
@@ -1062,7 +1125,8 @@ def extract_article(raw_html: str) -> dict[str, str]:
     dom_blocks = [normalized(block) for block in primary_blocks]
     dom_body = max(dom_blocks, key=len) if dom_blocks else ""
     exact_editorial = [normalized(block) for scope, block in parser.publisher_editorial_blocks
-                       if scope == primary_scope] if publisher_host in {"rc24h.com.br", "www.rc24h.com.br"} else []
+                       if scope == primary_scope] if publisher_host in {
+                           "rc24h.com.br", "www.rc24h.com.br", "diariodorio.com", "www.diariodorio.com"} else []
     if exact_editorial:
         # Keep the entire editorial container, including later Boca Miúda
         # sections. Never substitute a longer outer article/JSON-LD footer for

@@ -704,9 +704,11 @@ class PoliticalCorpusService:
             # Finish/cancel transactions lock the job before its tasks and
             # source scheduling row. Taking those locks in reverse order here
             # deadlocked with discovery inserting the next page's candidates.
-            # Skip a busy job before acquiring any task/source row locks.
+            # Wait for a busy job before acquiring any task/source row locks.
+            # A short save transaction must not turn into the worker's full
+            # empty-queue sleep while other fetch capacity remains available.
             job = conn.execute("""SELECT id FROM political_jobs WHERE id=%s
-                AND status IN ('queued','running') FOR UPDATE SKIP LOCKED""",
+                AND status IN ('queued','running') FOR UPDATE""",
                                (row["job_id"],)).fetchone()
             if not job:
                 return None
