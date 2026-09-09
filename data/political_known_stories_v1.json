@@ -1,0 +1,830 @@
+{
+  "version": "rio_2026_known_stories_v1",
+  "verified_at": "2026-09-09",
+  "roster_version": "rio_2026_v1",
+  "purpose": "Starter acceptance fixture for manually requested political collection; not exhaustive or statistically representative.",
+  "annotation_policy": "Expected associations were checked against the public article title and body. Names only in related stories, navigation or generated summaries are excluded. Negative labels apply only to assessed_target_keys. Date provenance remains explicit; visible timestamps are not asserted to be original publication dates.",
+  "limitations": [
+    "Fourteen convenience-selected articles across June–September and eight publishers (seven news outlets plus one party primary source).",
+    "The fixture does not yet cover every configured source, every target or every day. Expand annotations before claiming outlet-wide or corpus-wide recall.",
+    "Verified public addresses are lookup keys; publisher canonical declarations may change. Add only verified aliases.",
+    "Synthetic disambiguation cases test matching rules independently and never contribute to measured corpus recall or precision.",
+    "A passing annotated-case gate does not establish production readiness, a completed canary, or corpus-wide quality."
+  ],
+  "thresholds": {
+    "min_article_recall": 0.9,
+    "min_person_recall": 0.9,
+    "max_incorrect_person_match_rate": 0.05
+  },
+  "cases": [
+    {
+      "id": "tempo_juizado_0617",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-17",
+      "date_basis": "visible_article_timestamp",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "Valle pede manutenção de juizado em Copacabana",
+      "canonical_url": "https://temporealrj.com/oficio-juizado-especial-civel-copacabana/",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "flavio_valle"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/oficio-juizado-especial-civel-copacabana/",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Corpo identifica Flávio Valle como vereador do PSD e autor dos ofícios. Navegação e notícias seguintes foram excluídas."
+        }
+      ]
+    },
+    {
+      "id": "tempo_soranz_valle_0622",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-22",
+      "date_basis": "visible_article_timestamp",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "Discussão entre equipes de Soranz e Valle no Leblon",
+      "canonical_url": "https://temporealrj.com/soranz-flavio-valle-treta/",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "flavio_valle",
+        "daniel_soranz"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/soranz-flavio-valle-treta/",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Corpo identifica Daniel Soranz e Flávio Valle em reunião sobre saúde no Monte Líbano. Ambos são identificados como PSD."
+        }
+      ]
+    },
+    {
+      "id": "tempo_barraqueiro_0709",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-07-09",
+      "date_basis": "visible_article_timestamp",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "Lei municipal reconhece trabalhadores das praias",
+      "canonical_url": "https://temporealrj.com/prefeitura-lei-dia-do-barraqueiro-praia/",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "flavio_valle",
+        "eduardo_cavaliere"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/prefeitura-lei-dia-do-barraqueiro-praia/",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Corpo identifica Cavaliere como prefeito e Valle como autor da lei. Sanção aconteceu em 8 de julho; a página mostra 9 de julho."
+        }
+      ]
+    },
+    {
+      "id": "diario_pedro_duarte_0822",
+      "kind": "public_article",
+      "source_key": "diario_do_rio",
+      "publisher": "Diário do Rio",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-22",
+      "date_basis": "published",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "Candidatura de Pedro Duarte e propostas para São Januário",
+      "canonical_url": "https://www.diariodorio.com/politica/2026/08/567000-quem-e-o-candidato-a-deputado-estadual-do-rio-de-janeiro-do-vasco.html",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "pedro_duarte"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://www.diariodorio.com/politica/2026/08/567000-quem-e-o-candidato-a-deputado-estadual-do-rio-de-janeiro-do-vasco.html",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Corpo associa Pedro Duarte à candidatura para a Alerj e ao metrô em São Januário. A referência à comunidade portuguesa não muda a identidade do político carioca."
+        }
+      ]
+    },
+    {
+      "id": "cnn_pedro_paulo_0616",
+      "kind": "public_article",
+      "source_key": "cnn_brasil",
+      "publisher": "CNN Brasil",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-16",
+      "date_basis": "published",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "PSD define candidatura de Pedro Paulo ao Senado",
+      "canonical_url": "https://www.cnnbrasil.com.br/eleicoes/psd-escolhe-pedro-paulo-para-disputar-senado-e-fecha-chapa-de-paes-no-rj/",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "pedro_paulo",
+        "eduardo_paes",
+        "ronaldo_caiado",
+        "gilberto_kassab"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://www.cnnbrasil.com.br/eleicoes/psd-escolhe-pedro-paulo-para-disputar-senado-e-fecha-chapa-de-paes-no-rj/",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "O texto identifica a chapa fluminense, menciona a candidatura presidencial de Ronaldo Caiado e a direção partidária de Gilberto Kassab. Links de outras matérias foram excluídos."
+        }
+      ]
+    },
+    {
+      "id": "cabofrio_ferreirinha_0615",
+      "kind": "public_article",
+      "source_key": "cabofrio_em_foco",
+      "publisher": "Cabo Frio em Foco",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-15",
+      "date_basis": "published",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "Ferreirinha apresenta educação como tema eleitoral",
+      "canonical_url": "https://cabofrioemfoco.com.br/2026/06/15/renan-ferreirinha-coloca-a-educacao-no-centro-do-debate-politico-para-2026/",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "renan_ferreirinha"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://cabofrioemfoco.com.br/2026/06/15/renan-ferreirinha-coloca-a-educacao-no-centro-do-debate-politico-para-2026/",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Corpo identifica Renan Ferreirinha e discute suas propostas para educação. Menções na navegação do site foram excluídas."
+        }
+      ]
+    },
+    {
+      "id": "psd_convencao_0720",
+      "kind": "public_article",
+      "source_key": "psd_institucional",
+      "publisher": "PSD",
+      "publisher_type": "party_primary_source",
+      "date": "2026-07-20",
+      "date_basis": "published",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "Convenção apresenta chapa estadual do PSD",
+      "canonical_url": "https://psd.org.br/noticias/rio-convencao-confirma-candidatura-de-eduardo-paes/",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "jane_reis",
+        "pedro_paulo",
+        "eduardo_cavaliere"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://psd.org.br/noticias/rio-convencao-confirma-candidatura-de-eduardo-paes/",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Comunicado partidário identifica Paes, Jane Reis, Pedro Paulo e Cavaliere no corpo. Fonte institucional primária, não veículo jornalístico independente."
+        }
+      ]
+    },
+    {
+      "id": "metropoles_debate_0809",
+      "kind": "public_article",
+      "source_key": "metropoles",
+      "publisher": "Metrópoles",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-09",
+      "date_basis": "published",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "Debate estadual reúne críticas à ausência de Paes",
+      "canonical_url": "https://www.metropoles.com/brasil/debate-rj-ausente-paes-vira-alvo-ruas-cita-confianca-de-bolsonaro",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "douglas_ruas",
+        "william_siri",
+        "pedro_paulo",
+        "andre_marinho",
+        "anthony_garotinho"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://www.metropoles.com/brasil/debate-rj-ausente-paes-vira-alvo-ruas-cita-confianca-de-bolsonaro",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Corpo identifica os seis políticos: Siri questiona Ruas; a seção final menciona Pedro Paulo, Marinho e Garotinho. Anotação inclui esses trechos após o formulário de newsletter."
+        }
+      ]
+    },
+    {
+      "id": "metropoles_pesquisa_0825",
+      "kind": "public_article",
+      "source_key": "metropoles",
+      "publisher": "Metrópoles",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-25",
+      "date_basis": "published",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "Pesquisa estadual compara Paes, Ruas e Garotinho",
+      "canonical_url": "https://www.metropoles.com/brasil/parana-pesquisas-eduardo-paes-lidera-corrida-ao-governo-do-rio",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "douglas_ruas",
+        "anthony_garotinho"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://www.metropoles.com/brasil/parana-pesquisas-eduardo-paes-lidera-corrida-ao-governo-do-rio",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Corpo identifica Paes e Ruas pelo nome e Garotinho como ex-governador do Rio e candidato do Republicanos. Resumo automático e recomendações foram excluídos."
+        }
+      ]
+    },
+    {
+      "id": "uol_candidatos_0907",
+      "kind": "public_article",
+      "source_key": "uol",
+      "publisher": "UOL",
+      "publisher_type": "news_outlet",
+      "date": "2026-09-07",
+      "date_basis": "published",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "Lista de candidaturas ao governo e vice do Rio",
+      "canonical_url": "https://noticias.uol.com.br/eleicoes/2026/09/07/veja-lista-dos-candidatos-a-governador-do-rio-de-janeiro-em-2026.ghtm",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "andre_marinho",
+        "coronel_busnello",
+        "cyro_garcia",
+        "douglas_ruas",
+        "eduardo_paes",
+        "jane_reis",
+        "anthony_garotinho",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "william_siri"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://noticias.uol.com.br/eleicoes/2026/09/07/veja-lista-dos-candidatos-a-governador-do-rio-de-janeiro-em-2026.ghtm",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Tabela baseada no TSE identifica nove candidaturas e seus vices. Garotinho e Juliete aparecem pelos nomes eleitorais, com Republicanos e UP respectivamente; Jane Reis aparece como vice."
+        }
+      ]
+    },
+    {
+      "id": "agenda_convencao_siri_0729",
+      "kind": "public_article",
+      "source_key": "agenda_do_poder",
+      "publisher": "Agenda do Poder",
+      "publisher_type": "news_outlet",
+      "date": "2026-07-29",
+      "date_basis": "published",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "PSOL oficializa a candidatura estadual de Siri",
+      "canonical_url": "https://agendadopoder.com.br/psol-oficializa-william-siri-ao-governo-do-rio-e-monica-benicio-ao-senado/",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "william_siri",
+        "eduardo_paes",
+        "eduardo_cavaliere"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://agendadopoder.com.br/psol-oficializa-william-siri-ao-governo-do-rio-e-monica-benicio-ao-senado/",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Corpo trata da candidatura de Siri e, ao final, de sua oposição às gestões de Paes e Cavaliere. Data original 29 de julho, atualização 30 de julho."
+        }
+      ]
+    },
+    {
+      "id": "agenda_perfil_siri_0811",
+      "kind": "public_article",
+      "source_key": "agenda_do_poder",
+      "publisher": "Agenda do Poder",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-11",
+      "date_basis": "published",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "Perfil da trajetória política de William Siri",
+      "canonical_url": "https://agendadopoder.com.br/quem-e-william-siri-vereador-que-saiu-da-zona-oeste-e-virou-aposta-do-psol-para-o-governo-do-rio/",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "william_siri"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://agendadopoder.com.br/quem-e-william-siri-vereador-que-saiu-da-zona-oeste-e-virou-aposta-do-psol-para-o-governo-do-rio/",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Corpo acompanha trajetória de Siri na Zona Oeste e no PSOL. Nomes presentes apenas em matérias recomendadas foram excluídos."
+        }
+      ]
+    },
+    {
+      "id": "agenda_tarifa_siri_0904",
+      "kind": "public_article",
+      "source_key": "agenda_do_poder",
+      "publisher": "Agenda do Poder",
+      "publisher_type": "news_outlet",
+      "date": "2026-09-04",
+      "date_basis": "published",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "Siri propõe gratuidade nos trens e mudança na gestão do metrô",
+      "canonical_url": "https://agendadopoder.com.br/siri-promete-tarifa-zero-nos-trens-e-quer-reestatizar-tambem-o-metro-do-rio/",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "william_siri"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://agendadopoder.com.br/siri-promete-tarifa-zero-nos-trens-e-quer-reestatizar-tambem-o-metro-do-rio/",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Corpo identifica William Siri e suas propostas de transporte. Outros participantes citados não pertencem ao elenco de 25; navegação foi excluída."
+        }
+      ]
+    },
+    {
+      "id": "agenda_campanhas_0826",
+      "kind": "public_article",
+      "source_key": "agenda_do_poder",
+      "publisher": "Agenda do Poder",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-26",
+      "date_basis": "published",
+      "timezone": "America/Sao_Paulo",
+      "title_note": "Agendas de campanha na capital, no interior e na Região dos Lagos",
+      "canonical_url": "https://agendadopoder.com.br/agenda-desta-quinta-feira-27-ago-candidatos-vao-ao-sul-fluminense-a-capital-e-a-regiao-dos-lagos/",
+      "url_basis": "verified_public_article_address",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "william_siri",
+        "andre_marinho",
+        "anthony_garotinho",
+        "douglas_ruas",
+        "juliete_pantoja"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "jane_reis",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri",
+        "coronel_busnello",
+        "cyro_garcia",
+        "juliete_pantoja",
+        "luan_monteiro",
+        "gilberto_kassab",
+        "ronaldo_caiado",
+        "antonio_brito",
+        "otto_alencar"
+      ],
+      "annotation_scope": "article_title_and_body_excluding_navigation_related_stories_comments_and_generated_summary",
+      "evidence": [
+        {
+          "url": "https://agendadopoder.com.br/agenda-desta-quinta-feira-27-ago-candidatos-vao-ao-sul-fluminense-a-capital-e-a-regiao-dos-lagos/",
+          "verified_at": "2026-09-09",
+          "method": "public_article_body_read",
+          "note": "Corpo e agenda identificam os seis candidatos. Publicação de 26 de agosto descreve compromissos do dia 27; a data do evento não substitui a publicação."
+        }
+      ]
+    }
+  ],
+  "synthetic_cases": [
+    {
+      "id": "pedro_duarte_portugal",
+      "kind": "synthetic_disambiguation",
+      "text": "Pedro Duarte participou de reunião da Câmara Municipal do Porto, em Portugal.",
+      "expected_target_keys": []
+    },
+    {
+      "id": "ferreirinha_football",
+      "kind": "synthetic_disambiguation",
+      "text": "O atacante Ferreirinha do São Paulo marcou dois gols na partida de futebol.",
+      "expected_target_keys": []
+    },
+    {
+      "id": "pedro_paulo_singer",
+      "kind": "synthetic_disambiguation",
+      "text": "O cantor Pedro Paulo e Alex apresenta seu novo disco em show de música sertaneja.",
+      "expected_target_keys": []
+    },
+    {
+      "id": "ronaldo_not_carlo",
+      "kind": "synthetic_disambiguation",
+      "text": "Ronaldo Caiado falou da campanha nacional do PSD.",
+      "expected_target_keys": [
+        "ronaldo_caiado"
+      ]
+    },
+    {
+      "id": "carlo_not_ronaldo",
+      "kind": "synthetic_disambiguation",
+      "text": "Carlo Caiado presidiu sessão da Câmara Municipal do Rio de Janeiro.",
+      "expected_target_keys": [
+        "carlo_caiado"
+      ]
+    }
+  ]
+}

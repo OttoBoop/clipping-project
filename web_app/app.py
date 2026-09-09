@@ -8,7 +8,9 @@ from html import escape
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
+from starlette.concurrency import run_in_threadpool
 
 from .auth import (
     COOKIE_NAME,
@@ -51,6 +53,7 @@ from .jobs import (
     run_export_snapshot,
 )
 from . import activity
+from . import legacy_fence
 from .segmentation import (
     ViewerProfileError,
     add_target_to_profile,
@@ -71,6 +74,8 @@ from .segmentation import (
 )
 from .storage_bridge import artifact_store, sqlite_file_summary
 from .rio_corpus import RioCorpusNotConfigured, rio_corpus
+from .political_corpus import political_corpus
+from . import political_routes
 from .rio_topics import RIO_CITY_TOPIC, RIO_ECONOMICO_SCOPE, resolve_rio_topic_request
 from pipeline.database import ClippingDB
 
@@ -394,6 +399,15 @@ def _classification_db() -> ClippingDB:
 async def lifespan(_: FastAPI):
     artifact_store.download_current_artifacts()
     startup_remote_restore = restore_remote_sqlite_if_local_empty()
+    if legacy_fence.legacy_write_fenced():
+        # Restore the existing runtime, then leave its SQLite and target files
+        # unchanged until an operator completes the cutover/drain.
+        yield
+        return
+    # A restored runtime roster wins over the deployed targets.json. Merge the
+    # versioned political seed without reverting user edits or archived names.
+    from .db_admin import merge_political_roster
+    political_roster_merge = merge_political_roster()
     target_cleanup = archive_known_test_targets()
     targets_normalized = normalize_targets_file()
     ensure_app_tables(db_path())
@@ -418,6 +432,7 @@ async def lifespan(_: FastAPI):
     suppress_startup_upload = bool(startup_remote_restore.get("suppressCurrentUpload"))
     if (
         newly_seeded
+        or political_roster_merge.get("changed")
         or targets_normalized
         or interrupted_jobs
         or resumed_jobs
@@ -427,6 +442,7 @@ async def lifespan(_: FastAPI):
         artifact_store.upload_current_artifacts(
             manifest={
                 "kind": "startup-normalization",
+                "politicalRosterMerge": political_roster_merge,
                 "seededCategories": newly_seeded,
                 "targetsNormalized": targets_normalized,
                 "orphanedJobsInterrupted": interrupted_jobs,
@@ -446,17 +462,56 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Clipping Project", docs_url=None, redoc_url=None, lifespan=lifespan)
+app.include_router(political_routes.router)
 
 
 @app.middleware("http")
 async def no_cache_for_dashboard_assets(request: Request, call_next):
-    response = await call_next(request)
     path = request.url.path
+    shared = {"/api/update/start", "/api/update/resume", "/api/manual-story"}
+    auth_only = {"/api/login", "/api/logout"}
+    potential_legacy_mutation = (request.method not in {"GET", "HEAD", "OPTIONS"}
+        and path not in shared and path not in auth_only
+        and not path.startswith("/api/political/") and not path.startswith("/api/rio/"))
+    if potential_legacy_mutation:
+        try:
+            # Cancellation remains available for draining an already running
+            # writer. Its own handler still enforces admin and CSRF checks.
+            if path == "/api/update/cancel":
+                legacy_fence.begin_request()
+                request.state.legacy_writer_tracked = True
+            else:
+                begin_legacy_mutation(request)
+        except HTTPException as exc:
+            return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+    try:
+        response = await call_next(request)
+    finally:
+        if getattr(request.state, "legacy_writer_tracked", False):
+            legacy_fence.end_request()
     if path == "/" or path.startswith("/assets/clipping"):
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
     return response
+
+
+def begin_legacy_mutation(request: Request) -> None:
+    if legacy_fence.legacy_write_fenced():
+        require_viewer(request)
+        raise HTTPException(503, "legacy_write_fenced")
+    if not getattr(request.state, "legacy_writer_tracked", False):
+        legacy_fence.begin_request()
+        request.state.legacy_writer_tracked = True
+
+
+def legacy_writer_status() -> dict[str, Any]:
+    threads = job_manager.writer_status()
+    requests = legacy_fence.in_flight_requests()
+    return {"enabled": legacy_fence.legacy_write_fenced(), "processId": os.getpid(),
+            "scope": "this_web_process_only", **threads,
+            "inFlightLegacyMutationRequests": requests,
+            "activeLegacyWriters": requests + threads["jobManagerThreadsAlive"]}
 
 
 def current_session(request: Request) -> dict[str, Any] | None:
@@ -590,6 +645,15 @@ def dashboard_html_for_session(index_path, session: dict[str, Any], simulating: 
     )
     if public_role != "admin":
         html_doc = html_doc.replace("<body>", '<body class="viewer-readonly">', 1)
+    effective = {"role": public_role, "profile": public_profile}
+    permitted = allowed_target_keys(effective)
+    political_keys = {r["key"] for r in public_targets_response().get("targets", [])
+                      if r.get("political_roster_version") or r.get("key") in {"flavio_valle", "pedro_duarte"}}
+    if permitted is None or permitted.intersection(political_keys):
+        from urllib.parse import urlencode
+        suffix = "?" + urlencode({"as_profile": simulating}) if simulating else ""
+        html_doc = html_doc.replace('<section class="runner-shell"',
+            '<p class="political-navigation"><a href="/politica' + escape(suffix, quote=True) + '">Política RJ 2026 — nomes, coleta e notícias</a></p>\n    <section class="runner-shell"', 1)
     return html_doc
 
 
@@ -615,6 +679,16 @@ def public_dashboard(request: Request) -> Response:
     if not session:
         return HTMLResponse(login_html(), status_code=200)
     simulating = simulating_profile(request, session)
+    if (os.environ.get("POLITICAL_DASHBOARD_DEFAULT") == "1"
+            and political_corpus.configured and request.query_params.get("view") != "legacy"):
+        try:
+            political_routes.access(request)
+        except HTTPException:
+            pass
+        else:
+            from urllib.parse import urlencode
+            suffix = "?" + urlencode({"as_profile": simulating}) if simulating else ""
+            return RedirectResponse("/politica" + suffix, status_code=307)
     index_path = ROOT / "index.html"
     if index_path.is_file():
         return HTMLResponse(
@@ -778,6 +852,8 @@ def healthz() -> dict[str, Any]:
         "missingConfig": missing_auth_config(),
         "storage": artifact_store.status(),
         "rioCorpus": rio_corpus.health(check_database=False),
+        "politicalCorpus": political_corpus.health(check_database=False),
+        "legacyWriteFence": legacy_writer_status(),
         "localWritesAllowed": local_writes_allowed(),
         "job": safe_current_status().get("status", "idle"),
         "shakiraLoopVersion": "2026-05-06-durable-source-ledger-wp-internal-v2",
@@ -786,6 +862,8 @@ def healthz() -> dict[str, Any]:
 
 @app.get("/api/update/status")
 def update_status(request: Request, scope: str = "", job_id: str = "") -> dict[str, Any]:
+    if scope == political_routes.SCOPE or job_id.startswith("political-"):
+        return political_routes.status(request, job_id)
     session = require_viewer(request)
     effective = effective_session_for(request, session)
     if scope == RIO_ECONOMICO_SCOPE or is_rio_corpus_session(effective):
@@ -818,6 +896,16 @@ def safe_current_status() -> dict[str, Any]:
 
 @app.get("/api/update/live-results")
 def update_live_results(request: Request, job_id: str = "", target_key: str = "", scope: str = "", limit: int = 60) -> dict[str, Any]:
+    if scope == political_routes.SCOPE or job_id.startswith("political-"):
+        _, keys, _ = political_routes.access(request)
+        if target_key and target_key not in keys:
+            raise HTTPException(403, "political_scope_denied")
+        with political_routes.service_errors():
+            data = political_corpus.list_articles(allowed_target_keys=keys,
+                target_keys=[target_key] if target_key else None, page_size=max(1, min(limit, 200)), job_id=job_id)
+            return {"backend": "political_corpus", "jobId": job_id, "items": data["items"],
+                    "mode": "job" if job_id else "base", "count": len(data["items"]),
+                    "hasMore": data.get("hasMore", False), "nextCursor": data.get("nextCursor", "")}
     session = require_viewer(request)
     effective = effective_session_for(request, session)
     if scope == RIO_ECONOMICO_SCOPE or target_key == RIO_ECONOMICO_SCOPE or is_rio_corpus_session(effective):
@@ -847,7 +935,10 @@ def rio_economic_topic_report(request: Request) -> dict[str, Any]:
 async def start_update(request: Request) -> JSONResponse:
     require_admin(request)
     require_csrf(request)
-    payload = await read_json(request)
+    payload = await political_routes.json_body(request)
+    if str(payload.get("scope") or "") == political_routes.SCOPE:
+        return JSONResponse(jsonable_encoder(await political_routes.start(request)))
+    begin_legacy_mutation(request)
     try:
         topic_config = resolve_rio_topic_request(payload)
         if topic_config and topic_config.topic == RIO_CITY_TOPIC:
@@ -860,7 +951,7 @@ async def start_update(request: Request) -> JSONResponse:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    return JSONResponse(job)
+    return JSONResponse(jsonable_encoder(job))
 
 
 @app.get("/api/rio/status")
@@ -934,6 +1025,60 @@ def rio_corpus_audit(request: Request, job_id: str = "", limit: int = 50) -> dic
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
+@app.post("/api/rio/backfills")
+async def rio_create_backfill(request: Request) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    payload = await read_json(request)
+    try:
+        return JSONResponse(jsonable_encoder(rio_corpus.create_backfill(payload, started_by="admin")))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RioCorpusNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/api/rio/backfills/{batch_id}")
+def rio_get_backfill(request: Request, batch_id: str) -> dict[str, Any]:
+    require_rio_corpus_viewer(request)
+    try:
+        return rio_corpus.get_backfill(batch_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except RioCorpusNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.post("/api/rio/backfills/{batch_id}/pause")
+def rio_pause_backfill(request: Request, batch_id: str) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    try:
+        return JSONResponse(jsonable_encoder(rio_corpus.pause_backfill(batch_id)))
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/rio/backfills/{batch_id}/resume")
+def rio_resume_backfill(request: Request, batch_id: str) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    try:
+        return JSONResponse(jsonable_encoder(rio_corpus.resume_backfill(batch_id)))
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.post("/api/rio/backfills/{batch_id}/years/{year}/sources/{source_key}/retry")
+def rio_retry_backfill_source(request: Request, batch_id: str, year: int, source_key: str) -> JSONResponse:
+    require_admin(request)
+    require_csrf(request)
+    try:
+        return JSONResponse(jsonable_encoder(rio_corpus.retry_backfill_source(batch_id, year, source_key)))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.post("/api/rio/schedule")
 def rio_corpus_schedule(request: Request) -> JSONResponse:
     expected = str(os.environ.get("RIO_CORPUS_CRON_TOKEN") or "").strip()
@@ -941,7 +1086,7 @@ def rio_corpus_schedule(request: Request) -> JSONResponse:
     if not expected or not provided.startswith("Bearer ") or not hmac.compare_digest(provided[7:], expected):
         raise HTTPException(status_code=401, detail="rio_corpus_scheduler_auth_required")
     try:
-        return JSONResponse(rio_corpus.schedule_realtime(started_by="render_cron"))
+        return JSONResponse(jsonable_encoder(rio_corpus.scheduler_tick(started_by="render_cron")))
     except RioCorpusNotConfigured as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
@@ -950,9 +1095,12 @@ def rio_corpus_schedule(request: Request) -> JSONResponse:
 async def resume_update(request: Request) -> JSONResponse:
     require_admin(request)
     require_csrf(request)
-    payload = await read_json(request)
+    payload = await political_routes.json_body(request)
     try:
         requested_job_id = str(payload.get("job_id") or payload.get("jobId") or "")
+        if requested_job_id.startswith("political-") or payload.get("scope") == political_routes.SCOPE:
+            return JSONResponse(jsonable_encoder(await run_in_threadpool(political_routes.resume, request, requested_job_id)))
+        begin_legacy_mutation(request)
         if requested_job_id and rio_corpus.has_job(requested_job_id):
             job = rio_corpus.resume_job(requested_job_id)
         else:
@@ -963,7 +1111,7 @@ async def resume_update(request: Request) -> JSONResponse:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return JSONResponse(job)
+    return JSONResponse(jsonable_encoder(job))
 
 
 @app.post("/api/update/cancel")
@@ -971,7 +1119,10 @@ async def cancel_update(request: Request) -> JSONResponse:
     require_admin(request)
     require_csrf(request)
     try:
-        payload = await read_json(request)
+        payload = await political_routes.json_body(request, allow_empty=True)
+        requested_job_id = str(payload.get("job_id") or payload.get("jobId") or "")
+        if requested_job_id.startswith("political-") or payload.get("scope") == political_routes.SCOPE:
+            return JSONResponse(jsonable_encoder(await run_in_threadpool(political_routes.cancel, request, requested_job_id)))
         if str(payload.get("scope") or "") == RIO_ECONOMICO_SCOPE:
             job = rio_corpus.cancel_job(str(payload.get("job_id") or payload.get("jobId") or ""))
         else:
@@ -983,7 +1134,7 @@ async def cancel_update(request: Request) -> JSONResponse:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return JSONResponse(job)
+    return JSONResponse(jsonable_encoder(job))
 
 
 @app.post("/api/export")
@@ -1003,9 +1154,12 @@ async def start_export(request: Request) -> JSONResponse:
 async def manual_story(request: Request) -> JSONResponse:
     require_admin(request)
     require_csrf(request)
+    payload = await political_routes.json_body(request)
+    if payload.get("scope") == political_routes.SCOPE:
+        return JSONResponse(jsonable_encoder(await political_routes.manual_story(request)))
+    begin_legacy_mutation(request)
     if not artifact_store.writes_available:
         raise HTTPException(status_code=503, detail="persistent_storage_not_configured")
-    payload = await read_json(request)
     try:
         artifact_store.backup_current_artifacts("manual-story")
         result = insert_manual_story(db_path(), payload, created_by="admin")

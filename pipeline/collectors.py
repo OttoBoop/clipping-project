@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from typing import Iterable
+from zoneinfo import ZoneInfo
 from urllib.parse import parse_qsl, quote_plus, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 
 from .http_utils import (
@@ -56,6 +57,14 @@ class CandidateArticle:
     resolved_url: str = ""
 
 
+class CandidateBatch(list):
+    """List-compatible page result retaining unfiltered pagination evidence."""
+    def __init__(self, values=(), *, raw_count=0, has_next=False):
+        super().__init__(values)
+        self.raw_count = raw_count
+        self.has_next = has_next
+
+
 def _safe_text(node: ET.Element | None) -> str:
     if node is None or node.text is None:
         return ""
@@ -64,7 +73,7 @@ def _safe_text(node: ET.Element | None) -> str:
 
 def _parse_datetime(text: str) -> str:
     if not text:
-        return datetime.now(timezone.utc).isoformat()
+        return ""
     # RSS pubDate common format.
     try:
         dt = parsedate_to_datetime(text)
@@ -80,7 +89,7 @@ def _parse_datetime(text: str) -> str:
             dt = dt.replace(tzinfo=timezone.utc)
         return dt.astimezone(timezone.utc).isoformat()
     except Exception:
-        return datetime.now(timezone.utc).isoformat()
+        return ""
 
 
 def _parse_xml_root(xml_text: str) -> ET.Element:
@@ -99,7 +108,7 @@ def _parse_window_boundary(value: str, *, end_of_day: bool) -> datetime | None:
         return None
     try:
         if len(raw) == 10:
-            dt = datetime.strptime(raw, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            dt = datetime.strptime(raw, "%Y-%m-%d").replace(tzinfo=ZoneInfo("America/Sao_Paulo"))
             if end_of_day:
                 dt = dt.replace(hour=23, minute=59, second=59, microsecond=999999)
             return dt
@@ -264,20 +273,26 @@ def collect_google_news(
     request_timeout: int = 10,
     resolve_timeout: int = 6,
     collection_timeout: int = 6000,
+    raise_on_error: bool = False,
 ) -> list[CandidateArticle]:
     query_batches: list[list[CandidateArticle]] = []
+    raw_count = 0
     query_list = queries or GOOGLE_NEWS_QUERIES
     t0 = time.monotonic()
     rss_timeout = min(request_timeout, 12)
     for qi, query in enumerate(query_list):
         if time.monotonic() - t0 > collection_timeout:
             logging.warning(f"Google News collection time budget exhausted after {qi}/{len(query_list)} queries")
+            if raise_on_error:
+                raise TimeoutError("Google News collection budget exhausted before all queries were searched")
             break
         q = query.strip()
         if date_from:
-            q += f" after:{date_from}"
+            start_day = datetime.fromisoformat(date_from).date() - timedelta(days=1)
+            q += f" after:{start_day.isoformat()}"
         if date_to:
-            q += f" before:{date_to}"
+            next_day = datetime.fromisoformat(date_to).date() + timedelta(days=1)
+            q += f" before:{next_day.isoformat()}"
         url = google_news_rss_url(q)
         try:
             _, xml_text = fetch_url(url, timeout=rss_timeout)
@@ -287,6 +302,7 @@ def collect_google_news(
                 source_type="google_news",
                 metadata={"query": q},
             )
+            raw_count += len(items)
             for item in items:
                 # Prefer direct outlet links when present in snippet.
                 links = _extract_hrefs(item.snippet)
@@ -313,13 +329,17 @@ def collect_google_news(
                     meta["force_full_fetch"] = True
                     meta["redirect_resolution_skipped"] = True
                     item.metadata = meta
+            for item in items:
+                item.metadata = {**item.metadata, "raw_page_count": len(items)}
             filtered = [item for item in items if _within_window(item.published_at, date_from=date_from, date_to=date_to)]
             query_batches.append(filtered[: max(1, limit_per_query)])
             logging.info(f"Google News [{qi+1}/{len(query_list)}] '{query[:40]}': {len(filtered)} items")
         except Exception as e:
             logging.info(f"Google News [{qi+1}/{len(query_list)}] '{query[:40]}': FAILED ({type(e).__name__})")
+            if raise_on_error:
+                raise
             continue
-    return _dedupe_candidates_by_url(_round_robin_candidates(query_batches))
+    return CandidateBatch(_dedupe_candidates_by_url(_round_robin_candidates(query_batches)), raw_count=raw_count, has_next=raw_count >= 100)
 
 
 LINK_RE = re.compile(r"""<a[^>]+href=["']([^"'#]+)["'][^>]*>(.*?)</a>""", re.IGNORECASE | re.DOTALL)
@@ -403,7 +423,7 @@ def _parse_pt_br_datetime(value: str) -> str:
     if not month:
         return ""
     try:
-        dt = datetime(year, month, day, hour, minute, tzinfo=timezone.utc)
+        dt = datetime(year, month, day, hour, minute, tzinfo=ZoneInfo("America/Sao_Paulo")).astimezone(timezone.utc)
     except Exception:
         return ""
     return dt.isoformat()
@@ -637,6 +657,7 @@ def _collect_globo_internal_search(
     date_to: str,
     start_offset: int = 0,
     max_pages: int | None = None,
+    raise_on_error: bool = False,
 ) -> list[CandidateArticle]:
     candidates: list[CandidateArticle] = []
     seen_urls: set[str] = set()
@@ -644,6 +665,8 @@ def _collect_globo_internal_search(
     offset = max(0, int(start_offset or 0))
     page_size = max(1, int(adapter.page_size or 10))
     pages_seen = 0
+    raw_count = 0
+    has_next = False
     while len(candidates) < max(1, limit_per_adapter):
         if max_pages is not None and pages_seen >= max(1, int(max_pages)):
             break
@@ -662,15 +685,28 @@ def _collect_globo_internal_search(
             )
         except Exception as exc:
             logging.warning("Globo search failed for %s: %s", adapter.source_name, exc)
+            if raise_on_error:
+                raise
             break
         try:
             payload = json.loads(body)
         except Exception:
+            if raise_on_error:
+                raise
             break
-        if not isinstance(payload, list) or not payload:
+        if not isinstance(payload, list) or not payload or not isinstance(payload[0], dict):
+            if raise_on_error:
+                raise ValueError("Globo response has no search result envelope")
             break
-        first = payload[0] if isinstance(payload[0], dict) else {}
-        hits = (((first.get("result") or {}).get("hits") or {}).get("hits")) or []
+        first = payload[0]
+        hit_container = (first.get("result") or {}).get("hits")
+        if not isinstance(hit_container, dict) or not isinstance(hit_container.get("hits"), list):
+            if raise_on_error:
+                raise ValueError("Globo response has no hit list")
+            break
+        hits = hit_container["hits"]
+        raw_count += len(hits)
+        has_next = len(hits) >= page_size
         if not hits:
             break
         pages_seen += 1
@@ -702,12 +738,13 @@ def _collect_globo_internal_search(
             )
             seen_urls.add(url)
         candidates.extend(page_candidates)
-        if dated_hits and older_hits == dated_hits:
+        if dated_hits == len(hits) and older_hits == dated_hits:
+            has_next = False
             break
         if len(hits) < page_size:
             break
         offset += page_size
-    return [item for item in candidates if _within_window(item.published_at, date_from=date_from, date_to=date_to) or not item.published_at]
+    return CandidateBatch([item for item in candidates if _within_window(item.published_at, date_from=date_from, date_to=date_to) or not item.published_at], raw_count=raw_count, has_next=has_next)
 
 
 def _extract_links_from_search(html_page: str, base_source: str) -> Iterable[tuple[str, str]]:
@@ -746,7 +783,7 @@ def collect_direct_scrape(main_query: str = "Flavio Valle", *, per_target_limit:
                         url=link,
                         source_name=target.source_name,
                         source_type="scrape",
-                        published_at=datetime.now(timezone.utc).isoformat(),
+                        published_at="",
                         snippet="",
                         metadata={"search_url": search_url},
                     )
@@ -791,6 +828,8 @@ def collect_wordpress_api(
     articles: list[CandidateArticle] = []
     seen_urls: set[str] = set()
     accepted = 0
+    raw_count = 0
+    has_next = False
 
     for page in range(page_start, page_end + 1):
         if accepted >= site_limit:
@@ -813,8 +852,16 @@ def collect_wordpress_api(
         try:
             _, body = fetch_url(url, timeout=request_timeout)
         except urllib.error.HTTPError as exc:
-            # Typically "invalid page number" once we go beyond available results.
-            if raise_on_error and int(getattr(exc, "code", 0) or 0) >= 500:
+            # Only a structured invalid-page response proves exhaustion. A 429,
+            # 403, timeout, or arbitrary 400 remains a source failure.
+            exhausted = False
+            if int(getattr(exc, "code", 0) or 0) == 400:
+                try:
+                    error_payload = json.loads(exc.read().decode("utf-8"))
+                    exhausted = error_payload.get("code") == "rest_post_invalid_page_number"
+                except (ValueError, AttributeError, UnicodeError):
+                    pass
+            if raise_on_error and not exhausted:
                 raise
             break
         except Exception:
@@ -833,8 +880,16 @@ def collect_wordpress_api(
         try:
             payload = json.loads(body)
         except Exception:
+            if raise_on_error:
+                raise
             break
-        if not isinstance(payload, list) or not payload:
+        if not isinstance(payload, list):
+            if raise_on_error:
+                raise ValueError("WordPress response is not an article list")
+            break
+        raw_count += len(payload)
+        has_next = len(payload) >= per_page
+        if not payload:
             break
 
         for item in payload:
@@ -900,7 +955,7 @@ def collect_wordpress_api(
         if len(payload) < per_page:
             break
 
-    return articles
+    return CandidateBatch(articles, raw_count=raw_count, has_next=has_next)
 
 
 def collect_internal_site_search(
@@ -913,11 +968,14 @@ def collect_internal_site_search(
     max_pages_per_adapter: int = 6,
     start_page: int = 1,
     request_timeout: int = 10,
+    raise_on_error: bool = False,
 ) -> list[CandidateArticle]:
     query_list = [str(item or "").strip() for item in (queries or FLAVIO_INTERNAL_SEARCH_QUERIES) if str(item or "").strip()]
     adapter_list = adapters or FLAVIO_INTERNAL_SEARCH_TARGETS
     collected: list[CandidateArticle] = []
     global_seen_urls: set[str] = set()
+    raw_count = 0
+    has_next = False
     start = _parse_window_boundary(date_from, end_of_day=False)
     page_start = max(1, int(start_page or 1))
     page_count = max(1, int(max_pages_per_adapter or 1))
@@ -940,7 +998,10 @@ def collect_internal_site_search(
                     date_to=date_to,
                     start_offset=(page_start - 1) * page_size,
                     max_pages=page_count,
+                    raise_on_error=raise_on_error,
                 )
+                raw_count += getattr(batch, "raw_count", len(batch))
+                has_next = has_next or getattr(batch, "has_next", len(batch) >= page_size)
             else:
                 batch = []
                 next_url = adapter.search_url_template.format(query=quote_plus(query))
@@ -955,11 +1016,17 @@ def collect_internal_site_search(
                     try:
                         _, html_page = fetch_url(page_url, timeout=request_timeout)
                     except Exception:
+                        if raise_on_error:
+                            raise
                         break
                     page_candidates, discovered_next = _extract_internal_search_results(adapter, html_page=html_page, search_url=page_url)
                     if current_page < page_start:
                         next_url = discovered_next
                         continue
+                    raw_count += len(page_candidates)
+                    has_next = has_next or bool(discovered_next)
+                    if raise_on_error and not page_candidates and not discovered_next and not re.search(r"nenhum|sem resultados|no results", html_page, re.I):
+                        raise ValueError("Internal search markup not recognized; exhaustion unconfirmed")
                     older_hits = 0
                     dated_hits = 0
                     for item in page_candidates:
@@ -999,7 +1066,7 @@ def collect_internal_site_search(
             )
             item.metadata = metadata
             collected.append(item)
-    return _dedupe_candidates_by_url(collected)
+    return CandidateBatch(_dedupe_candidates_by_url(collected), raw_count=raw_count, has_next=has_next)
 
 
 def iterate_google_playwright_day(
@@ -1262,12 +1329,16 @@ def _matches_queries(text: str, queries: list[str] | None) -> bool:
     return any(query in searchable for query in normalized_queries)
 
 
-def _parse_sitemap_entries(xml_text: str) -> list[dict[str, str]]:
+def _parse_sitemap_entries(xml_text: str, *, raise_on_error: bool = False) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     try:
         root = ET.fromstring(xml_text)
     except Exception:
+        if raise_on_error:
+            raise
         return rows
+    if raise_on_error and _xml_local_name(root.tag) not in {"urlset", "sitemapindex"}:
+        raise ValueError("Response is not a sitemap")
     for url_node in root.iter():
         if _xml_local_name(url_node.tag) != "url":
             continue
@@ -1284,7 +1355,7 @@ def _parse_sitemap_entries(xml_text: str) -> list[dict[str, str]]:
                     loc = value
             elif name in {"title", "news_title"} and not title:
                 title = value
-            elif name in {"publication_date", "lastmod"} and not published_at:
+            elif name == "publication_date" and not published_at:
                 published_at = _parse_datetime(value)
         if loc:
             rows.append({"loc": loc, "title": title, "published_at": published_at})
@@ -1387,6 +1458,7 @@ def collect_camara_archive(
     max_pages: int = 24,
     request_timeout: int = 10,
     start_offset: int = 0,
+    raise_on_error: bool = False,
 ) -> list[CandidateArticle]:
     config = target or CAMARA_ARCHIVE_TARGET
     base_url = str(config.get("start_url") or "").strip()
@@ -1412,6 +1484,8 @@ def collect_camara_archive(
         try:
             _, html_page = fetch_url(page_url, timeout=request_timeout)
         except Exception:
+            if raise_on_error:
+                raise
             break
         page_candidates: list[CandidateArticle] = []
         dated_hits = 0
@@ -1464,6 +1538,7 @@ def collect_vejario_archive(
     limit_per_target: int = 120,
     max_pages_per_target: int = 12,
     request_timeout: int = 10,
+    raise_on_error: bool = False,
 ) -> list[CandidateArticle]:
     target_list = targets or VEJARIO_ARCHIVE_TARGETS
     collected: list[CandidateArticle] = []
@@ -1486,6 +1561,8 @@ def collect_vejario_archive(
             try:
                 _, html_page = fetch_url(page_url, timeout=request_timeout)
             except Exception:
+                if raise_on_error:
+                    raise
                 break
             page_candidates, discovered_next = _extract_vejario_archive_page(html_page, page_url, target)
             dated_hits = 0
@@ -1525,6 +1602,7 @@ def collect_sitemap_daily(
     limit_per_source: int = 240,
     request_timeout: int = 10,
     collection_timeout: int = 9000,
+    raise_on_error: bool = False,
 ) -> list[CandidateArticle]:
     query_list = [str(item or "").strip() for item in (queries or []) if str(item or "").strip()]
     source_list = sources or SITEMAP_DAILY_SOURCES
@@ -1563,8 +1641,10 @@ def collect_sitemap_daily(
                 try:
                     _, xml_text = fetch_url(sitemap_url, timeout=sitemap_timeout)
                 except Exception:
-                    break  # no more pages for this day
-                page_entries = list(_parse_sitemap_entries(xml_text))
+                    if raise_on_error:
+                        raise
+                    break
+                page_entries = list(_parse_sitemap_entries(xml_text, raise_on_error=raise_on_error))
                 if not page_entries:
                     break  # empty page means no more pages
                 for row in page_entries:
@@ -1576,9 +1656,7 @@ def collect_sitemap_daily(
                     title = str(row.get("title") or "").strip()
                     if query_list and not _matches_queries(" ".join([canon_url, title]), query_list):
                         continue
-                    published_at = str(row.get("published_at") or "").strip() or day.replace(
-                        hour=12, minute=0, second=0, microsecond=0,
-                    ).isoformat()
+                    published_at = str(row.get("published_at") or "").strip()
                     # Skip _within_window for sitemap_daily: the date-specific
                     # sitemap URL already filters by date, and published_at may
                     # use UTC while the sitemap organises by local time (e.g.

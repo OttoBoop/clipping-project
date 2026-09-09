@@ -1,0 +1,68 @@
+{
+  "dataset_version": "rio_2026_known_stories_v1",
+  "checked_at": "2026-09-09T13:36:23.444820+00:00",
+  "limitations": [
+    "Fourteen convenience-selected articles across June–September and eight publishers (seven news outlets plus one party primary source).",
+    "The fixture does not yet cover every configured source, every target or every day. Expand annotations before claiming outlet-wide or corpus-wide recall.",
+    "Verified public addresses are lookup keys; publisher canonical declarations may change. Add only verified aliases.",
+    "Synthetic disambiguation cases test matching rules independently and never contribute to measured corpus recall or precision.",
+    "A passing annotated-case gate does not establish production readiness, a completed canary, or corpus-wide quality."
+  ],
+  "production_rollout_verified": false,
+  "corpus": {
+    "measured": false,
+    "reason": "validation_only",
+    "scope": "annotated article cases only",
+    "article_count": 14,
+    "article_recall": null,
+    "person_recall": null,
+    "person_precision": null,
+    "incorrect_person_match_rate": null,
+    "gates": null,
+    "annotated_case_gates_passed": null
+  },
+  "synthetic_controls": {
+    "measured_against": "synthetic text only; excluded from corpus metrics",
+    "passed": true,
+    "cases": [
+      {
+        "id": "pedro_duarte_portugal",
+        "expected": [],
+        "actual": [],
+        "passed": true
+      },
+      {
+        "id": "ferreirinha_football",
+        "expected": [],
+        "actual": [],
+        "passed": true
+      },
+      {
+        "id": "pedro_paulo_singer",
+        "expected": [],
+        "actual": [],
+        "passed": true
+      },
+      {
+        "id": "ronaldo_not_carlo",
+        "expected": [
+          "ronaldo_caiado"
+        ],
+        "actual": [
+          "ronaldo_caiado"
+        ],
+        "passed": true
+      },
+      {
+        "id": "carlo_not_ronaldo",
+        "expected": [
+          "carlo_caiado"
+        ],
+        "actual": [
+          "carlo_caiado"
+        ],
+        "passed": true
+      }
+    ]
+  }
+}

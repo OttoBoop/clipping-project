@@ -2477,11 +2477,14 @@ def test_grouped_durable_source_units_keep_one_ledger_per_source_window(monkeypa
     assert [unit.source_type for unit in units] == [
         "rss",
         "google_news",
+        "google_news",
         "wordpress_api",
         "internal_search",
         "sitemap_daily",
     ]
-    query_cursors = [unit.cursor for unit in units if unit.source_type != "rss"]
+    google_cursors = [unit.cursor for unit in units if unit.source_type == "google_news"]
+    assert [cursor["query"] for cursor in google_cursors] == ['"Alpha"', '"Beta"']
+    query_cursors = [unit.cursor for unit in units if unit.source_type not in {"rss", "google_news"}]
     assert all(cursor["queries"] == ["Alpha", "Beta"] or cursor["queries"] == ['"Alpha"', '"Beta"'] for cursor in query_cursors)
 
 
@@ -2555,52 +2558,42 @@ def test_grouped_durable_runner_migrates_legacy_rows_and_ingests_all_targets(mon
     assert any(event["event"] == "source_run_ledger_migrated" for event in observed["events"])
 
 
-def test_grouped_google_news_source_run_circuit_breaker_skips_ingest(monkeypatch, tmp_path):
+def test_grouped_google_news_searches_every_selected_name_and_ingests(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    from pipeline import ingest
+    from pipeline.collectors import CandidateArticle
     monkeypatch.setenv("CLIPPING_SOURCE_RUN_YIELD_SECONDS", "0")
     spec = {
-        "preset": "custom",
-        "collector": "google_news",
-        "target_keys": ["alpha", "beta"],
+        "preset": "custom", "collector": "google_news", "target_keys": ["alpha", "beta"],
         "target_snapshots": [
             {"key": "alpha", "display_name": "Alpha", "keywords": ["Alpha"], "primary": True},
             {"key": "beta", "display_name": "Beta", "keywords": ["Beta"], "primary": True},
         ],
-        "date_from": "2026-04-01",
-        "date_to": "2026-04-01",
-        "export": False,
-        "durable": True,
+        "date_from": "2026-04-01", "date_to": "2026-04-01", "export": False, "durable": True,
     }
     collect_calls = []
+    ingest_calls = []
 
-    def unexpected_collect_google_news(**kwargs):
-        collect_calls.append(kwargs)
-        raise AssertionError("grouped Google News should not enter collection")
+    def collect(**kwargs):
+        collect_calls.extend(kwargs["queries"])
+        return [CandidateArticle("Alpha Beta", "https://example.com/story", "Google News", "google_news",
+                                 "2026-04-01T12:00:00+00:00", "", {})]
 
-    monkeypatch.setattr(jobs, "collect_google_news", unexpected_collect_google_news)
+    def process(source_name, source_type, candidates, *, options=None, **kwargs):
+        ingest_calls.append(options.target_keys)
+        return ingest.IngestionResult(source_name, source_type, len(candidates), 1, 2, 1, [])
 
-    def unexpected_process_candidates(*_args, **_kwargs):
-        raise AssertionError("grouped Google News should not enter full ingestion")
-
-    monkeypatch.setattr(jobs, "process_candidates", unexpected_process_candidates)
-    jobs.create_job("grouped-google-circuit", "update", spec, started_by="coworker")
-
-    result = jobs.run_durable_update("grouped-google-circuit", spec, threading.Event())
-    rows = jobs.source_run_rows("grouped-google-circuit")
-    observed = jobs.get_job("grouped-google-circuit")
-
+    monkeypatch.setattr(jobs, "collect_google_news", collect)
+    monkeypatch.setattr(jobs, "process_candidates", process)
+    jobs.create_job("grouped-google-queries", "update", spec, started_by="coworker")
+    result = jobs.run_durable_update("grouped-google-queries", spec, threading.Event())
+    rows = jobs.source_run_rows("grouped-google-queries")
+    expected = jobs.build_google_queries_for_targets(jobs.targets_from_spec(spec))
     assert result["coverage_state"] == "complete"
-    assert len(rows) == 1
-    assert rows[0]["target_key"] == jobs.GROUPED_SOURCE_RUN_TARGET_KEY
-    assert rows[0]["status"] == "complete"
-    assert rows[0]["candidates_seen"] == 0
-    assert rows[0]["articles_inserted"] == 0
-    assert collect_calls == []
-    assert any(
-        event["event"] == "source_progress"
-        and (event.get("payload") or {}).get("status") == "google_news_grouped_circuit_breaker"
-        for event in observed["events"]
-    )
+    assert collect_calls == expected
+    assert len(rows) == len(expected)
+    assert all(row["status"] == "complete" and row["candidates_seen"] == 1 for row in rows)
+    assert ingest_calls and all(keys == ["alpha", "beta"] for keys in ingest_calls)
 
 
 def test_grouped_wordpress_source_run_tracks_completed_queries(monkeypatch, tmp_path):
@@ -2917,8 +2910,9 @@ def test_late_wordpress_hard_timeout_completes_source_run(monkeypatch, tmp_path)
     assert next_cursor["page"] == 25
 
 
-def test_late_grouped_wordpress_502_completes_query(monkeypatch, tmp_path):
+def test_late_grouped_wordpress_502_preserves_failed_query(monkeypatch, tmp_path):
     import urllib.error
+    import pytest
 
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
     spec = {
@@ -2945,22 +2939,17 @@ def test_late_grouped_wordpress_502_completes_query(monkeypatch, tmp_path):
 
     monkeypatch.setattr(jobs, "collect_wordpress_api", bad_gateway_wordpress_api)
 
-    candidates, next_cursor, complete = jobs.collect_source_run_candidates(
-        spec,
-        {
-            "source_type": "wordpress_api",
-            "source_name": "Diario do Rio",
-            "candidates_seen": 379,
-            "candidates_total": 379,
-        },
-        {"site_index": 0, "queries": ["crime"], "page": 16, "complete_queries": []},
-    )
-
-    assert candidates == []
-    assert complete is True
-    assert next_cursor["page"] == 16
-    assert next_cursor["complete_queries"] == ["crime"]
-
+    with pytest.raises(urllib.error.HTTPError):
+        jobs.collect_source_run_candidates(
+            spec,
+            {
+                "source_type": "wordpress_api",
+                "source_name": "Diario do Rio",
+                "candidates_seen": 379,
+                "candidates_total": 379,
+            },
+            {"site_index": 0, "queries": ["crime"], "page": 16, "complete_queries": []},
+        )
 
 def test_early_wordpress_hard_timeout_still_fails_source_run(monkeypatch, tmp_path):
     _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
@@ -4595,3 +4584,22 @@ def test_sqlite_snapshot_includes_uncheckpointed_wal_rows(tmp_path):
     with sqlite3.connect(copied) as conn:
         rows = conn.execute("SELECT name FROM rows").fetchall()
     assert rows == [("persisted",)]
+
+
+def test_target_review_drains_batches_with_bounded_memory_and_cancellation(monkeypatch, tmp_path):
+    _, jobs, _ = reload_admin_modules(monkeypatch, tmp_path)
+    observed = []
+    def batch(*args, **kwargs):
+        observed.append(1)
+        return {"updated": [{"article_id": len(observed)}] * 100, "updatedCount": 100,
+                "mentionsInserted": 100, "storiesTouched": 100, "scannedCount": 100,
+                "cursor": 100 * len(observed), "hasMore": len(observed) < 3}
+    monkeypatch.setattr(jobs, "backfill_missing_target_mentions", batch)
+    result = jobs.backfill_all_target_mentions(tmp_path / "unused.db", ["alpha"])
+    assert len(observed) == 3
+    assert result["updatedCount"] == 300 and result["scannedCount"] == 300
+    assert len(result["updated"]) == 100 and result["sampleTruncated"]
+    observed.clear()
+    result = jobs.backfill_all_target_mentions(tmp_path / "unused.db", ["alpha"], cancel_check=lambda: len(observed) == 1)
+    assert len(observed) == 1
+    assert result["hasMore"] is True and result["cancelled"] is True

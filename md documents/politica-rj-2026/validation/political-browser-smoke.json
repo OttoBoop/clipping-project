@@ -1,0 +1,279 @@
+{
+  "simulated": true,
+  "productionVerified": false,
+  "viewports": {
+    "desktop": {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "passed": true,
+      "checks": [
+        "Initial load is paginated, with no collection or article body download",
+        "Group selection toggles the five requested figures",
+        "Next and previous use the cursor API",
+        "On-demand article text and nested classification DTO load, edit and save",
+        "Body availability and story expansion preserve the route contract",
+        "Only explicit clicks start, cancel and resume a job; persisted metric names render",
+        "Manual news form saves selected names and coverage reports an incomplete query",
+        "No console errors, page errors or horizontal overflow"
+      ],
+      "screenshots": [
+        "/tmp/political-browser-smoke/desktop-article.png",
+        "/tmp/political-browser-smoke/desktop-page.png"
+      ],
+      "consoleErrors": [],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/politica"
+        },
+        {
+          "method": "GET",
+          "path": "/assets/political.css"
+        },
+        {
+          "method": "GET",
+          "path": "/assets/political.js"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/meta"
+        },
+        {
+          "method": "GET",
+          "path": "/api/csrf"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/sources"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/status"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles/101/text"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles/101/classifications"
+        },
+        {
+          "method": "POST",
+          "path": "/api/political/articles/101/classifications"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/stories"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "POST",
+          "path": "/api/political/jobs"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/status"
+        },
+        {
+          "method": "POST",
+          "path": "/api/political/jobs/fixture-job/cancel"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/status"
+        },
+        {
+          "method": "POST",
+          "path": "/api/political/jobs/fixture-job/resume"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/status"
+        },
+        {
+          "method": "POST",
+          "path": "/api/political/jobs/fixture-job/cancel"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/status"
+        },
+        {
+          "method": "POST",
+          "path": "/api/political/manual-story"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/coverage"
+        }
+      ]
+    },
+    "mobile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "passed": true,
+      "checks": [
+        "Initial load is paginated, with no collection or article body download",
+        "Group selection toggles the five requested figures",
+        "Next and previous use the cursor API",
+        "On-demand article text and nested classification DTO load, edit and save",
+        "Body availability and story expansion preserve the route contract",
+        "Only explicit clicks start, cancel and resume a job; persisted metric names render",
+        "Manual news form saves selected names and coverage reports an incomplete query",
+        "No console errors, page errors or horizontal overflow"
+      ],
+      "screenshots": [
+        "/tmp/political-browser-smoke/mobile-article.png",
+        "/tmp/political-browser-smoke/mobile-page.png"
+      ],
+      "consoleErrors": [],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/politica"
+        },
+        {
+          "method": "GET",
+          "path": "/assets/political.css"
+        },
+        {
+          "method": "GET",
+          "path": "/assets/political.js"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/meta"
+        },
+        {
+          "method": "GET",
+          "path": "/api/csrf"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/sources"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/status"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles/101/text"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles/101/classifications"
+        },
+        {
+          "method": "POST",
+          "path": "/api/political/articles/101/classifications"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/stories"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "POST",
+          "path": "/api/political/jobs"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/status"
+        },
+        {
+          "method": "POST",
+          "path": "/api/political/jobs/fixture-job/cancel"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/status"
+        },
+        {
+          "method": "POST",
+          "path": "/api/political/jobs/fixture-job/resume"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/status"
+        },
+        {
+          "method": "POST",
+          "path": "/api/political/jobs/fixture-job/cancel"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/status"
+        },
+        {
+          "method": "POST",
+          "path": "/api/political/manual-story"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/articles"
+        },
+        {
+          "method": "GET",
+          "path": "/api/political/coverage"
+        }
+      ]
+    }
+  },
+  "passed": true
+}

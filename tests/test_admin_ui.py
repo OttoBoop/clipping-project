@@ -1208,6 +1208,8 @@ def test_healthz_exposes_safe_operational_fields(monkeypatch, tmp_path):
         "missingConfig",
         "storage",
         "rioCorpus",
+        "politicalCorpus",
+        "legacyWriteFence",
         "localWritesAllowed",
         "job",
         "shakiraLoopVersion",

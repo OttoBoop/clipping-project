@@ -1,0 +1,13 @@
+{
+  "date": "2026-09-09",
+  "counts": {
+    "tests": 507,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "elapsedSeconds": 56.88,
+  "postgres": "disposable local PostgreSQL",
+  "productionVerified": false,
+  "junit": "political-regression-tests.xml"
+}

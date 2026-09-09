@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import db_path as _default_db_path
+from .legacy_fence import legacy_write_fenced
 
 
 def _utc_iso_now() -> str:
@@ -55,6 +56,8 @@ def record(
         details: optional dict serialized as JSON for the details column.
         db_file: optional override (tests). Defaults to config.db_path().
     """
+    if legacy_write_fenced():
+        return
     try:
         path = Path(db_file) if db_file else _default_db_path()
         role, profile = _resolve_user(session)
@@ -87,7 +90,7 @@ def purge_older_than(
     Override via env var CLIPPING_ACTIVITY_RETENTION_DAYS (set 0 to
     disable). Never raises — best-effort.
     """
-    if days <= 0:
+    if legacy_write_fenced() or days <= 0:
         return 0
     try:
         path = Path(db_file) if db_file else _default_db_path()

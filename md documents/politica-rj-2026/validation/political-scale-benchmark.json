@@ -1,0 +1,65 @@
+{
+  "benchmarkVersion": 1,
+  "createdAt": "2026-09-09T13:50:39.341481+00:00",
+  "fixture": {
+    "storedArticles": 100000,
+    "storedMentions": 100000,
+    "targetCount": 25,
+    "incomingArticles": 120,
+    "networkLatencyMsPerFetch": 150,
+    "seedSeconds": 5.485
+  },
+  "legacy": {
+    "implementation": "pipeline.ingest.process_candidates",
+    "candidateWorkers": 1,
+    "seconds": 19.128,
+    "saved": 120,
+    "articlesPerSecond": 6.274,
+    "errors": []
+  },
+  "durable": {
+    "implementation": "PoliticalCorpusService.claim_task/process_task",
+    "fetchWorkers": 4,
+    "seconds": 6.732,
+    "saved": 120,
+    "totalStored": 100120,
+    "articlesPerSecond": 17.827,
+    "nonCompleteFetchTasks": 0,
+    "missingMentionOrStoryRelations": 0,
+    "visibleBeforeCompletion": true
+  },
+  "browsing": {
+    "httpRequests": 117,
+    "httpP95Ms": 189.991,
+    "serviceRequests": 117,
+    "serviceP95Ms": 9.058,
+    "errors": [],
+    "scopeTargetCount": 5,
+    "pageSize": 50
+  },
+  "memory": {
+    "peakRssMiB": 101.039,
+    "configuredCapacityMiB": 512,
+    "peakPercent": 19.734,
+    "sampleCount": 1538
+  },
+  "speedup": 2.842,
+  "acceptance": {
+    "atLeast100000Stored": true,
+    "all25Targets": true,
+    "atLeast2xThroughput": true,
+    "memoryBelow70Percent": true,
+    "noLostArticles": true,
+    "noIncompleteFetches": true,
+    "allRelationships": true,
+    "noWebErrors": true,
+    "committedResultsVisible": true
+  },
+  "limitations": [
+    "Controlled article network fixtures; external publisher latency, rate limits and coverage recall are not measured.",
+    "Legacy SQLite starts empty, while durable PostgreSQL starts with the requested large corpus.",
+    "HTTP uses the actual political router through ASGI TestClient with fixture authentication; production deployment is not exercised.",
+    "Immutable compressed object storage is local file-backed; remote object-storage latency is not measured.",
+    "RSS memory covers this Python process including browser and workers, excluding the PostgreSQL server process."
+  ]
+}

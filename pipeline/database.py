@@ -12,6 +12,7 @@ from the session log.
 """
 from __future__ import annotations
 
+import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -130,12 +131,16 @@ def utc_now_iso() -> str:
 class ClippingDB:
     def __init__(self, db_path: Path):
         self.db_path = Path(db_path)
+        if os.environ.get("CLIPPING_LEGACY_WRITE_FENCE", "").strip() == "1":
+            return
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_schema()
 
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:
-        conn = sqlite3.connect(self.db_path)
+        conn = (sqlite3.connect(self.db_path.resolve().as_uri() + "?mode=rw", uri=True)
+                if os.environ.get("CLIPPING_LEGACY_WRITE_FENCE", "").strip() == "1"
+                else sqlite3.connect(self.db_path))
         conn.row_factory = sqlite3.Row
         try:
             yield conn

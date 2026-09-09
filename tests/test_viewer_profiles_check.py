@@ -97,6 +97,11 @@ def test_repository_viewer_profiles_pass_current_scope_guard():
 
     assert result["ok"] is True
     assert result["profile_count"] == 4
-    assert result["target_count"] == 5
+    # The political expansion adds monitored names without widening any of
+    # the four existing viewer profiles. Runtime-added names remain valid.
+    targets = check.load_json(check.DEFAULT_TARGETS)
+    keys = {row["key"] for row in targets}
+    assert result["target_count"] >= 25
+    assert {"eduardo_paes", "flavio_valle", "pedro_duarte", "renan_ferreirinha", "pedro_paulo"} <= keys
     assert result["profiles"]["demo_cliente"]["target_count"] == 0
     assert result["profiles"]["rio_economico"]["target_keys"] == ["rio_economico"]

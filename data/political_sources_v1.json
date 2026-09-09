@@ -1,0 +1,312 @@
+{
+  "version": 1,
+  "scope": "politica_rj_2026",
+  "sources": [
+    {
+      "key": "google_news",
+      "name": "Google News",
+      "strategies": [
+        "google_news"
+      ],
+      "domain": "",
+      "known_constraint": "Search feed result caps remain explicit gaps; current single-day cap is 100 results.",
+      "evidence": [
+        {
+          "url": "https://news.google.com/rss/search?q=Eduardo+Paes&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+          "basis": "existing collector"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "key": "oglobo",
+      "name": "O Globo",
+      "domain": "oglobo.globo.com",
+      "strategies": [
+        "daily_sitemap",
+        "google_news"
+      ],
+      "sitemap_template": "https://oglobo.globo.com/sitemap/oglobo/{yyyy}/{mm}/{dd}_{page}.xml",
+      "section_patterns": [
+        "/(?:politica|rio|rj|brasil|eleicoes|blogs|colunas|economia|sao-paulo|sp)/"
+      ],
+      "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only.",
+      "evidence": [
+        {
+          "url": "https://oglobo.globo.com/robots.txt",
+          "basis": "existing daily sitemap collector configuration; live capability requires canary"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "key": "g1",
+      "name": "G1",
+      "domain": "g1.globo.com",
+      "strategies": [
+        "daily_sitemap",
+        "google_news"
+      ],
+      "sitemap_template": "https://g1.globo.com/sitemap/g1/{yyyy}/{mm}/{dd}_{page}.xml",
+      "section_patterns": [
+        "/(?:politica|rio|rj|brasil|eleicoes|blogs|colunas|economia|sao-paulo|sp)/"
+      ],
+      "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only.",
+      "evidence": [
+        {
+          "url": "https://g1.globo.com/robots.txt",
+          "basis": "existing daily sitemap collector configuration; live capability requires canary"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "key": "extra",
+      "name": "Extra",
+      "domain": "extra.globo.com",
+      "strategies": [
+        "daily_sitemap",
+        "google_news"
+      ],
+      "sitemap_template": "https://extra.globo.com/sitemap/extra/{yyyy}/{mm}/{dd}_{page}.xml",
+      "section_patterns": [
+        "/(?:politica|rio|rj|brasil|eleicoes|blogs|colunas|economia|sao-paulo|sp)/"
+      ],
+      "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only.",
+      "evidence": [
+        {
+          "url": "https://extra.globo.com/robots.txt",
+          "basis": "existing daily sitemap collector configuration; live capability requires canary"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "key": "cbn",
+      "name": "CBN",
+      "domain": "cbn.globo.com",
+      "strategies": [
+        "daily_sitemap",
+        "google_news"
+      ],
+      "sitemap_template": "https://cbn.globo.com/sitemap/cbn/{yyyy}/{mm}/{dd}_{page}.xml",
+      "section_patterns": [
+        "/(?:politica|rio|rj|brasil|eleicoes|blogs|colunas|economia|sao-paulo|sp)/"
+      ],
+      "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only.",
+      "evidence": [
+        {
+          "url": "https://cbn.globo.com/robots.txt",
+          "basis": "existing daily sitemap collector configuration; live capability requires canary"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "key": "diario_do_rio",
+      "name": "Diário do Rio",
+      "domain": "diariodorio.com",
+      "base_url": "https://diariodorio.com",
+      "strategies": [
+        "wordpress",
+        "google_news"
+      ],
+      "known_constraint": "WordPress date scans discover body-only mentions; HTTP and parser failures remain gaps. Existing API configuration requires production canary.",
+      "evidence": [
+        {
+          "url": "https://diariodorio.com/wp-json/wp/v2/posts",
+          "basis": "existing WordPress collector configuration"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "key": "tempo_real_rj",
+      "name": "Tempo Real RJ",
+      "domain": "temporealrj.com",
+      "base_url": "https://temporealrj.com",
+      "strategies": [
+        "wordpress",
+        "google_news"
+      ],
+      "known_constraint": "WordPress date scans discover body-only mentions; HTTP and parser failures remain gaps. Existing API configuration requires production canary.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/wp-json/wp/v2/posts",
+          "basis": "existing WordPress collector configuration"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "key": "agenda_do_poder",
+      "name": "Agenda do Poder",
+      "domain": "agendadopoder.com.br",
+      "base_url": "https://agendadopoder.com.br",
+      "strategies": [
+        "wordpress",
+        "google_news"
+      ],
+      "known_constraint": "WordPress date scans discover body-only mentions; HTTP and parser failures remain gaps. Existing API configuration requires production canary.",
+      "evidence": [
+        {
+          "url": "https://agendadopoder.com.br/wp-json/wp/v2/posts",
+          "basis": "existing WordPress collector configuration"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "key": "veja_rio",
+      "name": "Veja Rio",
+      "domain": "vejario.abril.com.br",
+      "base_url": "https://vejario.abril.com.br",
+      "strategies": [
+        "wordpress",
+        "google_news"
+      ],
+      "known_constraint": "WordPress date scans discover body-only mentions; HTTP and parser failures remain gaps. Existing API configuration requires production canary.",
+      "evidence": [
+        {
+          "url": "https://vejario.abril.com.br/wp-json/wp/v2/posts",
+          "basis": "existing WordPress collector configuration"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "key": "camara_rio",
+      "name": "Câmara Municipal do Rio",
+      "domain": "camara.rio",
+      "strategies": [
+        "camara_archive",
+        "google_news"
+      ],
+      "archive_urls": [
+        "https://camara.rio/comunicacao/noticias"
+      ],
+      "known_constraint": "HTML archive pagination depends on advertised next links; unrecognized markup remains a gap.",
+      "evidence": [
+        {
+          "url": "https://camara.rio/comunicacao/noticias",
+          "basis": "existing Câmara archive adapter"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "key": "odia",
+      "name": "O Dia",
+      "domain": "odia.ig.com.br",
+      "strategies": [
+        "sitemap",
+        "google_news"
+      ],
+      "sitemap_urls": [
+        "https://odia.ig.com.br/sitemap/sitemap.xml",
+        "https://odia.ig.com.br/sitemap/sitemap-news.xml",
+        "https://odia.ig.com.br/sitemap/map/day/sitemap.xml"
+      ],
+      "section_patterns": [
+        "/(?:rio-de-janeiro|politica|eleicoes|colunas|brasil|economia)/",
+        "^/(?!(?:diversao|esporte|esoterismo|dmulher|stories|_midias|apostas|balancos-e-editais)/)[a-z0-9-]+/\\d{4}/\\d{2}/"
+      ],
+      "known_constraint": "Advertised daily-index children are restricted to the requested calendar partition; article publication dates still require page extraction. Unknown partition URLs run with an explicit gap. Statewide regional sections are discovered before body matching.",
+      "evidence": [
+        {
+          "url": "https://odia.ig.com.br/robots.txt",
+          "basis": "publisher-advertised sitemap locations",
+          "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://odia.ig.com.br/sitemap-canais.xml",
+          "basis": "Live publisher section sitemap advertises statewide municipality sections; actual June 1 and August 9 daily maps also contain additional municipality paths. Dated news paths admit those sections before body matching.",
+          "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://odia.ig.com.br/sitemap/sitemap.xml",
+          "basis": "Live index contains 4888 calendar-day children. Verified daily URLs include /sitemap/2026/08/09.xml and /sitemap/2026/06/01.xml; calendar pruning does not assign article publication dates.",
+          "verified_at": "2026-09-09"
+        }
+      ],
+      "enabled": true,
+      "sitemap_index_date_pattern": "https://odia\\.ig\\.com\\.br/sitemap/(?P<year>\\d{4})/(?P<month>\\d{2})/(?P<day>\\d{2})\\.xml"
+    },
+    {
+      "key": "tupi",
+      "name": "Super Rádio Tupi",
+      "domain": "tupi.fm",
+      "strategies": [
+        "sitemap",
+        "google_news"
+      ],
+      "sitemap_urls": [
+        "https://www.tupi.fm/sitemap.xml",
+        "https://www.tupi.fm/sitemap-news.xml"
+      ],
+      "section_patterns": [
+        "/(?:rio|rio-de-janeiro|politica|brasil|sentinelas|eleicoes|economia|capital-fluminense)/"
+      ],
+      "known_constraint": "Recent news sitemap works. The advertised 2026 annual sitemap exceeded 20 MiB and took over 33 seconds in a public probe on 2026-09-09; current bounded worker cannot traverse it and must retain an explicit source gap. Domain-specific Google queries remain the historical fallback. No unadvertised API or pagination capability assumed.",
+      "evidence": [
+        {
+          "url": "https://www.tupi.fm/robots.txt",
+          "basis": "publisher-advertised sitemap locations",
+          "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://www.tupi.fm/sitemap-posttype-post.2026.xml",
+          "basis": "Advertised annual sitemap timed out at15seconds; bounded45second retry returnedHTTP200 after33seconds but exceeded20MiB. Current transport limit prevents traversal; retained as a visible gap with domain Google fallback.",
+          "verified_at": "2026-09-09"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "key": "metropoles",
+      "name": "Metrópoles",
+      "domain": "metropoles.com",
+      "strategies": [
+        "sitemap",
+        "google_news"
+      ],
+      "sitemap_urls": [
+        "https://www.metropoles.com/sitemap/google-news.xml"
+      ],
+      "section_patterns": [
+        "/(?:brasil|colunas|politica|rio-de-janeiro|eleicoes|negocios)/"
+      ],
+      "known_constraint": "News sitemap covers recent stories only; domain-specific Google queries cover historical discovery. Publisher disallows /wp-json/, /api/, /busca and /search.",
+      "evidence": [
+        {
+          "url": "https://www.metropoles.com/robots.txt",
+          "basis": "publisher-advertised sitemap locations",
+          "verified_at": "2026-09-09"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "key": "rc24h",
+      "name": "RC24h",
+      "domain": "rc24h.com.br",
+      "strategies": [
+        "google_news"
+      ],
+      "known_constraint": "Domain-specific Google discovery only; no direct API/archive capability claimed.",
+      "evidence": [],
+      "enabled": true
+    },
+    {
+      "key": "j3news",
+      "name": "J3News",
+      "domain": "j3news.com",
+      "strategies": [
+        "google_news"
+      ],
+      "known_constraint": "Domain-specific Google discovery only; no direct API/archive capability claimed.",
+      "evidence": [],
+      "enabled": true
+    }
+  ]
+}

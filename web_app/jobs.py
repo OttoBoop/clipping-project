@@ -13,7 +13,6 @@ import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 
 from pipeline.collectors import (
@@ -43,6 +42,7 @@ from pipeline.settings import (
 )
 
 from .config import ROOT, db_path
+from .legacy_fence import legacy_write_fenced, require_legacy_writes
 from .db_admin import (
     backfill_missing_target_mentions,
     cleanup_false_backfilled_target_mentions,
@@ -363,6 +363,16 @@ class JobManager:
         self._lock = threading.Lock()
         self._active_job_id: str | None = None
         self._cancel_events: dict[str, threading.Event] = {}
+        self._threads: dict[str, threading.Thread] = {}
+
+    def writer_status(self) -> dict[str, Any]:
+        """Thread exit, not the persisted job status, proves this process drained."""
+        with self._lock:
+            self._threads = {key: thread for key, thread in self._threads.items() if thread.is_alive()}
+            return {"jobManagerThreadsAlive": len(self._threads),
+                    "threadJobIds": sorted(self._threads),
+                    "cancelRequestedJobIds": sorted(key for key in self._threads
+                        if self._cancel_events.get(key) and self._cancel_events[key].is_set())}
 
     def current_status(self) -> dict[str, Any]:
         active = self._active_job_id
@@ -404,10 +414,12 @@ class JobManager:
         return get_job(job_id) or {"id": job_id, "status": "cancelled"}
 
     def start_update(self, payload: dict[str, Any], *, started_by: str) -> dict[str, Any]:
+        require_legacy_writes()
         spec = build_update_spec(payload)
         return self._start("update", spec, started_by=started_by)
 
     def resume_update(self, job_id: str = "", *, started_by: str) -> dict[str, Any]:
+        require_legacy_writes()
         if not self.store.writes_available:
             raise RuntimeError("persistent_storage_not_configured")
         ensure_app_tables(db_path())
@@ -447,11 +459,12 @@ class JobManager:
                 name=f"clipping-job-{resume_job_id}-resume",
                 daemon=True,
             )
+            self._threads[resume_job_id] = thread
             thread.start()
         return get_job(resume_job_id) or {"id": resume_job_id, "status": "queued"}
 
     def resume_startup_jobs(self) -> int:
-        if not self.store.writes_available:
+        if legacy_write_fenced() or not self.store.writes_available:
             return 0
         ensure_app_tables(db_path())
         if self._active_job_id or get_active_job():
@@ -466,6 +479,7 @@ class JobManager:
         return 1
 
     def start_export(self, *, started_by: str) -> dict[str, Any]:
+        require_legacy_writes()
         spec = {
             "preset": "export",
             "collector": "export",
@@ -485,6 +499,7 @@ class JobManager:
         export: bool = True,
         mentions_inserted: int = 0,
     ) -> dict[str, Any]:
+        require_legacy_writes()
         job_id = f"manual-{uuid.uuid4().hex[:12]}"
         spec = {
             "preset": "manual",
@@ -549,6 +564,7 @@ class JobManager:
         return get_job(job_id) or {"id": job_id, "status": "succeeded"}
 
     def _start(self, kind: str, spec: dict[str, Any], *, started_by: str) -> dict[str, Any]:
+        require_legacy_writes()
         if not self.store.writes_available:
             raise RuntimeError("persistent_storage_not_configured")
         with self._lock:
@@ -566,12 +582,13 @@ class JobManager:
                 name=f"clipping-job-{job_id}",
                 daemon=True,
             )
+            self._threads[job_id] = thread
             thread.start()
         return get_job(job_id) or {"id": job_id, "status": "queued"}
 
     def _run(self, job_id: str, kind: str, spec: dict[str, Any], cancel_event: threading.Event) -> None:
         try:
-            if cancel_event.is_set():
+            if legacy_write_fenced() or cancel_event.is_set():
                 return
             update_job(job_id, status="running")
             self.store.backup_current_artifacts(job_id)
@@ -593,7 +610,7 @@ class JobManager:
                     )
                     upload_live_checkpoint(job_id, reason="target-backfill-cleanup", force=True)
 
-                backfill = backfill_missing_target_mentions(db_path(), list(spec["target_keys"]))
+                backfill = backfill_all_target_mentions(db_path(), list(spec["target_keys"]), cancel_check=cancel_event.is_set)
                 if backfill.get("updatedCount"):
                     labels = target_labels()
                     labels.update(target_labels_from_spec(spec))
@@ -624,7 +641,7 @@ class JobManager:
                         )
                     append_event(
                         job_id,
-                        "target_backfill_complete",
+                        "target_backfill_checkpoint" if backfill.get("hasMore") else "target_backfill_complete",
                         {
                             "target_keys": list(spec["target_keys"]),
                             "mentions_inserted": totals["mentions_inserted"],
@@ -959,6 +976,7 @@ def active_secondary_target_keys() -> list[str]:
 
 
 def run_export_snapshot(job_id: str | None = None) -> None:
+    require_legacy_writes()
     export_db_path = validate_configured_db_file(db_path())
     cmd = [
         sys.executable,
@@ -1180,8 +1198,8 @@ def build_source_units_for_targets(spec: dict[str, Any], targets: list[Target], 
 
     if include("google_news"):
         google_queries = topic_queries_from_spec(spec, source_type="google_news") if topic_mode else build_google_queries_for_targets(targets)
-        if grouped or group_topic_queries:
-            chunks = chunk_queries(google_queries, topic_query_chunk_size(spec) if group_topic_queries else len(google_queries))
+        if group_topic_queries:
+            chunks = chunk_queries(google_queries, topic_query_chunk_size(spec))
             for chunk_idx, query_chunk in enumerate(chunks):
                 units.append(
                     SourceUnit(
@@ -1514,46 +1532,19 @@ def run_source_run(
             metadata_extra=metadata_extra,
             candidate_workers=effective_candidate_workers(spec),
         )
-        if source_type == "google_news" and target_key == GROUPED_SOURCE_RUN_TARGET_KEY:
-            record_progress(
-                job_id,
-                "source_progress",
-                {
-                    "source_name": source_name,
-                    "source_type": source_type,
-                    "candidates_total": candidate_total,
-                    "candidates_seen": candidate_total,
-                    "articles_inserted": 0,
-                    "mentions_inserted": 0,
-                    "stories_touched": 0,
-                    "status": "google_news_grouped_circuit_breaker",
-                    "reason": "skip_google_news_full_ingest_for_grouped_backfill",
-                    "target_keys": source_target_keys,
-                },
-                target_key=target_key,
-                target_label=target_label,
-            )
-            result = SimpleNamespace(
-                candidates_seen=candidate_total,
-                articles_inserted=0,
-                mentions_inserted=0,
-                stories_touched=0,
-                errors=[],
-            )
-        else:
-            result = process_candidates(
-                source_name,
-                source_type,
-                candidates,
-                options=options,
-                progress_callback=lambda event, data, jid=job_id, tk=target_key, tl=target_label, tks=source_target_keys, sri=source_run_id, sk=str(row.get("source_key") or ""): record_progress(
-                    jid,
-                    event,
-                    {**data, "target_keys": list(tks), "source_run_id": sri, "source_key": sk},
-                    target_key=tk,
-                    target_label=tl,
-                ),
-            )
+        result = process_candidates(
+            source_name,
+            source_type,
+            candidates,
+            options=options,
+            progress_callback=lambda event, data, jid=job_id, tk=target_key, tl=target_label, tks=source_target_keys, sri=source_run_id, sk=str(row.get("source_key") or ""): record_progress(
+                jid,
+                event,
+                {**data, "target_keys": list(tks), "source_run_id": sri, "source_key": sk},
+                target_key=tk,
+                target_label=tl,
+            ),
+        )
         if cancel_event.is_set():
             mark_source_run_interrupted(source_run_id, reason="cancel_requested")
             return {
@@ -1562,7 +1553,8 @@ def run_source_run(
                 "stories_touched": result.stories_touched,
                 "saved": bool(result.articles_inserted or result.mentions_inserted or result.stories_touched),
             }
-        next_status = "complete" if complete else "pending"
+        gap_error = str(next_cursor.get("soft_error") or next_cursor.get("coverage_gap") or "")
+        next_status = "failed_needs_fix" if gap_error else ("complete" if complete else "pending")
         update_source_run(
             source_run_id,
             status=next_status,
@@ -1572,8 +1564,8 @@ def run_source_run(
             articles_inserted=result.articles_inserted,
             mentions_inserted=result.mentions_inserted,
             stories_touched=result.stories_touched,
-            last_error="",
-            finished=complete,
+            last_error=gap_error,
+            finished=complete or bool(gap_error),
         )
         try:
             from .diagnostics import rss_mib
@@ -1601,7 +1593,7 @@ def run_source_run(
             completion_payload["soft_error_at"] = str(next_cursor.get("soft_error_at") or "")
         append_event(
             job_id,
-            "source_run_complete" if complete else "source_run_checkpoint",
+            "source_run_failed" if gap_error else ("source_run_complete" if complete else "source_run_checkpoint"),
             completion_payload,
         )
         return {
@@ -1670,18 +1662,38 @@ def collect_source_run_candidates(
         return annotate_topic_candidates(spec, candidates, cursor=cursor), cursor, True
 
     if source_type == "google_news":
-        if str(row.get("target_key") or "") == GROUPED_SOURCE_RUN_TARGET_KEY:
-            return [], cursor, True
+        from .political_discovery import date_windows
         queries = source_run_queries(cursor) or [str(cursor.get("query") or "")]
+        pending = list(cursor.get("pending_searches") or [])
+        if not pending:
+            windows = date_windows(date_from, date_to) if date_from and date_to else [(date_from, date_to)]
+            pending = [{"query": query, "date_from": start, "date_to": end}
+                       for query in queries for start, end in windows]
+        search = pending.pop(0)
         candidates = collect_google_news(
-            queries=queries,
-            date_from=date_from,
-            date_to=date_to,
+            queries=[search["query"]],
+            date_from=search["date_from"],
+            date_to=search["date_to"],
             limit_per_query=max_candidates,
             request_timeout=request_timeout,
             resolve_timeout=max(2, request_timeout - 2),
+            raise_on_error=True,
         )
-        return annotate_topic_candidates(spec, candidates, cursor=cursor), cursor, True
+        gaps = list(cursor.get("search_gaps") or [])
+        raw_count = getattr(candidates, "raw_count", len(candidates))
+        if raw_count >= 100 and search["date_from"] and search["date_to"]:
+            start = date.fromisoformat(search["date_from"])
+            end = date.fromisoformat(search["date_to"])
+            if start < end:
+                middle = start + timedelta(days=(end - start).days // 2)
+                pending[:0] = [{**search, "date_from": start.isoformat(), "date_to": middle.isoformat()},
+                               {**search, "date_from": (middle + timedelta(days=1)).isoformat(), "date_to": end.isoformat()}]
+            else:
+                gaps.append({**search, "reason": "google_daily_result_cap"})
+        next_cursor = {**cursor, "pending_searches": pending, "search_gaps": gaps}
+        if gaps and not pending:
+            next_cursor["coverage_gap"] = "google_daily_result_cap"
+        return annotate_topic_candidates(spec, candidates, cursor=cursor), next_cursor, not pending
 
     if source_type == "wordpress_api":
         queries = source_run_queries(cursor)
@@ -1694,12 +1706,14 @@ def collect_source_run_candidates(
         query = str(cursor.get("query") or "")
         candidates: list[CandidateArticle] = []
         complete = False
+        page_cap_reached = False
         next_page = start_page
         last_page = start_page
         for _ in range(pages_per_slice):
             page = next_page
             last_page = page
             if page > max_pages:
+                page_cap_reached = True
                 complete = True
                 last_page = max_pages
                 break
@@ -1730,11 +1744,14 @@ def collect_source_run_candidates(
                     return annotate_topic_candidates(spec, dedupe_source_run_candidates(candidates), cursor=cursor), next_cursor, True
                 raise
             candidates.extend(batch)
-            if len(batch) < WORDPRESS_PAGE_SIZE or page >= max_pages:
+            if not getattr(batch, "has_next", len(batch) >= WORDPRESS_PAGE_SIZE) or page >= max_pages:
+                page_cap_reached = page >= max_pages and getattr(batch, "has_next", len(batch) >= WORDPRESS_PAGE_SIZE)
                 complete = True
                 break
             next_page = page + 1
         next_cursor = dict(cursor)
+        if page_cap_reached:
+            next_cursor["coverage_gap"] = "wordpress_page_cap"
         next_cursor["page"] = next_page if not complete else last_page
         next_cursor["page_size"] = WORDPRESS_PAGE_SIZE
         next_cursor["pages_per_slice"] = pages_per_slice
@@ -1756,9 +1773,12 @@ def collect_source_run_candidates(
                 max_pages_per_adapter=1,
                 start_page=page,
                 request_timeout=request_timeout,
+                raise_on_error=True,
             )
-            complete = len(candidates) < limit or page >= INTERNAL_SEARCH_MAX_PAGES
+            complete = not getattr(candidates, "has_next", len(candidates) >= limit) or page >= INTERNAL_SEARCH_MAX_PAGES
             next_cursor = dict(cursor)
+            if page >= INTERNAL_SEARCH_MAX_PAGES and getattr(candidates, "has_next", len(candidates) >= limit):
+                next_cursor["coverage_gap"] = "internal_search_page_cap"
             next_cursor["page"] = page + 1 if not complete else page
             next_cursor["page_size"] = page_size
             return annotate_topic_candidates(spec, candidates, cursor=cursor), next_cursor, complete
@@ -1771,9 +1791,12 @@ def collect_source_run_candidates(
             max_pages_per_adapter=1,
             start_page=page,
             request_timeout=request_timeout,
+            raise_on_error=True,
         )
-        complete = len(candidates) < page_size or page >= INTERNAL_SEARCH_MAX_PAGES
+        complete = not getattr(candidates, "has_next", len(candidates) >= page_size) or page >= INTERNAL_SEARCH_MAX_PAGES
         next_cursor = dict(cursor)
+        if page >= INTERNAL_SEARCH_MAX_PAGES and getattr(candidates, "has_next", len(candidates) >= page_size):
+            next_cursor["coverage_gap"] = "internal_search_page_cap"
         next_cursor["page"] = page + 1 if not complete else page
         next_cursor["page_size"] = page_size
         return annotate_topic_candidates(spec, candidates, cursor=cursor), next_cursor, complete
@@ -1790,6 +1813,7 @@ def collect_source_run_candidates(
             limit_per_source=max_candidates,
             request_timeout=request_timeout,
             collection_timeout=max(30, request_timeout * 4),
+            raise_on_error=True,
         )
         return annotate_topic_candidates(spec, candidates, cursor=cursor), cursor, True
 
@@ -1805,6 +1829,7 @@ def collect_source_run_candidates(
             limit_per_target=max_candidates,
             max_pages_per_target=1,
             request_timeout=request_timeout,
+            raise_on_error=True,
         )
         return annotate_topic_candidates(spec, candidates, cursor=cursor), cursor, True
 
@@ -1818,6 +1843,7 @@ def collect_source_run_candidates(
             max_pages=1,
             request_timeout=request_timeout,
             start_offset=(page - 1) * page_size,
+            raise_on_error=True,
         )
         return annotate_topic_candidates(spec, candidates, cursor=cursor), cursor, True
 
@@ -1860,40 +1886,29 @@ def collect_grouped_wordpress_source_run(
         for query in queries:
             if query in complete_queries:
                 continue
-            try:
-                batch = collect_wordpress_api(
-                    query,
-                    source_name=str(site.get("source_name") or "WordPress"),
-                    base_url=str(site.get("base_url") or ""),
-                    date_from=date_from,
-                    date_to=date_to,
-                    per_site_limit=WORDPRESS_PAGE_SIZE,
-                    per_page=WORDPRESS_PAGE_SIZE,
-                    request_timeout=request_timeout,
-                    start_page=page,
-                    max_pages=1,
-                    raise_on_error=True,
-                )
-            except TimeoutError as exc:
-                seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total"))) + len(candidates)
-                if should_soft_complete_wordpress_timeout(spec, exc, page=page, seen_before=seen_before):
-                    complete_queries.add(query)
-                    continue
-                raise
-            except urllib.error.HTTPError as exc:
-                seen_before = max(safe_int(row.get("candidates_seen")), safe_int(row.get("candidates_total"))) + len(candidates)
-                if should_soft_complete_wordpress_http_error(spec, exc, page=page, seen_before=seen_before):
-                    complete_queries.add(query)
-                    continue
-                raise
+            batch = collect_wordpress_api(
+                query,
+                source_name=str(site.get("source_name") or "WordPress"),
+                base_url=str(site.get("base_url") or ""),
+                date_from=date_from,
+                date_to=date_to,
+                per_site_limit=WORDPRESS_PAGE_SIZE,
+                per_page=WORDPRESS_PAGE_SIZE,
+                request_timeout=request_timeout,
+                start_page=page,
+                max_pages=1,
+                raise_on_error=True,
+            )
             candidates.extend(batch)
-            if len(batch) < WORDPRESS_PAGE_SIZE:
+            if not getattr(batch, "has_next", len(batch) >= WORDPRESS_PAGE_SIZE):
                 complete_queries.add(query)
         complete = len(complete_queries) >= len(queries) or page >= max_pages
         if complete:
             break
         next_page = page + 1
     next_cursor = dict(cursor)
+    if last_page >= max_pages and len(complete_queries) < len(queries):
+        next_cursor["coverage_gap"] = "wordpress_page_cap"
     next_cursor["page"] = next_page if not complete else last_page
     next_cursor["page_size"] = WORDPRESS_PAGE_SIZE
     next_cursor["pages_per_slice"] = pages_per_slice
@@ -2450,8 +2465,35 @@ def live_checkpoint_min_seconds(job_id: str, *, reason: str = "") -> float:
     return interval
 
 
+def backfill_all_target_mentions(db_file, target_keys, *, cancel_check=None) -> dict[str, Any]:
+    """Drain persisted 100-article review batches with a bounded event sample."""
+    require_legacy_writes()
+    total = {"updated": [], "updatedCount": 0, "mentionsInserted": 0,
+             "storiesTouched": 0, "scannedCount": 0, "cursor": 0, "hasMore": False}
+    previous_cursor = None
+    while True:
+        if cancel_check and cancel_check():
+            total["hasMore"] = True
+            total["cancelled"] = True
+            return total
+        batch = backfill_missing_target_mentions(db_file, target_keys)
+        for key in ("updatedCount", "mentionsInserted", "storiesTouched", "scannedCount"):
+            total[key] += int(batch.get(key) or 0)
+        remaining = max(0, 100 - len(total["updated"]))
+        total["updated"].extend(list(batch.get("updated") or [])[:remaining])
+        total["cursor"] = batch.get("cursor", 0)
+        total["hasMore"] = bool(batch.get("hasMore"))
+        total["sampleTruncated"] = total["updatedCount"] > len(total["updated"])
+        if not total["hasMore"]:
+            return total
+        if previous_cursor == total["cursor"]:
+            raise RuntimeError("Target review cursor did not advance")
+        previous_cursor = total["cursor"]
+
+
 def record_target_sync(target_key: str, *, reason: str, cleanup: bool = False, started_by: str = "coworker") -> dict[str, Any]:
     """Backfill a target into the current base and expose touched articles as live results."""
+    require_legacy_writes()
     target_key = str(target_key or "").strip()
     if not target_key:
         return {
@@ -2468,7 +2510,7 @@ def record_target_sync(target_key: str, *, reason: str, cleanup: bool = False, s
         if cleanup
         else {"removedMentions": 0, "storiesTouched": 0}
     )
-    backfill = backfill_missing_target_mentions(db_path(), [target_key])
+    backfill = backfill_all_target_mentions(db_path(), [target_key])
     try:
         target_snapshots = frozen_target_snapshots(validate_target_keys([target_key]))
     except ValueError:

@@ -1,0 +1,44 @@
+{
+  "status": "passed",
+  "output_directory": "/tmp/political-static-verified-r8qlc30m/export",
+  "postgres_fixture": "temporary tables only",
+  "manifest": {
+    "version": 1,
+    "scope": "politica_rj_2026",
+    "status": "complete",
+    "generated_at": "2026-09-09T13:52:44.200238+00:00",
+    "target_keys": [
+      "eduardo_paes"
+    ],
+    "date_from": null,
+    "date_to": null,
+    "page_size": 100,
+    "page_count": 2,
+    "article_count": 100,
+    "association_count": 101,
+    "story_count": 2,
+    "text_count": 100,
+    "text_failures": 0,
+    "include_text": true,
+    "id_namespace": "negative political IDs; legacy positive IDs remain disjoint",
+    "page_pattern": "page-{number:06d}.html",
+    "uploaded": false,
+    "limitations": [
+      "Search and filters apply to each page, with at most 100 articles.",
+      "A story spanning pages keeps its original association and numeric ID.",
+      "This export contains only the explicitly selected political scope; existing snapshots remain separate."
+    ]
+  },
+  "checks": [
+    "PG transaction is read only",
+    "unique articles distinct from story associations",
+    "body objects deduplicated across pages",
+    "existing renderer displays negative political IDs",
+    "scoped classification chips render",
+    "no API calls",
+    "no eager full text request",
+    "one individual text loads on demand",
+    "next page navigation works"
+  ],
+  "browser_errors": []
+}

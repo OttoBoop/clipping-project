@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote_plus
 
-from .matcher import Target
+from .matcher import Target, target_metadata
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
@@ -450,6 +450,8 @@ def get_active_targets() -> list[Target]:
                     keywords=keywords,
                     exact_aliases=aliases,
                     primary=primary,
+                    className=str(row.get("className") or ""),
+                    **target_metadata(row),
                 )
             )
         return targets or list(DEFAULT_TARGETS)

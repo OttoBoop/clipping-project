@@ -7,6 +7,7 @@ import sqlite3
 import tempfile
 import unicodedata
 import html
+import hashlib
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,11 +16,14 @@ from urllib.parse import urlparse
 
 from pipeline.database import ClippingDB, utc_now_iso
 from pipeline.normalization import canonicalize_url, normalize_text
+from pipeline.matcher import target_metadata
 
 from .config import ROOT, db_path as configured_db_path
+from .legacy_fence import legacy_write_fenced, require_legacy_writes
 
 
 TARGETS_PATH = ROOT / "data" / "targets.json"
+POLITICAL_ROSTER_PATH = ROOT / "data" / "political_targets_v1.json"
 PROTECTED_PRIMARY_KEYS = ("flavio_valle", "pedro_angelito")
 
 
@@ -51,9 +55,12 @@ class DuplicateArticle:
 
 
 def connect(db_file: Path) -> sqlite3.Connection:
-    conn = sqlite3.connect(db_file)
+    conn = (sqlite3.connect(Path(db_file).resolve().as_uri() + "?mode=rw", uri=True)
+            if legacy_write_fenced() else sqlite3.connect(db_file))
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA busy_timeout = 5000")
+    if legacy_write_fenced():
+        return conn
     try:
         conn.execute("PRAGMA journal_mode = WAL")
     except sqlite3.OperationalError as exc:
@@ -79,6 +86,8 @@ _app_tables_initialized: set[Path] = set()
 
 
 def ensure_app_tables(db_file: Path) -> None:
+    if legacy_write_fenced():
+        return
     resolved = Path(db_file).resolve()
     if resolved in _app_tables_initialized:
         return
@@ -262,6 +271,8 @@ def maybe_auto_archive_synthetic_targets(rows: list[dict[str, Any]]) -> tuple[li
 def load_targets() -> list[dict[str, Any]]:
     rows = json.loads(TARGETS_PATH.read_text(encoding="utf-8"))
     rows = [row for row in rows if row.get("key")]
+    if legacy_write_fenced():
+        return rows
     rows, archived_keys = maybe_auto_archive_synthetic_targets(rows)
     if archived_keys:
         write_targets_atomic(rows)
@@ -335,6 +346,7 @@ def sanitize_target(row: dict[str, Any]) -> dict[str, Any]:
         "archived": bool(row.get("archived")),
         "keywords": ordered_clean_strings(row.get("keywords")),
         "exact_aliases": ordered_clean_strings(row.get("exact_aliases") or row.get("aliases")),
+        **target_metadata(row),
     }
     if target["archived"]:
         target["archived_at"] = str(row.get("archived_at") or "")
@@ -356,6 +368,8 @@ def normalize_targets(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def normalize_targets_file() -> bool:
+    if legacy_write_fenced():
+        return False
     rows = load_targets()
     normalized = normalize_targets(rows)
     if normalized == rows:
@@ -379,6 +393,7 @@ def list_public_targets() -> dict[str, Any]:
 
 
 def write_targets_atomic(rows: list[dict[str, Any]]) -> None:
+    require_legacy_writes()
     TARGETS_PATH.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(prefix=f".{TARGETS_PATH.name}.", suffix=".tmp", dir=str(TARGETS_PATH.parent))
     try:
@@ -391,6 +406,38 @@ def write_targets_atomic(rows: list[dict[str, Any]]) -> None:
     finally:
         if os.path.exists(tmp_name):
             os.unlink(tmp_name)
+
+
+def merge_political_roster() -> dict[str, Any]:
+    """Add versioned roster defaults after restore, preserving every runtime edit.
+
+    Existing keywords, primary flags, archive state and metadata values win, even
+    when empty. Only missing metadata fields and entirely missing names are added.
+    """
+    manifest = json.loads(POLITICAL_ROSTER_PATH.read_text(encoding="utf-8"))
+    rows = json.loads(TARGETS_PATH.read_text(encoding="utf-8-sig")) if TARGETS_PATH.exists() else []
+    if not isinstance(rows, list) or not isinstance(manifest.get("targets"), list):
+        raise ValidationError("Cadastro de nomes acompanhados invalido.")
+    by_key = {str(row.get("key") or ""): row for row in rows if isinstance(row, dict)}
+    added, enriched = [], []
+    for seed in manifest["targets"]:
+        key = str(seed.get("key") or "")
+        if not key:
+            continue
+        if key not in by_key:
+            row = sanitize_target(seed)
+            rows.append(row)
+            by_key[key] = row
+            added.append(key)
+            continue
+        row = by_key[key]
+        missing = {name: value for name, value in target_metadata(seed).items() if name not in row}
+        if missing:
+            row.update(missing)
+            enriched.append(key)
+    if added or enriched:
+        write_targets_atomic(rows)
+    return {"version": manifest.get("version"), "added": added, "enriched": enriched, "changed": bool(added or enriched)}
 
 
 def purge_archived_smoke_targets() -> list[str]:
@@ -469,6 +516,7 @@ def clean_target_payload(payload: dict[str, Any], existing: dict[str, Any] | Non
         "label": display_name,
         "keywords": keywords,
         "exact_aliases": aliases,
+        **target_metadata({**existing, **payload}),
     }
 
 
@@ -496,6 +544,7 @@ def create_secondary_target(payload: dict[str, Any]) -> dict[str, Any]:
         "className": "",
         "primary": False,
         "keywords": cleaned["keywords"],
+        **target_metadata(cleaned),
     }
     if cleaned["exact_aliases"]:
         target["exact_aliases"] = cleaned["exact_aliases"]
@@ -530,6 +579,7 @@ def create_primary_target(payload: dict[str, Any]) -> dict[str, Any]:
         "className": "primary",
         "primary": True,
         "keywords": cleaned["keywords"],
+        **target_metadata(cleaned),
     }
     if cleaned["exact_aliases"]:
         target["exact_aliases"] = cleaned["exact_aliases"]
@@ -593,6 +643,7 @@ def update_secondary_target(key: str, payload: dict[str, Any]) -> dict[str, Any]
     row["className"] = ""
     row["primary"] = False
     row["keywords"] = cleaned["keywords"]
+    row.update(target_metadata(cleaned))
     if cleaned["exact_aliases"]:
         row["exact_aliases"] = cleaned["exact_aliases"]
     else:
@@ -737,6 +788,7 @@ def cleanup_false_backfilled_target_mentions(db_file: Path, target_keys: list[st
                 JOIN articles a ON a.id = m.article_id
                 LEFT JOIN story_articles sa ON sa.article_id = a.id
                 WHERE m.target_key = ?
+                  AND NOT EXISTS (SELECT 1 FROM classifications c WHERE c.mention_id = m.id)
                 """,
                 (target.key,),
             ).fetchall()
@@ -745,8 +797,13 @@ def cleanup_false_backfilled_target_mentions(db_file: Path, target_keys: list[st
                     continue
                 mention_id = int(row["mention_id"])
                 story_id = int(row["story_id"] or 0)
-                conn.execute("DELETE FROM classifications WHERE mention_id = ?", (mention_id,))
-                conn.execute("DELETE FROM mentions WHERE id = ?", (mention_id,))
+                deleted = conn.execute(
+                    """DELETE FROM mentions WHERE id = ?
+                       AND NOT EXISTS (SELECT 1 FROM classifications WHERE mention_id = ?)""",
+                    (mention_id, mention_id),
+                )
+                if not deleted.rowcount:
+                    continue
                 removed_mentions += 1
                 if not story_id:
                     continue
@@ -770,95 +827,171 @@ def cleanup_false_backfilled_target_mentions(db_file: Path, target_keys: list[st
     return {"removedMentions": removed_mentions, "storiesTouched": len(touched_stories)}
 
 
-def backfill_missing_target_mentions(db_file: Path, target_keys: list[str]) -> dict[str, Any]:
-    """Attach selected active targets to existing articles whose saved text matches them."""
+def backfill_missing_target_mentions(
+    db_file: Path,
+    target_keys: list[str],
+    *,
+    batch_size: int = 100,
+    max_batches: int = 1,
+    sample_limit: int = 20,
+    rule_version: str = "political_names_v1",
+    date_from: str | None = None,
+    date_to: str | None = None,
+    reset: bool = False,
+) -> dict[str, Any]:
+    """Review bounded ID pages, atomically checkpointing each batch.
+
+    The worker calls again while ``hasMore`` is true. Changing the matching rules,
+    selected names or date interval creates an independent checkpoint. Existing
+    mentions and all classifications remain untouched. ``updated`` is a sample;
+    ``updatedCount`` and ``mentionsInserted`` are exact per-call totals.
+    """
     db_file = validate_configured_db_file(db_file)
     ensure_app_tables(db_file)
     from pipeline.matcher import CitationMatcher
 
-    targets = selected_active_targets(target_keys)
-    if not targets:
-        return {"updated": [], "updatedCount": 0, "mentionsInserted": 0, "storiesTouched": 0}
-
-    db = ClippingDB(db_file)
-    updated: list[dict[str, Any]] = []
-    touched_stories: set[int] = set()
-    with connect(db_file) as conn:
-        article_rows = conn.execute(
-            """
-            SELECT
-                a.id,
-                a.title,
-                a.url,
-                a.source_name,
-                a.source_type,
-                COALESCE(a.published_at, a.discovered_at) AS published_at,
-                a.snippet,
-                a.full_text,
-                a.summary,
-                sa.story_id
-            FROM articles a
-            LEFT JOIN story_articles sa ON sa.article_id = a.id
-            ORDER BY COALESCE(a.published_at, a.discovered_at) DESC
-            """
-        ).fetchall()
-
-    for target in targets:
-        matcher = CitationMatcher([target], exact_names_only=True)
-        for row in article_rows:
-            article_id = int(row["id"])
-            if db.find_mention_id(article_id, target.key) is not None:
-                continue
-            hits = matcher.find_hits(safe_article_match_text(row))
-            if not hits:
-                continue
-            hit = hits[0]
-            db.insert_mentions(
-                article_id,
-                [
-                    {
-                        "target_key": hit.target_key,
-                        "target_name": hit.target_name,
-                        "keyword_matched": hit.keyword_matched,
-                        "sentiment": "neutral",
-                        "sentiment_reason": "existing_article_backfill",
-                        "context": "",
-                    }
-                ],
-            )
-            story_id = int(row["story_id"] or 0)
-            if not story_id:
-                story_id = db.create_story(
-                    title=str(row["title"] or "Nova historia")[:220],
-                    summary=str(row["summary"] or row["snippet"] or row["title"] or "Nova historia")[:800],
-                    temperature=34.0,
-                    target_keys=[target.key],
-                )
-                db.attach_article_to_story(story_id, article_id)
-            db.ensure_story_target(story_id, target.key)
-            db.update_story(story_id)
-            touched_stories.add(story_id)
-            updated.append(
-                {
-                    "article_id": article_id,
-                    "story_id": story_id,
-                    "target_key": target.key,
-                    "target_label": target.display_name or target.label or target.key,
-                    "keyword_matched": hit.keyword_matched,
-                    "title": str(row["title"] or ""),
-                    "url": str(row["url"] or ""),
-                    "source_name": str(row["source_name"] or ""),
-                    "source_type": str(row["source_type"] or ""),
-                    "published_at": str(row["published_at"] or ""),
-                }
-            )
-
-    return {
-        "updated": updated,
-        "updatedCount": len(updated),
-        "mentionsInserted": len(updated),
-        "storiesTouched": len(touched_stories),
+    batch_size = max(1, min(int(batch_size), 100))
+    max_batches = max(1, min(int(max_batches), 10))
+    sample_limit = max(0, min(int(sample_limit), 100))
+    for value in (date_from, date_to):
+        if not value:
+            continue
+        try:
+            valid_date = len(value) == 10 and datetime.fromisoformat(value).date().isoformat() == value
+        except (TypeError, ValueError):
+            valid_date = False
+        if not valid_date:
+            raise ValidationError("Informe a data no formato AAAA-MM-DD.")
+    if date_from and date_to and date_from > date_to:
+        raise ValidationError("O intervalo de datas e invalido.")
+    targets = sorted(selected_active_targets(target_keys), key=lambda target: target.key)
+    rules = [{"key": t.key, "name": t.display_name, "keywords": t.keywords,
+              "aliases": t.exact_aliases, "context": t.match_context} for t in targets]
+    checkpoint_key = hashlib.sha256(json.dumps(
+        {"version": rule_version, "targets": rules, "date_from": date_from, "date_to": date_to},
+        sort_keys=True, ensure_ascii=False,
+    ).encode()).hexdigest()
+    result: dict[str, Any] = {
+        "updated": [], "updatedCount": 0, "mentionsInserted": 0, "storiesTouched": 0,
+        "scannedCount": 0, "checkpointKey": checkpoint_key, "cursor": 0,
+        "hasMore": False, "sampleTruncated": False, "ruleVersion": rule_version,
     }
+    if not targets:
+        return result
+    matcher = CitationMatcher(targets, exact_names_only=True)
+    touched_stories: set[int] = set()  # bounded by batch_size * max_batches
+    date_clause = ""
+    date_params: list[str] = []
+    if date_from:
+        date_clause += " AND substr(a.published_at, 1, 10) >= ?"
+        date_params.append(date_from)
+    if date_to:
+        date_clause += " AND substr(a.published_at, 1, 10) <= ?"
+        date_params.append(date_to)
+    conn = connect(db_file)
+    try:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS target_review_progress (
+                checkpoint_key TEXT PRIMARY KEY,
+                rule_version TEXT NOT NULL,
+                cursor INTEGER NOT NULL DEFAULT 0,
+                scanned_count INTEGER NOT NULL DEFAULT 0,
+                mentions_inserted INTEGER NOT NULL DEFAULT 0,
+                updated_at TEXT NOT NULL
+            )
+        """)
+        conn.commit()
+        for batch_index in range(max_batches):
+            # Serialize concurrent reviewers: associations and cursor commit together.
+            conn.execute("BEGIN IMMEDIATE")
+            if reset and batch_index == 0:
+                conn.execute("DELETE FROM target_review_progress WHERE checkpoint_key = ?", (checkpoint_key,))
+            state = conn.execute(
+                "SELECT cursor FROM target_review_progress WHERE checkpoint_key = ?", (checkpoint_key,)
+            ).fetchone()
+            cursor = int(state["cursor"] or 0) if state else 0
+            article_rows = conn.execute(
+                """SELECT a.id, substr(a.title, 1, 2000) AS title, a.url,
+                          a.source_name, a.source_type, a.published_at,
+                          substr(a.snippet, 1, 500) AS snippet,
+                          substr(a.full_text, 1, 500) AS full_text,
+                          substr(a.summary, 1, 500) AS summary, sa.story_id
+                   FROM articles a LEFT JOIN story_articles sa ON sa.article_id = a.id
+                   WHERE a.id > ?""" + date_clause + " ORDER BY a.id LIMIT ?",
+                [cursor, *date_params, batch_size],
+            ).fetchall()
+            now = utc_now_iso()
+            batch_inserted = 0
+            for row in article_rows:
+                article_id = int(row["id"])
+                hits_by_target = {}
+                for hit in matcher.find_hits(safe_article_match_text(row)):
+                    hits_by_target.setdefault(hit.target_key, hit)
+                story_id = int(row["story_id"] or 0)
+                for hit in hits_by_target.values():
+                    if conn.execute(
+                        "SELECT 1 FROM mentions WHERE article_id = ? AND target_key = ? LIMIT 1",
+                        (article_id, hit.target_key),
+                    ).fetchone():
+                        continue
+                    conn.execute(
+                        """INSERT INTO mentions
+                           (article_id, target_key, target_name, keyword_matched, sentiment, sentiment_reason, context)
+                           VALUES (?, ?, ?, ?, 'neutral', 'existing_article_backfill', '')""",
+                        (article_id, hit.target_key, hit.target_name, hit.keyword_matched),
+                    )
+                    if not story_id:
+                        cur = conn.execute(
+                            """INSERT INTO stories (title, summary, temperature, created_at, updated_at)
+                               VALUES (?, ?, 34, ?, ?)""",
+                            (str(row["title"] or "Nova historia")[:220],
+                             str(row["summary"] or row["snippet"] or row["title"] or "Nova historia")[:800], now, now),
+                        )
+                        story_id = int(cur.lastrowid)
+                        conn.execute("INSERT INTO story_articles (story_id, article_id) VALUES (?, ?)", (story_id, article_id))
+                    conn.execute("INSERT OR IGNORE INTO story_targets (story_id, target_key) VALUES (?, ?)", (story_id, hit.target_key))
+                    conn.execute("UPDATE stories SET updated_at = ? WHERE id = ?", (now, story_id))
+                    touched_stories.add(story_id)
+                    batch_inserted += 1
+                    if len(result["updated"]) < sample_limit:
+                        result["updated"].append({
+                            "article_id": article_id, "story_id": story_id, "target_key": hit.target_key,
+                            "target_label": hit.target_name, "keyword_matched": hit.keyword_matched,
+                            "title": str(row["title"] or ""), "url": str(row["url"] or ""),
+                            "source_name": str(row["source_name"] or ""),
+                            "source_type": str(row["source_type"] or ""), "published_at": str(row["published_at"] or ""),
+                        })
+            if article_rows:
+                cursor = int(article_rows[-1]["id"])
+            conn.execute(
+                """INSERT INTO target_review_progress
+                   (checkpoint_key, rule_version, cursor, scanned_count, mentions_inserted, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(checkpoint_key) DO UPDATE SET cursor=excluded.cursor,
+                       scanned_count=target_review_progress.scanned_count+excluded.scanned_count,
+                       mentions_inserted=target_review_progress.mentions_inserted+excluded.mentions_inserted,
+                       updated_at=excluded.updated_at""",
+                (checkpoint_key, rule_version, cursor, len(article_rows), batch_inserted, now),
+            )
+            has_more = conn.execute(
+                "SELECT 1 FROM articles a WHERE a.id > ?" + date_clause + " LIMIT 1", [cursor, *date_params]
+            ).fetchone() is not None
+            conn.commit()
+            result["cursor"] = cursor
+            result["scannedCount"] += len(article_rows)
+            result["mentionsInserted"] += batch_inserted
+            result["hasMore"] = has_more
+            if not has_more:
+                break
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    result["updatedCount"] = result["mentionsInserted"]
+    result["storiesTouched"] = len(touched_stories)
+    result["sampleTruncated"] = result["updatedCount"] > len(result["updated"])
+    return result
 
 
 def cleanup_synthetic_smoke_artifacts(db_file: Path) -> dict[str, Any]:

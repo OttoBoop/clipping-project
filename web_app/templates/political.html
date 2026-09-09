@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política RJ 2026 · Clipping</title>
+  <link rel="stylesheet" href="/assets/political.css">
+  <script src="/assets/political.js" defer></script>
+</head>
+<body data-role="{{ROLE}}">
+  <header class="topbar"><a class="brand" href="/politica">Clipping <span>Política RJ</span></a><nav aria-label="Conta"><span>{{PROFILE}}</span><a href="/?view=legacy">Nomes, clientes e arquivo anterior</a><button id="logout" class="quiet">Sair</button></nav></header>
+  <main>
+    <section class="intro"><p class="eyebrow">RIO DE JANEIRO · ELEIÇÕES 2026</p><h1>Acompanhe os nomes.<br>Encontre as notícias.</h1><p>Notícias, entrevistas e registros públicos sobre o governo do Rio e os nomes que você acompanha.</p></section>
+    <p id="message" role="status" aria-live="polite">Carregando nomes acompanhados…</p>
+    <section class="panel" aria-labelledby="names-title">
+      <div class="section-head"><div><h2 id="names-title">Nomes acompanhados</h2><p>Selecione nomes ou grupos para consultar e atualizar o clipping.</p></div><div class="actions"><button id="select-requested" class="quiet">Cinco nomes iniciais</button><button id="select-all" class="quiet">Todos os nomes</button><button id="select-none" class="quiet">Limpar seleção</button></div></div>
+      <div id="groups" class="groups"></div>
+    </section>
+    <section class="panel" aria-labelledby="search-title">
+      <h2 id="search-title">Consultar notícias</h2>
+      <form id="filters" class="filters">
+        <label>Busca no título e resumo<input id="query" type="search" placeholder="Tema ou palavra-chave" maxlength="300"></label>
+        <label>Desde<input id="date-from" type="date" value="2026-06-01"></label>
+        <label>Até<input id="date-to" type="date"></label>
+        <label>Fonte<select id="source"><option value="">Todas as fontes</option></select></label>
+        <label>Conteúdo<select id="body-status"><option value="">Todos</option><option value="body_extracted">Texto disponível</option><option value="metadata_only">Somente referência</option></select></label>
+        <label>Visualização<select id="view"><option value="articles">Mais recentes</option><option value="stories">Histórias agrupadas</option></select></label>
+        <button type="submit" class="primary">Consultar</button><button type="button" id="all-dates" class="quiet">Incluir notícias anteriores</button>
+      </form>
+      <div id="run-controls" class="run-controls" hidden><p>A coleta começa quando você solicita. Use o período e os nomes selecionados acima.</p><div class="actions"><button id="start" class="primary" disabled>Buscar novas notícias</button><button id="review" disabled>Revisar notícias salvas</button><button id="resume" hidden>Retomar coleta</button><button id="cancel" class="quiet" hidden>Cancelar coleta</button></div><details class="manual-box"><summary>Adicionar uma notícia encontrada por você</summary><form id="manual-form" class="filters"><label>Título<input id="manual-title" required maxlength="500"></label><label>Link original<input id="manual-url" type="url" required></label><label>Data da publicação<input id="manual-date" type="date"></label><label>Nome da fonte<input id="manual-source" maxlength="120"></label><label class="wide">Texto da notícia, se disponível<textarea id="manual-text" rows="5"></textarea></label><button type="submit" class="primary">Salvar para os nomes selecionados</button></form><p id="manual-message" role="status"></p></details></div>
+    </section>
+    <section id="progress" class="panel" aria-labelledby="progress-title"><div class="section-head"><h2 id="progress-title">Última coleta</h2><button id="refresh" class="quiet">Atualizar resultados</button></div><p id="job-state">Nenhuma coleta iniciada.</p><dl id="metrics" class="metrics"></dl><details id="coverage"><summary>Fontes e pendências da coleta</summary><div id="coverage-list"></div></details></section>
+    <section aria-labelledby="results-title"><div class="section-head"><h2 id="results-title">Notícias salvas</h2><span id="page-state"></span></div><div id="results" class="results" aria-live="polite"></div><nav class="pagination" aria-label="Páginas de notícias"><button id="previous" disabled>Anterior</button><button id="next" disabled>Próxima página</button></nav></section>
+  </main>
+  <dialog id="article-dialog"><div class="section-head"><h2 id="article-title">Notícia</h2><button id="close-article" aria-label="Fechar notícia">Fechar</button></div><p id="article-message" role="status"></p><div id="article-text" class="article-text"></div><section id="classification"><h3>Classificação</h3><form id="classification-form"><label>Nome<select id="classification-target" required></select></label><label>Tom da notícia<select id="article-sentiment"><option value="">Sem classificação</option><option value="positive">Positivo</option><option value="neutral">Neutro</option><option value="negative">Negativo</option></select></label><label>Tom em relação ao nome<select id="target-sentiment"><option value="">Sem classificação</option><option value="positive">Positivo</option><option value="neutral">Neutro</option><option value="negative">Negativo</option></select></label><label>Categorias, separadas por vírgula<input id="categories" maxlength="500"></label><label>Centimetragem<input id="centimetragem" type="number" min="0" step="0.01"></label><button type="submit" class="primary">Salvar classificação</button></form><p id="classification-message" role="status"></p></section></dialog>
+</body>
+</html>
