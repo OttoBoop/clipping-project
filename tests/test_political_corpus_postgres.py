@@ -624,3 +624,164 @@ time.sleep(60)
         if process.poll() is None:
             process.kill()
         process.communicate(timeout=5)
+
+
+@pytest.mark.parametrize("page_date,expected_status,expected_date", [
+    ("2026-06-01T15:00:00Z", "retryable", "2026-06-01"),
+    ("2026-06-03T15:00:00Z", "outside_window", None),
+    ("", "retryable", None),
+])
+def test_metadata_only_preserves_verified_page_date_and_window(service, monkeypatch, page_date, expected_status, expected_date):
+    start(service, monkeypatch)
+    candidate = {"url": "https://example.com/limited-story", "title": "Eduardo Paes anuncia proposta",
+                 "source_key": "example", "source_name": "Example", "snippet": "",
+                 "published_at": "2026-06-02T12:00:00-03:00" if page_date else "", "metadata": {}}
+    enqueue(service, monkeypatch, candidate)
+    response = fake_response(candidate["url"], body="Conteúdo indisponível.")
+    response._content = response._content.replace(b"2026-06-01T15:00:00Z", page_date.encode())
+    monkeypatch.setattr(service, "fetch", lambda *args, **kwargs: response)
+    result = service.process_task(service.claim_task("fetch", worker_id="date-check"))
+    assert result["status"] == expected_status
+    items = service.list_articles(allowed_target_keys=["paes"])["items"]
+    if expected_status == "outside_window":
+        assert items == []
+    else:
+        assert len(items) == 1 and items[0]["bodyStatus"] == "metadata_only"
+        assert items[0]["dateStatus"] == ("page_verified" if expected_date else "unknown")
+        assert (items[0]["publishedAt"][:10] if items[0]["publishedAt"] else None) == expected_date
+
+
+def test_resolved_google_forbidden_publisher_is_terminal_and_metadata_only(service, monkeypatch):
+    from web_app import political_discovery
+    start(service, monkeypatch)
+    candidate = {"url": "https://news.google.com/rss/articles/real-format-token", "title": "Eduardo Paes anuncia proposta",
+                 "source_key": "google_news", "source_name": "Google News", "snippet": "",
+                 "published_at": "2026-06-01T12:00:00-03:00", "metadata": {"google_redirect": True}}
+    enqueue(service, monkeypatch, candidate)
+    destination = "https://www.metropoles.com/brasil/reportagem"
+    monkeypatch.setattr(political_discovery, "resolve_google_redirect", lambda *a, **k: destination)
+    monkeypatch.setattr(service, "fetch", lambda url, **kwargs: fake_response(url, status=403 if url==destination else 200))
+    result = service.process_task(service.claim_task("fetch", worker_id="google-publisher-check"))
+    assert result["status"] == "gap" and "403" in result["errorType"]
+    items = service.list_articles(allowed_target_keys=["paes"])["items"]
+    assert len(items) == 1 and items[0]["bodyStatus"] == "metadata_only"
+    assert items[0]["sourceKey"] == "metropoles" and items[0]["url"] == destination
+    with service._connect() as conn:
+        alias = conn.execute("SELECT article_id FROM political_url_aliases WHERE url=%s", (candidate["url"],)).fetchone()
+    assert alias["article_id"] == items[0]["id"]
+
+
+@pytest.mark.parametrize("wrapper_alias_already_points_to_canonical", [False, True])
+def test_google_forbidden_publisher_alias_merges_wrapper_and_preserves_classification(
+        service, monkeypatch, wrapper_alias_already_points_to_canonical):
+    from web_app import political_discovery
+    canonical = "https://www.metropoles.com/brasil/canonical-reportagem"
+    publisher_alias = "https://www.metropoles.com/brasil/previous-reportagem"
+    wrapper = "https://news.google.com/rss/articles/previously-unresolved-wrapper"
+    hits = [{"target_key": "paes", "target_name": "Eduardo Paes", "keyword_matched": "Eduardo Paes"}]
+    digest, object_key = service._store_text(BODY)
+    with service._connect() as conn:
+        # The destination is deliberately older: selecting only ORDER BY id
+        # would miss the newer exact wrapper row when both claim its alias.
+        canonical_id = service._persist_article(conn, {"url": canonical, "title": "Eduardo Paes anuncia proposta",
+            "source_key": "metropoles", "source_name": "Metrópoles"}, hits,
+            published=datetime(2026, 6, 1, 15, tzinfo=timezone.utc), date_status="page_verified",
+            body_chars=len(BODY), digest=digest, object_key=object_key)
+        wrapper_id = service._persist_article(conn, {"url": wrapper, "title": "Eduardo Paes anuncia proposta",
+            "source_key": "google_news", "source_name": "Google News"}, hits)
+        conn.execute("INSERT INTO political_url_aliases(url,article_id) VALUES (%s,%s)", (publisher_alias, canonical_id))
+        if wrapper_alias_already_points_to_canonical:
+            conn.execute("UPDATE political_url_aliases SET article_id=%s WHERE url=%s", (canonical_id, wrapper))
+    service.upsert_classification(wrapper_id, {"targetKey": "paes", "target_sentiment": "negative"},
+                                  allowed_target_keys=["paes"], updated_by="editor")
+    job = start(service, monkeypatch, targets=("paes",))
+    candidate = {"url": wrapper, "title": "Eduardo Paes anuncia proposta", "source_key": "google_news",
+        "source_name": "Google News", "published_at": "2026-06-01T12:00:00-03:00",
+        "force_refresh": True, "metadata": {"google_redirect": True}}
+    enqueue(service, monkeypatch, candidate)
+    monkeypatch.setattr(political_discovery, "resolve_google_redirect", lambda *a, **k: publisher_alias)
+    monkeypatch.setattr(service, "fetch", lambda url, **kwargs: fake_response(url, status=403 if url == publisher_alias else 200))
+    result = service.process_task(service.claim_task("fetch", worker_id="alias-merge-check"))
+    assert result["status"] == "gap" and result["errorType"] == "http_403"
+    articles = service.list_articles(allowed_target_keys=["paes"])["items"]
+    assert len(articles) == 1 and articles[0]["id"] == canonical_id
+    assert articles[0]["bodyStatus"] == "body_extracted"
+    assert service.article_text(canonical_id, allowed_target_keys=["paes"])["text"] == BODY
+    classification = service.classifications(canonical_id, allowed_target_keys=["paes"])["items"][0]
+    assert classification["payload"]["target_sentiment"] == "negative"
+    with service._connect() as conn:
+        aliases = conn.execute("SELECT url,article_id FROM political_url_aliases WHERE url=ANY(%s)",
+                               ([wrapper, publisher_alias, canonical],)).fetchall()
+        observation = conn.execute("SELECT article_id,disposition FROM political_observations WHERE job_id=%s", (job["id"],)).fetchone()
+        revision = conn.execute("SELECT previous FROM political_article_revisions WHERE article_id=%s AND reason='canonical_duplicate_merge'",
+                                (canonical_id,)).fetchone()
+        inserted = conn.execute("SELECT articles_inserted FROM political_jobs WHERE id=%s", (job["id"],)).fetchone()["articles_inserted"]
+    assert {row["url"]: row["article_id"] for row in aliases} == dict.fromkeys([wrapper, publisher_alias, canonical], canonical_id)
+    assert observation == {"article_id": canonical_id, "disposition": "metadata_only"}
+    assert revision["previous"]["id"] == wrapper_id and inserted == 0
+
+
+def test_failed_force_refresh_of_existing_alias_preserves_article_and_human_classification(service, monkeypatch):
+    canonical, alias = "https://example.com/canonical-story", "https://example.com/old-story"
+    digest, object_key = service._store_text(BODY)
+    with service._connect() as conn:
+        article_id = service._persist_article(conn, {"url": canonical, "title": "Eduardo Paes anuncia proposta",
+            "source_key": "example", "source_name": "Example"},
+            [{"target_key": "paes", "target_name": "Eduardo Paes", "keyword_matched": "Eduardo Paes"}],
+            published=datetime(2026, 6, 1, 15, tzinfo=timezone.utc), date_status="page_verified",
+            body_chars=len(BODY), digest=digest, object_key=object_key)
+        conn.execute("INSERT INTO political_url_aliases(url,article_id) VALUES (%s,%s)", (alias, article_id))
+    service.upsert_classification(article_id, {"targetKey": "paes", "target_sentiment": "positive"},
+                                  allowed_target_keys=["paes"], updated_by="editor")
+    job = start(service, monkeypatch, targets=("paes",))
+    enqueue(service, monkeypatch, {"url": alias, "title": "Eduardo Paes anuncia proposta", "source_key": "example",
+        "source_name": "Example", "published_at": "2026-06-02T12:00:00-03:00", "force_refresh": True})
+    monkeypatch.setattr(service, "fetch", lambda url, **kwargs: fake_response(url, status=403))
+    result = service.process_task(service.claim_task("fetch", worker_id="alias-refresh-check"))
+    assert result["status"] == "gap" and result["errorType"] == "http_403"
+    articles = service.list_articles(allowed_target_keys=["paes"])["items"]
+    assert len(articles) == 1 and articles[0]["id"] == article_id and articles[0]["url"] == canonical
+    assert articles[0]["publishedAt"][:10] == "2026-06-01" and articles[0]["dateStatus"] == "page_verified"
+    assert service.article_text(article_id, allowed_target_keys=["paes"])["text"] == BODY
+    assert service.classifications(article_id, allowed_target_keys=["paes"])["items"][0]["payload"]["target_sentiment"] == "positive"
+    with service._connect() as conn:
+        observation = conn.execute("SELECT article_id FROM political_observations WHERE job_id=%s", (job["id"],)).fetchone()
+        inserted = conn.execute("SELECT articles_inserted FROM political_jobs WHERE id=%s", (job["id"],)).fetchone()["articles_inserted"]
+    assert observation["article_id"] == article_id and inserted == 0
+
+
+def test_retry_corrects_prior_metadata_date_and_detaches_outside_window_observation(service, monkeypatch):
+    job=start(service, monkeypatch)
+    candidate={"url":"https://example.com/reported-date", "title":"Eduardo Paes anuncia proposta",
+               "source_key":"example", "published_at":"2026-06-01T12:00:00-03:00", "snippet":""}
+    enqueue(service, monkeypatch, candidate)
+    monkeypatch.setattr(service,"fetch",lambda url,**kwargs:fake_response(url,status=503))
+    assert service.process_task(service.claim_task("fetch",worker_id="date-first"))["status"]=="retryable"
+    article=service.list_articles(allowed_target_keys=["paes"])["items"][0]
+    with service._connect() as conn:
+        conn.execute("UPDATE political_tasks SET next_attempt_at=NULL WHERE job_id=%s AND kind='fetch'",(job["id"],))
+    response=fake_response(candidate["url"],body="Conteúdo indisponível.")
+    response._content=response._content.replace(b"2026-06-01T15:00:00Z",b"2026-06-03T15:00:00Z")
+    monkeypatch.setattr(service,"fetch",lambda *args,**kwargs:response)
+    assert service.process_task(service.claim_task("fetch",worker_id="date-second"))["status"]=="outside_window"
+    corrected=service.article(article["id"],allowed_target_keys=["paes"])
+    assert corrected["publishedAt"].startswith("2026-06-03") and corrected["dateStatus"]=="page_verified"
+    assert service.list_articles(allowed_target_keys=["paes"],date_from="2026-06-01",date_to="2026-06-02")["items"]==[]
+    with service._connect() as conn:
+        observation=conn.execute("SELECT article_id,disposition FROM political_observations WHERE job_id=%s",(job["id"],)).fetchone()
+        revision=conn.execute("SELECT reason FROM political_article_revisions WHERE article_id=%s",(article["id"],)).fetchone()
+    assert observation=={"article_id":None,"disposition":"outside_window"}
+    assert revision["reason"]=="publication_date_verification"
+
+
+def test_object_upload_failure_keeps_verified_date_in_metadata_fallback(service, monkeypatch):
+    start(service, monkeypatch)
+    candidate={"url":"https://example.com/upload-date", "title":"Eduardo Paes anuncia proposta",
+               "source_key":"example", "published_at":"2026-06-02T12:00:00-03:00", "snippet":""}
+    enqueue(service,monkeypatch,candidate)
+    monkeypatch.setattr(service,"fetch",lambda url,**kwargs:fake_response(url))
+    monkeypatch.setattr(service.store,"upload_bytes",lambda *args,**kwargs:False)
+    assert service.process_task(service.claim_task("fetch",worker_id="upload-date"))["status"]=="retryable"
+    article=service.list_articles(allowed_target_keys=["paes"])["items"][0]
+    assert article["bodyStatus"]=="metadata_only" and article["publishedAt"].startswith("2026-06-01")
+    assert article["dateStatus"]=="page_verified"

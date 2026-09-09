@@ -95,13 +95,19 @@
       ],
       "sitemap_template": "https://cbn.globo.com/sitemap/cbn/{yyyy}/{mm}/{dd}_{page}.xml",
       "section_patterns": [
-        "/(?:politica|rio|rj|brasil|eleicoes|blogs|colunas|economia|sao-paulo|sp)/"
+        "/(?:politica|rio|rio-de-janeiro|rj|brasil|eleicoes|eleicoes-2026|blogs|colunas|economia|sao-paulo|sp)/",
+        "/podcasts/cbn-eleicoes/"
       ],
       "known_constraint": "Daily sitemap page failures remain gaps; body matching follows political/regional discovery. Paywalled articles may remain metadata-only. Domain Google queries are queued only for explicit terminal direct-discovery gaps.",
       "evidence": [
         {
           "url": "https://cbn.globo.com/robots.txt",
           "basis": "existing daily sitemap collector configuration; live capability requires canary"
+        },
+        {
+          "url": "https://cbn.globo.com/sitemap/cbn/2026/08/10_1.xml",
+          "basis": "Actual daily sitemap advertises /rio-de-janeiro/, /coberturas/eleicoes-2026/, and /podcasts/cbn-eleicoes/ articles. These political and regional paths must be fetched before body matching.",
+          "verified_at": "2026-09-09"
         }
       ],
       "enabled": true,
@@ -208,15 +214,27 @@
       "archive_urls": [
         "https://camara.rio/comunicacao/noticias"
       ],
-      "known_constraint": "HTML archive pagination depends on advertised next links; unrecognized markup remains a gap. Domain Google queries are queued only for explicit terminal direct-discovery gaps.",
+      "known_constraint": "On 2026-09-09 the archive was locally reachable and dated pages descended from September 8 into August, but Render connections to both apex and www timed out before TLS. No working alternate route was found. Consecutive fully parsed descending pages allow stopping after all dates pass below the requested start; unknown or inconsistent ordering remains an explicit gap. A 50-page safety cap also remains visible. Historical Google queries run on terminal direct gaps.",
       "evidence": [
         {
           "url": "https://camara.rio/comunicacao/noticias",
           "basis": "existing Câmara archive adapter"
+        },
+        {
+          "url": "https://camara.rio/comunicacao/noticias?limit=10&start=10",
+          "basis": "Live public HTTP 200 on 2026-09-09: 10 dated rows, August 26–18; page 1 September 8–August 28. Saved previous oldest date is checked across consecutive pages.",
+          "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://www.camara.rio/comunicacao/todas-noticias",
+          "basis": "Publisher archive advertises /comunicacao/todas-noticias as canonical. Render apex/www both resolved 177.47.113.151 and timed out after 8seconds before TLS; no alternate configured.",
+          "verified_at": "2026-09-09"
         }
       ],
       "enabled": true,
-      "google_policy": "on_direct_gap"
+      "google_policy": "on_direct_gap",
+      "archive_date_order": "observed_descending",
+      "max_pages": 50
     },
     {
       "key": "odia",

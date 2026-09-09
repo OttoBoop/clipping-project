@@ -55,6 +55,17 @@ def test_source_scoped_history_queries_and_registry_capabilities():
     assert "https://odia.ig.com.br/sitemap/sitemap.xml" in sources["odia"]["sitemap_urls"]
 
 
+def test_cbn_verified_rio_election_and_podcast_paths_are_discovered_before_body_matching():
+    urls = ['https://cbn.globo.com/rio-de-janeiro/noticia/2026/08/09/medidas-apos-acidente.ghtml',
+            'https://cbn.globo.com/coberturas/eleicoes-2026/noticia/2026/08/09/primeiros-debates.ghtml',
+            'https://cbn.globo.com/podcasts/cbn-eleicoes/noticia/2026/08/09/disputa-estadual.ghtml',
+            'https://cbn.globo.com/esporte/noticia/2026/08/09/partida-de-futebol.ghtml']
+    xml='<urlset>'+''.join('<url><loc>'+url+'</loc></url>' for url in urls)+'</urlset>'
+    result=discovery.discover(task('cbn','daily_sitemap',day='2026-08-09',date_from='2026-08-09',date_to='2026-08-09'),lambda _:Response(xml))
+    assert [row['url'] for row in result['candidates']]==urls[:3]
+    assert result['raw_count']==4
+
+
 def test_google_fanout_is_global_plus_four_historical_domains_for_all_24_names():
     snapshots = [{"key": f"person_{i}", "display_name": f"Pessoa {i}"} for i in range(24)]
     tasks = discovery.build_tasks(snapshots, "2026-06-01", "2026-06-07")
@@ -422,6 +433,24 @@ def test_boolean_html_attributes_do_not_crash_article_extraction():
     assert result["full_text"] == body.strip()
 
 
+def test_j3_primary_single_text_container_extracts_body_without_sidebar_cards():
+    body='O encontro discutiu propostas para o município. ' * 12 + 'Eduardo Paes participou da reunião.'
+    raw='<section class="section-single"><div class="col-content-single"><div class="content-txt-single">' \
+        '<h1>Propostas para a região</h1><p>'+body+'</p></div></div>' \
+        '<div class="sidebar-single"><div class="card-post">Hugo Leal em outra notícia</div></div></section>'
+    result=discovery.extract_article(raw)
+    assert result['extraction_state']=='full_text' and body in result['full_text']
+    assert 'Hugo Leal' not in result['full_text']
+
+
+def test_j3_short_caption_stays_metadata_only_even_with_long_sidebar():
+    raw='<div class="content-txt-single"><h1>Foto do evento</h1><p>Participantes na solenidade.</p></div>' \
+        '<div class="sidebar-single">'+('Eduardo Paes em outra notícia. '*40)+'</div>'
+    result=discovery.extract_article(raw)
+    assert result['extraction_state']=='metadata_only'
+    assert 'Eduardo Paes' not in result['full_text']
+
+
 def test_structured_body_for_another_canonical_article_is_not_selected():
     primary = "Eduardo Paes não compareceu ao debate. " * 12
     raw = '<link rel="canonical" href="https://example.com/debate"><div class="entry-content">' + primary + '</div>'
@@ -571,6 +600,67 @@ def test_archive_local_publication_time_keeps_end_day():
     parsed = _parse_pt_br_datetime("1 junho 2026, 23h30")
     assert parsed == "2026-06-02T02:30:00+00:00"
     assert discovery.in_window(parsed, "2026-06-01", "2026-06-01")
+
+
+def camara_page(dates, *, start=10, extra_markup=""):
+    rows = ''.join('<span class="catItemDateCreated">' + value + '</span>'
+                   '<h3 class="catItemTitle"><a href="/comunicacao/noticias/' + str(3000+i) + '-projeto-estadual">Projeto estadual</a></h3>'
+                   for i, value in enumerate(dates))
+    return rows + extra_markup + f'<link rel="next" href="/comunicacao/noticias?limit=10&amp;start={start}">'
+
+
+def test_camara_cutoff_requires_consecutive_ordered_pages_and_preserves_window_candidates():
+    current = task('camara_rio', 'camara_archive', url='https://camara.rio/comunicacao/noticias', date_from='2026-08-09', date_to='2026-08-09')
+    first = discovery.discover(current, lambda _: Response(camara_page(['8 setembro 2026', '7 setembro 2026'])))
+    assert first['next_cursor']['previous_oldest'] == '2026-09-07'
+    assert first['next_cursor']['ordered_pages'] == 1
+    second = discovery.discover({**current, 'cursor':first['next_cursor']}, lambda _: Response(camara_page(['10 agosto 2026', '9 agosto 2026'],start=20)))
+    assert len(second['candidates']) == 1 and second['next_cursor']['ordered_pages'] == 2
+    third = discovery.discover({**current, 'cursor':second['next_cursor']}, lambda _: Response(camara_page(['8 agosto 2026', '7 agosto 2026'],start=30)))
+    assert third['outcome'] == 'complete' and third['next_cursor'] is None and third['raw_count'] == 2
+
+
+def test_camara_first_older_page_alone_never_proves_date_exhaustion():
+    current = task('camara_rio', 'camara_archive', url='https://camara.rio/comunicacao/noticias', date_from='2026-08-09', date_to='2026-08-09')
+    first = discovery.discover(current, lambda _: Response(camara_page(['8 agosto 2026', '7 agosto 2026'])))
+    assert first['outcome'] == 'continue'
+    second = discovery.discover({**current,'cursor':first['next_cursor']}, lambda _: Response(camara_page(['6 agosto 2026', '5 agosto 2026'],start=20)))
+    assert second['outcome'] == 'complete' and second['next_cursor'] is None
+
+
+@pytest.mark.parametrize('partial_markup', [False, True])
+def test_camara_unknown_or_unparsed_date_prevents_claim_of_complete_coverage(partial_markup):
+    current = task('camara_rio', 'camara_archive', url='https://camara.rio/comunicacao/noticias', date_from='2026-08-09', date_to='2026-08-09')
+    dates = ['12 agosto 2026', '10 agosto 2026'] if partial_markup else ['12 agosto 2026', 'data indisponível']
+    extra = '<span class="catItemDateCreated">11 agosto 2026</span><h3 class="catItemTitle">Unrecognized item</h3>' if partial_markup else ''
+    first = discovery.discover(current, lambda _: Response(camara_page(dates,extra_markup=extra)))
+    assert first['next_cursor']['chronology_gap'] is True
+    second = discovery.discover({**current,'cursor':first['next_cursor']}, lambda _: Response(camara_page(['8 agosto 2026', '7 agosto 2026'],start=20)))
+    assert second['outcome'] == 'continue'
+    third = discovery.discover({**current,'cursor':second['next_cursor']}, lambda _: Response(camara_page(['6 agosto 2026', '5 agosto 2026'],start=30)))
+    assert third['outcome'] == 'gap' and third['gap_reason'] == 'archive_date_order_unproven'
+
+
+def test_camara_boundary_order_reversal_is_an_explicit_gap():
+    current = task('camara_rio', 'camara_archive', url='https://camara.rio/comunicacao/noticias', date_from='2026-09-01', date_to='2026-09-01')
+    first = discovery.discover(current, lambda _: Response(camara_page(['10 agosto 2026', '7 agosto 2026'])))
+    second = discovery.discover({**current,'cursor':first['next_cursor']}, lambda _: Response(camara_page(['9 agosto 2026', '6 agosto 2026'],start=20)))
+    assert second['outcome'] == 'gap' and second['gap_reason'] == 'archive_date_order_unproven'
+
+
+def test_camara_legacy_cursor_must_observe_ordering_before_stopping_with_gap():
+    current = task('camara_rio','camara_archive',url='https://camara.rio/comunicacao/noticias',date_from='2026-09-01',date_to='2026-09-01',cursor={'page':4,'url':'https://camara.rio/comunicacao/noticias?limit=10&start=30'})
+    first = discovery.discover(current,lambda _:Response(camara_page(['10 agosto 2026', '7 agosto 2026'],start=40)))
+    assert first['outcome']=='continue' and first['next_cursor']['chronology_gap'] is True
+    second = discovery.discover({**current,'cursor':first['next_cursor']},lambda _:Response(camara_page(['6 agosto 2026','5 agosto 2026'],start=50)))
+    assert second['outcome']=='gap' and second['gap_reason']=='archive_date_order_unproven'
+
+
+def test_camara_undated_archive_has_source_specific_visible_fifty_page_cap():
+    current=task('camara_rio','camara_archive',url='https://camara.rio/comunicacao/noticias',cursor={'page':50,'url':'https://camara.rio/comunicacao/noticias?limit=10&start=490'})
+    result=discovery.discover(current,lambda _:Response(camara_page(['data indisponível'],start=500)))
+    assert result['outcome']=='gap' and result['gap_reason']=='archive_page_cap_or_cycle'
+    assert len(result['candidates'])==1 and result['candidates'][0]['published_at']==''
 
 
 def test_benchmark_database_guard_rejects_production_and_nonlocal_urls():

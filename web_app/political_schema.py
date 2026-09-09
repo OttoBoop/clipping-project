@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS political_tasks (
 );
 CREATE INDEX IF NOT EXISTS political_tasks_claim ON political_tasks(kind,status,priority DESC,next_attempt_at,id);
 CREATE INDEX IF NOT EXISTS political_tasks_job ON political_tasks(job_id,status);
+ALTER TABLE political_tasks ADD COLUMN IF NOT EXISTS request_domain TEXT;
 CREATE TABLE IF NOT EXISTS political_source_leases (
  source_key TEXT PRIMARY KEY, task_id BIGINT, lease_token TEXT, leased_until TIMESTAMPTZ
 );
@@ -32,6 +33,8 @@ ALTER TABLE political_source_leases ADD COLUMN IF NOT EXISTS fetch_claimed_at TI
 CREATE TABLE IF NOT EXISTS political_domain_limits (
  domain TEXT PRIMARY KEY, next_request_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE political_domain_limits ADD COLUMN IF NOT EXISTS cooldown_until TIMESTAMPTZ;
+ALTER TABLE political_domain_limits ADD COLUMN IF NOT EXISTS cooldown_status INTEGER;
 CREATE TABLE IF NOT EXISTS political_workers (
  id TEXT PRIMARY KEY, kind TEXT NOT NULL, heartbeat_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
  task_id BIGINT, error_type TEXT NOT NULL DEFAULT '', started_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

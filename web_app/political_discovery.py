@@ -548,15 +548,46 @@ def _archive(task, source, fetch):
     response = _get(fetch, url)
     raw_html = response.text
     candidates = []
+    chronology = {}
+    date_cutoff = False
+    chronology_gap = False
     if task["strategy"] == "camara_archive":
         rows = CAMARA_ARCHIVE_ITEM_RE.findall(raw_html)
+        page_dates = []
         for raw_date, href, title in rows:
             item_url = urljoin(url, html.unescape(href))
             published = _parse_pt_br_datetime(raw_date)
+            parsed_date = parse_publication_date(published)
+            page_dates.append(datetime.fromisoformat(parsed_date).astimezone(SAO_PAULO).date() if parsed_date else None)
             if _allowed_url(item_url, source, article=True) and in_window(published, task["date_from"], task["date_to"]):
                 candidates.append(_candidate(source, item_url, title, published))
         match = CAMARA_NEXT_RE.search(raw_html)
         next_url = urljoin(url, html.unescape(match.group(1))) if match else ""
+        if source.get("archive_date_order") == "observed_descending" and rows:
+            # Check every raw date marker, including entries our article regex
+            # failed to recognize. Unknown rows cannot prove a date cutoff.
+            raw_date_count = len(re.findall(r'\bcatItemDateCreated\b', raw_html))
+            fully_dated = len(page_dates) == raw_date_count and all(page_dates)
+            ordered = fully_dated and page_dates == sorted(page_dates, reverse=True)
+            previous = str(cursor.get("previous_oldest") or "")
+            try:
+                previous_oldest = date.fromisoformat(previous) if previous else None
+            except ValueError:
+                previous_oldest = None
+            boundary_ordered = not previous_oldest or (fully_dated and max(page_dates) <= previous_oldest)
+            chronology_gap = bool(cursor.get("chronology_gap")) or not ordered or not boundary_ordered
+            if page > 1 and (not previous_oldest or not cursor.get("ordered_pages")):
+                chronology_gap = True  # A legacy cursor has no verified earlier ordering.
+            ordered_pages = int(cursor.get("ordered_pages") or 0) + 1 if ordered and boundary_ordered else 0
+            chronology = {"ordered_pages": ordered_pages}
+            if fully_dated:
+                chronology["previous_oldest"] = min(page_dates).isoformat()
+            if chronology_gap:
+                chronology["chronology_gap"] = True
+            entirely_older = fully_dated and max(page_dates) < date.fromisoformat(task["date_from"])
+            # One old first page is insufficient. An observed ordering break
+            # remains a visible gap when the dated portion passes the window.
+            date_cutoff = entirely_older and previous_oldest is not None and int(cursor.get("ordered_pages") or 0) >= 1
     else:
         config = {"host": source["domain"], "source_name": source["name"], "article_path_prefix": "/"}
         rows, next_url = _extract_vejario_archive_page(raw_html, url, config)
@@ -564,9 +595,12 @@ def _archive(task, source, fetch):
                       for row in rows if in_window(row.published_at, task["date_from"], task["date_to"])]
     if not rows and not next_url and not re.search(r'nenhum|sem resultados|no results', raw_html, re.I):
         raise DiscoveryError("archive markup not recognized; exhaustion unconfirmed")
-    if next_url and (next_url == url or page >= MAX_PAGES):
+    if next_url and date_cutoff:
+        return _result(candidates, raw_count=len(rows), outcome="gap" if chronology_gap else "complete",
+                       gap_reason="archive_date_order_unproven" if chronology_gap else "")
+    if next_url and (next_url == url or page >= int(source.get("max_pages") or MAX_PAGES)):
         return _result(candidates, outcome="gap", raw_count=len(rows), gap_reason="archive_page_cap_or_cycle")
-    return _result(candidates, next_cursor={"page": page + 1, "url": next_url} if next_url else None, raw_count=len(rows))
+    return _result(candidates, next_cursor={"page": page + 1, "url": next_url, **chronology} if next_url else None, raw_count=len(rows))
 
 
 def discover(task: dict[str, Any], fetch: Callable) -> dict[str, Any]:
@@ -587,7 +621,7 @@ def discover(task: dict[str, Any], fetch: Callable) -> dict[str, Any]:
 
 _VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
 _RELATED = re.compile(r'(?:related|relacionad|recommend|recomendad|leia[-_ ]?mais|read[-_ ]?more|sidebar|newsletter|comments|comentarios|social-share|outbrain|taboola|post-expansivel|more-posts)', re.I)
-_BODY = re.compile(r'(?:entry-content|post-content|article-content|materia-content|content-body|article-body|articleBody|mc-article-body|story-body)', re.I)
+_BODY = re.compile(r'(?:entry-content|post-content|article-content|materia-content|content-body|article-body|articleBody|mc-article-body|story-body|content-txt-single)', re.I)
 
 
 class _ArticleParser(HTMLParser):
