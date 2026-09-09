@@ -971,6 +971,17 @@ class _ArticleParser(HTMLParser):
         self.json_ld = []
         self.script = None
         self.head_title = []
+        self._publisher_identity = None
+        self._publisher_hostname = ""
+
+    def publisher_host(self):
+        # A large Globo page contains thousands of tags. Its document identity
+        # changes only when metadata is encountered, so parse it once per change.
+        identity = self.document_url or self.canonical
+        if identity != self._publisher_identity:
+            self._publisher_identity = identity
+            self._publisher_hostname = (urlparse(identity).hostname or "").lower().rstrip(".")
+        return self._publisher_hostname
 
     def handle_starttag(self, tag, attrs):
         # HTML permits valueless attributes (for example <div class>), which
@@ -992,7 +1003,7 @@ class _ArticleParser(HTMLParser):
             self.published = parse_publication_date(attrs.get("datetime", ""))
         if tag == "script" and "ld+json" in attrs.get("type", ""):
             self.script = []
-        publisher_host = (urlparse(self.document_url or self.canonical).hostname or "").lower().rstrip(".")
+        publisher_host = self.publisher_host()
         classes = set(attrs.get("class", "").split())
         publisher_author_box = "m-a-box" in classes and publisher_host in {"rc24h.com.br", "www.rc24h.com.br"}
         diario_navigation = publisher_host in {"diariodorio.com", "www.diariodorio.com"} and bool(
@@ -1044,7 +1055,7 @@ class _ArticleParser(HTMLParser):
                 depth == index and probe.is_related() for depth, _, probe in self.globo_link_lists)
             odia_prefix_start = None
             if tag == "a" and index and self.stack[index - 1][0] == "div" and "texto" in self.stack[index - 1][6].get("class", "").split():
-                publisher_host = (urlparse(self.document_url or self.canonical).hostname or "").lower().rstrip(".")
+                publisher_host = self.publisher_host()
                 prefix_start = self.stack[index - 1][2]
                 if publisher_host == "odia.ig.com.br" and re.fullmatch(r"\s*LEIA MAIS\s*:\s*", "".join(self.parts[prefix_start:start]), re.I):
                     odia_prefix_start = prefix_start
@@ -1112,7 +1123,7 @@ def extract_article(raw_html: str) -> dict[str, str]:
     # Infinite-scroll feeds can embed whole, longer stories after the requested
     # article. Only compare nested containers within the first article/body root.
     # A short primary/paywall body must never be replaced by an unrelated story.
-    publisher_host = (urlparse(parser.document_url or parser.canonical).hostname or "").lower().rstrip(".")
+    publisher_host = parser.publisher_host()
     primary_candidates = {scope for scope, block in parser.scoped_blocks if block.strip()}
     if publisher_host in _GLOBO_ARTICLE_HOSTS | {"odia.ig.com.br", "diariodorio.com", "www.diariodorio.com"}:
         # Removing the only related cards can leave an empty primary body.

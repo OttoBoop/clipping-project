@@ -982,3 +982,16 @@ def test_benchmark_database_guard_rejects_production_and_nonlocal_urls():
     for url in ("postgresql://user@127.0.0.1/production", "postgresql://user@db.example.com/political_test_scale", "sqlite:///test"):
         with pytest.raises(ValueError):
             guarded_database_url(url)
+
+
+def test_publisher_cleanup_uses_later_document_metadata():
+    # og:url can follow canonical metadata. The O Dia cleanup must still remove
+    # the related link and preserve the genuine paragraph following it.
+    raw = '''<link rel="canonical" href="https://example.com/story">
+    <meta property="og:url" content="https://odia.ig.com.br/politica/story.html">
+    <article><div class="texto">LEIA MAIS: <a href="/another-story">Unrelated headline</a>
+    Later editorial paragraph remains intact.</div></article>'''
+    body = discovery.extract_article(raw)["full_text"]
+    assert "Unrelated headline" not in body
+    assert "LEIA MAIS" not in body
+    assert "Later editorial paragraph remains intact." in body
