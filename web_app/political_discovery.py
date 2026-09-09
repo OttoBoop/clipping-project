@@ -620,7 +620,7 @@ def discover(task: dict[str, Any], fetch: Callable) -> dict[str, Any]:
 
 
 _VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
-_RELATED = re.compile(r'(?:related|relacionad|recommend|recomendad|leia[-_ ]?mais|read[-_ ]?more|sidebar|newsletter|comments|comentarios|social-share|outbrain|taboola|post-expansivel|more-posts)', re.I)
+_RELATED = re.compile(r'(?:related|relacionad|recommend|recomendad|leia[-_ ]?mais|read[-_ ]?more|sidebar|newsletter|comments|comentarios|social-share|outbrain|taboola|post-expansivel|more-posts|widget-playlist-player|passador-materia)', re.I)
 _BODY = re.compile(r'(?:entry-content|post-content|article-content|materia-content|content-body|article-body|articleBody|mc-article-body|story-body|content-txt-single)', re.I)
 
 

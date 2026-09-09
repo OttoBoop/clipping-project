@@ -411,6 +411,26 @@ def test_extraction_nested_primary_body_keeps_full_editorial_text_and_blocks_exp
     assert "Hugo Leal" not in result["full_text"]
 
 
+def test_cbn_playlist_and_next_story_widgets_preserve_editorial_continuation():
+    before = "Familiares aguardavam a liberação dos corpos no Instituto Médico-Legal após o acidente durante um voo panorâmico sobre a cidade."
+    middle = "O prefeito Eduardo Cavaliere pediu à agência um reforço na fiscalização e a suspensão temporária desse tipo de passeio."
+    after = "Uma câmera foi recuperada intacta. O material será analisado junto com os destroços para reconstruir os momentos anteriores à queda."
+    playlist = "Hugo Leal comenta uma notícia diferente no podcast mais recente."
+    next_story = "Pedro Paulo participa de outro evento amanhã."
+    raw = '<div class="mrf-article-body"><div class="mc-article-body"><article><p>' + before + '</p>' \
+          '<div class="widget-playlist-player"><ol><li><p class="audio-title">' + playlist + '</p></li></ol></div>' \
+          '<p>' + middle + '</p><section class="passador-materia"><a>' + next_story + '</a></section>' \
+          '<p>' + after + '</p></article></div></div>'
+    raw += '<script type="application/ld+json">' + json.dumps({
+        "@type": "NewsArticle", "articleBody": " ".join([before, playlist, middle, next_story, after])
+    }) + '</script>'
+    result = discovery.extract_article(raw)
+    assert result["extraction_state"] == "full_text"
+    assert all(paragraph in result["full_text"] for paragraph in (before, middle, after))
+    assert "Hugo Leal" not in result["full_text"]
+    assert "Pedro Paulo" not in result["full_text"]
+
+
 def test_short_primary_body_remains_metadata_only_even_with_long_later_article():
     raw = '<article><p>Assine para continuar.</p></article><article><p>' + ('Outra notícia extensa. ' * 100) + '</p></article>'
     result = discovery.extract_article(raw)

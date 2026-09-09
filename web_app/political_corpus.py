@@ -291,10 +291,13 @@ class PoliticalCorpusService:
     def _insert_task(self, conn, job_id: str, kind: str, payload: dict) -> None:
         source_key = str(payload.get("source_key") or "unknown")
         dedupe = canonicalize_url(str(payload.get("url") or "")) if kind == "fetch" else hashlib.sha256(_json(payload).encode()).hexdigest()
-        conn.execute("""INSERT INTO political_tasks(job_id,kind,source_key,dedupe_key,payload,cursor,request_domain)
-                        VALUES (%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s) ON CONFLICT(job_id,kind,dedupe_key) DO NOTHING""",
+        # Source rotation still comes first when claiming. Within each source,
+        # finish its direct publisher discovery before optional Google queries.
+        priority = 0 if kind == "discovery" and payload.get("strategy") == "google_news" else 10
+        conn.execute("""INSERT INTO political_tasks(job_id,kind,source_key,dedupe_key,payload,cursor,request_domain,priority)
+                        VALUES (%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s) ON CONFLICT(job_id,kind,dedupe_key) DO NOTHING""",
                      (job_id, kind, source_key, dedupe, _json(payload), _json(payload.get("cursor") or {}),
-                      task_request_domain(kind, payload, _source_domains())))
+                      task_request_domain(kind, payload, _source_domains()), priority))
         conn.execute("INSERT INTO political_source_leases(source_key) VALUES (%s) ON CONFLICT DO NOTHING", (source_key,))
 
     @staticmethod
@@ -638,6 +641,23 @@ class PoliticalCorpusService:
                 ON CONFLICT(id) DO UPDATE SET kind=EXCLUDED.kind,task_id=EXCLUDED.task_id,error_type=EXCLUDED.error_type,heartbeat_at=NOW()""",
                          (worker_id, kind, task_id, error_type[:100]))
 
+    @staticmethod
+    def _discovery_backpressure(conn) -> tuple[bool, list[str]]:
+        """Aggregate once across active jobs, instead of once per queued task.
+
+        Below 2000 active fetches every source may discover. From 2000 to
+        3999, admit only sources with fewer than 100 active fetches. At 4000,
+        stop admission entirely. These are admission thresholds, not strict
+        queue caps: two already running discovery pages can each enqueue up to
+        the existing 5000-candidate page limit before the next check.
+        """
+        rows = conn.execute("""SELECT t.source_key,COUNT(*) AS n FROM political_tasks t
+            JOIN political_jobs j ON j.id=t.job_id
+            WHERE t.kind='fetch' AND t.status=ANY(%s) AND j.status IN ('queued','running')
+            GROUP BY t.source_key""", (list(ACTIVE),)).fetchall()
+        total = sum(int(row["n"]) for row in rows)
+        return total >= 4000, [row["source_key"] for row in rows if total >= 2000 and int(row["n"]) >= 100]
+
     def claim_task(self, kind: str, *, worker_id: str, lease_seconds: int = LEASE_SECONDS) -> dict | None:
         if kind not in {"discovery", "fetch"}:
             raise ValueError("invalid_worker_kind")
@@ -646,12 +666,11 @@ class PoliticalCorpusService:
         maximum = 2 if kind == "discovery" else 4
         with self._connect() as conn:
             conn.execute("SELECT pg_advisory_xact_lock(%s)", (734892102 if kind == "discovery" else 734892103,))
-            # Check capacity before leasing any source. Requeueing hundreds of
-            # separate discovery tasks on a delay still creates a busy loop while
-            # the fetch backlog is full, even when each individual delay works.
-            if kind == "discovery" and conn.execute("""SELECT COUNT(*) AS n FROM political_tasks
-                    WHERE kind='fetch' AND status=ANY(%s)""", (list(ACTIVE),)).fetchone()["n"] >= 2000:
-                return None
+            blocked_sources = []
+            if kind == "discovery":
+                stop_discovery, blocked_sources = self._discovery_backpressure(conn)
+                if stop_discovery:
+                    return None
             count = conn.execute("""SELECT COUNT(*) AS n FROM political_tasks WHERE kind=ANY(%s)
                 AND status='running' AND leased_until>NOW()""", (kinds,)).fetchone()["n"]
             if count >= maximum:
@@ -661,6 +680,7 @@ class PoliticalCorpusService:
                 LEFT JOIN political_source_leases scheduling ON scheduling.source_key=t.source_key
                 LEFT JOIN political_domain_limits cooling ON cooling.domain=""" + TASK_DOMAIN_FALLBACK_SQL + """
                 WHERE t.kind=ANY(%s) AND j.status IN ('queued','running')
+                AND (t.kind='fetch' OR NOT (t.source_key=ANY(%s)))
                 AND (cooling.cooldown_until IS NULL OR cooling.cooldown_until<=NOW())
                 AND (t.status IN ('queued','retryable') OR (t.status='running' AND t.leased_until<NOW()))
                 AND (t.next_attempt_at IS NULL OR t.next_attempt_at<=NOW())
@@ -674,7 +694,7 @@ class PoliticalCorpusService:
                               ELSE scheduling.discovery_claimed_at END ASC NULLS FIRST,
                     t.priority DESC,
                     CASE WHEN t.kind='fetch' AND COALESCE(t.payload->>'published_at','')<>'' THEN 0 ELSE 1 END,
-                    t.id FOR UPDATE OF t SKIP LOCKED LIMIT 1""", (_json(source_domains), kinds)).fetchone()
+                    t.id FOR UPDATE OF t SKIP LOCKED LIMIT 1""", (_json(source_domains), kinds, blocked_sources)).fetchone()
             if not row:
                 return None
             token = uuid.uuid4().hex
@@ -951,8 +971,8 @@ class PoliticalCorpusService:
     def _discover(self, task: dict) -> dict:
         from .political_discovery import discover
         with self._connect() as conn:
-            queued = conn.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE kind='fetch' AND status=ANY(%s)", (list(ACTIVE),)).fetchone()["n"]
-        if queued >= 2000:
+            stop_discovery, blocked_sources = self._discovery_backpressure(conn)
+        if stop_discovery or task["source_key"] in blocked_sources:
             with self._connect() as conn:
                 self._finish(conn, task, "queued", delay=15)
             return {"taskId": task["id"], "status": "backpressure"}

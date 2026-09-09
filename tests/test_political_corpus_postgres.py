@@ -184,6 +184,88 @@ def test_full_fetch_backlog_does_not_lease_or_churn_discovery_tasks(service, mon
     assert service.claim_task('discovery', worker_id='d') is not None
 
 
+def _queue_pending_fetches(conn, job_id, source_key, count):
+    conn.execute("""INSERT INTO political_tasks(job_id,kind,source_key,dedupe_key,payload)
+        SELECT %s,'fetch',%s,%s || n,'{}'::jsonb FROM generate_series(1,%s) AS n""",
+        (job_id, source_key, source_key + '-pending-', count))
+
+
+@pytest.mark.parametrize("source_backlog,total_backlog,admitted", [
+    (99, 2000, True), (100, 2000, False), (0, 4000, False), (100, 1999, True),
+])
+def test_discovery_admission_uses_source_backlog_across_active_jobs(
+        service, monkeypatch, source_backlog, total_backlog, admitted):
+    from web_app import political_discovery
+    older = start(service, monkeypatch, tasks=[
+        {"source_key": "g1", "strategy": "daily_sitemap", "cursor": {}},
+        {"source_key": "agenda_do_poder", "strategy": "wordpress", "cursor": {}},
+    ])
+    current = start(service, monkeypatch, tasks=[{"source_key": "cbn", "strategy": "daily_sitemap", "cursor": {}}])
+    with service._connect() as conn:
+        _queue_pending_fetches(conn, older["id"], "g1", 1000)
+        _queue_pending_fetches(conn, older["id"], "agenda_do_poder", total_backlog - source_backlog - 1000)
+        # Both runs contribute to the same source budget. Counting only the
+        # current job would incorrectly admit the 100-task boundary case.
+        _queue_pending_fetches(conn, older["id"], "cbn", source_backlog // 2)
+        _queue_pending_fetches(conn, current["id"], "cbn", source_backlog - source_backlog // 2)
+    task = service.claim_task("discovery", worker_id="source-budget")
+    if not admitted:
+        assert task is None
+        with service._connect() as conn:
+            assert conn.execute("SELECT SUM(attempts) AS n FROM political_tasks WHERE kind='discovery'").fetchone()["n"] == 0
+        return
+    # Below the global threshold all sources qualify, preserving source rotation.
+    if total_backlog < 2000:
+        assert task["source_key"] == "g1"
+        return
+    assert task["source_key"] == "cbn" and task["job_id"] == current["id"]
+    monkeypatch.setattr(political_discovery, "discover", lambda *a: {
+        "outcome": "complete", "candidates": [{"url": "https://cbn.globo.com/rio-de-janeiro/new-story",
+            "title": "Eduardo Paes", "published_at": "2026-06-01T12:00:00-03:00"}],
+        "raw_count": 1, "next_cursor": None, "child_tasks": [], "gap_reason": ""})
+    # The execution-time check must admit the same low-backlog source.
+    assert service.process_task(task)["status"] == "complete"
+    with service._connect() as conn:
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE job_id=%s AND kind='fetch' AND payload->>'title'='Eduardo Paes'",
+                            (current["id"],)).fetchone()["n"] == 1
+
+
+@pytest.mark.parametrize("source_backlog,total_backlog", [(100, 2000), (0, 4000)])
+def test_discovery_rechecks_source_and_global_admission_before_network(service, monkeypatch, source_backlog, total_backlog):
+    from web_app import political_discovery
+    job = start(service, monkeypatch, tasks=[{"source_key": "cbn", "strategy": "daily_sitemap", "cursor": {"page": 7}}])
+    task = service.claim_task("discovery", worker_id="admission-race")
+    with service._connect() as conn:
+        _queue_pending_fetches(conn, job["id"], "g1", total_backlog - source_backlog)
+        _queue_pending_fetches(conn, job["id"], "cbn", source_backlog)
+    monkeypatch.setattr(political_discovery, "discover", lambda *a: pytest.fail("blocked discovery must not request HTTP"))
+    assert service.process_task(task)["status"] == "backpressure"
+    with service._connect() as conn:
+        row = conn.execute("SELECT status,cursor,lease_token,next_attempt_at FROM political_tasks WHERE id=%s", (task["id"],)).fetchone()
+        assert row["status"] == "queued" and row["cursor"] == {"page": 7}
+        assert row["lease_token"] is None and row["next_attempt_at"] is not None
+
+
+def test_direct_discovery_precedes_google_for_same_source_without_removing_google(service, monkeypatch):
+    job = start(service, monkeypatch, tasks=[
+        {"source_key": "j3news", "strategy": "google_news", "query": '"Eduardo Paes"', "cursor": {}},
+        {"source_key": "j3news", "strategy": "wordpress", "cursor": {}},
+        {"source_key": "metropoles", "strategy": "sitemap", "cursor": {}},
+    ])
+    first = service.claim_task("discovery", worker_id="direct-first")
+    assert first["source_key"] == "j3news" and first["payload"]["strategy"] == "wordpress" and first["priority"] == 10
+    with service._connect() as conn:
+        service._finish(conn, first, "complete")
+    second = service.claim_task("discovery", worker_id="other-source")
+    assert second["source_key"] == "metropoles"
+    with service._connect() as conn:
+        service._finish(conn, second, "complete")
+    third = service.claim_task("discovery", worker_id="google-after-direct")
+    assert third["source_key"] == "j3news" and third["payload"]["strategy"] == "google_news" and third["priority"] == 0
+    with service._connect() as conn:
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE job_id=%s", (job["id"],)).fetchone()["n"] == 3
+
+
 def test_lease_expiry_recovery_fences_old_worker(service, monkeypatch):
     start(service, monkeypatch)
     old = service.claim_task("discovery", worker_id="old")
