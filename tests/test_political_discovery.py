@@ -441,6 +441,29 @@ def test_syndicated_article_structured_body_matches_document_even_with_external_
     assert result["full_text"] == body.strip()
 
 
+def test_structured_body_cannot_reintroduce_explicit_related_card_inside_primary_article():
+    before = "Eduardo Paes não compareceu ao debate. " * 12
+    after = "Pedro Paulo foi citado no segundo bloco. " * 12
+    related = "Leia também: Hugo Leal em uma notícia diferente. " * 10
+    raw = '<article><p>' + before + '</p><div class="m-related-news">' + related + '</div><p>' + after + '</p></article>'
+    raw += '<script type="application/ld+json">' + json.dumps({"@type": "NewsArticle", "articleBody": before + related + after}) + '</script>'
+    result = discovery.extract_article(raw)
+    assert before.strip() in result["full_text"] and after.strip() in result["full_text"]
+    assert "Hugo Leal" not in result["full_text"] and "Leia também" not in result["full_text"]
+
+
+def test_related_anchor_removal_preserves_following_editorial_text_and_decodes_entities():
+    before = "Eduardo Paes não compareceu ao debate. " * 12
+    after = "Depois, Pedro Paulo respondeu aos jornalistas. " * 12
+    raw = '<article><div class="texto">' + before + '</div><div class="texto">' \
+          '<a href="/outra-noticia">LEIA MAIS: previsão do tempo</a>' + after + '</div>' \
+          '<p>O candidato disse &amp;#8220;estarei presente&amp;#8221;.</p></article>'
+    result = discovery.extract_article(raw)
+    assert "LEIA MAIS" not in result["full_text"] and "previsão do tempo" not in result["full_text"]
+    assert before.strip() in result["full_text"] and after.strip() in result["full_text"]
+    assert '“estarei presente”' in result["full_text"]
+
+
 def test_structured_article_body_and_date_are_usable_without_html_body():
     data = {"@type": "NewsArticle", "headline": "Título", "datePublished": "2026-06-01T09:00:00-03:00",
             "articleBody": "Uma reportagem sobre a disputa estadual. " * 10}

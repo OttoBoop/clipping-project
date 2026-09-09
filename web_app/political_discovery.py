@@ -598,6 +598,7 @@ class _ArticleParser(HTMLParser):
         self.blocks = []
         self.scoped_blocks = []
         self.body_scope = 0
+        self.cleaned_scopes = set()
         self.title = ""
         self.published = ""
         self.canonical = ""
@@ -624,12 +625,15 @@ class _ArticleParser(HTMLParser):
             self.published = parse_publication_date(attrs.get("datetime", ""))
         if tag == "script" and "ld+json" in attrs.get("type", ""):
             self.script = []
-        blocked = (bool(self.stack) and self.stack[-1][1]) or tag in {"script", "style", "nav", "aside", "footer", "header", "form"} or bool(_RELATED.search(attrs.get("class", "") + " " + attrs.get("id", "")))
+        related = bool(_RELATED.search(attrs.get("class", "") + " " + attrs.get("id", "")))
+        blocked = (bool(self.stack) and self.stack[-1][1]) or tag in {"script", "style", "nav", "aside", "footer", "header", "form"} or related
         body = tag == "article" or bool(_BODY.search(attrs.get("class", "") + " " + attrs.get("itemprop", "")))
         scope = self.stack[-1][4] if self.stack else 0
         if body and not blocked and not scope:
             self.body_scope += 1
             scope = self.body_scope
+        if related and scope:
+            self.cleaned_scopes.add(scope)
         if tag not in _VOID_TAGS:
             self.stack.append((tag, blocked, len(self.parts), body, scope))
         if tag in {"p", "div", "br", "li", "h1", "h2", "h3"} and not blocked:
@@ -648,8 +652,10 @@ class _ArticleParser(HTMLParser):
             current, blocked, start, body, scope = self.stack[index]
             if current != tag:
                 continue
-            if tag == "p" and re.match(r"\s*(?:leia (?:tamb[eé]m|mais)|veja (?:tamb[eé]m|mais)|saiba mais|confira tamb[eé]m)\s*:", "".join(self.parts[start:]), re.I):
+            if tag in {"p", "a"} and re.match(r"\s*(?:leia (?:tamb[eé]m|mais)|veja (?:tamb[eé]m|mais)|saiba mais|confira tamb[eé]m)\s*:", "".join(self.parts[start:]), re.I):
                 del self.parts[start:]
+                if scope:
+                    self.cleaned_scopes.add(scope)
             elif body and not blocked:
                 text = "".join(self.parts[start:])
                 self.blocks.append(text)
@@ -701,8 +707,18 @@ def extract_article(raw_html: str) -> dict[str, str]:
     # A short primary/paywall body must never be replaced by an unrelated story.
     primary_scope = min((scope for scope, block in parser.scoped_blocks if block.strip()), default=0)
     primary_blocks = [block for scope, block in parser.scoped_blocks if scope == primary_scope]
-    blocks = [re.sub(r'[ \t\r\f\v]+', ' ', block).strip() for block in primary_blocks + structured_bodies]
-    body = max(blocks, key=len) if blocks else ""
+    def normalized(block):
+        return re.sub(r'[ \t\r\f\v]+', ' ', html.unescape(block)).strip()
+    dom_blocks = [normalized(block) for block in primary_blocks]
+    dom_body = max(dom_blocks, key=len) if dom_blocks else ""
+    if primary_scope in parser.cleaned_scopes and len(dom_body.split()) >= 40:
+        # Some publishers flatten related cards into articleBody. Once their
+        # bounded DOM containers were removed, do not reintroduce that content
+        # merely because the structured string is longer.
+        body = dom_body
+    else:
+        blocks = dom_blocks + [normalized(block) for block in structured_bodies]
+        body = max(blocks, key=len) if blocks else ""
     # Without an article container or structured article body the extraction is
     # unconfirmed. Menu/search/paywall text must not become a full article.
     return {"full_text": body, "title": parser.title or "".join(parser.head_title).strip(),
