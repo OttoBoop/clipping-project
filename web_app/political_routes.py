@@ -156,6 +156,13 @@ def status(request: Request, job_id: str = ""):
         return political_corpus.status(job_id, allowed_target_keys=keys)
 
 
+@router.get("/api/political/articles/{article_id}")
+def individual_article(request: Request, article_id: int):
+    _, keys, _ = access(request)
+    with service_errors():
+        return political_corpus.article(article_id, allowed_target_keys=keys)
+
+
 @router.post("/api/political/jobs")
 async def start(request: Request):
     session, keys, targets = access(request, mutation=True, admin=True)

@@ -86,6 +86,24 @@ def test_worker_recovers_after_transient_claim_failure():
     assert service.claims == 2
 
 
+def test_http_object_read_closes_stream_and_verifies_digest(monkeypatch):
+    class Store:
+        def _object_url(self, key): return "https://storage.example/" + key
+        def _headers(self): return {}
+    class Response:
+        status_code = 200
+        closed = False
+        def raise_for_status(self): pass
+        def iter_content(self, size): yield gzip.compress("Conteúdo preservado.".encode())
+        def close(self): self.closed = True
+    response = Response()
+    monkeypatch.setattr("web_app.political_corpus.requests.get", lambda *a, **kw: response)
+    service = PoliticalCorpusService(store=Store())
+    body = "Conteúdo preservado."
+    assert service._read_text("object.txt.gz", hashlib.sha256(body.encode()).hexdigest()) == body
+    assert response.closed
+
+
 def test_unconfigured_status_is_readable_but_no_implicit_target_access(monkeypatch):
     monkeypatch.delenv("POLITICAL_DATABASE_URL", raising=False)
     monkeypatch.delenv("RIO_CORPUS_DATABASE_URL", raising=False)

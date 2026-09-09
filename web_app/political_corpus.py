@@ -518,6 +518,7 @@ class PoliticalCorpusService:
             response = requests.get(self.store._object_url(key), headers=self.store._headers(), timeout=30, stream=True)
             response.raise_for_status()
             chunks, size = [], 0
+            started = time.monotonic()
             try:
                 for part in response.iter_content(65536):
                     size += len(part)
@@ -808,6 +809,7 @@ class PoliticalCorpusService:
                 response.close()
                 if temporary:
                     Path(temporary).unlink(missing_ok=True)
+                record_timing("http_body", time.monotonic() - started, status_code=response.status_code)
             response._content = b"".join(chunks)
             response._content_consumed = True
             return response
