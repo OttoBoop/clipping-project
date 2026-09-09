@@ -38,6 +38,7 @@ from .political_rate_limits import (
 )
 from .publisher_tls import publisher_verify
 from .storage_bridge import ArtifactStore, artifact_store
+from .political_body_batches import BatchBodyUnavailable, WordPressBodyBatches
 
 START_DATE = date(2026, 6, 1)
 ZONE = ZoneInfo("America/Sao_Paulo")
@@ -188,6 +189,7 @@ class PoliticalCorpusService:
         self._schema_lock = threading.Lock()
         self._schema_ready = False
         self._http_local = threading.local()
+        self._body_batches = WordPressBodyBatches(self.store)
 
     @property
     def database_url(self) -> str:
@@ -984,6 +986,18 @@ class PoliticalCorpusService:
         outcome = str(result.get("outcome") or "gap")
         if outcome not in {"complete", "continue", "split", "gap"}:
             raise ValueError("invalid_discovery_outcome")
+        batch_refs, batch_fallback = {}, str(result.get("body_batch_fallback") or "")
+        if batch_fallback:
+            record_timing("body_batch_fallback", 0, outcome="error")
+        if result.get("body_batch"):
+            try:
+                for reference in self._body_batches.store_batch(result["body_batch"]):
+                    batch_refs[reference["post_id"]] = reference
+            except BatchBodyUnavailable as exc:
+                # A body-cache optimization must never discard discovered URLs
+                # or prevent healthy sources from continuing after storage trouble.
+                batch_fallback = str(exc)
+                record_timing("body_batch_fallback", 0, outcome="error")
         with self._connect() as conn:
             self._lock_task(conn, task)
             for candidate in candidates:
@@ -991,6 +1005,11 @@ class PoliticalCorpusService:
                 if not url or urlparse(url).scheme not in {"http", "https"}:
                     continue
                 candidate = {**candidate, "url": url, "source_key": task["source_key"]}
+                reference = batch_refs.get((candidate.get("metadata") or {}).get("wordpress_id"))
+                if reference:
+                    candidate["body_batch_ref"] = reference
+                elif batch_fallback:
+                    candidate["metadata"] = {**(candidate.get("metadata") or {}), "body_batch_fallback": batch_fallback}
                 conn.execute("""INSERT INTO political_observations(job_id,source_task_id,observed_url,source_key,title,snippet,metadata)
                     VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb) ON CONFLICT(job_id,observed_url) DO NOTHING""",
                              (task["job_id"], task["id"], url, task["source_key"], str(candidate.get("title") or "")[:1000],
@@ -1002,7 +1021,8 @@ class PoliticalCorpusService:
                 self._enqueue_discovery_fallback(conn, task)
             self._finish(conn, task, "queued" if outcome == "continue" else outcome,
                          cursor=result.get("next_cursor") or task["cursor"], raw_count=int(result.get("raw_count") or 0),
-                         error_type=str(result.get("gap_reason") or ""))
+                         error_type=str(result.get("gap_reason") or ""),
+                         result={"bodyBatchRecords": len(batch_refs), "bodyBatchFallback": batch_fallback})
         return {"taskId": task["id"], "status": outcome, "candidates": len(candidates)}
 
     def _finish_fetch_outside_window(self, task: dict, *, published=None, date_status="") -> dict:
@@ -1039,11 +1059,34 @@ class PoliticalCorpusService:
         digest = key = ""
         force_refresh = bool(candidate.get("force_refresh"))
         html_hash = html_key = ""
-        if existing and existing["text_object_key"] and existing["body_status"] == "body_extracted" and not force_refresh and existing["source_key"] != "google_news":
+        use_saved_body = bool(existing and existing["text_object_key"] and existing["body_status"] == "body_extracted"
+                              and not force_refresh and existing["source_key"] != "google_news")
+        batch_body, batch_fallback, body_origin = None, "", "publisher_page"
+        if candidate.get("body_batch_ref") and not use_saved_body and not force_refresh:
+            with self._connect() as conn:
+                self._lock_task(conn, task)
+            try:
+                batch_body = self._body_batches.read_body(candidate["body_batch_ref"], candidate)
+            except BatchBodyUnavailable as exc:
+                batch_fallback = str(exc)
+                record_timing("body_batch_fallback", 0, outcome="error")
+                candidate = {**candidate, "metadata": {**(candidate.get("metadata") or {}),
+                                                       "body_batch_fallback": batch_fallback}}
+        if use_saved_body:
             body = self._read_text(existing["text_object_key"], existing["content_hash"])
             final_url, title = existing["canonical_url"], existing["title"]
             published, date_status = existing["published_at"], existing["date_status"]
             digest, key = existing["content_hash"], existing["text_object_key"]
+            body_origin = "saved_object"
+        elif batch_body is not None:
+            body, final_url = batch_body["full_text"], batch_body["canonical_url"]
+            published, date_status = parse_date(batch_body["published_at"]), "api_verified"
+            candidate = _confirmed_publisher(candidate, final_url)
+            candidate["metadata"]["publisher_provenance"].update(batch_body["provenance"])
+            task["_verified_candidate"] = {**candidate, "url": final_url,
+                "observed_url": task["payload"]["url"], "published_at": str(published or "")}
+            task["_verified_date_status"] = date_status
+            body_origin = "wordpress_api_batch"
         else:
             with self._connect() as conn:
                 self._lock_task(conn, task)
@@ -1153,8 +1196,10 @@ class PoliticalCorpusService:
                 disposition = "saved" if write_result["inserted"] else "duplicate"
             conn.execute("UPDATE political_observations SET article_id=%s,disposition=%s WHERE job_id=%s AND observed_url=%s",
                          (article_id, disposition, task["job_id"], candidate["url"]))
-            self._finish(conn, task, "complete", result={"articleId": article_id, "disposition": disposition})
-        return {"taskId": task["id"], "status": disposition, "articleId": article_id}
+            self._finish(conn, task, "complete", result={"articleId": article_id, "disposition": disposition,
+                         "bodyOrigin": body_origin, "bodyBatchFallback": batch_fallback})
+        return {"taskId": task["id"], "status": disposition, "articleId": article_id,
+                "bodyOrigin": body_origin, "bodyBatchFallback": batch_fallback}
 
     def _save_metadata_attempt(self, task: dict, job: dict, candidate: dict, problem: FetchProblem, *, date_status: str = "") -> None:
         # The generic failure handler must not save the original RSS candidate

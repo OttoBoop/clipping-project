@@ -630,6 +630,100 @@ def test_metropoles_related_news_nested_articles_cannot_reenter_through_jsonld()
     assert result["published_at"] == "2026-08-13T18:08:00+00:00"
 
 
+@pytest.mark.parametrize("host", ["g1.globo.com", "extra.globo.com", "oglobo.globo.com"])
+def test_globo_headline_lists_and_news_box_preserve_later_editorial_sections(host):
+    # Exact structures from actual saved G1 237, Extra 364 and O Globo 1194.
+    # These generic list classes also serve genuine prose; links/lead-ins must
+    # be inspected rather than dropping every bullet list on the publisher.
+    url = f"https://{host}/rio/noticia/2026/08/12/onibus.ghtml"
+    opening = "Os novos ônibus terão piso baixo, acesso facilitado e equipamentos de segurança para todos os passageiros. " * 4
+    later = "Eduardo Cavaliere explicou o calendário das entregas e lembrou a proposta apresentada por Eduardo Paes."
+    ending = "A última seção informa as próximas linhas atendidas e mantém a comparação final com a transformação do BRT."
+    unrelated = "Hugo Leal aparece em uma reportagem diferente."
+    raw = f'''<meta property="og:url" content="{url}">
+      <meta property="article:published_time" content="2026-08-12T10:29:34-03:00">
+      <script type="application/ld+json">{json.dumps({'@type':'NewsArticle','url':url,'articleBody':opening+unrelated*50+later+ending})}</script>
+      <div class="mc-article-body"><article><div class="wall protected-content"><p>{opening}</p>
+        <div class="mc-column content-text active-extra-styles" data-block-type="raw">
+          <p class="content-text__container"><ul class="content-unordered-list">
+            <li><strong>Outra matéria:</strong> <a class href="/rio/outra.ghtml">{unrelated}</a></li>
+            <li><strong>Uma terceira manchete; </strong><a href="/rio/terceira.ghtml"><strong>Laura Carneiro está em outra pauta.</strong></a></li>
+            <li><a href="/rio/quarta.ghtml">Pedro Duarte está em um assunto separado.</a></li>
+          </ul></p></div><p>{later}</p><h2>Última seção</h2><p>{ending}</p>
+        <section class="mc-column box-wrapper"><div class="you-need-to-know-theme">
+          <h2 class="you-need-to-know-theme__title">Notícias do Rio:</h2><div><ul><li>{unrelated}</li></ul></div>
+        </div></section></div><section class="passador-materia"><a>Próxima: {unrelated}</a></section>
+      </article></div>'''
+    result = discovery.extract_article(raw)
+    assert all(text in result["full_text"] for text in (opening, later, ending, "Última seção"))
+    assert not any(text in result["full_text"] for text in ("Hugo Leal", "Laura Carneiro", "Pedro Duarte", "Notícias do Rio", "Próxima"))
+    assert result["published_at"] == "2026-08-12T13:29:34+00:00"
+    assert result["extraction_state"] == "full_text"
+
+
+@pytest.mark.parametrize("item", [
+    'A proposta de Eduardo Paes foi discutida, conforme <a href="/rio/antes.ghtml">a reportagem anterior</a>, e aprovada na reunião.',
+    '<strong>Eduardo Paes explicou a proposta completa.</strong> <a href="/rio/antes.ghtml">Veja os dados</a>',
+    '<a href="https://camara.rio/documento">Pedro Paulo apresenta a íntegra do projeto</a>',
+    '<a href="/rio/atual.ghtml#propostas">Eduardo Paes nas propostas desta mesma reportagem</a>',
+    'Eduardo Paes apresentou duas propostas.<ul><li><a href="/rio/antes.ghtml">Uma referência</a></li></ul>',
+])
+def test_globo_ordinary_lists_with_prose_citations_or_nested_items_survive(item):
+    opening = "A reportagem explica as decisões tomadas em uma reunião pública. " * 10
+    raw = f'<link rel="canonical" href="https://g1.globo.com/rio/atual.ghtml"><article><p>{opening}</p><ul class="content-unordered-list"><li>{item}</li></ul><p>Encerramento editorial preservado.</p></article>'
+    result = discovery.extract_article(raw)
+    assert "Encerramento editorial preservado." in result["full_text"]
+    assert "Eduardo Paes" in result["full_text"] or "Pedro Paulo" in result["full_text"]
+
+
+def test_globo_related_selectors_require_exact_publisher_and_tokens():
+    for host, classes in [("example.com", "you-need-to-know-theme"), ("g1.globo.com", "you-need-to-know-theme-editorial")]:
+        raw = f'<link rel="canonical" href="https://{host}/rio/atual.ghtml"><article><div class="{classes}">Texto editorial de Eduardo Paes.</div></article>'
+        assert "Eduardo Paes" in discovery.extract_article(raw)["full_text"]
+
+
+def test_globo_short_primary_text_does_not_reintroduce_related_jsonld():
+    raw = '<link rel="canonical" href="https://extra.globo.com/rio/atual.ghtml"><article><p>Assine para continuar.</p><ul class="content-unordered-list"><li><a href="/rio/outra.ghtml">Hugo Leal em outra notícia.</a></li></ul></article>'
+    raw += '<script type="application/ld+json">'+json.dumps({'@type':'NewsArticle','articleBody':'Hugo Leal em outra notícia. '*50})+'</script>'
+    result = discovery.extract_article(raw)
+    assert result["full_text"] == "Assine para continuar."
+    assert result["extraction_state"] == "metadata_only"
+
+
+def test_globo_related_only_primary_cannot_select_later_story_or_jsonld():
+    unrelated = "Hugo Leal participa de outra notícia. " * 50
+    raw = '<link rel="canonical" href="https://extra.globo.com/rio/atual.ghtml"><article><ul class="content-unordered-list"><li><a href="/rio/outra.ghtml">Hugo Leal em outra notícia.</a></li></ul></article>'
+    raw += f'<article><p>{unrelated}</p></article><script type="application/ld+json">'+json.dumps({'@type':'NewsArticle','articleBody':unrelated})+'</script>'
+    result = discovery.extract_article(raw)
+    assert result["full_text"] == ""
+    assert result["extraction_state"] == "metadata_only"
+
+
+def test_odia_related_lead_outside_anchor_preserves_same_div_continuation():
+    # Actual 246 has LEIA MAIS as a div text node, with later genuine prose in
+    # the SAME div after the second linked headline and two line breaks.
+    opening = "O prefeito explicou os planos para o evento e a organização das próximas apresentações. " * 5
+    later = "Eduardo Cavaliere convidou os moradores de São Paulo para o evento no Rio."
+    ending = "As negociações com a produtora serão retomadas para definir a data das apresentações."
+    raw = f'''<link rel="canonical" href="https://odia.ig.com.br/rio/atual.html">
+      <meta property="article:published_time" content="2026-08-14T10:29:05-03:00">
+      <article><div class="article-body"><div class="texto">{opening}</div>
+      <div class="texto">LEIA MAIS:&nbsp;<a href="/outra.html">Hugo Leal em outra notícia.</a></div>
+      <div class="texto">LEIA MAIS:&nbsp;<a href="/terceira.html">Laura Carneiro em outro assunto.</a><br><br>{later}<br><br>{ending}</div>
+      </div></article>'''
+    result = discovery.extract_article(raw)
+    assert all(text in result["full_text"] for text in (opening, later, ending))
+    assert not any(text in result["full_text"] for text in ("LEIA MAIS", "Hugo Leal", "Laura Carneiro"))
+    assert result["published_at"] == "2026-08-14T13:29:05+00:00"
+
+
+def test_odia_link_removal_requires_exact_lead_at_start_of_text_block():
+    for host, prefix in [("example.com", "LEIA MAIS:"), ("odia.ig.com.br", 'A entrevistada recomendou: LEIA MAIS:')]:
+        raw=f'<link rel="canonical" href="https://{host}/atual.html"><article><div class="texto">{prefix}<a href="/outro">Eduardo Paes explicou o tema</a><br>Fim editorial.</div></article>'
+        result=discovery.extract_article(raw)
+        assert "Eduardo Paes" in result["full_text"] and "Fim editorial." in result["full_text"]
+
+
 def test_short_primary_body_remains_metadata_only_even_with_long_later_article():
     raw = '<article><p>Assine para continuar.</p></article><article><p>' + ('Outra notícia extensa. ' * 100) + '</p></article>'
     result = discovery.extract_article(raw)

@@ -512,12 +512,38 @@ def _sitemap(task, source, fetch):
 
 
 def _wordpress(task, source, fetch):
+    from .political_body_batches import WORDPRESS_BODY_SOURCES
+    include_body = source["key"] in WORDPRESS_BODY_SOURCES
     page = max(1, int((task.get("cursor") or {}).get("page") or 1))
     params = {"page": page, "per_page": 100, "orderby": "date", "order": "desc",
               "after": task["date_from"] + "T00:00:00", "before": (date.fromisoformat(task["date_to"]) + timedelta(days=1)).isoformat() + "T00:00:00",
               "_fields": "id,link,title,excerpt,date,date_gmt"}
+    if include_body:
+        params["_fields"] += ",content,modified_gmt"
     # No title/name search: date scans discover people mentioned only in bodies.
-    response = _get(fetch, source["base_url"].rstrip("/") + "/wp-json/wp/v2/posts?" + urlencode(params), allowed_statuses=(400,))
+    endpoint = source["base_url"].rstrip("/") + "/wp-json/wp/v2/posts?"
+    body_batch_fallback = ""
+    try:
+        response = _get(fetch, endpoint + urlencode(params), allowed_statuses=(400,))
+    except DiscoveryError as exc:
+        # Adding full bodies can exceed the transport's existing 8MiB/35s
+        # response budget. Retry only that precise failure as the original
+        # metadata query, preserving page size, page number and date bounds.
+        # HTTP429/503, cooldowns and unrelated timeouts keep normal retry policy.
+        cause, budget_failure = exc, False
+        for _ in range(5):
+            if cause is None:
+                break
+            if str(cause) in {"response_budget_exceeded", "response_too_large"} and not getattr(cause, "status_code", 0):
+                budget_failure = True
+                break
+            cause = cause.__cause__
+        if not include_body or not budget_failure:
+            raise
+        include_body = False
+        body_batch_fallback = "api_body_response_budget"
+        params["_fields"] = "id,link,title,excerpt,date,date_gmt"
+        response = _get(fetch, endpoint + urlencode(params), allowed_statuses=(400,))
     try:
         payload = json.loads(response.text)
     except (ValueError, TypeError) as exc:
@@ -529,6 +555,7 @@ def _wordpress(task, source, fetch):
     if not isinstance(payload, list):
         raise DiscoveryError("WordPress response is not a post list")
     candidates = []
+    body_records = []
     for row in payload:
         if not isinstance(row, dict) or not _allowed_url(str(row.get("link") or ""), source, article=True):
             continue
@@ -539,6 +566,11 @@ def _wordpress(task, source, fetch):
         rendered = lambda value: (value or {}).get("rendered", "") if isinstance(value, dict) else str(value or "")
         candidates.append(_candidate(source, row["link"], rendered(row.get("title")), published,
                                      rendered(row.get("excerpt")), {"wordpress_id": row.get("id"), "collection_mode": "date_scan"}))
+        content = row.get("content")
+        if include_body and published and isinstance(content, dict) and isinstance(content.get("rendered"), str) and type(row.get("id")) is int:
+            body_records.append({"post_id": row["id"], "url": candidates[-1]["url"], "published_at": published,
+                                 "content_html": content["rendered"], "protected": content.get("protected") is not False,
+                                 "modified_gmt": str(row.get("modified_gmt") or "")})
     total_pages_raw = response.headers.get("X-WP-TotalPages") or response.headers.get("x-wp-totalpages")
     try:
         total_pages = int(total_pages_raw) if total_pages_raw is not None else None
@@ -546,8 +578,16 @@ def _wordpress(task, source, fetch):
         raise DiscoveryError("invalid WordPress page count") from exc
     has_next = page < total_pages if total_pages is not None else len(payload) >= 100
     if has_next and page >= MAX_PAGES:
-        return _result(candidates, outcome="gap", raw_count=len(payload), gap_reason="wordpress_page_cap")
-    return _result(candidates, next_cursor={"page": page + 1} if has_next else None, raw_count=len(payload))
+        result = _result(candidates, outcome="gap", raw_count=len(payload), gap_reason="wordpress_page_cap")
+    else:
+        result = _result(candidates, next_cursor={"page": page + 1} if has_next else None, raw_count=len(payload))
+    if body_records:
+        # Ephemeral discovery output only. The worker stores one immutable object
+        # before attaching small references to candidate tasks and committing the cursor.
+        result["body_batch"] = {"source_key": source["key"], "records": body_records}
+    if body_batch_fallback:
+        result["body_batch_fallback"] = body_batch_fallback
+    return result
 
 
 def _archive(task, source, fetch):
@@ -774,6 +814,63 @@ def discover(task: dict[str, Any], fetch: Callable) -> dict[str, Any]:
 _VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
 _RELATED = re.compile(r'(?:related|relacionad|recommend|recomendad|leia[-_ ]?mais|read[-_ ]?more|sidebar|newsletter|comments|comentarios|social-share|outbrain|taboola|post-expansivel|more-posts|widget-playlist-player|passador-materia)', re.I)
 _BODY = re.compile(r'(?:entry-content|post-content|article-content|materia-content|content-body|article-body|articleBody|mc-article-body|story-body|content-txt-single)', re.I)
+_GLOBO_ARTICLE_HOSTS = {"g1.globo.com", "extra.globo.com", "oglobo.globo.com", "cbn.globo.com"}
+
+
+class _GloboArticleLinkList(HTMLParser):
+    """Recognize Globo's headline-only lists, preserving ordinary linked prose."""
+    def __init__(self, document_url):
+        super().__init__()
+        self.document = urlparse(document_url)
+        self.tags = []
+        self.items = []
+        self.item = None
+        self.valid = True
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == "ul" and "ul" in self.tags:
+            self.valid = False
+        if tag == "li":
+            if self.item is not None:
+                self.valid = False
+            self.item = {"links": [], "lead": "", "linked_text": False}
+        if tag == "a" and self.item is not None:
+            link = urlparse(urljoin(self.document.geturl(), attrs.get("href") or ""))
+            self.item["links"].append(
+                link.scheme in {"http", "https"} and link.hostname == self.document.hostname
+                and link.path.endswith(".ghtml") and link.path != self.document.path)
+        if tag not in _VOID_TAGS:
+            self.tags.append(tag)
+
+    def handle_data(self, data):
+        if not data.strip():
+            return
+        if self.item is None:
+            self.valid = False
+        elif "a" in self.tags:
+            self.item["linked_text"] = True
+        elif "strong" in self.tags:
+            self.item["lead"] += data
+        else:
+            # A genuine list item may cite a previous report while retaining
+            # its own prose. It must survive this narrowly scoped cleanup.
+            self.valid = False
+
+    def handle_endtag(self, tag):
+        if tag == "li" and self.item is not None:
+            self.items.append(self.item)
+            self.item = None
+        for index in range(len(self.tags) - 1, -1, -1):
+            if self.tags[index] == tag:
+                del self.tags[index:]
+                break
+
+    def is_related(self):
+        return self.valid and bool(self.items) and all(
+            item["links"] and all(item["links"]) and item["linked_text"]
+            and (not item["lead"].strip() or item["lead"].rstrip().endswith((":", ";")))
+            for item in self.items)
 
 
 class _ArticleParser(HTMLParser):
@@ -784,6 +881,7 @@ class _ArticleParser(HTMLParser):
         self.blocks = []
         self.scoped_blocks = []
         self.publisher_editorial_blocks = []
+        self.globo_link_lists = []
         self.body_scope = 0
         self.cleaned_scopes = set()
         self.title = ""
@@ -798,6 +896,8 @@ class _ArticleParser(HTMLParser):
         # HTML permits valueless attributes (for example <div class>), which
         # HTMLParser represents as None. Real Globo pages contain these.
         attrs = {key: value or "" for key, value in attrs}
+        for _, _, probe in self.globo_link_lists:
+            probe.handle_starttag(tag, attrs.items())
         if tag == "meta":
             key = attrs.get("property") or attrs.get("name")
             if key in {"og:title", "twitter:title"} and not self.title:
@@ -812,9 +912,11 @@ class _ArticleParser(HTMLParser):
             self.published = parse_publication_date(attrs.get("datetime", ""))
         if tag == "script" and "ld+json" in attrs.get("type", ""):
             self.script = []
-        publisher_author_box = "m-a-box" in attrs.get("class", "").split() and (
-            urlparse(self.document_url or self.canonical).hostname or "").lower().rstrip(".") in {"rc24h.com.br", "www.rc24h.com.br"}
-        related = bool(_RELATED.search(attrs.get("class", "") + " " + attrs.get("id", ""))) or publisher_author_box
+        publisher_host = (urlparse(self.document_url or self.canonical).hostname or "").lower().rstrip(".")
+        classes = set(attrs.get("class", "").split())
+        publisher_author_box = "m-a-box" in classes and publisher_host in {"rc24h.com.br", "www.rc24h.com.br"}
+        publisher_recommendations = publisher_host in _GLOBO_ARTICLE_HOSTS and "you-need-to-know-theme" in classes
+        related = bool(_RELATED.search(attrs.get("class", "") + " " + attrs.get("id", ""))) or publisher_author_box or publisher_recommendations
         blocked = (bool(self.stack) and self.stack[-1][1]) or tag in {"script", "style", "nav", "aside", "footer", "header", "form"} or related
         body = tag == "article" or bool(_BODY.search(attrs.get("class", "") + " " + attrs.get("itemprop", "")))
         # Exact tokens from RC24h's public article templates. Its enclosing
@@ -826,8 +928,12 @@ class _ArticleParser(HTMLParser):
             scope = self.body_scope
         if related and scope:
             self.cleaned_scopes.add(scope)
+        if tag == "ul" and "content-unordered-list" in classes and publisher_host in _GLOBO_ARTICLE_HOSTS and not blocked:
+            probe = _GloboArticleLinkList(self.document_url or self.canonical)
+            probe.handle_starttag(tag, attrs.items())
+            self.globo_link_lists.append((len(self.stack), len(self.parts), probe))
         if tag not in _VOID_TAGS:
-            self.stack.append((tag, blocked, len(self.parts), body, scope, publisher_editorial))
+            self.stack.append((tag, blocked, len(self.parts), body, scope, publisher_editorial, attrs))
         if tag in {"p", "div", "br", "li", "h1", "h2", "h3"} and not blocked:
             self.parts.append("\n")
 
@@ -837,14 +943,30 @@ class _ArticleParser(HTMLParser):
             self.handle_endtag(tag)
 
     def handle_endtag(self, tag):
+        for _, _, probe in self.globo_link_lists:
+            probe.handle_endtag(tag)
         if tag == "script" and self.script is not None:
             self.json_ld.append("".join(self.script))
             self.script = None
         for index in range(len(self.stack) - 1, -1, -1):
-            current, blocked, start, body, scope, publisher_editorial = self.stack[index]
+            current, blocked, start, body, scope, publisher_editorial, attrs = self.stack[index]
             if current != tag:
                 continue
-            if tag in {"p", "a"} and re.match(r"\s*(?:leia (?:tamb[eé]m|mais)|veja (?:tamb[eé]m|mais)|saiba mais|confira tamb[eé]m)\s*:", "".join(self.parts[start:]), re.I):
+            globo_related_list = tag == "ul" and any(
+                depth == index and probe.is_related() for depth, _, probe in self.globo_link_lists)
+            odia_prefix_start = None
+            if tag == "a" and index and self.stack[index - 1][0] == "div" and "texto" in self.stack[index - 1][6].get("class", "").split():
+                publisher_host = (urlparse(self.document_url or self.canonical).hostname or "").lower().rstrip(".")
+                prefix_start = self.stack[index - 1][2]
+                if publisher_host == "odia.ig.com.br" and re.fullmatch(r"\s*LEIA MAIS\s*:\s*", "".join(self.parts[prefix_start:start]), re.I):
+                    odia_prefix_start = prefix_start
+            if odia_prefix_start is not None:
+                # O Dia may put genuine later paragraphs in this same div.
+                # Remove only its explicit lead-in and immediate anchor.
+                del self.parts[odia_prefix_start:]
+                if scope:
+                    self.cleaned_scopes.add(scope)
+            elif globo_related_list or tag in {"p", "a"} and re.match(r"\s*(?:leia (?:tamb[eé]m|mais)|veja (?:tamb[eé]m|mais)|saiba mais|confira tamb[eé]m)\s*:", "".join(self.parts[start:]), re.I):
                 del self.parts[start:]
                 if scope:
                     self.cleaned_scopes.add(scope)
@@ -855,9 +977,12 @@ class _ArticleParser(HTMLParser):
                 if publisher_editorial:
                     self.publisher_editorial_blocks.append((scope, text))
             del self.stack[index:]
+            self.globo_link_lists = [row for row in self.globo_link_lists if row[0] < index]
             break
 
     def handle_data(self, data):
+        for _, _, probe in self.globo_link_lists:
+            probe.handle_data(data)
         if self.script is not None:
             self.script.append(data)
         if any(row[0] == "title" for row in self.stack):
@@ -899,13 +1024,18 @@ def extract_article(raw_html: str) -> dict[str, str]:
     # Infinite-scroll feeds can embed whole, longer stories after the requested
     # article. Only compare nested containers within the first article/body root.
     # A short primary/paywall body must never be replaced by an unrelated story.
-    primary_scope = min((scope for scope, block in parser.scoped_blocks if block.strip()), default=0)
+    publisher_host = (urlparse(parser.document_url or parser.canonical).hostname or "").lower().rstrip(".")
+    primary_candidates = {scope for scope, block in parser.scoped_blocks if block.strip()}
+    if publisher_host in _GLOBO_ARTICLE_HOSTS | {"odia.ig.com.br"}:
+        # Removing the only related cards can leave an empty primary body.
+        # That absence must not select a later story or polluted JSON-LD.
+        primary_candidates.update(parser.cleaned_scopes)
+    primary_scope = min(primary_candidates, default=0)
     primary_blocks = [block for scope, block in parser.scoped_blocks if scope == primary_scope]
     def normalized(block):
         return re.sub(r'[ \t\r\f\v]+', ' ', html.unescape(block)).strip()
     dom_blocks = [normalized(block) for block in primary_blocks]
     dom_body = max(dom_blocks, key=len) if dom_blocks else ""
-    publisher_host = (urlparse(parser.document_url or parser.canonical).hostname or "").lower().rstrip(".")
     exact_editorial = [normalized(block) for scope, block in parser.publisher_editorial_blocks
                        if scope == primary_scope] if publisher_host in {"rc24h.com.br", "www.rc24h.com.br"} else []
     if exact_editorial:
@@ -913,7 +1043,9 @@ def extract_article(raw_html: str) -> dict[str, str]:
         # sections. Never substitute a longer outer article/JSON-LD footer for
         # a short or unavailable primary body, and never cut on prose phrases.
         body = max(exact_editorial, key=len)
-    elif primary_scope in parser.cleaned_scopes and len(dom_body.split()) >= 40:
+    elif primary_scope in parser.cleaned_scopes and (
+        len(dom_body.split()) >= 40 or publisher_host in _GLOBO_ARTICLE_HOSTS | {"odia.ig.com.br"}
+    ):
         # Some publishers flatten related cards into articleBody. Once their
         # bounded DOM containers were removed, do not reintroduce that content
         # merely because the structured string is longer.
