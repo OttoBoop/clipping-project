@@ -783,6 +783,7 @@ class _ArticleParser(HTMLParser):
         self.parts = []
         self.blocks = []
         self.scoped_blocks = []
+        self.publisher_editorial_blocks = []
         self.body_scope = 0
         self.cleaned_scopes = set()
         self.title = ""
@@ -811,9 +812,14 @@ class _ArticleParser(HTMLParser):
             self.published = parse_publication_date(attrs.get("datetime", ""))
         if tag == "script" and "ld+json" in attrs.get("type", ""):
             self.script = []
-        related = bool(_RELATED.search(attrs.get("class", "") + " " + attrs.get("id", "")))
+        publisher_author_box = "m-a-box" in attrs.get("class", "").split() and (
+            urlparse(self.document_url or self.canonical).hostname or "").lower().rstrip(".") in {"rc24h.com.br", "www.rc24h.com.br"}
+        related = bool(_RELATED.search(attrs.get("class", "") + " " + attrs.get("id", ""))) or publisher_author_box
         blocked = (bool(self.stack) and self.stack[-1][1]) or tag in {"script", "style", "nav", "aside", "footer", "header", "form"} or related
         body = tag == "article" or bool(_BODY.search(attrs.get("class", "") + " " + attrs.get("itemprop", "")))
+        # Exact tokens from RC24h's public article templates. Its enclosing
+        # <article> also contains unrelated current headlines and navigation.
+        publisher_editorial = {"tdb_single_content", "td-post-content"}.issubset(attrs.get("class", "").split())
         scope = self.stack[-1][4] if self.stack else 0
         if body and not blocked and not scope:
             self.body_scope += 1
@@ -821,7 +827,7 @@ class _ArticleParser(HTMLParser):
         if related and scope:
             self.cleaned_scopes.add(scope)
         if tag not in _VOID_TAGS:
-            self.stack.append((tag, blocked, len(self.parts), body, scope))
+            self.stack.append((tag, blocked, len(self.parts), body, scope, publisher_editorial))
         if tag in {"p", "div", "br", "li", "h1", "h2", "h3"} and not blocked:
             self.parts.append("\n")
 
@@ -835,7 +841,7 @@ class _ArticleParser(HTMLParser):
             self.json_ld.append("".join(self.script))
             self.script = None
         for index in range(len(self.stack) - 1, -1, -1):
-            current, blocked, start, body, scope = self.stack[index]
+            current, blocked, start, body, scope, publisher_editorial = self.stack[index]
             if current != tag:
                 continue
             if tag in {"p", "a"} and re.match(r"\s*(?:leia (?:tamb[eé]m|mais)|veja (?:tamb[eé]m|mais)|saiba mais|confira tamb[eé]m)\s*:", "".join(self.parts[start:]), re.I):
@@ -846,6 +852,8 @@ class _ArticleParser(HTMLParser):
                 text = "".join(self.parts[start:])
                 self.blocks.append(text)
                 self.scoped_blocks.append((scope, text))
+                if publisher_editorial:
+                    self.publisher_editorial_blocks.append((scope, text))
             del self.stack[index:]
             break
 
@@ -897,7 +905,15 @@ def extract_article(raw_html: str) -> dict[str, str]:
         return re.sub(r'[ \t\r\f\v]+', ' ', html.unescape(block)).strip()
     dom_blocks = [normalized(block) for block in primary_blocks]
     dom_body = max(dom_blocks, key=len) if dom_blocks else ""
-    if primary_scope in parser.cleaned_scopes and len(dom_body.split()) >= 40:
+    publisher_host = (urlparse(parser.document_url or parser.canonical).hostname or "").lower().rstrip(".")
+    exact_editorial = [normalized(block) for scope, block in parser.publisher_editorial_blocks
+                       if scope == primary_scope] if publisher_host in {"rc24h.com.br", "www.rc24h.com.br"} else []
+    if exact_editorial:
+        # Keep the entire editorial container, including later Boca Miúda
+        # sections. Never substitute a longer outer article/JSON-LD footer for
+        # a short or unavailable primary body, and never cut on prose phrases.
+        body = max(exact_editorial, key=len)
+    elif primary_scope in parser.cleaned_scopes and len(dom_body.split()) >= 40:
         # Some publishers flatten related cards into articleBody. Once their
         # bounded DOM containers were removed, do not reintroduce that content
         # merely because the structured string is longer.
@@ -912,18 +928,24 @@ def extract_article(raw_html: str) -> dict[str, str]:
             "extraction_state": "full_text" if len(body.split()) >= 40 else "metadata_only"}
 
 
+def is_google_intermediary(url: str) -> bool:
+    """Google landing, consent and challenge pages are never publisher articles."""
+    host = (urlparse(url).hostname or "").lower().rstrip(".")
+    return any(host == domain or host.endswith("." + domain) for domain in ("google.com", "google.com.br"))
+
+
 def resolve_google_redirect(url: str, fetch: Callable, *, initial_response=None) -> str:
     """Resolve using the injected limiter for GET and the existing Google RPC."""
     if urlparse(url).hostname != "news.google.com":
         return url
     direct = (parse_qs(urlparse(url).query).get("url") or [""])[0]
     if direct.startswith(("https://", "http://")):
-        return canonicalize_url(direct)
+        return "" if is_google_intermediary(direct) else canonicalize_url(direct)
     # The fetch worker already retrieved this landing page. Reusing it avoids a
     # second Google request and keeps the one-request-per-second budget useful.
     response = initial_response if initial_response is not None else _get(fetch, url)
     if urlparse(response.url).hostname != "news.google.com":
-        return canonicalize_url(response.url)
+        return "" if is_google_intermediary(response.url) else canonicalize_url(response.url)
     token_match = re.search(r'/(?:rss/)?(?:articles|read)/([^/?#]+)', response.url)
     signature = re.search(r'data-n-a-sg=["\']([^"\']+)', response.text)
     timestamp = re.search(r'data-n-a-ts=["\'](\d+)', response.text)
@@ -940,7 +962,7 @@ def resolve_google_redirect(url: str, fetch: Callable, *, initial_response=None)
                 decoded = json.loads(row[2])
                 if isinstance(decoded, list) and len(decoded) >= 2 and decoded[0] == "garturlres":
                     resolved = str(decoded[1] or "")
-                    if resolved.startswith(("https://", "http://")):
+                    if resolved.startswith(("https://", "http://")) and not is_google_intermediary(resolved):
                         return canonicalize_url(resolved)
     except (ValueError, TypeError, IndexError):
         pass

@@ -856,6 +856,35 @@ def test_metadata_only_preserves_verified_page_date_and_window(service, monkeypa
         assert (items[0]["publishedAt"][:10] if items[0]["publishedAt"] else None) == expected_date
 
 
+@pytest.mark.parametrize("stage", ["landing", "resolver", "publisher_redirect"])
+def test_google_challenge_is_unresolved_metadata_never_a_publisher_or_article(service, monkeypatch, stage):
+    from web_app import political_discovery
+    start(service, monkeypatch, targets=("paes",), tasks=[{"source_key": "google_news", "strategy": "google_news", "cursor": {}}])
+    wrapper = "https://news.google.com/rss/articles/unresolved-public-story"
+    challenge = "https://www.google.com/sorry/index?continue=https%3A%2F%2Fexample.com%2Fstory"
+    publisher = "https://example.com/story"
+    candidate = {"url": wrapper, "title": "Eduardo Paes anuncia proposta", "source_key": "google_news",
+                 "source_name": "Google News", "published_at": "2026-06-01T12:00:00-03:00"}
+    enqueue(service, monkeypatch, candidate)
+    requests_made = []
+    def fetch(url, **kwargs):
+        requests_made.append(url)
+        return fake_response(challenge if stage == "landing" or url == publisher else url)
+    monkeypatch.setattr(service, "fetch", fetch)
+    if stage != "landing":
+        monkeypatch.setattr(political_discovery, "resolve_google_redirect", lambda *a, **k: challenge if stage == "resolver" else publisher)
+    monkeypatch.setattr(political_discovery, "extract_article", lambda *a: pytest.fail("must never extract a Google challenge"))
+    result = service.process_task(service.claim_task("fetch", worker_id="google-challenge"))
+    assert result["status"] == "retryable" and result["errorType"] == "google_url_unresolved"
+    assert len(requests_made) == (2 if stage == "publisher_redirect" else 1)
+    items = service.list_articles(allowed_target_keys=["paes"])["items"]
+    assert len(items) == 1 and items[0]["url"] == wrapper
+    assert items[0]["sourceKey"] == "google_news" and items[0]["bodyStatus"] == "metadata_only"
+    with service._connect() as conn:
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_articles WHERE canonical_url LIKE '%%/sorry/%%'").fetchone()["n"] == 0
+    assert service.store.objects == {}
+
+
 def test_resolved_google_forbidden_publisher_is_terminal_and_metadata_only(service, monkeypatch):
     from web_app import political_discovery
     start(service, monkeypatch)

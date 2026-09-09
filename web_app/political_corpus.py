@@ -1027,7 +1027,7 @@ class PoliticalCorpusService:
         return {"taskId": task["id"], "status": "outside_window"}
 
     def _fetch_article(self, task: dict) -> dict:
-        from .political_discovery import extract_article
+        from .political_discovery import extract_article, is_google_intermediary
         candidate = task["payload"]
         with self._connect() as conn:
             job = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (task["job_id"],)).fetchone()
@@ -1066,12 +1066,16 @@ class PoliticalCorpusService:
                 self._save_metadata_attempt(task, job, candidate, problem)
                 raise problem
             final_url = canonicalize_url(response.url)
-            if urlparse(final_url).hostname == "news.google.com":
+            if is_google_intermediary(final_url):
                 from . import political_discovery
                 resolver = getattr(political_discovery, "resolve_google_redirect", None)
-                resolved = resolver(final_url, self.fetch, initial_response=response) if resolver else None
-                if resolved and urlparse(resolved).hostname != "news.google.com":
+                resolved = resolver(candidate["url"], self.fetch, initial_response=response) if resolver and urlparse(candidate["url"]).hostname == "news.google.com" else None
+                if resolved and not is_google_intermediary(resolved):
                     response = self.fetch(resolved)
+                    if is_google_intermediary(response.url):
+                        problem = FetchProblem("google_url_unresolved")
+                        self._save_metadata_attempt(task, job, candidate, problem)
+                        raise problem
                     if response.status_code >= 400:
                         retry_at = retry_after_deadline(response.headers.get("Retry-After"))
                         problem = FetchProblem(f"http_{response.status_code}",

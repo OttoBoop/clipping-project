@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 
 DEFAULT_429_COOLDOWN_SECONDS = 60
+DEFAULT_503_COOLDOWN_SECONDS = 30
 
 
 def normalize_domain(hostname: str) -> str:
@@ -95,7 +96,7 @@ def active_cooldown(conn, domain: str) -> datetime | None:
 
 
 def record_response_cooldown(conn, domain: str, status_code: int, retry_after: str | None) -> datetime | None:
-    """429 always backs off; 503 only shares an explicit Retry-After deadline.
+    """Share explicit retry deadlines, with bounded defaults for 429 and 503.
 
     401/403 do not create a retry policy or change existing access restrictions.
     Database time anchors delta seconds consistently across worker processes.
@@ -105,9 +106,8 @@ def record_response_cooldown(conn, domain: str, status_code: int, retry_after: s
     now = conn.execute("SELECT clock_timestamp() AS now").fetchone()["now"]
     deadline = retry_after_deadline(retry_after, now=now)
     if deadline is None:
-        if status_code != 429:
-            return None
-        deadline = now + timedelta(seconds=DEFAULT_429_COOLDOWN_SECONDS)
+        seconds = DEFAULT_429_COOLDOWN_SECONDS if status_code == 429 else DEFAULT_503_COOLDOWN_SECONDS
+        deadline = now + timedelta(seconds=seconds)
     row = conn.execute("""INSERT INTO political_domain_limits(domain,cooldown_until,cooldown_status)
         VALUES (%s,%s,%s) ON CONFLICT(domain) DO UPDATE SET
         cooldown_until=GREATEST(political_domain_limits.cooldown_until,EXCLUDED.cooldown_until),

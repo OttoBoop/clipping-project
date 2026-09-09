@@ -179,10 +179,71 @@ def test_http_response_installs_durable_cooldown_without_shortening_it(service, 
 def test_403_does_not_create_cooldown_and_missing_429_header_uses_explicit_policy(service):
     with service._connect() as conn:
         assert record_response_cooldown(conn, "blocked.example", 403, "120") is None
-        assert record_response_cooldown(conn, "unavailable.example", 503, None) is None
+        assert record_response_cooldown(conn, "unauthorized.example", 401, "120") is None
         assert conn.execute("SELECT COUNT(*) AS n FROM political_domain_limits").fetchone()["n"] == 0
         deadline = record_response_cooldown(conn, "busy.example", 429, None)
     assert 55 < (deadline - datetime.now(timezone.utc)).total_seconds() <= 60
+
+
+@pytest.mark.parametrize("header", [None, "", "malformed", "nan", "-1"])
+def test_503_default_cooldown_preserves_longer_shared_deadlines(service, header):
+    with service._connect() as conn:
+        deadline = record_response_cooldown(conn, "news.google.com", 503, header)
+        assert 25 < (deadline - datetime.now(timezone.utc)).total_seconds() <= 30
+        longer = record_response_cooldown(conn, "news.google.com", 503, "7200")
+        assert (longer - datetime.now(timezone.utc)).total_seconds() > 7190
+        assert record_response_cooldown(conn, "news.google.com", 503, header) == longer
+
+
+def test_503_blocks_shared_google_queue_without_attempts_and_healthy_publisher_finishes(service, monkeypatch):
+    window = {"date_from": "2026-08-09", "date_to": "2026-08-09", "cursor": {}}
+    job = start(service, monkeypatch, discovery=[
+        {**window, "source_key": source, "strategy": "google_news", "query": '"Eduardo Paes"'}
+        for source in ["google_news", "rc24h", "metropoles"]
+    ] + [{**window, "source_key": "tupi", "strategy": "wordpress"}])
+    requests_made = []
+    def request(method, url, **kwargs):
+        requests_made.append(url)
+        response = requests.Response()
+        response.url = url
+        response.status_code = 503 if "news.google.com" in url else 200
+        response._content = b"temporarily unavailable" if response.status_code == 503 else b"[]"
+        response._content_consumed = True
+        return response
+    service._http_local.session = SimpleNamespace(request=request)
+    assert service.fetch("https://news.google.com/rss/search?q=outage").status_code == 503
+    healthy = service.claim_task("discovery", worker_id="healthy-after-503")
+    assert healthy["source_key"] == "tupi"
+    assert service.process_task(healthy)["status"] == "complete"
+    assert service.claim_task("discovery", worker_id="cooled-google") is None
+    with pytest.raises(DomainCooldown):
+        service.fetch("https://news.google.com/rss/search?q=another-name")
+    with service._connect() as conn:
+        rows = conn.execute("""SELECT status,attempts,lease_token FROM political_tasks
+            WHERE job_id=%s AND payload->>'strategy'='google_news'""", (job["id"],)).fetchall()
+    assert len(rows) == 3
+    assert all(row == {"status": "queued", "attempts": 0, "lease_token": None} for row in rows)
+    assert len(requests_made) == 2 and "tupi.fm" in requests_made[-1]
+
+
+def test_503_race_defers_claimed_google_discovery_without_exhausting_retry_budget(service, monkeypatch):
+    job = start(service, monkeypatch, discovery=[{
+        "source_key": "rc24h", "strategy": "google_news", "query": '"Eduardo Paes"',
+        "date_from": "2026-08-09", "date_to": "2026-08-09", "cursor": {},
+    }])
+    with service._connect() as conn:
+        conn.execute("UPDATE political_tasks SET attempts=5 WHERE job_id=%s", (job["id"],))
+    task = service.claim_task("discovery", worker_id="google-race")
+    assert task["attempts"] == 6
+    with service._connect() as conn:
+        deadline = record_response_cooldown(conn, "news.google.com", 503, None)
+    monkeypatch.setattr("web_app.political_corpus.time.sleep", lambda seconds: pytest.fail("cooldown must not occupy worker slots"))
+    service._http_local.session = SimpleNamespace(request=lambda *a, **kw: pytest.fail("cooldown must not issue HTTP"))
+    assert service.process_task(task)["status"] == "deferred"
+    with service._connect() as conn:
+        row = conn.execute("SELECT status,attempts,next_attempt_at,lease_token FROM political_tasks WHERE id=%s", (task["id"],)).fetchone()
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE job_id=%s", (job["id"],)).fetchone()["n"] == 1
+    assert row == {"status": "retryable", "attempts": 5, "next_attempt_at": deadline, "lease_token": None}
 
 
 def test_global_four_fetch_slots_remain_enforced(service, monkeypatch):

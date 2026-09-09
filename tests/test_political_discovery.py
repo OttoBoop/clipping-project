@@ -556,6 +556,80 @@ def test_cbn_playlist_and_next_story_widgets_preserve_editorial_continuation():
     assert "Pedro Paulo" not in result["full_text"]
 
 
+def test_rc24h_exact_editorial_container_keeps_long_column_and_excludes_outer_widgets():
+    # Exact class tokens and nesting observed in captured public RC24h articles,
+    # including the multi-section Boca Miúda column. Body text is synthetic.
+    url = "https://rc24h.com.br/boca-miuda-column"
+    opening = "Eduardo Paes participou do encontro municipal. " + "A coluna acompanha as decisões locais e seus efeitos para os moradores. " * 12
+    later = "Mais notícias sobre o orçamento foram discutidas pelos vereadores durante a sessão."
+    conclusion = "Pedro Paulo apresentou propostas ao governo do Rio na última seção editorial."
+    editorial = opening + "\n" + later + "\n" + conclusion
+    unrelated = "Hugo Leal aparece em outra notícia publicada hoje. " * 60
+    structured = json.dumps({"@type": "NewsArticle", "url": url, "articleBody": editorial + unrelated})
+    raw = f'''<meta property="og:url" content="{url}">
+      <meta property="article:published_time" content="2026-06-01T22:37:04+00:00">
+      <script type="application/ld+json">{structured}</script>
+      <article><h1>Boca Miúda</h1>
+      <div class="td_block_wrap tdb_single_content tdi_72 td-pb-border-top td_block_template_1 td-post-content tagdiv-type">
+        <div class="tdb-block-inner td-fix-index"><p>{opening}</p><h2>ORÇAMENTO</h2><p>{later}</p>
+        <div class="m-a-box"><div class="m-a-box-bio">Laura Carneiro appears only in the author biography.</div></div>
+        <h2>ÚLTIMA SEÇÃO</h2><p>{conclusion}</p></div>
+      </div><div class="td_block_wrap tdb_loop"><h2>Mais notícias</h2><p>{unrelated}</p></div></article>'''
+    result = discovery.extract_article(raw)
+    assert result["extraction_state"] == "full_text"
+    assert opening in result["full_text"] and later in result["full_text"] and conclusion in result["full_text"]
+    assert "ÚLTIMA SEÇÃO" in result["full_text"] and "Hugo Leal" not in result["full_text"]
+    assert "Laura Carneiro" not in result["full_text"]
+    assert result["published_at"] == "2026-06-01T22:37:04+00:00"
+
+
+def test_rc24h_short_editorial_container_does_not_fall_back_to_footer_or_later_article():
+    unrelated = "Hugo Leal e Eduardo Paes constam em outra matéria. " * 60
+    raw = f'''<link rel="canonical" href="https://rc24h.com.br/restricted-story/">
+      <script type="application/ld+json">{json.dumps({'@type': 'NewsArticle', 'articleBody': unrelated})}</script>
+      <article><div class="tdb_single_content td-post-content"><p>Conteúdo indisponível.</p></div>
+        <div class="tdb_loop">{unrelated}</div></article>
+      <article><div class="tdb_single_content td-post-content">{unrelated}</div></article>'''
+    result = discovery.extract_article(raw)
+    assert result["full_text"] == "Conteúdo indisponível."
+    assert result["extraction_state"] == "metadata_only"
+
+
+def test_rc24h_container_preference_requires_exact_classes_and_publisher_identity():
+    editorial = "A reportagem explica os investimentos previstos para os próximos meses. " * 12
+    later = "Uma segunda seção legítima descreve a fiscalização desses recursos."
+    for url, classes in [("https://example.com/story", "tdb_single_content td-post-content"),
+                         ("https://rc24h.com.br/story", "tdb_single_content_preview td-post-content")]:
+        raw = f'<link rel="canonical" href="{url}"><article><div class="{classes}">{editorial}</div><p>{later}</p></article>'
+        assert later in discovery.extract_article(raw)["full_text"]
+
+
+def test_metropoles_related_news_nested_articles_cannot_reenter_through_jsonld():
+    # Structure verified in the actual publisher page for saved article98.
+    url = "https://www.metropoles.com/brasil/campaign-recordings"
+    opening = "O presidente iniciou as gravações da campanha com candidatos de diversos estados. " * 5
+    later = "O candidato ao governo do Rio de Janeiro, Eduardo Paes, deve participar das gravações na sexta."
+    ending = "Além das filmagens, a equipe preparará mensagens destinadas às campanhas estaduais."
+    unrelated = "Hugo Leal aparece em outra reportagem sem relação com as gravações."
+    structured = json.dumps({"@type": "NewsArticle", "url": url,
+        "articleBody": opening + ' Leia também ' + unrelated * 20 + later + ending})
+    raw = f'''<meta property="og:url" content="{url}">
+      <meta property="article:published_time" content="2026-08-13T15:08:00-03:00">
+      <script type="application/ld+json">{structured}</script>
+      <article class="mtp-NTEzNjM0OA=="><section>
+        <div class="conteudoNoticia-module__P4yESq__conteudoNoticia enquete-module__5j_1KW__enqueteScope">
+        <p>{opening}</p><div class="m-news-list-content m-related-news"><h2>Leia também</h2>
+          <ul class="columns is-multiline"><li class="column is-full"><article class="m-feed m-feed-small">
+          <div class="m-box-text"><h3 class="m-title"><a>{unrelated}</a></h3></div></article></li></ul>
+        </div><p>{later}</p><p>{ending}</p></div>
+      </section></article>'''
+    result = discovery.extract_article(raw)
+    assert result["extraction_state"] == "full_text"
+    assert all(paragraph in result["full_text"] for paragraph in [opening, later, ending])
+    assert "Leia também" not in result["full_text"] and "Hugo Leal" not in result["full_text"]
+    assert result["published_at"] == "2026-08-13T18:08:00+00:00"
+
+
 def test_short_primary_body_remains_metadata_only_even_with_long_later_article():
     raw = '<article><p>Assine para continuar.</p></article><article><p>' + ('Outra notícia extensa. ' * 100) + '</p></article>'
     result = discovery.extract_article(raw)
