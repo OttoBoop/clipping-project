@@ -345,8 +345,14 @@
       "strategies": [
         "google_news"
       ],
-      "known_constraint": "Domain-specific Google discovery only; no direct API/archive capability claimed.",
-      "evidence": [],
+      "known_constraint": "Domain-specific Google discovery remains enabled. The advertised WordPress API index is public but its posts endpoint returned HTTP 401 on September 9; direct API collection is unavailable without publisher authorization.",
+      "evidence": [
+        {
+          "url": "https://rc24h.com.br/robots.txt",
+          "basis": "Advertises sitemap and public wp-json index through Link header. Date-filtered posts endpoint returned HTTP 401; no protected API collection scheduled.",
+          "verified_at": "2026-09-09"
+        }
+      ],
       "enabled": true,
       "google_policy": "always"
     },
@@ -355,12 +361,20 @@
       "name": "J3News",
       "domain": "j3news.com",
       "strategies": [
+        "wordpress",
         "google_news"
       ],
-      "known_constraint": "Domain-specific Google discovery only; no direct API/archive capability claimed.",
-      "evidence": [],
+      "known_constraint": "Publisher-advertised WordPress REST API supports publication-window discovery: August 9 returned 19 posts on one page. Historical domain Google discovery remains enabled. Fetch article bodies before matching; date-only permalink evidence is not sufficient to verify publication.",
+      "evidence": [
+        {
+          "url": "https://j3news.com/robots.txt",
+          "basis": "HTTP 200 and Link rel=https://api.w.org/ advertises /wp-json/. Public wp/v2 posts returned HTTP 200, X-WP-Total=19 and X-WP-TotalPages=1 for August 9.",
+          "verified_at": "2026-09-09"
+        }
+      ],
       "enabled": true,
-      "google_policy": "always"
+      "google_policy": "always",
+      "base_url": "https://j3news.com"
     }
   ]
 }

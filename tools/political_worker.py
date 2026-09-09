@@ -14,6 +14,7 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from web_app.political_corpus import political_corpus
+from web_app.political_metrics import configure_logging, reporting_loop, task_metrics
 
 log = logging.getLogger("political_worker")
 
@@ -41,8 +42,9 @@ def worker_loop(service, kind: str, worker_id: str, stop: threading.Event, *, on
                 renewer = threading.Thread(target=renew, name=f"{worker_id}-lease", daemon=True)
                 renewer.start()
                 try:
-                    result = service.process_task(task)
-                    log.info("task complete worker=%s task=%s status=%s", worker_id, task["id"], result.get("status"))
+                    with task_metrics(task) as measured:
+                        result = service.process_task(task)
+                        measured.outcome = result.get("status", "error")
                 finally:
                     lease_stop.set()
                     renewer.join(timeout=5)
@@ -70,10 +72,15 @@ def main() -> int:
     parser.add_argument("--once", action="store_true")
     args = parser.parse_args()
     logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"), format="%(asctime)s %(levelname)s %(message)s")
+    configure_logging()
     stop = threading.Event()
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     signal.signal(signal.SIGINT, lambda *_: stop.set())
     political_corpus.ensure_schema()
+    metrics_stop = threading.Event()
+    metrics_reporter = threading.Thread(target=reporting_loop, args=(metrics_stop,), daemon=True,
+                                        name="political-metrics")
+    metrics_reporter.start()
     identity = f"{socket.gethostname()}:{os.getpid()}"
     failed = threading.Event()
 
@@ -93,15 +100,21 @@ def main() -> int:
     if args.once:
         for thread in threads:
             thread.join()
+        metrics_stop.set()
+        metrics_reporter.join(timeout=5)
         return 1 if failed.is_set() else 0
     while not stop.wait(1):
         if any(not thread.is_alive() for thread in threads):
             log.error("worker capacity lost; exiting for process supervision")
             stop.set()
+            metrics_stop.set()
+            metrics_reporter.join(timeout=5)
             return 1
     deadline = time.monotonic() + 25
     for thread in threads:
         thread.join(timeout=max(0, deadline - time.monotonic()))
+    metrics_stop.set()
+    metrics_reporter.join(timeout=5)
     return 0
 
 

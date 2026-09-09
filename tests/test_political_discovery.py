@@ -47,8 +47,8 @@ def test_source_scoped_history_queries_and_registry_capabilities():
     tasks = discovery.build_tasks([{"key": "paes", "display_name": "Eduardo Paes"}],
                                   "2026-06-01", "2026-06-07", ["metropoles", "rc24h", "j3news", "tupi", "odia"])
     sources = {row["key"]: row for row in discovery.load_sources()}
-    assert sources["rc24h"]["strategies"] == ["google_news"]
-    assert sources["j3news"]["strategies"] == ["google_news"]
+    assert "google_news" in sources["rc24h"]["strategies"]
+    assert "google_news" in sources["j3news"]["strategies"]
     assert "wordpress" not in sources["metropoles"]["strategies"]
     assert all("site:" in row["query"] for row in tasks if row["strategy"] == "google_news")
     assert any(row.get("url") == "https://www.metropoles.com/sitemap/google-news.xml" for row in tasks)
@@ -377,6 +377,42 @@ def test_extraction_removes_related_blocks_without_full_page_fallback():
     assert "Eduardo" not in extracted["full_text"]
     assert extracted["published_at"] == "2026-06-02T01:00:00+00:00"
     assert discovery.extract_article('<nav>' + body + '</nav>')["extraction_state"] == "metadata_only"
+
+
+def test_extraction_primary_body_cannot_be_replaced_by_longer_infinite_scroll_story():
+    primary = "Eduardo Paes não compareceu ao debate. " * 12
+    unrelated = "Hugo Leal participa de outra campanha. " * 60
+    raw = '<div class="entry-content"><p>' + primary + '</p></div>' \
+          '<div id="post-expansivel"><div class="elementor-widget-theme-post-content"><p>' + unrelated + '</p></div></div>' \
+          '<article><div class="entry-content"><p>' + unrelated + '</p></div></article>'
+    result = discovery.extract_article(raw)
+    assert result["extraction_state"] == "full_text"
+    assert result["full_text"] == primary.strip()
+    assert "Hugo Leal" not in result["full_text"]
+
+
+def test_extraction_nested_primary_body_keeps_full_editorial_text_and_blocks_expanded_posts():
+    primary = "O primeiro debate ocorreu no Rio de Janeiro. " * 12
+    raw = '<article><div class="entry-content"><p>' + primary + '</p><div class="more-posts">Hugo Leal</div></div>' \
+          '<div id="post-expansivel"><div class="entry-content">' + ('Hugo Leal ' * 100) + '</div></div></article>'
+    result = discovery.extract_article(raw)
+    assert primary.strip() in result["full_text"]
+    assert "Hugo Leal" not in result["full_text"]
+
+
+def test_short_primary_body_remains_metadata_only_even_with_long_later_article():
+    raw = '<article><p>Assine para continuar.</p></article><article><p>' + ('Outra notícia extensa. ' * 100) + '</p></article>'
+    result = discovery.extract_article(raw)
+    assert result["extraction_state"] == "metadata_only"
+    assert result["full_text"] == "Assine para continuar."
+
+
+def test_structured_body_for_another_canonical_article_is_not_selected():
+    primary = "Eduardo Paes não compareceu ao debate. " * 12
+    raw = '<link rel="canonical" href="https://example.com/debate"><div class="entry-content">' + primary + '</div>'
+    other = {"@type": "NewsArticle", "url": "https://example.com/outra-noticia", "articleBody": "Hugo Leal " * 200}
+    raw += '<script type="application/ld+json">' + json.dumps(other) + '</script>'
+    assert discovery.extract_article(raw)["full_text"] == primary.strip()
 
 
 def test_structured_article_body_and_date_are_usable_without_html_body():

@@ -30,6 +30,7 @@ from pipeline.matcher import CitationMatcher, Target
 from pipeline.normalization import canonicalize_url, clean_title
 from .config import DATA_DIR
 from .political_schema import SCHEMA_SQL, SCHEMA_UPGRADES, SCHEMA_VERSION
+from .political_metrics import record_timing, timed_operation
 from .publisher_tls import publisher_verify
 from .storage_bridge import ArtifactStore, artifact_store
 
@@ -524,6 +525,7 @@ class PoliticalCorpusService:
                         raise FetchProblem("text_object_too_large", retryable=False)
                     chunks.append(part)
             finally:
+                record_timing("http_body", time.monotonic() - started, status_code=response.status_code)
                 response.close()
             payload = b"".join(chunks)
         import io
@@ -747,7 +749,8 @@ class PoliticalCorpusService:
             self._public_url(current)
             wait = self.reserve_domain(urlparse(current).hostname.lower())
             if wait:
-                time.sleep(min(wait, 60))
+                with timed_operation("throttle_wait"):
+                    time.sleep(min(wait, 60))
             session = getattr(self._http_local, "session", None)
             if session is None:
                 session = self._http_local.session = requests.Session()
@@ -755,9 +758,11 @@ class PoliticalCorpusService:
             method = str(kwargs.get("method") or "GET").upper()
             if method not in {"GET", "POST"}:
                 raise FetchProblem("invalid_fetch_method", retryable=False)
-            response = session.request(method, current, data=kwargs.get("data"), headers=kwargs.get("headers"),
-                                       timeout=(8, 60 if large_sitemap else 20), allow_redirects=False, stream=True,
-                                       verify=publisher_verify(current))
+            with timed_operation("http") as measurement:
+                response = session.request(method, current, data=kwargs.get("data"), headers=kwargs.get("headers"),
+                                           timeout=(8, 60 if large_sitemap else 20), allow_redirects=False, stream=True,
+                                           verify=publisher_verify(current))
+                measurement.status_code = response.status_code
             if response.is_redirect or response.is_permanent_redirect:
                 location = response.headers.get("Location")
                 response.close()
@@ -816,8 +821,9 @@ class PoliticalCorpusService:
             raise FetchProblem("body_too_large", retryable=False)
         digest = hashlib.sha256(raw).hexdigest()
         key = f"{self.store.prefix}/political/objects/{digest[:2]}/{digest}.txt.gz"
-        if not self.store.enabled or not self.store.upload_bytes(gzip.compress(raw, mtime=0), key, "application/gzip"):
-            raise FetchProblem("body_storage_failed")
+        with timed_operation("object_upload"):
+            if not self.store.enabled or not self.store.upload_bytes(gzip.compress(raw, mtime=0), key, "application/gzip"):
+                raise FetchProblem("body_storage_failed")
         return digest, key
 
     def _store_html(self, raw_html: str) -> tuple[str, str]:
@@ -826,8 +832,9 @@ class PoliticalCorpusService:
             raise FetchProblem("html_too_large", retryable=False)
         digest = hashlib.sha256(raw).hexdigest()
         key = f"{self.store.prefix}/political/objects/{digest[:2]}/{digest}.html.gz"
-        if not self.store.enabled or not self.store.upload_bytes(gzip.compress(raw, mtime=0), key, "application/gzip"):
-            raise FetchProblem("html_storage_failed")
+        with timed_operation("object_upload"):
+            if not self.store.enabled or not self.store.upload_bytes(gzip.compress(raw, mtime=0), key, "application/gzip"):
+                raise FetchProblem("html_storage_failed")
         return digest, key
 
     def process_task(self, task: dict) -> dict:
@@ -948,7 +955,8 @@ class PoliticalCorpusService:
                     problem = FetchProblem("google_url_unresolved")
                     self._save_metadata_attempt(task, job, candidate, problem)
                     raise problem
-            extracted = extract_article(response.text)
+            with timed_operation("extraction"):
+                extracted = extract_article(response.text)
             body = str(extracted.get("full_text") or "")
             title = str(extracted.get("title") or title)
             page_date = parse_date(extracted.get("published_at"))

@@ -1,0 +1,1525 @@
+{
+  "version": "psd_rj_2026_real_articles_v1",
+  "profile_key": "psd_rj_2026",
+  "verified_at": "2026-09-09",
+  "roster_manifest": "data/psd_rj_2026_profile.json",
+  "date_scope": {
+    "date_from": "2026-06-01",
+    "date_to": "2026-09-09",
+    "timezone": "America/Sao_Paulo",
+    "inclusive": true
+  },
+  "purpose": "Independent real publisher article reference for comparing the PSD collection in PostgreSQL. No generated articles or production observations are included.",
+  "annotation_policy": "Positive associations are manually grounded in publisher editorial text returned by the web reader or indexed publisher-body results. Search summaries alone, related links, tags and comments do not establish a match. Only assessed_target_keys may contribute to association precision; unassessed names are unknown.",
+  "limitations": [
+    "Convenience sample of 40 real URLs across ten publishers and all 24 approved people; neither statistically representative nor complete by person, source, date or event.",
+    "All verification was mediated by web page opening or indexed publisher editorial text. This does not prove direct collector access, successful extraction, production storage or freshness of a cached page.",
+    "Three J3News dates come from publisher URL paths corroborated by event timing, without an explicit publication timestamp in the returned article. Publication dates remain UNVERIFIED and eligible_for_strict_date_evaluation=false. Evaluate the 37 visible-date cases separately; do not relax the checker whitelist to include these three.",
+    "Verified public addresses are lookup keys, not assertions about rel=canonical. One O Dia URL is an AMP address; unverified non-AMP aliases were not invented.",
+    "Only five explicit negative person associations were assessed across four articles. A low error rate here cannot establish corpus-wide precision; all other unlisted people are unassessed.",
+    "Some separate URLs report the same event or campaign, so 40 URLs do not mean 40 independent news events.",
+    "No verified O Globo, G1, Extra or CBN article was added in this bounded research. O Globo access was blocked by the web reader and useful G1 results were not returned. This is a reference coverage gap, not evidence that those outlets published no relevant news.",
+    "One source is Câmara Municipal do Rio institutional reporting and must remain distinguishable from nine independent news publishers.",
+    "No collection was started and no production articles, recall measurements or readiness gates are claimed by this file."
+  ],
+  "thresholds": {
+    "min_article_recall": 0.9,
+    "min_person_recall": 0.9,
+    "max_incorrect_person_match_rate": 0.05
+  },
+  "summary": {
+    "article_count": 40,
+    "publisher_count": 10,
+    "news_outlet_count": 9,
+    "institutional_publisher_count": 1,
+    "approved_target_count": 24,
+    "covered_target_count": 24,
+    "positive_association_count": 107,
+    "explicit_negative_association_count": 5,
+    "by_source": {
+      "odia": 5,
+      "tupi": 3,
+      "rc24h": 3,
+      "j3news": 3,
+      "tempo_real_rj": 12,
+      "metropoles": 5,
+      "diario_do_rio": 2,
+      "agenda_do_poder": 4,
+      "veja_rio": 2,
+      "camara_rio": 1
+    },
+    "by_month": {
+      "2026-06": 13,
+      "2026-08": 14,
+      "2026-09": 4,
+      "2026-07": 9
+    },
+    "by_target": {
+      "salvino_oliveira": 5,
+      "eduardo_cavaliere": 10,
+      "eduardo_paes": 20,
+      "pedro_paulo": 15,
+      "renan_ferreirinha": 5,
+      "marcio_ribeiro": 6,
+      "laura_carneiro": 2,
+      "felipe_boro": 5,
+      "joao_pires": 4,
+      "marcelo_diniz": 1,
+      "rafael_aloisio_freitas": 2,
+      "flavio_valle": 5,
+      "junior_da_lucinha": 3,
+      "pedro_duarte": 4,
+      "carlo_caiado": 2,
+      "rosa_fernandes": 1,
+      "luiz_paulo": 3,
+      "atila_nunes": 2,
+      "guilherme_schleder": 2,
+      "joyce_trindade": 3,
+      "sergio_fernandes": 1,
+      "otoni_de_paula": 3,
+      "hugo_leal": 1,
+      "daniel_soranz": 2
+    },
+    "by_verification_method": {
+      "web_publisher_page_open": 17,
+      "web_indexed_publisher_article_body": 23
+    },
+    "url_date_only_count": 3,
+    "strict_date_article_count": 37,
+    "unverified_publication_date_article_count": 3
+  },
+  "cases": [
+    {
+      "id": "psd_2026_001",
+      "kind": "public_article",
+      "source_key": "odia",
+      "publisher": "O Dia",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-27",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://odia.ig.com.br/colunas/informe-do-dia/2026/06/7269810-salvino-oliveira-ve-chances-de-ser-deputado-federal.html",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "salvino_oliveira",
+        "eduardo_cavaliere",
+        "eduardo_paes",
+        "pedro_paulo"
+      ],
+      "assessed_target_keys": [
+        "salvino_oliveira",
+        "eduardo_cavaliere",
+        "eduardo_paes",
+        "pedro_paulo"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://odia.ig.com.br/colunas/informe-do-dia/2026/06/7269810-salvino-oliveira-ve-chances-de-ser-deputado-federal.html",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Anúncio da pré-candidatura de Salvino na Cidade de Deus cita Cavaliere, Paes e Pedro Paulo como presenças confirmadas."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_002",
+      "kind": "public_article",
+      "source_key": "tupi",
+      "publisher": "Super Rádio Tupi",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-16",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://www.tupi.fm/rio/eduardo-paes-inicia-campanha-ao-governo-do-rio-neste-domingo/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://www.tupi.fm/rio/eduardo-paes-inicia-campanha-ao-governo-do-rio-neste-domingo/",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Agenda inicial da campanha de Paes descreve missa na Penha e passagem por Caxias, acompanhado de Pedro Paulo."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_003",
+      "kind": "public_article",
+      "source_key": "rc24h",
+      "publisher": "RC24h",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-28",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://rc24h.com.br/boca-miuda-os-bastidores-da-politica-na-regiao-dos-lagos-nesta-sexta-feira-28-10/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo",
+        "renan_ferreirinha"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo",
+        "renan_ferreirinha"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://rc24h.com.br/boca-miuda-os-bastidores-da-politica-na-regiao-dos-lagos-nesta-sexta-feira-28-10/",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Coluna relata comício em Arraial e visita a obras de batalhão em Araruama; os três aparecem no texto editorial."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_004",
+      "kind": "public_article",
+      "source_key": "j3news",
+      "publisher": "J3News",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-26",
+      "date_basis": "publisher_url_date",
+      "date_basis_detail": "publisher_url_date_corroborated_by_editorial_event_not_explicit_publication_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://j3news.com/2026/08/26/paes-mantem-lideranca-com-349-enquanto-ruas-avanca-para-147-aponta-pesquisa/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://j3news.com/2026/08/26/paes-mantem-lideranca-com-349-enquanto-ruas-avanca-para-147-aponta-pesquisa/",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Texto de pesquisa eleitoral identifica Paes; data do endereço corroborada pela divulgação no dia 26 citada no corpo."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": false
+    },
+    {
+      "id": "psd_2026_005",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-15",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://temporealrj.com/marcio-ribeiro-psd-deputado-federal/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "marcio_ribeiro",
+        "eduardo_cavaliere",
+        "pedro_paulo",
+        "eduardo_paes"
+      ],
+      "assessed_target_keys": [
+        "marcio_ribeiro",
+        "eduardo_cavaliere",
+        "pedro_paulo",
+        "eduardo_paes"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/marcio-ribeiro-psd-deputado-federal/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Anúncio da pré-candidatura de Márcio Ribeiro cita reunião com Cavaliere e a composição eleitoral com Pedro Paulo e Paes."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_006",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-15",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://temporealrj.com/laura-carneiro-herda-estrutura-pedro-paulo/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "laura_carneiro",
+        "pedro_paulo",
+        "marcio_ribeiro",
+        "eduardo_cavaliere",
+        "salvino_oliveira",
+        "felipe_boro"
+      ],
+      "assessed_target_keys": [
+        "laura_carneiro",
+        "pedro_paulo",
+        "marcio_ribeiro",
+        "eduardo_cavaliere",
+        "salvino_oliveira",
+        "felipe_boro"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/laura-carneiro-herda-estrutura-pedro-paulo/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Coluna sobre a estrutura eleitoral destinada a Laura cita no corpo Márcio, Cavaliere, Salvino e Felipe Boró."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_007",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-04",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://temporealrj.com/christi-sao-goncalo-pl-psd-psol-2026/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "joao_pires",
+        "renan_ferreirinha"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "joao_pires",
+        "renan_ferreirinha"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/christi-sao-goncalo-pl-psd-psol-2026/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Cobertura de Corpus Christi em São Gonçalo identifica João Pires e Renan como representantes de Paes no evento."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_008",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-07",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://temporealrj.com/patrimonio-milionario-vereador-felipe-boro-psd/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "felipe_boro"
+      ],
+      "assessed_target_keys": [
+        "felipe_boro"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/patrimonio-milionario-vereador-felipe-boro-psd/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Reportagem compara declarações patrimoniais do vereador Felipe Boró, incluindo a filiação histórica ao Patriota."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_009",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-07",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://temporealrj.com/camara-do-rio-tera-28-candidatos-em-outubro/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo",
+        "felipe_boro",
+        "marcelo_diniz",
+        "marcio_ribeiro",
+        "rafael_aloisio_freitas",
+        "salvino_oliveira",
+        "flavio_valle",
+        "junior_da_lucinha",
+        "pedro_duarte"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo",
+        "felipe_boro",
+        "marcelo_diniz",
+        "marcio_ribeiro",
+        "rafael_aloisio_freitas",
+        "salvino_oliveira",
+        "flavio_valle",
+        "junior_da_lucinha",
+        "pedro_duarte"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/camara-do-rio-tera-28-candidatos-em-outubro/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Levantamento editorial das pré-candidaturas de vereadores lista os nomes em seções sobre Câmara Federal e ALERJ."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_010",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-26",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://temporealrj.com/camara-do-rio-projeto-luciana-novaes-rua/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "carlo_caiado",
+        "eduardo_cavaliere",
+        "rafael_aloisio_freitas",
+        "junior_da_lucinha",
+        "pedro_duarte",
+        "rosa_fernandes",
+        "marcio_ribeiro",
+        "felipe_boro"
+      ],
+      "assessed_target_keys": [
+        "carlo_caiado",
+        "eduardo_cavaliere",
+        "rafael_aloisio_freitas",
+        "junior_da_lucinha",
+        "pedro_duarte",
+        "rosa_fernandes",
+        "marcio_ribeiro",
+        "felipe_boro",
+        "atila_nunes"
+      ],
+      "forbidden_target_keys": [
+        "atila_nunes"
+      ],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/camara-do-rio-projeto-luciana-novaes-rua/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Homenagem a Luciana Novaes identifica autor, prefeito e coautores. Átila Nunes nesta lista é vereador, não o político estadual aprovado."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_011",
+      "kind": "public_article",
+      "source_key": "odia",
+      "publisher": "O Dia",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-12",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://odia.ig.com.br/rio-de-janeiro/2026/06/amp/7263878-justica-manda-devolver-bens-apreendidos-de-salvino-oliveira-apos-investigacao-ser-trancada.html",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "salvino_oliveira"
+      ],
+      "assessed_target_keys": [
+        "salvino_oliveira"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://odia.ig.com.br/rio-de-janeiro/2026/06/amp/7263878-justica-manda-devolver-bens-apreendidos-de-salvino-oliveira-apos-investigacao-ser-trancada.html",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Texto publicado às 18h28 relata decisão de devolver bens a Salvino após trancamento da investigação; leitura pelo índice do veículo, pois a abertura retornou cache miss."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_012",
+      "kind": "public_article",
+      "source_key": "tupi",
+      "publisher": "Super Rádio Tupi",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-17",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://www.tupi.fm/eleicoes/candidato-ao-governo-do-rio-paes-propoe-reunificar-secretarias-de-seguranca-autoridade-e-comando/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://www.tupi.fm/eleicoes/candidato-ao-governo-do-rio-paes-propoe-reunificar-secretarias-de-seguranca-autoridade-e-comando/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Entrevista no PodCobrar apresenta a proposta de Paes para o comando da segurança; página indexada mostra 17/08/26 17h21, apesar de idade incorreta no resultado de busca."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_013",
+      "kind": "public_article",
+      "source_key": "rc24h",
+      "publisher": "RC24h",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-31",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://rc24h.com.br/boca-miuda-os-bastidores-da-politica-na-regiao-dos-lagos-nesta-segunda-feira-31-6/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "renan_ferreirinha",
+        "eduardo_paes",
+        "pedro_paulo"
+      ],
+      "assessed_target_keys": [
+        "renan_ferreirinha",
+        "eduardo_paes",
+        "pedro_paulo"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://rc24h.com.br/boca-miuda-os-bastidores-da-politica-na-regiao-dos-lagos-nesta-segunda-feira-31-6/",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "A seção sobre campanha de Ana Paula relata reunião com Renan; outro trecho editorial recorda o comício com Paes e Pedro Paulo."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_014",
+      "kind": "public_article",
+      "source_key": "j3news",
+      "publisher": "J3News",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-22",
+      "date_basis": "publisher_url_date",
+      "date_basis_detail": "publisher_url_date_corroborated_by_editorial_event_not_explicit_publication_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://j3news.com/2026/06/22/eduardo-paes-participa-de-encontro-em-campos-para-ouvir-propostas-para-o-norte-e-noroeste-fluminense/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://j3news.com/2026/06/22/eduardo-paes-participa-de-encontro-em-campos-para-ouvir-propostas-para-o-norte-e-noroeste-fluminense/",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Anúncio de encontro da CDL identifica Eduardo Paes; 22 de junho aparece no endereço e no evento descrito para aquela segunda-feira."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": false
+    },
+    {
+      "id": "psd_2026_015",
+      "kind": "public_article",
+      "source_key": "odia",
+      "publisher": "O Dia",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-21",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://odia.ig.com.br/colunas/informe-do-dia/2026/08/7293090-conceicao-tavares-pode-virar-nome-de-rua-no-rio.html",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "salvino_oliveira"
+      ],
+      "assessed_target_keys": [
+        "salvino_oliveira",
+        "pedro_paulo",
+        "eduardo_paes"
+      ],
+      "forbidden_target_keys": [
+        "pedro_paulo",
+        "eduardo_paes"
+      ],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://odia.ig.com.br/colunas/informe-do-dia/2026/08/7293090-conceicao-tavares-pode-virar-nome-de-rua-no-rio.html",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Nota editorial trata de projeto de Salvino. Pedro Paulo e Eduardo Paes aparecem somente em tags ou notícias relacionadas, excluídos das associações."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_016",
+      "kind": "public_article",
+      "source_key": "tupi",
+      "publisher": "Super Rádio Tupi",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-24",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://www.tupi.fm/rio/veja-como-as-duas-novas-agulhas-na-av-brasil-vao-mudar-seu-trajeto-para-o-porto/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_cavaliere"
+      ],
+      "assessed_target_keys": [
+        "eduardo_cavaliere"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://www.tupi.fm/rio/veja-como-as-duas-novas-agulhas-na-av-brasil-vao-mudar-seu-trajeto-para-o-porto/",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Corpo da reportagem sobre acessos da Avenida Brasil ao porto identifica e atribui declaração ao prefeito Cavaliere."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_017",
+      "kind": "public_article",
+      "source_key": "rc24h",
+      "publisher": "RC24h",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-19",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://rc24h.com.br/boca-miuda-os-bastidores-da-politica-na-regiao-dos-lagos-nesta-quarta-feira-19-10/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "renan_ferreirinha",
+        "pedro_paulo"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "renan_ferreirinha",
+        "pedro_paulo"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://rc24h.com.br/boca-miuda-os-bastidores-da-politica-na-regiao-dos-lagos-nesta-quarta-feira-19-10/",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Coluna relata a agenda de Paes em cinco municípios e descreve propostas de Renan e Pedro Paulo na seção sobre aliados."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_018",
+      "kind": "public_article",
+      "source_key": "j3news",
+      "publisher": "J3News",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-23",
+      "date_basis": "publisher_url_date",
+      "date_basis_detail": "publisher_url_date_event_is_previous_day_no_explicit_publication_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://j3news.com/2026/06/23/com-eduardo-paes-primeiro-encontro-de-escuta-e-propostas-da-cdl-campos-reune-grande-publico/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://j3news.com/2026/06/23/com-eduardo-paes-primeiro-encontro-de-escuta-e-propostas-da-cdl-campos-reune-grande-publico/",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Reportagem do encontro da CDL cita Paes e Pedro Paulo no corpo. Endereço indica 23/06; o encontro narrado ocorreu na noite de 22/06."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": false
+    },
+    {
+      "id": "psd_2026_019",
+      "kind": "public_article",
+      "source_key": "metropoles",
+      "publisher": "Metrópoles",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-09",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://www.metropoles.com/brasil/debate-rj-ausente-paes-vira-alvo-ruas-cita-confianca-de-bolsonaro",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://www.metropoles.com/brasil/debate-rj-ausente-paes-vira-alvo-ruas-cita-confianca-de-bolsonaro",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Cobertura do debate cita Paes no início e Pedro Paulo na seção editorial posterior ao formulário de newsletter."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_020",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-17",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://temporealrj.com/oficio-juizado-especial-civel-copacabana/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "flavio_valle"
+      ],
+      "assessed_target_keys": [
+        "flavio_valle"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/oficio-juizado-especial-civel-copacabana/",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Texto sobre a preservação do juizado de Copacabana identifica Valle como autor dos ofícios e atribui declaração ao vereador."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_021",
+      "kind": "public_article",
+      "source_key": "diario_do_rio",
+      "publisher": "Diário do Rio",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-22",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://www.diariodorio.com/politica/2026/08/567000-quem-e-o-candidato-a-deputado-estadual-do-rio-de-janeiro-do-vasco.html",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "pedro_duarte"
+      ],
+      "assessed_target_keys": [
+        "pedro_duarte"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://www.diariodorio.com/politica/2026/08/567000-quem-e-o-candidato-a-deputado-estadual-do-rio-de-janeiro-do-vasco.html",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Perfil eleitoral relaciona o vereador carioca a São Januário e à ALERJ. As referências à comunidade portuguesa são legítimas e não indicam homônimo de Portugal."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_022",
+      "kind": "public_article",
+      "source_key": "agenda_do_poder",
+      "publisher": "Agenda do Poder",
+      "publisher_type": "news_outlet",
+      "date": "2026-09-01",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://agendadopoder.com.br/luiz-paulo-lembra-projeto-com-marcio-canella-e-provoca-reacao-no-plenario-da-alerj/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "luiz_paulo"
+      ],
+      "assessed_target_keys": [
+        "luiz_paulo"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://agendadopoder.com.br/luiz-paulo-lembra-projeto-com-marcio-canella-e-provoca-reacao-no-plenario-da-alerj/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Debate tributário no plenário identifica Luiz Paulo como líder do PSD. Texto editorial indexado lido; abertura da página retornou HTTP429."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_023",
+      "kind": "public_article",
+      "source_key": "veja_rio",
+      "publisher": "Veja Rio",
+      "publisher_type": "news_outlet",
+      "date": "2026-07-20",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://vejario.abril.com.br/cidade/mpf-suspensao-tolerancia-zero-prefeito-criticas/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_cavaliere"
+      ],
+      "assessed_target_keys": [
+        "eduardo_cavaliere"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://vejario.abril.com.br/cidade/mpf-suspensao-tolerancia-zero-prefeito-criticas/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Reportagem sobre Tolerância Zero identifica e transcreve a reação de Cavaliere ao pedido do MPF."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_024",
+      "kind": "public_article",
+      "source_key": "diario_do_rio",
+      "publisher": "Diário do Rio",
+      "publisher_type": "news_outlet",
+      "date": "2026-07-26",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://www.diariodorio.com/quem-sao-os-candidatos-a-deputado-estadual-do-psd-em-2026-no-rio-de-janeiro/index.html",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo",
+        "atila_nunes",
+        "flavio_valle",
+        "guilherme_schleder",
+        "joao_pires",
+        "joyce_trindade",
+        "luiz_paulo",
+        "pedro_duarte",
+        "sergio_fernandes",
+        "junior_da_lucinha"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo",
+        "atila_nunes",
+        "flavio_valle",
+        "guilherme_schleder",
+        "joao_pires",
+        "joyce_trindade",
+        "luiz_paulo",
+        "pedro_duarte",
+        "sergio_fernandes",
+        "junior_da_lucinha",
+        "carlo_caiado"
+      ],
+      "forbidden_target_keys": [
+        "carlo_caiado"
+      ],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://www.diariodorio.com/quem-sao-os-candidatos-a-deputado-estadual-do-psd-em-2026-no-rio-de-janeiro/index.html",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Lista editorial de candidaturas estaduais inclui os nomes e números eleitorais; Átila 55055 corresponde ao político estadual de 1948. Claudio Caiado não é Carlo Caiado."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_025",
+      "kind": "public_article",
+      "source_key": "metropoles",
+      "publisher": "Metrópoles",
+      "publisher_type": "news_outlet",
+      "date": "2026-09-08",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://www.metropoles.com/brasil/deputado-do-psd-pede-que-tse-investigue-crescimento-digital-de-augusto-cury",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "otoni_de_paula"
+      ],
+      "assessed_target_keys": [
+        "otoni_de_paula"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://www.metropoles.com/brasil/deputado-do-psd-pede-que-tse-investigue-crescimento-digital-de-augusto-cury",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Texto relata pedido de investigação protocolado por Otoni de Paula sobre alcance digital de candidatura presidencial, tratando alegações como alegações."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_026",
+      "kind": "public_article",
+      "source_key": "agenda_do_poder",
+      "publisher": "Agenda do Poder",
+      "publisher_type": "news_outlet",
+      "date": "2026-09-03",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://agendadopoder.com.br/rio-avanca-com-programa-de-prevencao-a-yersiniose-e-preve-exames-pelo-sus/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "atila_nunes"
+      ],
+      "assessed_target_keys": [
+        "atila_nunes"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://agendadopoder.com.br/rio-avanca-com-programa-de-prevencao-a-yersiniose-e-preve-exames-pelo-sus/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Notícia da votação na ALERJ identifica o ex-deputado Átila Nunes como autor; contexto estadual diferencia o vereador homônimo."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_027",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-14",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://temporealrj.com/joao-pires-imovel-600-mil-patrimonio-eleicoes/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "joao_pires",
+        "eduardo_paes"
+      ],
+      "assessed_target_keys": [
+        "joao_pires",
+        "eduardo_paes"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/joao-pires-imovel-600-mil-patrimonio-eleicoes/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Texto sobre declaração de bens identifica João Pires, sua atuação na defesa do consumidor e a gestão de Paes; não apresenta evolução patrimonial como prova de irregularidade."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_028",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-18",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://temporealrj.com/cavaliere-apoio-schleder-caiado-alerj/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_cavaliere",
+        "eduardo_paes",
+        "guilherme_schleder",
+        "marcio_ribeiro",
+        "carlo_caiado"
+      ],
+      "assessed_target_keys": [
+        "eduardo_cavaliere",
+        "eduardo_paes",
+        "guilherme_schleder",
+        "marcio_ribeiro",
+        "carlo_caiado"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/cavaliere-apoio-schleder-caiado-alerj/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Coluna acompanha os apoios de Cavaliere a candidatos; o corpo diferencia explicitamente os irmãos Carlo e Cláudio Caiado."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_029",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-05",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://temporealrj.com/acao-castracao-microchipagem-caes-gatos/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "marcio_ribeiro",
+        "pedro_paulo"
+      ],
+      "assessed_target_keys": [
+        "marcio_ribeiro",
+        "pedro_paulo"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/acao-castracao-microchipagem-caes-gatos/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Reportagem de serviço identifica apoio de Márcio Ribeiro e emenda de Pedro Paulo apenas depois da apresentação dos locais de atendimento."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_030",
+      "kind": "public_article",
+      "source_key": "odia",
+      "publisher": "O Dia",
+      "publisher_type": "news_outlet",
+      "date": "2026-07-08",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://odia.ig.com.br/colunas/informe-do-dia/2026/07/7274285-desenvolvimento-do-rio-em-pauta.html",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "hugo_leal"
+      ],
+      "assessed_target_keys": [
+        "hugo_leal",
+        "carlo_caiado"
+      ],
+      "forbidden_target_keys": [
+        "carlo_caiado"
+      ],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://odia.ig.com.br/colunas/informe-do-dia/2026/07/7274285-desenvolvimento-do-rio-em-pauta.html",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Nota sobre encontro em Teresópolis identifica Hugo Leal como anfitrião. A menção a Ronaldo Caiado não corresponde a Carlo Caiado."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_031",
+      "kind": "public_article",
+      "source_key": "veja_rio",
+      "publisher": "Veja Rio",
+      "publisher_type": "news_outlet",
+      "date": "2026-07-03",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://vejario.abril.com.br/coluna/lu-lacerda/lapa-a-escadaria-selaron-vai-ficar-tinindo-de-nova/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_cavaliere"
+      ],
+      "assessed_target_keys": [
+        "eduardo_cavaliere"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://vejario.abril.com.br/coluna/lu-lacerda/lapa-a-escadaria-selaron-vai-ficar-tinindo-de-nova/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Texto sobre obras da Escadaria Selarón identifica Cavaliere e reproduz sua explicação sobre o projeto."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_032",
+      "kind": "public_article",
+      "source_key": "metropoles",
+      "publisher": "Metrópoles",
+      "publisher_type": "news_outlet",
+      "date": "2026-08-09",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://www.metropoles.com/brasil/otoni-de-paula-declara-patrimonio-quase-300-vezes-maior-que-o-de-2022",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "otoni_de_paula"
+      ],
+      "assessed_target_keys": [
+        "otoni_de_paula"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://www.metropoles.com/brasil/otoni-de-paula-declara-patrimonio-quase-300-vezes-maior-que-o-de-2022",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Comparação de declarações patrimoniais identifica o deputado federal Otoni. Data original de 09/08 é preservada, separada da atualização em 10/08."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_033",
+      "kind": "public_article",
+      "source_key": "metropoles",
+      "publisher": "Metrópoles",
+      "publisher_type": "news_outlet",
+      "date": "2026-07-03",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://www.metropoles.com/colunas/milena-teixeira/paes-entra-em-campo-para-destravar-chapa-com-benedita-e-pedro-paulo",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo",
+        "eduardo_cavaliere"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo",
+        "eduardo_cavaliere"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://www.metropoles.com/colunas/milena-teixeira/paes-entra-em-campo-para-destravar-chapa-com-benedita-e-pedro-paulo",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Coluna relata articulação da chapa ao Senado e reunião prevista de Paes com Cavaliere e parlamentares petistas."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_034",
+      "kind": "public_article",
+      "source_key": "metropoles",
+      "publisher": "Metrópoles",
+      "publisher_type": "news_outlet",
+      "date": "2026-07-04",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://www.metropoles.com/colunas/milena-teixeira/candidatas-do-pt-no-rio-resistem-a-apoiar-publicamente-aliado-de-paes",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://www.metropoles.com/colunas/milena-teixeira/candidatas-do-pt-no-rio-resistem-a-apoiar-publicamente-aliado-de-paes",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Coluna trata da resistência a apoio eleitoral a Pedro Paulo e da articulação de Paes; registra o arquivamento da acusação mencionada."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_035",
+      "kind": "public_article",
+      "source_key": "odia",
+      "publisher": "O Dia",
+      "publisher_type": "news_outlet",
+      "date": "2026-07-22",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://odia.ig.com.br/rio-de-janeiro/2026/07/7280824-rio-sanciona-leis-para-ampliar-atendimento-a-pessoas-com-tea.html",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "joyce_trindade",
+        "felipe_boro"
+      ],
+      "assessed_target_keys": [
+        "joyce_trindade",
+        "felipe_boro"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://odia.ig.com.br/rio-de-janeiro/2026/07/7280824-rio-sanciona-leis-para-ampliar-atendimento-a-pessoas-com-tea.html",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Reportagem sobre três leis de assistência a pessoas com TEA identifica Joyce Trindade e Felipe Boró entre os autores no corpo editorial, depois de um link isolado de Leia Mais."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_036",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-06-22",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://temporealrj.com/soranz-flavio-valle-treta/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "daniel_soranz",
+        "flavio_valle"
+      ],
+      "assessed_target_keys": [
+        "daniel_soranz",
+        "flavio_valle"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/soranz-flavio-valle-treta/",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Coluna relata discussão entre assessores de Daniel Soranz e Flávio Valle em evento no Clube Monte Líbano. Ambos são identificados no primeiro parágrafo editorial."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_037",
+      "kind": "public_article",
+      "source_key": "tempo_real_rj",
+      "publisher": "Tempo Real RJ",
+      "publisher_type": "news_outlet",
+      "date": "2026-07-09",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://temporealrj.com/prefeitura-lei-dia-do-barraqueiro-praia/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_cavaliere",
+        "flavio_valle"
+      ],
+      "assessed_target_keys": [
+        "eduardo_cavaliere",
+        "flavio_valle"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://temporealrj.com/prefeitura-lei-dia-do-barraqueiro-praia/",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Corpo identifica Cavaliere como responsável pela sanção e Valle como autor da lei. A publicação é de 09/07; a sanção narrada ocorreu em 08/07."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_038",
+      "kind": "public_article",
+      "source_key": "camara_rio",
+      "publisher": "Câmara Municipal do Rio",
+      "publisher_type": "institutional_news",
+      "date": "2026-06-10",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://www.camara.rio/comunicacao/noticias/3167-municipio-devera-estabelecer-diretrizes-para-enfrentar-a-violencia-virtual",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "joyce_trindade"
+      ],
+      "assessed_target_keys": [
+        "joyce_trindade"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://www.camara.rio/comunicacao/noticias/3167-municipio-devera-estabelecer-diretrizes-para-enfrentar-a-violencia-virtual",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Notícia institucional descreve aprovação do PL 696/2025 contra violência virtual e identifica Joyce como autora no corpo indexado. A abertura da página retornou erro da ferramenta."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_039",
+      "kind": "public_article",
+      "source_key": "agenda_do_poder",
+      "publisher": "Agenda do Poder",
+      "publisher_type": "news_outlet",
+      "date": "2026-09-08",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://agendadopoder.com.br/eduardo-paes-visita-get-na-rocinha-e-promete-expandir-modelo-tecnologico-na-rede-estadual/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://agendadopoder.com.br/eduardo-paes-visita-get-na-rocinha-e-promete-expandir-modelo-tecnologico-na-rede-estadual/",
+          "verified_at": "2026-09-09",
+          "method": "web_indexed_publisher_article_body",
+          "indirect_verification": true,
+          "note": "Corpo indexado relata visita de Paes ao GET na Rocinha. Luiz Paulo Horta é o nome da escola, sem associação positiva ao deputado Luiz Paulo; não se presume anotação negativa integral do artigo."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    },
+    {
+      "id": "psd_2026_040",
+      "kind": "public_article",
+      "source_key": "agenda_do_poder",
+      "publisher": "Agenda do Poder",
+      "publisher_type": "news_outlet",
+      "date": "2026-07-20",
+      "date_basis": "visible_article_timestamp",
+      "date_precision": "day",
+      "timezone": "America/Sao_Paulo",
+      "canonical_url": "https://agendadopoder.com.br/psd-oficializa-eduardo-paes-candidato-para-governo-do-rio-e-pedro-paulo-ao-senado/",
+      "url_basis": "verified_public_article_address_not_rel_canonical",
+      "aliases": [],
+      "expected_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo",
+        "laura_carneiro",
+        "luiz_paulo",
+        "otoni_de_paula",
+        "daniel_soranz",
+        "renan_ferreirinha",
+        "joao_pires"
+      ],
+      "assessed_target_keys": [
+        "eduardo_paes",
+        "pedro_paulo",
+        "laura_carneiro",
+        "luiz_paulo",
+        "otoni_de_paula",
+        "daniel_soranz",
+        "renan_ferreirinha",
+        "joao_pires"
+      ],
+      "forbidden_target_keys": [],
+      "annotation_scope": "Verified positive associations in article title or editorial paragraphs; explicit negative labels only for forbidden_target_keys. Navigation, related-story blocks, tags, comments and search summaries are excluded. Other roster targets are unassessed.",
+      "evidence": [
+        {
+          "url": "https://agendadopoder.com.br/psd-oficializa-eduardo-paes-candidato-para-governo-do-rio-e-pedro-paulo-ao-senado/",
+          "verified_at": "2026-09-09",
+          "method": "web_publisher_page_open",
+          "indirect_verification": true,
+          "note": "Cobertura da convenção cita Paes, Pedro Paulo, Laura e Luiz Paulo e lista Otoni, Soranz, Renan e João Pires entre os participantes. A menção sem cargo a Átila Nunes permanece não avaliada por ambiguidade."
+        }
+      ],
+      "eligible_for_strict_date_evaluation": true
+    }
+  ],
+  "synthetic_cases": []
+}

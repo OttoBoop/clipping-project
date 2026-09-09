@@ -586,7 +586,7 @@ def discover(task: dict[str, Any], fetch: Callable) -> dict[str, Any]:
 
 
 _VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
-_RELATED = re.compile(r'(?:related|relacionad|recommend|recomendad|leia[-_ ]?mais|read[-_ ]?more|sidebar|newsletter|comments|comentarios|social-share|outbrain|taboola)', re.I)
+_RELATED = re.compile(r'(?:related|relacionad|recommend|recomendad|leia[-_ ]?mais|read[-_ ]?more|sidebar|newsletter|comments|comentarios|social-share|outbrain|taboola|post-expansivel|more-posts)', re.I)
 _BODY = re.compile(r'(?:entry-content|post-content|article-content|materia-content|content-body|article-body|articleBody|mc-article-body|story-body)', re.I)
 
 
@@ -596,6 +596,8 @@ class _ArticleParser(HTMLParser):
         self.stack = []
         self.parts = []
         self.blocks = []
+        self.scoped_blocks = []
+        self.body_scope = 0
         self.title = ""
         self.published = ""
         self.canonical = ""
@@ -619,8 +621,12 @@ class _ArticleParser(HTMLParser):
             self.script = []
         blocked = (bool(self.stack) and self.stack[-1][1]) or tag in {"script", "style", "nav", "aside", "footer", "header", "form"} or bool(_RELATED.search(attrs.get("class", "") + " " + attrs.get("id", "")))
         body = tag == "article" or bool(_BODY.search(attrs.get("class", "") + " " + attrs.get("itemprop", "")))
+        scope = self.stack[-1][4] if self.stack else 0
+        if body and not blocked and not scope:
+            self.body_scope += 1
+            scope = self.body_scope
         if tag not in _VOID_TAGS:
-            self.stack.append((tag, blocked, len(self.parts), body))
+            self.stack.append((tag, blocked, len(self.parts), body, scope))
         if tag in {"p", "div", "br", "li", "h1", "h2", "h3"} and not blocked:
             self.parts.append("\n")
 
@@ -634,13 +640,15 @@ class _ArticleParser(HTMLParser):
             self.json_ld.append("".join(self.script))
             self.script = None
         for index in range(len(self.stack) - 1, -1, -1):
-            current, blocked, start, body = self.stack[index]
+            current, blocked, start, body, scope = self.stack[index]
             if current != tag:
                 continue
             if tag == "p" and re.match(r"\s*(?:leia (?:tamb[eé]m|mais)|veja (?:tamb[eé]m|mais)|saiba mais|confira tamb[eé]m)\s*:", "".join(self.parts[start:]), re.I):
                 del self.parts[start:]
             elif body and not blocked:
-                self.blocks.append("".join(self.parts[start:]))
+                text = "".join(self.parts[start:])
+                self.blocks.append(text)
+                self.scoped_blocks.append((scope, text))
             del self.stack[index:]
             break
 
@@ -656,6 +664,7 @@ class _ArticleParser(HTMLParser):
 def extract_article(raw_html: str) -> dict[str, str]:
     parser = _ArticleParser()
     parser.feed(raw_html or "")
+    structured_bodies = []
     for raw in parser.json_ld:
         try:
             payload = json.loads(raw)
@@ -671,11 +680,22 @@ def extract_article(raw_html: str) -> dict[str, str]:
                 kinds = [kinds]
             if not set(kinds) & {"NewsArticle", "Article", "ReportageNewsArticle", "BlogPosting"}:
                 continue
+            identity = item.get("url") or item.get("mainEntityOfPage") or item.get("@id") or ""
+            if isinstance(identity, dict):
+                identity = identity.get("@id") or identity.get("url") or ""
+            if isinstance(identity, str) and identity.startswith(("http://", "https://")) and parser.canonical:
+                if canonicalize_url(identity.split("#", 1)[0]).rstrip("/") != canonicalize_url(parser.canonical).rstrip("/"):
+                    continue
             parser.title = parser.title or str(item.get("headline") or "")
             parser.published = parser.published or parse_publication_date(item.get("datePublished") or "")
             if item.get("articleBody"):
-                parser.blocks.append(str(item["articleBody"]))
-    blocks = [re.sub(r'[ \t\r\f\v]+', ' ', block).strip() for block in parser.blocks]
+                structured_bodies.append(str(item["articleBody"]))
+    # Infinite-scroll feeds can embed whole, longer stories after the requested
+    # article. Only compare nested containers within the first article/body root.
+    # A short primary/paywall body must never be replaced by an unrelated story.
+    primary_scope = min((scope for scope, _ in parser.scoped_blocks), default=0)
+    primary_blocks = [block for scope, block in parser.scoped_blocks if scope == primary_scope]
+    blocks = [re.sub(r'[ \t\r\f\v]+', ' ', block).strip() for block in primary_blocks + structured_bodies]
     body = max(blocks, key=len) if blocks else ""
     # Without an article container or structured article body the extraction is
     # unconfirmed. Menu/search/paywall text must not become a full article.
