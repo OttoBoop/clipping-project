@@ -299,7 +299,10 @@
       "exempt_aliases": [
         "Pedro Paulo Carvalho Teixeira"
       ],
-      "window_chars": 220
+      "window_chars": 220,
+      "excluded_phrases": [
+        "Pedro Paulo Malta"
+      ]
     },
     "collection_profiles": [
       "psd_rj_2026"
@@ -428,7 +431,13 @@
     ],
     "collection_profiles": [
       "psd_rj_2026"
-    ]
+    ],
+    "match_context": {
+      "excluded_phrases": [
+        "Hugo Leal de Oliveira Reis",
+        "Hugo Leal Divulgação"
+      ]
+    }
   },
   {
     "key": "carlo_caiado",

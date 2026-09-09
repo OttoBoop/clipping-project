@@ -66,3 +66,27 @@ def test_known_google_alias_cannot_restore_rejected_directory_on_http_failure(se
     with service._connect() as conn:
         assert conn.execute("SELECT COUNT(*) AS n FROM political_mentions").fetchone()["n"] == 0
         assert conn.execute("SELECT COUNT(*) AS n FROM political_articles").fetchone()["n"] == 1
+
+
+@pytest.mark.parametrize("title", [
+    "Eduardo Paes 55 - Candidato a governador do RJ pelo PSD | Eleições 2026 - ndmais.com.br",
+    "Dr Pedro Paulo 1567 - Candidato a deputado federal do CE pelo MDB | Eleições 2026 - ND Mais",
+    "Joyce Trindade 55557 - Candidata a deputada estadual do RJ pelo PSD | Eleições 2026 - ndmais.com.br",
+    "Pedro Paulo 555 - Candidato a senador do RJ pelo PSD | Eleições 2026 - ND Mais",
+])
+def test_unresolved_google_profile_is_not_saved_when_redirect_would_fail(service,monkeypatch,title):
+    start(service,monkeypatch)
+    enqueue(service,monkeypatch,{"url":GOOGLE,"title":title,"source_key":"google_news",
+        "published_at":"2026-06-01T12:00:00-03:00","metadata":{"google_redirect":True}})
+    monkeypatch.setattr(service,"fetch",lambda *a,**kw:pytest.fail("known profile feed title needs no request"))
+    assert service.process_task(service.claim_task("fetch",worker_id="feed-profile"))["status"]=="not_news"
+    with service._connect() as conn:
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_articles").fetchone()["n"]==0
+
+
+def test_profile_title_rule_does_not_exclude_editorial_or_other_publishers():
+    title="Eduardo Paes 55 - Candidato a governador do RJ pelo PSD | Eleições 2026 - ndmais.com.br"
+    assert non_news_reason(GOOGLE,title)=="publisher_directory_not_news"
+    assert non_news_reason("https://ndmais.com.br/politica/noticia/",title)==""
+    assert non_news_reason(GOOGLE,title.replace("ndmais.com.br","Outro Jornal"))==""
+    assert non_news_reason(GOOGLE,"Eduardo Paes anuncia candidatos para 2026 - ND Mais")==""

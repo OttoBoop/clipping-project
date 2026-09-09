@@ -1048,8 +1048,8 @@ class PoliticalCorpusService:
             self._finish(conn, task, "complete", result={"disposition": "outside_window"})
         return {"taskId": task["id"], "status": "outside_window"}
 
-    def _finish_fetch_not_news(self, task: dict, url: str) -> dict:
-        result = {"disposition": "not_news", "reason": non_news_reason(url),
+    def _finish_fetch_not_news(self, task: dict, url: str, *, title: str | None = None) -> dict:
+        result = {"disposition": "not_news", "reason": non_news_reason(url, title if title is not None else task["payload"].get("title", "")),
                   "recordKind": "candidate_profile", "resolvedUrl": canonicalize_url(url)}
         with self._connect() as conn:
             self._lock_task(conn, task)
@@ -1062,14 +1062,14 @@ class PoliticalCorpusService:
     def _fetch_article(self, task: dict) -> dict:
         from .political_discovery import extract_article, is_google_intermediary
         candidate = task["payload"]
-        if non_news_reason(candidate["url"]):
+        if non_news_reason(candidate["url"], candidate.get("title", "")):
             return self._finish_fetch_not_news(task, candidate["url"])
         with self._connect() as conn:
             job = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (task["job_id"],)).fetchone()
             existing = conn.execute("""SELECT a.* FROM political_articles a LEFT JOIN political_url_aliases u ON u.article_id=a.id
                 WHERE a.canonical_url=%s OR u.url=%s ORDER BY a.id LIMIT 1""", (candidate["url"], candidate["url"])).fetchone()
-        if existing and non_news_reason(existing["canonical_url"]):
-            return self._finish_fetch_not_news(task, existing["canonical_url"])
+        if existing and non_news_reason(existing["canonical_url"], existing["title"]):
+            return self._finish_fetch_not_news(task, existing["canonical_url"], title=existing["title"])
         body, final_url, title = "", candidate["url"], str(candidate.get("title") or "")
         published = parse_date(candidate.get("published_at"))
         date_status = ("api_verified" if (candidate.get("metadata") or {}).get("wordpress_id") is not None else "source_reported") if published else "unknown"

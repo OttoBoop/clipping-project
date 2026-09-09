@@ -41,7 +41,7 @@ def target_metadata(row: dict) -> dict:
         elif key == "match_context":
             context = value if isinstance(value, dict) else {}
             normalized = {}
-            for field_name in ("required_for", "any_of", "none_of", "exempt_aliases"):
+            for field_name in ("required_for", "any_of", "none_of", "exempt_aliases", "excluded_phrases"):
                 values = context.get(field_name, [])
                 normalized[field_name] = [str(item).strip() for item in values[:50] if str(item).strip()] if isinstance(values, list) else []
             try:
@@ -143,6 +143,16 @@ def _has_phrase(text: str, phrase: str) -> bool:
 
 def _context_matches(target: Target, keyword: str, text: str, start: int, end: int) -> bool:
     context = target_metadata({"match_context": target.match_context})["match_context"]
+    # A namesake or attribution excludes only the overlapping occurrence. Apply
+    # this before alias exemptions; another genuine mention remains eligible.
+    for phrase in context["excluded_phrases"]:
+        normalized_phrase = _normalize_match_text(phrase)
+        if not normalized_phrase:
+            continue
+        left = max(0, start - len(normalized_phrase))
+        for excluded in _phrase_pattern(normalized_phrase).finditer(text[left:end + len(normalized_phrase)]):
+            if left + excluded.start() < end and left + excluded.end() > start:
+                return False
     if any(_has_phrase(keyword, alias) for alias in context["exempt_aliases"]):
         return True
     # An inherited short keyword can still occur inside a verified full civil
