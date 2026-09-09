@@ -39,6 +39,7 @@ from .political_rate_limits import (
 from .publisher_tls import publisher_verify
 from .storage_bridge import ArtifactStore, artifact_store
 from .political_body_batches import BatchBodyUnavailable, WordPressBodyBatches
+from .political_record_types import non_news_reason
 
 START_DATE = date(2026, 6, 1)
 ZONE = ZoneInfo("America/Sao_Paulo")
@@ -1046,9 +1047,22 @@ class PoliticalCorpusService:
             self._finish(conn, task, "complete", result={"disposition": "outside_window"})
         return {"taskId": task["id"], "status": "outside_window"}
 
+    def _finish_fetch_not_news(self, task: dict, url: str) -> dict:
+        result = {"disposition": "not_news", "reason": non_news_reason(url),
+                  "recordKind": "candidate_profile", "resolvedUrl": canonicalize_url(url)}
+        with self._connect() as conn:
+            self._lock_task(conn, task)
+            conn.execute("""UPDATE political_observations SET disposition='not_news',article_id=NULL,
+                metadata=metadata || %s::jsonb WHERE job_id=%s AND observed_url=%s""",
+                (_json({"non_news": result}), task["job_id"], task["payload"]["url"]))
+            self._finish(conn, task, "complete", result=result)
+        return {"taskId": task["id"], "status": "not_news", "reason": result["reason"]}
+
     def _fetch_article(self, task: dict) -> dict:
         from .political_discovery import extract_article, is_google_intermediary
         candidate = task["payload"]
+        if non_news_reason(candidate["url"]):
+            return self._finish_fetch_not_news(task, candidate["url"])
         with self._connect() as conn:
             job = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (task["job_id"],)).fetchone()
             existing = conn.execute("""SELECT a.* FROM political_articles a LEFT JOIN political_url_aliases u ON u.article_id=a.id
@@ -1102,6 +1116,8 @@ class PoliticalCorpusService:
                     with self._connect() as conn:
                         self._lock_task(conn, task)
                         conn.execute("UPDATE political_jobs SET fetch_attempted=fetch_attempted+1 WHERE id=%s", (task["job_id"],))
+            if non_news_reason(response.url):
+                return self._finish_fetch_not_news(task, response.url)
             if response.status_code >= 400:
                 retry_at = retry_after_deadline(response.headers.get("Retry-After"))
                 problem = FetchProblem(f"http_{response.status_code}", retryable=response.status_code in {408,425,429} or response.status_code >= 500,
@@ -1114,7 +1130,11 @@ class PoliticalCorpusService:
                 resolver = getattr(political_discovery, "resolve_google_redirect", None)
                 resolved = resolver(candidate["url"], self.fetch, initial_response=response) if resolver and urlparse(candidate["url"]).hostname == "news.google.com" else None
                 if resolved and not is_google_intermediary(resolved):
+                    if non_news_reason(resolved):
+                        return self._finish_fetch_not_news(task, resolved)
                     response = self.fetch(resolved)
+                    if non_news_reason(response.url):
+                        return self._finish_fetch_not_news(task, response.url)
                     if is_google_intermediary(response.url):
                         problem = FetchProblem("google_url_unresolved")
                         self._save_metadata_attempt(task, job, candidate, problem)
@@ -1143,6 +1163,8 @@ class PoliticalCorpusService:
             canonical = canonicalize_url(str(extracted.get("canonical_url") or ""))
             if canonical and urlparse(canonical).hostname == urlparse(final_url).hostname:
                 final_url = canonical
+            if non_news_reason(final_url):
+                return self._finish_fetch_not_news(task, final_url)
             candidate = _confirmed_publisher(candidate, final_url)
             # Preserve confirmed metadata if immutable-object storage fails after
             # extraction; the generic retry handler must not revert to RSS dates.
