@@ -7,6 +7,7 @@ Every network operation uses the caller's shared, rate-limited ``fetch``.
 from __future__ import annotations
 
 import gzip
+import hashlib
 import html
 import json
 import os
@@ -156,6 +157,16 @@ def build_tasks(target_snapshots: list[dict[str, Any]], date_from: str, date_to:
                 for start, stop in windows:
                     tasks.append({**base, "strategy": strategy, "date_from": start, "date_to": stop,
                                   "cursor": {"page": 1}})
+            elif strategy == "rc24h_archive":
+                month = date.fromisoformat(date_from).replace(day=1)
+                end = date.fromisoformat(date_to)
+                while month <= end:
+                    following = (month.replace(day=28) + timedelta(days=4)).replace(day=1)
+                    tasks.append({**base, "strategy": strategy, "month": month.isoformat()[:7],
+                                  "date_from": max(date.fromisoformat(date_from), month).isoformat(),
+                                  "date_to": min(end, following - timedelta(days=1)).isoformat(),
+                                  "cursor": {"page": 1}})
+                    month = following
             elif strategy in {"camara_archive", "vejario_archive"}:
                 for url in source.get("archive_urls", []):
                     tasks.append({**base, "strategy": strategy, "url": url, "cursor": {"page": 1}})
@@ -603,6 +614,145 @@ def _archive(task, source, fetch):
     return _result(candidates, next_cursor={"page": page + 1, "url": next_url, **chronology} if next_url else None, raw_count=len(rows))
 
 
+class _RCArchiveCards(HTMLParser):
+    """Read only the publisher's primary result loop, never footer headlines."""
+    def __init__(self, block_id=None):
+        super().__init__(convert_charrefs=True)
+        self.block_id, self.stack, self.rows = block_id, [], []
+        self.raw_count, self.heading = 0, None
+        self.root_found = block_id is None
+
+    def handle_starttag(self, tag, attrs):
+        attrs = {key: value or "" for key, value in attrs}
+        inside = self.block_id is None or bool(self.stack and self.stack[-1][1]) or attrs.get("id") == self.block_id
+        self.root_found |= inside
+        classes = attrs.get("class", "").split()
+        if inside and any(value == "tdb_module_loop" or value.startswith("tdb_module_loop_") for value in classes):
+            self.raw_count += 1
+        if inside and tag == "h3" and "entry-title" in classes:
+            self.heading = {"url": "", "title": ""}
+        if self.heading is not None and tag == "a" and not self.heading["url"]:
+            self.heading["url"] = attrs.get("href", "")
+        if tag not in _VOID_TAGS:
+            self.stack.append((tag, inside))
+
+    def handle_data(self, data):
+        if self.heading is not None:
+            self.heading["title"] += data
+
+    def handle_endtag(self, tag):
+        if tag == "h3" and self.heading is not None:
+            if self.heading["url"] and self.heading["title"].strip():
+                self.rows.append(self.heading)
+            self.heading = None
+        for index in range(len(self.stack) - 1, -1, -1):
+            if self.stack[index][0] == tag:
+                del self.stack[index:]
+                break
+
+
+def _rc24h_archive(task, source, fetch):
+    cursor = task.get("cursor") or {}
+    page = max(1, int(cursor.get("page") or 1))
+    seen = list(cursor.get("seen_pages") or [])
+
+    def fingerprint(rows):
+        return hashlib.sha256(json.dumps(sorted(canonicalize_url(row["url"]) for row in rows)).encode()).hexdigest()
+
+    month = date.fromisoformat(task["month"] + "-01")
+    archive_url = f"https://{source['domain']}/{month:%Y/%m}/"
+    # Refresh the publisher's public pagination token/config on every resumed
+    # step. Persist page evidence, not an expiring token or executable script.
+    raw = _get(fetch, archive_url).text
+    config = None
+    for match in re.finditer(r"block_(\w+)\.atts\s*=\s*'([^']{1,50000})';", raw):
+        try:
+            attrs = json.loads(match.group(2))
+        except ValueError:
+            continue
+        if isinstance(attrs, dict) and attrs.get("block_type") == "tdb_loop" and attrs.get("date_query") == {"year": month.year, "month": month.month, "day": ""}:
+            config = (match.group(1), attrs)
+            break
+    endpoint = re.search(r'var td_ajax_url\s*=\s*("[^"\n]+")', raw)
+    token = re.search(r'var tdBlockNonce\s*=\s*("[^"\n]+")', raw)
+    if not config or not endpoint or not token:
+        return _result(outcome="gap", gap_reason="rc24h_monthly_loop_configuration_missing")
+    block_id, attrs = config
+    try:
+        endpoint, token = json.loads(endpoint.group(1)), json.loads(token.group(1))
+        offset, limit = int(attrs.get("offset") or 0), int(attrs.get("limit") or 0)
+    except (ValueError, TypeError):
+        return _result(outcome="gap", gap_reason="rc24h_monthly_loop_configuration_invalid")
+    if not _allowed_url(endpoint, source) or urlparse(endpoint).path != "/wp-admin/admin-ajax.php":
+        return _result(outcome="gap", gap_reason="rc24h_unrecognized_public_pagination_endpoint")
+    if offset != 3 or not offset < limit <= MAX_CANDIDATES or cursor.get("archive_offset", offset) != offset or cursor.get("archive_limit", limit) != limit:
+        return _result(outcome="gap", gap_reason="rc24h_archive_offset_or_limit_changed")
+
+    def ajax(current_page, query_attrs):
+        response = _get(fetch, endpoint, method="POST", headers={"Referer": archive_url}, data={
+            "action": "td_ajax_block", "td_atts": json.dumps(query_attrs), "td_block_id": block_id,
+            "td_column_number": str(query_attrs.get("td_column_number") or 3), "td_current_page": str(current_page),
+            "block_type": "tdb_loop", "td_filter_value": "", "td_user_action": "", "td_magic_token": token})
+        try:
+            payload = json.loads(response.text)
+        except (ValueError, TypeError):
+            return None
+        if not isinstance(payload, dict) or payload.get("td_block_id") != block_id or not isinstance(payload.get("td_data"), str) or not isinstance(payload.get("td_hide_next"), bool):
+            return None
+        parsed = _RCArchiveCards()
+        parsed.feed(payload["td_data"])
+        return parsed, payload["td_hide_next"]
+
+    recovered = []
+    recovery_raw = 0
+    parse_gap = bool(cursor.get("parse_gap"))
+    if page == 1:
+        parsed = _RCArchiveCards(block_id)
+        parsed.feed(raw)
+        if not parsed.root_found:
+            return _result(outcome="gap", gap_reason="rc24h_primary_archive_loop_missing")
+        # The public template omits three initial entries. Offset zero works for
+        # this one prefix request, but REAL page2/page56 probes repeat page1.
+        # All subsequent pages must retain the advertised offset of three.
+        prefix = ajax(1, {**attrs, "offset": "0"})
+        if prefix is None:
+            return _result(outcome="gap", gap_reason="rc24h_prefix_response_invalid")
+        head, _ = prefix
+        recovery_raw = head.raw_count
+        recovered = head.rows[:offset]
+        if head.rows:
+            seen.append(fingerprint(head.rows))
+        if len(head.rows) < offset or [row["url"] for row in head.rows[offset:]] != [row["url"] for row in parsed.rows[:limit - offset]]:
+            parse_gap = True
+        parse_gap |= head.raw_count != len(head.rows)
+        finished = False  # publisher AJAX response supplies exhaustion later
+    else:
+        response = ajax(page, attrs)
+        if response is None:
+            return _result(outcome="gap", gap_reason="rc24h_pagination_response_invalid")
+        parsed, finished = response
+    parse_gap |= parsed.raw_count != len(parsed.rows)
+    candidates = []
+    for row in recovered + parsed.rows:
+        if _allowed_url(row["url"], source, article=True):
+            candidates.append(_candidate(source, row["url"], row["title"], metadata={
+                "archive_month": task["month"], "archive_url": archive_url, "needs_date_review": True,
+                "collection_mode": "public_monthly_archive"}))
+        else:
+            parse_gap = True
+    page_fingerprint = fingerprint(parsed.rows)
+    raw_count = parsed.raw_count + recovery_raw
+    if parsed.rows and page_fingerprint in seen:
+        return _result(candidates, outcome="gap", raw_count=raw_count, gap_reason="rc24h_repeated_archive_page")
+    if finished:
+        return _result(candidates, outcome="gap" if parse_gap else "complete", raw_count=raw_count,
+                       gap_reason="rc24h_archive_parse_gap" if parse_gap else "")
+    if not parsed.raw_count or page >= int(source.get("max_pages") or 100):
+        return _result(candidates, outcome="gap", raw_count=raw_count, gap_reason="rc24h_empty_page_or_page_cap")
+    return _result(candidates, raw_count=raw_count, next_cursor={"page": page + 1, "archive_offset": offset, "archive_limit": limit,
+                   "parse_gap": parse_gap, "seen_pages": seen + [page_fingerprint]})
+
+
 def discover(task: dict[str, Any], fetch: Callable) -> dict[str, Any]:
     source = next((row for row in load_sources() if row["key"] == task["source_key"]), None)
     if source is None:
@@ -614,6 +764,8 @@ def discover(task: dict[str, Any], fetch: Callable) -> dict[str, Any]:
         return _sitemap(task, source, fetch)
     if strategy == "wordpress":
         return _wordpress(task, source, fetch)
+    if strategy == "rc24h_archive":
+        return _rc24h_archive(task, source, fetch)
     if strategy in {"camara_archive", "vejario_archive"}:
         return _archive(task, source, fetch)
     raise DiscoveryError("unknown discovery strategy", retryable=False)

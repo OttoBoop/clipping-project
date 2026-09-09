@@ -1270,6 +1270,15 @@ class PoliticalCorpusService:
     def _merge_articles(conn, old: dict, canonical: dict) -> None:
         """Merge a resolved wrapper into an existing outlet article without losing review data."""
         old_id, new_id = old["id"], canonical["id"]
+        # URL/article locks already fence concurrent article merges. Editors use
+        # the same per-mention advisory lock and recheck membership after taking
+        # it: let any earlier edit commit before copying, and hold these locks
+        # until deleting the wrapper commits so later stale edits get not found.
+        pairs = conn.execute("""SELECT article_id,target_key FROM political_mentions
+            WHERE article_id=ANY(%s) ORDER BY article_id,target_key""", ([old_id, new_id],)).fetchall()
+        for pair in pairs:
+            conn.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                         (f"political-classification:{pair['article_id']}:{pair['target_key']}",))
         conn.execute("INSERT INTO political_article_revisions(article_id,previous,reason) VALUES (%s,%s::jsonb,'canonical_duplicate_merge')",
                      (new_id, _json(dict(old))))
         conn.execute("""INSERT INTO political_mentions(article_id,target_key,target_name,keyword_matched,legacy_id,rule_version)

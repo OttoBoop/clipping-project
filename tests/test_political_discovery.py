@@ -83,6 +83,131 @@ def test_aliases_share_queries_across_case_accents_spacing_and_targets():
     assert tasks[0]["target_ids"] == ["one", "two"]
 
 
+def rc_cards(ids):
+    return ''.join('<div class="tdb_module_loop td_module_wrap"><h3 class="entry-title td-module-title">'
+                   f'<a href="https://rc24h.com.br/noticia-regional-{key}/">Notícia regional {key}</a>'
+                   '</h3></div>' for key in ids)
+
+
+def rc_month_page(ids=range(3, 11), *, nonce="fresh-public-token", prefix_offset=3):
+    attrs = {"block_type": "tdb_loop", "date_query": {"year": 2026, "month": 6, "day": ""},
+             "offset": str(prefix_offset), "limit": "8", "td_column_number": 3}
+    return '<script>var td_ajax_url="https://rc24h.com.br/wp-admin/admin-ajax.php?td_theme_name=Newspaper";' \
+           'var tdBlockNonce=' + json.dumps(nonce) + ';block_month.atts = \'' + json.dumps(attrs) + "';</script>" \
+           '<div id="month">' + rc_cards(ids) + '</div><footer>' + rc_cards([900]) + '</footer>'
+
+
+def rc_ajax(ids, *, finished=False):
+    return Response(json.dumps({"td_block_id": "month", "td_data": rc_cards(ids), "td_hide_next": finished}))
+
+
+def test_rc_month_tasks_are_shared_across_targets_and_keep_google_history():
+    targets = [{"key": str(i), "display_name": f"Pessoa {i}"} for i in range(24)]
+    tasks = discovery.build_tasks(targets, "2026-06-15", "2026-08-03", ["rc24h"])
+    archive = [row for row in tasks if row["strategy"] == "rc24h_archive"]
+    assert [(row["month"], row["date_from"], row["date_to"]) for row in archive] == [
+        ("2026-06", "2026-06-15", "2026-06-30"), ("2026-07", "2026-07-01", "2026-07-31"),
+        ("2026-08", "2026-08-01", "2026-08-03")]
+    assert all(len(row["target_ids"]) == 24 for row in archive)
+    assert any(row["strategy"] == "google_news" for row in tasks)
+
+
+def test_rc_prefix_recovery_and_resumed_original_offset_keep_dates_unknown():
+    calls = []
+    def fetch(url, **kwargs):
+        calls.append((url, kwargs))
+        if not kwargs:
+            return Response(rc_month_page(nonce=f"public-token-{len(calls)}"))
+        data = kwargs["data"]
+        attrs = json.loads(data["td_atts"])
+        assert attrs["date_query"] == {"year": 2026, "month": 6, "day": ""}
+        if data["td_current_page"] == "1":
+            assert attrs["offset"] == "0"
+            return rc_ajax(range(8))
+        assert data["td_current_page"] == "2" and attrs["offset"] == "3"
+        assert data["td_magic_token"] == "public-token-3"
+        return rc_ajax(range(11, 19))
+    run = task("rc24h", "rc24h_archive", month="2026-06")
+    first = discovery.discover(run, fetch)
+    assert first["outcome"] == "continue" and first["raw_count"] == 16
+    assert len(first["candidates"]) == 11
+    assert {row["url"] for row in first["candidates"]} == {f"https://rc24h.com.br/noticia-regional-{i}" for i in range(11)}
+    assert all(not row["published_at"] and row["metadata"]["needs_date_review"] for row in first["candidates"])
+    second = discovery.discover({**run, "cursor": first["next_cursor"]}, fetch)
+    assert second["outcome"] == "continue" and len(second["candidates"]) == 8
+    assert len(calls) == 4 and second["next_cursor"]["page"] == 3
+
+
+@pytest.mark.parametrize("finished", [False, True])
+def test_rc_repeated_page_is_a_gap_even_when_publisher_claims_exhaustion(finished):
+    run = task("rc24h", "rc24h_archive", month="2026-06")
+    first = discovery.discover(run, lambda url, **kw: rc_ajax(range(8)) if kw else Response(rc_month_page()))
+    repeated = discovery.discover({**run, "cursor": first["next_cursor"]},
+        lambda url, **kw: rc_ajax(reversed(range(3, 11)), finished=finished) if kw else Response(rc_month_page()))
+    assert repeated["outcome"] == "gap" and repeated["gap_reason"] == "rc24h_repeated_archive_page"
+
+
+def test_rc_offset_zero_prefix_repetition_cannot_claim_end_of_month():
+    run = task("rc24h", "rc24h_archive", month="2026-06")
+    first = discovery.discover(run, lambda url, **kw: rc_ajax(range(8)) if kw else Response(rc_month_page()))
+    # Real offset0/page56 returned the prefix page and td_hide_next=true.
+    repeated = discovery.discover({**run, "cursor": first["next_cursor"]},
+        lambda url, **kw: rc_ajax(range(8), finished=True) if kw else Response(rc_month_page()))
+    assert repeated["outcome"] == "gap" and repeated["gap_reason"] == "rc24h_repeated_archive_page"
+
+
+@pytest.mark.parametrize("finished,expected", [(False, "gap"), (True, "complete")])
+def test_rc_empty_page_requires_explicit_publisher_exhaustion(finished, expected):
+    run = task("rc24h", "rc24h_archive", month="2026-06", cursor={"page": 2, "archive_offset": 3})
+    result = discovery.discover(run, lambda url, **kw: rc_ajax([], finished=finished) if kw else Response(rc_month_page()))
+    assert result["outcome"] == expected
+
+
+def test_rc_missing_month_loop_does_not_collect_current_footer_links():
+    result = discovery.discover(task("rc24h", "rc24h_archive", month="2026-06"), lambda _: Response('<footer>'+rc_cards([900])+'</footer>'))
+    assert result["outcome"] == "gap" and result["candidates"] == []
+
+
+def test_rc_changed_page_limit_cannot_skip_articles_after_resume():
+    run = task("rc24h", "rc24h_archive", month="2026-06")
+    first = discovery.discover(run, lambda url, **kw: rc_ajax(range(8)) if kw else Response(rc_month_page()))
+    assert first["next_cursor"]["archive_limit"] == 8
+    calls = []
+    def changed_template(url, **kwargs):
+        calls.append((url, kwargs))
+        return Response(rc_month_page().replace('"limit": "8"', '"limit": "12"'))
+    resumed = discovery.discover({**run, "cursor": first["next_cursor"]}, changed_template)
+    assert resumed["outcome"] == "gap" and resumed["gap_reason"] == "rc24h_archive_offset_or_limit_changed"
+    assert len(calls) == 1 and resumed["candidates"] == []
+
+
+def test_rc_missing_prefix_evidence_is_retained_as_gap_through_exhaustion():
+    run = task("rc24h", "rc24h_archive", month="2026-06")
+    first = discovery.discover(run, lambda url, **kw: rc_ajax([0, 1]) if kw else Response(rc_month_page()))
+    assert first["next_cursor"]["parse_gap"] and len(first["candidates"]) == 10
+    final = discovery.discover({**run, "cursor": first["next_cursor"]},
+        lambda url, **kw: rc_ajax([11], finished=True) if kw else Response(rc_month_page()))
+    assert final["outcome"] == "gap" and final["gap_reason"] == "rc24h_archive_parse_gap"
+    assert len(final["candidates"]) == 1
+
+
+def test_rc_rate_limit_is_retryable_and_does_not_become_empty_archive():
+    run = task("rc24h", "rc24h_archive", month="2026-06", cursor={"page": 2})
+    with pytest.raises(discovery.DiscoveryError) as raised:
+        discovery.discover(run, lambda url, **kw: Response('', status_code=429, headers={"Retry-After": "60"}) if kw else Response(rc_month_page()))
+    assert raised.value.retryable and raised.value.status_code == 429 and raised.value.retry_after == 60
+
+
+def test_rc_unparseable_ajax_response_and_page_cap_are_explicit_gaps(monkeypatch):
+    run = task("rc24h", "rc24h_archive", month="2026-06", cursor={"page": 2})
+    invalid = discovery.discover(run, lambda url, **kw: Response('0') if kw else Response(rc_month_page()))
+    assert invalid["outcome"] == "gap" and invalid["gap_reason"] == "rc24h_pagination_response_invalid"
+    source = next(row for row in discovery.load_sources() if row["key"] == "rc24h")
+    monkeypatch.setattr(discovery, "load_sources", lambda: [{**source, "max_pages": 2}])
+    capped = discovery.discover(run, lambda url, **kw: rc_ajax([11]) if kw else Response(rc_month_page()))
+    assert capped["outcome"] == "gap" and capped["gap_reason"] == "rc24h_empty_page_or_page_cap"
+
+
 def test_explicit_direct_gaps_generate_stable_scoped_fallbacks_without_recursion():
     snapshots = [{"key": "paes", "display_name": "Eduardo Paes"}]
     direct = task("g1", "daily_sitemap", day="2026-06-03")

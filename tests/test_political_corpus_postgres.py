@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from datetime import datetime, timezone
 import os
 import selectors
@@ -594,6 +595,128 @@ def test_canonical_wrapper_merges_into_outlet_article_without_losing_classificat
     assert merged_id == final_id
     assert len(service.list_articles(allowed_target_keys=["paes"])["items"]) == 1
     assert service.classifications(final_id, allowed_target_keys=["paes"])["items"][0]["payload"]["target_sentiment"] == "negative"
+
+
+def test_canonical_merge_waits_for_committed_editor_and_preserves_latest_classification(service, monkeypatch):
+    hits = [{"target_key": "paes", "target_name": "Eduardo Paes", "keyword_matched": "Eduardo Paes"}]
+    wrapper, canonical = "https://news.google.com/articles/concurrent-edit", "https://example.com/concurrent-edit"
+    with service._connect() as conn:
+        old_id = service._persist_article(conn, {"url": wrapper, "title": "Eduardo Paes"}, hits)
+        new_id = service._persist_article(conn, {"url": canonical, "title": "Eduardo Paes"}, hits)
+    service.upsert_classification(old_id, {"targetKey": "paes", "target_sentiment": "negative"},
+                                  allowed_target_keys=["paes"], updated_by="first-editor")
+    original_connect = service._connect
+    role = threading.local()
+    editor_locked, release_editor = threading.Event(), threading.Event()
+    merge_attempted, merge_acquired, release_merge = threading.Event(), threading.Event(), threading.Event()
+    merge_pid = []
+    lock_key = f"political-classification:{old_id}:paes"
+
+    class ObservedConnection:
+        def __init__(self, conn): self.conn = conn
+        def __getattr__(self, name): return getattr(self.conn, name)
+        def execute(self, query, params=None, **kwargs):
+            matching_lock = "pg_advisory_xact_lock" in str(query) and params == (lock_key,)
+            actor = getattr(role, "actor", "")
+            if actor == "merge" and matching_lock:
+                merge_pid.append(self.conn.info.backend_pid)
+                merge_attempted.set()
+            result = self.conn.execute(query, params, **kwargs)
+            if actor == "editor" and matching_lock:
+                editor_locked.set()
+                assert release_editor.wait(5), "test did not release editor"
+            if actor == "merge" and matching_lock:
+                merge_acquired.set()
+                assert release_merge.wait(5), "test did not release merge"
+            return result
+
+    @contextmanager
+    def observed_connect():
+        with original_connect() as conn:
+            conn.execute("SET LOCAL lock_timeout='5s'")
+            yield ObservedConnection(conn)
+
+    monkeypatch.setattr(service, "_connect", observed_connect)
+    def edit():
+        role.actor = "editor"
+        return service.upsert_classification(old_id, {"targetKey": "paes", "target_sentiment": "positive"},
+                                              allowed_target_keys=["paes"], updated_by="concurrent-editor")
+    def merge():
+        role.actor = "merge"
+        with service._connect() as conn:
+            return service._persist_article(conn, {"url": canonical, "observed_url": wrapper, "title": "Eduardo Paes"}, hits)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        editor_future = pool.submit(edit)
+        try:
+            assert editor_locked.wait(5)
+            merge_future = pool.submit(merge)
+            assert merge_attempted.wait(5), "merge must acquire the editor's classification lock"
+            # Observe PostgreSQL's actual advisory-lock wait, not a sleep-based
+            # assumption about which Python thread has run first.
+            deadline = time.monotonic() + 3
+            waiting = False
+            while time.monotonic() < deadline:
+                with original_connect() as conn:
+                    row = conn.execute("SELECT wait_event_type,wait_event FROM pg_stat_activity WHERE pid=%s", (merge_pid[0],)).fetchone()
+                if row and row["wait_event_type"] == "Lock" and row["wait_event"] == "advisory":
+                    waiting = True
+                    break
+                time.sleep(.01)
+            assert waiting and not merge_acquired.is_set()
+            release_editor.set()
+            edited = editor_future.result(timeout=5)
+            assert edited["items"][0]["payload"]["target_sentiment"] == "positive"
+            assert merge_acquired.wait(5)
+            release_merge.set()
+            assert merge_future.result(timeout=5) == new_id
+        finally:
+            release_editor.set()
+            release_merge.set()
+    result = service.classifications(new_id, allowed_target_keys=["paes"])["items"][0]
+    assert result["payload"]["target_sentiment"] == "positive" and result["updatedBy"] == "concurrent-editor"
+    revisions = service.revision_history(new_id, allowed_target_keys=["paes"])["classifications"]
+    assert any(row["previous"]["payload"]["target_sentiment"] == "negative" for row in revisions)
+    assert any(row["previous"]["payload"]["target_sentiment"] == "positive" for row in revisions)
+
+
+def test_editor_authorized_before_merge_gets_not_found_when_old_mention_is_gone(service, monkeypatch):
+    hits = [{"target_key": "paes", "target_name": "Eduardo Paes", "keyword_matched": "Eduardo Paes"}]
+    wrapper, canonical = "https://news.google.com/articles/stale-edit", "https://example.com/stale-edit"
+    with service._connect() as conn:
+        old_id = service._persist_article(conn, {"url": wrapper, "title": "Eduardo Paes"}, hits)
+        new_id = service._persist_article(conn, {"url": canonical, "title": "Eduardo Paes"}, hits)
+    service.upsert_classification(old_id, {"targetKey": "paes", "target_sentiment": "positive"},
+                                  allowed_target_keys=["paes"], updated_by="committed-editor")
+    original_article = service.article
+    authorized, release_editor = threading.Event(), threading.Event()
+    role = threading.local()
+    def gated_article(article_id, **kwargs):
+        result = original_article(article_id, **kwargs)
+        if article_id == old_id and getattr(role, "stale_editor", False):
+            authorized.set()
+            assert release_editor.wait(5), "test did not release stale editor"
+        return result
+    monkeypatch.setattr(service, "article", gated_article)
+    def edit():
+        role.stale_editor = True
+        return service.upsert_classification(old_id, {"targetKey": "paes", "target_sentiment": "negative"},
+                                              allowed_target_keys=["paes"], updated_by="stale-editor")
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(edit)
+        try:
+            assert authorized.wait(5)
+            with service._connect() as conn:
+                assert service._persist_article(conn, {"url": canonical, "observed_url": wrapper, "title": "Eduardo Paes"}, hits) == new_id
+            release_editor.set()
+            with pytest.raises(PoliticalNotFound):
+                future.result(timeout=5)
+        finally:
+            release_editor.set()
+    result = service.classifications(new_id, allowed_target_keys=["paes"])["items"][0]
+    assert result["payload"]["target_sentiment"] == "positive" and result["updatedBy"] == "committed-editor"
+    with service._connect() as conn:
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_classifications WHERE article_id=%s", (old_id,)).fetchone()["n"] == 0
 
 
 @pytest.mark.parametrize("existing_generic,wrapped", [(False, True), (True, True), (True, False)])

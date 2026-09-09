@@ -361,18 +361,30 @@
       "name": "RC24h",
       "domain": "rc24h.com.br",
       "strategies": [
+        "rc24h_archive",
         "google_news"
       ],
-      "known_constraint": "Domain-specific Google discovery remains enabled. The advertised WordPress API index is public but its posts endpoint returned HTTP 401 on September 9; direct API collection is unavailable without publisher authorization.",
+      "known_constraint": "Public monthly archive and its publisher-advertised AJAX pagination support shared date-scoped discovery. Recover the template's skipped first three entries once; preserve its original offset for pagination. Article pages must verify publication dates. Repeated pages, malformed responses and page caps remain explicit gaps. The protected WordPress posts API is not used; domain Google history remains enabled.",
       "evidence": [
         {
           "url": "https://rc24h.com.br/robots.txt",
           "basis": "Advertises sitemap and public wp-json index through Link header. Date-filtered posts endpoint returned HTTP 401; no protected API collection scheduled.",
           "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://rc24h.com.br/2026/06/",
+          "basis": "Public monthly page exposes date_query(year=2026,month=6), eight-card loop and offset3. Real public AJAX page2 with original offset3 returns different June articles; one offset0/page1 request recovers the initial three. Offset0 continuation repeats page1 even with a terminal flag, requiring duplicate-page checks.",
+          "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://rc24h.com.br/wp-content/cache/minify/d83e7.js",
+          "basis": "Publisher-loaded code specifies public POST action td_ajax_block with td_atts, td_current_page and public tdBlockNonce; robots explicitly allows admin-ajax.php. No protected WordPress posts requests.",
+          "verified_at": "2026-09-09"
         }
       ],
       "enabled": true,
-      "google_policy": "always"
+      "google_policy": "always",
+      "max_pages": 100
     },
     {
       "key": "j3news",
