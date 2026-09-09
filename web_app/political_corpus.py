@@ -698,7 +698,22 @@ class PoliticalCorpusService:
                               ELSE scheduling.discovery_claimed_at END ASC NULLS FIRST,
                     t.priority DESC,
                     CASE WHEN t.kind='fetch' AND COALESCE(t.payload->>'published_at','')<>'' THEN 0 ELSE 1 END,
-                    t.id FOR UPDATE OF t SKIP LOCKED LIMIT 1""", (_json(source_domains), kinds, blocked_sources)).fetchone()
+                    t.id LIMIT 1""", (_json(source_domains), kinds, blocked_sources)).fetchone()
+            if not row:
+                return None
+            # Finish/cancel transactions lock the job before its tasks and
+            # source scheduling row. Taking those locks in reverse order here
+            # deadlocked with discovery inserting the next page's candidates.
+            # Skip a busy job before acquiring any task/source row locks.
+            job = conn.execute("""SELECT id FROM political_jobs WHERE id=%s
+                AND status IN ('queued','running') FOR UPDATE SKIP LOCKED""",
+                               (row["job_id"],)).fetchone()
+            if not job:
+                return None
+            row = conn.execute("""SELECT * FROM political_tasks WHERE id=%s
+                AND (status IN ('queued','retryable') OR (status='running' AND leased_until<NOW()))
+                AND (next_attempt_at IS NULL OR next_attempt_at<=NOW())
+                FOR UPDATE SKIP LOCKED""", (row["id"],)).fetchone()
             if not row:
                 return None
             token = uuid.uuid4().hex
@@ -1230,6 +1245,9 @@ class PoliticalCorpusService:
         # The generic failure handler must not save the original RSS candidate
         # again after this attempt resolved its publisher URL or corrected date.
         problem.metadata_handled = True
+        # Failed extraction can already have resolved the publisher. Keep the
+        # discovery URL so persistence can rename/merge its earlier metadata row.
+        candidate = {**candidate, "observed_url": candidate.get("observed_url") or task["payload"]["url"]}
         hits = match_targets(job["target_snapshots"], str(candidate.get("title") or ""), str(candidate.get("snippet") or ""))
         if not hits:
             return

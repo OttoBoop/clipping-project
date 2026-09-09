@@ -188,6 +188,42 @@ def test_six_fetch_claims_are_global_and_keep_google_single_slot(service, monkey
     assert service.claim_task("fetch",worker_id="seventh") is None
 
 
+@pytest.mark.parametrize("kind", ["fetch", "discovery"])
+def test_claim_skips_busy_job_before_locking_task_or_source(service, monkeypatch, kind):
+    job = start(service, monkeypatch)
+    with service._connect() as conn:
+        service._insert_task(conn, job["id"], "fetch", {
+            "source_key": "example", "url": "https://example.com/queued-story"})
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with service._connect() as finishing:
+            finishing.execute("SELECT id FROM political_jobs WHERE id=%s FOR UPDATE", (job["id"],))
+            pending = pool.submit(service.claim_task, kind, worker_id="concurrent-claim")
+            try:
+                # Previously the claim held the source row while waiting for
+                # this job. Inserting the next discovery page then deadlocked.
+                assert pending.result(timeout=2) is None
+                finishing.execute("SET LOCAL lock_timeout='500ms'")
+                service._insert_task(finishing, job["id"], "fetch", {
+                    "source_key": "example", "url": "https://example.com/next-page-story"})
+                assert finishing.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE attempts>0").fetchone()["n"] == 0
+            finally:
+                finishing.rollback()
+    assert service.claim_task(kind, worker_id="after-save") is not None
+
+
+def test_claim_keeps_skip_locked_for_busy_candidate_task(service, monkeypatch):
+    start(service, monkeypatch)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with service._connect() as renewing:
+            renewing.execute("SELECT id FROM political_tasks FOR UPDATE")
+            pending = pool.submit(service.claim_task, "discovery", worker_id="while-renewing")
+            try:
+                assert pending.result(timeout=2) is None
+            finally:
+                renewing.rollback()
+    assert service.claim_task("discovery", worker_id="after-renewal") is not None
+
+
 def test_full_fetch_backlog_does_not_lease_or_churn_discovery_tasks(service, monkeypatch):
     job = start(service, monkeypatch)
     with service._connect() as conn:
@@ -970,6 +1006,51 @@ def test_google_forbidden_publisher_alias_merges_wrapper_and_preserves_classific
     assert {row["url"]: row["article_id"] for row in aliases} == dict.fromkeys([wrapper, publisher_alias, canonical], canonical_id)
     assert observation == {"article_id": canonical_id, "disposition": "metadata_only"}
     assert revision["previous"]["id"] == wrapper_id and inserted == 0
+
+
+@pytest.mark.parametrize("canonical_already_exists", [False, True])
+def test_google_body_missing_resolves_prior_wrapper_without_duplicate_or_lost_classification(
+        service, monkeypatch, canonical_already_exists):
+    from web_app import political_discovery
+    canonical = "https://www.metropoles.com/brasil/resolved-short-body"
+    wrapper = "https://news.google.com/rss/articles/short-body-original-wrapper"
+    hits = [{"target_key": "paes", "target_name": "Eduardo Paes", "keyword_matched": "Eduardo Paes"}]
+    with service._connect() as conn:
+        canonical_id = None
+        if canonical_already_exists:
+            canonical_id = service._persist_article(conn, {"url": canonical, "title": "Eduardo Paes anuncia proposta",
+                "source_key": "metropoles", "source_name": "Metrópoles"}, hits)
+        wrapper_id = service._persist_article(conn, {"url": wrapper, "title": "Eduardo Paes anuncia proposta",
+            "source_key": "google_news", "source_name": "Google News"}, hits,
+            published=datetime(2026, 6, 2, 15, tzinfo=timezone.utc), date_status="source_reported")
+    service.upsert_classification(wrapper_id, {"targetKey": "paes", "target_sentiment": "positive"},
+                                  allowed_target_keys=["paes"], updated_by="editor")
+    job = start(service, monkeypatch, targets=("paes",))
+    enqueue(service, monkeypatch, {"url": wrapper, "title": "Eduardo Paes anuncia proposta",
+        "source_key": "google_news", "source_name": "Google News", "published_at": "2026-06-02T15:00:00Z",
+        "metadata": {"google_redirect": True, "query": '"Eduardo Paes"'}})
+    monkeypatch.setattr(political_discovery, "resolve_google_redirect", lambda *a, **k: canonical)
+    monkeypatch.setattr(service, "fetch", lambda url, **kwargs: fake_response(url, body="Conteúdo indisponível."))
+    result = service.process_task(service.claim_task("fetch", worker_id="body-missing-merge-check"))
+    assert result["status"] == "retryable" and result["errorType"] == "body_missing"
+    expected_id = canonical_id if canonical_already_exists else wrapper_id
+    items = service.list_articles(allowed_target_keys=["paes"])["items"]
+    assert len(items) == 1 and items[0]["id"] == expected_id and items[0]["url"] == canonical
+    assert items[0]["bodyStatus"] == "metadata_only" and items[0]["sourceKey"] == "metropoles"
+    assert items[0]["dateStatus"] == "page_verified" and items[0]["publishedAt"].startswith("2026-06-01")
+    classification = service.classifications(expected_id, allowed_target_keys=["paes"])["items"][0]
+    assert classification["payload"]["target_sentiment"] == "positive"
+    with service._connect() as conn:
+        aliases = conn.execute("SELECT url,article_id FROM political_url_aliases WHERE url=ANY(%s)", ([wrapper, canonical],)).fetchall()
+        observation = conn.execute("SELECT article_id,disposition,observed_url,metadata FROM political_observations WHERE job_id=%s", (job["id"],)).fetchone()
+        reasons = conn.execute("SELECT reason,previous->>'id' old_id FROM political_article_revisions WHERE article_id=%s", (expected_id,)).fetchall()
+        inserted = conn.execute("SELECT articles_inserted FROM political_jobs WHERE id=%s", (job["id"],)).fetchone()["articles_inserted"]
+    assert {row["url"]: row["article_id"] for row in aliases} == dict.fromkeys([wrapper, canonical], expected_id)
+    assert observation["article_id"] == expected_id and observation["disposition"] == "metadata_only"
+    assert observation["observed_url"] == wrapper and observation["metadata"]["query"] == '"Eduardo Paes"'
+    expected_reason = "canonical_duplicate_merge" if canonical_already_exists else "canonical_url_resolved"
+    assert any(row["reason"] == expected_reason and row["old_id"] == str(wrapper_id) for row in reasons)
+    assert inserted == 0
 
 
 def test_failed_force_refresh_of_existing_alias_preserves_article_and_human_classification(service, monkeypatch):
