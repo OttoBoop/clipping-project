@@ -1,0 +1,19 @@
+{
+  "captured_at": "2026-09-09",
+  "origin": "Actual public publisher responses captured through root network; no article bodies or account data.",
+  "files": {
+    "initial-primary.html": {
+      "url": "https://www.diariodorio.com/ultimas-noticias",
+      "reduction": "Only the unchanged primary td-main-content container retained, including td-ss-main-content cards and its sibling public pagination button; navigation/scripts/sidebar excluded.",
+      "sha256": "9e3857e6cbe9c33dc69ed53f01f15fd776dbe607b8c235e85e3e1cecd60aa33f"
+    },
+    "page2.html": {
+      "url": "https://www.diariodorio.com/index.php?id=%2FreadMore.php&cd_sesit=90&p=2",
+      "sha256": "87222f5acb8ec421559ae8af4625b2915d726e4221a0fab34843f25cc97b3258"
+    },
+    "page500.html": {
+      "url": "https://www.diariodorio.com/index.php?id=%2FreadMore.php&cd_sesit=90&p=500",
+      "sha256": "04bc76aa5a45bf6221c0cca270fdaa4f0c58513ae29ac93a2d663f2d3300f16a"
+    }
+  }
+}

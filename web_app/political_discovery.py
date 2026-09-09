@@ -100,18 +100,26 @@ def _target_queries(snapshot: dict[str, Any]) -> list[str]:
 
 def _google_tasks(snapshots: list[dict], source: dict, date_from: str, date_to: str) -> list[dict]:
     queries = {}
-    for row in snapshots:
+    for person_rank, row in enumerate(snapshots):
         target_id = str(row.get("key") or row.get("id") or "")
-        for query in _target_queries(row):
+        for alias_rank, query in enumerate(_target_queries(row)):
             identity = " ".join("".join(char for char in unicodedata.normalize("NFKD", query)
                                        if not unicodedata.combining(char)).casefold().split())
-            shared = queries.setdefault(identity, {"query": query, "target_ids": []})
+            shared = queries.setdefault(identity, {"query": query, "target_ids": [],
+                                                   "order": (alias_rank, person_rank)})
+            shared["order"] = min(shared["order"], (alias_rank, person_rank))
             if target_id not in shared["target_ids"]:
                 shared["target_ids"].append(target_id)
+    # Query payloads stay identical so existing PostgreSQL dedupe keys remain
+    # valid. Only insertion order changes: all people get their primary query
+    # in each window before moving to secondary aliases.
+    ordered = sorted(queries.values(), key=lambda item: item["order"])
     return [{"source_key": source["key"], "strategy": "google_news", "cursor": {},
              "query": item["query"] + (" site:" + source["domain"] if source.get("domain") else ""),
              "target_ids": item["target_ids"], "date_from": start, "date_to": stop}
-            for item in queries.values() for start, stop in date_windows(date_from, date_to)]
+            for alias_rank in sorted({item["order"][0] for item in ordered})
+            for start, stop in date_windows(date_from, date_to)
+            for item in ordered if item["order"][0] == alias_rank]
 
 
 def fallback_tasks(task: dict, target_snapshots: list[dict]) -> list[dict]:
@@ -157,6 +165,9 @@ def build_tasks(target_snapshots: list[dict[str, Any]], date_from: str, date_to:
                 for start, stop in windows:
                     tasks.append({**base, "strategy": strategy, "date_from": start, "date_to": stop,
                                   "cursor": {"page": 1}})
+            elif strategy == "diario_archive":
+                tasks.append({**base, "strategy": strategy, "url": source["archive_url"],
+                              "cursor": {"page": 1}})
             elif strategy == "rc24h_archive":
                 month = date.fromisoformat(date_from).replace(day=1)
                 end = date.fromisoformat(date_to)
@@ -804,6 +815,9 @@ def discover(task: dict[str, Any], fetch: Callable) -> dict[str, Any]:
         return _sitemap(task, source, fetch)
     if strategy == "wordpress":
         return _wordpress(task, source, fetch)
+    if strategy == "diario_archive":
+        from .political_diario_archive import discover_archive
+        return discover_archive(task, source, fetch)
     if strategy == "rc24h_archive":
         return _rc24h_archive(task, source, fetch)
     if strategy in {"camara_archive", "vejario_archive"}:

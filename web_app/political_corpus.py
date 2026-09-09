@@ -1067,6 +1067,8 @@ class PoliticalCorpusService:
             job = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (task["job_id"],)).fetchone()
             existing = conn.execute("""SELECT a.* FROM political_articles a LEFT JOIN political_url_aliases u ON u.article_id=a.id
                 WHERE a.canonical_url=%s OR u.url=%s ORDER BY a.id LIMIT 1""", (candidate["url"], candidate["url"])).fetchone()
+        if existing and non_news_reason(existing["canonical_url"]):
+            return self._finish_fetch_not_news(task, existing["canonical_url"])
         body, final_url, title = "", candidate["url"], str(candidate.get("title") or "")
         published = parse_date(candidate.get("published_at"))
         date_status = ("api_verified" if (candidate.get("metadata") or {}).get("wordpress_id") is not None else "source_reported") if published else "unknown"

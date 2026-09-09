@@ -119,11 +119,22 @@
       "domain": "diariodorio.com",
       "base_url": "https://diariodorio.com",
       "strategies": [
+        "diario_archive",
         "sitemap",
         "google_news"
       ],
-      "known_constraint": "Current sitemap returned HTTP 200 on 2026-09-09 with 1,000 entries, all lacking publication_date; URL paths covered August 25–September 9. For windows up to seven days, undated sitemap entries are deferred with an explicit coverage gap so current archive fetches do not swamp historical canaries. Wider jobs retain the supplemental body scan. Domain Google history always runs; historical completeness remains unverified. The former WordPress API returned HTTP 403 and is no longer scheduled. lastmod is never treated as publication date.",
+      "known_constraint": "Public Últimas notícias pagination is advertised by the current frontend and returns 10 dated cards per page; sampled pages 500/625/650 reached June 22/June 3/May 30 on 2026-09-09. A shared resumable scan uses a 1,000-page cap and explicit gaps for unknown dates, chronology, repeated pages or changed markup. Card days guide traversal only; article-page publication dates remain required. Full historical coverage is not yet verified. The supplemental sitemap has 1,000 undated entries covering August 25–September 9 and is deferred for windows up to seven days. Google history remains enabled. The former WordPress API returned HTTP 403 and is not scheduled; lastmod is never publication date.",
       "evidence": [
+        {
+          "url": "https://www.diariodorio.com/ultimas-noticias",
+          "basis": "Public initial archive exposes data-type=listao, data-sesit=90, data-page=2 on its Mostrar Mais button; primary cards contain visible time datetime day hints.",
+          "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://www.diariodorio.com/js/action.js?v=8",
+          "basis": "Advertised public click handler sends GET /index.php with id=/readMore.php, cd_sesit and p, advancing one page after success; only a response equal to the empty PORTAL:FINISH marker hides the button.",
+          "verified_at": "2026-09-09"
+        },
         {
           "url": "https://diariodorio.com/wp-json/wp/v2/posts",
           "basis": "existing WordPress collector configuration"
@@ -141,6 +152,8 @@
       ],
       "enabled": true,
       "google_policy": "always",
+      "archive_url": "https://www.diariodorio.com/ultimas-noticias",
+      "archive_max_pages": 1000,
       "sitemap_urls": [
         "https://www.diariodorio.com/sitemap.xml"
       ],

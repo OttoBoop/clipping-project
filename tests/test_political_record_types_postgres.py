@@ -51,3 +51,18 @@ def test_editorial_nd_article_preserved(service, monkeypatch):
     assert service.process_task(service.claim_task("fetch", worker_id="editorial-test"))["status"] == "saved"
     assert non_news_reason(url) == ""
     assert non_news_reason("https://example.com/eleicoes/2026/candidatos/name/") == ""
+
+
+def test_known_google_alias_cannot_restore_rejected_directory_on_http_failure(service, monkeypatch):
+    job = start(service, monkeypatch)
+    with service._connect() as conn:
+        article_id = service._persist_article(conn, {"url": PROFILE, "title": "Eduardo Paes",
+            "source_key": "publisher:ndmais.com.br", "metadata": {"relevance_rejected": True}}, [], job_id=job["id"])
+        conn.execute("INSERT INTO political_url_aliases(url,article_id) VALUES(%s,%s)", (GOOGLE,article_id))
+    enqueue(service, monkeypatch, {"url": GOOGLE, "title": "Eduardo Paes", "source_key": "google_news",
+        "published_at": "2026-06-01T12:00:00-03:00", "metadata": {}})
+    monkeypatch.setattr(service, "fetch", lambda *a, **kw: pytest.fail("known directory alias must stop before Google HTTP"))
+    assert service.process_task(service.claim_task("fetch", worker_id="known-alias"))["status"] == "not_news"
+    with service._connect() as conn:
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_mentions").fetchone()["n"] == 0
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_articles").fetchone()["n"] == 1
