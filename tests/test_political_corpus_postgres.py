@@ -1236,3 +1236,45 @@ def test_g1_rio_priority_preserves_other_states(service, monkeypatch):
     first=service.claim_task('fetch',worker_id='one');second=service.claim_task('fetch',worker_id='two');third=service.claim_task('fetch',worker_id='three')
     assert '/sp/' not in first['payload']['url'] and '/sp/' not in second['payload']['url']
     assert '/sp/' in third['payload']['url']
+
+
+def test_verified_date_reuse_skips_other_window_but_not_new_people(service, monkeypatch):
+    start(service, monkeypatch, targets=('private',))
+    candidate=enqueue(service,monkeypatch)
+    calls=[]
+    monkeypatch.setattr(service,'fetch',lambda url,**kw:calls.append(url) or fake_response(url))
+    assert service.process_task(service.claim_task('fetch',worker_id='first'))['status']=='no_match'
+    # The same date and new names must fetch and match a previously rejected URL.
+    start(service,monkeypatch,targets=('paes',));enqueue(service,monkeypatch,candidate)
+    assert service.process_task(service.claim_task('fetch',worker_id='second'))['status']=='saved'
+    assert len(calls)==2
+    third=start(service,monkeypatch);enqueue(service,monkeypatch,candidate)
+    with service._connect() as c:
+        c.execute("UPDATE political_jobs SET date_from='2026-06-02',date_to='2026-06-02' WHERE id=%s",(third['id'],))
+    monkeypatch.setattr(service,'_read_text',lambda *a:pytest.fail('out-of-window body must not be downloaded'))
+    task=service.claim_task('fetch',worker_id='third')
+    assert service.process_task(task)['status']=='outside_window' and len(calls)==2
+    with service._connect() as c:
+        assert c.execute('SELECT result FROM political_tasks WHERE id=%s',(task['id'],)).fetchone()['result']['dateReused']
+
+
+def test_verified_observation_date_survives_no_article(service, monkeypatch):
+    start(service,monkeypatch,targets=('private',));candidate=enqueue(service,monkeypatch)
+    monkeypatch.setattr(service,'fetch',lambda url,**kw:fake_response(url))
+    assert service.process_task(service.claim_task('fetch',worker_id='first'))['status']=='no_match'
+    job=start(service,monkeypatch);enqueue(service,monkeypatch,candidate)
+    with service._connect() as c:
+        c.execute("UPDATE political_jobs SET date_from='2026-06-02',date_to='2026-06-02' WHERE id=%s",(job['id'],))
+    monkeypatch.setattr(service,'fetch',lambda *a,**kw:pytest.fail('verified other-day page must not be fetched again'))
+    assert service.process_task(service.claim_task('fetch',worker_id='second'))['status']=='outside_window'
+
+
+def test_calendar_partition_priority_retains_undated_candidates(service, monkeypatch):
+    start(service,monkeypatch)
+    with service._connect() as c:
+        job=c.execute('SELECT id FROM political_jobs').fetchone()['id']
+        service._insert_task(c,job,'fetch',{'url':'https://odia.ig.com.br/current-story','source_key':'odia'})
+        service._insert_task(c,job,'fetch',{'url':'https://odia.ig.com.br/historical-story','source_key':'odia',
+            'metadata':{'partition_status':'requested_calendar_partition'}})
+    assert service.claim_task('fetch',worker_id='one')['payload']['url'].endswith('/historical-story')
+    assert service.claim_task('fetch',worker_id='two')['payload']['url'].endswith('/current-story')

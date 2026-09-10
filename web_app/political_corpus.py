@@ -312,6 +312,8 @@ class PoliticalCorpusService:
         priority = 0 if kind == "discovery" and payload.get("strategy") == "google_news" else 10
         if kind == "fetch" and source_key == "g1" and re.match(r"^/(?:rj|politica|eleicoes)(?:/|$)", urlparse(str(payload.get("url") or "")).path):
             priority = 20
+        if kind == "fetch" and (payload.get("metadata") or {}).get("partition_status") == "requested_calendar_partition":
+            priority = 20
         conn.execute("""INSERT INTO political_tasks(job_id,kind,source_key,dedupe_key,payload,cursor,request_domain,priority)
                         VALUES (%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s) ON CONFLICT(job_id,kind,dedupe_key) DO NOTHING""",
                      (job_id, kind, source_key, dedupe, _json(payload), _json(payload.get("cursor") or {}),
@@ -1078,7 +1080,13 @@ class PoliticalCorpusService:
                          result={"bodyBatchRecords": len(batch_refs), "bodyBatchFallback": batch_fallback})
         return {"taskId": task["id"], "status": outcome, "candidates": len(candidates)}
 
-    def _finish_fetch_outside_window(self, task: dict, *, published=None, date_status="") -> dict:
+    @staticmethod
+    def _publication_fact(published, date_status: str) -> dict:
+        if not published or date_status not in {"page_verified", "api_verified"}:
+            return {}
+        return {"verified_publication_at": published.isoformat(), "publication_date_status": date_status}
+
+    def _finish_fetch_outside_window(self, task: dict, *, published=None, date_status="", reused_date=False) -> dict:
         with self._connect() as conn:
             self._lock_task(conn, task)
             # A prior failed attempt may have saved the feed's inaccurate date.
@@ -1094,9 +1102,9 @@ class PoliticalCorpusService:
                                  (previous["id"], _json(dict(previous))))
                     conn.execute("UPDATE political_articles SET published_at=%s,date_status=%s WHERE id=%s",
                                  (published,date_status,previous["id"]))
-            conn.execute("UPDATE political_observations SET disposition='outside_window',article_id=NULL WHERE job_id=%s AND observed_url=%s",
-                         (task["job_id"], task["payload"]["url"]))
-            self._finish(conn, task, "complete", result={"disposition": "outside_window"})
+            conn.execute("UPDATE political_observations SET disposition='outside_window',article_id=NULL,metadata=metadata || %s::jsonb WHERE job_id=%s AND observed_url=%s",
+                         (_json(self._publication_fact(published, date_status)), task["job_id"], task["payload"]["url"]))
+            self._finish(conn, task, "complete", result={"disposition": "outside_window", "dateReused": reused_date})
         return {"taskId": task["id"], "status": "outside_window"}
 
     def _finish_fetch_not_news(self, task: dict, url: str, *, title: str | None = None) -> dict:
@@ -1114,19 +1122,33 @@ class PoliticalCorpusService:
         from .political_discovery import extract_article, is_google_intermediary
         candidate = task["payload"]
         fetch_url = task["cursor"].get("resolved_url") or candidate["url"]
+        force_refresh = bool(candidate.get("force_refresh"))
         if non_news_reason(candidate["url"], candidate.get("title", "")):
             return self._finish_fetch_not_news(task, candidate["url"])
         with self._connect() as conn:
             job = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (task["job_id"],)).fetchone()
             existing = conn.execute("""SELECT a.* FROM political_articles a LEFT JOIN political_url_aliases u ON u.article_id=a.id
                 WHERE a.canonical_url=%s OR u.url=%s ORDER BY a.id LIMIT 1""", (fetch_url, fetch_url)).fetchone()
+            known_date = None
+            if not force_refresh:
+                if existing and existing["date_status"] in {"page_verified", "api_verified"}:
+                    known_date = (existing["published_at"], existing["date_status"])
+                elif not existing:
+                    fact = conn.execute("""SELECT metadata FROM political_observations
+                        WHERE observed_url=%s AND metadata ? 'verified_publication_at'
+                        ORDER BY id DESC LIMIT 1""", (candidate["url"],)).fetchone()
+                    if fact and fact["metadata"].get("publication_date_status") in {"page_verified", "api_verified"}:
+                        known_date = (parse_date(fact["metadata"]["verified_publication_at"]), fact["metadata"]["publication_date_status"])
+        # Reuse only verified publication dates to reject a different period.
+        # A prior no_match result is never evidence against newly selected people.
+        if known_date and known_date[0] and not job["date_from"] <= known_date[0].astimezone(ZONE).date() <= job["date_to"]:
+            return self._finish_fetch_outside_window(task, published=known_date[0], date_status=known_date[1], reused_date=True)
         if existing and non_news_reason(existing["canonical_url"], existing["title"]):
             return self._finish_fetch_not_news(task, existing["canonical_url"], title=existing["title"])
         body, final_url, title = "", fetch_url, str(candidate.get("title") or "")
         published = parse_date(candidate.get("published_at"))
         date_status = ("api_verified" if (candidate.get("metadata") or {}).get("wordpress_id") is not None else "source_reported") if published else "unknown"
         digest = key = ""
-        force_refresh = bool(candidate.get("force_refresh"))
         html_hash = html_key = ""
         use_saved_body = bool(existing and existing["text_object_key"] and existing["body_status"] == "body_extracted"
                               and not force_refresh and existing["source_key"] != "google_news")
@@ -1277,8 +1299,8 @@ class PoliticalCorpusService:
                     force_correction=force_refresh, write_result=write_result)
                 conn.execute("INSERT INTO political_url_aliases(url,article_id) VALUES (%s,%s) ON CONFLICT DO NOTHING", (candidate["url"], article_id))
                 disposition = "saved" if write_result["inserted"] else "duplicate"
-            conn.execute("UPDATE political_observations SET article_id=%s,disposition=%s WHERE job_id=%s AND observed_url=%s",
-                         (article_id, disposition, task["job_id"], candidate["url"]))
+            conn.execute("UPDATE political_observations SET article_id=%s,disposition=%s,metadata=metadata || %s::jsonb WHERE job_id=%s AND observed_url=%s",
+                         (article_id, disposition, _json(self._publication_fact(published, date_status)), task["job_id"], candidate["url"]))
             self._finish(conn, task, "complete", result={"articleId": article_id, "disposition": disposition,
                          "bodyOrigin": body_origin, "bodyBatchFallback": batch_fallback})
         return {"taskId": task["id"], "status": disposition, "articleId": article_id,

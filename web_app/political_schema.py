@@ -98,6 +98,8 @@ CREATE TABLE IF NOT EXISTS political_observations (
  UNIQUE(job_id,observed_url)
 );
 CREATE INDEX IF NOT EXISTS political_observations_job ON political_observations(job_id,disposition);
+CREATE INDEX IF NOT EXISTS political_observations_verified_date ON political_observations(observed_url,id DESC)
+ WHERE metadata ? 'verified_publication_at';
 CREATE TABLE IF NOT EXISTS political_import_progress (
  source_key TEXT PRIMARY KEY, last_article_id BIGINT NOT NULL DEFAULT 0, completed BOOLEAN NOT NULL DEFAULT FALSE,
  validation JSONB NOT NULL DEFAULT '{}', updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

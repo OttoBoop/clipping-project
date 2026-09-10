@@ -513,6 +513,7 @@ def _sitemap(task, source, fetch):
             continue
         candidates.append(_candidate(source, url, _sitemap_title(node), published,
                                      metadata={"sitemap_url": sitemap_url,
+                                               "partition_status": task.get("partition_status", ""),
                                                "discovery_day": task.get("day", ""), "needs_date_review": not bool(published)}))
     next_cursor = None
     if offset + MAX_CANDIDATES < len(entries):
