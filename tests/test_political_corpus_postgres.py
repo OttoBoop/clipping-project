@@ -82,6 +82,36 @@ def fake_response(url, body=BODY, status=200):
     return response
 
 
+@pytest.mark.parametrize("original,requested", [
+    ("https://www.diariodorio.com/politica/2026/06/story.html", "https://diariodorio.com/politica/2026/06/story.html"),
+    ("https://vejario.abril.com.br/cidade/story", "https://vejario.abril.com.br/cidade/story/"),
+])
+def test_publisher_request_shortcut_preserves_alias_and_reuses_saved_text(service, monkeypatch, original, requested):
+    from pipeline.normalization import canonicalize_url
+    start(service, monkeypatch, targets=("paes",))
+    candidate = {"url": original, "title": "Encontro político", "source_name": "Example", "source_key": "example"}
+    enqueue(service, monkeypatch, candidate)
+    calls = []
+    def fetch(url):
+        calls.append(url)
+        return fake_response(url)
+    monkeypatch.setattr(service, "fetch", fetch)
+    first = service.process_task(service.claim_task("fetch", worker_id="first"))
+    assert calls == [requested]
+    with service._connect() as conn:
+        article = conn.execute("SELECT * FROM political_articles WHERE id=%s", (first["articleId"],)).fetchone()
+        assert article["canonical_url"] == canonicalize_url(requested)
+        assert conn.execute("SELECT article_id FROM political_url_aliases WHERE url=%s", (original,)).fetchone()["article_id"] == article["id"]
+    start(service, monkeypatch, targets=("duarte",))
+    enqueue(service, monkeypatch, candidate)
+    second = service.process_task(service.claim_task("fetch", worker_id="second"))
+    assert second["articleId"] == first["articleId"]
+    assert calls == [requested]  # Second person matched from the immutable saved body.
+    with service._connect() as conn:
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_articles").fetchone()["n"] == 1
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_mentions").fetchone()["n"] == 2
+
+
 def test_quality_and_reuse_metrics_exclude_corrected_unassociated_articles(service, monkeypatch):
     job = start(service, monkeypatch, targets=("paes",))
     candidate = enqueue(service, monkeypatch)

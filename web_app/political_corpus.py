@@ -42,6 +42,7 @@ from .storage_bridge import ArtifactStore, artifact_store
 from .political_body_batches import BatchBodyUnavailable, WordPressBodyBatches
 from .political_record_types import non_news_reason
 from .political_worker_limits import fetch_concurrency
+from .political_request_urls import publisher_article_request_url
 
 START_DATE = date(2026, 6, 1)
 ZONE = ZoneInfo("America/Sao_Paulo")
@@ -1197,7 +1198,7 @@ class PoliticalCorpusService:
                 self._lock_task(conn, task)
             domain_deferred = False
             try:
-                response = self.fetch(final_url)
+                response = self.fetch(publisher_article_request_url(final_url))
             except DomainCooldown:
                 domain_deferred = True
                 raise
@@ -1227,7 +1228,7 @@ class PoliticalCorpusService:
                     if non_news_reason(resolved):
                         return self._finish_fetch_not_news(task, resolved)
                     self._checkpoint_fetch(task, {"resolved_url": canonicalize_url(resolved)})
-                    response = self.fetch(resolved)
+                    response = self.fetch(publisher_article_request_url(resolved))
                     if non_news_reason(response.url):
                         return self._finish_fetch_not_news(task, response.url)
                     if is_google_intermediary(response.url):
