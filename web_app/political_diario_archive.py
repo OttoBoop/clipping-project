@@ -220,6 +220,13 @@ def discover_archive(task, source, fetch):
     reason = _gaps(state)
     if state["older_pages"] >= 2 and not reason:
         return discovery._result(raw_count=parser.raw_count, next_cursor=state, outcome="complete")
+    older_cap = min(MAX_PAGES, max(10, int(source.get("archive_older_page_cap") or 10)))
+    if reason and state["older_pages"] >= older_cap:
+        # A sticky earlier ordering gap must not send every narrow run through
+        # the entire archive. This is an explicit coverage limit, not proof of
+        # exhaustion; the independent domain/name searches remain scheduled.
+        return discovery._result(candidates, raw_count=parser.raw_count, next_cursor=state, outcome="gap",
+                                 gap_reason=reason + f";older_page_budget:{older_cap}")
     if page >= cap:
         return discovery._result(candidates, raw_count=parser.raw_count, next_cursor=state, outcome="gap",
                                  gap_reason="diario_archive_page_cap" + (";" + reason if reason else ""))

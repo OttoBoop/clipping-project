@@ -134,6 +134,18 @@ def test_order_reversal_stays_visible_after_later_ordered_older_pages():
     assert fourth["outcome"] == "continue" and "chronology_unproven" in fourth["gap_reason"]
 
 
+def test_prior_ordering_gap_has_bounded_older_tail_without_claiming_exhaustion():
+    first = run(task(), page([(1, "2026-06-02")], initial=True))
+    result = run(task(cursor=first["next_cursor"]), page([(2, "2026-06-03")]))
+    for index in range(10):
+        result = run(task(cursor=result["next_cursor"]), page([(index + 3, "2026-05-30")]))
+        assert result["outcome"] == ("gap" if index == 9 else "continue")
+    assert "chronology_unproven" in result["gap_reason"]
+    assert "older_page_budget:10" in result["gap_reason"]
+    assert result["next_cursor"]["older_pages"] == 10
+    assert result["next_cursor"]["page"] == 13
+
+
 def test_malformed_or_external_card_has_visible_gap_and_never_fetches_other_host():
     raw = page([(1, "2026-06-22"), (2, "2026-06-22")], initial=True).replace('/regional-news-service-2/index.html', 'https://other.example/story.html')
     first = run(task(), raw)

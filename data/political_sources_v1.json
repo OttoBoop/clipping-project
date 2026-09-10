@@ -123,7 +123,7 @@
         "sitemap",
         "google_news"
       ],
-      "known_constraint": "Public Últimas notícias pagination is advertised by the current frontend and returns 10 dated cards per page; sampled pages 500/625/650 reached June 22/June 3/May 30 on 2026-09-09. A shared resumable scan uses a 1,000-page cap and explicit gaps for unknown dates, chronology, repeated pages or changed markup. Card days guide traversal only; article-page publication dates remain required. Full historical coverage is not yet verified. The supplemental sitemap has 1,000 undated entries covering August 25–September 9 and is deferred for windows up to seven days. Google history remains enabled. The former WordPress API returned HTTP 403 and is not scheduled; lastmod is never publication date.",
+      "known_constraint": "Public Últimas notícias pagination is advertised by the current frontend and returns 10 dated cards per page; sampled pages 500/625/650 reached June 22/June 3/May 30 on 2026-09-09. A shared resumable scan uses a 1,000-page cap and explicit gaps for unknown dates, chronology, repeated pages or changed markup. Card days guide traversal only; article-page publication dates remain required. Full historical coverage is not yet verified. The supplemental sitemap has 1,000 undated entries covering August 25–September 9 and is deferred for windows up to seven days. Google history remains enabled. The former WordPress API returned HTTP 403 and is not scheduled; lastmod is never publication date. Live 10/09 canary reached page 728 / May 21 for an August 9 window because chronology_gap remained sticky. After ten consecutive ordered pages older than the requested start, stop with an explicit older_page_budget coverage gap; do not report exhaustion. Independent domain/name queries remain enabled.",
       "evidence": [
         {
           "url": "https://www.diariodorio.com/ultimas-noticias",
@@ -157,7 +157,8 @@
       "sitemap_urls": [
         "https://www.diariodorio.com/sitemap.xml"
       ],
-      "defer_undated_sitemap_up_to_days": 7
+      "defer_undated_sitemap_up_to_days": 7,
+      "archive_older_page_cap": 10
     },
     {
       "key": "tempo_real_rj",
