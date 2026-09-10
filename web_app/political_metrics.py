@@ -13,7 +13,7 @@ import re
 import threading
 import time
 
-OPERATIONS = frozenset({"task", "http", "http_body", "throttle_wait", "extraction", "object_upload",
+OPERATIONS = frozenset({"task", "http", "http_body", "throttle_wait", "google_resolution", "extraction", "object_upload",
                        "body_batch_upload", "body_batch_read", "body_batch_cache_hit",
                        "body_batch_use", "body_batch_fallback"})
 OUTCOMES = frozenset({"ok", "error", "saved", "duplicate", "no_match", "not_news", "outside_window", "complete",

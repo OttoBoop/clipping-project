@@ -1185,7 +1185,8 @@ class PoliticalCorpusService:
             if is_google_intermediary(final_url):
                 from . import political_discovery
                 resolver = getattr(political_discovery, "resolve_google_redirect", None)
-                resolved = resolver(candidate["url"], self.fetch, initial_response=response) if resolver and urlparse(candidate["url"]).hostname == "news.google.com" else None
+                with timed_operation("google_resolution"):
+                    resolved = resolver(candidate["url"], self.fetch, initial_response=response) if resolver and urlparse(candidate["url"]).hostname == "news.google.com" else None
                 if resolved and not is_google_intermediary(resolved):
                     if non_news_reason(resolved):
                         return self._finish_fetch_not_news(task, resolved)
