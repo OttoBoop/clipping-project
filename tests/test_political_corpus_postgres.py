@@ -132,6 +132,21 @@ def test_quality_and_reuse_metrics_exclude_corrected_unassociated_articles(servi
         assert conn.execute("SELECT text_object_key FROM political_articles WHERE id=%s", (article_id,)).fetchone()["text_object_key"]
 
 
+def test_google_discovery_access_challenge_is_an_explicit_terminal_gap(service, monkeypatch):
+    start(service, monkeypatch, tasks=[{"source_key": "google_news", "strategy": "google_news",
+        "query": '"Eduardo Paes"', "date_from": "2026-06-01", "date_to": "2026-06-02", "cursor": {}}])
+    def blocked(*args, **kwargs):
+        raise FetchProblem("google_access_challenge", retryable=False)
+    monkeypatch.setattr(service, "fetch", blocked)
+    task = service.claim_task("discovery", worker_id="blocked-google")
+    result = service.process_task(task)
+    assert result["status"] == "gap" and result["errorType"] == "google_access_challenge"
+    with service._connect() as conn:
+        row = conn.execute("SELECT status,error_type,attempts FROM political_tasks WHERE id=%s", (task["id"],)).fetchone()
+        assert row == {"status": "gap", "error_type": "google_access_challenge", "attempts": 1}
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_articles").fetchone()["n"] == 0
+
+
 @pytest.mark.parametrize("raises", [True, False])
 def test_direct_source_gaps_enqueue_deduplicated_google_fallback_with_job_scope(service, monkeypatch, raises):
     from web_app import political_discovery

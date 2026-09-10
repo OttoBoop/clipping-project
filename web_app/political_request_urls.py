@@ -2,6 +2,13 @@
 from urllib.parse import urlsplit, urlunsplit
 
 
+def is_google_access_challenge(url: str) -> bool:
+    parsed = urlsplit(url)
+    host = (parsed.hostname or "").lower().rstrip(".")
+    google = any(host == domain or host.endswith("." + domain) for domain in ("google.com", "google.com.br"))
+    return google and (parsed.path == "/sorry" or parsed.path.startswith("/sorry/"))
+
+
 def publisher_article_request_url(url: str) -> str:
     parsed = urlsplit(url)
     if parsed.scheme != "https":

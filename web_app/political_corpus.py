@@ -42,7 +42,7 @@ from .storage_bridge import ArtifactStore, artifact_store
 from .political_body_batches import BatchBodyUnavailable, WordPressBodyBatches
 from .political_record_types import non_news_reason
 from .political_worker_limits import fetch_concurrency
-from .political_request_urls import publisher_article_request_url
+from .political_request_urls import is_google_access_challenge, publisher_article_request_url
 
 START_DATE = date(2026, 6, 1)
 ZONE = ZoneInfo("America/Sao_Paulo")
@@ -862,6 +862,11 @@ class PoliticalCorpusService:
                     return response
         current = url
         for _ in range(8):
+            # A Google /sorry/ redirect is an access challenge, not a publisher
+            # or a transient article response. Do not request/churn that page,
+            # reset a shared cooldown indefinitely, or try to bypass it.
+            if is_google_access_challenge(current):
+                raise FetchProblem("google_access_challenge", retryable=False)
             self._public_url(current)
             domain = normalize_domain(urlparse(current).hostname)
             wait = self.reserve_domain(domain)
@@ -1004,6 +1009,14 @@ class PoliticalCorpusService:
                 safe_detail = str(exc)
                 if safe_detail in {"malformed XML response", "sitemap byte limit reached", "expanded sitemap byte limit reached", "unsupported XML entity declaration"}:
                     error_type = safe_detail.replace(" ", "_").lower()
+                cause = exc.__cause__
+                for _ in range(5):
+                    if cause is None:
+                        break
+                    if isinstance(cause, FetchProblem) and str(cause) == "google_access_challenge":
+                        error_type = "google_access_challenge"
+                        break
+                    cause = cause.__cause__
             if task["kind"] == "fetch" and not getattr(exc, "metadata_handled", False):
                 try:
                     with self._connect() as conn:

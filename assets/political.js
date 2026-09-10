@@ -12,6 +12,7 @@
   const sourceName = key => state.sources.find(s => s.key === key)?.name || key;
   const gapCount = metrics => (metrics.tasks || []).filter(t => ["gap", "failed", "retryable"].includes(t.status)).reduce((n, t) => n + Number(t.count || 0), 0);
   function gapReason(code = "") {
+    if (code === "google_access_challenge") return "O Google bloqueou o acesso automatizado. A consulta ou a resolução da notícia ficou incompleta.";
     if (/429/.test(code)) return "A fonte limitou os acessos; nova tentativa necessária.";
     if (/403|401|blocked/.test(code)) return "A fonte não permitiu o acesso público.";
     if (/timeout/i.test(code)) return "A fonte demorou além do limite de espera.";
