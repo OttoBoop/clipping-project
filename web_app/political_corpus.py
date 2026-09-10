@@ -823,6 +823,10 @@ class PoliticalCorpusService:
             raise FetchProblem("invalid_article_url", retryable=False)
         try:
             addresses = socket.getaddrinfo(parsed.hostname, parsed.port or 443, type=socket.SOCK_STREAM)
+        except UnicodeError as exc:
+            # A malformed publisher redirect can concatenate the article slug
+            # into the hostname. Retrying cannot repair an invalid IDNA label.
+            raise FetchProblem("invalid_article_hostname", retryable=False) from exc
         except OSError as exc:
             raise FetchProblem("dns_failed") from exc
         if not addresses or any(not ipaddress.ip_address(address[4][0]).is_global for address in addresses):

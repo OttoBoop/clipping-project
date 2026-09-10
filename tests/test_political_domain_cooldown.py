@@ -17,6 +17,18 @@ from web_app.political_rate_limits import (
 NOW = datetime(2026, 9, 9, 15, tzinfo=timezone.utc)
 
 
+def test_malformed_publisher_redirect_is_terminal_instead_of_six_dns_retries(monkeypatch):
+    from web_app.political_corpus import FetchProblem
+
+    def invalid_hostname(*args, **kwargs):
+        raise UnicodeError("label too long")
+
+    monkeypatch.setattr("web_app.political_corpus.socket.getaddrinfo", invalid_hostname)
+    with pytest.raises(FetchProblem, match="invalid_article_hostname") as error:
+        PoliticalCorpusService._public_url("https://" + "x" * 80 + ".com/story")
+    assert not error.value.retryable
+
+
 @pytest.mark.parametrize("header,seconds", [
     ("120", 120), (" 1.5 ", 1.5), ("7200", 7200),
     ("Wed, 09 Sep 2026 17:00:00 GMT", 7200),
