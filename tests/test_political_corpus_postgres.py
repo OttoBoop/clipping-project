@@ -1148,3 +1148,91 @@ def test_object_upload_failure_keeps_verified_date_in_metadata_fallback(service,
     article=service.list_articles(allowed_target_keys=["paes"])["items"][0]
     assert article["bodyStatus"]=="metadata_only" and article["publishedAt"].startswith("2026-06-01")
     assert article["dateStatus"]=="page_verified"
+
+
+def test_incremental_discovery_snapshots_fallback_and_request_idempotency(service, monkeypatch):
+    from web_app import political_discovery
+    original = political_discovery.build_tasks
+    payload = {'target_keys':['paes','duarte'],'target_snapshots':TARGETS,
+        'discovery_target_keys':['duarte'],'date_from':'2026-06-01','date_to':'2026-06-02',
+        'source_keys':['g1','google_news'],'request_key':'incremental-example'}
+    job=service.start_job(payload,started_by='test',allowed_target_keys=['paes','duarte'])
+    assert job['discoveryTargetKeys']==['duarte']
+    with service._connect() as c:
+        tasks=c.execute('SELECT * FROM political_tasks WHERE job_id=%s',(job['id'],)).fetchall()
+        assert {k for t in tasks if t['payload']['strategy']=='google_news' for k in t['payload']['target_ids']}=={'duarte'}
+        row=c.execute('SELECT * FROM political_jobs WHERE id=%s',(job['id'],)).fetchone()
+        assert {r['key'] for r in row['target_snapshots']}=={'paes','duarte'}
+    assert service.start_job(payload,started_by='test',allowed_target_keys=['paes','duarte'])['id']==job['id']
+    with pytest.raises(ValueError,match='request_key_conflict'):
+        service.start_job({**payload,'discovery_target_keys':['paes']},started_by='test',allowed_target_keys=['paes','duarte'])
+    task=service.claim_task('discovery',worker_id='test')
+    assert task['payload']['strategy']=='daily_sitemap'
+    monkeypatch.setattr(political_discovery,'discover',lambda *a,**k: {'outcome':'gap','gap_reason':'source_failed'})
+    assert service.process_task(task)['status']=='gap'
+    with service._connect() as c:
+        fallbacks=c.execute("SELECT payload FROM political_tasks WHERE job_id=%s AND source_key='g1' AND payload->>'strategy'='google_news'",(job['id'],)).fetchall()
+    assert fallbacks and all(r['payload']['target_ids']==['duarte'] for r in fallbacks)
+
+
+def test_empty_body_two_successful_responses_separate_from_network_attempts(service, monkeypatch):
+    start(service,monkeypatch);enqueue(service,monkeypatch)
+    replies=[503,200,200]
+    monkeypatch.setattr(service,'fetch',lambda url,**kw:fake_response(url,body='Sem conteúdo editorial.',status=replies.pop(0)))
+    outcomes=[]
+    for index in range(3):
+        task=service.claim_task('fetch',worker_id='test')
+        outcomes.append(service.process_task(task))
+        with service._connect() as c:
+            c.execute('UPDATE political_tasks SET next_attempt_at=NOW() WHERE id=%s',(task['id'],))
+    assert [r['status'] for r in outcomes]==['retryable','retryable','gap']
+    with service._connect() as c:
+        row=c.execute('SELECT attempts,cursor,error_type FROM political_tasks WHERE id=%s',(task['id'],)).fetchone()
+    assert row['attempts']==3 and row['cursor']['empty_body_responses']==2 and row['error_type']=='body_missing'
+
+
+def test_google_checkpoint_releases_slot_and_survives_publisher_failure(service, monkeypatch):
+    from web_app import political_discovery
+    start(service,monkeypatch)
+    enqueue(service,monkeypatch,{'url':'https://news.google.com/rss/articles/first','title':'Eduardo Paes no Rio',
+        'source_key':'google_news','source_name':'Google News','published_at':'2026-06-01T15:00:00Z'})
+    with service._connect() as c:
+        job=c.execute('SELECT id FROM political_jobs').fetchone()['id']
+        service._insert_task(c,job,'fetch',{'url':'https://news.google.com/rss/articles/second','source_key':'google_news','title':'Segunda notícia'})
+    first=service.claim_task('fetch',worker_id='first')
+    assert service.claim_task('fetch',worker_id='blocked') is None
+    monkeypatch.setattr(political_discovery,'resolve_google_redirect',lambda *a,**kw:'https://example.com/published')
+    calls=[];released=[]
+    def fetch(url,**kw):
+        calls.append(url)
+        if url=='https://example.com/published':
+            released.append(service.claim_task('fetch',worker_id='second'))
+            raise requests.ReadTimeout()
+        return fake_response(url)
+    monkeypatch.setattr(service,'fetch',fetch)
+    assert service.process_task(first)['status']=='retryable'
+    assert released[0] and released[0]['payload']['url'].endswith('/second')
+    with service._connect() as c:
+        stored=c.execute('SELECT cursor FROM political_tasks WHERE id=%s',(first['id'],)).fetchone()['cursor']
+        assert stored['resolved_url']=='https://example.com/published'
+        c.execute('UPDATE political_tasks SET next_attempt_at=NOW() WHERE id=%s',(first['id'],))
+    retried=service.claim_task('fetch',worker_id='resume')
+    assert retried['id']==first['id']
+    monkeypatch.setattr(service,'fetch',lambda url,**kw: calls.append(url) or fake_response(url))
+    assert service.process_task(retried)['status']=='duplicate'
+    assert service.list_articles(allowed_target_keys=['paes'])['items'][0]['bodyStatus']=='body_extracted'
+    assert calls==['https://news.google.com/rss/articles/first','https://example.com/published','https://example.com/published']
+    with service._connect() as c:
+        aliases=c.execute('SELECT url FROM political_url_aliases').fetchall()
+    assert any(r['url'].endswith('/first') for r in aliases)
+
+
+def test_g1_rio_priority_preserves_other_states(service, monkeypatch):
+    start(service,monkeypatch)
+    with service._connect() as c:
+        job=c.execute('SELECT id FROM political_jobs').fetchone()['id']
+        for path in ['sp/sao-paulo/story','rj/rio/story','politica/story']:
+            service._insert_task(c,job,'fetch',{'url':'https://g1.globo.com/'+path,'source_key':'g1'})
+    first=service.claim_task('fetch',worker_id='one');second=service.claim_task('fetch',worker_id='two');third=service.claim_task('fetch',worker_id='three')
+    assert '/sp/' not in first['payload']['url'] and '/sp/' not in second['payload']['url']
+    assert '/sp/' in third['payload']['url']

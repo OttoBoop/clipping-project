@@ -1,8 +1,8 @@
 {
   "version": "rio_2026_v1",
-  "verified_at": "2026-09-09",
+  "verified_at": "2026-09-10",
   "discovery_date_from": "2026-06-01",
-  "scope": "Governo do Rio de Janeiro em 2026; PSD e figuras solicitadas",
+  "scope": "PSD Rio 2026 e seleção aprovada de candidatos ao governo e Senado/RJ",
   "targets": [
     {
       "key": "eduardo_paes",
@@ -28,11 +28,17 @@
         {
           "url": "https://psd.org.br/noticias/rio-convencao-confirma-candidatura-de-eduardo-paes/",
           "note": "Convenção do PSD em 20/07/2026 confirmou a candidatura ao Governo do Rio."
+        },
+        {
+          "url": "https://noticias.uol.com.br/eleicoes/2026/09/07/veja-lista-dos-candidatos-a-governador-do-rio-de-janeiro-em-2026.ghtm",
+          "note": "Cargo disputado; preservar situação e data informadas pela fonte."
         }
       ],
       "collection_profiles": [
         "psd_rj_2026"
-      ]
+      ],
+      "candidacy_office": "Governador/RJ 2026",
+      "candidacy_status": "Aguardando julgamento na lista de 07/09/2026"
     },
     {
       "key": "flavio_valle",
@@ -222,6 +228,10 @@
         {
           "url": "https://www.camara.leg.br/deputados/122158",
           "note": "Perfil parlamentar e nome civil."
+        },
+        {
+          "url": "https://www12.senado.leg.br/noticias/candidatos-2026/rio-de-janeiro",
+          "note": "Cargo disputado; preservar situação e data informadas pela fonte."
         }
       ],
       "match_context": {
@@ -261,7 +271,9 @@
       },
       "collection_profiles": [
         "psd_rj_2026"
-      ]
+      ],
+      "candidacy_office": "Senador/RJ 2026",
+      "candidacy_status": "Relacionado pela Agência Senado em 24/08/2026; julgamento eleitoral não verificado"
     },
     {
       "key": "eduardo_cavaliere",
@@ -524,14 +536,16 @@
       "keywords": [
         "Douglas Ruas"
       ],
-      "exact_aliases": [],
+      "exact_aliases": [
+        "Douglas Ruas dos Santos"
+      ],
       "political_roster_version": "rio_2026_v1",
       "group": "rio_governor_opponents",
       "group_label": "Disputa pelo Governo do Rio",
       "preferred_for_political_run": false,
       "party": "PL",
       "role": "Candidato ao Governo do Rio em 2026",
-      "verified_at": "2026-09-09",
+      "verified_at": "2026-09-10",
       "sources": [
         {
           "url": "https://noticias.uol.com.br/eleicoes/2026/09/07/veja-lista-dos-candidatos-a-governador-do-rio-de-janeiro-em-2026.ghtm",
@@ -540,8 +554,18 @@
         {
           "url": "https://www.cnnbrasil.com.br/eleicoes/quem-sao-os-candidatos-a-governador-do-rio-de-janeiro-em-2026/",
           "note": "Lista jornalística de candidatos publicada em agosto de 2026."
+        },
+        {
+          "url": "https://www.rj.gov.br/casacivil/sites/default/files/arquivos_paginas/CONTRATO%20SECC%20017_2025.pdf",
+          "note": "Identidade completa; preservada a data da informação sobre candidatura."
         }
-      ]
+      ],
+      "full_name": "Douglas Ruas dos Santos",
+      "collection_profiles": [
+        "psd_rj_2026"
+      ],
+      "candidacy_office": "Governador/RJ 2026",
+      "candidacy_status": "Deferido na listagem de 07/09/2026"
     },
     {
       "key": "anthony_garotinho",
@@ -554,7 +578,8 @@
         "Anthony Garotinho"
       ],
       "exact_aliases": [
-        "Garotinho"
+        "Garotinho",
+        "Anthony William Garotinho Matheus de Oliveira"
       ],
       "political_roster_version": "rio_2026_v1",
       "group": "rio_governor_opponents",
@@ -562,7 +587,7 @@
       "preferred_for_political_run": false,
       "party": "Republicanos",
       "role": "Candidato ao Governo do Rio em 2026",
-      "verified_at": "2026-09-09",
+      "verified_at": "2026-09-10",
       "sources": [
         {
           "url": "https://noticias.uol.com.br/eleicoes/2026/09/07/veja-lista-dos-candidatos-a-governador-do-rio-de-janeiro-em-2026.ghtm",
@@ -571,8 +596,44 @@
         {
           "url": "https://www.cnnbrasil.com.br/eleicoes/quem-sao-os-candidatos-a-governador-do-rio-de-janeiro-em-2026/",
           "note": "Lista jornalística de candidatos publicada em agosto de 2026."
+        },
+        {
+          "url": "https://www2.camara.leg.br/atividade-legislativa/comissoes/comissoes-temporarias/especiais/54a-legislatura/8046-10-codigo-de-processo-civil/documentos/controle-tramitacao-e-notas-taquigraficas/nt-26.10.11-cpc",
+          "note": "Identidade completa; preservada a data da informação sobre candidatura."
         }
-      ]
+      ],
+      "full_name": "Anthony William Garotinho Matheus de Oliveira",
+      "collection_profiles": [
+        "psd_rj_2026"
+      ],
+      "candidacy_office": "Governador/RJ 2026",
+      "candidacy_status": "Aguardando julgamento em 07/09/2026",
+      "match_context": {
+        "required_for": [
+          "Garotinho"
+        ],
+        "any_of": [
+          "governador",
+          "governo",
+          "Campos",
+          "Republicanos",
+          "Anthony",
+          "eleição",
+          "eleições",
+          "Rio"
+        ],
+        "exempt_aliases": [
+          "Anthony Garotinho",
+          "Anthony William Garotinho Matheus de Oliveira"
+        ],
+        "excluded_phrases": [
+          "Rosinha Garotinho",
+          "Clarissa Garotinho",
+          "Wladimir Garotinho",
+          "Anthony William Garotinho Matheus de Oliveira Neto"
+        ],
+        "window_chars": 300
+      }
     },
     {
       "key": "andre_marinho",
@@ -585,7 +646,8 @@
         "André Marinho"
       ],
       "exact_aliases": [
-        "Andre Marinho"
+        "Andre Marinho",
+        "André Bourguignon Marinho"
       ],
       "political_roster_version": "rio_2026_v1",
       "group": "rio_governor_opponents",
@@ -593,7 +655,7 @@
       "preferred_for_political_run": false,
       "party": "Novo",
       "role": "Candidato ao Governo do Rio em 2026",
-      "verified_at": "2026-09-09",
+      "verified_at": "2026-09-10",
       "sources": [
         {
           "url": "https://noticias.uol.com.br/eleicoes/2026/09/07/veja-lista-dos-candidatos-a-governador-do-rio-de-janeiro-em-2026.ghtm",
@@ -602,8 +664,18 @@
         {
           "url": "https://www.cnnbrasil.com.br/eleicoes/quem-sao-os-candidatos-a-governador-do-rio-de-janeiro-em-2026/",
           "note": "Lista jornalística de candidatos publicada em agosto de 2026."
+        },
+        {
+          "url": "https://www.meuvoto.org.br/candidato/190002537524.html",
+          "note": "Identidade completa; preservada a data da informação sobre candidatura."
         }
-      ]
+      ],
+      "full_name": "André Bourguignon Marinho",
+      "collection_profiles": [
+        "psd_rj_2026"
+      ],
+      "candidacy_office": "Governador/RJ 2026",
+      "candidacy_status": "Deferido na listagem de 07/09/2026"
     },
     {
       "key": "william_siri",
@@ -615,14 +687,16 @@
       "keywords": [
         "William Siri"
       ],
-      "exact_aliases": [],
+      "exact_aliases": [
+        "William Carlos Brum Bispo"
+      ],
       "political_roster_version": "rio_2026_v1",
       "group": "rio_governor_opponents",
       "group_label": "Disputa pelo Governo do Rio",
       "preferred_for_political_run": false,
       "party": "PSOL",
       "role": "Candidato ao Governo do Rio em 2026",
-      "verified_at": "2026-09-09",
+      "verified_at": "2026-09-10",
       "sources": [
         {
           "url": "https://noticias.uol.com.br/eleicoes/2026/09/07/veja-lista-dos-candidatos-a-governador-do-rio-de-janeiro-em-2026.ghtm",
@@ -631,8 +705,18 @@
         {
           "url": "https://www.cnnbrasil.com.br/eleicoes/quem-sao-os-candidatos-a-governador-do-rio-de-janeiro-em-2026/",
           "note": "Lista jornalística de candidatos publicada em agosto de 2026."
+        },
+        {
+          "url": "https://www.eleicoescandidatos.com.br/noticias/eleicoes-2024/60011/50222/william-siri-eleito-vereador-rio-de-janeiro-rj",
+          "note": "Identidade completa; preservada a data da informação sobre candidatura."
         }
-      ]
+      ],
+      "full_name": "William Carlos Brum Bispo",
+      "collection_profiles": [
+        "psd_rj_2026"
+      ],
+      "candidacy_office": "Governador/RJ 2026",
+      "candidacy_status": "Deferido na listagem de 07/09/2026"
     },
     {
       "key": "coronel_busnello",
@@ -1461,6 +1545,379 @@
       "collection_profiles": [
         "psd_rj_2026"
       ]
+    },
+    {
+      "key": "benedita_da_silva",
+      "label": "Benedita da Silva",
+      "display_name": "Benedita da Silva",
+      "full_name": "Benedita Souza da Silva Sampaio",
+      "className": "",
+      "primary": false,
+      "archived": false,
+      "keywords": [
+        "Benedita da Silva"
+      ],
+      "exact_aliases": [
+        "Benedita Souza da Silva Sampaio",
+        "Benedita"
+      ],
+      "political_roster_version": "rio_2026_v1",
+      "group": "rio_senate",
+      "group_label": "Disputa pelo Senado",
+      "preferred_for_political_run": false,
+      "party": "PT",
+      "role": "Deputada federal/RJ; ex-governadora e ex-senadora",
+      "verified_at": "2026-09-10",
+      "collection_profiles": [
+        "psd_rj_2026"
+      ],
+      "candidacy_office": "Senador/RJ 2026",
+      "candidacy_status": "Relacionado como candidato pela Agência Senado em 24/08/2026; julgamento eleitoral não verificado",
+      "sources": [
+        {
+          "url": "https://www12.senado.leg.br/noticias/candidatos-2026/rio-de-janeiro",
+          "note": "Identidade, partido e candidatura; consulta em 10/09/2026. A listagem não comprova deferimento judicial."
+        }
+      ],
+      "match_context": {
+        "required_for": [
+          "Benedita"
+        ],
+        "any_of": [
+          "Rio",
+          "RJ",
+          "Senado",
+          "senador",
+          "senadora",
+          "deputado",
+          "deputada",
+          "eleição",
+          "eleições",
+          "Crivella",
+          "Portinho",
+          "Jordy"
+        ],
+        "exempt_aliases": [
+          "Benedita da Silva",
+          "Benedita Souza da Silva Sampaio"
+        ],
+        "window_chars": 260
+      }
+    },
+    {
+      "key": "marcelo_crivella",
+      "label": "Marcelo Crivella",
+      "display_name": "Marcelo Crivella",
+      "full_name": "Marcelo Bezerra Crivella",
+      "className": "",
+      "primary": false,
+      "archived": false,
+      "keywords": [
+        "Marcelo Crivella"
+      ],
+      "exact_aliases": [
+        "Marcelo Bezerra Crivella",
+        "Crivella"
+      ],
+      "political_roster_version": "rio_2026_v1",
+      "group": "rio_senate",
+      "group_label": "Disputa pelo Senado",
+      "preferred_for_political_run": false,
+      "party": "Republicanos",
+      "role": "Deputado federal/RJ; ex-prefeito do Rio",
+      "verified_at": "2026-09-10",
+      "collection_profiles": [
+        "psd_rj_2026"
+      ],
+      "candidacy_office": "Senador/RJ 2026",
+      "candidacy_status": "Relacionado como candidato pela Agência Senado em 24/08/2026; julgamento eleitoral não verificado",
+      "sources": [
+        {
+          "url": "https://www12.senado.leg.br/noticias/candidatos-2026/rio-de-janeiro",
+          "note": "Identidade, partido e candidatura; consulta em 10/09/2026. A listagem não comprova deferimento judicial."
+        }
+      ],
+      "match_context": {
+        "required_for": [
+          "Crivella"
+        ],
+        "any_of": [
+          "Rio",
+          "RJ",
+          "Senado",
+          "senador",
+          "senadora",
+          "deputado",
+          "deputada",
+          "eleição",
+          "eleições",
+          "Benedita",
+          "Portinho",
+          "Jordy"
+        ],
+        "exempt_aliases": [
+          "Marcelo Crivella",
+          "Marcelo Bezerra Crivella"
+        ],
+        "window_chars": 260
+      }
+    },
+    {
+      "key": "carlos_portinho",
+      "label": "Carlos Portinho",
+      "display_name": "Carlos Portinho",
+      "full_name": "Carlos Francisco Portinho",
+      "className": "",
+      "primary": false,
+      "archived": false,
+      "keywords": [
+        "Carlos Portinho"
+      ],
+      "exact_aliases": [
+        "Carlos Francisco Portinho",
+        "Portinho"
+      ],
+      "political_roster_version": "rio_2026_v1",
+      "group": "rio_senate",
+      "group_label": "Disputa pelo Senado",
+      "preferred_for_political_run": false,
+      "party": "PL",
+      "role": "Senador pelo Rio de Janeiro",
+      "verified_at": "2026-09-10",
+      "collection_profiles": [
+        "psd_rj_2026"
+      ],
+      "candidacy_office": "Senador/RJ 2026",
+      "candidacy_status": "Relacionado como candidato pela Agência Senado em 24/08/2026; julgamento eleitoral não verificado",
+      "sources": [
+        {
+          "url": "https://www12.senado.leg.br/noticias/candidatos-2026/rio-de-janeiro",
+          "note": "Identidade, partido e candidatura; consulta em 10/09/2026. A listagem não comprova deferimento judicial."
+        }
+      ],
+      "match_context": {
+        "required_for": [
+          "Portinho"
+        ],
+        "any_of": [
+          "Rio",
+          "RJ",
+          "Senado",
+          "senador",
+          "senadora",
+          "deputado",
+          "deputada",
+          "eleição",
+          "eleições",
+          "Benedita",
+          "Crivella",
+          "Jordy"
+        ],
+        "exempt_aliases": [
+          "Carlos Portinho",
+          "Carlos Francisco Portinho"
+        ],
+        "window_chars": 260
+      }
+    },
+    {
+      "key": "carlos_jordy",
+      "label": "Carlos Jordy",
+      "display_name": "Carlos Jordy",
+      "full_name": "Carlos Roberto Coelho de Mattos Júnior",
+      "className": "",
+      "primary": false,
+      "archived": false,
+      "keywords": [
+        "Carlos Jordy"
+      ],
+      "exact_aliases": [
+        "Carlos Roberto Coelho de Mattos Júnior",
+        "Jordy"
+      ],
+      "political_roster_version": "rio_2026_v1",
+      "group": "rio_senate",
+      "group_label": "Disputa pelo Senado",
+      "preferred_for_political_run": false,
+      "party": "PL",
+      "role": "Deputado federal/RJ; ex-vereador de Niterói",
+      "verified_at": "2026-09-10",
+      "collection_profiles": [
+        "psd_rj_2026"
+      ],
+      "candidacy_office": "Senador/RJ 2026",
+      "candidacy_status": "Relacionado como candidato pela Agência Senado em 24/08/2026; julgamento eleitoral não verificado",
+      "sources": [
+        {
+          "url": "https://www12.senado.leg.br/noticias/candidatos-2026/rio-de-janeiro",
+          "note": "Identidade, partido e candidatura; consulta em 10/09/2026. A listagem não comprova deferimento judicial."
+        }
+      ],
+      "match_context": {
+        "required_for": [
+          "Jordy"
+        ],
+        "any_of": [
+          "Rio",
+          "RJ",
+          "Senado",
+          "senador",
+          "senadora",
+          "deputado",
+          "deputada",
+          "eleição",
+          "eleições",
+          "Benedita",
+          "Crivella",
+          "Portinho"
+        ],
+        "exempt_aliases": [
+          "Carlos Jordy",
+          "Carlos Roberto Coelho de Mattos Júnior"
+        ],
+        "window_chars": 260
+      }
+    },
+    {
+      "key": "waguinho",
+      "label": "Waguinho",
+      "display_name": "Waguinho",
+      "full_name": "Wagner dos Santos Carneiro",
+      "className": "",
+      "primary": false,
+      "archived": false,
+      "keywords": [
+        "Waguinho"
+      ],
+      "exact_aliases": [
+        "Wagner dos Santos Carneiro"
+      ],
+      "political_roster_version": "rio_2026_v1",
+      "group": "rio_senate",
+      "group_label": "Disputa pelo Senado",
+      "preferred_for_political_run": false,
+      "party": "Republicanos",
+      "role": "Ex-prefeito de Belford Roxo; distinto do cantor homônimo",
+      "verified_at": "2026-09-10",
+      "collection_profiles": [
+        "psd_rj_2026"
+      ],
+      "candidacy_office": "Senador/RJ 2026",
+      "candidacy_status": "Relacionado como candidato pela Agência Senado em 24/08/2026; julgamento eleitoral não verificado",
+      "sources": [
+        {
+          "url": "https://www12.senado.leg.br/noticias/candidatos-2026/rio-de-janeiro",
+          "note": "Identidade, partido e candidatura; consulta em 10/09/2026. A listagem não comprova deferimento judicial."
+        }
+      ],
+      "match_context": {
+        "required_for": [
+          "Waguinho"
+        ],
+        "any_of": [
+          "Belford Roxo",
+          "Baixada Fluminense",
+          "Senado",
+          "senador",
+          "Republicanos",
+          "Daniela do Waguinho"
+        ],
+        "exempt_aliases": [
+          "Wagner dos Santos Carneiro"
+        ],
+        "window_chars": 350,
+        "excluded_phrases": [
+          "cantor Waguinho",
+          "Waguinho cantor",
+          "Daniela do Waguinho"
+        ]
+      }
+    },
+    {
+      "key": "monica_benicio",
+      "label": "Monica Benicio",
+      "display_name": "Monica Benicio",
+      "full_name": "Monica Tereza Azeredo Benício",
+      "className": "",
+      "primary": false,
+      "archived": false,
+      "keywords": [
+        "Monica Benicio"
+      ],
+      "exact_aliases": [
+        "Monica Tereza Azeredo Benício",
+        "Mônica Benício"
+      ],
+      "political_roster_version": "rio_2026_v1",
+      "group": "rio_senate",
+      "group_label": "Disputa pelo Senado",
+      "preferred_for_political_run": false,
+      "party": "PSOL",
+      "role": "Vereadora do Rio de Janeiro",
+      "verified_at": "2026-09-10",
+      "collection_profiles": [
+        "psd_rj_2026"
+      ],
+      "candidacy_office": "Senador/RJ 2026",
+      "candidacy_status": "Relacionado como candidato pela Agência Senado em 24/08/2026; julgamento eleitoral não verificado",
+      "sources": [
+        {
+          "url": "https://www12.senado.leg.br/noticias/candidatos-2026/rio-de-janeiro",
+          "note": "Identidade, partido e candidatura; consulta em 10/09/2026. A listagem não comprova deferimento judicial."
+        }
+      ]
+    },
+    {
+      "key": "marcos_dias",
+      "label": "Marcos Dias",
+      "display_name": "Marcos Dias",
+      "full_name": "Marcos Dias Pereira",
+      "className": "",
+      "primary": false,
+      "archived": false,
+      "keywords": [
+        "Marcos Dias"
+      ],
+      "exact_aliases": [
+        "Marcos Dias Pereira"
+      ],
+      "political_roster_version": "rio_2026_v1",
+      "group": "rio_senate",
+      "group_label": "Disputa pelo Senado",
+      "preferred_for_political_run": false,
+      "party": "Podemos",
+      "role": "Vereador do Rio de Janeiro; candidato ao Senado",
+      "verified_at": "2026-09-10",
+      "collection_profiles": [
+        "psd_rj_2026"
+      ],
+      "candidacy_office": "Senador/RJ 2026",
+      "candidacy_status": "Relacionado como candidato pela Agência Senado em 24/08/2026; julgamento eleitoral não verificado",
+      "sources": [
+        {
+          "url": "https://www12.senado.leg.br/noticias/candidatos-2026/rio-de-janeiro",
+          "note": "Identidade, partido e candidatura; consulta em 10/09/2026. A listagem não comprova deferimento judicial."
+        }
+      ],
+      "match_context": {
+        "required_for": [
+          "Marcos Dias"
+        ],
+        "any_of": [
+          "Rio de Janeiro",
+          "Câmara do Rio",
+          "vereador",
+          "Podemos",
+          "Senado",
+          "senador",
+          "política fluminense"
+        ],
+        "exempt_aliases": [
+          "Marcos Dias Pereira"
+        ],
+        "window_chars": 350,
+        "excluded_phrases": []
+      }
     }
   ],
   "collection_profiles": [

@@ -6,6 +6,7 @@ This surface never reads either of the full-archive JSON bundles.
 from __future__ import annotations
 
 import logging
+import json
 from contextlib import contextmanager
 from html import escape
 
@@ -132,7 +133,14 @@ def meta(request: Request):
         defaults = [row["key"] for row in active if row.get("preferred_for_political_run")]
     if not defaults:
         defaults = [row["key"] for row in active]
+    presets, new_keys = [], []
+    if profile == PSD_PROFILE:
+        seed = json.loads((ROOT / "data" / "psd_rj_2026_profile.json").read_text())
+        presets = [{**p, "target_keys": [k for k in p["target_keys"] if k in available]}
+                   for p in seed.get("selection_presets", [])]
+        new_keys = [k for k in seed.get("new_target_keys", []) if k in available]
     return {"scope": SCOPE, "configured": political_corpus.configured,
+            "selectionPresets": presets, "newDiscoveryTargets": new_keys,
             "canRun": is_admin_session(session), "dateFrom": "2026-06-01",
             "defaultTargets": defaults, "clientProfile": profile,
             "clientLabel": config.get("label") or profile,
@@ -173,6 +181,10 @@ async def start(request: Request):
     active = {row["key"]: row for row in targets if not row.get("archived")}
     if any(k not in active for k in selected):
         raise HTTPException(400, "archived_target")
+    if "discovery_target_keys" in payload:
+        discovery = payload["discovery_target_keys"]
+        if not isinstance(discovery, list) or not discovery or any(not isinstance(k, str) or k not in selected for k in discovery):
+            raise HTTPException(400, "invalid_discovery_targets")
     # Never trust client-supplied matching rules or hidden target snapshots.
     payload["target_snapshots"] = [active[k] for k in dict.fromkeys(selected)]
     payload["scope"] = SCOPE

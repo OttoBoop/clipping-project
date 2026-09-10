@@ -30,7 +30,7 @@ def roster_matcher():
 def test_roster_preserves_original_groups_and_adds_approved_psd_profile():
     rows = roster_rows()
     by_key = {r["key"]: r for r in rows}
-    assert len(rows) == len(by_key) == 37
+    assert len(rows) == len(by_key) == 44
     assert {r["key"] for r in rows if r["preferred_for_political_run"]} == {
         "flavio_valle", "pedro_duarte", "eduardo_paes", "pedro_paulo", "renan_ferreirinha",
     }
@@ -39,7 +39,7 @@ def test_roster_preserves_original_groups_and_adds_approved_psd_profile():
     assert by_key["pedro_duarte"]["party"] == "PSD"
     assert by_key["jane_reis"]["party"] == "MDB"
     assert by_key["jane_reis"]["group"] == "coalition_partners"
-    assert all(r["verified_at"] == "2026-09-09" and r["sources"] for r in rows)
+    assert all(r["verified_at"] in {"2026-09-09", "2026-09-10"} and r["sources"] for r in rows)
     inherited = {r["key"]: r for r in json.loads((ROOT / "data" / "targets.json").read_text())}
     assert inherited["flavio_valle"]["primary"] is True
     assert inherited["pedro_angelito"]["primary"] is True
@@ -53,11 +53,14 @@ def test_roster_preserves_original_groups_and_adds_approved_psd_profile():
         "joyce_trindade", "rafael_aloisio_freitas", "marcelo_diniz", "luiz_paulo", "atila_nunes",
         "otoni_de_paula", "joao_pires", "felipe_boro", "marcio_ribeiro", "salvino_oliveira",
     }
-    assert len(approved["target_keys"]) == approved["target_count"] == 24
+    original = expected.copy()
+    expected |= {"douglas_ruas", "anthony_garotinho", "andre_marinho", "william_siri", "benedita_da_silva", "marcelo_crivella", "carlos_portinho", "carlos_jordy", "waguinho", "monica_benicio", "marcos_dias"}
+    assert set(approved["original_target_keys"]) == original
+    assert len(approved["target_keys"]) == approved["target_count"] == 35
     assert set(approved["target_keys"]) == expected
     assert {r["key"] for r in rows if "psd_rj_2026" in r.get("collection_profiles", [])} == expected
-    assert {r["key"] for r in inherited.values() if "psd_rj_2026" in r.get("collection_profiles", [])} == expected
-    assert all(by_key[key]["party"] == "PSD" for key in expected)
+    assert {r["key"] for r in inherited.values() if "psd_rj_2026" in r.get("collection_profiles", [])} == original
+    assert all(by_key[key]["party"] == "PSD" for key in original)
     assert "1948" in by_key["atila_nunes"]["role"]
     assert "renúncia" in by_key["felipe_boro"]["role"]
     assert any("Patriota" in s["note"] for s in by_key["felipe_boro"]["sources"])
@@ -139,7 +142,7 @@ def test_bootstrap_merge_preserves_archives_user_edits_permissions_and_is_idempo
     monkeypatch.setattr(db_admin, "POLITICAL_ROSTER_PATH", MANIFEST)
     result = db_admin.merge_political_roster()
     actual = {r["key"]: r for r in json.loads(path.read_text())}
-    assert len(result["added"]) == 35
+    assert len(result["added"]) == 42
     assert all(actual["pedro_duarte"][k] == v for k, v in archived.items())
     assert all(actual["flavio_valle"][k] == v for k, v in protected.items())
     assert actual["meu_assunto"] == unrelated
@@ -247,3 +250,19 @@ def test_legacy_cleanup_cannot_delete_an_existing_classification(monkeypatch, tm
     with sqlite3.connect(path) as conn:
         conn.execute("UPDATE articles SET title='Título editado sem o nome'")
     assert db_admin.cleanup_false_backfilled_target_mentions(path, ["paes"])["removedMentions"] == 0
+
+
+@pytest.mark.parametrize('text,expected',[
+ ('Rosinha Garotinho participou de evento no Rio.',set()),
+ ('Anthony Garotinho e Rosinha Garotinho participaram do debate.',{'anthony_garotinho'}),
+ ('Garotinho apresentou propostas ao governo do Rio.',{'anthony_garotinho'}),
+ ('Daniela do Waguinho participou de evento em Belford Roxo.',set()),
+ ('O cantor Waguinho anunciou show em Belford Roxo.',set()),
+ ('Waguinho, ex-prefeito de Belford Roxo, concorre ao Senado.',{'waguinho'}),
+ ('Marcos Dias apresentou seu novo disco em Lisboa.',set()),
+ ('O vereador Marcos Dias, do Podemos, discutiu o futuro do Rio de Janeiro.',{'marcos_dias'}),
+ ('Benedita da Silva, Carlos Jordy e Carlos Portinho disputam o Senado pelo Rio.',{'benedita_da_silva','carlos_jordy','carlos_portinho'}),
+])
+def test_expanded_roster_context_and_namesakes(text,expected):
+    approved={'anthony_garotinho','waguinho','marcos_dias','benedita_da_silva','carlos_jordy','carlos_portinho'}
+    assert {h.target_key for h in roster_matcher().find_hits(text)} & approved == expected

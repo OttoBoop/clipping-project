@@ -259,6 +259,18 @@ def test_viewer_can_classify_only_accessible_articles_and_read_text_on_demand(si
     assert client.post("/api/political/jobs", headers={"X-CSRF-Token": csrf}, json={"target_keys": ["flavio_valle"]}).status_code == 401
 
 
+@pytest.mark.parametrize("discovery", [[], "flavio_valle", [None], ["shakira"], ["eduardo_paes"]])
+def test_discovery_cannot_escape_selected_targets(site, discovery):
+    client, _, fake = site
+    csrf = login_and_csrf(client, "test-password")
+    response = client.post("/api/political/jobs", headers={"X-CSRF-Token": csrf}, json={
+        "target_keys": ["flavio_valle"], "discovery_target_keys": discovery,
+    })
+    assert response.status_code == 400
+    assert response.json()["detail"] == "invalid_discovery_targets"
+    assert not any(c["method"] == "start_job" for c in fake.calls)
+
+
 def test_invalid_payloads_and_errors_have_bounded_sanitized_responses(site, monkeypatch):
     client, _, fake = site
     csrf = login_and_csrf(client, "test-password")

@@ -13,6 +13,38 @@ from test_political_routes import FakePoliticalCorpus
 PSD = "psd_rj_2026"
 
 
+def test_approved_35_presets_and_incremental_scope_preserve_clients(psd_site):
+    client, app, auth, segmentation, service, _, uploads, full_uploads, syncs = psd_site
+    from pathlib import Path
+    admin = importlib.import_module("web_app.db_admin")
+    root = Path(__file__).resolve().parents[1]
+    seed = json.loads((root / "data/psd_rj_2026_profile.json").read_text())
+    manifest = json.loads((root / "data/political_targets_v1.json").read_text())
+    rows = json.loads(admin.TARGETS_PATH.read_text())
+    existing = {r["key"] for r in rows}
+    rows.extend(r for r in manifest["targets"] if r["key"] not in existing)
+    admin.TARGETS_PATH.write_text(json.dumps(rows))
+    others_before = {k: v for k, v in segmentation.viewer_profiles().items() if k != PSD}
+    csrf = login_and_csrf(client, "test-password")
+    response = client.patch(f"/api/admin/viewers/{PSD}", headers={"X-CSRF-Token": csrf}, json={
+        "target_keys": seed["target_keys"], "default_targets": seed["target_keys"],
+    })
+    assert response.status_code == 200
+    meta = client.get(f"/api/political/meta?client={PSD}").json()
+    assert len(meta["targets"]) == 35 and len(meta["newDiscoveryTargets"]) == 11
+    assert [len(p["target_keys"]) for p in meta["selectionPresets"]] == [24, 5, 8]
+    response = client.post(f"/api/political/jobs?client={PSD}", headers={"X-CSRF-Token": csrf}, json={
+        "target_keys": seed["target_keys"], "discovery_target_keys": seed["new_target_keys"],
+    })
+    assert response.status_code == 200
+    call = next(c for c in service.calls if c["method"] == "start_job")
+    assert len(call["payload"]["target_snapshots"]) == 35
+    assert call["payload"]["discovery_target_keys"] == seed["new_target_keys"]
+    assert {k: v for k, v in segmentation.viewer_profiles().items() if k != PSD} == others_before
+    assert auth.login_identity("psd-test-password")["profile"] == PSD
+    assert not full_uploads and not syncs
+
+
 @pytest.fixture
 def psd_site(monkeypatch, tmp_path):
     monkeypatch.setenv("CLIPPING_LEGACY_WRITE_FENCE", "0")

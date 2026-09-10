@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const $ = id => document.getElementById(id);
-  const state = {targets: [], defaultTargets: [], sources: [], selected: new Set(), items: [], cursor: "", previous: [], next: "", storyId: "", job: null, csrf: "", configured: false, canRun: false, sequence: 0, article: null, classifications: []};
+  const state = {targets: [], defaultTargets: [], newDiscoveryTargets: [], sources: [], selected: new Set(), items: [], cursor: "", previous: [], next: "", storyId: "", job: null, csrf: "", configured: false, canRun: false, sequence: 0, article: null, classifications: []};
   const pageParams = new URLSearchParams(location.search);
   const simulation = pageParams.get("as_profile");
   const clientProfile = pageParams.get("client");
@@ -37,7 +37,7 @@
     if (response.status === 401) {location.assign("/"); throw new Error("Entre novamente para continuar.");}
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const known = {political_service_unavailable: "A coleta ainda não está disponível. Tente novamente após a configuração do serviço.", political_scope_denied: "Este registro não está disponível para o seu perfil.", political_record_not_found: "Esta notícia não foi encontrada ou não está disponível para o seu perfil.", select_allowed_targets: "Selecione pelo menos um nome disponível.", archived_target: "Um nome selecionado foi arquivado. Atualize a página.", simulation_is_read_only: "Saia da simulação para alterar dados."};
+      const known = {political_service_unavailable: "A coleta ainda não está disponível. Tente novamente após a configuração do serviço.", political_scope_denied: "Este registro não está disponível para o seu perfil.", political_record_not_found: "Esta notícia não foi encontrada ou não está disponível para o seu perfil.", invalid_discovery_targets: "Selecione nomes de busca pertencentes à seleção atual.", select_allowed_targets: "Selecione pelo menos um nome disponível.", archived_target: "Um nome selecionado foi arquivado. Atualize a página.", simulation_is_read_only: "Saia da simulação para alterar dados."};
       throw new Error(known[data.detail] || (response.status === 403 ? "Seu perfil não pode realizar esta ação." : "Não foi possível concluir esta ação. Tente novamente."));
     }
     return data;
@@ -116,7 +116,7 @@
   }
   function renderMetrics(metrics = {}) {
     metrics = {...metrics, unresolvedGaps: gapCount(metrics)};
-    const fields = [["uniqueCandidates", "URLs encontradas"], ["articlesInserted", "Notícias novas"], ["duplicates", "URLs repetidas"], ["mentionsInserted", "Associações a nomes"], ["bodyExtracted", "Textos disponíveis"], ["fetchPending", "Textos pendentes"], ["unknownDates", "Datas a revisar"], ["unresolvedGaps", "Consultas com pendências"]];
+    const fields = [["uniqueCandidates", "URLs encontradas"], ["articlesInserted", "Notícias novas"], ["articlesReused", "Notícias reutilizadas"], ["duplicates", "URLs repetidas"], ["mentionsInserted", "Associações novas"], ["bodyExtracted", "Textos disponíveis"], ["metadataOnly", "Somente metadados"], ["fetchPending", "Textos pendentes"], ["unknownDates", "Datas a revisar"], ["unresolvedGaps", "Consultas com pendências"]];
     $("metrics").replaceChildren();
     for (const [key, label] of fields) {const pair = document.createElement("div"); pair.append(text("dt", label), text("dd", Number(metrics[key] || 0).toLocaleString("pt-BR"))); $("metrics").append(pair);}
   }
@@ -150,9 +150,14 @@
     if (!$("date-from").value || !$("date-to").value) {message("Informe as duas datas para iniciar a coleta ou revisão.", true); return;}
     $("start").disabled = $("review").disabled = true;
     try {
-      await api("/api/political/jobs", {method: "POST", body: JSON.stringify({kind, target_keys: [...state.selected], date_from: $("date-from").value, date_to: $("date-to").value})});
+      const payload = {kind, target_keys: [...state.selected], date_from: $("date-from").value, date_to: $("date-to").value, request_key: crypto.randomUUID()};
+      if (kind === "collect" && $("discovery-mode").value === "new") {
+        payload.discovery_target_keys = state.newDiscoveryTargets.filter(key => state.selected.has(key));
+        if (!payload.discovery_target_keys.length) throw new Error("Selecione pelo menos um dos novos candidatos.");
+      }
+      await api("/api/political/jobs", {method: "POST", body: JSON.stringify(payload)});
       message(kind === "review" ? "Revisão solicitada. Os registros e classificações existentes serão preservados." : "Coleta solicitada. Você pode fechar esta página e acompanhar o resultado depois."); await refreshStatus();
-    } catch (error) {message(error.message, true);} finally {$("start").disabled = $("review").disabled = !state.configured;}
+    } catch (error) {message(error.message, true);} finally {$("start").disabled = $("review").disabled = !state.configured || !state.canRun;}
   }
   function populateClassification() {
     const record = state.classifications.find(c => (c.target_key || c.targetKey) === $("classification-target").value) || {};
@@ -232,6 +237,15 @@
       state.defaultTargets = (meta.defaultTargets || []).filter(key => state.targets.some(t => t.key === key));
       if (!state.defaultTargets.length) state.defaultTargets = state.targets.map(t => t.key);
       state.selected = new Set(state.defaultTargets);
+      state.newDiscoveryTargets = meta.newDiscoveryTargets || [];
+      $("discovery-mode-label").hidden = !state.canRun || !state.newDiscoveryTargets.length;
+      $("select-all").textContent = `Todos os ${state.targets.length}`;
+      for (const preset of meta.selectionPresets || []) {
+        if (!preset.target_keys.length) continue;
+        const button = text("button", preset.label, "quiet"); button.type = "button"; button.dataset.preset = preset.key;
+        button.addEventListener("click", () => {state.selected = new Set(preset.target_keys); renderGroups();});
+        $("selection-presets").append(button);
+      }
       if (!state.selected.size) state.selected = new Set(state.targets.map(t => t.key));
       const parts = new Intl.DateTimeFormat("en-CA", {timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit"}).formatToParts(new Date());
       const part = name => parts.find(p => p.type === name).value; $("date-to").value = `${part("year")}-${part("month")}-${part("day")}`;

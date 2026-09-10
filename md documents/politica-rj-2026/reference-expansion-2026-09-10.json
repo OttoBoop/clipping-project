@@ -1,0 +1,226 @@
+{
+  "frozen_at": "2026-09-10T14:10:32.100501+00:00",
+  "execution_cutoff": "2026-09-10",
+  "method": "Busca independente antes da coleta. URLs não serão semeadas no coletor. Artigos com múltiplas pessoas contam uma vez por par artigo/pessoa. Referência pequena, deliberada, sem alegação de cobertura estatística de todos os veículos.",
+  "counts_per_target": {
+    "douglas_ruas": 4,
+    "anthony_garotinho": 4,
+    "andre_marinho": 4,
+    "william_siri": 3,
+    "benedita_da_silva": 4,
+    "marcelo_crivella": 5,
+    "carlos_portinho": 7,
+    "carlos_jordy": 7,
+    "waguinho": 4,
+    "monica_benicio": 5,
+    "marcos_dias": 5
+  },
+  "articles": [
+    {
+      "reference_id": 1,
+      "url": "https://odia.ig.com.br/rio-de-janeiro/2026/08/7288650-candidatos-miram-paes-e-ruas-no-primeiro-debate-ao-governo-do-rio.html",
+      "discovered_url": "https://odia.ig.com.br/rio-de-janeiro/2026/08/7288650-candidatos-miram-paes-e-ruas-no-primeiro-debate-ao-governo-do-rio.html",
+      "published_at": "2026-08-09T22:53:00-03:00",
+      "publication_day_sao_paulo": "2026-08-09",
+      "expected_targets": [
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri"
+      ],
+      "html_sha256": "97372ccea99ebab8d0936020a3d9cc467f203683b0cca8ab6137ea769e1ce278",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 2,
+      "url": "https://agendadopoder.com.br/consideracoes-finais-do-debate-misturam-ataques-a-paes-e-promessas-de-mudanca-no-rio/",
+      "discovered_url": "https://agendadopoder.com.br/consideracoes-finais-do-debate-misturam-ataques-a-paes-e-promessas-de-mudanca-no-rio/",
+      "published_at": "2026-08-10T00:52:44+00:00",
+      "publication_day_sao_paulo": "2026-08-09",
+      "expected_targets": [
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri"
+      ],
+      "html_sha256": "3d1b3bcf11a3952bd6aeacc1f16c51c2136622e6ef3fe1bdeba68adb927f60c4",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 3,
+      "url": "https://agendadopoder.com.br/sorteio-define-ordem-dos-candidatos-ao-governo-do-rio-no-debate-da-band/",
+      "discovered_url": "https://agendadopoder.com.br/sorteio-define-ordem-dos-candidatos-ao-governo-do-rio-no-debate-da-band/",
+      "published_at": "2026-08-09T22:06:02+00:00",
+      "publication_day_sao_paulo": "2026-08-09",
+      "expected_targets": [
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri"
+      ],
+      "html_sha256": "55cdb274464a0b98f264419ff62826b14107ab83296f0d6746e9175959639dde",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 4,
+      "url": "https://temporealrj.com/debate-candidatos-ao-senado-rio-oab-rj/",
+      "discovered_url": "https://temporealrj.com/debate-candidatos-ao-senado-rio-oab-rj/",
+      "published_at": "2026-09-01T14:58:22-03:00",
+      "publication_day_sao_paulo": "2026-09-01",
+      "expected_targets": [
+        "benedita_da_silva",
+        "marcelo_crivella",
+        "carlos_portinho",
+        "carlos_jordy",
+        "waguinho",
+        "monica_benicio",
+        "marcos_dias"
+      ],
+      "html_sha256": "0dd633750f9dd13b898abc44c55ba032fc4e2e7c94d97c23999ef47c11aa9457",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 5,
+      "url": "https://www.metropoles.com/brasil/quaest-benedita-tem-10-ao-senado-no-rj-jordy-7",
+      "discovered_url": "https://www.metropoles.com/brasil/quaest-benedita-tem-10-ao-senado-no-rj-jordy-7-e-crivella-6",
+      "published_at": "2026-08-25T17:20:00-03:00",
+      "publication_day_sao_paulo": "2026-08-25",
+      "expected_targets": [
+        "benedita_da_silva",
+        "marcelo_crivella",
+        "carlos_portinho",
+        "carlos_jordy",
+        "waguinho",
+        "monica_benicio",
+        "marcos_dias"
+      ],
+      "html_sha256": "75559148d9b2679d91e516132ca22d3075220788265e3414cafd8824978820d8",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 6,
+      "url": "https://temporealrj.com/pesquisa-quaest-senado-rj-benedita-jordy-crivella/",
+      "discovered_url": "https://temporealrj.com/pesquisa-quaest-senado-rj-benedita-jordy-crivella/",
+      "published_at": "2026-08-25T17:34:42-03:00",
+      "publication_day_sao_paulo": "2026-08-25",
+      "expected_targets": [
+        "benedita_da_silva",
+        "marcelo_crivella",
+        "carlos_portinho",
+        "carlos_jordy",
+        "waguinho",
+        "monica_benicio"
+      ],
+      "html_sha256": "8f239ba78710e16ab31b8cb7be5e53c2e2e69cbe7ee44ee81eca59c0470ff604",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 7,
+      "url": "https://temporealrj.com/marcos-dias-aumenta-patrimonio-dois-anos/",
+      "discovered_url": "https://temporealrj.com/marcos-dias-aumenta-patrimonio-dois-anos/",
+      "published_at": "2026-08-11T11:21:41-03:00",
+      "publication_day_sao_paulo": "2026-08-11",
+      "expected_targets": [
+        "marcos_dias"
+      ],
+      "html_sha256": "fe07b7bf30d8132cbcf22e0ffd3250aaa2110644d9fa4215272cae8f8636413c",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 8,
+      "url": "https://temporealrj.com/tre-rj-monica-benicio-post-pedro-paulo/",
+      "discovered_url": "https://temporealrj.com/tre-rj-monica-benicio-post-pedro-paulo/",
+      "published_at": "2026-07-15T11:51:39-03:00",
+      "publication_day_sao_paulo": "2026-07-15",
+      "expected_targets": [
+        "monica_benicio"
+      ],
+      "html_sha256": "529cd66ddb99694284f37ed914881f0c1bd62cab7f6efe0aed4a57d6bfdf45cb",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 9,
+      "url": "https://www.metropoles.com/brasil/pl-escolhe-carlos-portinho-como-pre-candidato-ao-senado-no-rj",
+      "discovered_url": "https://www.metropoles.com/brasil/pl-escolhe-carlos-portinho-como-pre-candidato-ao-senado-no-rj",
+      "published_at": "2026-07-14T20:10:00-03:00",
+      "publication_day_sao_paulo": "2026-07-14",
+      "expected_targets": [
+        "carlos_portinho",
+        "carlos_jordy"
+      ],
+      "html_sha256": "acf5ecc4e3d2c30527958c62425e6c6dfabcad7c58f7b50fb0b512ca37eef787",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 10,
+      "url": "https://odia.ig.com.br/rio-de-janeiro/2026/09/7297365-marcos-dias-ve-debate-como-oportunidade-para-apresentar-propostas.html",
+      "discovered_url": "https://odia.ig.com.br/rio-de-janeiro/2026/09/7297365-marcos-dias-ve-debate-como-oportunidade-para-apresentar-propostas.html",
+      "published_at": "2026-09-01T10:13:00-03:00",
+      "publication_day_sao_paulo": "2026-09-01",
+      "expected_targets": [
+        "marcos_dias"
+      ],
+      "html_sha256": "c472ca46fe760024f8de9825384e2170ac8227b7ede05df961f003a6f16d854f",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 11,
+      "url": "https://www.metropoles.com/brasil/flavio-bolsonaro-escolhe-copacabana-para-abrir-campanha-a-presidencia",
+      "discovered_url": "https://www.metropoles.com/brasil/flavio-bolsonaro-escolhe-copacabana-para-abrir-campanha-a-presidencia",
+      "published_at": "2026-08-10T19:45:00-03:00",
+      "publication_day_sao_paulo": "2026-08-10",
+      "expected_targets": [
+        "douglas_ruas",
+        "carlos_jordy",
+        "carlos_portinho"
+      ],
+      "html_sha256": "b0f101280522e498a9ee2c81e18997b0a729bd9702d770e9016e627b0f667918",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 12,
+      "url": "https://agendadopoder.com.br/aos-32-anos-um-humorista-e-influencer-quer-governar-um-estado-com-172-milhoes-de-habitantes/",
+      "discovered_url": "https://agendadopoder.com.br/aos-32-anos-um-humorista-e-influencer-quer-governar-um-estado-com-172-milhoes-de-habitantes/",
+      "published_at": "2026-08-11T10:01:00+00:00",
+      "publication_day_sao_paulo": "2026-08-11",
+      "expected_targets": [
+        "andre_marinho",
+        "marcelo_crivella"
+      ],
+      "html_sha256": "b0ccd5a0dc19552c2dea3761e936414ceebb62a82b0375801e825eb1231f907f",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 13,
+      "url": "https://www.diariodorio.com/politica/2026/08/566979-senado-no-rio-benedita-tem-15-e-adversarios-disputam-voto-a-voto.html",
+      "discovered_url": "https://www.diariodorio.com/politica/2026/08/566979-senado-no-rio-benedita-tem-15-e-adversarios-disputam-voto-a-voto.html",
+      "published_at": "2026-08-21T19:26:00-03:00",
+      "publication_day_sao_paulo": "2026-08-21",
+      "expected_targets": [
+        "benedita_da_silva",
+        "marcelo_crivella",
+        "carlos_portinho",
+        "carlos_jordy",
+        "waguinho",
+        "monica_benicio",
+        "marcos_dias"
+      ],
+      "html_sha256": "74a17dcdb0d35f1cc4b04a9f6f32623f60520823cf5339bcdcf2352503a8edda",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    },
+    {
+      "reference_id": 14,
+      "url": "https://j3news.com/2026/08/18/wladimir-garotinho-bruno-dauaire-e-thiago-virgilio-lancam-candidaturas-em-noite-lotada-de-apoiadores-em-campos/",
+      "discovered_url": "https://j3news.com/2026/08/18/wladimir-garotinho-bruno-dauaire-e-thiago-virgilio-lancam-candidaturas-em-noite-lotada-de-apoiadores-em-campos/",
+      "published_at": "2026-08-18T03:19:00+00:00",
+      "publication_day_sao_paulo": "2026-08-18",
+      "expected_targets": [
+        "anthony_garotinho",
+        "carlos_portinho",
+        "carlos_jordy"
+      ],
+      "html_sha256": "5641d1dc8ef500b24a0096273370898f60f66fce304b049b571ee65bdfabebc6",
+      "review": "Inspeção humana dos trechos editoriais na resposta original do veículo; excluídos relacionados, tags e rodapé."
+    }
+  ]
+}

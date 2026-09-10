@@ -9,6 +9,7 @@ TARGET_METADATA_FIELDS = (
     "political_roster_version", "group", "group_label", "role", "party",
     "verified_at", "sources", "preferred_for_political_run", "match_context",
     "collection_profiles",
+    "full_name", "candidacy_office", "candidacy_status",
 )
 
 
@@ -19,6 +20,8 @@ def target_metadata(row: dict) -> dict:
         if key not in row:
             continue
         value = row[key]
+        if key in {"full_name", "candidacy_office", "candidacy_status"} and not value:
+            continue
         if key == "preferred_for_political_run":
             result[key] = value is True
         elif key == "collection_profiles":
@@ -75,6 +78,9 @@ class Target:
     preferred_for_political_run: bool = False
     match_context: dict = field(default_factory=dict)
     collection_profiles: list = field(default_factory=list)
+    full_name: str = ""
+    candidacy_office: str = ""
+    candidacy_status: str = ""
 
 
 @dataclass

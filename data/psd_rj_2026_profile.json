@@ -1,8 +1,50 @@
 {
   "profile_key": "psd_rj_2026",
   "label": "PSD Rio 2026",
-  "approved_at": "2026-09-09",
+  "approved_at": "2026-09-10",
   "target_keys": [
+    "eduardo_paes",
+    "flavio_valle",
+    "pedro_duarte",
+    "renan_ferreirinha",
+    "pedro_paulo",
+    "eduardo_cavaliere",
+    "daniel_soranz",
+    "laura_carneiro",
+    "hugo_leal",
+    "carlo_caiado",
+    "rosa_fernandes",
+    "guilherme_schleder",
+    "sergio_fernandes",
+    "junior_da_lucinha",
+    "joyce_trindade",
+    "rafael_aloisio_freitas",
+    "marcelo_diniz",
+    "luiz_paulo",
+    "atila_nunes",
+    "otoni_de_paula",
+    "joao_pires",
+    "felipe_boro",
+    "marcio_ribeiro",
+    "salvino_oliveira",
+    "douglas_ruas",
+    "anthony_garotinho",
+    "andre_marinho",
+    "william_siri",
+    "benedita_da_silva",
+    "marcelo_crivella",
+    "carlos_portinho",
+    "carlos_jordy",
+    "waguinho",
+    "monica_benicio",
+    "marcos_dias"
+  ],
+  "target_count": 35,
+  "manifest": "data/political_targets_v1.json",
+  "date_from": "2026-06-01",
+  "manual_only": true,
+  "note": "Seleção aprovada; metadados não concedem acesso. Aplicar permissões explicitamente ao perfil de conta. Nenhuma coleta ou migração é iniciada por este arquivo.",
+  "original_target_keys": [
     "eduardo_paes",
     "flavio_valle",
     "pedro_duarte",
@@ -28,9 +70,74 @@
     "marcio_ribeiro",
     "salvino_oliveira"
   ],
-  "target_count": 24,
-  "manifest": "data/political_targets_v1.json",
-  "date_from": "2026-06-01",
-  "manual_only": true,
-  "note": "Seleção aprovada; metadados não concedem acesso. Aplicar permissões explicitamente ao perfil de conta. Nenhuma coleta ou migração é iniciada por este arquivo."
+  "new_target_keys": [
+    "douglas_ruas",
+    "anthony_garotinho",
+    "andre_marinho",
+    "william_siri",
+    "benedita_da_silva",
+    "marcelo_crivella",
+    "carlos_portinho",
+    "carlos_jordy",
+    "waguinho",
+    "monica_benicio",
+    "marcos_dias"
+  ],
+  "selection_presets": [
+    {
+      "key": "original",
+      "label": "24 atuais",
+      "target_keys": [
+        "eduardo_paes",
+        "flavio_valle",
+        "pedro_duarte",
+        "renan_ferreirinha",
+        "pedro_paulo",
+        "eduardo_cavaliere",
+        "daniel_soranz",
+        "laura_carneiro",
+        "hugo_leal",
+        "carlo_caiado",
+        "rosa_fernandes",
+        "guilherme_schleder",
+        "sergio_fernandes",
+        "junior_da_lucinha",
+        "joyce_trindade",
+        "rafael_aloisio_freitas",
+        "marcelo_diniz",
+        "luiz_paulo",
+        "atila_nunes",
+        "otoni_de_paula",
+        "joao_pires",
+        "felipe_boro",
+        "marcio_ribeiro",
+        "salvino_oliveira"
+      ]
+    },
+    {
+      "key": "governor",
+      "label": "Governo",
+      "target_keys": [
+        "eduardo_paes",
+        "douglas_ruas",
+        "anthony_garotinho",
+        "andre_marinho",
+        "william_siri"
+      ]
+    },
+    {
+      "key": "senate",
+      "label": "Senado",
+      "target_keys": [
+        "pedro_paulo",
+        "benedita_da_silva",
+        "marcelo_crivella",
+        "carlos_portinho",
+        "carlos_jordy",
+        "waguinho",
+        "monica_benicio",
+        "marcos_dias"
+      ]
+    }
+  ]
 }

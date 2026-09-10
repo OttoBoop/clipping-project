@@ -11,6 +11,7 @@ import hashlib
 import ipaddress
 import json
 import os
+import re
 import socket
 import tempfile
 import threading
@@ -259,6 +260,13 @@ class PoliticalCorpusService:
         selected = _scope(allowed_target_keys, payload.get("target_keys") or payload.get("targetKeys"))
         start, end = _date_window(payload)
         snapshots = self._snapshots(payload, selected)
+        discovery_keys = selected
+        if "discovery_target_keys" in payload:
+            raw = payload["discovery_target_keys"]
+            if not isinstance(raw, list) or not raw or any(not isinstance(k, str) or k not in selected for k in raw):
+                raise ValueError("invalid_discovery_targets")
+            discovery_keys = list(dict.fromkeys(raw))
+        discovery_snapshots = [s for s in snapshots if s["key"] in discovery_keys]
         kind = str(payload.get("kind") or "collect")
         if kind not in {"collect", "review"}:
             raise ValueError("invalid_political_job_kind")
@@ -269,7 +277,7 @@ class PoliticalCorpusService:
             tasks = [{"source_key": "_review", "strategy": "review", "cursor": {"after_id": 0}}]
         else:
             from .political_discovery import build_tasks
-            tasks = build_tasks(snapshots, start.isoformat(), end.isoformat(),
+            tasks = build_tasks(discovery_snapshots, start.isoformat(), end.isoformat(),
                                 source_keys=payload.get("source_keys") or payload.get("sourceKeys"))
         if not tasks:
             raise ValueError("no_political_sources")
@@ -283,10 +291,14 @@ class PoliticalCorpusService:
                     self._authorize_job(existing, selected)
                     if existing["target_keys"] != selected or existing["date_from"] != start or existing["date_to"] != end or existing["kind"] != kind:
                         raise ValueError("request_key_conflict")
+                    if (existing.get("metadata") or {}).get("discovery_target_keys", existing["target_keys"]) != discovery_keys:
+                        raise ValueError("request_key_conflict")
                     return self._job_dto(existing)
             conn.execute("""INSERT INTO political_jobs(id,kind,target_keys,target_snapshots,date_from,date_to,requested_by,request_key)
                             VALUES (%s,%s,%s,%s::jsonb,%s,%s,%s,%s)""",
                          (job_id, kind, selected, _json(snapshots), start, end, started_by, request_key))
+            conn.execute("UPDATE political_jobs SET metadata=metadata || %s::jsonb WHERE id=%s",
+                         (_json({"discovery_target_keys": discovery_keys}), job_id))
             for task in tasks:
                 self._insert_task(conn, job_id, "review" if kind == "review" else "discovery", task)
             row = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (job_id,)).fetchone()
@@ -298,6 +310,8 @@ class PoliticalCorpusService:
         # Source rotation still comes first when claiming. Within each source,
         # finish its direct publisher discovery before optional Google queries.
         priority = 0 if kind == "discovery" and payload.get("strategy") == "google_news" else 10
+        if kind == "fetch" and source_key == "g1" and re.match(r"^/(?:rj|politica|eleicoes)(?:/|$)", urlparse(str(payload.get("url") or "")).path):
+            priority = 20
         conn.execute("""INSERT INTO political_tasks(job_id,kind,source_key,dedupe_key,payload,cursor,request_domain,priority)
                         VALUES (%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s) ON CONFLICT(job_id,kind,dedupe_key) DO NOTHING""",
                      (job_id, kind, source_key, dedupe, _json(payload), _json(payload.get("cursor") or {}),
@@ -312,6 +326,7 @@ class PoliticalCorpusService:
     @staticmethod
     def _job_dto(row: dict) -> dict:
         return {"id": row["id"], "kind": row["kind"], "status": row["status"],
+                "discoveryTargetKeys": (row.get("metadata") or {}).get("discovery_target_keys", row["target_keys"]),
                 "targetKeys": row["target_keys"], "dateFrom": str(row["date_from"]), "dateTo": str(row["date_to"]),
                 "createdAt": str(row["created_at"]), "updatedAt": str(row["updated_at"]),
                 "finishedAt": str(row["finished_at"]) if row.get("finished_at") else None}
@@ -349,10 +364,12 @@ class PoliticalCorpusService:
             COUNT(DISTINCT article_id) FILTER(WHERE EXISTS (SELECT 1 FROM political_mentions m
                 WHERE m.article_id=o.article_id AND m.target_key=ANY(j.target_keys))) AS articles_saved,
             COUNT(*) FILTER (WHERE disposition='duplicate') AS duplicates,
+            COUNT(DISTINCT article_id) FILTER (WHERE disposition='duplicate') AS articles_reused,
             COUNT(*) FILTER (WHERE disposition='no_match') AS no_match,
             COUNT(*) FILTER (WHERE disposition='outside_window') AS outside_window
             FROM political_observations o JOIN political_jobs j ON j.id=o.job_id WHERE o.job_id=%s""", (job_id,)).fetchone()
         quality = conn.execute("""SELECT COUNT(*) FILTER (WHERE a.body_status='body_extracted') AS body_extracted,
+            COUNT(*) FILTER (WHERE a.body_status<>'body_extracted') AS metadata_only,
             COUNT(*) FILTER (WHERE a.published_at IS NULL) AS unknown_dates,
             COUNT(*) FILTER (WHERE a.body_status<>'body_extracted' OR a.date_status NOT IN ('page_verified','api_verified')) AS needs_review,
             COUNT(*) FILTER (WHERE a.date_status IN ('page_verified','api_verified')) AS dates_verified
@@ -361,6 +378,7 @@ class PoliticalCorpusService:
         return {"uniqueCandidates": int(observed["unique_candidates"]), "articlesSaved": int(observed["articles_saved"]),
                 "articlesInserted": int(counters["articles_inserted"]), "mentionsInserted": int(counters["mentions_inserted"]),
                 "fetchAttempted": int(counters["fetch_attempted"]),
+                "articlesReused": int(observed["articles_reused"]), "metadataOnly": int(quality["metadata_only"]),
                 "fetchPending": sum(int(row["count"]) for row in tasks if row["kind"] == "fetch" and row["status"] in ACTIVE),
                 "duplicates": int(observed["duplicates"]), "noMatch": int(observed["no_match"]),
                 "outsideWindow": int(observed["outside_window"]), "bodyExtracted": int(quality["body_extracted"]),
@@ -690,10 +708,10 @@ class PoliticalCorpusService:
                 AND (t.next_attempt_at IS NULL OR t.next_attempt_at<=NOW())
                 AND (t.kind='fetch' OR NOT EXISTS (SELECT 1 FROM political_source_leases s
                     WHERE s.source_key=t.source_key AND s.leased_until>NOW()))
-                AND (t.kind<>'fetch' OR t.payload->>'url' NOT LIKE 'https://news.google.com/%%'
+                AND (t.kind<>'fetch' OR COALESCE(t.cursor->>'resolved_url',t.payload->>'url') NOT LIKE 'https://news.google.com/%%'
                     OR NOT EXISTS (SELECT 1 FROM political_tasks active
                         WHERE active.kind='fetch' AND active.status='running' AND active.leased_until>NOW()
-                        AND active.payload->>'url' LIKE 'https://news.google.com/%%'))
+                        AND COALESCE(active.cursor->>'resolved_url',active.payload->>'url') LIKE 'https://news.google.com/%%'))
                 ORDER BY CASE WHEN t.kind='fetch' THEN scheduling.fetch_claimed_at
                               ELSE scheduling.discovery_claimed_at END ASC NULLS FIRST,
                     t.priority DESC,
@@ -986,8 +1004,24 @@ class PoliticalCorpusService:
     def _enqueue_discovery_fallback(self, conn, task: dict) -> None:
         from .political_discovery import fallback_tasks
         job = self._lock_task(conn, task)
-        for child in fallback_tasks(task["payload"], job["target_snapshots"]):
+        discovery_keys = (job.get("metadata") or {}).get("discovery_target_keys", job["target_keys"])
+        for child in fallback_tasks(task["payload"], [s for s in job["target_snapshots"] if s["key"] in discovery_keys]):
             self._insert_task(conn, task["job_id"], "discovery", child)
+
+    def _checkpoint_fetch(self, task: dict, changes: dict) -> None:
+        """Commit retry state under the live lease before additional network I/O."""
+        cursor = {**task["cursor"], **changes}
+        with self._connect() as conn:
+            self._lock_task(conn, task)
+            conn.execute("UPDATE political_tasks SET cursor=%s::jsonb,updated_at=NOW() WHERE id=%s",
+                         (_json(cursor), task["id"]))
+            if changes.get("resolved_url"):
+                conn.execute("UPDATE political_tasks SET request_domain=%s WHERE id=%s",
+                             (urlparse(changes["resolved_url"]).hostname, task["id"]))
+        task["cursor"] = cursor
+        if changes.get("resolved_url"):
+            task["_verified_candidate"] = {**_confirmed_publisher(task["payload"], changes["resolved_url"]),
+                "url": changes["resolved_url"], "observed_url": task["payload"]["url"]}
 
     def _discover(self, task: dict) -> dict:
         from .political_discovery import discover
@@ -1079,15 +1113,16 @@ class PoliticalCorpusService:
     def _fetch_article(self, task: dict) -> dict:
         from .political_discovery import extract_article, is_google_intermediary
         candidate = task["payload"]
+        fetch_url = task["cursor"].get("resolved_url") or candidate["url"]
         if non_news_reason(candidate["url"], candidate.get("title", "")):
             return self._finish_fetch_not_news(task, candidate["url"])
         with self._connect() as conn:
             job = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (task["job_id"],)).fetchone()
             existing = conn.execute("""SELECT a.* FROM political_articles a LEFT JOIN political_url_aliases u ON u.article_id=a.id
-                WHERE a.canonical_url=%s OR u.url=%s ORDER BY a.id LIMIT 1""", (candidate["url"], candidate["url"])).fetchone()
+                WHERE a.canonical_url=%s OR u.url=%s ORDER BY a.id LIMIT 1""", (fetch_url, fetch_url)).fetchone()
         if existing and non_news_reason(existing["canonical_url"], existing["title"]):
             return self._finish_fetch_not_news(task, existing["canonical_url"], title=existing["title"])
-        body, final_url, title = "", candidate["url"], str(candidate.get("title") or "")
+        body, final_url, title = "", fetch_url, str(candidate.get("title") or "")
         published = parse_date(candidate.get("published_at"))
         date_status = ("api_verified" if (candidate.get("metadata") or {}).get("wordpress_id") is not None else "source_reported") if published else "unknown"
         digest = key = ""
@@ -1138,11 +1173,13 @@ class PoliticalCorpusService:
                         conn.execute("UPDATE political_jobs SET fetch_attempted=fetch_attempted+1 WHERE id=%s", (task["job_id"],))
             if non_news_reason(response.url):
                 return self._finish_fetch_not_news(task, response.url)
+            if is_google_intermediary(candidate["url"]) and not is_google_intermediary(response.url):
+                self._checkpoint_fetch(task, {"resolved_url": canonicalize_url(response.url)})
             if response.status_code >= 400:
                 retry_at = retry_after_deadline(response.headers.get("Retry-After"))
                 problem = FetchProblem(f"http_{response.status_code}", retryable=response.status_code in {408,425,429} or response.status_code >= 500,
                                        status_code=response.status_code, retry_after=remaining_seconds(retry_at) if retry_at else 0)
-                self._save_metadata_attempt(task, job, candidate, problem)
+                self._save_metadata_attempt(task, job, task.get("_verified_candidate") or candidate, problem)
                 raise problem
             final_url = canonicalize_url(response.url)
             if is_google_intermediary(final_url):
@@ -1152,6 +1189,7 @@ class PoliticalCorpusService:
                 if resolved and not is_google_intermediary(resolved):
                     if non_news_reason(resolved):
                         return self._finish_fetch_not_news(task, resolved)
+                    self._checkpoint_fetch(task, {"resolved_url": canonicalize_url(resolved)})
                     response = self.fetch(resolved)
                     if non_news_reason(response.url):
                         return self._finish_fetch_not_news(task, response.url)
@@ -1204,7 +1242,9 @@ class PoliticalCorpusService:
                     conn.execute("UPDATE political_observations SET metadata=metadata || %s::jsonb WHERE job_id=%s AND observed_url=%s",
                         (_json({"html_hash": html_hash, "html_object_key": html_key}), task["job_id"], task["payload"]["url"]))
             if insufficient_body:
-                problem = FetchProblem("body_missing")
+                empty_count = int(task["cursor"].get("empty_body_responses", 0)) + 1
+                self._checkpoint_fetch(task, {"empty_body_responses": empty_count})
+                problem = FetchProblem("body_missing", retryable=empty_count < 2)
                 self._save_metadata_attempt(task, job, {**candidate, "url": final_url,
                     "title": candidate.get("title") or title, "published_at": str(published or ""),
                     "metadata": {**(candidate.get("metadata") or {}),
