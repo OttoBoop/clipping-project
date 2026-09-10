@@ -1,6 +1,18 @@
 import pytest
 
-from web_app.political_request_urls import is_google_access_challenge, publisher_article_request_url
+from web_app.political_request_urls import (
+    is_google_access_challenge, publisher_article_identity_urls, publisher_article_request_url,
+)
+
+
+def test_diario_identity_variants_are_symmetric_and_do_not_rewrite_other_hosts():
+    bare = "https://diariodorio.com/politica/story.html"
+    www = "https://www.diariodorio.com/politica/story.html"
+    assert publisher_article_identity_urls(bare) == (bare, www)
+    assert publisher_article_identity_urls(www) == (www, bare)
+    for url in ("https://www.other.example/story", "http://diariodorio.com/story",
+                "https://user@diariodorio.com/story", "https://diariodorio.com:444/story"):
+        assert publisher_article_identity_urls(url) == (url,)
 
 
 @pytest.mark.parametrize("url,expected", [

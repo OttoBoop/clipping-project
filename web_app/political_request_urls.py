@@ -2,6 +2,15 @@
 from urllib.parse import urlsplit, urlunsplit
 
 
+def publisher_article_identity_urls(url: str) -> tuple[str, ...]:
+    """Known equivalent host forms, without rewriting historical identifiers."""
+    parsed = urlsplit(url)
+    if parsed.scheme == "https" and parsed.netloc in {"diariodorio.com", "www.diariodorio.com"}:
+        other = "diariodorio.com" if parsed.netloc.startswith("www.") else "www.diariodorio.com"
+        return url, urlunsplit(parsed._replace(netloc=other))
+    return (url,)
+
+
 def is_google_access_challenge(url: str) -> bool:
     parsed = urlsplit(url)
     host = (parsed.hostname or "").lower().rstrip(".")

@@ -42,7 +42,9 @@ from .storage_bridge import ArtifactStore, artifact_store
 from .political_body_batches import BatchBodyUnavailable, WordPressBodyBatches
 from .political_record_types import non_news_reason
 from .political_worker_limits import fetch_concurrency
-from .political_request_urls import is_google_access_challenge, publisher_article_request_url
+from .political_request_urls import (
+    is_google_access_challenge, publisher_article_identity_urls, publisher_article_request_url,
+)
 
 START_DATE = date(2026, 6, 1)
 ZONE = ZoneInfo("America/Sao_Paulo")
@@ -1146,6 +1148,14 @@ class PoliticalCorpusService:
             self._finish(conn, task, "complete", result=result)
         return {"taskId": task["id"], "status": "not_news", "reason": result["reason"]}
 
+    @staticmethod
+    def _find_article(conn, url: str) -> dict | None:
+        variants = list(publisher_article_identity_urls(canonicalize_url(url)))
+        return conn.execute("""SELECT a.* FROM political_articles a
+            WHERE a.canonical_url=ANY(%s) OR EXISTS (
+                SELECT 1 FROM political_url_aliases u WHERE u.article_id=a.id AND u.url=ANY(%s))
+            ORDER BY a.body_chars DESC,a.id LIMIT 1""", (variants, variants)).fetchone()
+
     def _fetch_article(self, task: dict) -> dict:
         from .political_discovery import extract_article, is_google_intermediary
         candidate = task["payload"]
@@ -1155,8 +1165,7 @@ class PoliticalCorpusService:
             return self._finish_fetch_not_news(task, candidate["url"])
         with self._connect() as conn:
             job = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (task["job_id"],)).fetchone()
-            existing = conn.execute("""SELECT a.* FROM political_articles a LEFT JOIN political_url_aliases u ON u.article_id=a.id
-                WHERE a.canonical_url=%s OR u.url=%s ORDER BY a.id LIMIT 1""", (fetch_url, fetch_url)).fetchone()
+            existing = self._find_article(conn, fetch_url)
             known_date = None
             if not force_refresh:
                 if existing and existing["date_status"] in {"page_verified", "api_verified"}:
@@ -1241,6 +1250,14 @@ class PoliticalCorpusService:
                     if non_news_reason(resolved):
                         return self._finish_fetch_not_news(task, resolved)
                     self._checkpoint_fetch(task, {"resolved_url": canonicalize_url(resolved)})
+                    with self._connect() as conn:
+                        resolved_article = self._find_article(conn, resolved)
+                    if (resolved_article and resolved_article["text_object_key"]
+                            and resolved_article["body_status"] == "body_extracted"
+                            and resolved_article["source_key"] != "google_news" and not force_refresh):
+                        # Resolution can reveal an already stored publisher URL.
+                        # Re-enter with its committed cursor to reuse that text.
+                        return self._fetch_article(task)
                     response = self.fetch(publisher_article_request_url(resolved))
                     if non_news_reason(response.url):
                         return self._finish_fetch_not_news(task, response.url)
@@ -1270,7 +1287,7 @@ class PoliticalCorpusService:
             if page_date:
                 published, date_status = page_date, "page_verified"
             canonical = canonicalize_url(str(extracted.get("canonical_url") or ""))
-            if canonical and urlparse(canonical).hostname == urlparse(final_url).hostname:
+            if canonical and normalize_domain(urlparse(canonical).hostname) == normalize_domain(urlparse(final_url).hostname):
                 final_url = canonical
             if non_news_reason(final_url):
                 return self._finish_fetch_not_news(task, final_url)
@@ -1370,9 +1387,18 @@ class PoliticalCorpusService:
         url = canonicalize_url(candidate["url"])
         title = clean_title(candidate.get("title") or url)[:1000]
         observed_url = canonicalize_url(str(candidate.get("observed_url") or url))
-        for locked_url in sorted({url, observed_url}):
+        identity_urls = list(publisher_article_identity_urls(url))
+        observed_urls = list(publisher_article_identity_urls(observed_url))
+        for locked_url in sorted(set(identity_urls + observed_urls)):
             conn.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s,0))", ("political-url:" + locked_url,))
-        previous = conn.execute("SELECT * FROM political_articles WHERE canonical_url=%s FOR UPDATE", (url,)).fetchone()
+        previous_rows = conn.execute("SELECT * FROM political_articles WHERE canonical_url=ANY(%s) ORDER BY id FOR UPDATE", (identity_urls,)).fetchall()
+        previous = previous_rows[0] if previous_rows else None
+        if previous:
+            for duplicate in previous_rows[1:]:
+                self._merge_articles(conn, duplicate, previous)
+            # Keep the original record and its URL; attach the verified host
+            # variant as an alias instead of inserting a second article.
+            url = previous["canonical_url"]
         publisher_confirmed = candidate.get("_publisher_confirmed") is True
         if observed_url != url:
             alias = conn.execute("""SELECT a.* FROM political_articles a WHERE a.canonical_url=%s OR EXISTS
@@ -1426,7 +1452,8 @@ class PoliticalCorpusService:
         if candidate.get("html_object_key"):
             conn.execute("UPDATE political_articles SET html_hash=%s,html_object_key=%s WHERE id=%s",
                          (str(candidate.get("html_hash") or ""), str(candidate["html_object_key"]), article_id))
-        conn.execute("INSERT INTO political_url_aliases(url,article_id) VALUES (%s,%s) ON CONFLICT DO NOTHING", (url, article_id))
+        for alias_url in set(identity_urls + [url]):
+            conn.execute("INSERT INTO political_url_aliases(url,article_id) VALUES (%s,%s) ON CONFLICT DO NOTHING", (alias_url, article_id))
         mentions_added = 0
         for hit in hits:
             changed = conn.execute("""INSERT INTO political_mentions(article_id,target_key,target_name,keyword_matched,legacy_id)
@@ -1466,8 +1493,8 @@ class PoliticalCorpusService:
                          (f"political-classification:{pair['article_id']}:{pair['target_key']}",))
         conn.execute("INSERT INTO political_article_revisions(article_id,previous,reason) VALUES (%s,%s::jsonb,'canonical_duplicate_merge')",
                      (new_id, _json(dict(old))))
-        conn.execute("""INSERT INTO political_mentions(article_id,target_key,target_name,keyword_matched,legacy_id,rule_version)
-            SELECT %s,target_key,target_name,keyword_matched,legacy_id,rule_version FROM political_mentions WHERE article_id=%s
+        conn.execute("""INSERT INTO political_mentions(article_id,target_key,target_name,keyword_matched,legacy_id,rule_version,created_at)
+            SELECT %s,target_key,target_name,keyword_matched,legacy_id,rule_version,created_at FROM political_mentions WHERE article_id=%s
             ON CONFLICT DO NOTHING""", (new_id, old_id))
         conn.execute("""INSERT INTO political_classification_revisions(article_id,target_key,previous,updated_by)
             SELECT %s,target_key,to_jsonb(c),'canonical_merge' FROM political_classifications c WHERE article_id=%s""", (new_id, old_id))

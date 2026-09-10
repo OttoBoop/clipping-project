@@ -1,5 +1,6 @@
 """Transport budgets and reconstructible sitemap caches, without network access."""
 import threading
+from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
@@ -38,6 +39,11 @@ def service_with_response(tmp_path, monkeypatch, response):
     service._http_local = threading.local()
     service._http_local.session = Session()
     monkeypatch.setattr(service, "_public_url", lambda _: None)
+    # Domain cooldown persistence has its own PostgreSQL tests; this fixture
+    # deliberately exercises only streaming transport with an in-memory session.
+    monkeypatch.setattr(service, "_check_domain_cooldown", lambda _: None)
+    monkeypatch.setattr(service, "_connect", lambda: nullcontext(None))
+    monkeypatch.setattr(political_corpus, "record_response_cooldown", lambda *args: None)
     monkeypatch.setattr(service, "reserve_domain", lambda domain: domains.append(domain) or 0)
     return service, requests, domains
 
