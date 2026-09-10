@@ -1008,8 +1008,9 @@ class _ArticleParser(HTMLParser):
         publisher_author_box = "m-a-box" in classes and publisher_host in {"rc24h.com.br", "www.rc24h.com.br"}
         diario_navigation = publisher_host in {"diariodorio.com", "www.diariodorio.com"} and bool(
             classes & {"ddr-author-box", "td-category", "td-post-sharing", "td-post-sharing-top", "td-a-rec"})
+        odia_tags = publisher_host == "odia.ig.com.br" and tag == "div" and attrs.get("id") == "tags" and "tags" in classes
         publisher_recommendations = publisher_host in _GLOBO_ARTICLE_HOSTS and "you-need-to-know-theme" in classes
-        related = bool(_RELATED.search(attrs.get("class", "") + " " + attrs.get("id", ""))) or publisher_author_box or publisher_recommendations or diario_navigation
+        related = bool(_RELATED.search(attrs.get("class", "") + " " + attrs.get("id", ""))) or publisher_author_box or publisher_recommendations or diario_navigation or odia_tags
         blocked = (bool(self.stack) and self.stack[-1][1]) or tag in {"script", "style", "nav", "aside", "footer", "header", "form"} or related
         body = tag == "article" or bool(_BODY.search(attrs.get("class", "") + " " + attrs.get("itemprop", "")))
         # Exact tokens from RC24h's public article templates. Its enclosing

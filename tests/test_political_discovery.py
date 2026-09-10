@@ -724,6 +724,28 @@ def test_odia_link_removal_requires_exact_lead_at_start_of_text_block():
         assert "Eduardo Paes" in result["full_text"] and "Fim editorial." in result["full_text"]
 
 
+def test_odia_search_tags_are_not_article_mentions():
+    raw = '''<link rel="canonical" href="https://odia.ig.com.br/colunas/informe-do-dia/atual.html">
+      <article><div class="texto">Salvino Oliveira apresentou um projeto no Rio.</div>
+      <div id="tags" class="tags"><ul><li><a href="/noticias?q=PEDRO+PAULO">PEDRO PAULO</a></li>
+      <li><a href="/noticias?q=EDUARDO+PAES">EDUARDO PAES</a></li></ul></div></article>'''
+    result = discovery.extract_article(raw)
+    assert result["full_text"] == "Salvino Oliveira apresentou um projeto no Rio."
+    assert result["extraction_state"] == "metadata_only"
+    # The publisher-specific container must not remove editorial text elsewhere.
+    other = discovery.extract_article(raw.replace('odia.ig.com.br', 'example.com'))
+    assert "PEDRO PAULO" in other["full_text"]
+
+
+def test_odia_tag_cleanup_keeps_genuine_names_in_editorial_text():
+    prose = "Eduardo Paes e Pedro Paulo falaram sobre o projeto apresentado por Salvino Oliveira no Rio. " * 3
+    raw = f'''<link rel="canonical" href="https://odia.ig.com.br/politica/atual.html">
+      <article><div class="texto">{prose}</div><div id="tags" class="tags">Hugo Leal</div></article>'''
+    result = discovery.extract_article(raw)
+    assert result["full_text"] == prose.strip()
+    assert result["extraction_state"] == "full_text"
+
+
 def test_short_primary_body_remains_metadata_only_even_with_long_later_article():
     raw = '<article><p>Assine para continuar.</p></article><article><p>' + ('Outra notícia extensa. ' * 100) + '</p></article>'
     result = discovery.extract_article(raw)
