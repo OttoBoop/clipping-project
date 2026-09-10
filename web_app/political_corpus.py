@@ -700,6 +700,10 @@ class PoliticalCorpusService:
             if count >= maximum:
                 return None
             source_domains = _source_domains()
+            # Prefer a publisher whose normal 1rps reservation is already due,
+            # before applying source fairness and section priority. Busy domains
+            # remain eligible when there is no ready work; fetch still enforces
+            # the shared reservation and every Retry-After cooldown.
             row = conn.execute("""SELECT t.* FROM political_tasks t JOIN political_jobs j ON j.id=t.job_id
                 LEFT JOIN political_source_leases scheduling ON scheduling.source_key=t.source_key
                 LEFT JOIN political_domain_limits cooling ON cooling.domain=""" + TASK_DOMAIN_FALLBACK_SQL + """
@@ -714,7 +718,8 @@ class PoliticalCorpusService:
                     OR NOT EXISTS (SELECT 1 FROM political_tasks active
                         WHERE active.kind='fetch' AND active.status='running' AND active.leased_until>NOW()
                         AND COALESCE(active.cursor->>'resolved_url',active.payload->>'url') LIKE 'https://news.google.com/%%'))
-                ORDER BY CASE WHEN t.kind='fetch' THEN scheduling.fetch_claimed_at
+                ORDER BY CASE WHEN t.kind='fetch' AND cooling.next_request_at>NOW() THEN 1 ELSE 0 END,
+                    CASE WHEN t.kind='fetch' THEN scheduling.fetch_claimed_at
                               ELSE scheduling.discovery_claimed_at END ASC NULLS FIRST,
                     t.priority DESC,
                     CASE WHEN t.kind='fetch' AND COALESCE(t.payload->>'published_at','')<>'' THEN 0 ELSE 1 END,

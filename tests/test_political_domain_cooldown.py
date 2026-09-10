@@ -265,3 +265,19 @@ def test_global_four_fetch_slots_remain_enforced(service, monkeypatch):
             service._insert_task(conn, job["id"], "fetch", candidate(f"host{number}.example", f"source{number}"))
     assert all(service.claim_task("fetch", worker_id=f"f{i}") for i in range(4))
     assert service.claim_task("fetch", worker_id="f4") is None
+
+
+def test_ready_domain_precedes_ordinary_throttle_wait_without_discarding_busy_task(service, monkeypatch):
+    job = start(service, monkeypatch)
+    with service._connect() as conn:
+        service._insert_task(conn, job["id"], "fetch", candidate("busy.example", "busy"))
+        service._insert_task(conn, job["id"], "fetch", candidate("ready.example", "ready"))
+        conn.execute("INSERT INTO political_domain_limits(domain,next_request_at) VALUES ('busy.example',NOW()+INTERVAL '10 seconds')")
+    ready = service.claim_task("fetch", worker_id="ready-domain")
+    assert ready["source_key"] == "ready"
+    # If every remaining domain is busy, a worker still claims the task and
+    # reserve_domain enforces the same shared delay. No retry is consumed merely
+    # by prioritizing another publisher, and no candidate is dropped.
+    busy = service.claim_task("fetch", worker_id="remaining-domain")
+    assert busy["source_key"] == "busy" and busy["attempts"] == 1
+    assert service.reserve_domain("busy.example") > 8
