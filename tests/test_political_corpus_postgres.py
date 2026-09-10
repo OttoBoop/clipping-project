@@ -82,6 +82,26 @@ def fake_response(url, body=BODY, status=200):
     return response
 
 
+def test_quality_and_reuse_metrics_exclude_corrected_unassociated_articles(service, monkeypatch):
+    job = start(service, monkeypatch, targets=("paes",))
+    candidate = enqueue(service, monkeypatch)
+    monkeypatch.setattr(service, "fetch", lambda url: fake_response(url))
+    task = service.claim_task("fetch", worker_id="quality-metrics")
+    article_id = service.process_task(task)["articleId"]
+    with service._connect() as conn:
+        conn.execute("UPDATE political_observations SET disposition='duplicate' WHERE job_id=%s", (job["id"],))
+        before = service._metrics(conn, job["id"])
+        assert before["articlesSaved"] == before["bodyExtracted"] == before["articlesReused"] == 1
+        conn.execute("DELETE FROM political_mentions WHERE article_id=%s", (article_id,))
+        # Retaining text and even another client's mention must not keep this
+        # job's quality counters inflated after an association correction.
+        conn.execute("INSERT INTO political_mentions(article_id,target_key,target_name,keyword_matched) VALUES(%s,'private','Pessoa Privada','Pessoa Privada')", (article_id,))
+        after = service._metrics(conn, job["id"])
+        assert after["articlesSaved"] == after["bodyExtracted"] == after["articlesReused"] == 0
+        assert after["metadataOnly"] == after["datesVerified"] == 0
+        assert conn.execute("SELECT text_object_key FROM political_articles WHERE id=%s", (article_id,)).fetchone()["text_object_key"]
+
+
 @pytest.mark.parametrize("raises", [True, False])
 def test_direct_source_gaps_enqueue_deduplicated_google_fallback_with_job_scope(service, monkeypatch, raises):
     from web_app import political_discovery

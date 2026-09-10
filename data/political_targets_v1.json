@@ -615,12 +615,13 @@
         "any_of": [
           "governador",
           "governo",
-          "Campos",
           "Republicanos",
           "Anthony",
           "eleição",
           "eleições",
-          "Rio"
+          "inelegibilidade",
+          "direitos políticos",
+          "Paes"
         ],
         "exempt_aliases": [
           "Anthony Garotinho",
@@ -630,7 +631,8 @@
           "Rosinha Garotinho",
           "Clarissa Garotinho",
           "Wladimir Garotinho",
-          "Anthony William Garotinho Matheus de Oliveira Neto"
+          "Anthony William Garotinho Matheus de Oliveira Neto",
+          "Daily do Garotinho"
         ],
         "window_chars": 300
       }

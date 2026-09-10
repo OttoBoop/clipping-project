@@ -366,7 +366,9 @@ class PoliticalCorpusService:
             COUNT(DISTINCT article_id) FILTER(WHERE EXISTS (SELECT 1 FROM political_mentions m
                 WHERE m.article_id=o.article_id AND m.target_key=ANY(j.target_keys))) AS articles_saved,
             COUNT(*) FILTER (WHERE disposition='duplicate') AS duplicates,
-            COUNT(DISTINCT article_id) FILTER (WHERE disposition='duplicate') AS articles_reused,
+            COUNT(DISTINCT article_id) FILTER (WHERE disposition='duplicate' AND EXISTS
+                (SELECT 1 FROM political_mentions m WHERE m.article_id=o.article_id
+                 AND m.target_key=ANY(j.target_keys))) AS articles_reused,
             COUNT(*) FILTER (WHERE disposition='no_match') AS no_match,
             COUNT(*) FILTER (WHERE disposition='outside_window') AS outside_window
             FROM political_observations o JOIN political_jobs j ON j.id=o.job_id WHERE o.job_id=%s""", (job_id,)).fetchone()
@@ -376,7 +378,10 @@ class PoliticalCorpusService:
             COUNT(*) FILTER (WHERE a.body_status<>'body_extracted' OR a.date_status NOT IN ('page_verified','api_verified')) AS needs_review,
             COUNT(*) FILTER (WHERE a.date_status IN ('page_verified','api_verified')) AS dates_verified
             FROM political_articles a WHERE EXISTS
-            (SELECT 1 FROM political_observations o WHERE o.job_id=%s AND o.article_id=a.id)""", (job_id,)).fetchone()
+            (SELECT 1 FROM political_observations o JOIN political_jobs j ON j.id=o.job_id
+             WHERE o.job_id=%s AND o.article_id=a.id AND EXISTS
+             (SELECT 1 FROM political_mentions m WHERE m.article_id=a.id
+              AND m.target_key=ANY(j.target_keys)))""", (job_id,)).fetchone()
         return {"uniqueCandidates": int(observed["unique_candidates"]), "articlesSaved": int(observed["articles_saved"]),
                 "articlesInserted": int(counters["articles_inserted"]), "mentionsInserted": int(counters["mentions_inserted"]),
                 "fetchAttempted": int(counters["fetch_attempted"]),
