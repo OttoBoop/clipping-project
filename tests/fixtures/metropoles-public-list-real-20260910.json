@@ -1,0 +1,36 @@
+{
+  "source": "Public Brasil section load-more response fetched on the production worker, 2026-09-10; no article inserts from this diagnostic.",
+  "originalArtifactSha256": "5b426f4e1cfd429d60160581681c89cc006e80ff0079b605e36619b4fffcc47c",
+  "rows": [
+    {
+      "title": "Ciro Gomes e Elmano batem boca em debate no CearÃ¡: \"Baixe o dedinho\"",
+      "url": "https://www.metropoles.com/brasil/ciro-gomes-e-elmano-batem-boca-em-debate-no-ceara-baixe-o-dedinho",
+      "authority": {
+        "authors": [],
+        "createdAt": "09/09/2026 22:32",
+        "publishedAt": "2026-09-09 22:32:30"
+      },
+      "id": 5231194
+    },
+    {
+      "title": "Lula critica bandeiras dos EUA em atos polÃ­ticos: âTraidores da pÃ¡triaâ",
+      "url": "https://www.metropoles.com/brasil/lula-critica-bandeiras-dos-eua-em-atos-politicos-traidores-da-patria",
+      "authority": {
+        "authors": [],
+        "createdAt": "09/09/2026 22:15",
+        "publishedAt": "2026-09-09 22:15:18"
+      },
+      "id": 5231124
+    },
+    {
+      "title": "Lula: âQue nÃ£o venha o tribunal eleitoral querer falcatrua\"",
+      "url": "https://www.metropoles.com/brasil/lula-que-nao-venha-o-tribunal-eleitoral-querer-falcatrua",
+      "authority": {
+        "authors": [],
+        "createdAt": "09/09/2026 22:14",
+        "publishedAt": "2026-09-09 22:14:43"
+      },
+      "id": 5231052
+    }
+  ]
+}

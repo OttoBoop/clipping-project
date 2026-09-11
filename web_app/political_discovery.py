@@ -174,6 +174,9 @@ def build_tasks(target_snapshots: list[dict[str, Any]], date_from: str, date_to:
             elif strategy == "diario_archive":
                 tasks.append({**base, "strategy": strategy, "url": source["archive_url"],
                               "cursor": {"page": 1}})
+            elif strategy == "metropoles_archive":
+                for section in source.get("public_archive_sections", []):
+                    tasks.append({**base, "strategy": strategy, "section": section})
             elif strategy == "rc24h_archive":
                 month = date.fromisoformat(date_from).replace(day=1)
                 end = date.fromisoformat(date_to)
@@ -884,6 +887,9 @@ def discover(task: dict[str, Any], fetch: Callable) -> dict[str, Any]:
         return _wordpress(task, source, fetch)
     if strategy == "diario_archive":
         from .political_diario_archive import discover_archive
+        return discover_archive(task, source, fetch)
+    if strategy == "metropoles_archive":
+        from .political_metropoles_archive import discover_archive
         return discover_archive(task, source, fetch)
     if strategy == "rc24h_archive":
         return _rc24h_archive(task, source, fetch)

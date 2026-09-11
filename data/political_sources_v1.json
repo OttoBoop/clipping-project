@@ -364,6 +364,7 @@
       "name": "Metrópoles",
       "domain": "metropoles.com",
       "strategies": [
+        "metropoles_archive",
         "sitemap",
         "google_news"
       ],
@@ -373,16 +374,26 @@
       "section_patterns": [
         "/(?:brasil|colunas|politica|rio-de-janeiro|eleicoes|negocios)/"
       ],
-      "known_constraint": "News sitemap covers recent stories only; domain-specific Google queries cover historical discovery. Publisher disallows /wp-json/, /api/, /busca and /search.",
+      "known_constraint": "News sitemap is recent; historical coverage uses individual domain searches and the public Brasil section pagination. Missing action, malformed pages, chronology uncertainty and page caps remain explicit gaps.",
       "evidence": [
         {
           "url": "https://www.metropoles.com/robots.txt",
           "basis": "publisher-advertised sitemap locations",
           "verified_at": "2026-09-09"
+        },
+        {
+          "url": "https://www.metropoles.com/brasil",
+          "basis": "Public Ver mais notícias button: date-cursor POST to the section itself; getMoreArticlesAction identifier advertised in public JavaScript. No search/API paths or login are used.",
+          "verified_at": "2026-09-10"
         }
       ],
       "enabled": true,
-      "google_policy": "always"
+      "google_policy": "always",
+      "public_archive_sections": [
+        "brasil"
+      ],
+      "public_archive_action_bundle_hint": "https://assets-v4.metroimg.com/_next/static/chunks/3_-cu-39abe67.js",
+      "public_archive_max_pages": 2000
     },
     {
       "key": "rc24h",
