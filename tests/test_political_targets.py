@@ -265,6 +265,8 @@ def test_legacy_cleanup_cannot_delete_an_existing_classification(monkeypatch, tm
  ('Paes fujão, Garotinho franco atirador e debate sem propostas no Rio.',{'anthony_garotinho'}),
  ('Anthony Garotinho comentou o governo; o perfil Daily do Garotinho publicou fotos.',{'anthony_garotinho'}),
  ('Daniela do Waguinho participou de evento em Belford Roxo.',set()),
+ ('Leandro do Waguinho é candidato pelo Republicanos no Rio de Janeiro.',set()),
+ ('Waguinho, ex-prefeito de Belford Roxo, participou com Leandro do Waguinho.',{'waguinho'}),
  ('O cantor Waguinho anunciou show em Belford Roxo.',set()),
  ('Waguinho, ex-prefeito de Belford Roxo, concorre ao Senado.',{'waguinho'}),
  ('Marcos Dias apresentou seu novo disco em Lisboa.',set()),

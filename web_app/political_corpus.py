@@ -1040,6 +1040,8 @@ class PoliticalCorpusService:
                         FetchProblem(error_type), date_status=task.get("_verified_date_status") or "")
                 except LeaseLost:
                     return {"taskId": task["id"], "status": "lease_lost"}
+            if task.get("_metadata_date_conflict"):
+                status, error_type = "gap", "publication_date_conflict"
             with self._connect() as conn:
                 if task["kind"] == "discovery" and status == "gap":
                     self._enqueue_discovery_fallback(conn, task)
@@ -1379,10 +1381,18 @@ class PoliticalCorpusService:
             return
         with self._connect() as conn:
             self._lock_task(conn, task)
-            existing = conn.execute("""SELECT a.canonical_url FROM political_articles a
-                LEFT JOIN political_url_aliases u ON u.article_id=a.id
-                WHERE a.canonical_url=%s OR u.url=%s ORDER BY a.id LIMIT 1""",
-                (candidate["url"], candidate["url"])).fetchone()
+            existing = self._find_article(conn, candidate["url"])
+            if existing and existing["published_at"] and not job["date_from"] <= existing["published_at"].astimezone(ZONE).date() <= job["date_to"]:
+                task["_metadata_date_conflict"] = True
+                # A new RSS date must not attach an older, unverified metadata
+                # record to this window. Preserve the record and both dates for
+                # review; this is not proof that either publication date is right.
+                conn.execute("""UPDATE political_observations SET article_id=NULL,disposition='date_conflict',
+                    metadata=metadata || %s::jsonb WHERE job_id=%s AND observed_url=%s""",
+                    (_json({"date_conflict":{"existingArticleId":existing["id"],
+                        "existingPublication":str(existing["published_at"]),"candidatePublication":str(published or ""),
+                        "existingDateStatus":existing["date_status"],"fetchFailure":str(problem)}}),task["job_id"],task["payload"]["url"]))
+                return
             if existing and existing["canonical_url"] != candidate["url"]:
                 candidate = {**candidate, "observed_url": candidate.get("observed_url") or candidate["url"], "url": existing["canonical_url"]}
             article_id = self._persist_article(conn, candidate, hits, published=published,

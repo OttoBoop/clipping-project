@@ -1023,6 +1023,30 @@ def test_metadata_only_preserves_verified_page_date_and_window(service, monkeypa
         assert (items[0]["publishedAt"][:10] if items[0]["publishedAt"] else None) == expected_date
 
 
+def test_failed_metadata_reuse_with_conflicting_old_date_keeps_old_record_out_of_new_window(service,monkeypatch):
+    job=start(service,monkeypatch)
+    url='https://example.com/metadata-conflict'
+    old_date=datetime(2026,5,31,15,tzinfo=timezone.utc)
+    with service._connect() as conn:
+        old_id=service._persist_article(conn,{'url':url,'title':'Eduardo Paes'},
+            [{'target_key':'paes','target_name':'Eduardo Paes','keyword_matched':'Eduardo Paes'}],
+            published=old_date,date_status='source_reported')
+    enqueue(service,monkeypatch,{'url':url,'title':'Eduardo Paes e Pedro Duarte',
+        'source_key':'example','published_at':'2026-06-01T12:00:00-03:00','metadata':{}})
+    monkeypatch.setattr(service,'fetch',lambda url,**kwargs:fake_response(url,status=503))
+    result=service.process_task(service.claim_task('fetch',worker_id='date-conflict'))
+    assert result['status']=='gap' and result['errorType']=='publication_date_conflict'
+    with service._connect() as conn:
+        old=conn.execute('SELECT id,published_at,date_status FROM political_articles').fetchone()
+        assert old=={'id':old_id,'published_at':old_date,'date_status':'source_reported'}
+        assert conn.execute('SELECT target_key FROM political_mentions').fetchall()==[{'target_key':'paes'}]
+        observation=conn.execute('SELECT article_id,disposition,metadata FROM political_observations WHERE job_id=%s',(job['id'],)).fetchone()
+        assert observation['article_id'] is None and observation['disposition']=='date_conflict'
+        assert observation['metadata']['date_conflict']['existingArticleId']==old_id
+        metrics=service._metrics(conn,job['id'])
+        assert metrics['articlesSaved']==metrics['mentionsInserted']==0
+
+
 @pytest.mark.parametrize("stage", ["landing", "resolver", "publisher_redirect"])
 def test_google_challenge_is_unresolved_metadata_never_a_publisher_or_article(service, monkeypatch, stage):
     from web_app import political_discovery

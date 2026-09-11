@@ -73,6 +73,9 @@ def test_known_google_alias_cannot_restore_rejected_directory_on_http_failure(se
     "Dr Pedro Paulo 1567 - Candidato a deputado federal do CE pelo MDB | Eleições 2026 - ND Mais",
     "Joyce Trindade 55557 - Candidata a deputada estadual do RJ pelo PSD | Eleições 2026 - ndmais.com.br",
     "Pedro Paulo 555 - Candidato a senador do RJ pelo PSD | Eleições 2026 - ND Mais",
+    "Eduardo Paes 55 (PSD): candidato a Governador pelo RJ - Gazeta do Povo",
+    "Laura Carneiro 5566 (PSD): candidata a Deputado Federal pelo RJ - gazetadopovo.com.br",
+    "Leandro do Waguinho 10456 (REPUBLICANOS): candidato a Deputado Estadual pelo RJ - Gazeta do Povo",
 ])
 def test_unresolved_google_profile_is_not_saved_when_redirect_would_fail(service,monkeypatch,title):
     start(service,monkeypatch)
@@ -90,3 +93,10 @@ def test_profile_title_rule_does_not_exclude_editorial_or_other_publishers():
     assert non_news_reason("https://ndmais.com.br/politica/noticia/",title)==""
     assert non_news_reason(GOOGLE,title.replace("ndmais.com.br","Outro Jornal"))==""
     assert non_news_reason(GOOGLE,"Eduardo Paes anuncia candidatos para 2026 - ND Mais")==""
+
+
+def test_gazeta_directory_path_excludes_profiles_but_not_editorial():
+    assert non_news_reason('https://www.gazetadopovo.com.br/eleicoes/2026/candidatos/rj/senador/pedro-paulo-psd-555')=='publisher_directory_not_news'
+    assert non_news_reason('https://www.gazetadopovo.com.br/eleicoes/2026/paes-apresenta-propostas')==''
+    assert non_news_reason(GOOGLE,'Paes apresenta propostas para o Rio - Gazeta do Povo')==''
+    assert non_news_reason(GOOGLE,'Eduardo Paes 55 (PSD): candidato a Governador pelo RJ - Outro Jornal')==''
