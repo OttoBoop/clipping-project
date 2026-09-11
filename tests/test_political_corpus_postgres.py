@@ -132,6 +132,24 @@ def test_quality_and_reuse_metrics_exclude_corrected_unassociated_articles(servi
         assert conn.execute("SELECT text_object_key FROM political_articles WHERE id=%s", (article_id,)).fetchone()["text_object_key"]
 
 
+def test_status_metrics_count_a_multi_person_article_once_across_observed_urls(service, monkeypatch):
+    job = start(service, monkeypatch)
+    enqueue(service, monkeypatch)
+    monkeypatch.setattr(service, "fetch", lambda url: fake_response(url))
+    article_id = service.process_task(service.claim_task("fetch", worker_id="metrics"))["articleId"]
+    with service._connect() as conn:
+        conn.execute("""INSERT INTO political_observations
+            (job_id,source_task_id,observed_url,source_key,title,article_id,disposition)
+            SELECT job_id,source_task_id,observed_url || '?second-observation',source_key,title,article_id,'duplicate'
+            FROM political_observations WHERE job_id=%s""", (job["id"],))
+        metrics = service._metrics(conn, job["id"])
+        assert metrics["uniqueCandidates"] == 2
+        assert metrics["articlesSaved"] == metrics["articlesReused"] == metrics["bodyExtracted"] == 1
+        assert metrics["duplicates"] == 1
+        assert metrics["mentionsInserted"] == 2
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_mentions WHERE article_id=%s", (article_id,)).fetchone()["n"] == 2
+
+
 def test_google_discovery_access_challenge_is_an_explicit_terminal_gap(service, monkeypatch):
     start(service, monkeypatch, tasks=[{"source_key": "google_news", "strategy": "google_news",
         "query": '"Eduardo Paes"', "date_from": "2026-06-01", "date_to": "2026-06-02", "cursor": {}}])

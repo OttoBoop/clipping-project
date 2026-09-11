@@ -365,26 +365,31 @@ class PoliticalCorpusService:
         counters = conn.execute("SELECT articles_inserted,mentions_inserted,fetch_attempted FROM political_jobs WHERE id=%s", (job_id,)).fetchone()
         tasks = conn.execute("""SELECT kind,status,COUNT(*) AS count,COALESCE(SUM(raw_count),0) AS raw_count
                                 FROM political_tasks WHERE job_id=%s GROUP BY kind,status""", (job_id,)).fetchall()
-        observed = conn.execute("""SELECT COUNT(*) AS unique_candidates,
-            COUNT(DISTINCT article_id) FILTER(WHERE EXISTS (SELECT 1 FROM political_mentions m
-                WHERE m.article_id=o.article_id AND m.target_key=ANY(j.target_keys))) AS articles_saved,
+        # Resolve authorized article IDs once. Carrying the job's full target
+        # array through every observation spilled the status aggregate to disk.
+        observed = conn.execute("""WITH visible AS MATERIALIZED (
+            SELECT DISTINCT m.article_id FROM political_mentions m JOIN political_jobs j
+            ON j.id=%s AND m.target_key=ANY(j.target_keys))
+            SELECT COUNT(*) AS unique_candidates,
+            COUNT(DISTINCT o.article_id) FILTER(WHERE v.article_id IS NOT NULL) AS articles_saved,
             COUNT(*) FILTER (WHERE disposition='duplicate') AS duplicates,
-            COUNT(DISTINCT article_id) FILTER (WHERE disposition='duplicate' AND EXISTS
-                (SELECT 1 FROM political_mentions m WHERE m.article_id=o.article_id
-                 AND m.target_key=ANY(j.target_keys))) AS articles_reused,
+            COUNT(DISTINCT o.article_id) FILTER (WHERE disposition='duplicate'
+                AND v.article_id IS NOT NULL) AS articles_reused,
             COUNT(*) FILTER (WHERE disposition='no_match') AS no_match,
             COUNT(*) FILTER (WHERE disposition='outside_window') AS outside_window
-            FROM political_observations o JOIN political_jobs j ON j.id=o.job_id WHERE o.job_id=%s""", (job_id,)).fetchone()
-        quality = conn.execute("""SELECT COUNT(*) FILTER (WHERE a.body_status='body_extracted') AS body_extracted,
+            FROM political_observations o LEFT JOIN visible v ON v.article_id=o.article_id
+            WHERE o.job_id=%s""", (job_id, job_id)).fetchone()
+        quality = conn.execute("""WITH visible AS MATERIALIZED (
+            SELECT DISTINCT m.article_id FROM political_mentions m JOIN political_jobs j
+            ON j.id=%s AND m.target_key=ANY(j.target_keys))
+            SELECT COUNT(*) FILTER (WHERE a.body_status='body_extracted') AS body_extracted,
             COUNT(*) FILTER (WHERE a.body_status<>'body_extracted') AS metadata_only,
             COUNT(*) FILTER (WHERE a.published_at IS NULL) AS unknown_dates,
             COUNT(*) FILTER (WHERE a.body_status<>'body_extracted' OR a.date_status NOT IN ('page_verified','api_verified')) AS needs_review,
             COUNT(*) FILTER (WHERE a.date_status IN ('page_verified','api_verified')) AS dates_verified
-            FROM political_articles a WHERE EXISTS
-            (SELECT 1 FROM political_observations o JOIN political_jobs j ON j.id=o.job_id
-             WHERE o.job_id=%s AND o.article_id=a.id AND EXISTS
-             (SELECT 1 FROM political_mentions m WHERE m.article_id=a.id
-              AND m.target_key=ANY(j.target_keys)))""", (job_id,)).fetchone()
+            FROM political_articles a JOIN visible v ON v.article_id=a.id WHERE EXISTS
+            (SELECT 1 FROM political_observations o
+             WHERE o.job_id=%s AND o.article_id=a.id)""", (job_id, job_id)).fetchone()
         return {"uniqueCandidates": int(observed["unique_candidates"]), "articlesSaved": int(observed["articles_saved"]),
                 "articlesInserted": int(counters["articles_inserted"]), "mentionsInserted": int(counters["mentions_inserted"]),
                 "fetchAttempted": int(counters["fetch_attempted"]),
