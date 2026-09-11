@@ -258,6 +258,22 @@ def test_503_race_defers_claimed_google_discovery_without_exhausting_retry_budge
     assert row == {"status": "retryable", "attempts": 5, "next_attempt_at": deadline, "lease_token": None}
 
 
+def test_google_block_with_explicit_retry_after_keeps_publisher_deadline(service):
+    from pathlib import Path
+    from web_app.political_corpus import FetchProblem
+    response=requests.Response()
+    response.status_code=503
+    response.headers['Retry-After']='120'
+    response._content=(Path(__file__).parent/'fixtures/google-automated-query-block-20260911.html').read_bytes()
+    response._content_consumed=True
+    service._http_local.session=SimpleNamespace(request=lambda *a,**k:response)
+    with pytest.raises(FetchProblem,match='google_access_challenge'):
+        service.fetch('https://news.google.com/rss/search?q=name')
+    with service._connect() as conn:
+        deadline=conn.execute("SELECT cooldown_until FROM political_domain_limits WHERE domain='news.google.com'").fetchone()['cooldown_until']
+    assert 115 < (deadline-datetime.now(timezone.utc)).total_seconds() <= 120
+
+
 def test_global_four_fetch_slots_remain_enforced(service, monkeypatch):
     job = start(service, monkeypatch)
     with service._connect() as conn:

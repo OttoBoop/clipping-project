@@ -43,7 +43,7 @@ from .political_body_batches import BatchBodyUnavailable, WordPressBodyBatches
 from .political_record_types import non_news_reason
 from .political_worker_limits import fetch_concurrency
 from .political_request_urls import (
-    is_google_access_challenge, publisher_article_identity_urls, publisher_article_request_url,
+    is_google_access_challenge, is_google_block_response, publisher_article_identity_urls, publisher_article_request_url,
 )
 
 START_DATE = date(2026, 6, 1)
@@ -895,7 +895,10 @@ class PoliticalCorpusService:
                                            timeout=(8, 60 if large_sitemap else 20), allow_redirects=False, stream=True,
                                            verify=publisher_verify(current))
                 measurement.status_code = response.status_code
-            if response.status_code in {429, 503}:
+            # Honor explicit Retry-After immediately. A headerless 503 needs
+            # its body inspected: Google can return an automated-query block
+            # here, which must not renew the default outage pause indefinitely.
+            if response.status_code == 429 or (response.status_code == 503 and response.headers.get("Retry-After")):
                 with self._connect() as conn:
                     record_response_cooldown(conn, domain, response.status_code, response.headers.get("Retry-After"))
             if response.is_redirect or response.is_permanent_redirect:
@@ -946,6 +949,11 @@ class PoliticalCorpusService:
                 record_timing("http_body", time.monotonic() - started, status_code=response.status_code)
             response._content = b"".join(chunks)
             response._content_consumed = True
+            if is_google_block_response(current, response.status_code, response.content):
+                raise FetchProblem("google_access_challenge", retryable=False)
+            if response.status_code == 503 and not response.headers.get("Retry-After"):
+                with self._connect() as conn:
+                    record_response_cooldown(conn, domain, response.status_code, None)
             if "text/html" in response.headers.get("Content-Type", "").lower() and "charset=" not in response.headers.get("Content-Type", "").lower():
                 declared = requests.utils.get_encodings_from_content(response.content[:8192].decode("ascii", errors="ignore"))
                 if declared:

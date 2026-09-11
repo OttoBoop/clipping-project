@@ -1,8 +1,45 @@
 import pytest
+from pathlib import Path
 
 from web_app.political_request_urls import (
-    is_google_access_challenge, publisher_article_identity_urls, publisher_article_request_url,
+    is_google_access_challenge, is_google_block_response, publisher_article_identity_urls, publisher_article_request_url,
 )
+
+
+GOOGLE_BLOCK = (Path(__file__).parent / "fixtures/google-automated-query-block-20260911.html").read_bytes()
+
+
+@pytest.mark.parametrize("url,status,body,expected", [
+    ("https://news.google.com/rss/articles/token", 503, GOOGLE_BLOCK, True),
+    ("https://news.google.com/rss/search?q=name", 503, GOOGLE_BLOCK, True),
+    ("https://publisher.example/story", 503, GOOGLE_BLOCK, False),
+    ("https://news.google.com.evil.example/story", 503, GOOGLE_BLOCK, False),
+    ("https://news.google.com/rss/search", 429, GOOGLE_BLOCK, False),
+    ("https://news.google.com/rss/search", 503, b"Service temporarily unavailable", False),
+    ("https://news.google.com/rss/search", 503, b"<title>Sorry...</title>maintenance", False),
+    ("https://news.google.com/rss/search", 200, GOOGLE_BLOCK, False),
+])
+def test_observed_google_503_block_requires_host_status_and_specific_block_evidence(url,status,body,expected):
+    assert is_google_block_response(url,status,body) is expected
+
+
+def test_google_503_block_closes_response_without_default_outage_cooldown(monkeypatch):
+    from types import SimpleNamespace
+    import requests
+    from web_app.political_corpus import FetchProblem, PoliticalCorpusService
+    service=PoliticalCorpusService()
+    response=requests.Response()
+    response.status_code=503
+    response._content=GOOGLE_BLOCK
+    response._content_consumed=True
+    service._http_local.session=SimpleNamespace(request=lambda *a,**k:response)
+    monkeypatch.setattr(service,"_public_url",lambda url:None)
+    monkeypatch.setattr(service,"reserve_domain",lambda domain:0)
+    monkeypatch.setattr(service,"_check_domain_cooldown",lambda domain:None)
+    monkeypatch.setattr(service,"_connect",lambda:pytest.fail("terminal block must not renew a default outage cooldown"))
+    with pytest.raises(FetchProblem,match="google_access_challenge") as failure:
+        service.fetch("https://news.google.com/rss/search?q=name")
+    assert not failure.value.retryable
 
 
 def test_diario_identity_variants_are_symmetric_and_do_not_rewrite_other_hosts():
