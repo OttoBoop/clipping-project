@@ -268,9 +268,32 @@ def test_legacy_cleanup_cannot_delete_an_existing_classification(monkeypatch, tm
  ('O cantor Waguinho anunciou show em Belford Roxo.',set()),
  ('Waguinho, ex-prefeito de Belford Roxo, concorre ao Senado.',{'waguinho'}),
  ('Marcos Dias apresentou seu novo disco em Lisboa.',set()),
+ ('Marcos Dias apresentou seu novo disco no Rio de Janeiro.',set()),
+ ('O vereador Marcos Dias, do Podemos, discutiu obras em São Paulo.',set()),
  ('O vereador Marcos Dias, do Podemos, discutiu o futuro do Rio de Janeiro.',{'marcos_dias'}),
+ ('Marcos Dias é candidato ao Senado no RJ.',{'marcos_dias'}),
+ ('Foto: Marcos Dias / Furacão 2000. O show carioca foi acompanhado por um vereador.',set()),
+ ('Foto: Marcos Dias. O vereador Marcos Dias, do Podemos, disputará o Senado no Rio.',{'marcos_dias'}),
  ('Benedita da Silva, Carlos Jordy e Carlos Portinho disputam o Senado pelo Rio.',{'benedita_da_silva','carlos_jordy','carlos_portinho'}),
 ])
 def test_expanded_roster_context_and_namesakes(text,expected):
     approved={'anthony_garotinho','waguinho','marcos_dias','benedita_da_silva','carlos_jordy','carlos_portinho'}
     assert {h.target_key for h in roster_matcher().find_hits(text)} & approved == expected
+
+
+@pytest.mark.parametrize('groups', [[[]], ['invalid'], 'invalid'])
+def test_malformed_required_context_groups_cannot_relax_matching(groups):
+    row = next(r for r in roster_rows() if r['key'] == 'marcos_dias')
+    row['match_context']['all_of_groups'] = groups
+    matcher = CitationMatcher([Target(key=row['key'], display_name=row['display_name'],
+        keywords=row['keywords'], exact_aliases=row['exact_aliases'], **target_metadata(row))], exact_names_only=True)
+    assert not matcher.find_hits('O vereador Marcos Dias, do Podemos, discutiu o Rio de Janeiro.')
+
+
+def test_context_groups_roundtrip_without_adding_fields_to_existing_rules():
+    existing = {'match_context': {'required_for': ['Pedro Duarte'], 'any_of': ['Rio']}}
+    assert 'all_of_groups' not in target_metadata(existing)['match_context']
+    row = next(r for r in roster_rows() if r['key'] == 'marcos_dias')
+    first = target_metadata(row)
+    assert first['match_context']['all_of_groups'] == row['match_context']['all_of_groups']
+    assert target_metadata(first) == first

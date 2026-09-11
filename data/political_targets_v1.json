@@ -1917,8 +1917,55 @@
         "exempt_aliases": [
           "Marcos Dias Pereira"
         ],
-        "window_chars": 350,
-        "excluded_phrases": []
+        "window_chars": 1000,
+        "excluded_phrases": [
+          "Foto Marcos Dias",
+          "Fotos Marcos Dias",
+          "fotógrafo Marcos Dias",
+          "fotografia Marcos Dias",
+          "Marcos Dias Furacão 2000"
+        ],
+        "all_of_groups": [
+          [
+            "Rio de Janeiro",
+            "Câmara do Rio",
+            "Senado no Rio",
+            "Senado pelo Rio",
+            "senador pelo Rio",
+            "RJ",
+            "fluminense",
+            "carioca",
+            "Rio",
+            "Eduardo Paes",
+            "Paes",
+            "Eduardo Cavaliere",
+            "Cavaliere",
+            "Benedita",
+            "Carlos Portinho",
+            "Carlos Jordy",
+            "Waguinho",
+            "Pedro Paulo",
+            "Renan Ferreirinha",
+            "Arolde de Oliveira",
+            "Arolde",
+            "Washington Reis",
+            "Cláudio Castro"
+          ],
+          [
+            "vereador",
+            "Podemos",
+            "Senado",
+            "senador",
+            "eleições",
+            "eleição",
+            "candidato",
+            "candidatura",
+            "pesquisa",
+            "votos",
+            "votação",
+            "Câmara"
+          ]
+        ]
       }
     }
   ],

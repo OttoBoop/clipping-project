@@ -47,6 +47,13 @@ def target_metadata(row: dict) -> dict:
             for field_name in ("required_for", "any_of", "none_of", "exempt_aliases", "excluded_phrases"):
                 values = context.get(field_name, [])
                 normalized[field_name] = [str(item).strip() for item in values[:50] if str(item).strip()] if isinstance(values, list) else []
+            if "all_of_groups" in context:
+                groups = context["all_of_groups"]
+                normalized["all_of_groups"] = [
+                    [item.strip() for item in group[:50] if isinstance(item, str) and item.strip()]
+                    if isinstance(group, list) else []
+                    for group in (groups[:10] if isinstance(groups, list) else [None])
+                ]
             try:
                 window = int(context.get("window_chars", 220))
             except (TypeError, ValueError):
@@ -176,6 +183,9 @@ def _context_matches(target: Target, keyword: str, text: str, start: int, end: i
     window = context["window_chars"]
     nearby = text[max(0, start - window):end + window]
     if any(_has_phrase(nearby, phrase) for phrase in context["none_of"]):
+        return False
+    if not all(any(_has_phrase(nearby, phrase) for phrase in group)
+               for group in context.get("all_of_groups", [])):
         return False
     return any(_has_phrase(nearby, phrase) for phrase in context["any_of"])
 
