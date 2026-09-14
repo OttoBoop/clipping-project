@@ -48,7 +48,7 @@ def task(key, start='2026-08-09', end='2026-08-09'):
 
 def test_all_38_active_inventory_products_and_audited_nationals_have_scoped_routes():
     rows = expanded.load_expanded_sources()
-    assert len(rows) == 69 and len({r['key'] for r in rows}) == 69
+    assert len(rows) == 70 and len({r['key'] for r in rows}) == 70
     assert sum('audit_state' in r for r in rows) == 42
     assert all(r['allowed_profiles'] == ['psd_rj_2026'] and r['google_policy'] == 'on_direct_gap' for r in rows)
     assert all(r['evidence'] and r['mechanisms'] and r['legacy_source_keys'] for r in rows)
@@ -308,3 +308,39 @@ def test_real_folha_lagos_full_sitemap_stays_bounded_and_does_not_treat_lastmod_
     assert result['raw_count']==500 and len(result['candidates'])<=500
     assert result['next_cursor']['offset']==500
     assert all(not c['published_at'] for c in result['candidates'])
+
+
+def test_verified_custom_types_are_frozen_and_do_not_collapse_into_posts():
+    s=source('azmina')
+    runs=expanded.build_expanded_tasks(s,'2026-07-01','2026-07-31',[])
+    assert {r['mechanism']['rest_base'] for r in runs}=={'posts','az_reportagem','az_coluna_article'}
+    run=next(r for r in runs if r['mechanism']['rest_base']=='az_reportagem' and r['date_to']=='2026-07-31')
+    # Use the same public month response with the month bounds it was fetched for.
+    run.update(date_from='2026-07-01',date_to='2026-07-31')
+    calls=[]
+    def fetch(url):calls.append(url);return response('azmina_editorial_type')
+    result=expanded.discover_expanded(run,s,fetch)
+    assert len(result['candidates'])==2 and len(result['body_batch']['records'])==2
+    assert '/wp/v2/az_reportagem?' in calls[0]
+    assert all(c['metadata']['wordpress_rest_base']=='az_reportagem' for c in result['candidates'])
+    assert all(len(r['content_html'])>5000 for r in result['body_batch']['records'])
+
+
+def test_custom_type_empty_api_body_is_preserved_as_fetch_candidate_not_full_text():
+    s=source('genero_e_numero');run=next(r for r in expanded.build_expanded_tasks(s,'2026-07-01','2026-07-31',[]) if r['mechanism']['rest_base']=='reportagens')
+    run.update(date_from='2026-07-01',date_to='2026-07-31')
+    result=expanded.discover_expanded(run,s,lambda url:response('genero_reportagens_type'))
+    assert len(result['candidates'])==2 and all(c['published_at'] for c in result['candidates'])
+    assert all(not r['content_html'] for r in result['body_batch']['records'])
+    assert all(c['metadata']['wordpress_rest_base']=='reportagens' for c in result['candidates'])
+    # read_body already rejects empty fragments, preserving the worker's normal
+    # page-fetch fallback instead of claiming a complete editorial text.
+
+
+def test_record_is_a_distinct_product_and_real_sitemap_yields_companion_articles():
+    s=source('record');run={**task('record'),'url':'https://record.r7.com/arc/outboundfeeds/sitemap3/2026-08-09/','depth':1}
+    result=expanded.discover_expanded(run,s,lambda url:response('record_aug9_sitemap'))
+    assert result['candidates'] and result['raw_count']<=500
+    assert all(c['source_key']=='record' and urlparse(c['url']).hostname=='record.r7.com' for c in result['candidates'])
+    assert s['legacy_source_keys']==['publisher:record.r7.com']
+    assert 'publisher:record.r7.com' not in source('r7')['legacy_source_keys']

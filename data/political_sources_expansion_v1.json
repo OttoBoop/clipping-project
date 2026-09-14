@@ -1629,9 +1629,25 @@
           "page_size": 50,
           "date_scan_verified": true,
           "evidence_url": "https://apublica.org/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        },
+        {
+          "kind": "wordpress",
+          "url": "https://apublica.org/wp-json/",
+          "rest_base": "note",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://apublica.org/wp-json/wp/v2/types"
+        },
+        {
+          "kind": "wordpress",
+          "url": "https://apublica.org/wp-json/",
+          "rest_base": "podcast",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://apublica.org/wp-json/wp/v2/types"
         }
       ],
-      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text. Notes and podcast companion articles have separate verified types. Podcast companion text is not a claimed complete audio transcription. A sampled parallax component returned empty editorial content and is not treated as a full article.",
       "evidence": [
         {
           "url": "https://apublica.org/robots.txt",
@@ -1647,6 +1663,11 @@
           "url": "https://apublica.org/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
           "verified_at": "2026-09-14T16:39:00Z",
           "basis": "Public workstation HTTP 200; evidence 44b7b23fec4f0b83ac02.gz; does not prove Render access."
+        },
+        {
+          "url": "https://apublica.org/wp-json/wp/v2/types",
+          "verified_at": "2026-09-14",
+          "basis": "Publisher-advertised custom editorial types tested with date-bounded July pages. Preserved evidence in sources/custom-editorial-verifications.json; developer sample URLs are not discovery seeds."
         }
       ],
       "verified_at": "2026-09-14",
@@ -2223,6 +2244,22 @@
           "page_size": 50,
           "date_scan_verified": true,
           "evidence_url": "https://azmina.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        },
+        {
+          "kind": "wordpress",
+          "url": "https://azmina.com.br/wp-json/",
+          "rest_base": "az_reportagem",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://azmina.com.br/wp-json/wp/v2/types"
+        },
+        {
+          "kind": "wordpress",
+          "url": "https://azmina.com.br/wp-json/",
+          "rest_base": "az_coluna_article",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://azmina.com.br/wp-json/wp/v2/types"
         }
       ],
       "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
@@ -2251,6 +2288,11 @@
           "url": "https://azmina.com.br/news-sitemap.xml",
           "verified_at": "2026-09-14T16:39:06Z",
           "basis": "Public workstation HTTP 200; evidence ed66b1dc5e7d09b846f1.gz; does not prove Render access."
+        },
+        {
+          "url": "https://azmina.com.br/wp-json/wp/v2/types",
+          "verified_at": "2026-09-14",
+          "basis": "Publisher-advertised custom editorial types tested with date-bounded July pages. Preserved evidence in sources/custom-editorial-verifications.json; developer sample URLs are not discovery seeds."
         }
       ],
       "verified_at": "2026-09-14",
@@ -2546,9 +2588,17 @@
           "page_size": 50,
           "date_scan_verified": true,
           "evidence_url": "https://almapreta.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        },
+        {
+          "kind": "wordpress",
+          "url": "https://almapreta.com.br/wp-json/",
+          "rest_base": "retratos",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://almapreta.com.br/wp-json/wp/v2/types"
         }
       ],
-      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text. Retratos is a dated editorial/data product; public companion text does not prove retrieval of embedded interactive datasets.",
       "evidence": [
         {
           "url": "https://almapreta.com.br/robots.txt",
@@ -2569,6 +2619,11 @@
           "url": "https://almapreta.com.br/sitemap_index.xml",
           "verified_at": "2026-09-14T16:38:58Z",
           "basis": "Public workstation HTTP 200; evidence b14bf1046f887c072210.gz; does not prove Render access."
+        },
+        {
+          "url": "https://almapreta.com.br/wp-json/wp/v2/types",
+          "verified_at": "2026-09-14",
+          "basis": "Publisher-advertised custom editorial types tested with date-bounded July pages. Preserved evidence in sources/custom-editorial-verifications.json; developer sample URLs are not discovery seeds."
         }
       ],
       "verified_at": "2026-09-14",
@@ -2840,9 +2895,25 @@
           "page_size": 50,
           "date_scan_verified": true,
           "evidence_url": "https://www.generonumero.media/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        },
+        {
+          "kind": "wordpress",
+          "url": "https://www.generonumero.media/wp-json/",
+          "rest_base": "artigos",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://www.generonumero.media/wp-json/wp/v2/types"
+        },
+        {
+          "kind": "wordpress",
+          "url": "https://www.generonumero.media/wp-json/",
+          "rest_base": "reportagens",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://www.generonumero.media/wp-json/wp/v2/types"
         }
       ],
-      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text. Editorial articles and reports live in custom REST types. These routes return verified publication dates and URLs but empty content.rendered. Real HTML retains editorial text; publisher selector .post-wrapper > .content now recovers every editorial paragraph in two preserved July examples while excluding standalone related/promotional links. The API empty-body path falls back to the publisher page. Live worker readback remains required; available text is not a claim of complete historical coverage.",
       "evidence": [
         {
           "url": "https://generonumero.media/robots.txt",
@@ -2858,6 +2929,11 @@
           "url": "https://www.generonumero.media/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
           "verified_at": "2026-09-14T16:39:23Z",
           "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.generonumero.media/wp-json/wp/v2/types",
+          "verified_at": "2026-09-14",
+          "basis": "Publisher-advertised custom editorial types tested with date-bounded July pages. Preserved evidence in sources/custom-editorial-verifications.json; developer sample URLs are not discovery seeds."
         }
       ],
       "verified_at": "2026-09-14",
@@ -3902,6 +3978,45 @@
       "revalidated_from_pending": true,
       "region": "Capital/comunitário",
       "expected_initial_candidates": 1607
+    },
+    {
+      "key": "record",
+      "name": "Record — programas jornalísticos",
+      "domain": "record.r7.com",
+      "domains": [
+        "record.r7.com"
+      ],
+      "base_url": "https://record.r7.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:record.r7.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://record.r7.com/arc/outboundfeeds/sitemap-index-byday/",
+          "evidence_url": "https://record.r7.com/robots.txt"
+        }
+      ],
+      "known_constraint": "Distinct product from R7 Notícias. Public date-partitioned sitemap and three real companion editorial texts returnedHTTP200. Preserve published editorial text only; a video page is not proof of a complete transcription. Date/sitemap/body gaps remain visible. Workstation responses do not establish worker access.",
+      "evidence": [
+        {
+          "url": "https://record.r7.com/robots.txt",
+          "verified_at": "2026-09-14",
+          "basis": "Robots advertises own daily sitemap index; index and advertised August9 leaf returnedHTTP200. Preserved in sources/record-product-probes.json and record-sitemap-verification.json."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
     }
   ],
   "not_enabled_pending_verification": [

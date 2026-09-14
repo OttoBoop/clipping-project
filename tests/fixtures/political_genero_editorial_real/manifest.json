@@ -1,0 +1,29 @@
+{
+  "cases": [
+    {
+      "name": "artigos",
+      "file": "artigos.html.gz",
+      "url": "https://www.generonumero.media/artigos/protecao-as-mulheres-travada-no-congresso/",
+      "sha256": "9ac23fee0906e6b03e25885b9c9a1f475901b25f4415b3b46bb2ee6833ad8557",
+      "captured_at": "2026-09-14T17:40:12Z",
+      "environment": "workstation_public_read_only",
+      "role": "development_editorial_extraction",
+      "publication_day": "2026-07-28",
+      "selector": ".post-wrapper > .content",
+      "previous_extractor_text_chars": 0
+    },
+    {
+      "name": "reportagens",
+      "file": "reportagens.html.gz",
+      "url": "https://www.generonumero.media/reportagens/solitarias-mulheres-negras-no-legislativo-federal/",
+      "sha256": "980c4bbd10d7e7e08ed61683df59fc22bc1a73df644836ff8a5ba0d6ff1e21be",
+      "captured_at": "2026-09-14T17:40:14Z",
+      "environment": "workstation_public_read_only",
+      "role": "development_editorial_extraction",
+      "publication_day": "2026-07-23",
+      "selector": ".post-wrapper > .content",
+      "previous_extractor_text_chars": 0
+    }
+  ],
+  "production_articles_created": 0
+}

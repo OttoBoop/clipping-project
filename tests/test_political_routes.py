@@ -172,16 +172,18 @@ def site(monkeypatch, tmp_path):
 READ_PATHS = ["/politica", "/api/political/meta", "/api/political/sources", "/api/political/status",
               "/api/political/articles", "/api/political/stories", "/api/political/coverage",
               "/api/political/articles/101/text", "/api/political/articles/101/classifications"]
+AUTH_READ_PATHS = READ_PATHS + ["/api/political/edition-pages", "/api/political/edition-pages/1/text",
+                               "/api/political/edition-counts"]
 
 
-@pytest.mark.parametrize("path", READ_PATHS)
+@pytest.mark.parametrize("path", AUTH_READ_PATHS)
 def test_logged_out_political_endpoints_require_authentication(site, path):
     client, _, fake = site
     assert client.get(path).status_code == 401
     assert not fake.calls
 
 
-@pytest.mark.parametrize("path", READ_PATHS)
+@pytest.mark.parametrize("path", AUTH_READ_PATHS)
 def test_other_profile_cannot_read_political_data(site, path):
     client, _, fake = site
     login_and_csrf(client, "viewer-shakira")

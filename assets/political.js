@@ -212,6 +212,15 @@
     $("start").disabled = $("review").disabled = $("recover").disabled = true;
     try {
       const payload = {kind, source_keys: [...selectedSources], target_keys: [...state.selected], date_from: $("date-from").value, date_to: $("date-to").value, request_key: crypto.randomUUID()};
+      if (kind === "recover") {
+        const recoveryTypes = {
+          missing: ["body_missing", "metadata_only"],
+          partial: ["partial_text"],
+          access: ["http_401", "http_403", "http_404", "http_429", "network", "google_url_unresolved", "google_access_challenge"],
+          storage: ["storage"]
+        };
+        payload.recovery_gap_types = $("recovery-types").value === "all" ? [...new Set(Object.values(recoveryTypes).flat())] : recoveryTypes[$("recovery-types").value];
+      }
       if (kind === "collect" && $("discovery-mode").value === "new") {
         payload.discovery_target_keys = state.newDiscoveryTargets.filter(key => state.selected.has(key));
         if (!payload.discovery_target_keys.length) throw new Error("Selecione pelo menos um dos novos candidatos.");

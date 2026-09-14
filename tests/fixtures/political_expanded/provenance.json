@@ -166,5 +166,44 @@
     "captured_at": "2026-09-14T17:20:46Z",
     "environment": "workstation_public_read_only",
     "role": "development_discovery_fixture"
+  },
+  {
+    "name": "azmina_editorial_type",
+    "url": "https://azmina.com.br/wp-json/wp/v2/az_reportagem?after=2026-06-30T23%3A59%3A59&before=2026-08-01T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent%2Ctype",
+    "sha256": "d7784d28ee0e96b2510afc70dc7329fe3d60cb0b9fe25cd32ff6650e4fe8f901",
+    "headers": {
+      "Content-Type": "application/json; charset=UTF-8",
+      "link": "<https://azmina.com.br/wp-json/wp/v2/az_reportagem?after=2026-06-30T23%3A59%3A59&before=2026-08-01T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent%2Ctype&page=2>; rel=\"next\"",
+      "x-wp-total": "3",
+      "x-wp-totalpages": "2"
+    },
+    "captured_at": "2026-09-14T17:38:15Z",
+    "environment": "workstation_public_read_only",
+    "role": "development_discovery_fixture"
+  },
+  {
+    "name": "genero_reportagens_type",
+    "url": "https://www.generonumero.media/wp-json/wp/v2/reportagens?after=2026-06-30T23%3A59%3A59&before=2026-08-01T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent%2Ctype",
+    "sha256": "d39c1d4d26c92d4c3afc240f92bed5a169fbd12530d4a80ae330f016ba7981bb",
+    "headers": {
+      "X-WP-Total": "3",
+      "X-WP-TotalPages": "2",
+      "Link": "<https://www.generonumero.media/wp-json/wp/v2/reportagens?after=2026-06-30T23%3A59%3A59&before=2026-08-01T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent%2Ctype&page=2>; rel=\"next\"",
+      "Content-Type": "application/json; charset=UTF-8"
+    },
+    "captured_at": "2026-09-14T17:38:19Z",
+    "environment": "workstation_public_read_only",
+    "role": "development_discovery_fixture"
+  },
+  {
+    "name": "record_aug9_sitemap",
+    "url": "https://record.r7.com/arc/outboundfeeds/sitemap3/2026-08-09/",
+    "sha256": "0b8ff79dd95d74b68e4371709281b9be1a9c065db8d4755edc25756ea42bc3ce",
+    "headers": {
+      "Content-Type": "application/xml; charset=utf-8"
+    },
+    "captured_at": "2026-09-14T17:38:51Z",
+    "environment": "workstation_public_read_only",
+    "role": "development_discovery_fixture"
   }
 ]

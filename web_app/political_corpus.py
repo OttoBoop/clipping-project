@@ -437,10 +437,15 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 "fetchAttempted": int(counters["fetch_attempted"]),
                 "articlesReused": int(observed["articles_reused"]), "metadataOnly": int(quality["metadata_only"]),
                 "fetchPending": sum(int(row["count"]) for row in tasks if row["kind"] == "fetch" and row["status"] in ACTIVE),
+                "unresolvedGaps": sum(int(row["count"]) for row in tasks if row["status"] in {"gap", "failed"}),
                 "duplicates": int(observed["duplicates"]), "noMatch": int(observed["no_match"]),
                 "outsideWindow": int(observed["outside_window"]), "bodyExtracted": int(quality["body_extracted"]),
                 "textAvailable": int(quality["text_available"]), "partialText": int(quality["partial_text"]),
-                "articlesEnriched": int(conn.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE job_id=%s AND result->>'bodyEnriched'='true'", (job_id,)).fetchone()["n"]),
+                "articlesEnriched": int(conn.execute("""SELECT COUNT(DISTINCT o.article_id) AS n
+                    FROM political_tasks t JOIN political_observations o
+                    ON o.job_id=t.job_id AND o.observed_url=t.payload->>'url'
+                    WHERE t.job_id=%s AND (t.result->>'bodyEnriched'='true'
+                        OR t.cursor->>'partial_body_enriched'='true')""", (job_id,)).fetchone()["n"]),
                 "datesVerified": int(quality["dates_verified"]),
                 "unknownDates": int(quality["unknown_dates"]), "needsReview": int(quality["needs_review"]),
                 "rawEntries": sum(int(row["raw_count"]) for row in tasks if row["kind"] == "discovery"),
@@ -1325,6 +1330,15 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         with self._connect() as conn:
             job = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (task["job_id"],)).fetchone()
             existing = self._find_article(conn, fetch_url)
+            if not existing and job["kind"] == "recover" and candidate.get("recover_partial_text"):
+                # Older Google metadata may not yet have a publisher URL alias.
+                # The frozen recovery reference still identifies its retained
+                # body, which must participate in the no-degradation check.
+                recovery_article = ((candidate.get("metadata") or {}).get("recovery") or {}).get("article_id")
+                if recovery_article:
+                    existing = conn.execute("""SELECT a.* FROM political_articles a WHERE a.id=%s AND EXISTS
+                        (SELECT 1 FROM political_mentions m WHERE m.article_id=a.id AND m.target_key=ANY(%s))""",
+                        (recovery_article, job["target_keys"])).fetchone()
             known_date = None
             if not force_refresh:
                 if existing and existing["date_status"] in {"page_verified", "api_verified"}:
@@ -1346,10 +1360,15 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         date_status = ("api_verified" if (candidate.get("metadata") or {}).get("wordpress_id") is not None else "source_reported") if published else "unknown"
         digest = key = ""
         html_hash = html_key = ""
+        recover_partial = bool(job["kind"] == "recover" and candidate.get("recover_partial_text") and existing
+            and existing["text_object_key"] and (existing.get("metadata") or {}).get("text_extent") == "partial")
         use_saved_body = bool(existing and existing["text_object_key"] and existing["body_status"] == "body_extracted"
-                              and not force_refresh and existing["source_key"] != "google_news")
+                              and not force_refresh and not recover_partial and existing["source_key"] != "google_news")
         batch_body, batch_fallback, body_origin = None, "", "publisher_page"
-        if candidate.get("body_batch_ref") and not use_saved_body and not force_refresh:
+        historical = None
+        if (candidate.get("body_batch_ref") and not use_saved_body and not force_refresh
+                and not (recover_partial and task["cursor"].get("recovery_batch_used"))
+                and not (recover_partial and candidate.get("recovery_html") and not task["cursor"].get("recovery_html_used"))):
             with self._connect() as conn:
                 self._lock_task(conn, task)
             try:
@@ -1505,6 +1524,21 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 raise problem
         if published and not job["date_from"] <= published.astimezone(ZONE).date() <= job["date_to"]:
             return self._finish_fetch_outside_window(task, published=published, date_status=date_status)
+        if recover_partial:
+            same_text = hashlib.sha256(body.encode("utf-8")).hexdigest() == existing["content_hash"]
+            improved_extent = (candidate.get("metadata") or {}).get("text_extent") == "available"
+            if len(body) < max(1, int(existing["body_chars"])) or (same_text and not improved_extent):
+                # Recovery cannot replace retained text with a shorter response
+                # or report the same restricted excerpt as repaired. A retained
+                # HTML attempt may try the current public page once afterwards.
+                if historical:
+                    self._checkpoint_fetch(task, {"recovery_html_used": True})
+                elif batch_body is not None:
+                    self._checkpoint_fetch(task, {"recovery_batch_used": True})
+                problem = FetchProblem("partial_text_not_improved", retryable=bool(historical or batch_body is not None))
+                self._save_metadata_attempt(task, job, {**candidate, "url": final_url,
+                    "title": title, "published_at": str(published or "")}, problem, date_status=date_status)
+                raise problem
         hits = match_targets(job["target_snapshots"], title, body)
         if existing and (force_refresh or job["kind"] == "recover") and not hits:
             # A changed source article must retain its archived association and human
@@ -1532,10 +1566,23 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 disposition = "saved" if write_result["inserted"] else "duplicate"
             conn.execute("UPDATE political_observations SET article_id=%s,disposition=%s,metadata=metadata || %s::jsonb WHERE job_id=%s AND observed_url=%s",
                          (article_id, disposition, _json(self._publication_fact(published, date_status)), task["job_id"], candidate["url"]))
-            self._finish(conn, task, "complete", result={"articleId": article_id, "disposition": disposition,
-                         "bodyEnriched": write_result.get("enriched", False),
-                         "bodyOrigin": body_origin, "bodyBatchFallback": batch_fallback})
-        return {"taskId": task["id"], "status": disposition, "articleId": article_id,
+            partial_remaining = bool(recover_partial and article_id and (candidate.get("metadata") or {}).get("text_extent") == "partial")
+            next_cursor = dict(task["cursor"])
+            enriched = bool(write_result.get("enriched", False) or next_cursor.get("partial_body_enriched"))
+            if recover_partial and enriched:
+                next_cursor["partial_body_enriched"] = True
+            # Keep every improved excerpt, but finish its public-page attempt
+            # before calling an explicitly partial record recovered.
+            continue_partial = partial_remaining and bool(historical or batch_body is not None)
+            if continue_partial:
+                next_cursor["recovery_html_used" if historical else "recovery_batch_used"] = True
+            finish_status = "queued" if continue_partial else "gap" if partial_remaining else "complete"
+            self._finish(conn, task, finish_status, cursor=next_cursor,
+                error_type="partial_text_remaining" if partial_remaining and not continue_partial else "",
+                result={"articleId": article_id, "disposition": disposition, "bodyEnriched": enriched,
+                    "partialTextRecovered": bool(recover_partial and article_id and (candidate.get("metadata") or {}).get("text_extent") == "available"),
+                    "partialTextRemaining": partial_remaining, "bodyOrigin": body_origin, "bodyBatchFallback": batch_fallback})
+        return {"taskId": task["id"], "status": "continue" if continue_partial else "gap" if partial_remaining else disposition, "articleId": article_id,
                 "bodyOrigin": body_origin, "bodyBatchFallback": batch_fallback}
 
     def _save_metadata_attempt(self, task: dict, job: dict, candidate: dict, problem: FetchProblem, *, date_status: str = "") -> None:
@@ -1645,7 +1692,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         article_id = int(row["id"])
         if write_result is not None:
             write_result["inserted"] = bool(row["inserted"])
-            write_result["enriched"] = bool(previous and object_key and not previous["text_object_key"])
+            write_result["enriched"] = bool(previous and object_key and (not previous["text_object_key"]
+                or (candidate.get("recover_partial_text") and digest != previous["content_hash"])))
         if candidate.get("html_object_key"):
             conn.execute("UPDATE political_articles SET html_hash=%s,html_object_key=%s WHERE id=%s",
                          (str(candidate.get("html_hash") or ""), str(candidate["html_object_key"]), article_id))

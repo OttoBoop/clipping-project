@@ -10,6 +10,7 @@ import gzip
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 from types import SimpleNamespace
 from urllib.parse import urlparse
@@ -20,6 +21,7 @@ import pytest
 from web_app.political_corpus import PoliticalCorpusService, match_targets, parse_date
 from web_app.political_editorial_extraction import extract_for_publisher
 from web_app import political_source_catalog as catalog
+from pipeline.http_utils import canonicalize_url
 
 DATABASE_URL = os.environ.get("POLITICAL_RECOVERY_TEST_DATABASE_URL", "")
 pytestmark = pytest.mark.skipif(not DATABASE_URL, reason="Dedicated disposable POLITICAL_RECOVERY_TEST_DATABASE_URL required")
@@ -301,3 +303,153 @@ def test_route_replaces_forged_profile_and_matching_snapshots(monkeypatch):
     assert captured["collection_profile"] == "psd_rj_2026"
     assert {row["key"]: row for row in captured["target_snapshots"]} == {row["key"]: row for row in TARGETS}
     assert len(captured["target_snapshots"]) == 35
+
+
+def seed_real_partial(corpus, ident="125485", *, extent="partial", original_url=None):
+    """Local partial state contains a literal prefix of real editorial text."""
+    item = seed_failure(corpus, ident, metadata_article=True, original_url=original_url)
+    full = item["extracted"]["full_text"]
+    partial = full[:len(full) // 2]
+    digest, key = corpus._store_text(partial)
+    with corpus._connect() as conn:
+        conn.execute("""UPDATE political_articles SET canonical_url=%s,body_status='body_extracted',body_chars=%s,
+            content_hash=%s,text_object_key=%s,metadata=metadata || %s::jsonb WHERE id=%s""",
+            (original_url or canonicalize_url(item["case"]["url"]), len(partial), digest, key, json.dumps({"text_extent": extent}), item["article_id"]))
+        classification = dict(conn.execute("SELECT * FROM political_classifications WHERE article_id=%s", (item["article_id"],)).fetchone())
+    return {**item, "partial": partial, "previous_hash": digest, "previous_key": key, "classification": classification}
+
+
+@pytest.mark.parametrize("original_url", [None, GOOGLE_EXAME], ids=["publisher", "historical-google-wrapper"])
+def test_explicit_partial_recovery_reextracts_real_html_and_preserves_classification(corpus, original_url):
+    item = seed_real_partial(corpus, original_url=original_url)
+    unknown = seed_real_partial(corpus, "170568", extent="unknown")
+    available = seed_real_partial(corpus, "218383", extent="available")
+    job = recover(corpus, [item["source"]["key"]], recovery_gap_types=["partial_text"])
+    drain(corpus)
+    with corpus._connect() as conn:
+        row = conn.execute("SELECT * FROM political_articles WHERE id=%s", (item["article_id"],)).fetchone()
+        assert row["id"] == item["article_id"] and row["metadata"]["text_extent"] == "available"
+        assert corpus._read_text(row["text_object_key"], row["content_hash"]) == item["extracted"]["full_text"]
+        assert corpus._read_text(item["previous_key"], item["previous_hash"]) == item["partial"]
+        assert dict(conn.execute("SELECT * FROM political_classifications WHERE article_id=%s", (row["id"],)).fetchone()) == item["classification"]
+        revisions = conn.execute("SELECT previous FROM political_article_revisions WHERE article_id=%s", (row["id"],)).fetchall()
+        assert any(r["previous"]["content_hash"] == item["previous_hash"] for r in revisions)
+        tasks = conn.execute("SELECT payload,result FROM political_tasks WHERE job_id=%s AND kind='fetch'", (job["id"],)).fetchall()
+        assert len(tasks) == 1 and tasks[0]["payload"]["recover_partial_text"] is True
+        assert tasks[0]["result"]["bodyEnriched"] and tasks[0]["result"]["partialTextRecovered"]
+        assert conn.execute("SELECT content_hash FROM political_articles WHERE id=%s", (unknown["article_id"],)).fetchone()["content_hash"] == unknown["previous_hash"]
+        assert conn.execute("SELECT content_hash FROM political_articles WHERE id=%s", (available["article_id"],)).fetchone()["content_hash"] == available["previous_hash"]
+        assert corpus._metrics(conn, job["id"])["articlesEnriched"] == 1
+        assert corpus._metrics(conn, job["id"])["articlesInserted"] == 0
+
+
+def test_partial_recovery_rejects_shorter_real_excerpt_and_keeps_original(corpus, monkeypatch):
+    item = seed_real_partial(corpus)
+    _, html, _, _ = case_data("125485")
+    # Keep the real response's metadata and its exact first editorial paragraph;
+    # emulate a shorter public response without inventing any article sentence.
+    body_start = re.search(r'<div[^>]+id="news-body"[^>]*>', html).end()
+    first_end = html.index('</p>', body_start) + len('</p>')
+    shortened = html[:first_end] + '</div></body></html>'
+    assert 0 < len(extract_for_publisher(shortened, item["case"]["url"])["full_text"]) < len(item["partial"])
+    digest, key = corpus._store_html(shortened)
+    with corpus._connect() as conn:
+        conn.execute("UPDATE political_observations SET metadata=%s::jsonb WHERE id=%s",
+            (json.dumps({"html_hash": digest, "html_object_key": key}), item["observation_id"]))
+    requests_seen = []
+    def public_response(url, **kwargs):
+        requests_seen.append(url)
+        return SimpleNamespace(url=url, text=shortened, status_code=200, headers={})
+    monkeypatch.setattr(corpus, "fetch", public_response)
+    job = recover(corpus, [item["source"]["key"]], recovery_gap_types=["partial_text"])
+    discovery = corpus.claim_task("discovery", worker_id="local-discovery")
+    corpus.process_task(discovery)
+    first = corpus.claim_task("fetch", worker_id="local-partial-worker")
+    result = corpus.process_task(first)
+    assert result["status"] == "retryable" and result["errorType"] == "partial_text_not_improved"
+    with corpus._connect() as conn:
+        conn.execute("UPDATE political_tasks SET next_attempt_at=NOW() WHERE id=%s", (first["id"],))
+    second = corpus.claim_task("fetch", worker_id="local-partial-worker")
+    result = corpus.process_task(second)
+    assert result["status"] == "gap" and result["errorType"] == "partial_text_not_improved"
+    assert len(requests_seen) == 1
+    with corpus._connect() as conn:
+        row = conn.execute("SELECT * FROM political_articles WHERE id=%s", (item["article_id"],)).fetchone()
+        assert row["content_hash"] == item["previous_hash"] and row["text_object_key"] == item["previous_key"]
+        assert row["metadata"]["text_extent"] == "partial"
+        assert dict(conn.execute("SELECT * FROM political_classifications WHERE article_id=%s", (row["id"],)).fetchone()) == item["classification"]
+        assert corpus._metrics(conn, job["id"])["articlesEnriched"] == 0
+        assert corpus._metrics(conn, job["id"])["unresolvedGaps"] == 1
+
+
+def test_partial_recovery_storage_failure_keeps_existing_text_and_classification(corpus, monkeypatch):
+    item = seed_real_partial(corpus)
+    expected_hash = hashlib.sha256(item["extracted"]["full_text"].encode()).hexdigest()
+    original_upload = corpus.store.upload_bytes
+    monkeypatch.setattr(corpus.store, "upload_bytes", lambda raw, key, mime: False if expected_hash in key else original_upload(raw, key, mime))
+    job = recover(corpus, [item["source"]["key"]], recovery_gap_types=["partial_text"])
+    corpus.process_task(corpus.claim_task("discovery", worker_id="local-discovery"))
+    result = corpus.process_task(corpus.claim_task("fetch", worker_id="local-partial-worker"))
+    assert result["status"] == "retryable"
+    with corpus._connect() as conn:
+        row = conn.execute("SELECT * FROM political_articles WHERE id=%s", (item["article_id"],)).fetchone()
+        assert row["content_hash"] == item["previous_hash"] and row["text_object_key"] == item["previous_key"]
+        assert corpus._read_text(row["text_object_key"], row["content_hash"]) == item["partial"]
+        assert dict(conn.execute("SELECT * FROM political_classifications WHERE article_id=%s", (row["id"],)).fetchone()) == item["classification"]
+        assert corpus._metrics(conn, job["id"])["articlesEnriched"] == 0
+
+
+def test_longer_restricted_excerpt_is_committed_but_public_attempt_and_gap_remain(corpus, monkeypatch):
+    from web_app import political_discovery
+    item = seed_real_partial(corpus)
+    _, html, _, _ = case_data("125485")
+    extract = political_discovery.extract_article
+    def restricted_state(raw, url):
+        # Controlled restriction state around an unchanged real article body;
+        # the scenario tests persistence, not whether Exame restricts this URL.
+        return {**extract(raw, url), "text_extent": "partial"}
+    monkeypatch.setattr(political_discovery, "extract_article", restricted_state)
+    requested = []
+    def public_response(url, **kwargs):
+        requested.append(url)
+        return SimpleNamespace(url=url, text=html, status_code=200, headers={})
+    monkeypatch.setattr(corpus, "fetch", public_response)
+    job = recover(corpus, [item["source"]["key"]], recovery_gap_types=["partial_text"])
+    corpus.process_task(corpus.claim_task("discovery", worker_id="local-discovery"))
+    first = corpus.process_task(corpus.claim_task("fetch", worker_id="local-partial-worker"))
+    assert first["status"] == "continue" and not requested
+    with corpus._connect() as conn:
+        row = conn.execute("SELECT * FROM political_articles WHERE id=%s", (item["article_id"],)).fetchone()
+        assert corpus._read_text(row["text_object_key"], row["content_hash"]) == item["extracted"]["full_text"]
+        assert row["metadata"]["text_extent"] == "partial"
+        assert corpus._metrics(conn, job["id"])["articlesEnriched"] == 1
+    second = corpus.process_task(corpus.claim_task("fetch", worker_id="local-partial-worker"))
+    assert len(requested) == 1 and second["status"] == "gap"
+    with corpus._connect() as conn:
+        assert corpus._metrics(conn, job["id"])["articlesEnriched"] == 1
+        assert conn.execute("SELECT status FROM political_jobs WHERE id=%s", (job["id"],)).fetchone()["status"] == "completed_with_gaps"
+        assert dict(conn.execute("SELECT * FROM political_classifications WHERE article_id=%s", (item["article_id"],)).fetchone()) == item["classification"]
+
+
+def test_enrichment_counts_distinct_articles_across_google_and_publisher_tasks(corpus):
+    item = seed_real_partial(corpus)
+    job = recover(corpus, [item["source"]["key"]], recovery_gap_types=["partial_text"])
+    drain(corpus)
+    with corpus._connect() as conn:
+        assert corpus._metrics(conn, job["id"])["articlesEnriched"] == 1
+        # The Google wrapper and publisher URL are both genuine preserved URLs
+        # for this article. Simulate a second completed enrichment whose final
+        # failure replaced result, while the committed cursor evidence remains.
+        task = conn.execute("""INSERT INTO political_tasks(job_id,kind,source_key,dedupe_key,payload,cursor,status,error_type)
+            VALUES(%s,'fetch','google_news',%s,%s::jsonb,'{"partial_body_enriched":true}','gap','partial_text_not_improved') RETURNING id""",
+            (job["id"], GOOGLE_EXAME, json.dumps({"url": GOOGLE_EXAME, "source_key": "google_news"}))).fetchone()
+        conn.execute("""INSERT INTO political_observations(job_id,source_task_id,observed_url,source_key,title,article_id,disposition)
+            VALUES(%s,%s,%s,'google_news',%s,%s,'duplicate')""",
+            (job["id"], task["id"], GOOGLE_EXAME, item["extracted"]["title"], item["article_id"]))
+        assert conn.execute("""SELECT COUNT(*) AS n FROM political_tasks WHERE job_id=%s
+            AND (result->>'bodyEnriched'='true' OR cursor->>'partial_body_enriched'='true')""", (job["id"],)).fetchone()["n"] == 2
+        assert corpus._metrics(conn, job["id"])["articlesEnriched"] == 1
+        # The remaining qualifying cursor must still count after the other
+        # observation no longer points to an article.
+        conn.execute("UPDATE political_observations SET article_id=NULL WHERE job_id=%s AND observed_url<>%s", (job["id"], GOOGLE_EXAME))
+        assert corpus._metrics(conn, job["id"])["articlesEnriched"] == 1

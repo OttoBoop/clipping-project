@@ -14,7 +14,7 @@ import re
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
-EXTRACTION_VERSION = "editorial-2026-09-14.1"
+EXTRACTION_VERSION = "editorial-2026-09-14.2"
 _SAO_PAULO = ZoneInfo("America/Sao_Paulo")
 _SELECTORS = {
     "exame.com": "#news-body",
@@ -23,6 +23,7 @@ _SELECTORS = {
     "elizeupires.com": ".conteudo-post",
     "ultimahoraonline.com.br": ".post-detalhe-texto",
     "estadao.com.br": ".news-body[data-paywall-wrapper]",
+    "generonumero.media": ".post-wrapper > .content",
 }
 _VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
 _BLOCK = {"address", "article", "blockquote", "div", "figcaption", "figure", "h1", "h2", "h3", "h4", "h5", "h6", "li", "ol", "p", "section", "table", "tr", "ul"}
@@ -98,6 +99,10 @@ class _EditorialParser(HTMLParser):
             return attrs.get("id") == "news-body"
         if self.host == "congressoemfoco.com.br":
             return "html-content" in classes and any("asset__content" in item[1].get("class", "").split() for item in self.stack)
+        if self.host == "generonumero.media":
+            return ("content" in classes and bool(self.stack)
+                    and "post-wrapper" in self.stack[-1][1].get("class", "").split()
+                    and any(item[0] == "main" and "page-single" in item[1].get("class", "").split() for item in self.stack))
         if self.host == "estadao.com.br":
             # The candidate directory wraps its footer in [data-paywall-wrapper]
             # too; only the publisher's editorial news-body is a body selector.
@@ -114,6 +119,12 @@ class _EditorialParser(HTMLParser):
             self.found_body = True
         body = parent_body or new_body
         skip = tag in _SKIP_TAGS or bool(classes & _SKIP_CLASSES)
+        if self.host == "generonumero.media" and parent_body and self.stack:
+            # These siblings are the article hero, author/taxonomy, contents
+            # list and standalone related/newsletter links. Inline citations
+            # inside .text remain part of the editorial paragraphs.
+            direct_child = "content" in self.stack[-1][1].get("class", "").split()
+            skip = skip or (direct_child and bool(classes & {"hero", "author", "box", "list", "link", "dot"}))
         skip = skip or "hidden" in attrs or attrs.get("aria-hidden", "").lower() == "true"
         skip = skip or bool(re.search(r"display\s*:\s*none", attrs.get("style", ""), re.I))
         blocked = parent_blocked or skip
@@ -128,6 +139,14 @@ class _EditorialParser(HTMLParser):
         field = ""
         if tag == "script" and attrs.get("type", "").lower() == "application/ld+json":
             field = "json_ld"
+        elif (self.host == "generonumero.media" and tag in {"h1", "time"}
+              and any(item[0] == "main" and "page-single" in item[1].get("class", "").split() for item in self.stack)
+              and (tag == "h1" or "date" in classes)):
+            # The hero is omitted from body text, but its editorial title/day
+            # still supply metadata. No collection-time date is synthesized.
+            field = "h1" if tag == "h1" else "publication_visible"
+            if tag == "time" and attrs.get("datetime"):
+                self.fields.setdefault("publication_visible", []).append(attrs["datetime"])
         elif tag in {"title", "h1", "time"} and not parent_blocked:
             field = tag
             if tag == "time" and attrs.get("datetime"):
