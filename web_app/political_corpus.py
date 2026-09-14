@@ -441,11 +441,15 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 "duplicates": int(observed["duplicates"]), "noMatch": int(observed["no_match"]),
                 "outsideWindow": int(observed["outside_window"]), "bodyExtracted": int(quality["body_extracted"]),
                 "textAvailable": int(quality["text_available"]), "partialText": int(quality["partial_text"]),
-                "articlesEnriched": int(conn.execute("""SELECT COUNT(DISTINCT o.article_id) AS n
-                    FROM political_tasks t JOIN political_observations o
-                    ON o.job_id=t.job_id AND o.observed_url=t.payload->>'url'
-                    WHERE t.job_id=%s AND (t.result->>'bodyEnriched'='true'
-                        OR t.cursor->>'partial_body_enriched'='true')""", (job_id,)).fetchone()["n"]),
+                # Filtering before this join is essential on discovery-heavy
+                # jobs: the planner otherwise probes large task payloads for
+                # every observation even when no text was enriched.
+                "articlesEnriched": int(conn.execute("""WITH enriched_tasks AS MATERIALIZED (
+                    SELECT job_id,payload->>'url' AS url FROM political_tasks
+                    WHERE job_id=%s AND (result->>'bodyEnriched'='true'
+                        OR cursor->>'partial_body_enriched'='true'))
+                    SELECT COUNT(DISTINCT o.article_id) AS n FROM enriched_tasks t
+                    JOIN political_observations o ON o.job_id=t.job_id AND o.observed_url=t.url""", (job_id,)).fetchone()["n"]),
                 "datesVerified": int(quality["dates_verified"]),
                 "unknownDates": int(quality["unknown_dates"]), "needsReview": int(quality["needs_review"]),
                 "rawEntries": sum(int(row["raw_count"]) for row in tasks if row["kind"] == "discovery"),
