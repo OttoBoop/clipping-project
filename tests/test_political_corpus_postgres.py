@@ -1658,3 +1658,89 @@ def test_atom_response_cannot_exceed_reserved_capacity(service,monkeypatch):
     with service._connect() as conn:
         assert conn.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE kind='fetch'").fetchone()['n']==0
         assert conn.execute('SELECT COUNT(*) AS n FROM political_articles').fetchone()['n']==0
+
+
+def test_discovery_reuses_real_page_date_before_creating_fetch_task(service,monkeypatch):
+    import gzip,hashlib,json
+    from pathlib import Path
+    from web_app import political_discovery
+    root=Path(__file__).parent/'fixtures/political_editorial_real'
+    ref=json.loads((root/'manifest.json').read_text())['cases'][0]
+    raw=gzip.decompress((root/ref['fixture']).read_bytes())
+    assert hashlib.sha256(raw).hexdigest()==ref['fixture_html_sha256']
+    candidate={'url':ref['url'],'title':'','source_key':'estadao','metadata':{}}
+    start(service,monkeypatch,targets=('private',));enqueue(service,monkeypatch,candidate)
+    response=requests.Response();response.status_code=200;response.url=ref['url'];response._content=raw;response.encoding='utf-8'
+    calls=[];monkeypatch.setattr(service,'fetch',lambda url,**kw:calls.append(url) or response)
+    assert service.process_task(service.claim_task('fetch',worker_id='first'))['status']=='outside_window'
+    assert len(calls)==1
+    job=start(service,monkeypatch,targets=('paes',));enqueue(service,monkeypatch,candidate)
+    assert service.claim_task('fetch',worker_id='redundant') is None
+    with service._connect() as c:
+        observation=c.execute('SELECT * FROM political_observations WHERE job_id=%s',(job['id'],)).fetchone()
+        assert observation['disposition']=='outside_window'
+        assert observation['metadata']['date_reused_in_discovery'] is True
+        assert observation['metadata']['verified_publication_at']=='2026-07-15T08:30:00+00:00'
+        metrics=service._metrics(c,job['id'])
+        assert metrics['uniqueCandidates']==1 and metrics['outsideWindow']==1 and metrics['discoveryDatesReused']==1
+    # The same URL must still be fetched when the requested window includes it.
+    third=start(service,monkeypatch)
+    with service._connect() as c:c.execute("UPDATE political_jobs SET date_from='2026-07-15',date_to='2026-07-15' WHERE id=%s",(third['id'],))
+    enqueue(service,monkeypatch,candidate)
+    assert service.claim_task('fetch',worker_id='in-window') is not None
+    assert len(calls)==1
+
+
+@pytest.mark.parametrize('date_status,published,expected_skip',[
+    ('page_verified','2026-06-02T02:59:59+00:00',False),
+    ('page_verified','2026-06-02T03:00:00+00:00',True),
+    ('api_verified','2026-06-02T03:00:00+00:00',True),
+    ('publisher_feed_reported','2026-06-02T03:00:00+00:00',False),
+    ('source_reported','2026-06-02T03:00:00+00:00',False),
+    ('unknown','',False),
+])
+def test_discovery_date_reuse_requires_verified_evidence_and_sp_boundary(service,monkeypatch,date_status,published,expected_skip):
+    import json
+    start(service,monkeypatch);candidate=enqueue(service,monkeypatch)
+    with service._connect() as c:
+        c.execute("UPDATE political_observations SET metadata=%s::jsonb",(json.dumps({'verified_publication_at':published,'publication_date_status':date_status}),))
+        c.execute("UPDATE political_tasks SET status='complete' WHERE kind='fetch'")
+        c.execute("UPDATE political_jobs SET status='completed_with_gaps'")
+    job=start(service,monkeypatch)
+    with service._connect() as c:c.execute("UPDATE political_jobs SET date_to=date_from WHERE id=%s",(job['id'],))
+    enqueue(service,monkeypatch,candidate)
+    assert (service.claim_task('fetch',worker_id='second') is None)==expected_skip
+
+
+def test_discovery_date_reuse_resolves_alias_and_retains_classifications(service,monkeypatch):
+    start(service,monkeypatch);candidate=enqueue(service,monkeypatch)
+    monkeypatch.setattr(service,'fetch',lambda url,**kw:fake_response(url))
+    saved=service.process_task(service.claim_task('fetch',worker_id='first'))
+    with service._connect() as c:
+        article=c.execute('SELECT * FROM political_articles WHERE id=%s',(saved['articleId'],)).fetchone()
+        c.execute("INSERT INTO political_url_aliases(url,article_id) VALUES('https://example.com/alternate',%s)",(article['id'],))
+        c.execute("INSERT INTO political_classifications(article_id,target_key,payload,updated_by) VALUES(%s,'paes','{\"human\":true}'::jsonb,'editor')",(article['id'],))
+    job=start(service,monkeypatch)
+    with service._connect() as c:c.execute("UPDATE political_jobs SET date_from='2026-06-02',date_to='2026-06-02' WHERE id=%s",(job['id'],))
+    alias={**candidate,'url':'https://example.com/alternate'};enqueue(service,monkeypatch,alias)
+    assert service.claim_task('fetch',worker_id='alias') is None
+    with service._connect() as c:
+        assert c.execute('SELECT * FROM political_articles WHERE id=%s',(article['id'],)).fetchone()==article
+        assert c.execute('SELECT payload FROM political_classifications').fetchone()['payload']=={'human':True}
+    # An explicit refresh still gets a task even with a verified older date.
+    third=start(service,monkeypatch,targets=('paes',))
+    with service._connect() as c:c.execute("UPDATE political_jobs SET date_from='2026-06-02',date_to='2026-06-02' WHERE id=%s",(third['id'],))
+    enqueue(service,monkeypatch,{**alias,'force_refresh':True})
+    assert service.claim_task('fetch',worker_id='forced') is not None
+
+
+def test_discovery_does_not_override_existing_reported_date_with_old_observation(service,monkeypatch):
+    start(service,monkeypatch);candidate=enqueue(service,monkeypatch)
+    monkeypatch.setattr(service,'fetch',lambda url,**kw:fake_response(url))
+    service.process_task(service.claim_task('fetch',worker_id='first'))
+    with service._connect() as c:
+        c.execute("UPDATE political_articles SET published_at='2026-06-02T12:00:00Z',date_status='source_reported'")
+    job=start(service,monkeypatch)
+    with service._connect() as c:c.execute("UPDATE political_jobs SET date_from='2026-06-02',date_to='2026-06-02' WHERE id=%s",(job['id'],))
+    enqueue(service,monkeypatch,candidate)
+    assert service.claim_task('fetch',worker_id='conflicting-evidence') is not None

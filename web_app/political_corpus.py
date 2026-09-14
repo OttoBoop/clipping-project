@@ -432,7 +432,9 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             COUNT(DISTINCT o.article_id) FILTER (WHERE disposition='duplicate'
                 AND v.article_id IS NOT NULL) AS articles_reused,
             COUNT(*) FILTER (WHERE disposition='no_match') AS no_match,
-            COUNT(*) FILTER (WHERE disposition='outside_window') AS outside_window
+            COUNT(*) FILTER (WHERE disposition='outside_window') AS outside_window,
+            COUNT(*) FILTER (WHERE disposition='outside_window'
+                AND metadata->>'date_reused_in_discovery'='true') AS discovery_dates_reused
             FROM political_observations o LEFT JOIN visible v ON v.article_id=o.article_id
             WHERE o.job_id=%s""", (job_id, job_id)).fetchone()
         quality = conn.execute("""WITH visible AS MATERIALIZED (
@@ -465,7 +467,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 "fetchPending": sum(int(row["count"]) for row in tasks if row["kind"] == "fetch" and row["status"] in ACTIVE),
                 "unresolvedGaps": sum(int(row["count"]) for row in tasks if row["status"] in {"gap", "failed"}),
                 "duplicates": int(observed["duplicates"]), "noMatch": int(observed["no_match"]),
-                "outsideWindow": int(observed["outside_window"]), "bodyExtracted": int(quality["body_extracted"]),
+                "outsideWindow": int(observed["outside_window"]),
+                "discoveryDatesReused": int(observed["discovery_dates_reused"]), "bodyExtracted": int(quality["body_extracted"]),
                 "textAvailable": int(quality["text_available"]), "partialText": int(quality["partial_text"]),
                 # Filtering before this join is essential on discovery-heavy
                 # jobs: the planner otherwise probes large task payloads for
@@ -1318,7 +1321,9 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 batch_fallback = str(exc)
                 record_timing("body_batch_fallback", 0, outcome="error")
         with self._connect() as conn:
-            self._lock_task(conn, task)
+            job = self._lock_task(conn, task)
+            known_dates = self._discovery_verified_dates(conn, candidates) if job["kind"] == "collect" else {}
+            dates_reused = 0
             for candidate in candidates:
                 url = canonicalize_url(str(candidate.get("url") or ""))
                 if not url or urlparse(url).scheme not in {"http", "https"}:
@@ -1338,6 +1343,20 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb) ON CONFLICT(job_id,observed_url) DO NOTHING""",
                              (task["job_id"], task["id"], url, task["source_key"], str(candidate.get("title") or "")[:1000],
                               str(candidate.get("snippet") or "")[:2000], _json(candidate.get("metadata") or {})))
+                known_date = known_dates.get(url)
+                if (not candidate.get("force_refresh") and known_date and known_date[0] and not job["date_from"] <=
+                        known_date[0].astimezone(ZONE).date() <= job["date_to"]):
+                    # Retain discovery evidence, but avoid creating a fetch task
+                    # whose existing first action would reject this verified date.
+                    # Unknown/reported dates and prior no-match results never
+                    # exclude a URL through this optimization.
+                    changed = conn.execute("""UPDATE political_observations
+                        SET disposition='outside_window',metadata=metadata || %s::jsonb
+                        WHERE job_id=%s AND observed_url=%s AND disposition='pending' AND article_id IS NULL""",
+                        (_json({**self._publication_fact(*known_date), "date_reused_in_discovery": True}),
+                         task["job_id"], url))
+                    dates_reused += changed.rowcount
+                    continue
                 self._insert_task(conn, task["job_id"], "fetch", candidate)
             for child in result.get("child_tasks") or []:
                 self._insert_task(conn, task["job_id"], "discovery", {**child,
@@ -1347,8 +1366,58 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             self._finish(conn, task, "queued" if outcome == "continue" else outcome,
                          cursor=result.get("next_cursor") or task["cursor"], raw_count=int(result.get("raw_count") or 0),
                          error_type=str(result.get("gap_reason") or ""),
-                         result={"bodyBatchRecords": len(batch_refs), "bodyBatchFallback": batch_fallback})
-        return {"taskId": task["id"], "status": outcome, "candidates": len(candidates)}
+                         result={"bodyBatchRecords": len(batch_refs), "bodyBatchFallback": batch_fallback,
+                                 "datesReusedBeforeFetch": dates_reused})
+        return {"taskId": task["id"], "status": outcome, "candidates": len(candidates),
+                "datesReusedBeforeFetch": dates_reused}
+
+    @staticmethod
+    def _discovery_verified_dates(conn, candidates: list[dict]) -> dict:
+        """Batch the same conservative date evidence used by article fetching.
+
+        At most 500 current candidates are inspected. This does not scan or
+        revise the archive, infer publication from lastmod, or cache no-match.
+        Google wrappers still resolve through their normal fetch path.
+        """
+        from .political_discovery import is_google_intermediary
+        variants_to_urls: dict[str, set[str]] = {}
+        candidate_urls: set[str] = set()
+        for candidate in candidates:
+            url = canonicalize_url(str(candidate.get("url") or ""))
+            if (not url or urlparse(url).scheme not in {"http", "https"}
+                    or candidate.get("force_refresh") or candidate.get("document_type")
+                    or is_google_intermediary(url)):
+                continue
+            candidate_urls.add(url)
+            for variant in publisher_article_identity_urls(url):
+                variants_to_urls.setdefault(variant, set()).add(url)
+        if not candidate_urls:
+            return {}
+        variants = list(variants_to_urls)
+        rows = conn.execute("""SELECT a.id,a.canonical_url,a.published_at,a.date_status,
+            ARRAY(SELECT u.url FROM political_url_aliases u WHERE u.article_id=a.id AND u.url=ANY(%s)) AS matched_aliases
+            FROM political_articles a WHERE a.canonical_url=ANY(%s) OR EXISTS (
+                SELECT 1 FROM political_url_aliases u WHERE u.article_id=a.id AND u.url=ANY(%s))
+            ORDER BY a.body_chars DESC,a.id""", (variants, variants, variants)).fetchall()
+        existing, known = set(), {}
+        for row in rows:
+            urls = set(variants_to_urls.get(row["canonical_url"], ()))
+            for alias in row["matched_aliases"]:
+                urls.update(variants_to_urls[alias])
+            for url in urls - existing:
+                existing.add(url)
+                if row["date_status"] in {"page_verified", "api_verified"}:
+                    known[url] = (row["published_at"], row["date_status"])
+        unresolved = list(candidate_urls - existing)
+        if unresolved:
+            facts = conn.execute("""SELECT DISTINCT ON (observed_url) observed_url,metadata
+                FROM political_observations WHERE observed_url=ANY(%s)
+                AND metadata ? 'verified_publication_at' ORDER BY observed_url,id DESC""", (unresolved,)).fetchall()
+            for row in facts:
+                metadata = row["metadata"]
+                if metadata.get("publication_date_status") in {"page_verified", "api_verified"}:
+                    known[row["observed_url"]] = (parse_date(metadata["verified_publication_at"]), metadata["publication_date_status"])
+        return known
 
     @staticmethod
     def _publication_fact(published, date_status: str) -> dict:
