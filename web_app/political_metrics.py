@@ -15,9 +15,11 @@ import time
 
 OPERATIONS = frozenset({"task", "http", "http_body", "throttle_wait", "google_resolution", "extraction", "object_upload",
                        "body_batch_upload", "body_batch_read", "body_batch_cache_hit",
-                       "body_batch_use", "body_batch_fallback"})
+                       "body_batch_use", "body_batch_fallback", "sitemap_cache", "sitemap_cache_store",
+                       "publication_date_probe"})
 OUTCOMES = frozenset({"ok", "error", "saved", "duplicate", "no_match", "not_news", "outside_window", "complete",
-                      "continue", "split", "gap", "backpressure", "lease_lost", "retryable", "metadata_only", "failed"})
+                      "continue", "split", "gap", "backpressure", "lease_lost", "retryable", "metadata_only", "failed",
+                      "hit", "miss"})
 KINDS = frozenset({"discovery", "fetch", "review"})
 MAX_SERIES = 4096
 _local = threading.local()

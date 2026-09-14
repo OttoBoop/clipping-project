@@ -56,6 +56,18 @@ def test_real_2000_entry_leaf_retains_same_candidates_and_reduces_four_downloads
     assert all(not c['published_at'] for c in after)
 
 
+def test_real_cache_hits_are_explicit_telemetry_instead_of_other(tmp_path):
+    from web_app import political_metrics as metrics
+    collector = metrics.Collector(allowed_sources={'istoe'})
+    with metrics.task_metrics({'kind':'discovery','source_key':'istoe','id':1},metrics=collector):
+        candidates,calls=run_pages(tmp_path,True)
+    rows=collector.drain(30)
+    assert len(candidates)>1900 and len(calls)==1
+    hits=[r for r in rows if r['operation']=='sitemap_cache' and r['outcome']=='hit']
+    assert len(hits)==1 and hits[0]['count']==3
+    assert not any(r['operation']=='other' for r in rows)
+
+
 @pytest.mark.parametrize('lost', ['deleted', 'corrupt'])
 def test_restart_or_corruption_refetches_and_keeps_offset_when_document_unchanged(tmp_path, lost):
     source, task = source_task()
