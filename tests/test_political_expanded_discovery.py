@@ -386,3 +386,19 @@ def test_record_is_a_distinct_product_and_real_sitemap_yields_companion_articles
     assert all(c['source_key']=='record' and urlparse(c['url']).hostname=='record.r7.com' for c in result['candidates'])
     assert s['legacy_source_keys']==['publisher:record.r7.com']
     assert 'publisher:record.r7.com' not in source('r7')['legacy_source_keys']
+
+
+def test_real_exame_editorial_webstories_branch_and_months_remain_discoverable():
+    run, publisher = task('exame'), source('exame')
+    children=[]
+    while True:
+        result=expanded.discover_expanded(run,publisher,lambda u:response('exame_index'))
+        children.extend(result['child_tasks'])
+        if not result['next_cursor']:break
+        run['cursor']=result['next_cursor']
+    route=next(child for child in children if child['url']=='https://exame.com/webstories/sitemap.xml')
+    result=expanded.discover_expanded(route,publisher,lambda u:response('exame_webstories_index'))
+    assert [child['url'] for child in result['child_tasks']]==['https://exame.com/webstories/2026-08/sitemap.xml']
+    assert result['raw_count']==40
+    assert not result['candidates']
+    assert expanded._skip_branch('https://exame.com/authors/sitemap.xml')

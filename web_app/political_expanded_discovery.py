@@ -136,8 +136,9 @@ def _fingerprint(urls):
 
 def _skip_branch(url):
     # Taxonomy/author indexes are structural, not editorial text. Columns are
-    # deliberately retained (unlike author landing-page taxonomies).
-    return bool(re.search(r'(?:sitemap[-_/](?:taxonomy|taxonomies|users|authors?|autor|tag|category)|/(?:autor|authors?|tags|webstories)/sitemap|sitemap-webstories)', url, re.I))
+    # deliberately retained (unlike author landing-page taxonomies). Published
+    # Web Stories are editorial HTML and must also reach body/date extraction.
+    return bool(re.search(r'(?:sitemap[-_/](?:taxonomy|taxonomies|users|authors?|autor|tag|category)|/(?:autor|authors?|tags)/sitemap)', url, re.I))
 
 
 def _sitemap(task, source, fetch):

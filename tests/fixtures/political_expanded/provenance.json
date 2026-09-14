@@ -214,5 +214,16 @@
     "headers": {},
     "environment": "workstation",
     "note": "Preserved public index from route discovery, not an independent article evaluation reference."
+  },
+  {
+    "name": "exame_webstories_index",
+    "url": "https://exame.com/webstories/sitemap.xml",
+    "sha256": "8bd19ff1cad53f648cdb06cfc868d3a1ac87f160d2b0c9edcc10e29c1218d23e",
+    "headers": {
+      "Content-Type": "application/xml"
+    },
+    "retrieved_at": "2026-09-14T21:27:44.166643+00:00",
+    "environment": "workstation_current_probe",
+    "evaluation_role": "development_only"
   }
 ]
