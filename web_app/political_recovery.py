@@ -17,14 +17,18 @@ def recovery_filters(payload: dict) -> list[str]:
 
 class PoliticalRecoveryMixin:
     def _recover_discovery(self, task: dict, source: dict) -> dict:
-        from .political_corpus import _json
-        payload, cursor = task["payload"], task["cursor"]
+        cursor = task["cursor"]
         with self._connect() as conn:
             job = self._lock_task(conn, task)
             meta = job["metadata"]
             failures = meta["recovery_gap_types"]
             aliases = source_aliases(source["key"], meta["source_snapshots"])
             domains = list({d.removeprefix("www.") for d in [source.get("domain", ""), *source.get("domains", [])] if d})
+        # Selection is read-only and bounded by the frozen observation ceiling.
+        # Release the job/lease row locks before scanning historical failures so
+        # fetch commits and lease renewal can proceed. _discover fences the
+        # lease again before admitting any selected candidates.
+        with self._connect() as conn:
             # Failed pages without articles are included. The publisher may have
             # been resolved from Google after the original observation was made.
             rows = conn.execute("""SELECT o.id,o.observed_url,o.title,o.snippet,o.metadata,

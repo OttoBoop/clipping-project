@@ -128,6 +128,45 @@ def recover(corpus, source_keys, **updates):
     return corpus.start_job(payload, started_by="local-test-operator", allowed_target_keys=KEYS)
 
 
+def test_historical_selection_does_not_block_other_task_commits(corpus, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from contextlib import contextmanager
+    from threading import Event
+    item = seed_failure(corpus, "125485")
+    job = recover(corpus, [item["source"]["key"]])
+    task = corpus.claim_task("discovery", worker_id="local-selection-worker")
+    entered, release = Event(), Event()
+    original_connect = corpus._connect
+
+    class ObservedConnection:
+        def __init__(self, connection):
+            self.connection = connection
+
+        def execute(self, sql, *args, **kwargs):
+            if sql.startswith("SELECT o.id,o.observed_url"):
+                entered.set()
+                assert release.wait(10), "The selection test was not released"
+            return self.connection.execute(sql, *args, **kwargs)
+
+    @contextmanager
+    def observed_connect():
+        with original_connect() as conn:
+            yield ObservedConnection(conn)
+
+    monkeypatch.setattr(corpus, "_connect", observed_connect)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        pending = pool.submit(corpus._recover_discovery, task, item["source"])
+        try:
+            assert entered.wait(5)
+            with original_connect() as conn:
+                conn.execute("SET LOCAL lock_timeout='500ms'")
+                assert conn.execute("SELECT id FROM political_jobs WHERE id=%s FOR UPDATE", (job["id"],)).fetchone()["id"] == job["id"]
+        finally:
+            release.set()
+        result = pending.result(timeout=10)
+    assert [row["url"].rstrip("/") for row in result["candidates"]] == [item["case"]["url"].rstrip("/")]
+
+
 def drain(corpus):
     results = []
     for _ in range(250):
