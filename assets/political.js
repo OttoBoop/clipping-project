@@ -279,6 +279,7 @@
     if (state.article !== article) return;
     if (article.restrictionEvidence?.length) $("article-message").append(text("p", "A publicação sinaliza conteúdo restrito. O texto abaixo é o que ficou disponível na captura; a íntegra não foi confirmada."));
     const body = results[0]; $("article-text").textContent = body.status === "fulfilled" ? body.value.text || "Texto indisponível. Consulte a publicação original pelo link da notícia." : body.reason.message;
+    if (body.status === "fulfilled" && body.value.contentFormat === "video_companion_text") $("article-message").append(text("p", "Texto editorial publicado junto ao vídeo. Não há confirmação de transcrição integral."));
     if (results[1].status === "fulfilled") {state.classifications = classificationRows(results[1].value); populateClassification();}
     else $("classification-message").textContent = results[1].reason.message;
   }

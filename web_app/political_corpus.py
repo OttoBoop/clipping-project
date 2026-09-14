@@ -679,6 +679,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 "textExtent": metadata.get("text_extent", "unknown") if row["text_object_key"] else "unavailable",
                 "extractionMethod": metadata.get("extraction_method", ""),
                 "extractionVersion": metadata.get("extraction_version", ""),
+                "contentFormat": metadata.get("content_format", "article"),
                 "bodyOrigin": metadata.get("body_origin", ""),
                 "restrictionEvidence": metadata.get("restriction_evidence", []),
                 "publisherProvenance": metadata.get("publisher_provenance", {}),
@@ -1489,7 +1490,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 return self._finish_fetch_not_news(task, final_url)
             candidate = _confirmed_publisher(candidate, final_url)
             candidate["metadata"].update({key: extracted[key] for key in
-                ("extraction_method", "extraction_version", "text_extent", "restriction_evidence") if key in extracted})
+                ("extraction_method", "extraction_version", "text_extent", "restriction_evidence", "content_format") if key in extracted})
             candidate["metadata"]["body_origin"] = body_origin
             # Preserve confirmed metadata if immutable-object storage fails after
             # extraction; the generic retry handler must not revert to RSS dates.
