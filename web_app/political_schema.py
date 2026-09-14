@@ -55,6 +55,8 @@ CREATE TABLE IF NOT EXISTS political_article_revisions (
  previous JSONB NOT NULL, reason TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS political_article_revisions_article ON political_article_revisions(article_id,id DESC);
+CREATE INDEX IF NOT EXISTS political_article_revisions_retired_id
+ ON political_article_revisions((previous->>'id'),id DESC) WHERE reason='canonical_duplicate_merge';
 CREATE INDEX IF NOT EXISTS political_articles_date ON political_articles(COALESCE(published_at,discovered_at) DESC,id DESC);
 CREATE INDEX IF NOT EXISTS political_articles_source ON political_articles(source_key,id DESC);
 CREATE TABLE IF NOT EXISTS political_url_aliases (

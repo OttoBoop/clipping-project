@@ -841,6 +841,42 @@ def test_canonical_wrapper_merges_into_outlet_article_without_losing_classificat
     assert merged_id == final_id
     assert len(service.list_articles(allowed_target_keys=["paes"])["items"]) == 1
     assert service.classifications(final_id, allowed_target_keys=["paes"])["items"][0]["payload"]["target_sentiment"] == "negative"
+    assert service.article(wrapper_id, allowed_target_keys=['paes'])['id'] == final_id
+    assert service.classifications(wrapper_id, allowed_target_keys=['paes'])['articleId'] == final_id
+
+
+def test_retired_identifiers_keep_text_history_and_scoped_edits_after_multiple_merges(service):
+    hits=[{'target_key':'paes','target_name':'Eduardo Paes','keyword_matched':'Eduardo Paes'}]
+    digest,key=service._store_text(BODY)
+    with service._connect() as c:
+        ids=[service._persist_article(c,{'url':url,'title':'Eduardo Paes'},hits,
+              body_chars=len(BODY),digest=digest,object_key=key)
+             for url in ['https://news.google.com/articles/retired','https://example.com/first','https://example.com/final']]
+    service.upsert_classification(ids[0],{'targetKey':'paes','target_sentiment':'negative'},
+                                  allowed_target_keys=['paes'],updated_by='original-editor')
+    with service._connect() as c:
+        rows={r['id']:r for r in c.execute('SELECT * FROM political_articles').fetchall()}
+        service._merge_articles(c,rows[ids[0]],rows[ids[1]])
+        service._merge_articles(c,rows[ids[1]],rows[ids[2]])
+    for old in ids:
+        article=service.article(old,allowed_target_keys=['paes'])
+        assert article['id']==ids[2]
+        assert old==ids[2] or article['requestedId']==old
+        text=service.article_text(old,allowed_target_keys=['paes'])
+        assert text['id']==ids[2] and text['text']==BODY and text['contentHash']==digest
+        assert old==ids[2] or text['requestedId']==old
+        assert service.classifications(old,allowed_target_keys=['paes'])['items'][0]['payload']['target_sentiment']=='negative'
+        assert len(service.revision_history(old,allowed_target_keys=['paes'])['articles'])==2
+        with pytest.raises(PoliticalNotFound):service.article(old,allowed_target_keys=['private'])
+        with pytest.raises(PoliticalNotFound):service.article_text(old,allowed_target_keys=['private'])
+        with pytest.raises(PoliticalNotFound):service.upsert_classification(old,{'targetKey':'private'},allowed_target_keys=['private'],updated_by='forbidden')
+    edited=service.upsert_classification(ids[0],{'targetKey':'paes','target_sentiment':'positive'},
+                                       allowed_target_keys=['paes'],updated_by='authorized-editor')
+    assert edited['articleId']==ids[2] and edited['items'][0]['payload']['target_sentiment']=='positive'
+    history=service.revision_history(ids[0],allowed_target_keys=['paes'])
+    assert history['classifications'][0]['previous']['payload']['target_sentiment']=='negative'
+    assert len(service.list_articles(allowed_target_keys=['paes'])['items'])==1
+    with pytest.raises(PoliticalNotFound):service.article(999999,allowed_target_keys=['paes'])
 
 
 def test_canonical_merge_waits_for_committed_editor_and_preserves_latest_classification(service, monkeypatch):

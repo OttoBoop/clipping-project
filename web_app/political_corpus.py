@@ -613,15 +613,31 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         return {"items": [self._article_dto(row) for row in rows], "hasMore": more,
                 "nextCursor": encode_cursor(rows[-1]["sort_stamp"], rows[-1]["id"]) if more else ""}
 
+    def _article_by_identifier(self, conn, article_id: int, allowed: list[str]) -> dict:
+        # Merge revisions already preserve every retired identifier and are
+        # reassigned when the canonical row itself merges again. Resolve within
+        # the same SQL snapshot as the scoped article read, including its text
+        # pointer, so a concurrent merge cannot produce a missing second row.
+        rows = self._article_rows(conn, """a.id=COALESCE(
+            (SELECT current_article.id FROM political_articles current_article WHERE current_article.id=%s),
+            (SELECT r.article_id FROM political_article_revisions r
+             WHERE r.reason='canonical_duplicate_merge' AND r.previous->>'id'=%s
+             ORDER BY r.id DESC LIMIT 1))
+            AND EXISTS (SELECT 1 FROM political_mentions m WHERE m.article_id=a.id AND m.target_key=ANY(%s))""",
+            [int(article_id), str(int(article_id)), allowed], allowed, 1)
+        if not rows:
+            raise PoliticalNotFound("political_article_not_found")
+        return rows[0]
+
     def article(self, article_id: int, *, allowed_target_keys: list[str]) -> dict:
         allowed = _scope(allowed_target_keys)
         self.ensure_schema()
         with self._connect() as conn:
-            rows = self._article_rows(conn, "a.id=%s AND EXISTS (SELECT 1 FROM political_mentions m WHERE m.article_id=a.id AND m.target_key=ANY(%s))",
-                                      [int(article_id), allowed], allowed, 1)
-        if not rows:
-            raise PoliticalNotFound("political_article_not_found")
-        return self._article_dto(rows[0])
+            row = self._article_by_identifier(conn, article_id, allowed)
+        result = self._article_dto(row)
+        if result["id"] != int(article_id):
+            result["requestedId"] = int(article_id)
+        return result
 
     def list_stories(self, *, allowed_target_keys: list[str], page_size: int = 50, cursor: str = "", **filters) -> dict:
         allowed = _scope(allowed_target_keys)
@@ -684,11 +700,13 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         return raw.decode("utf-8")
 
     def article_text(self, article_id: int, *, allowed_target_keys: list[str]) -> dict:
-        self.article(article_id, allowed_target_keys=allowed_target_keys)
+        allowed = _scope(allowed_target_keys)
+        self.ensure_schema()
         with self._connect() as conn:
-            row = conn.execute("SELECT text_object_key,content_hash,body_status,metadata FROM political_articles WHERE id=%s", (int(article_id),)).fetchone()
+            row = self._article_by_identifier(conn, article_id, allowed)
         metadata = row.get("metadata") or {}
-        return {"id": int(article_id), "bodyStatus": row["body_status"],
+        return {"id": row["id"], **({"requestedId": int(article_id)} if row["id"] != int(article_id) else {}),
+                "bodyStatus": row["body_status"],
                 "textAvailable": bool(row["text_object_key"]),
                 "textExtent": metadata.get("text_extent", "unknown") if row["text_object_key"] else "unavailable",
                 "extractionMethod": metadata.get("extraction_method", ""),
@@ -702,7 +720,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
 
     def classifications(self, article_id: int, *, allowed_target_keys: list[str]) -> dict:
         allowed = _scope(allowed_target_keys)
-        self.article(article_id, allowed_target_keys=allowed)
+        article_id = self.article(article_id, allowed_target_keys=allowed)["id"]
         with self._connect() as conn:
             rows = conn.execute("""SELECT * FROM political_classifications WHERE article_id=%s AND target_key=ANY(%s)
                                    ORDER BY target_key""", (int(article_id), allowed)).fetchall()
@@ -712,7 +730,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
     def upsert_classification(self, article_id: int, payload: dict, *, allowed_target_keys: list[str], updated_by: str) -> dict:
         target_key = str(payload.get("target_key") or payload.get("targetKey") or "")
         _scope(allowed_target_keys, [target_key])
-        self.article(article_id, allowed_target_keys=[target_key])
+        article_id = self.article(article_id, allowed_target_keys=[target_key])["id"]
         content = payload.get("payload") if isinstance(payload.get("payload"), dict) else {key: value for key, value in payload.items() if key not in {"target_key", "targetKey"}}
         if len(_json(content).encode()) > 32000:
             raise ValueError("classification_too_large")
@@ -737,7 +755,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
 
     def revision_history(self, article_id: int, *, allowed_target_keys: list[str], limit: int = 50) -> dict:
         allowed = _scope(allowed_target_keys)
-        self.article(article_id, allowed_target_keys=allowed)
+        article_id = self.article(article_id, allowed_target_keys=allowed)["id"]
         with self._connect() as conn:
             articles = conn.execute("SELECT id,previous,reason,created_at FROM political_article_revisions WHERE article_id=%s ORDER BY id DESC LIMIT %s",
                                     (int(article_id), max(1, min(int(limit), 100)))).fetchall()

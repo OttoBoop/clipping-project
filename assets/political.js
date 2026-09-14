@@ -257,7 +257,9 @@
     }
     try {
       const article = await api(`/api/political/articles/${id}`);
-      if (article.id !== id) throw new Error("Não foi possível abrir esta notícia.");
+      if (!Number.isSafeInteger(article.id) || article.id < 1 || (article.id !== id && article.requestedId !== id)) {
+        throw new Error("Não foi possível abrir esta notícia.");
+      }
       await openArticle(article);
     } catch (error) {message(error.message, true);}
   }

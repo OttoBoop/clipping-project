@@ -60,6 +60,10 @@ def dashboard(browser):
             route.fulfill(json={"items": [{**article, "id": 7}], "hasMore": True, "nextCursor": "page-two"})
         elif path == "/api/political/articles/49":
             route.fulfill(json=article)
+        elif path == "/api/political/articles/48":
+            route.fulfill(json={**article, "requestedId": 48})
+        elif path == "/api/political/articles/47":
+            route.fulfill(json=article)
         elif path in {"/api/political/articles/403", "/api/political/articles/404"}:
             status = int(path.rsplit("/", 1)[-1])
             route.fulfill(status=status, json={"detail": "political_scope_denied" if status == 403 else "political_record_not_found"})
@@ -109,6 +113,28 @@ def test_direct_article_preserves_read_only_simulation_and_escape(dashboard):
     expect(page.locator("#article-dialog")).not_to_be_visible()
     expect(page).to_have_url(ORIGIN + "/politica?as_profile=psd_rj_2026")
     assert parse_qs(urlparse(page.url).query) == {"as_profile": ["psd_rj_2026"]}
+    assert not errors
+
+
+def test_retired_identifier_opens_confirmed_canonical_article_and_updates_link(dashboard):
+    from playwright.sync_api import expect
+    page,calls,errors=dashboard
+    page.goto(ORIGIN+'/politica?client=psd_rj_2026&article=48')
+    expect(page.locator('#article-dialog')).to_be_visible()
+    expect(page.locator('#article-text')).to_have_text('Texto editorial salvo.')
+    expect(page).to_have_url(ORIGIN+'/politica?client=psd_rj_2026&article=49')
+    assert ('GET','/api/political/articles/49/text',{'client':['psd_rj_2026']}) in calls
+    assert not any(path.endswith('/48/text') for _,path,_ in calls)
+    assert not errors
+
+
+def test_unconfirmed_mismatched_identifier_still_does_not_open_another_article(dashboard):
+    from playwright.sync_api import expect
+    page,calls,errors=dashboard
+    page.goto(ORIGIN+'/politica?article=47')
+    expect(page.locator('#message')).to_have_text('Não foi possível abrir esta notícia.')
+    expect(page.locator('#article-dialog')).not_to_be_visible()
+    assert not any(path.endswith('/text') for _,path,_ in calls)
     assert not errors
 
 
