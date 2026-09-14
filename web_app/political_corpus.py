@@ -60,6 +60,15 @@ MAX_SITEMAP_RESPONSE_SECONDS = 120
 BODY_MIN_CHARS = 200
 TERMINAL = {"complete", "gap", "failed", "cancelled", "split"}
 ACTIVE = {"queued", "running", "retryable"}
+SITEMAP_INDEX_TASK_SQL = """(t.payload->>'strategy' IN ('expanded_sitemap','expanded_daily_sitemap')
+    AND t.cursor ? 'invalid_children' AND COALESCE(t.cursor->>'document_fingerprint','')<>'')"""
+
+
+def _known_sitemap_index(payload: dict, cursor: dict) -> bool:
+    # These cursor fields are committed only after parsing a sitemapindex.
+    # The adapter rejects a changed document kind before emitting candidates.
+    return (payload.get("strategy") in {"expanded_sitemap", "expanded_daily_sitemap"}
+            and "invalid_children" in cursor and bool(cursor.get("document_fingerprint")))
 
 
 def _publisher_host(hostname: str) -> str:
@@ -780,15 +789,17 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
 
         Below 2000 active fetches every source may discover. From 2000 to
         3999, admit only sources with fewer than 100 active fetches. Reserve
-        each running page's maximum (100 for recovery, 500 for discovery)
-        before admission, so concurrent results fit the 4000-fetch budget.
+        each running page's maximum (100 for recovery, 500 for article discovery,
+        zero for already identified sitemap indexes) before admission, so
+        concurrent results fit the 4000-fetch budget.
         """
         rows = conn.execute("""SELECT t.source_key,COUNT(*) AS n FROM political_tasks t
             JOIN political_jobs j ON j.id=t.job_id
             WHERE t.kind='fetch' AND t.status=ANY(%s) AND j.status IN ('queued','running')
             GROUP BY t.source_key""", (list(ACTIVE),)).fetchall()
         total = sum(int(row["n"]) for row in rows)
-        running = conn.execute("""SELECT COALESCE(SUM(CASE WHEN t.payload->>'strategy'='recover' THEN 100 ELSE 500 END),0) AS n FROM political_tasks t
+        running = conn.execute("""SELECT COALESCE(SUM(CASE WHEN """ + SITEMAP_INDEX_TASK_SQL + """ THEN 0
+            WHEN t.payload->>'strategy'='recover' THEN 100 ELSE 500 END),0) AS n FROM political_tasks t
             JOIN political_jobs j ON j.id=t.job_id WHERE t.kind='discovery'
             AND t.status='running' AND t.leased_until>NOW() AND j.status IN ('queued','running')""").fetchone()["n"]
         reservation = int(running) + (next_capacity if reserve_next else 0)
@@ -804,13 +815,15 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             conn.execute("SELECT pg_advisory_xact_lock(%s)", (734892102 if kind == "discovery" else 734892103,))
             blocked_sources = []
             recovery_only = False
+            index_only = False
             if kind == "discovery":
                 stop_discovery, blocked_sources = self._discovery_backpressure(conn, reserve_next=True)
                 if stop_discovery:
                     stop_recovery, blocked_sources = self._discovery_backpressure(conn, reserve_next=True, next_capacity=100)
-                    if stop_recovery:
-                        return None
                     recovery_only = True
+                    # Known indexes emit bounded discovery children, never
+                    # article-fetch tasks; no fetch capacity is reserved for them.
+                    index_only = stop_recovery
             count = conn.execute("""SELECT COUNT(*) AS n FROM political_tasks WHERE kind=ANY(%s)
                 AND status='running' AND leased_until>NOW()""", (kinds,)).fetchone()["n"]
             if count >= maximum:
@@ -824,8 +837,9 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 LEFT JOIN political_source_leases scheduling ON scheduling.source_key=t.source_key
                 LEFT JOIN political_domain_limits cooling ON cooling.domain=""" + TASK_DOMAIN_FALLBACK_SQL + """
                 WHERE t.kind=ANY(%s) AND j.status IN ('queued','running')
-                AND (t.kind='fetch' OR NOT (t.source_key=ANY(%s)))
-                AND (NOT %s OR t.payload->>'strategy'='recover')
+                AND (t.kind='fetch' OR """ + SITEMAP_INDEX_TASK_SQL + """ OR NOT (t.source_key=ANY(%s)))
+                AND (NOT %s OR t.payload->>'strategy'='recover' OR """ + SITEMAP_INDEX_TASK_SQL + """)
+                AND (NOT %s OR """ + SITEMAP_INDEX_TASK_SQL + """)
                 AND (cooling.cooldown_until IS NULL OR cooling.cooldown_until<=NOW())
                 AND (t.status IN ('queued','retryable') OR (t.status='running' AND t.leased_until<NOW()))
                 AND (t.next_attempt_at IS NULL OR t.next_attempt_at<=NOW())
@@ -846,7 +860,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                               ELSE scheduling.discovery_claimed_at END ASC NULLS FIRST,
                     t.priority DESC,
                     CASE WHEN t.kind='fetch' AND COALESCE(t.payload->>'published_at','')<>'' THEN 0 ELSE 1 END,
-                    t.id LIMIT 1""", (_json(source_domains), kinds, blocked_sources, recovery_only,
+                    t.id LIMIT 1""", (_json(source_domains), kinds, blocked_sources, recovery_only, index_only,
                         os.environ.get("POLITICAL_HEAVY_PAUSED", "").lower() in {"1", "true", "yes"})).fetchone()
             if not row:
                 return None
@@ -1219,12 +1233,14 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
 
     def _discover(self, task: dict) -> dict:
         from .political_discovery import discover
-        with self._connect() as conn:
-            stop_discovery, blocked_sources = self._discovery_backpressure(conn)
-        if stop_discovery or task["source_key"] in blocked_sources:
+        known_index = _known_sitemap_index(task["payload"], task["cursor"])
+        if not known_index:
             with self._connect() as conn:
-                self._finish(conn, task, "queued", delay=15)
-            return {"taskId": task["id"], "status": "backpressure"}
+                stop_discovery, blocked_sources = self._discovery_backpressure(conn)
+            if stop_discovery or task["source_key"] in blocked_sources:
+                with self._connect() as conn:
+                    self._finish(conn, task, "queued", delay=15)
+                return {"taskId": task["id"], "status": "backpressure"}
         payload = {**task["payload"], "cursor": task["cursor"]}
         sitemap_cache = None
         discovery_fetch = self.fetch
@@ -1236,6 +1252,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         if sitemap_cache and result.get("next_cursor"):
             result["next_cursor"] = sitemap_cache.checkpoint(result["next_cursor"])
         candidates = result.get("candidates") or []
+        if known_index and candidates:
+            raise FetchProblem("sitemap_index_emitted_article_candidates", retryable=False)
         if len(candidates) > 500:
             raise FetchProblem("discovery_page_too_large", retryable=False)
         outcome = str(result.get("outcome") or "gap")

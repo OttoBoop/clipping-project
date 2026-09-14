@@ -159,6 +159,8 @@ def _sitemap(task, source, fetch):
     nodes = list(root)
     if kind not in {'sitemapindex', 'urlset'}:
         raise core.DiscoveryError('expanded sitemap response is not a sitemap')
+    if 'invalid_children' in cursor and kind != 'sitemapindex':
+        return _result(outcome='gap', raw_count=len(nodes), gap_reason='expanded_sitemap_kind_changed_during_resume')
     fingerprint = _fingerprint(core._child_text(n, 'loc') for n in nodes)
     # A changed page may shift offsets: stop visibly instead of silently losing
     # rows or replaying a different partial document under an old cursor.

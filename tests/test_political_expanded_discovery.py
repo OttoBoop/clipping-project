@@ -145,6 +145,18 @@ def test_existing_record_index_cursor_continues_after_larger_scan_batch():
     assert result['raw_count'] == 4300 and result['child_tasks'] == []
 
 
+def test_known_index_cannot_emit_article_candidates_after_publisher_changes_document_kind():
+    s = source('record')
+    root = core._xml(response('record_aug9_sitemap'))
+    # Even a matching URL fingerprint cannot change the reserved task kind.
+    fingerprint = expanded._fingerprint(core._child_text(n, 'loc') for n in root)
+    run = {**task('record'), 'strategy': 'expanded_sitemap', 'url': response('record_index').url,
+           'cursor': {'offset': 1, 'invalid_children': 0, 'document_fingerprint': fingerprint}}
+    result = expanded.discover_expanded(run, s, lambda u: response('record_aug9_sitemap'))
+    assert result['outcome'] == 'gap' and not result['candidates']
+    assert result['gap_reason'] == 'expanded_sitemap_kind_changed_during_resume'
+
+
 def test_retry_after_429_propagates_without_claiming_completion():
     with pytest.raises(core.DiscoveryError) as info:
         expanded.discover_expanded(task('istoe'), source('istoe'), lambda u: Response(b'', 429, {'Retry-After': '60'}))

@@ -359,6 +359,65 @@ def _queue_pending_fetches(conn, job_id, source_key, count):
         (job_id, source_key, source_key + '-pending-', count))
 
 
+def _real_record_index_task(offset=1600):
+    from pathlib import Path
+    import gzip,json,hashlib
+    from web_app import political_expanded_discovery as expanded, political_discovery as discovery
+    directory = Path(__file__).parent / 'fixtures/political_expanded'
+    proof = next(r for r in json.loads((directory/'provenance.json').read_text()) if r['name']=='record_index')
+    response = requests.Response();response.status_code=200;response.url=proof['url']
+    response._content = gzip.decompress((directory/'record_index.gz').read_bytes())
+    assert hashlib.sha256(response.content).hexdigest()==proof['sha256']
+    fingerprint = expanded._fingerprint(discovery._child_text(n,'loc') for n in discovery._xml(response))
+    return {'source_key':'record','strategy':'expanded_sitemap','url':proof['url'],
+        'date_from':'2026-08-09','date_to':'2026-08-09','depth':0,
+        'cursor':{'offset':offset,'invalid_children':0,'document_fingerprint':fingerprint}},response
+
+
+def test_known_real_calendar_index_advances_at_full_fetch_capacity_without_adding_fetches(service,monkeypatch):
+    payload,response=_real_record_index_task()
+    job=start(service,monkeypatch,tasks=[payload])
+    with service._connect() as c:
+        _queue_pending_fetches(c,job['id'],'record',4000)
+    monkeypatch.setattr(service,'fetch',lambda u:response)
+    task=service.claim_task('discovery',worker_id='full-queue-index')
+    assert task is not None
+    assert service.process_task(task)['status']=='complete'
+    with service._connect() as c:
+        assert c.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE kind='fetch' AND status='queued'").fetchone()['n']==4000
+        assert c.execute('SELECT status FROM political_tasks WHERE id=%s',(task['id'],)).fetchone()['status']=='complete'
+
+
+def test_known_index_reserves_no_fetch_capacity_while_recovery_still_reserves_100(service,monkeypatch):
+    payload,_=_real_record_index_task()
+    job=start(service,monkeypatch,tasks=[payload,{'source_key':'r7','strategy':'recover','cursor':{}}])
+    with service._connect() as c:
+        _queue_pending_fetches(c,job['id'],'busy',3900)
+        c.execute("UPDATE political_tasks SET next_attempt_at=NOW()+INTERVAL '1 hour' WHERE payload->>'strategy'='recover'")
+    index=service.claim_task('discovery',worker_id='index')
+    assert index and index['source_key']=='record'
+    with service._connect() as c:
+        c.execute("UPDATE political_tasks SET next_attempt_at=NULL WHERE payload->>'strategy'='recover'")
+    recovery=service.claim_task('discovery',worker_id='recovery')
+    assert recovery and recovery['payload']['strategy']=='recover'
+    assert service.claim_task('discovery',worker_id='third') is None
+
+
+def test_index_contract_violation_cannot_overfill_fetch_queue(service,monkeypatch):
+    from web_app import political_discovery
+    payload,_=_real_record_index_task()
+    job=start(service,monkeypatch,tasks=[payload])
+    with service._connect() as c:
+        _queue_pending_fetches(c,job['id'],'busy',4000)
+    task=service.claim_task('discovery',worker_id='contract')
+    monkeypatch.setattr(political_discovery,'discover',lambda *a:{'outcome':'complete',
+        'candidates':[{'url':'https://record.r7.com/unexpected-article'}]})
+    result=service.process_task(task)
+    assert result['status']=='gap' and result['errorType']=='sitemap_index_emitted_article_candidates'
+    with service._connect() as c:
+        assert c.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE kind='fetch'").fetchone()['n']==4000
+
+
 @pytest.mark.parametrize('pending,slots',[(3800,2),(3900,1),(3901,0)])
 def test_recovery_reserves_its_100_candidates_without_exceeding_queue_budget(service,monkeypatch,pending,slots):
     job=start(service,monkeypatch,tasks=[
