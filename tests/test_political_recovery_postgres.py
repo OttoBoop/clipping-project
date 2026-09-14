@@ -128,6 +128,47 @@ def recover(corpus, source_keys, **updates):
     return corpus.start_job(payload, started_by="local-test-operator", allowed_target_keys=KEYS)
 
 
+def test_real_sitemap_cache_cursor_survives_service_restart_without_repeated_download(corpus, monkeypatch, tmp_path):
+    from web_app import political_discovery
+    from web_app import political_expanded_discovery as expanded
+    import requests
+    fixtures = ROOT / 'tests/fixtures/political_expanded'
+    evidence = next(r for r in json.loads((fixtures / 'provenance.json').read_text()) if r['name'] == 'istoe_603')
+    raw = gzip.decompress((fixtures / 'istoe_603.gz').read_bytes())
+    assert hashlib.sha256(raw).hexdigest() == evidence['sha256']
+    source = next(s for s in expanded.load_expanded_sources() if s['key'] == 'istoe')
+    leaf = expanded.build_expanded_tasks(source, '2026-08-09', '2026-08-09', TARGETS)[0]
+    leaf.update(url=evidence['url'], depth=1)
+    monkeypatch.setattr(political_discovery, 'build_tasks', lambda *a, **kw: [leaf])
+    monkeypatch.setenv('POLITICAL_PAGED_SITEMAP_CACHE_DIR', str(tmp_path))
+    calls = []
+    def fetch(url):
+        calls.append(url)
+        response = requests.Response();response.status_code = 200
+        response._content = raw;response.url = url
+        return response
+    monkeypatch.setattr(corpus, 'fetch', fetch)
+    job = recover(corpus, ['istoe'], kind='collect', date_from='2026-08-09', date_to='2026-08-09')
+    first = corpus.claim_task('discovery', worker_id='local-before-restart')
+    assert corpus.process_task(first)['status'] == 'continue'
+    with corpus._connect() as c:
+        cursor = c.execute('SELECT cursor FROM political_tasks WHERE id=%s', (first['id'],)).fetchone()['cursor']
+    assert cursor['offset'] == 500 and cursor['response_cache']['sha256'] == evidence['sha256']
+    restarted = PoliticalCorpusService(store=corpus.store, database_url=DATABASE_URL)
+    monkeypatch.setattr(restarted, 'fetch', fetch)
+    try:
+        second = restarted.claim_task('discovery', worker_id='local-after-restart')
+        assert second['id'] == first['id'] and second['cursor'] == cursor
+        assert restarted.process_task(second)['status'] == 'continue'
+        with restarted._connect() as c:
+            row = c.execute('SELECT cursor FROM political_tasks WHERE id=%s', (first['id'],)).fetchone()
+            assert row['cursor']['offset'] == 1000
+            assert c.execute('SELECT COUNT(*) AS n FROM political_observations WHERE job_id=%s', (job['id'],)).fetchone()['n'] > 900
+        assert len(calls) == 1
+    finally:
+        restarted.close()
+
+
 def test_real_http_200_challenge_ends_as_access_gap_without_empty_body_retry(corpus, monkeypatch):
     import requests
     folder=ROOT/'tests/fixtures/political_expanded_editorial_real'

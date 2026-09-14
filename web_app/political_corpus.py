@@ -1226,7 +1226,15 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 self._finish(conn, task, "queued", delay=15)
             return {"taskId": task["id"], "status": "backpressure"}
         payload = {**task["payload"], "cursor": task["cursor"]}
-        result = self._recover_discovery(task, source_for_task(payload)) if payload.get("strategy") == "recover" else discover(payload, self.fetch)
+        sitemap_cache = None
+        discovery_fetch = self.fetch
+        if payload.get("strategy") in {"expanded_sitemap", "expanded_daily_sitemap"}:
+            from .political_sitemap_cache import PaginatedSitemapCache
+            sitemap_cache = PaginatedSitemapCache(self.fetch, task["cursor"])
+            discovery_fetch = sitemap_cache.fetch
+        result = self._recover_discovery(task, source_for_task(payload)) if payload.get("strategy") == "recover" else discover(payload, discovery_fetch)
+        if sitemap_cache and result.get("next_cursor"):
+            result["next_cursor"] = sitemap_cache.checkpoint(result["next_cursor"])
         candidates = result.get("candidates") or []
         if len(candidates) > 500:
             raise FetchProblem("discovery_page_too_large", retryable=False)
