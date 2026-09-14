@@ -1571,3 +1571,40 @@ def test_rolling_old_google_lease_retains_500_reservation(service,monkeypatch):
         conn.execute("UPDATE political_tasks SET cursor=cursor || '{\"google_batch_capacity\":100}'::jsonb WHERE id=%s",(old['id'],))
     new=service.claim_task('discovery',worker_id='new-worker')
     assert new and new['cursor']['google_batch_capacity']==100
+
+
+def test_real_atom_discovery_saves_body_only_mention_from_immutable_batch(service,monkeypatch):
+    from tests.test_political_blogger_feed import response,SOURCE,task as atom_task
+    from web_app import political_discovery
+    payload=atom_task('2026-06-01','2026-06-02');payload['cursor']={'url':response(226).url}
+    monkeypatch.setattr(political_discovery,'build_tasks',lambda *a,**k:[payload])
+    targets=[{'key':'douglas_ruas','display_name':'Douglas Ruas','keywords':['Douglas Ruas']}]
+    job=service.start_job({'target_keys':['douglas_ruas'],'target_snapshots':targets,
+        'date_from':'2026-06-01','date_to':'2026-06-02','collection_profile':'psd_rj_2026',
+        'source_keys':['noticias_de_belford_roxo']},started_by='local-real-feed-test',allowed_target_keys=['douglas_ruas'])
+    calls=[]
+    def fetch(url):
+        calls.append(url)
+        assert url==response(226).url,'Article bodies must come from retained publisher feed'
+        return response(226)
+    monkeypatch.setattr(service,'fetch',fetch)
+    discovery=service.claim_task('discovery',worker_id='feed-discovery')
+    assert service.process_task(discovery)['status']=='continue'
+    with service._connect() as conn:
+        candidates=conn.execute("SELECT payload FROM political_tasks WHERE kind='fetch' AND job_id=%s",(job['id'],)).fetchall()
+        assert all(c['payload'].get('body_batch_ref') for c in candidates)
+    while True:
+        task=service.claim_task('fetch',worker_id='feed-body')
+        if not task:break
+        result=service.process_task(task)
+        assert result['status'] in {'saved','no_match'}
+    assert len(calls)==1
+    with service._connect() as conn:
+        rows=conn.execute('SELECT * FROM political_articles ORDER BY id').fetchall()
+        assert len(rows)==2
+        assert all(r['date_status']=='publisher_feed_reported' and r['source_key']=='noticias_de_belford_roxo' for r in rows)
+        assert all(r['metadata']['body_origin']=='publisher_atom' and r['metadata']['text_extent']=='unknown' for r in rows)
+        assert all('Douglas Ruas' not in r['title'] for r in rows)
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_mentions WHERE target_key='douglas_ruas'").fetchone()['n']==2
+    for row in rows:
+        assert 'Douglas Ruas' in service._read_text(row['text_object_key'],row['content_hash'])

@@ -34,6 +34,8 @@ for _source in load_expanded_sources():
 
 from .political_access_alternatives import PUBLIC_FEED_BODY_SOURCES
 WORDPRESS_BODY_SOURCES.update(PUBLIC_FEED_BODY_SOURCES)
+from .political_blogger_feed import PUBLIC_ATOM_BODY_SOURCES, VERIFIED_BLOG_IDS
+WORDPRESS_BODY_SOURCES.update(PUBLIC_ATOM_BODY_SOURCES)
 
 MAX_BATCH_BYTES = 2 * 1024 * 1024
 MAX_RECORDS = 100
@@ -82,6 +84,15 @@ def _record(record, source):
                 or not re.fullmatch(r"[0-9a-f]{64}", str(record.get("feed_sha256", "")))
                 or record.get("text_extent") != "unknown"):
             _fail("batch_feed_provenance_invalid")
+    elif record.get("body_origin") == "publisher_atom":
+        if (source not in PUBLIC_ATOM_BODY_SOURCES
+                or (urlparse(str(record.get("feed_url", ""))).hostname or "").removeprefix("www.") != PUBLIC_ATOM_BODY_SOURCES[source]
+                or urlparse(str(record.get("feed_url", ""))).scheme != "https"
+                or urlparse(str(record.get("feed_url", ""))).path != "/feeds/posts/default"
+                or record.get("blog_id") != VERIFIED_BLOG_IDS[source]
+                or not re.fullmatch(r"[0-9a-f]{64}", str(record.get("feed_sha256", "")))
+                or record.get("text_extent") != "unknown"):
+            _fail("batch_atom_provenance_invalid")
     elif record.get("body_origin") not in (None, "wordpress_api"):
         _fail("batch_origin_invalid")
     return record
@@ -213,7 +224,7 @@ class WordPressBodyBatches:
         if type(index) is not int or not 0 <= index < len(payload["records"]):
             _fail("batch_index_invalid")
         record = _record(payload["records"][index], source)
-        post_id = (candidate.get("metadata") or {}).get("wordpress_id")
+        post_id = (candidate.get("metadata") or {}).get("publisher_post_id", (candidate.get("metadata") or {}).get("wordpress_id"))
         if type(post_id) is not int or type(reference.get("post_id")) is not int or post_id != reference.get("post_id") or post_id != record["post_id"]:
             _fail("batch_post_id_mismatch")
         if _url(record["url"], source) != _url(candidate.get("url"), source):
@@ -225,7 +236,7 @@ class WordPressBodyBatches:
             _fail("batch_text_unavailable")
         # These can represent editorial continuation unavailable in a fragment.
         # Fall back to the real page rather than infer a complete negative match.
-        if record.get("body_origin") == "publisher_rss":
+        if record.get("body_origin") in {"publisher_rss", "publisher_atom"}:
             # Public feeds contain ordinary bracketed quotations ("[A parceria]")
             # and CSS attribute selectors. Neither indicates missing article text.
             # Check actual continuation markers and recognized visible WP embeds.
@@ -250,13 +261,15 @@ class WordPressBodyBatches:
         if extracted.get("extraction_state") != "full_text" or len(body.strip()) < 200:
             _fail("batch_text_unavailable")
         record_timing("body_batch_use", 0)
-        rss = record.get("body_origin") == "publisher_rss"
-        provenance = {"method": "publisher_rss_batch" if rss else "wordpress_api_batch",
+        atom = record.get("body_origin") == "publisher_atom"
+        rss = record.get("body_origin") in {"publisher_rss", "publisher_atom"}
+        provenance = {"method": "publisher_atom_batch" if atom else "publisher_rss_batch" if rss else "wordpress_api_batch",
                       "version": VERSION, "batch": reference}
         if rss:
             provenance.update(feed_url=record["feed_url"], feed_sha256=record["feed_sha256"],
                               text_extent="unknown")
         return {"full_text": body, "published_at": record["published_at"],
                 "canonical_url": _url(record["url"], source), "provenance": provenance,
-                "body_origin": "publisher_rss" if rss else "wordpress_api_batch",
+                "body_origin": "publisher_atom" if atom else "publisher_rss" if rss else "wordpress_api_batch",
+                "publication_date_status": "publisher_feed_reported" if atom else "api_verified",
                 "text_extent": "unknown" if rss else "available"}

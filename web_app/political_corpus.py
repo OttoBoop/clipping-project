@@ -1326,7 +1326,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 if candidate.get("document_type") == "edition_pdf":
                     self.enqueue_document_candidate(conn, task["job_id"], candidate)
                     continue
-                reference = batch_refs.get((candidate.get("metadata") or {}).get("wordpress_id"))
+                reference = batch_refs.get((candidate.get("metadata") or {}).get("publisher_post_id", (candidate.get("metadata") or {}).get("wordpress_id")))
                 if reference:
                     candidate["body_batch_ref"] = reference
                 elif batch_fallback:
@@ -1523,7 +1523,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                         **task["_date_probe_evidence"]}}
         elif batch_body is not None:
             body, final_url = batch_body["full_text"], batch_body["canonical_url"]
-            published, date_status = parse_date(batch_body["published_at"]), "api_verified"
+            published, date_status = parse_date(batch_body["published_at"]), batch_body.get("publication_date_status", "api_verified")
             candidate = _confirmed_publisher(candidate, final_url)
             candidate["metadata"]["publisher_provenance"].update(batch_body["provenance"])
             task["_verified_candidate"] = {**candidate, "url": final_url,

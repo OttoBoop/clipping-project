@@ -3605,6 +3605,13 @@
       ],
       "mechanisms": [
         {
+          "kind": "blogger_feed",
+          "url": "https://www.noticiasdebelfordroxo.com/feeds/posts/default",
+          "blog_id": "3445980854316391287",
+          "evidence_url": "https://www.noticiasdebelfordroxo.com/",
+          "history_basis": "Publisher-advertised Atom next links; real public pages verified through June and May2026. Dates are publisher feed dates, not silently assigned from sitemap lastmod."
+        },
+        {
           "kind": "sitemap",
           "url": "https://www.noticiasdebelfordroxo.com/sitemap.xml",
           "evidence_url": "https://noticiasdebelfordroxo.com/robots.txt"
@@ -3626,6 +3633,11 @@
           "url": "https://www.noticiasdebelfordroxo.com/sitemap.xml",
           "verified_at": "2026-09-14T16:39:00Z",
           "basis": "Public workstation HTTP 200; evidence 5ce37a747b25b90d3635.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.noticiasdebelfordroxo.com/feeds/posts/default",
+          "verified_at": "2026-09-14T21:56:25.815555+00:00",
+          "basis": "Production worker HTTP200,25dated entries with public HTML bodies; SHA256 0a62abd7554b9145c11b5637cd563c2b2a6d920361a27e33ce142b378656d29a. Workstation pages26/101/201/301 verified historical pagination; worker history still needs collection readback."
         }
       ],
       "verified_at": "2026-09-14",

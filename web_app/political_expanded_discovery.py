@@ -96,7 +96,7 @@ def build_expanded_tasks(source, date_from, date_to, target_snapshots):
             # Limit one response to 50 full bodies and each task to seven days.
             for first, last in _core().date_windows(date_from, date_to):
                 tasks.append({**route, 'date_from': first, 'date_to': last})
-        elif kind in {'sitemap', 'feed', 'archive', 'capability', 'edition_archive', 'metropoles_archive'}:
+        elif kind in {'sitemap', 'feed', 'blogger_feed', 'archive', 'capability', 'edition_archive', 'metropoles_archive'}:
             tasks.append({**route, 'url': mechanism.get('url', ''), 'section': mechanism.get('section', ''), 'depth': 0, 'ancestors': []})
         else:
             raise ValueError('Unsupported expanded mechanism: ' + kind)
@@ -453,6 +453,9 @@ def discover_expanded(task, source, fetch):
         return _sitemap(task, source, fetch)
     if strategy == 'expanded_wordpress':
         return _wordpress(task, source, fetch)
+    if strategy == 'expanded_blogger_feed':
+        from .political_blogger_feed import discover_blogger_feed
+        return discover_blogger_feed(task, source, fetch)
     if strategy == 'expanded_feed':
         return _feed(task, source, fetch)
     if strategy in {'expanded_archive', 'expanded_monthly_archive'}:

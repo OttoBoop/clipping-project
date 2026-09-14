@@ -1,0 +1,74 @@
+[
+  {
+    "name": "page_1",
+    "url": "https://www.noticiasdebelfordroxo.com/feeds/posts/default",
+    "sha256": "0a62abd7554b9145c11b5637cd563c2b2a6d920361a27e33ce142b378656d29a",
+    "http_status": 200,
+    "environment": "workstation_current_probe; page1 also verified on production worker",
+    "evaluation_role": "development_only; no candidate URL manually seeded in production"
+  },
+  {
+    "name": "page_26",
+    "url": "https://www.noticiasdebelfordroxo.com/feeds/posts/default?start-index=26&max-results=25",
+    "sha256": "7f0eca10c2375078adc002292fabfdf87262afb3b5ffa84c55a3e0e4ede53b13",
+    "http_status": 200,
+    "environment": "workstation_current_probe; page1 also verified on production worker",
+    "evaluation_role": "development_only; no candidate URL manually seeded in production"
+  },
+  {
+    "name": "page_101",
+    "url": "https://www.noticiasdebelfordroxo.com/feeds/posts/default?start-index=101&max-results=25",
+    "sha256": "b8fc3ef8c94eb8e7fa10a02f9e2e2227e6f3c7751623dcfd3f4b84e3094517b6",
+    "http_status": 200,
+    "environment": "workstation_current_probe; page1 also verified on production worker",
+    "evaluation_role": "development_only; no candidate URL manually seeded in production"
+  },
+  {
+    "name": "page_201",
+    "url": "https://www.noticiasdebelfordroxo.com/feeds/posts/default?start-index=201&max-results=25",
+    "sha256": "13ea8166ace2ff6a517dbb08bf35dc21915ef64a290b38f6511507ed747cf78c",
+    "http_status": 200,
+    "environment": "workstation_current_probe; page1 also verified on production worker",
+    "evaluation_role": "development_only; no candidate URL manually seeded in production"
+  },
+  {
+    "name": "page_301",
+    "url": "https://www.noticiasdebelfordroxo.com/feeds/posts/default?start-index=301&max-results=25",
+    "sha256": "909eb7ed0e5a3920e0922ee318ddd3b39cbb798efb3a07ed8ecbd4d2e984cc43",
+    "http_status": 200,
+    "environment": "workstation_current_probe; page1 also verified on production worker",
+    "evaluation_role": "development_only; no candidate URL manually seeded in production"
+  },
+  {
+    "name": "page_51",
+    "url": "https://www.noticiasdebelfordroxo.com/feeds/posts/default?start-index=51&max-results=25",
+    "sha256": "100d61fcce4ebe3e792193b7848ac42b3d01f98a3c7edf361089b60ec814b3d9",
+    "http_status": 200,
+    "environment": "workstation_current_probe; page1 also verified on production worker",
+    "evaluation_role": "development_only; no candidate URL manually seeded in production"
+  },
+  {
+    "name": "page_76",
+    "url": "https://www.noticiasdebelfordroxo.com/feeds/posts/default?start-index=76&max-results=25",
+    "sha256": "52c61c7dd0a6c4c12dbdc3505e9b6e9c600014b1eb960aa7450e080501ac6952",
+    "http_status": 200,
+    "environment": "workstation_current_probe; page1 also verified on production worker",
+    "evaluation_role": "development_only; no candidate URL manually seeded in production"
+  },
+  {
+    "name": "page_226",
+    "url": "https://www.noticiasdebelfordroxo.com/feeds/posts/default?start-index=226&max-results=25",
+    "sha256": "af5ee123bd79b8035fa0b6ab05fbf548a2aabb6ad56df65f41821d9f757e806f",
+    "http_status": 200,
+    "environment": "workstation_current_probe; page1 also verified on production worker",
+    "evaluation_role": "development_only; no candidate URL manually seeded in production"
+  },
+  {
+    "name": "page_251",
+    "url": "https://www.noticiasdebelfordroxo.com/feeds/posts/default?start-index=251&max-results=25",
+    "sha256": "861e8a2b91b753cd39a6c2ac1facbee68ff80baddcccdaa5d80c6e98890cdb14",
+    "http_status": 200,
+    "environment": "workstation_current_probe; page1 also verified on production worker",
+    "evaluation_role": "development_only; no candidate URL manually seeded in production"
+  }
+]
