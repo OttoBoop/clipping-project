@@ -2039,6 +2039,12 @@
           "page_size": 50,
           "date_scan_verified": true,
           "evidence_url": "https://maredenoticias.com/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        },
+        {
+          "kind": "edition_archive",
+          "publisher_family": "mare",
+          "url": "https://maredenoticias.com/impresso/",
+          "evidence_url": "https://maredenoticias.com/impresso/"
         }
       ],
       "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
@@ -3007,6 +3013,12 @@
           "page_size": 50,
           "date_scan_verified": true,
           "evidence_url": "https://panoramarj.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        },
+        {
+          "kind": "edition_archive",
+          "publisher_family": "panorama",
+          "url": "https://panoramarj.com.br/jornais/",
+          "evidence_url": "https://panoramarj.com.br/jornais/"
         }
       ],
       "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
@@ -3700,127 +3712,285 @@
       "editorial_type": "tecnologia e poder",
       "audit_state": "ativo_sem_referencia_pertinente_confirmada",
       "audit_note": "Diretórios e crédito de republicação da Pública identificam produto. O buscador bloqueou acesso por robots; benchmark nominal/noRio no período não confirmado."
+    },
+    {
+      "key": "folha_dos_lagos",
+      "name": "Folha dos Lagos",
+      "domain": "folhadoslagos.com",
+      "domains": [
+        "folhadoslagos.com",
+        "www.folhadoslagos.com"
+      ],
+      "base_url": "https://www.folhadoslagos.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:folhadoslagos.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www.folhadoslagos.com/sitemap/",
+          "evidence_url": "https://www.folhadoslagos.com/robots.txt"
+        }
+      ],
+      "known_constraint": "Nenhuma referência nominal aos 35 validada nesta subtarefa; qualidade histórica dos sitemaps e acesso pelo Render ainda precisam de execução. Public undated full sitemap contains 21571 URL entries spanning older years. Publication must be checked in each article; lastmod is not a basis to exclude a story. Count is discovery workload, not expected nominal matches.",
+      "evidence": [
+        {
+          "url": "https://www.folhadoslagos.com/robots.txt",
+          "basis": "Publisher-advertised mechanism; current verification and preserved response hashes in gap-closure/sources/pending-products and promoted-mechanisms.json. Workstation access does not prove worker access.",
+          "verified_at": "2026-09-14T17:18:39.221101+00:00"
+        }
+      ],
+      "verified_at": "2026-09-14T17:18:39.221101+00:00",
+      "catalog_version": 1,
+      "audit_state": "ativo_com_publicacao_no_periodo",
+      "audit_note": "Homepage e cinco páginas editoriais HTTP 200; exemplo de cultura de 02/09/2026 tem JSON-LD datePublished 2026-09-02T11:12:00-03:00 e corpo público.",
+      "revalidated_from_pending": true,
+      "region": "Região dos Lagos",
+      "expected_initial_candidates": 21571
+    },
+    {
+      "key": "financial_times",
+      "name": "Financial Times",
+      "domain": "ft.com",
+      "domains": [
+        "ft.com",
+        "www.ft.com"
+      ],
+      "base_url": "https://www.ft.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:ft.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www.ft.com/sitemaps/index.xml",
+          "evidence_url": "https://www.ft.com/robots.txt"
+        }
+      ],
+      "known_constraint": "Não foi validada reportagem datada mencionando os 35. Lastmod do sitemap não é publicação; acesso integral do artigo individual não foi comprovado.",
+      "evidence": [
+        {
+          "url": "https://www.ft.com/robots.txt",
+          "basis": "Publisher-advertised mechanism; current verification and preserved response hashes in gap-closure/sources/pending-products and promoted-mechanisms.json. Workstation access does not prove worker access.",
+          "verified_at": "2026-09-14T17:18:39.221101+00:00"
+        }
+      ],
+      "verified_at": "2026-09-14T17:18:39.221101+00:00",
+      "catalog_version": 1,
+      "audit_state": "ativo_acervo_mensal_do_periodo_disponivel",
+      "audit_note": "Homepage, índice e sitemap de junho HTTP 200; índice anuncia acervos junho, julho, agosto e setembro de 2026. Página individual testada devolveu verificação de segurança HTTP 403.",
+      "revalidated_from_pending": true,
+      "region": "Internacional"
+    },
+    {
+      "key": "the_economist",
+      "name": "The Economist",
+      "domain": "economist.com",
+      "domains": [
+        "economist.com",
+        "www.economist.com"
+      ],
+      "base_url": "https://www.economist.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:economist.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www.economist.com/sitemap.xml",
+          "evidence_url": "https://www.economist.com/robots.txt"
+        }
+      ],
+      "known_constraint": "Não confirmamos corpo de edição específica ou notícia nominal aos 35 em junho–setembro; volume perdido permanece desconhecido.",
+      "evidence": [
+        {
+          "url": "https://www.economist.com/robots.txt",
+          "basis": "Publisher-advertised mechanism; current verification and preserved response hashes in gap-closure/sources/pending-products and promoted-mechanisms.json. Workstation access does not prove worker access.",
+          "verified_at": "2026-09-14T17:18:39.221101+00:00"
+        }
+      ],
+      "verified_at": "2026-09-14T17:18:39.221101+00:00",
+      "catalog_version": 1,
+      "audit_state": "produto_editorial_ativo_acesso_recusado",
+      "audit_note": "Resultados oficiais de 2026 informam operação editorial e assinaturas; oferta atual confirma edição semanal. Robots HTTP 200 anuncia sitemaps. Homepage, sitemap e edição 05/09/2026 retornaram HTTP 403 com desafio.",
+      "revalidated_from_pending": true,
+      "region": "Internacional"
+    },
+    {
+      "key": "agencia_lume",
+      "name": "Agência Lume",
+      "domain": "agencialume.com",
+      "domains": [
+        "agencialume.com",
+        "www.agencialume.com"
+      ],
+      "base_url": "https://www.agencialume.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:agencialume.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www.agencialume.com/blog-posts-sitemap.xml",
+          "evidence_url": "https://www.agencialume.com/sitemap.xml"
+        },
+        {
+          "kind": "feed",
+          "url": "https://www.agencialume.com/blog-feed.xml",
+          "pagination": "advertised_only",
+          "history_complete": false,
+          "evidence_url": "https://www.agencialume.com/"
+        }
+      ],
+      "known_constraint": "Não se comprovou regularidade após julho nem completude do feed; há 20 itens do feed, não 20 referências nominais. Public undated full sitemap contains 1607 URL entries spanning older years. Publication must be checked in each article; lastmod is not a basis to exclude a story. Count is discovery workload, not expected nominal matches.",
+      "evidence": [
+        {
+          "url": "https://www.agencialume.com/sitemap.xml",
+          "basis": "Publisher-advertised mechanism; current verification and preserved response hashes in gap-closure/sources/pending-products and promoted-mechanisms.json. Workstation access does not prove worker access.",
+          "verified_at": "2026-09-14T17:18:39.221101+00:00"
+        },
+        {
+          "url": "https://www.agencialume.com/",
+          "basis": "Publisher-advertised mechanism; current verification and preserved response hashes in gap-closure/sources/pending-products and promoted-mechanisms.json. Workstation access does not prove worker access.",
+          "verified_at": "2026-09-14T17:18:39.221101+00:00"
+        }
+      ],
+      "verified_at": "2026-09-14T17:18:39.221101+00:00",
+      "catalog_version": 1,
+      "audit_state": "ativo_com_publicacao_nominal_no_periodo",
+      "audit_note": "Homepage em manutenção, mas feed HTTP 200 contém itens de 12/06, 24/06 e 04/07/2026. Matéria de 04/07 responde HTTP 200, tem data editorial em meta e JSON-LD e menciona Eduardo Cavaliere no corpo.",
+      "revalidated_from_pending": true,
+      "region": "Capital/comunitário",
+      "expected_initial_candidates": 1607
     }
   ],
   "not_enabled_pending_verification": [
     {
-      "veiculo_produto": "Portal Multiplix",
+      "produto": "Portal Multiplix",
       "dominio": "portalmultiplix.com",
-      "regiao": "Serrana e Lagos",
-      "tipo_editorial": "portal e TV/acervo",
-      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
-      "escopo_referencia": "a confirmar",
-      "url_referencia": "https://www.portalmultiplix.com/",
-      "data_publicacao": "",
-      "origem_identificacao": "lista anterior revisitada; probe-05.json",
-      "registros_na_matriz": "0",
-      "textos_na_matriz": "0",
-      "ocorrencias_no_recorte_funil": "0",
-      "nota": "REVISÃO DO DIAGNÓSTICO: homepage oficial informa encerramento da produção regular jornalística e audiovisual em 28/05/2026; mantém acervo. Não apresentar zero no período posterior como prova de falha. Estado específico: acervo ativo, produção regular encerrada antes da janela.",
-      "verificado_em": "2026-09-14",
-      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
+      "estado_atividade": "producao_regular_encerrada_acervo_online",
+      "evidencia_no_periodo": "encerramento_anterior_ao_periodo",
+      "referencia_primaria": "https://www.portalmultiplix.com/",
+      "data_editorial_ou_encerramento": "2026-05-28",
+      "referencia_nominal_35": "nao_confirmada",
+      "mecanismos_publicos": "acervo HTML e audiovisual já existente",
+      "evidencia": "Comunicado oficial: produção jornalística e audiovisual regular encerrada em 28/05/2026; site mantido como acervo.",
+      "incertezas": "Nenhuma evidência de retomada ou publicação excepcional desde junho.",
+      "recomendacao": "manter_acervo_anterior_excluir_coleta_regular_junho_setembro",
+      "observacoes": "Não tratar ausência após encerramento como falha do coletor; não iniciar coleta anterior à janela aprovada.",
+      "verificado_em": "2026-09-14T17:18:39.221101+00:00"
     },
     {
-      "veiculo_produto": "Folha dos Lagos",
-      "dominio": "folhadoslagos.com",
-      "regiao": "Lagos",
-      "tipo_editorial": "jornalismo digital",
-      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
-      "escopo_referencia": "a confirmar",
-      "url_referencia": "https://www.folhadoslagos.com/",
-      "data_publicacao": "",
-      "origem_identificacao": "lista anterior revisitada; probe-11.json",
-      "registros_na_matriz": "0",
-      "textos_na_matriz": "0",
-      "ocorrencias_no_recorte_funil": "0",
-      "nota": "Domínio sem registros; abertura externa falhou. Identidade, disponibilidade atual e matéria datada precisam de confirmação. Identidade encontrada também no Atlas, mas sonda atual web403 e local não validou corpo editorial. Atividade no período continua incerta.",
-      "verificado_em": "2026-09-14",
-      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
-    },
-    {
-      "veiculo_produto": "IstoÉ — site da revista",
+      "produto": "IstoÉ — site da revista",
       "dominio": "revista.istoe.com.br",
-      "regiao": "nacional",
-      "tipo_editorial": "jornalismo digital",
-      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
-      "escopo_referencia": "a confirmar",
-      "url_referencia": "https://revista.istoe.com.br/",
-      "data_publicacao": "",
-      "origem_identificacao": "lista anterior revisitada; probe-12.json",
-      "registros_na_matriz": "0",
-      "textos_na_matriz": "0",
-      "ocorrencias_no_recorte_funil": "0",
-      "nota": "Zero registros nesse subdomínio; um registro do portal não demonstra cobertura da edição. Sem reportagem elegível adicional confirmada.",
-      "verificado_em": "2026-09-14",
-      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
+      "estado_atividade": "acervo_disponivel_continuidade_no_periodo_nao_confirmada",
+      "evidencia_no_periodo": "nenhuma_edicao_junho_setembro_confirmada",
+      "referencia_primaria": "https://revista.istoe.com.br/edicao/a-maior-de-todas",
+      "data_editorial_ou_encerramento": "2026-05-29",
+      "referencia_nominal_35": "nao_confirmada",
+      "mecanismos_publicos": "https://revista.istoe.com.br/wp-sitemap.xml | https://revista.istoe.com.br/edicao/",
+      "evidencia": "Homepage e página da edição HTTP 200; última edição apresentada é nº 36, 29/05; PDF oficial em uploads/2026/05.",
+      "incertezas": "Não há comunicado de encerramento; não sabemos se novas edições deixaram de sair, mudaram de endereço ou deixaram de ser listadas.",
+      "recomendacao": "manter_acervo_registrado_continuidade_indefinida",
+      "observacoes": "Não atribuir ausência no clipping a paywall ou falha histórica; não confundir com o portal ativo istoe.com.br.",
+      "verificado_em": "2026-09-14T17:18:39.221101+00:00"
     },
     {
-      "veiculo_produto": "Financial Times",
-      "dominio": "ft.com",
-      "regiao": "nacional",
-      "tipo_editorial": "jornalismo digital",
-      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
-      "escopo_referencia": "a confirmar",
-      "url_referencia": "https://www.ft.com/",
-      "data_publicacao": "",
-      "origem_identificacao": "lista anterior revisitada; probe-13.json",
-      "registros_na_matriz": "0",
-      "textos_na_matriz": "0",
-      "ocorrencias_no_recorte_funil": "0",
-      "nota": "Zero registros identificados; nenhuma referência primária datada sobre os 35 nomes, no período, foi confirmada nesta investigação. Não atribuir falha técnica ou volume perdido.",
-      "verificado_em": "2026-09-14",
-      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
-    },
-    {
-      "veiculo_produto": "The Economist",
-      "dominio": "economist.com",
-      "regiao": "nacional",
-      "tipo_editorial": "jornalismo digital",
-      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
-      "escopo_referencia": "a confirmar",
-      "url_referencia": "https://www.economist.com/",
-      "data_publicacao": "",
-      "origem_identificacao": "lista anterior revisitada; probe-14.json",
-      "registros_na_matriz": "0",
-      "textos_na_matriz": "0",
-      "ocorrencias_no_recorte_funil": "0",
-      "nota": "Zero registros identificados; nenhuma referência primária datada sobre os 35 nomes, no período, foi confirmada nesta investigação. Não atribuir falha técnica ou volume perdido.",
-      "verificado_em": "2026-09-14",
-      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
-    },
-    {
-      "veiculo_produto": "IstoÉ Dinheiro — revista/acervo",
+      "produto": "IstoÉ Dinheiro — revista/acervo",
       "dominio": "revista.istoedinheiro.com.br",
-      "regiao": "nacional",
-      "tipo_editorial": "jornalismo digital",
-      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
-      "escopo_referencia": "a confirmar",
-      "url_referencia": "https://revista.istoedinheiro.com.br/",
-      "data_publicacao": "",
-      "origem_identificacao": "lista anterior revisitada; probe-19.json",
-      "registros_na_matriz": "0",
-      "textos_na_matriz": "0",
-      "ocorrencias_no_recorte_funil": "0",
-      "nota": "Página consultada exibiu edição 31 de 08/05/2026 e acervo paginado. Nenhuma edição de junho–setembro confirmada neste acesso; não inferir que continuou ou cessou publicação. Edições PDF constituem formato distinto do portal HTML.",
-      "verificado_em": "2026-09-14",
-      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
-    },
-    {
-      "veiculo_produto": "Agência Lume",
-      "dominio": "agencialume.com",
-      "regiao": "capital — Rio das Pedras",
-      "tipo_editorial": "comunitário",
-      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
-      "escopo_referencia": "a confirmar",
-      "url_referencia": "https://www.agencialume.com/",
-      "data_publicacao": "",
-      "origem_identificacao": "lista anterior revisitada; probe-32.json",
-      "registros_na_matriz": "0",
-      "textos_na_matriz": "0",
-      "ocorrencias_no_recorte_funil": "0",
-      "nota": "Página primária confirma identidade e atuação em Rio das Pedras, Anil e Freguesia; exibe manutenção. Publicação noticiosa regular no período não confirmada.",
-      "verificado_em": "2026-09-14",
-      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
+      "estado_atividade": "acervo_disponivel_continuidade_no_periodo_nao_confirmada",
+      "evidencia_no_periodo": "nenhuma_edicao_junho_setembro_confirmada",
+      "referencia_primaria": "https://revista.istoedinheiro.com.br/edicao/cannabis-s-a",
+      "data_editorial_ou_encerramento": "2026-05-08",
+      "referencia_nominal_35": "nao_confirmada",
+      "mecanismos_publicos": "https://revista.istoedinheiro.com.br/wp-sitemap.xml | https://revista.istoedinheiro.com.br/edicao/",
+      "evidencia": "Homepage e página da edição HTTP 200; última edição apresentada é nº 31, 08/05; PDF oficial em uploads/2026/05.",
+      "incertezas": "Ausência de edições posteriores no índice não comprova encerramento; continuidade ou mudança de canal não confirmadas.",
+      "recomendacao": "manter_acervo_registrado_continuidade_indefinida",
+      "observacoes": "Acervo de revista é produto distinto do portal de notícias; não preencher janela com data de modificação de PDF.",
+      "verificado_em": "2026-09-14T17:18:39.221101+00:00"
     }
-  ]
+  ],
+  "source_overrides": {
+    "metropoles": {
+      "key": "metropoles",
+      "strategies": [
+        "expanded",
+        "sitemap",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "public_archive_sections": [
+        "brasil",
+        "colunas"
+      ],
+      "public_archive_action_bundle_hint": "",
+      "mechanisms": [
+        {
+          "kind": "metropoles_archive",
+          "section": "brasil",
+          "url": "https://www.metropoles.com/brasil",
+          "evidence_url": "https://www.metropoles.com/brasil"
+        },
+        {
+          "kind": "metropoles_archive",
+          "section": "colunas",
+          "url": "https://www.metropoles.com/colunas",
+          "evidence_url": "https://www.metropoles.com/colunas"
+        }
+      ],
+      "known_constraint": "Current publisher assets are used to resolve public pagination actions; stale actions refresh without losing the historical cursor. Shared Brasil and Colunas historical discovery precedes body matching. News sitemap remains recent. Explicit errors and unresolved historical gaps trigger domain searches.",
+      "evidence": [
+        {
+          "url": "https://www.metropoles.com/colunas",
+          "verified_at": "2026-09-14",
+          "basis": "Fresh public Next-Action returned historical August9 column rows. Old still-served bundle returned404 Server action not found; full responses preserved in gap-closure/sources/metro-fresh-action-probes.json."
+        }
+      ],
+      "public_archive_action_page": "brasil"
+    },
+    "diario_do_rio": {
+      "google_policy": "on_direct_gap"
+    }
+  }
 }

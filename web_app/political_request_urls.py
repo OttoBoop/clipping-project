@@ -8,7 +8,15 @@ def publisher_article_identity_urls(url: str) -> tuple[str, ...]:
     parsed = urlsplit(url)
     if parsed.scheme == "https" and parsed.netloc in {"diariodorio.com", "www.diariodorio.com"}:
         other = "diariodorio.com" if parsed.netloc.startswith("www.") else "www.diariodorio.com"
-        return url, urlunsplit(parsed._replace(netloc=other))
+        paths = [parsed.path]
+        # Four independently retrieved publisher pages advertise /index.html
+        # as their canonical while serving the same editorial slug without it.
+        # Do not rewrite IDs or equate different titles/dated permalink shapes.
+        base = parsed.path.removesuffix("index.html").rstrip("/")
+        if re.fullmatch(r"/[^/.]+-[^/.]+", base):
+            paths.extend([base + "/", base + "/index.html"])
+        return tuple(dict.fromkeys([url] + [urlunsplit(parsed._replace(netloc=host, path=path))
+            for host in (parsed.netloc, other) for path in paths]))
     return (url,)
 
 

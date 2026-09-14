@@ -52,6 +52,15 @@ def test_diario_identity_variants_are_symmetric_and_do_not_rewrite_other_hosts()
         assert publisher_article_identity_urls(url) == (url,)
 
 
+def test_diario_real_publisher_canonical_index_reuses_both_verified_forms():
+    # Canonical explicitly advertised in the preserved public HTML; live ID2037.
+    path = "/parana-pesquisas-mostra-eduardo-paes-na-lideranca-para-o-governo-do-rio/"
+    expected = {"https://" + host + path + suffix for host in
+                ("diariodorio.com", "www.diariodorio.com") for suffix in ("", "index.html")}
+    for url in expected:
+        assert set(publisher_article_identity_urls(url)) == expected
+
+
 @pytest.mark.parametrize("url,expected", [
     ("https://www.google.com/sorry/index?continue=redacted", True),
     ("https://google.com.br/sorry/", True),

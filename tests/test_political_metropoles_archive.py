@@ -9,13 +9,15 @@ import pytest
 from web_app.political_discovery import DiscoveryError, build_tasks, discover, load_sources
 
 ACTION = '404f01c3d0caa10b02ca3723e7fc61b7cbf5d9c8aa'
-SOURCE = next(r for r in load_sources() if r['key'] == 'metropoles')
+# Saved jobs from the earlier release retain their original source snapshot.
+SOURCE = next(r for r in json.loads((Path(__file__).resolve().parents[1] / 'data/political_sources_v1.json').read_text())['sources'] if r['key'] == 'metropoles')
 ROWS = json.loads((Path(__file__).parent / 'fixtures/metropoles-public-list-real-20260910.json').read_text())['rows']
 
 
 def task(**changes):
     return {'source_key': 'metropoles', 'strategy': 'metropoles_archive', 'section': 'brasil',
-            'date_from': '2026-09-09', 'date_to': '2026-09-09', 'cursor': {'action_id': ACTION}, **changes}
+            'date_from': '2026-09-09', 'date_to': '2026-09-09', 'cursor': {'action_id': ACTION},
+            'source_snapshot': copy.deepcopy(SOURCE), **changes}
 
 
 def response(rows=None, status=200, text=None, headers=None):
@@ -94,6 +96,16 @@ def test_429_preserves_retry_after_and_empty_page_preserves_prior_parse_gap():
 def test_shared_discovery_does_not_multiply_public_archive_by_person():
     targets = [{'key': f'person_{i}', 'display_name': f'Person {i}'} for i in range(11)]
     tasks = build_tasks(targets, '2026-06-01', '2026-09-09', ['metropoles'])
-    public = [t for t in tasks if t['strategy'] == 'metropoles_archive']
-    assert len(public) == 1 and len(public[0]['target_ids']) == 11
-    assert {t['target_ids'][0] for t in tasks if t['strategy'] == 'google_news'} == {t['key'] for t in targets}
+    public = [t for t in tasks if t['strategy'] == 'expanded_metropoles_archive']
+    assert len(public) == 2 and all(len(t['target_ids']) == 11 for t in public)
+    assert {t['section'] for t in public} == {'brasil', 'colunas'}
+    assert not any(t['strategy'] == 'google_news' for t in tasks)
+
+
+def test_saved_legacy_source_snapshot_keeps_original_discovery_contract():
+    targets=[{'key':'paes','display_name':'Eduardo Paes'}]
+    tasks=build_tasks(targets,'2026-08-09','2026-08-09',['metropoles'],source_snapshots=[SOURCE])
+    public=[t for t in tasks if t['strategy']=='metropoles_archive']
+    assert len(public)==1 and public[0]['section']=='brasil'
+    assert public[0]['source_snapshot']==SOURCE
+    assert len([t for t in tasks if t['strategy']=='google_news'])==1

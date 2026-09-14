@@ -361,6 +361,7 @@ def _queue_pending_fetches(conn, job_id, source_key, count):
 
 @pytest.mark.parametrize("source_backlog,total_backlog,admitted", [
     (99, 2000, True), (100, 2000, False), (0, 4000, False), (100, 1999, True),
+    (0, 3500, True), (0, 3501, False),
 ])
 def test_discovery_admission_uses_source_backlog_across_active_jobs(
         service, monkeypatch, source_backlog, total_backlog, admitted):

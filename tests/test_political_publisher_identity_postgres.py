@@ -23,6 +23,10 @@ def save(service, conn, url, target, body=BODY):
 
 @pytest.mark.parametrize("origin", [BARE, GOOGLE])
 def test_new_host_or_google_wrapper_reuses_legacy_text_and_identifier(service, monkeypatch, origin):
+    # API tests deliberately reload web_app modules. Patch the resolver used by
+    # the method's runtime import, rather than the stale collection-time module.
+    import importlib
+    current_discovery = importlib.import_module("web_app.political_discovery")
     with service._connect() as conn:
         old_id = save(service, conn, WWW, "paes")
         conn.execute("DELETE FROM political_url_aliases WHERE url=%s", (BARE,))
@@ -35,9 +39,10 @@ def test_new_host_or_google_wrapper_reuses_legacy_text_and_identifier(service, m
         assert url == GOOGLE, "Stored publisher text must not be fetched again"
         return fake_response(GOOGLE, body="")
     monkeypatch.setattr(service, "fetch", fetch)
-    monkeypatch.setattr(political_discovery, "resolve_google_redirect", lambda *a, **k: BARE)
+    monkeypatch.setattr(current_discovery, "resolve_google_redirect", lambda *a, **k: BARE)
     task = service.claim_task("fetch", worker_id="identity")
     result = service.process_task(task)
+    assert "articleId" in result, result
     assert result["articleId"] == old_id
     assert result["bodyOrigin"] == "saved_object"
     assert calls == ([GOOGLE] if origin == GOOGLE else [])

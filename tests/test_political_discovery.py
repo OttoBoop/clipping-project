@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -66,12 +67,12 @@ def test_cbn_verified_rio_election_and_podcast_paths_are_discovered_before_body_
     assert result['raw_count']==4
 
 
-def test_google_fanout_is_global_plus_four_historical_domains_for_all_24_names():
+def test_google_fanout_does_not_preempt_verified_metropoles_and_diario_routes():
     snapshots = [{"key": f"person_{i}", "display_name": f"Pessoa {i}"} for i in range(24)]
     tasks = discovery.build_tasks(snapshots, "2026-06-01", "2026-06-07")
     google = [row for row in tasks if row["strategy"] == "google_news"]
-    assert len(google) == 24 * 5
-    assert {row["source_key"] for row in google} == {"google_news", "metropoles", "rc24h", "j3news", "diario_do_rio"}
+    assert len(google) == 24 * 3
+    assert {row["source_key"] for row in google} == {"google_news", "rc24h", "j3news"}
     assert {row["target_ids"][0] for row in google if row["source_key"] == "google_news"} == {row["key"] for row in snapshots}
 
 
@@ -482,10 +483,19 @@ def test_diario_narrow_window_defers_undated_entries_with_persistent_gap(monkeyp
     assert len(last["candidates"]) == 1 and last["raw_count"] == 1
     assert last["outcome"] == "gap"
     assert last["gap_reason"] == "undated_sitemap_deferred_for_narrow_window:2"
-    # This domain already has historical Google tasks; a gap must not duplicate them.
-    assert discovery.fallback_tasks(current, [{"key": "paes", "display_name": "Eduardo Paes"}]) == []
+    # The current catalog schedules this domain only after a direct gap.
+    people=[{"key": "paes", "display_name": "Eduardo Paes"}]
+    fallback=discovery.fallback_tasks(current,people)
+    assert len(fallback)==1 and fallback[0]["query"]=='"Eduardo Paes" site:diariodorio.com'
+    assert fallback[0]["date_from"]==current["date_from"] and fallback[0]["date_to"]==end_day
+    # Earlier jobs keep their always-Google snapshot; they must not fan out twice.
+    legacy=next(s for s in json.loads((Path(__file__).resolve().parents[1]/"data/political_sources_v1.json").read_text())["sources"] if s["key"]=="diario_do_rio")
+    assert legacy["google_policy"]=="always"
+    assert discovery.fallback_tasks({**current,"source_snapshot":legacy},people)==[]
     planned = discovery.build_tasks([{"key": "paes", "display_name": "Eduardo Paes"}], "2026-06-01", end_day, ["diario_do_rio"])
-    assert len([row for row in planned if row["strategy"] == "google_news"]) == 1
+    assert not any(row["strategy"] == "google_news" for row in planned)
+    original=discovery.build_tasks(people,"2026-06-01",end_day,["diario_do_rio"],source_snapshots=[legacy])
+    assert len([row for row in original if row["strategy"] == "google_news"]) == 1
 
 
 def test_diario_wider_window_keeps_unknown_dates_for_body_review():

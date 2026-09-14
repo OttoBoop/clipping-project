@@ -15,6 +15,10 @@ def catalog_sources() -> list[dict]:
     if extra.exists():
         value = json.loads(extra.read_text())
         rows += value["sources"] if isinstance(value, dict) else value
+        overrides = value.get("source_overrides", {}) if isinstance(value, dict) else {}
+        if not isinstance(overrides, dict) or set(overrides) - {r["key"] for r in rows}:
+            raise ValueError("invalid_source_override")
+        rows = [{**row, **overrides.get(row["key"], {}), "key": row["key"]} for row in rows]
     unique = {}
     for row in rows:
         if row["key"] in unique:

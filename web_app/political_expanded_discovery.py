@@ -95,8 +95,8 @@ def build_expanded_tasks(source, date_from, date_to, target_snapshots):
             # Limit one response to 50 full bodies and each task to seven days.
             for first, last in _core().date_windows(date_from, date_to):
                 tasks.append({**route, 'date_from': first, 'date_to': last})
-        elif kind in {'sitemap', 'feed', 'archive', 'capability'}:
-            tasks.append({**route, 'url': mechanism.get('url', ''), 'depth': 0, 'ancestors': []})
+        elif kind in {'sitemap', 'feed', 'archive', 'capability', 'edition_archive', 'metropoles_archive'}:
+            tasks.append({**route, 'url': mechanism.get('url', ''), 'section': mechanism.get('section', ''), 'depth': 0, 'ancestors': []})
         else:
             raise ValueError('Unsupported expanded mechanism: ' + kind)
     return tasks
@@ -119,7 +119,7 @@ def _partition(url):
             return d, d
         except ValueError:
             return None
-    match = re.search(r'(?<!\d)(20\d{2})[-/.]?(\d{2})(?:\.xml|/|$)', path)
+    match = re.search(r'(?<!\d)((?:19|20)\d{2})[-/.]?(\d{1,2})(?:\.xml|/|$)', path)
     if match:
         try:
             d = date(int(match[1]), int(match[2]), 1)
@@ -448,4 +448,64 @@ def discover_expanded(task, source, fetch):
         return _archive(task, source, fetch)
     if strategy == 'expanded_capability':
         return _capability(task, source, fetch)
+    if strategy == 'expanded_metropoles_archive':
+        return _metropoles_current(task, source, fetch)
+    if strategy == 'expanded_edition_archive':
+        from .political_document_tasks import discover_edition_archive
+        return discover_edition_archive(task, source, fetch)
     raise _core().DiscoveryError('unsupported expanded discovery strategy', retryable=False)
+
+
+def _metropoles_current(task, source, fetch):
+    """Use currently advertised assets; a still-served old bundle can be stale.
+
+    On2026-09-14 the old static bundle returned200 while its action returned404.
+    Renew only this discovery action, keeping the saved historical date cursor.
+    """
+    from .political_metropoles_archive import ASSET, ACTION, discover_archive
+    core = _core()
+    mechanism = task.get('mechanism') or {}
+    slug = mechanism.get('section') or task.get('section') or 'brasil'
+    if slug not in source.get('public_archive_sections', []):
+        raise core.DiscoveryError('metropoles_archive_invalid_section', retryable=False)
+    cursor = dict(task.get('cursor') or {})
+    # Brasil advertises the shared public pagination action; the Colunas
+    # landing page does not include that JavaScript bundle. The same action
+    # was verified against the Colunas aggregator in a real publisher POST.
+    action_page = source.get('public_archive_action_page') or slug
+    if action_page not in source.get('public_archive_sections', []):
+        raise core.DiscoveryError('metropoles_action_page_not_in_frozen_sections', retryable=False)
+    page_url = 'https://www.metropoles.com/' + action_page
+    if not cursor.get('action_id'):
+        assets = cursor.get('action_assets')
+        if assets is None:
+            response = core._get(fetch, page_url)
+            assets = list(reversed(list(dict.fromkeys(ASSET.findall(response.text)))))
+            if not assets:
+                return _result(outcome='gap', gap_reason='metropoles_current_public_assets_missing')
+            return _result(next_cursor={**cursor, 'action_assets': assets[:64], 'asset_index': 0,
+                                        'action_page': page_url, 'asset_cap_hit': len(assets) > 64})
+        index = int(cursor.get('asset_index', 0))
+        if index >= len(assets):
+            return _result(outcome='gap', gap_reason='metropoles_current_action_asset_cap' if cursor.get('asset_cap_hit') else 'metropoles_current_public_action_not_found')
+        asset = assets[index]
+        if not ASSET.fullmatch(asset):
+            raise core.DiscoveryError('metropoles_unadvertised_action_asset', retryable=False)
+        response = core._get(fetch, asset, allowed_statuses=(404,))
+        found = ACTION.search(response.text) if response.status_code == 200 else None
+        return _result(next_cursor={**cursor, **({'action_id': found.group(1), 'action_asset': asset} if found else {'asset_index': index + 1})})
+    try:
+        result = discover_archive({**task, 'section': slug}, {**source, 'public_archive_action_bundle_hint': ''}, fetch)
+    except core.DiscoveryError as exc:
+        refreshes = int(cursor.get('action_refresh_count', 0))
+        if exc.status_code not in {404, 410}:
+            raise
+        if refreshes >= 2:
+            return _result(outcome='gap', gap_reason='metropoles_public_action_refresh_exhausted')
+        renewed = {k:v for k,v in cursor.items() if k not in {'action_id','action_assets','asset_index','action_asset','asset_cap_hit'}}
+        renewed['action_refresh_count'] = refreshes + 1
+        renewed['stale_action_id'] = cursor['action_id']
+        return _result(next_cursor=renewed)
+    if result.get('next_cursor'):
+        result['next_cursor'] = {**{k:v for k,v in cursor.items() if k in {'action_page','action_asset','action_refresh_count'}}, **result['next_cursor']}
+    return result

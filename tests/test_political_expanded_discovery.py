@@ -48,8 +48,8 @@ def task(key, start='2026-08-09', end='2026-08-09'):
 
 def test_all_38_active_inventory_products_and_audited_nationals_have_scoped_routes():
     rows = expanded.load_expanded_sources()
-    assert len(rows) == 65 and len({r['key'] for r in rows}) == 65
-    assert sum('audit_state' in r for r in rows) == 38
+    assert len(rows) == 69 and len({r['key'] for r in rows}) == 69
+    assert sum('audit_state' in r for r in rows) == 42
     assert all(r['allowed_profiles'] == ['psd_rj_2026'] and r['google_policy'] == 'on_direct_gap' for r in rows)
     assert all(r['evidence'] and r['mechanisms'] and r['legacy_source_keys'] for r in rows)
     assert {'exame', 'congresso_em_foco', 'nf_noticias', 'elizeu_pires', 'ultima_hora_online', 'estadao', 'istoe', 'crusoe'} <= {r['key'] for r in rows}
@@ -219,3 +219,92 @@ def test_api_start_boundary_requests_prior_second_without_changing_end_exclusivi
     query=parse_qs(urlparse(calls[0]).query)
     assert query['after']==['2026-08-08T23:59:59']
     assert query['before']==['2026-08-10T00:00:00']
+
+
+def metro_source():
+    from web_app.political_source_catalog import catalog_sources
+    return next(row for row in catalog_sources() if row['key'] == 'metropoles')
+
+
+def test_current_metropoles_catalog_searches_brasil_and_all_columns_shared():
+    s = metro_source()
+    tasks = expanded.build_expanded_tasks(s, '2026-08-09', '2026-08-09', [{'key':str(i)} for i in range(35)])
+    assert {t['section'] for t in tasks} == {'brasil', 'colunas'}
+    assert len(tasks) == 2
+    assert all(t['strategy'] == 'expanded_metropoles_archive' for t in tasks)
+    assert not s['public_archive_action_bundle_hint']
+
+
+def test_real_metropoles_stale_action_refresh_preserves_historical_progress():
+    s = metro_source();run = expanded.build_expanded_tasks(s, '2026-08-09', '2026-08-09', [])[1]
+    run['cursor'] = {'action_id':'404f01c3d0caa10b02ca3723e7fc61b7cbf5d9c8aa',
+                     'after':'2026-08-09 12:00:00', 'page':7, 'parse_gap':True}
+    calls=[]
+    def fetch(url, **kwargs):
+        calls.append((url,kwargs));result=response('metro_stale_action');result.status_code=404;return result
+    result=expanded.discover_expanded(run,s,fetch)
+    assert result['outcome']=='continue'
+    assert result['next_cursor']['after']=='2026-08-09 12:00:00'
+    assert result['next_cursor']['page']==7 and result['next_cursor']['parse_gap']
+    assert result['next_cursor']['action_refresh_count']==1 and 'action_id' not in result['next_cursor']
+    assert calls[0][1]['method']=='POST'
+    run['cursor']=result['next_cursor']
+    fresh=expanded.discover_expanded(run,s,lambda url:response('metro_brasil_page'))
+    assets=fresh['next_cursor']['action_assets']
+    assert 'https://assets-v4.metroimg.com/_next/static/chunks/3p1vg_mg74ng_.js' in assets
+    assert 'https://assets-v4.metroimg.com/_next/static/chunks/3_-cu-39abe67.js' not in assets
+    assert fresh['next_cursor']['page']==7
+
+
+def test_actual_metropoles_current_javascript_yields_publisher_action():
+    s=metro_source();run=expanded.build_expanded_tasks(s,'2026-08-09','2026-08-09',[])[1]
+    asset=response('metro_current_action')
+    run['cursor']={'action_assets':[asset.url],'asset_index':0,'after':'2026-08-10 00:00:00'}
+    result=expanded.discover_expanded(run,s,lambda url:asset)
+    assert result['next_cursor']['action_id']=='40a579897be38972ef04fa3b5ef195ca842a76a2ae'
+    assert result['next_cursor']['action_asset']==asset.url
+
+
+@pytest.mark.parametrize('section',['brasil','colunas'])
+def test_real_metropoles_historical_rows_supply_editorial_candidates(section):
+    s=metro_source();run=next(t for t in expanded.build_expanded_tasks(s,'2026-08-09','2026-08-09',[]) if t['section']==section)
+    run['cursor']={'action_id':'40a579897be38972ef04fa3b5ef195ca842a76a2ae','action_refresh_count':1}
+    calls=[]
+    def fetch(url,**kwargs):
+        calls.append(kwargs);return response('metro_'+section+'_aug9')
+    result=expanded.discover_expanded(run,s,fetch)
+    assert result['candidates'] and result['raw_count']>0
+    assert all(core.in_window(c['published_at'],'2026-08-09','2026-08-09') for c in result['candidates'])
+    assert all(c['metadata']['metropoles_public_archive']==section for c in result['candidates'])
+    assert json.loads(calls[0]['data'])[0]['slug']==section
+    if result['next_cursor']:
+        assert result['next_cursor']['action_refresh_count']==1
+
+
+def test_actual_ft_index_selects_requested_unpadded_months_only():
+    s=source('financial_times');run=task('financial_times','2026-06-01','2026-09-10');children=[]
+    while True:
+        result=expanded.discover_expanded(run,s,lambda url:response('ft_historical_index'))
+        children.extend(result['child_tasks'])
+        if not result['next_cursor']:break
+        run['cursor']=result['next_cursor']
+    assert {c['url'] for c in children if '/archive-' in c['url']}=={'https://www.ft.com/sitemaps/archive-2026-'+str(m)+'.xml' for m in (6,7,8,9)}
+    assert all('/archive-' in c['url'] or c['url']=='https://www.ft.com/sitemaps/news.xml' for c in children)
+
+
+def test_real_lume_feed_discovers_body_only_reference_without_manual_seeding():
+    s=source('agencia_lume');run=next(t for t in expanded.build_expanded_tasks(s,'2026-06-01','2026-09-10',[]) if t['strategy']=='expanded_feed')
+    result=expanded.discover_expanded(run,s,lambda url:response('lume_public_feed'))
+    assert result['raw_count']==20 and len(result['candidates'])==3
+    # The discovery itself supplies all3 chronological candidates. Person/body
+    # matching remains the fetch worker's responsibility.
+    assert any('como-a-luta-de-moradores-de-jacarepagua' in c['url'] for c in result['candidates'])
+    assert result['outcome']=='gap' and 'feed' in result['gap_reason']
+
+
+def test_real_folha_lagos_full_sitemap_stays_bounded_and_does_not_treat_lastmod_as_publication():
+    s=source('folha_dos_lagos');run={**task('folha_dos_lagos'),'url':'https://www.folhadoslagos.com/sitemaps/sitemap1.xml','depth':1}
+    result=expanded.discover_expanded(run,s,lambda url:response('folha_lagos_historical_leaf'))
+    assert result['raw_count']==500 and len(result['candidates'])<=500
+    assert result['next_cursor']['offset']==500
+    assert all(not c['published_at'] for c in result['candidates'])

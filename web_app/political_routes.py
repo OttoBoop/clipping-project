@@ -223,6 +223,35 @@ def stories(request: Request):
         return political_corpus.list_stories(**list_filters(request, keys))
 
 
+@router.get("/api/political/edition-pages")
+def edition_pages(request: Request):
+    _, keys, _ = access(request)
+    filters = list_filters(request, keys)
+    filters.pop("story_id", None)
+    filters["job_id"] = request.query_params.get("job_id", "")
+    with service_errors():
+        return political_corpus.document_pages(**filters)
+
+
+@router.get("/api/political/edition-pages/{page_id}/text")
+def edition_page_text(request: Request, page_id: int):
+    _, keys, _ = access(request)
+    with service_errors():
+        return political_corpus.document_page_text(page_id, allowed_target_keys=keys,
+                                                  page_version_id=request.query_params.get("version"))
+
+
+@router.get("/api/political/edition-counts")
+def edition_counts(request: Request):
+    _, keys, _ = access(request)
+    filters = list_filters(request, keys)
+    for key in ("page_size", "cursor", "story_id"):
+        filters.pop(key, None)
+    filters["job_id"] = request.query_params.get("job_id", "")
+    with service_errors():
+        return political_corpus.document_counts(**filters)
+
+
 @router.get("/api/political/articles/{article_id}/text")
 def article_text(request: Request, article_id: int):
     _, keys, _ = access(request)

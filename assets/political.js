@@ -97,11 +97,45 @@
     const open = text("button", "Ler e classificar"); open.addEventListener("click", () => openArticle(article)); card.append(open);
     return card;
   }
+  function editionCard(page) {
+    const card = text("article", "", "news-card"), date = page.editorial_date || {};
+    const period = date.date_precision === "month" ? `Edição de ${date.edition_month}` : date.period_from ? `${formatDate(date.period_from)}${date.period_to !== date.period_from ? " a " + formatDate(date.period_to) : ""}` : "Data da edição a confirmar";
+    card.append(text("div", `${page.source_name} · ${period}`, "news-meta"));
+    card.append(text("h3", page.displayLabel || `Página ${page.page_number} da edição`));
+    card.append(text("p", "Página de edição: pode conter mais de uma matéria. Contabilizada separadamente das reportagens individuais."));
+    const tags = text("div", "", "tags");
+    (page.target_keys || []).forEach(key => tags.append(text("span", displayName(key), "tag")));
+    tags.append(text("span", page.text_available ? "Texto disponível" : "Texto indisponível", "tag")); card.append(tags);
+    const open = text("button", "Ler página preservada"); open.addEventListener("click", () => openEdition(page)); card.append(open);
+    return card;
+  }
+  async function openEdition(page) {
+    state.article = page; state.classifications = [];
+    $("article-title").textContent = page.displayLabel || `Página ${page.page_number || page.id} da edição`;
+    $("article-message").replaceChildren(text("p", "Texto de uma página da edição, com a disposição editorial original. A leitura das colunas e eventuais falhas de OCR devem ser conferidas no PDF."));
+    $("classification").hidden = true; $("article-text").textContent = "Carregando página…";
+    $("article-dialog").showModal();
+    const address = new URL(location.href); address.searchParams.delete("article"); address.searchParams.set("edition_page", page.id);
+    if (page.page_version_id) address.searchParams.set("edition_version", page.page_version_id); else address.searchParams.delete("edition_version");
+    history.replaceState(history.state, "", address.pathname + address.search);
+    try {
+      const body = await api(`/api/political/edition-pages/${page.id}/text${page.page_version_id ? "?version=" + page.page_version_id : ""}`);
+      if (state.article !== page) return;
+      $("article-text").textContent = body.text || "Texto indisponível nesta captura.";
+      const url = new URL(body.originalUrl);
+      if (["https:", "http:"].includes(url.protocol)) {
+        const link = text("a", "Abrir página no PDF original"); link.href = url.href; link.target = "_blank"; link.rel = "noopener noreferrer";
+        $("article-message").append(link);
+      }
+      if (body.errorType) $("article-message").append(text("p", `Pendência: ${gapReason(body.errorType)}`));
+    } catch (error) {if (state.article === page) $("article-text").textContent = error.message;}
+  }
   function renderResults() {
     $("results").replaceChildren();
     if (!state.items.length) $("results").append(text("p", "Nenhuma notícia encontrada com estes filtros.", "empty"));
     for (const item of state.items) {
-      if (Array.isArray(item.articles)) {
+      if (item.recordType === "edition_page") $("results").append(editionCard(item));
+      else if (Array.isArray(item.articles)) {
         const group = text("section", "", "story-group"); group.append(text("h3", item.title || "História"));
         item.articles.forEach(a => group.append(articleCard(a)));
         if (Number(item.articleCount || 0) > item.articles.length) {
@@ -112,7 +146,7 @@
       } else $("results").append(articleCard(item));
     }
     $("previous").disabled = !state.previous.length; $("next").disabled = !state.next;
-    $("page-state").textContent = `Página ${state.previous.length + 1} · ${state.items.length} ${$("view").value === "stories" ? "histórias" : "notícias"}`;
+    $("page-state").textContent = `Página ${state.previous.length + 1} · ${state.items.length} ${$("view").value === "edition-pages" ? "páginas de edição" : $("view").value === "stories" ? "histórias" : "notícias"}`;
   }
   async function loadResults(reset = false) {
     if (reset) {state.cursor = ""; state.previous = [];}
@@ -123,7 +157,7 @@
       const data = await api(`/api/political/${$("view").value}?${filters()}`);
       if (sequence !== state.sequence) return;
       state.items = data.items || []; state.next = data.nextCursor || ""; renderResults();
-      message("Resultados atualizados. Cada notícia pode aparecer associada a vários nomes.");
+      message($("view").value === "edition-pages" ? "Páginas de edições preservadas. Estes registros têm contagem separada das notícias individuais." : "Resultados atualizados. Cada notícia pode aparecer associada a vários nomes.");
     } catch (error) {if (sequence === state.sequence) message(error.message, true);}
   }
   function renderMetrics(metrics = {}) {
@@ -131,6 +165,9 @@
     const fields = [["uniqueCandidates", "URLs encontradas"], ["articlesInserted", "Notícias novas"], ["articlesReused", "Notícias reutilizadas"], ["articlesEnriched", "Registros com texto recuperado"], ["duplicates", "URLs repetidas"], ["mentionsInserted", "Associações novas"], ["textAvailable", "Textos disponíveis"], ["partialText", "Textos parciais"], ["metadataOnly", "Somente metadados"], ["fetchPending", "Textos pendentes"], ["unknownDates", "Datas a revisar"], ["unresolvedGaps", "Consultas com pendências"]];
     $("metrics").replaceChildren();
     for (const [key, label] of fields) {const pair = document.createElement("div"); pair.append(text("dt", label), text("dd", Number(metrics[key] || 0).toLocaleString("pt-BR"))); $("metrics").append(pair);}
+    for (const [key, label] of [["editionPagesNew", "Páginas de edição novas"], ["editionPagesReused", "Páginas de edição reutilizadas"], ["editionAssociationsNew", "Associações em páginas de edição"], ["editionTextAvailable", "Textos de páginas de edição"]]) {
+      const pair = document.createElement("div"); pair.append(text("dt", label), text("dd", Number(metrics[key] || 0).toLocaleString("pt-BR"))); $("metrics").append(pair);
+    }
   }
   async function refreshStatus() {
     if (!state.configured) return;
@@ -190,11 +227,20 @@
   }
   function setArticleLink(id = null) {
     const url = new URL(location.href);
+    url.searchParams.delete("edition_page");
+    url.searchParams.delete("edition_version");
     if (id === null) url.searchParams.delete("article");
     else url.searchParams.set("article", String(id));
     history.replaceState(history.state, "", url.pathname + url.search + url.hash);
   }
   async function openLinkedArticle() {
+    if (pageParams.has("edition_page")) {
+      const raw = pageParams.get("edition_page"), id = Number(raw);
+      if (pageParams.getAll("edition_page").length !== 1 || !/^[1-9]\d*$/.test(raw) || !Number.isSafeInteger(id)) {message("O link da página é inválido.", true); return;}
+      const version = pageParams.get("edition_version");
+      if (version && (!/^[1-9]\d*$/.test(version) || !Number.isSafeInteger(Number(version)))) {message("A versão da página é inválida.", true); return;}
+      await openEdition({id, recordType: "edition_page", page_version_id: version ? Number(version) : null}); return;
+    }
     if (!pageParams.has("article")) return;
     const rawId = pageParams.get("article"), id = Number(rawId);
     if (pageParams.getAll("article").length !== 1 || !/^[1-9]\d*$/.test(rawId) || !Number.isSafeInteger(id)) {

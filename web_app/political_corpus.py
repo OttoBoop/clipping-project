@@ -44,6 +44,8 @@ from .political_record_types import non_news_reason
 from .political_worker_limits import fetch_concurrency
 from .political_source_catalog import catalog_sources, select_sources, source_snapshot, source_aliases, source_for_task
 from .political_recovery import PoliticalRecoveryMixin, recovery_filters
+from .political_document_tasks import PoliticalDocumentMixin, DOCUMENT_SCHEMA_SQL
+from .political_documents import DocumentProblem
 from .political_request_urls import (
     is_google_access_challenge, is_google_block_response, publisher_article_identity_urls, publisher_article_request_url,
 )
@@ -187,7 +189,7 @@ def decode_cursor(value: str) -> tuple[datetime, int]:
         raise ValueError("invalid_cursor") from exc
 
 
-class PoliticalCorpusService(PoliticalRecoveryMixin):
+class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
     def __init__(self, *, store: ArtifactStore | None = None, database_url: str = ""):
         self.store = store or artifact_store
         self._database_url = database_url
@@ -235,6 +237,9 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
                         conn.execute(statement)
                 for statement in SCHEMA_UPGRADES:
                     conn.execute(statement)
+                for statement in DOCUMENT_SCHEMA_SQL.split(";"):
+                    if statement.strip():
+                        conn.execute(statement)
             self._schema_ready = True
 
     def health(self, check_database: bool = False) -> dict:
@@ -329,6 +334,10 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
     def _insert_task(self, conn, job_id: str, kind: str, payload: dict) -> None:
         source_key = str(payload.get("source_key") or "unknown")
         dedupe = canonicalize_url(str(payload.get("url") or "")) if kind == "fetch" else hashlib.sha256(_json(payload).encode()).hexdigest()
+        if kind == "discovery" and payload.get("strategy") == "expanded_edition_archive":
+            identity = {k: payload.get(k) for k in ("source_key", "date_from", "date_to", "mechanism")}
+            identity["url"] = canonicalize_url(str(payload.get("url") or ""))
+            dedupe = "edition-index:" + hashlib.sha256(_json(identity).encode()).hexdigest()
         # Source rotation still comes first when claiming. Within each source,
         # finish its direct publisher discovery before optional Google queries.
         priority = 0 if kind == "discovery" and payload.get("strategy") == "google_news" else 10
@@ -413,7 +422,17 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
             FROM political_articles a JOIN visible v ON v.article_id=a.id WHERE EXISTS
             (SELECT 1 FROM political_observations o
              WHERE o.job_id=%s AND o.article_id=a.id)""", (job_id, job_id)).fetchone()
+        document_results = conn.execute("""SELECT
+            COALESCE(SUM((result->>'documentsNew')::int),0) AS documents_new,
+            COALESCE(SUM((result->>'editionPagesNew')::int),0) AS pages_new,
+            COALESCE(SUM((result->>'editionPagesReused')::int),0) AS pages_reused,
+            COALESCE(SUM((result->>'editionAssociationsNew')::int),0) AS mentions_new,
+            COALESCE(SUM((result->>'editionTextAvailable')::int),0) AS texts
+            FROM political_tasks WHERE job_id=%s AND payload->>'document_task' IS NOT NULL""", (job_id,)).fetchone()
         return {"uniqueCandidates": int(observed["unique_candidates"]), "articlesSaved": int(observed["articles_saved"]),
+                "documentsNew": int(document_results["documents_new"]), "editionPagesNew": int(document_results["pages_new"]),
+                "editionPagesReused": int(document_results["pages_reused"]), "editionAssociationsNew": int(document_results["mentions_new"]),
+                "editionTextAvailable": int(document_results["texts"]),
                 "articlesInserted": int(counters["articles_inserted"]), "mentionsInserted": int(counters["mentions_inserted"]),
                 "fetchAttempted": int(counters["fetch_attempted"]),
                 "articlesReused": int(observed["articles_reused"]), "metadataOnly": int(quality["metadata_only"]),
@@ -648,8 +667,18 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
     def article_text(self, article_id: int, *, allowed_target_keys: list[str]) -> dict:
         self.article(article_id, allowed_target_keys=allowed_target_keys)
         with self._connect() as conn:
-            row = conn.execute("SELECT text_object_key,content_hash,body_status FROM political_articles WHERE id=%s", (int(article_id),)).fetchone()
-        return {"id": int(article_id), "bodyStatus": row["body_status"], "text": self._read_text(row["text_object_key"], row["content_hash"])}
+            row = conn.execute("SELECT text_object_key,content_hash,body_status,metadata FROM political_articles WHERE id=%s", (int(article_id),)).fetchone()
+        metadata = row.get("metadata") or {}
+        return {"id": int(article_id), "bodyStatus": row["body_status"],
+                "textAvailable": bool(row["text_object_key"]),
+                "textExtent": metadata.get("text_extent", "unknown") if row["text_object_key"] else "unavailable",
+                "extractionMethod": metadata.get("extraction_method", ""),
+                "extractionVersion": metadata.get("extraction_version", ""),
+                "bodyOrigin": metadata.get("body_origin", ""),
+                "restrictionEvidence": metadata.get("restriction_evidence", []),
+                "publisherProvenance": metadata.get("publisher_provenance", {}),
+                "contentHash": row["content_hash"],
+                "text": self._read_text(row["text_object_key"], row["content_hash"])}
 
     def classifications(self, article_id: int, *, allowed_target_keys: list[str]) -> dict:
         allowed = _scope(allowed_target_keys)
@@ -735,21 +764,24 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
                          (worker_id, kind, task_id, error_type[:100]))
 
     @staticmethod
-    def _discovery_backpressure(conn) -> tuple[bool, list[str]]:
+    def _discovery_backpressure(conn, *, reserve_next=False) -> tuple[bool, list[str]]:
         """Aggregate once across active jobs, instead of once per queued task.
 
         Below 2000 active fetches every source may discover. From 2000 to
-        3999, admit only sources with fewer than 100 active fetches. At 4000,
-        stop admission entirely. These are admission thresholds, not strict
-        queue caps: two already running discovery pages can each enqueue up to
-        the existing 5000-candidate page limit before the next check.
+        3999, admit only sources with fewer than 100 active fetches. Reserve
+        500 candidate slots for each running discovery page before admitting
+        another one, so concurrent results fit the 4000-fetch queue budget.
         """
         rows = conn.execute("""SELECT t.source_key,COUNT(*) AS n FROM political_tasks t
             JOIN political_jobs j ON j.id=t.job_id
             WHERE t.kind='fetch' AND t.status=ANY(%s) AND j.status IN ('queued','running')
             GROUP BY t.source_key""", (list(ACTIVE),)).fetchall()
         total = sum(int(row["n"]) for row in rows)
-        return total >= 4000, [row["source_key"] for row in rows if total >= 2000 and int(row["n"]) >= 100]
+        running = conn.execute("""SELECT COUNT(*) AS n FROM political_tasks t
+            JOIN political_jobs j ON j.id=t.job_id WHERE t.kind='discovery'
+            AND t.status='running' AND t.leased_until>NOW() AND j.status IN ('queued','running')""").fetchone()["n"]
+        reservation = 500 * (int(running) + int(reserve_next))
+        return total + reservation > 4000 or total >= 4000, [row["source_key"] for row in rows if total >= 2000 and int(row["n"]) >= 100]
 
     def claim_task(self, kind: str, *, worker_id: str, lease_seconds: int = LEASE_SECONDS) -> dict | None:
         if kind not in {"discovery", "fetch"}:
@@ -761,7 +793,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
             conn.execute("SELECT pg_advisory_xact_lock(%s)", (734892102 if kind == "discovery" else 734892103,))
             blocked_sources = []
             if kind == "discovery":
-                stop_discovery, blocked_sources = self._discovery_backpressure(conn)
+                stop_discovery, blocked_sources = self._discovery_backpressure(conn, reserve_next=True)
                 if stop_discovery:
                     return None
             count = conn.execute("""SELECT COUNT(*) AS n FROM political_tasks WHERE kind=ANY(%s)
@@ -787,12 +819,18 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
                     OR NOT EXISTS (SELECT 1 FROM political_tasks active
                         WHERE active.kind='fetch' AND active.status='running' AND active.leased_until>NOW()
                         AND COALESCE(active.cursor->>'resolved_url',active.payload->>'url') LIKE 'https://news.google.com/%%'))
+                AND (t.payload->>'document_task' IS NULL OR NOT EXISTS (
+                    SELECT 1 FROM political_tasks heavy WHERE heavy.kind='fetch'
+                    AND heavy.payload->>'document_task' IS NOT NULL
+                    AND heavy.status='running' AND heavy.leased_until>NOW()))
+                AND (t.payload->>'document_task' IS NULL OR NOT %s)
                 ORDER BY CASE WHEN t.kind='fetch' AND cooling.next_request_at>NOW() THEN 1 ELSE 0 END,
                     CASE WHEN t.kind='fetch' THEN scheduling.fetch_claimed_at
                               ELSE scheduling.discovery_claimed_at END ASC NULLS FIRST,
                     t.priority DESC,
                     CASE WHEN t.kind='fetch' AND COALESCE(t.payload->>'published_at','')<>'' THEN 0 ELSE 1 END,
-                    t.id LIMIT 1""", (_json(source_domains), kinds, blocked_sources)).fetchone()
+                    t.id LIMIT 1""", (_json(source_domains), kinds, blocked_sources,
+                        os.environ.get("POLITICAL_HEAVY_PAUSED", "").lower() in {"1", "true", "yes"})).fetchone()
             if not row:
                 return None
             # Finish/cancel transactions lock the job before its tasks and
@@ -910,6 +948,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
 
     def fetch(self, url: str, **kwargs) -> requests.Response:
         large_sitemap = bool(kwargs.get("stream_sitemap"))
+        stream_pdf = bool(kwargs.get("stream_pdf"))
         snapshot = str(kwargs.get("sitemap_snapshot") or "")
         cache = Path(os.environ.get("POLITICAL_SITEMAP_CACHE_DIR") or (Path(tempfile.gettempdir()) / "clipping-political-sitemaps"))
         if large_sitemap:
@@ -966,6 +1005,11 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
                     raise FetchProblem("redirect_without_location", retryable=False)
                 current = urljoin(current, location)
                 continue
+            if stream_pdf and response.status_code < 400:
+                # The document processor streams to disk, checks its own byte
+                # and time budgets, and closes this response. Never materialize
+                # a full public edition inside the web/worker heap.
+                return response
             chunks, size = [], 0
             started = time.monotonic()
             temporary = None
@@ -1075,6 +1119,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
                 return self._discover(task)
             if task["kind"] == "review":
                 return self._review(task)
+            if task["payload"].get("document_task"):
+                return self.process_document_task(task)
             return self._fetch_article(task)
         except LeaseLost:
             return {"taskId": task["id"], "status": "lease_lost"}
@@ -1095,7 +1141,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
             retryable = bool(getattr(exc, "retryable", True))
             delay = max(int(getattr(exc, "retry_after", 0) or 0), min(3600, 15 * 2 ** min(8, int(task["attempts"]) - 1)))
             status = "retryable" if retryable and int(task["attempts"]) < int(task["max_attempts"]) else "gap"
-            error_type = str(exc) if isinstance(exc, FetchProblem) else type(exc).__name__
+            error_type = str(exc) if isinstance(exc, (FetchProblem, DocumentProblem)) else type(exc).__name__
             if not isinstance(exc, FetchProblem) and hasattr(exc, "status_code"):
                 error_type = f"{type(exc).__name__}:http_{int(getattr(exc, 'status_code', 0) or 0)}"
                 safe_detail = str(exc)
@@ -1109,7 +1155,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
                         error_type = "google_access_challenge"
                         break
                     cause = cause.__cause__
-            if task["kind"] == "fetch" and not getattr(exc, "metadata_handled", False):
+            if task["kind"] == "fetch" and not task["payload"].get("document_task") and not getattr(exc, "metadata_handled", False):
                 try:
                     with self._connect() as conn:
                         job = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (task["job_id"],)).fetchone()
@@ -1165,7 +1211,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
         payload = {**task["payload"], "cursor": task["cursor"]}
         result = self._recover_discovery(task, source_for_task(payload)) if payload.get("strategy") == "recover" else discover(payload, self.fetch)
         candidates = result.get("candidates") or []
-        if len(candidates) > 5000:
+        if len(candidates) > 500:
             raise FetchProblem("discovery_page_too_large", retryable=False)
         outcome = str(result.get("outcome") or "gap")
         if outcome not in {"complete", "continue", "split", "gap"}:
@@ -1189,6 +1235,11 @@ class PoliticalCorpusService(PoliticalRecoveryMixin):
                 if not url or urlparse(url).scheme not in {"http", "https"}:
                     continue
                 candidate = {**candidate, "url": url, "source_key": task["source_key"]}
+                if payload.get("source_snapshot"):
+                    candidate["source_snapshot"] = payload["source_snapshot"]
+                if candidate.get("document_type") == "edition_pdf":
+                    self.enqueue_document_candidate(conn, task["job_id"], candidate)
+                    continue
                 reference = batch_refs.get((candidate.get("metadata") or {}).get("wordpress_id"))
                 if reference:
                     candidate["body_batch_ref"] = reference

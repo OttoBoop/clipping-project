@@ -63,5 +63,108 @@
     "checked_at": "2026-09-14",
     "sha256": "c7ee2c5152632600a3e3fa6894e99e6e4575221ac00b464189f7f8f91a900233",
     "headers": {}
+  },
+  {
+    "name": "metro_brasil_page",
+    "url": "https://www.metropoles.com/brasil",
+    "sha256": "b3b17748549b50552c6eae8eb9fdb3432263ac7d20ef3b0a723e549e49679e1d",
+    "headers": {
+      "Content-Type": "text/html; charset=utf-8",
+      "link": "<https://assets-v4.metroimg.com/_next/static/media/248e1dc0efc99276-s.p.1d6sb5kuiz5lw.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", <https://assets-v4.metroimg.com/_next/static/media/5f63f773218f7fe1.p.1naomth23rpk9.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", <https://assets-v4.metroimg.com/_next/static/media/9de307755bdae5a1-s.p.1kbfywaj9b7tf.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", <https://assets-v4.metroimg.com/_next/static/media/9e9f04e3c37952ab-s.p.0pan85mumqyf3.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", <https://assets-v4.metroimg.com/_next/static/media/ce62453a442c7f35-s.p.0a0h245ktd4x0.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", <https://assets-v4.metroimg.com/_next/static/chunks/3_7nxwywa-gg_.css>; rel=preload; as=\"style\", <https://assets-v4.metroimg.com/_next/static/chunks/06-4gs4f38j1w.css>; rel=preload; as=\"style\", <https://assets-v4.metroimg.com/_next/static/chunks/03udkru9-5zvm.css>; rel=preload; as=\"style\""
+    },
+    "status": 200,
+    "captured_at": "2026-09-14T17:07:03Z",
+    "environment": "workstation_public_read_only",
+    "role": "development_discovery_fixture",
+    "method": "GET"
+  },
+  {
+    "name": "metro_colunas_page",
+    "url": "https://www.metropoles.com/colunas",
+    "sha256": "8e392fca3f4fda94f3dff0e48cf619999a580dfbc4940aec1f9b8dea2f021448",
+    "headers": {
+      "Content-Type": "text/html; charset=utf-8",
+      "link": "<https://assets-v4.metroimg.com/_next/static/media/248e1dc0efc99276-s.p.1d6sb5kuiz5lw.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", <https://assets-v4.metroimg.com/_next/static/media/5f63f773218f7fe1.p.1naomth23rpk9.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", <https://assets-v4.metroimg.com/_next/static/media/9de307755bdae5a1-s.p.1kbfywaj9b7tf.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", <https://assets-v4.metroimg.com/_next/static/media/ce62453a442c7f35-s.p.0a0h245ktd4x0.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", <https://images.metroimg.com/46f25d65-logo-grande-angular-nova-3.webp>; rel=preload; as=\"image\"; fetchpriority=\"high\""
+    },
+    "status": 200,
+    "captured_at": "2026-09-14T17:07:01Z",
+    "environment": "workstation_public_read_only",
+    "role": "development_discovery_fixture",
+    "method": "GET"
+  },
+  {
+    "name": "metro_current_action",
+    "url": "https://assets-v4.metroimg.com/_next/static/chunks/3p1vg_mg74ng_.js",
+    "sha256": "c33de850efdfd846d29ae95ece69f6492fa75008b655f0af316c4ad7a8ff9b4d",
+    "headers": {
+      "Content-Type": "text/javascript"
+    },
+    "status": 200,
+    "captured_at": "2026-09-14T17:09:05Z",
+    "environment": "workstation_public_read_only",
+    "role": "development_discovery_fixture",
+    "method": "GET"
+  },
+  {
+    "name": "metro_stale_action",
+    "url": "https://www.metropoles.com/colunas",
+    "sha256": "dc559d64ef8cbee0f80063b9a7e03eb7064ae3b9cfb6f40fe08210b735998742",
+    "headers": {},
+    "status": 404,
+    "captured_at": "2026-09-14T17:07:10Z",
+    "environment": "workstation_public_read_only",
+    "role": "development_discovery_fixture",
+    "method": "POST"
+  },
+  {
+    "name": "metro_brasil_aug9",
+    "url": "https://www.metropoles.com/brasil",
+    "sha256": "dec476a99f80f3465d42bd98cb858a3fc3f86298328b14accc304d51581b2548",
+    "headers": {},
+    "status": 200,
+    "captured_at": "2026-09-14T17:09:57Z",
+    "environment": "workstation_public_read_only",
+    "role": "development_discovery_fixture",
+    "method": "POST"
+  },
+  {
+    "name": "metro_colunas_aug9",
+    "url": "https://www.metropoles.com/colunas",
+    "sha256": "e93c43bf71295f0b80828cb6c0569c21a7b6e7844fcc49019b758864fe650fe6",
+    "headers": {},
+    "status": 200,
+    "captured_at": "2026-09-14T17:09:59Z",
+    "environment": "workstation_public_read_only",
+    "role": "development_discovery_fixture",
+    "method": "POST"
+  },
+  {
+    "name": "ft_historical_index",
+    "url": "https://www.ft.com/sitemaps/index.xml",
+    "sha256": "595cec5e8ba6cc1589055a4309e43b5f84b8962d958d8c59ee3e593dc6818c12",
+    "headers": {},
+    "captured_at": "2026-09-14T17:14:11.998354+00:00",
+    "environment": "workstation_public_read_only",
+    "role": "development_discovery_fixture"
+  },
+  {
+    "name": "lume_public_feed",
+    "url": "https://www.agencialume.com/blog-feed.xml",
+    "sha256": "7b19bb858feceb9df6770a990c7382da1ccb698bc78c776eb4fb11d79f63ba37",
+    "headers": {},
+    "captured_at": "2026-09-14T17:14:12.006929+00:00",
+    "environment": "workstation_public_read_only",
+    "role": "development_discovery_fixture"
+  },
+  {
+    "name": "folha_lagos_historical_leaf",
+    "url": "https://www.folhadoslagos.com/sitemaps/sitemap1.xml",
+    "sha256": "803f44a8aa53690abc813e7003575b327803b124ed3c6b301cac616bdc217f74",
+    "headers": {
+      "Content-Type": "application/xml"
+    },
+    "captured_at": "2026-09-14T17:20:46Z",
+    "environment": "workstation_public_read_only",
+    "role": "development_discovery_fixture"
   }
 ]
