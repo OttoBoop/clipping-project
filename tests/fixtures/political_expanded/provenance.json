@@ -205,5 +205,14 @@
     "captured_at": "2026-09-14T17:38:51Z",
     "environment": "workstation_public_read_only",
     "role": "development_discovery_fixture"
+  },
+  {
+    "name": "record_index",
+    "url": "https://record.r7.com/arc/outboundfeeds/sitemap-index-byday/",
+    "checked_at": "2026-09-14T17:38:48Z",
+    "sha256": "38327a90fd68837b709a9c3eca66b76d3cca4636f3053e1a27642689e2f80d05",
+    "headers": {},
+    "environment": "workstation",
+    "note": "Preserved public index from route discovery, not an independent article evaluation reference."
   }
 ]

@@ -20,6 +20,7 @@ from pipeline.http_utils import canonicalize_url, html_to_text, is_likely_articl
 REGISTRY_PATH = Path(__file__).resolve().parents[1] / 'data' / 'political_sources_expansion_v1.json'
 MAX_BATCH = 500
 MAX_INDEX_BATCH = 100
+MAX_INDEX_SCAN = 5000
 MAX_DEPTH = 6
 MAX_PAGES = 2000
 VERSION = 'expanded-public-1'
@@ -172,7 +173,12 @@ def _sitemap(task, source, fetch):
         ancestors = list(task.get('ancestors') or []) + [url]
         start, end = date.fromisoformat(task['date_from']), date.fromisoformat(task['date_to']) + timedelta(days=int(mechanism.get('calendar_tail_days', 0)))
         seen = set()
-        for node in nodes[offset:offset + batch]:
+        # Calendar filtering can reject thousands of old index branches. Scan
+        # them in bounded CPU batches, without spending a worker lease for every
+        # 100 rejected dates. The emitted child-task cap remains 100.
+        scanned = 0
+        for node in nodes[offset:offset + MAX_INDEX_SCAN]:
+            scanned += 1
             child_url = core._child_text(node, 'loc')
             if _skip_branch(child_url) or child_url in seen:
                 continue
@@ -191,14 +197,16 @@ def _sitemap(task, source, fetch):
             children.append({**task, 'strategy': 'expanded_sitemap', 'url': child_url,
                              'depth': int(task.get('depth', 0)) + 1, 'ancestors': ancestors, 'cursor': {},
                              'partition_hint': [x.isoformat() for x in partition] if partition else []})
-        next_cursor = {'offset': offset + batch, 'document_fingerprint': fingerprint, 'invalid_children': invalid} if offset + batch < len(nodes) else None
+            if len(children) >= batch:
+                break
+        next_cursor = {'offset': offset + scanned, 'document_fingerprint': fingerprint, 'invalid_children': invalid} if offset + scanned < len(nodes) else None
         residual = bool(mechanism.get('numbered_part_pattern')) and int(task.get('depth', 0)) == 0
         reasons = []
         if invalid:
             reasons.append('expanded_sitemap_invalid_or_cyclic_children')
         if residual:
             reasons.append('expanded_earlier_partitions_not_verified')
-        return _result(child_tasks=children, next_cursor=next_cursor, raw_count=len(nodes[offset:offset + batch]),
+        return _result(child_tasks=children, next_cursor=next_cursor, raw_count=scanned,
                        outcome='gap' if reasons and not next_cursor else None,
                        gap_reason=';'.join(reasons) if not next_cursor else '')
     if page > 1 and offset == 0 and fingerprint in cursor.get('page_fingerprints', []):

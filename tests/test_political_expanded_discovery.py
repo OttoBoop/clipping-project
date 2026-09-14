@@ -72,7 +72,7 @@ def test_actual_istoe_index_preserves_complete_audited_parts_and_explicit_residu
     children, outcomes = [], []
     while True:
         result = expanded.discover_expanded(run, s, lambda u: response('istoe_index'))
-        assert len(result['child_tasks']) <= 100 and result['raw_count'] <= 100
+        assert len(result['child_tasks']) <= 100 and result['raw_count'] <= expanded.MAX_INDEX_SCAN
         children += result['child_tasks']; outcomes.append(result['outcome'])
         if not result['next_cursor']:
             assert result['outcome'] == 'gap' and 'earlier_partitions' in result['gap_reason']
@@ -113,6 +113,36 @@ def test_real_index_does_not_emit_unbounded_children():
     run = {**task('cnn_brasil', '2026-06-01', '2026-09-10'), 'strategy': 'expanded_sitemap', 'url': 'https://www.cnnbrasil.com.br/sitemap_index.xml', 'mechanism': {'kind': 'sitemap'}}
     result = expanded.discover_expanded(run, source('cnn_brasil'), lambda u: response('cnn_index'))
     assert len(result['child_tasks']) <= 100 and result['next_cursor']['offset'] == 100
+
+
+def test_real_record_calendar_index_skips_old_dates_without_59_worker_pages():
+    s = source('record')
+    run = {**task('record'), 'strategy': 'expanded_sitemap', 'url': response('record_index').url}
+    children, pages, raw = [], 0, 0
+    while True:
+        result = expanded.discover_expanded(run, s, lambda u: response('record_index'))
+        pages += 1; raw += result['raw_count']; children.extend(result['child_tasks'])
+        assert len(result['child_tasks']) <= 100
+        assert result['raw_count'] <= expanded.MAX_INDEX_SCAN
+        if not result['next_cursor']:
+            break
+        run['cursor'] = result['next_cursor']
+    assert pages == 2 and raw == 5900
+    assert {c['url'] for c in children} == {
+        'https://record.r7.com/arc/outboundfeeds/sitemap/latest/',
+        'https://record.r7.com/arc/outboundfeeds/sitemap3/2026-08-09/',
+    }
+
+
+def test_existing_record_index_cursor_continues_after_larger_scan_batch():
+    s = source('record')
+    root = core._xml(response('record_index'))
+    fingerprint = expanded._fingerprint(core._child_text(n, 'loc') for n in root)
+    run = {**task('record'), 'strategy': 'expanded_sitemap', 'url': response('record_index').url,
+           'cursor': {'offset': 1600, 'document_fingerprint': fingerprint, 'invalid_children': 0}}
+    result = expanded.discover_expanded(run, s, lambda u: response('record_index'))
+    assert result['outcome'] == 'complete' and result['next_cursor'] is None
+    assert result['raw_count'] == 4300 and result['child_tasks'] == []
 
 
 def test_retry_after_429_propagates_without_claiming_completion():
