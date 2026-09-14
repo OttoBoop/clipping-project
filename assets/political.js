@@ -216,7 +216,7 @@
         const recoveryTypes = {
           missing: ["body_missing", "metadata_only"],
           partial: ["partial_text"],
-          access: ["http_401", "http_403", "http_404", "http_429", "network", "google_url_unresolved", "google_access_challenge"],
+          access: ["http_401", "http_403", "http_404", "http_429", "network", "google_url_unresolved", "google_access_challenge", "publisher_access_challenge"],
           storage: ["storage"]
         };
         payload.recovery_gap_types = $("recovery-types").value === "all" ? [...new Set(Object.values(recoveryTypes).flat())] : recoveryTypes[$("recovery-types").value];

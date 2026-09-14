@@ -128,6 +128,31 @@ def recover(corpus, source_keys, **updates):
     return corpus.start_job(payload, started_by="local-test-operator", allowed_target_keys=KEYS)
 
 
+def test_real_http_200_challenge_ends_as_access_gap_without_empty_body_retry(corpus, monkeypatch):
+    import requests
+    folder=ROOT/'tests/fixtures/political_expanded_editorial_real'
+    case=next(c for c in json.loads((folder/'manifest.json').read_text())['cases'] if c['taskId']==232335)
+    raw=gzip.decompress((folder/case['fixture']).read_bytes())
+    assert hashlib.sha256(raw).hexdigest()==case['htmlHash']
+    job=recover(corpus,['tv_zoom'])
+    payload={'url':case['url'],'source_key':'tv_zoom','title':'','source_name':'TV Zoom'}
+    with corpus._connect() as conn:
+        discovery=conn.execute("UPDATE political_tasks SET status='complete' WHERE job_id=%s RETURNING id",(job['id'],)).fetchone()['id']
+        corpus._insert_task(conn,job['id'],'fetch',payload)
+        conn.execute("INSERT INTO political_observations(job_id,source_task_id,observed_url,source_key) VALUES(%s,%s,%s,'tv_zoom')",(job['id'],discovery,case['url']))
+    response=requests.Response();response.status_code=200;response.url=case['url'];response._content=raw;response.encoding='utf-8'
+    monkeypatch.setattr(corpus,'fetch',lambda *a,**k:response)
+    task=corpus.claim_task('fetch',worker_id='real-challenge-test')
+    result=corpus.process_task(task)
+    assert result['status']=='gap' and result['errorType']=='publisher_access_challenge'
+    with corpus._connect() as conn:
+        saved=conn.execute('SELECT status,attempts,cursor FROM political_tasks WHERE id=%s',(task['id'],)).fetchone()
+        evidence=conn.execute('SELECT metadata FROM political_observations WHERE job_id=%s',(job['id'],)).fetchone()['metadata']['access_failure']
+    assert saved['attempts']==1 and 'empty_body_responses' not in saved['cursor']
+    assert evidence['status']==200 and evidence['kind']=='challenge'
+    assert evidence['html_hash']==case['htmlHash']
+
+
 def test_historical_selection_does_not_block_other_task_commits(corpus, monkeypatch):
     from concurrent.futures import ThreadPoolExecutor
     from contextlib import contextmanager

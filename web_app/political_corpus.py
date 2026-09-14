@@ -47,7 +47,8 @@ from .political_recovery import PoliticalRecoveryMixin, recovery_filters
 from .political_document_tasks import PoliticalDocumentMixin, DOCUMENT_SCHEMA_SQL
 from .political_documents import DocumentProblem
 from .political_request_urls import (
-    is_google_access_challenge, is_google_block_response, publisher_article_identity_urls, publisher_article_request_url,
+    is_google_access_challenge, is_google_block_response, is_publisher_access_challenge,
+    publisher_article_identity_urls, publisher_article_request_url,
 )
 
 START_DATE = date(2026, 6, 1)
@@ -1112,7 +1113,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     "content_type": response.headers.get("Content-Type", ""),
                     "retry_after": response.headers.get("Retry-After", "")}
         body = response.text[:65536]
-        evidence["kind"] = "challenge" if re.search(r"cf-chl|challenge-platform|Just a moment", body, re.I) else "http_refusal"
+        evidence["kind"] = "challenge" if re.search(r"cf-chl|challenge-platform|Just a moment|sucuri_cloudproxy_js", body, re.I) else "http_refusal"
         try:
             digest, key = self._store_html(body)
             evidence.update(html_hash=digest, html_object_key=key)
@@ -1480,6 +1481,11 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     problem = FetchProblem("google_url_unresolved")
                     self._save_metadata_attempt(task, job, candidate, problem)
                     raise problem
+            if is_publisher_access_challenge(final_url, response.text):
+                self._record_access_failure(task, response)
+                problem = FetchProblem("publisher_access_challenge", retryable=False)
+                self._save_metadata_attempt(task, job, candidate, problem)
+                raise problem
             with timed_operation("extraction"):
                 extracted = extract_article(response.text, final_url)
             body = str(extracted.get("full_text") or "")

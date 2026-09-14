@@ -38,6 +38,16 @@ def is_google_block_response(url: str, status_code: int, body: bytes) -> bool:
                 and "support.google.com/websearch/answer/86640" in text)
 
 
+def is_publisher_access_challenge(url: str, raw_html: str) -> bool:
+    """TV Zoom's preserved HTTP 200 is a Sucuri challenge, not editorial HTML."""
+    if (urlsplit(url).hostname or "").removeprefix("www.") != "tvzoom.com.br":
+        return False
+    text = raw_html[:65536].lower()
+    return ("<title>you are being redirected...</title>" in text
+            and "sucuri_cloudproxy_js" in text
+            and "javascript is required" in text)
+
+
 def publisher_article_request_url(url: str) -> str:
     parsed = urlsplit(url)
     if parsed.scheme != "https":

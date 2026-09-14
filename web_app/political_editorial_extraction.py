@@ -14,7 +14,7 @@ import re
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
-EXTRACTION_VERSION = "editorial-2026-09-14.4"
+EXTRACTION_VERSION = "editorial-2026-09-14.5"
 _SAO_PAULO = ZoneInfo("America/Sao_Paulo")
 _SELECTORS = {
     "exame.com": "#news-body",
@@ -24,6 +24,8 @@ _SELECTORS = {
     "ultimahoraonline.com.br": ".post-detalhe-texto",
     "estadao.com.br": ".news-body[data-paywall-wrapper]",
     "generonumero.media": ".post-wrapper > .content",
+    "aosfatos.org": "#entry-content",
+    "folha1.com.br": ".materia-corpo",
 }
 _VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
 _BLOCK = {"address", "article", "blockquote", "div", "figcaption", "figure", "h1", "h2", "h3", "h4", "h5", "h6", "li", "ol", "p", "section", "table", "tr", "ul"}
@@ -97,6 +99,8 @@ class _EditorialParser(HTMLParser):
         classes = set(attrs.get("class", "").split())
         if self.host == "exame.com":
             return attrs.get("id") == "news-body"
+        if self.host == "aosfatos.org":
+            return attrs.get("id") == "entry-content"
         if self.host == "congressoemfoco.com.br":
             return "html-content" in classes and any("asset__content" in item[1].get("class", "").split() for item in self.stack)
         if self.host == "generonumero.media":
@@ -154,6 +158,12 @@ class _EditorialParser(HTMLParser):
         elif self.host == "ultimahoraonline.com.br" and "post-detalhe-data" in classes:
             field = "publication_visible"
         elif self.host == "nfnoticias.com.br" and tag == "span" and {"text-dark", "ml-1"} <= classes:
+            field = "publication_visible"
+        elif (self.host == "aosfatos.org" and tag == "aside"
+              and {"text-sm", "text-center", "mb-5"} <= classes
+              and self.stack and "max-w-entry" in self.stack[-1][1].get("class", "").split()):
+            # Publication above the editorial root; timeline event dates inside
+            # the article must not become its publication date.
             field = "publication_visible"
         if tag not in _VOID:
             self.stack.append((tag, attrs, body, blocked))
@@ -219,6 +229,8 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
         published = _date(parser.metadata.get(key, ""))
         if published:
             break
+    if not published and host == "folha1.com.br":
+        published = _date(parser.metadata.get("dc.date.created", ""))
     restricted = False
     for raw in parser.json_ld:
         try:
@@ -235,7 +247,8 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
                 queue.extend(graph)
             kinds = item.get("@type", [])
             kinds = [kinds] if isinstance(kinds, str) else kinds
-            if not isinstance(kinds, list) or not (_ARTICLE_KINDS & set(str(kind) for kind in kinds)):
+            accepted_kinds = _ARTICLE_KINDS | ({"ClaimReview"} if host == "aosfatos.org" else set())
+            if not isinstance(kinds, list) or not (accepted_kinds & set(str(kind) for kind in kinds)):
                 continue
             identity = item.get("url") or item.get("mainEntityOfPage") or item.get("@id")
             if isinstance(identity, dict):
@@ -254,7 +267,8 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
                     restricted = True
                     parser.restrictions.append("article_jsonld:hasPart.isAccessibleForFree=false")
     if not published:
-        for value in parser.fields.get("publication_visible", []) + parser.fields.get("time", []):
+        times = [] if host == "aosfatos.org" else parser.fields.get("time", [])
+        for value in parser.fields.get("publication_visible", []) + times:
             published = _date(value)
             if published:
                 break

@@ -4,7 +4,7 @@ from __future__ import annotations
 from .political_source_catalog import source_aliases
 
 RECOVERY_FAILURES = {"body_missing", "http_401", "http_403", "http_404", "http_429",
-                     "google_url_unresolved", "google_access_challenge", "storage",
+                     "google_url_unresolved", "google_access_challenge", "publisher_access_challenge", "storage",
                      "metadata_only", "network", "partial_text"}
 
 
