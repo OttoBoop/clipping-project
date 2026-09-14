@@ -1,0 +1,56 @@
+[
+  {
+    "id": 16326,
+    "url": "https://www.folhadoslagos.com/geral/apos-enterro-de-seguranca-moradores-fazem-protesto-contra-violencia/57",
+    "status": 200,
+    "file": "16326.html",
+    "sha256": "21076a7ba1620faf414d84e7dda3c00bb9427a5c0d80921c176dacddd68c097a",
+    "environment": "local_current_probe_not_historical_worker_response",
+    "dateElements": [
+      "<small class=\"data\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tsegunda, 14 de setembro de 2026 \n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</small>",
+      "<small class=\"data\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tsegunda, 14 de setembro de 2026 \n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</small>"
+    ],
+    "title": "\n\t<strong>Após enterro de segurança, moradores fazem protesto contra violência</strong> - Folha dos Lagos\n",
+    "fixture": "16326.html.gz",
+    "expected_date": ""
+  },
+  {
+    "id": 16328,
+    "url": "https://www.folhadoslagos.com/geral/vice-podera-ser-do-interior-diz-crivella/80",
+    "status": 200,
+    "file": "16328.html",
+    "sha256": "d3162e9ca74cfc5332205d5cf8815d9b0d119db24dd62ff64b13a5ff2d8c68d7",
+    "environment": "local_current_probe_not_historical_worker_response",
+    "dateElements": [
+      "<small class=\"data\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tsegunda, 14 de setembro de 2026 \n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</small>",
+      "<small class=\"data\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tsegunda, 14 de setembro de 2026 \n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</small>"
+    ],
+    "title": "\n\tEm Cabo Frio, pré-candidato a governador Marcelo Crivella diz que vice pode ser do interior - Folha dos Lagos\n",
+    "fixture": "16328.html.gz",
+    "expected_date": ""
+  },
+  {
+    "id": 16221,
+    "url": "https://www.noticiasdebelfordroxo.com/2026/08/canella-rueda-lancam-campanhas-belford-roxo.html",
+    "status": 200,
+    "file": "16221.html",
+    "sha256": "c601893d0ae3dac0c2cd13c1918710f9ae5e011aae5551be36519d4ea5e81880",
+    "environment": "local_current_probe_not_historical_worker_response",
+    "dateElements": [],
+    "title": "\nFaltando 44 dias para eleições: Márcio Canella e Rueda  lotam Estádio Nélio Gomes no lançamento da campanha | Notícias de Belford Roxo\n",
+    "fixture": "16221.html.gz",
+    "expected_date": "2026-08-22T18:18:00+00:00"
+  },
+  {
+    "id": 16227,
+    "url": "https://www.noticiasdebelfordroxo.com/2026/06/canella-combate-milicia-belford-roxo.html",
+    "status": 200,
+    "file": "16227.html",
+    "sha256": "fbb294f95e6c6c0c1ed7e3cbf84510419298856a4cac8e47b13ed0477bb43088",
+    "environment": "local_current_probe_not_historical_worker_response",
+    "dateElements": [],
+    "title": "\nPré-candidato ao Senado, Márcio Canella quer classificar milícias como grupos terroristas | Notícias de Belford Roxo\n",
+    "fixture": "16227.html.gz",
+    "expected_date": "2026-06-01T12:16:00+00:00"
+  }
+]

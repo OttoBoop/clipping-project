@@ -153,6 +153,41 @@ def test_real_http_200_challenge_ends_as_access_gap_without_empty_body_retry(cor
     assert evidence['html_hash']==case['htmlHash']
 
 
+@pytest.mark.parametrize('last,expected',[('2026-08-09','outside_window'),('2026-09-10','duplicate')])
+def test_rediscovered_undated_body_gets_real_date_without_replacing_text(corpus,monkeypatch,last,expected):
+    import requests
+    from web_app.political_discovery import extract_article
+    folder=ROOT/'tests/fixtures/political_new_dates_real'
+    case=next(c for c in json.loads((folder/'manifest.json').read_text()) if c['id']==16221)
+    raw=gzip.decompress((folder/case['fixture']).read_bytes())
+    assert hashlib.sha256(raw).hexdigest()==case['sha256']
+    extracted=extract_article(raw.decode(),case['url'])
+    hits=match_targets(TARGETS,extracted['title'],extracted['full_text']);assert hits
+    digest,key=corpus._store_text(extracted['full_text'])
+    source='noticias_de_belford_roxo'
+    job=recover(corpus,[source],date_from='2026-08-09',date_to=last)
+    payload={'url':case['url'],'title':extracted['title'],'source_key':source,'source_name':'Notícias de Belford Roxo'}
+    with corpus._connect() as conn:
+        article=corpus._persist_article(conn,payload,hits,published=None,date_status='unknown',
+            body_chars=len(extracted['full_text']),digest=digest,object_key=key)
+        conn.execute("INSERT INTO political_classifications(article_id,target_key,payload,updated_by) VALUES(%s,%s,'{\"keep\":true}','local-test-operator')",(article,hits[0]['target_key']))
+        discovery=conn.execute("UPDATE political_tasks SET status='complete' WHERE job_id=%s RETURNING id",(job['id'],)).fetchone()['id']
+        corpus._insert_task(conn,job['id'],'fetch',payload)
+        conn.execute("INSERT INTO political_observations(job_id,source_task_id,observed_url,source_key) VALUES(%s,%s,%s,%s)",(job['id'],discovery,case['url'],source))
+    response=requests.Response();response.status_code=200;response.url=case['url'];response._content=raw;response.encoding='utf-8'
+    monkeypatch.setattr(corpus,'fetch',lambda *a,**k:response)
+    task=corpus.claim_task('fetch',worker_id='real-date-test');corpus.process_task(task)
+    with corpus._connect() as conn:
+        saved=conn.execute('SELECT * FROM political_articles WHERE id=%s',(article,)).fetchone()
+        outcome=conn.execute('SELECT result FROM political_tasks WHERE id=%s',(task['id'],)).fetchone()['result']
+        classification=conn.execute('SELECT payload FROM political_classifications WHERE article_id=%s',(article,)).fetchone()['payload']
+        assert conn.execute('SELECT COUNT(*) AS n FROM political_articles').fetchone()['n']==1
+        assert conn.execute('SELECT COUNT(*) AS n FROM political_article_revisions WHERE article_id=%s',(article,)).fetchone()['n']==1
+    assert saved['published_at']==parse_date(case['expected_date']) and saved['date_status']=='page_verified'
+    assert saved['content_hash']==digest and saved['text_object_key']==key and classification=={'keep':True}
+    assert outcome['disposition']==expected
+
+
 def test_historical_selection_does_not_block_other_task_commits(corpus, monkeypatch):
     from concurrent.futures import ThreadPoolExecutor
     from contextlib import contextmanager

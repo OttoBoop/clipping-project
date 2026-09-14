@@ -14,7 +14,7 @@ import re
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
-EXTRACTION_VERSION = "editorial-2026-09-14.5"
+EXTRACTION_VERSION = "editorial-2026-09-14.6"
 _SAO_PAULO = ZoneInfo("America/Sao_Paulo")
 _SELECTORS = {
     "exame.com": "#news-body",
@@ -26,6 +26,7 @@ _SELECTORS = {
     "generonumero.media": ".post-wrapper > .content",
     "aosfatos.org": "#entry-content",
     "folha1.com.br": ".materia-corpo",
+    "folhadoslagos.com": ".conteudoNoticia > article",
 }
 _VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
 _BLOCK = {"address", "article", "blockquote", "div", "figcaption", "figure", "h1", "h2", "h3", "h4", "h5", "h6", "li", "ol", "p", "section", "table", "tr", "ul"}
@@ -101,6 +102,9 @@ class _EditorialParser(HTMLParser):
             return attrs.get("id") == "news-body"
         if self.host == "aosfatos.org":
             return attrs.get("id") == "entry-content"
+        if self.host == "folhadoslagos.com":
+            return ("grid_8" in classes and bool(self.stack)
+                    and "conteudoNoticia" in self.stack[-1][1].get("class", "").split())
         if self.host == "congressoemfoco.com.br":
             return "html-content" in classes and any("asset__content" in item[1].get("class", "").split() for item in self.stack)
         if self.host == "generonumero.media":
@@ -275,6 +279,9 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
     title = title or next(iter(parser.fields.get("h1", [])), "") or next(iter(parser.fields.get("title", [])), "")
     body = _normalize("".join(parser.parts))
     explicit_gate = "editorial_body:explicit_subscription_gate" in parser.restrictions
+    if host == "folhadoslagos.com" and re.search(r"reportagem completa na edi[çc][aã]o", body, re.I):
+        explicit_gate = True
+        parser.restrictions.append("editorial_body:complete_story_in_print_edition")
     extent = "absent" if not body else "partial" if explicit_gate else "unknown" if restricted else "available"
     return {
         "full_text": body, "title": title.strip(), "published_at": published,

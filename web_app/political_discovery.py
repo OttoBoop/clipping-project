@@ -1017,6 +1017,9 @@ class _ArticleParser(HTMLParser):
             self.canonical = attrs.get("href", "")
         if tag == "time" and not self.published:
             self.published = parse_publication_date(attrs.get("datetime", ""))
+        if (tag == "abbr" and attrs.get("itemprop") == "datePublished"
+                and self.publisher_host().removeprefix("www.") == "noticiasdebelfordroxo.com" and not self.published):
+            self.published = parse_publication_date(attrs.get("title", ""))
         if tag == "script" and "ld+json" in attrs.get("type", ""):
             self.script = []
         publisher_host = self.publisher_host()

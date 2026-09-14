@@ -359,6 +359,24 @@ def _queue_pending_fetches(conn, job_id, source_key, count):
         (job_id, source_key, source_key + '-pending-', count))
 
 
+@pytest.mark.parametrize('pending,slots',[(3800,2),(3900,1),(3901,0)])
+def test_recovery_reserves_its_100_candidates_without_exceeding_queue_budget(service,monkeypatch,pending,slots):
+    job=start(service,monkeypatch,tasks=[
+        {'source_key':'g1','strategy':'daily_sitemap','cursor':{}},
+        {'source_key':'r7','strategy':'recover','cursor':{}},
+        {'source_key':'folha','strategy':'recover','cursor':{}},
+    ])
+    with service._connect() as conn:
+        _queue_pending_fetches(conn,job['id'],'busy-publisher',pending)
+    claimed=[]
+    for i in range(3):
+        task=service.claim_task('discovery',worker_id='recovery-budget-'+str(i))
+        if task:claimed.append(task)
+    assert len(claimed)==slots
+    assert all(t['payload']['strategy']=='recover' for t in claimed)
+    assert pending+100*len(claimed)<=4000
+
+
 @pytest.mark.parametrize("source_backlog,total_backlog,admitted", [
     (99, 2000, True), (100, 2000, False), (0, 4000, False), (100, 1999, True),
     (0, 3500, True), (0, 3501, False),

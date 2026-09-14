@@ -775,23 +775,23 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                          (worker_id, kind, task_id, error_type[:100]))
 
     @staticmethod
-    def _discovery_backpressure(conn, *, reserve_next=False) -> tuple[bool, list[str]]:
+    def _discovery_backpressure(conn, *, reserve_next=False, next_capacity=500) -> tuple[bool, list[str]]:
         """Aggregate once across active jobs, instead of once per queued task.
 
         Below 2000 active fetches every source may discover. From 2000 to
         3999, admit only sources with fewer than 100 active fetches. Reserve
-        500 candidate slots for each running discovery page before admitting
-        another one, so concurrent results fit the 4000-fetch queue budget.
+        each running page's maximum (100 for recovery, 500 for discovery)
+        before admission, so concurrent results fit the 4000-fetch budget.
         """
         rows = conn.execute("""SELECT t.source_key,COUNT(*) AS n FROM political_tasks t
             JOIN political_jobs j ON j.id=t.job_id
             WHERE t.kind='fetch' AND t.status=ANY(%s) AND j.status IN ('queued','running')
             GROUP BY t.source_key""", (list(ACTIVE),)).fetchall()
         total = sum(int(row["n"]) for row in rows)
-        running = conn.execute("""SELECT COUNT(*) AS n FROM political_tasks t
+        running = conn.execute("""SELECT COALESCE(SUM(CASE WHEN t.payload->>'strategy'='recover' THEN 100 ELSE 500 END),0) AS n FROM political_tasks t
             JOIN political_jobs j ON j.id=t.job_id WHERE t.kind='discovery'
             AND t.status='running' AND t.leased_until>NOW() AND j.status IN ('queued','running')""").fetchone()["n"]
-        reservation = 500 * (int(running) + int(reserve_next))
+        reservation = int(running) + (next_capacity if reserve_next else 0)
         return total + reservation > 4000 or total >= 4000, [row["source_key"] for row in rows if total >= 2000 and int(row["n"]) >= 100]
 
     def claim_task(self, kind: str, *, worker_id: str, lease_seconds: int = LEASE_SECONDS) -> dict | None:
@@ -803,10 +803,14 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         with self._connect() as conn:
             conn.execute("SELECT pg_advisory_xact_lock(%s)", (734892102 if kind == "discovery" else 734892103,))
             blocked_sources = []
+            recovery_only = False
             if kind == "discovery":
                 stop_discovery, blocked_sources = self._discovery_backpressure(conn, reserve_next=True)
                 if stop_discovery:
-                    return None
+                    stop_recovery, blocked_sources = self._discovery_backpressure(conn, reserve_next=True, next_capacity=100)
+                    if stop_recovery:
+                        return None
+                    recovery_only = True
             count = conn.execute("""SELECT COUNT(*) AS n FROM political_tasks WHERE kind=ANY(%s)
                 AND status='running' AND leased_until>NOW()""", (kinds,)).fetchone()["n"]
             if count >= maximum:
@@ -821,6 +825,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 LEFT JOIN political_domain_limits cooling ON cooling.domain=""" + TASK_DOMAIN_FALLBACK_SQL + """
                 WHERE t.kind=ANY(%s) AND j.status IN ('queued','running')
                 AND (t.kind='fetch' OR NOT (t.source_key=ANY(%s)))
+                AND (NOT %s OR t.payload->>'strategy'='recover')
                 AND (cooling.cooldown_until IS NULL OR cooling.cooldown_until<=NOW())
                 AND (t.status IN ('queued','retryable') OR (t.status='running' AND t.leased_until<NOW()))
                 AND (t.next_attempt_at IS NULL OR t.next_attempt_at<=NOW())
@@ -836,11 +841,12 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     AND heavy.status='running' AND heavy.leased_until>NOW()))
                 AND (t.payload->>'document_task' IS NULL OR NOT %s)
                 ORDER BY CASE WHEN t.kind='fetch' AND cooling.next_request_at>NOW() THEN 1 ELSE 0 END,
+                    CASE WHEN t.kind='discovery' AND t.payload->>'strategy'='recover' THEN 0 ELSE 1 END,
                     CASE WHEN t.kind='fetch' THEN scheduling.fetch_claimed_at
                               ELSE scheduling.discovery_claimed_at END ASC NULLS FIRST,
                     t.priority DESC,
                     CASE WHEN t.kind='fetch' AND COALESCE(t.payload->>'published_at','')<>'' THEN 0 ELSE 1 END,
-                    t.id LIMIT 1""", (_json(source_domains), kinds, blocked_sources,
+                    t.id LIMIT 1""", (_json(source_domains), kinds, blocked_sources, recovery_only,
                         os.environ.get("POLITICAL_HEAVY_PAUSED", "").lower() in {"1", "true", "yes"})).fetchone()
             if not row:
                 return None
@@ -1280,20 +1286,23 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
 
     def _finish_fetch_outside_window(self, task: dict, *, published=None, date_status="", reused_date=False) -> dict:
         with self._connect() as conn:
-            self._lock_task(conn, task)
+            job = self._lock_task(conn, task)
             # A prior failed attempt may have saved the feed's inaccurate date.
-            # Correct only this job's newly collected record, retaining content,
-            # associations, classifications and the original metadata revision.
+            # Correct a non-legacy record encountered by this job, retaining
+            # content, associations, classifications and its previous metadata.
             if published and date_status in {"page_verified", "api_verified"}:
                 previous = conn.execute("""SELECT a.* FROM political_articles a
-                    JOIN political_observations o ON o.article_id=a.id
-                    WHERE o.job_id=%s AND o.observed_url=%s AND a.legacy_id IS NULL
-                    FOR UPDATE OF a""", (task["job_id"], task["payload"]["url"])).fetchone()
+                    WHERE a.id=COALESCE((SELECT o.article_id FROM political_observations o
+                        WHERE o.job_id=%s AND o.observed_url=%s),%s)
+                    AND a.legacy_id IS NULL AND EXISTS(SELECT 1 FROM political_mentions m
+                        WHERE m.article_id=a.id AND m.target_key=ANY(%s))
+                    FOR UPDATE OF a""", (task["job_id"], task["payload"]["url"],
+                                         task.get("_undated_existing_article_id"), job["target_keys"])).fetchone()
                 if previous and (previous["published_at"] != published or previous["date_status"] != date_status):
                     conn.execute("INSERT INTO political_article_revisions(article_id,previous,reason) VALUES(%s,%s::jsonb,'publication_date_verification')",
                                  (previous["id"], _json(dict(previous))))
-                    conn.execute("UPDATE political_articles SET published_at=%s,date_status=%s WHERE id=%s",
-                                 (published,date_status,previous["id"]))
+                    conn.execute("UPDATE political_articles SET published_at=%s,date_status=%s,metadata=metadata || %s::jsonb WHERE id=%s",
+                                 (published,date_status,_json(task.get("_date_probe_evidence") or {}),previous["id"]))
             conn.execute("UPDATE political_observations SET disposition='outside_window',article_id=NULL,metadata=metadata || %s::jsonb WHERE job_id=%s AND observed_url=%s",
                          (_json(self._publication_fact(published, date_status)), task["job_id"], task["payload"]["url"]))
             self._finish(conn, task, "complete", result={"disposition": "outside_window", "dateReused": reused_date})
@@ -1318,6 +1327,45 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 SELECT 1 FROM political_url_aliases u WHERE u.article_id=a.id AND u.url=ANY(%s))
             ORDER BY a.body_chars DESC,a.id LIMIT 1""", (variants, variants)).fetchone()
 
+    def _probe_saved_publication(self, task: dict, url: str):
+        from .political_discovery import extract_article
+        deferred = False
+        try:
+            response = self.fetch(publisher_article_request_url(url))
+        except DomainCooldown:
+            deferred = True
+            raise
+        finally:
+            if not deferred:
+                with self._connect() as conn:
+                    self._lock_task(conn, task)
+                    conn.execute("UPDATE political_jobs SET fetch_attempted=fetch_attempted+1 WHERE id=%s", (task["job_id"],))
+        if response.status_code >= 400:
+            self._record_access_failure(task, response)
+            deadline = retry_after_deadline(response.headers.get("Retry-After"))
+            raise FetchProblem(f"http_{response.status_code}",
+                retryable=response.status_code in {408,425,429} or response.status_code >= 500,
+                status_code=response.status_code, retry_after=remaining_seconds(deadline) if deadline else 0)
+        if is_publisher_access_challenge(response.url, response.text):
+            self._record_access_failure(task, response)
+            raise FetchProblem("publisher_access_challenge", retryable=False)
+        # A home page redirect cannot establish this article's publication.
+        if canonicalize_url(response.url).rstrip("/") not in {
+                v.rstrip("/") for v in publisher_article_identity_urls(url)}:
+            return None
+        with timed_operation("publication_date_probe"):
+            extracted = extract_article(response.text, url)
+        canonical = canonicalize_url(str(extracted.get("canonical_url") or ""))
+        if canonical and canonical.rstrip("/") not in {v.rstrip("/") for v in publisher_article_identity_urls(url)}:
+            return None
+        published = parse_date(extracted.get("published_at"))
+        if not published:
+            return None
+        digest, key = self._store_html(response.text)
+        return published, {"url": response.url, "published_at": published.isoformat(),
+            "html_hash": digest, "html_object_key": key,
+            "at": datetime.now(timezone.utc).isoformat(), "body_reused": True}
+
     def _fetch_article(self, task: dict) -> dict:
         from .political_discovery import extract_article, is_google_intermediary
         candidate = task["payload"]
@@ -1336,6 +1384,9 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         with self._connect() as conn:
             job = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (task["job_id"],)).fetchone()
             existing = self._find_article(conn, fetch_url)
+            if (existing and existing["published_at"] is None and existing["legacy_id"] is None
+                    and not existing["source_key"].startswith(("manual", "legacy"))):
+                task["_undated_existing_article_id"] = existing["id"]
             if not existing and job["kind"] == "recover" and candidate.get("recover_partial_text"):
                 # Older Google metadata may not yet have a publisher URL alias.
                 # The frozen recovery reference still identifies its retained
@@ -1390,6 +1441,17 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             published, date_status = existing["published_at"], existing["date_status"]
             digest, key = existing["content_hash"], existing["text_object_key"]
             body_origin = "saved_object"
+            if not published and task.get("_undated_existing_article_id"):
+                # A saved body is reusable even when the initial parser missed
+                # its publication field. Recheck only this rediscovered URL;
+                # retain the original text and classifications unchanged.
+                date_probe = self._probe_saved_publication(task, final_url)
+                if date_probe:
+                    published, date_evidence = date_probe
+                    date_status = "page_verified"
+                    task["_date_probe_evidence"] = {"publication_date_evidence": date_evidence}
+                    candidate = {**candidate, "metadata": {**(candidate.get("metadata") or {}),
+                        **task["_date_probe_evidence"]}}
         elif batch_body is not None:
             body, final_url = batch_body["full_text"], batch_body["canonical_url"]
             published, date_status = parse_date(batch_body["published_at"]), "api_verified"
@@ -1493,6 +1555,13 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             page_date = parse_date(extracted.get("published_at"))
             if page_date:
                 published, date_status = page_date, "page_verified"
+                if task.get("_undated_existing_article_id"):
+                    if not html_key:
+                        html_hash, html_key = self._store_html(response.text)
+                    task["_date_probe_evidence"] = {"publication_date_evidence": {
+                        "url": response.url, "published_at": published.isoformat(),
+                        "html_hash": html_hash, "html_object_key": html_key,
+                        "at": datetime.now(timezone.utc).isoformat()}}
             canonical = canonicalize_url(str(extracted.get("canonical_url") or ""))
             if canonical and normalize_domain(urlparse(canonical).hostname) == normalize_domain(urlparse(final_url).hostname):
                 final_url = canonical
@@ -1502,6 +1571,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             candidate["metadata"].update({key: extracted[key] for key in
                 ("extraction_method", "extraction_version", "text_extent", "restriction_evidence", "content_format") if key in extracted})
             candidate["metadata"]["body_origin"] = body_origin
+            candidate["metadata"].update(task.get("_date_probe_evidence") or {})
             # Preserve confirmed metadata if immutable-object storage fails after
             # extraction; the generic retry handler must not revert to RSS dates.
             task["_verified_candidate"] = {**candidate, "url": final_url,
@@ -1515,7 +1585,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             insufficient_body = not editorial_available
             sample = int(hashlib.sha256(final_url.encode()).hexdigest()[:8], 16) % 100 < 5
             if insufficient_body or (sample and match_targets(job["target_snapshots"], title, body)):
-                html_hash, html_key = self._store_html(response.text)
+                if not html_key:
+                    html_hash, html_key = self._store_html(response.text)
                 candidate = {**candidate, "html_hash": html_hash, "html_object_key": html_key}
                 with self._connect() as conn:
                     self._lock_task(conn, task)
