@@ -14,7 +14,7 @@ import re
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
-EXTRACTION_VERSION = "editorial-2026-09-14.3"
+EXTRACTION_VERSION = "editorial-2026-09-14.4"
 _SAO_PAULO = ZoneInfo("America/Sao_Paulo")
 _SELECTORS = {
     "exame.com": "#news-body",
@@ -199,6 +199,9 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
     falling back to a larger unrelated story or subscription/navigation text.
     """
     host = (urlparse(url).hostname or "").lower().removeprefix("www.")
+    if host == "www1.folha.uol.com.br" and urlparse(url).path.startswith("/webstories/"):
+        from .political_webstory_extraction import extract_folha_story
+        return extract_folha_story(raw_html, url)
     if host in {"noticias.r7.com", "record.r7.com"}:
         from .political_r7_extraction import extract_video_companion
         return extract_video_companion(raw_html, url)
