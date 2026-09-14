@@ -19,14 +19,15 @@ OPERATIONS = frozenset({"task", "http", "http_body", "throttle_wait", "google_re
 OUTCOMES = frozenset({"ok", "error", "saved", "duplicate", "no_match", "not_news", "outside_window", "complete",
                       "continue", "split", "gap", "backpressure", "lease_lost", "retryable", "metadata_only", "failed"})
 KINDS = frozenset({"discovery", "fetch", "review"})
-MAX_SERIES = 256
+MAX_SERIES = 4096
 _local = threading.local()
 _log = logging.getLogger("political_metrics")
 
 
 def _sources() -> set[str]:
     try:
-        data = json.loads((Path(__file__).resolve().parents[1] / "data/political_sources_v1.json").read_text())
+        from .political_source_catalog import catalog_sources
+        data = {"sources": catalog_sources()}
         return {row["key"] for row in data.get("sources", []) if isinstance(row.get("key"), str)
                 and re.fullmatch(r"[a-z][a-z0-9_]{0,63}", row["key"])} | {"_review"}
     except (OSError, ValueError, TypeError, KeyError):
@@ -71,6 +72,7 @@ class Collector:
         self.max_series = max(2, min(MAX_SERIES, int(max_series)))
         self._lock = threading.Lock()
         self._rows = {}
+        self.overflow = 0
 
     def source(self, value) -> str:
         return value if isinstance(value, str) and value in self.allowed_sources else "unknown"
@@ -81,6 +83,7 @@ class Collector:
                operation if operation in OPERATIONS else "other", _outcome(outcome), _status(status_code))
         with self._lock:
             if key not in self._rows and len(self._rows) >= self.max_series - 1:
+                self.overflow += 1
                 key = ("unknown", "unknown", "other", "other", 0)
             row = self._rows.setdefault(key, {"count": 0, "durationMs": 0.0, "maxMs": 0.0})
             row["count"] += 1
@@ -90,6 +93,9 @@ class Collector:
     def drain(self, interval_seconds: float) -> list[dict]:
         with self._lock:
             rows, self._rows = self._rows, {}
+            overflow, self.overflow = self.overflow, 0
+        if overflow:
+            _emit("political_metrics_overflow", observations=overflow, seriesLimit=self.max_series)
         interval = max(float(interval_seconds), .001)
         return [{"kind": key[0], "source": key[1], "operation": key[2], "outcome": key[3],
                  "httpStatus": key[4], "count": row["count"], "durationMs": round(row["durationMs"], 2),
@@ -131,6 +137,14 @@ def record_timing(operation: str, elapsed_seconds: float, *, status_code=None, o
     row["durationMs"] = round(row["durationMs"] + duration, 2)
 
 
+def set_publisher_source(source: str) -> None:
+    context = getattr(_local, "task", None)
+    if context is not None:
+        if not hasattr(context, "discovery_source"):
+            context.discovery_source = context.source
+        context.source = context.collector.source(source)
+
+
 @contextmanager
 def timed_operation(operation: str):
     measured = Measurement()
@@ -165,6 +179,7 @@ def task_metrics(task: dict, *, metrics: Collector | None = None):
         outcome = _outcome(measured.outcome)
         metrics.observe(measured.kind, measured.source, "task", duration, outcome)
         _emit("political_task_duration", kind=measured.kind, source=measured.source,
+              discoverySource=getattr(measured, "discovery_source", measured.source),
               taskId=measured.task_id, outcome=outcome, durationMs=round(duration, 2), operations=measured.operations)
         _local.task = previous
 

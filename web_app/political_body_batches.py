@@ -23,6 +23,18 @@ WORDPRESS_BODY_SOURCES = {
     "tempo_real_rj": "temporealrj.com", "agenda_do_poder": "agendadopoder.com.br",
     "tupi": "tupi.fm", "j3news": "j3news.com",
 }
+# Add only publisher-advertised APIs whose dated public post responses were
+# preserved and checked during the 2026-09-14 gap-closure capability audit.
+# This is a publisher allowlist, not permission to associate arbitrary domains.
+from .political_expanded_discovery import load_expanded_sources
+for _source in load_expanded_sources():
+    if any(m.get("kind") == "wordpress" and m.get("date_scan_verified") is True
+           for m in _source.get("mechanisms", [])):
+        WORDPRESS_BODY_SOURCES[_source["key"]] = _source["domain"].removeprefix("www.")
+
+from .political_access_alternatives import PUBLIC_FEED_BODY_SOURCES
+WORDPRESS_BODY_SOURCES.update(PUBLIC_FEED_BODY_SOURCES)
+
 MAX_BATCH_BYTES = 2 * 1024 * 1024
 MAX_RECORDS = 100
 MAX_CACHE_BYTES = 8 * 1024 * 1024
@@ -63,6 +75,15 @@ def _record(record, source):
     _stamp(record.get("published_at"))
     if not isinstance(record.get("content_html"), str) or type(record.get("protected")) is not bool:
         _fail("batch_content_invalid")
+    if record.get("body_origin") == "publisher_rss":
+        if (source not in PUBLIC_FEED_BODY_SOURCES
+                or (urlparse(str(record.get("feed_url", ""))).hostname or "").removeprefix("www.") != PUBLIC_FEED_BODY_SOURCES[source]
+                or urlparse(str(record.get("feed_url", ""))).scheme != "https"
+                or not re.fullmatch(r"[0-9a-f]{64}", str(record.get("feed_sha256", "")))
+                or record.get("text_extent") != "unknown"):
+            _fail("batch_feed_provenance_invalid")
+    elif record.get("body_origin") not in (None, "wordpress_api"):
+        _fail("batch_origin_invalid")
     return record
 
 
@@ -204,7 +225,18 @@ class WordPressBodyBatches:
             _fail("batch_text_unavailable")
         # These can represent editorial continuation unavailable in a fragment.
         # Fall back to the real page rather than infer a complete negative match.
-        if re.search(r"<!--\s*(?:nextpage|more)\b|\bpage-links\b|\[(?:/?[a-z][a-z0-9_-]*)(?:\s|\])", fragment, re.I):
+        if record.get("body_origin") == "publisher_rss":
+            # Public feeds contain ordinary bracketed quotations ("[A parceria]")
+            # and CSS attribute selectors. Neither indicates missing article text.
+            # Check actual continuation markers and recognized visible WP embeds.
+            from pipeline.http_utils import html_to_text
+            continuation = re.search(r"<!--\s*(?:nextpage|more)\b|\bpage-links\b", fragment, re.I)
+            shortcode = re.search(r"\[/?(?:gallery|caption|embed|audio|video|playlist|et_pb_[a-z_]+|vc_[a-z_]+)(?:\s|\])",
+                                  html_to_text(fragment), re.I)
+        else:
+            continuation = re.search(r"<!--\s*(?:nextpage|more)\b|\bpage-links\b|\[(?:/?[a-z][a-z0-9_-]*)(?:\s|\])", fragment, re.I)
+            shortcode = False
+        if continuation or shortcode:
             _fail("batch_continuation_unverified")
         from .political_discovery import extract_article
         wrapper = ('<html><head><link rel="canonical" href="' + html.escape(record["url"], quote=True)
@@ -218,6 +250,13 @@ class WordPressBodyBatches:
         if extracted.get("extraction_state") != "full_text" or len(body.strip()) < 200:
             _fail("batch_text_unavailable")
         record_timing("body_batch_use", 0)
+        rss = record.get("body_origin") == "publisher_rss"
+        provenance = {"method": "publisher_rss_batch" if rss else "wordpress_api_batch",
+                      "version": VERSION, "batch": reference}
+        if rss:
+            provenance.update(feed_url=record["feed_url"], feed_sha256=record["feed_sha256"],
+                              text_extent="unknown")
         return {"full_text": body, "published_at": record["published_at"],
-                "canonical_url": _url(record["url"], source), "provenance": {
-                    "method": "wordpress_api_batch", "version": VERSION, "batch": reference}}
+                "canonical_url": _url(record["url"], source), "provenance": provenance,
+                "body_origin": "publisher_rss" if rss else "wordpress_api_batch",
+                "text_extent": "unknown" if rss else "available"}

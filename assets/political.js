@@ -10,6 +10,17 @@
   const text = (tag, value, cls) => {const e = document.createElement(tag); e.textContent = value == null ? "" : String(value); if (cls) e.className = cls; return e;};
   const displayName = key => state.targets.find(t => t.key === key)?.display_name || state.targets.find(t => t.key === key)?.label || key;
   const sourceName = key => state.sources.find(s => s.key === key)?.name || key;
+  const selectedSources = new Set();
+  function renderSources() {
+    $("collection-sources").replaceChildren();
+    for (const source of state.sources.filter(s => s.enabled !== false)) {
+      const label = document.createElement("label"), input = document.createElement("input");
+      input.type = "checkbox"; input.value = source.key; input.checked = selectedSources.has(source.key);
+      input.addEventListener("change", () => {input.checked ? selectedSources.add(source.key) : selectedSources.delete(source.key); $("selected-source-count").textContent = `(${selectedSources.size})`;});
+      label.append(input, text("span", source.name)); $("collection-sources").append(label);
+    }
+    $("selected-source-count").textContent = `(${selectedSources.size})`;
+  }
   const gapCount = metrics => (metrics.tasks || []).filter(t => ["gap", "failed", "retryable"].includes(t.status)).reduce((n, t) => n + Number(t.count || 0), 0);
   function gapReason(code = "") {
     if (code === "google_access_challenge") return "O Google bloqueou o acesso automatizado. A consulta ou a resolução da notícia ficou incompleta.";
@@ -82,7 +93,7 @@
     if (article.summary || article.snippet) card.append(text("p", article.summary || article.snippet));
     const tags = text("div", "", "tags");
     (article.targetKeys || []).forEach(key => tags.append(text("span", displayName(key), "tag")));
-    tags.append(text("span", article.bodyStatus === "body_extracted" ? "Texto disponível" : labels[article.bodyStatus] || "Texto pendente", "tag")); card.append(tags);
+    tags.append(text("span", article.textExtent === "partial" ? "Texto parcial" : article.textAvailable || article.bodyStatus === "body_extracted" ? "Texto disponível" : labels[article.bodyStatus] || "Texto pendente", "tag")); card.append(tags);
     const open = text("button", "Ler e classificar"); open.addEventListener("click", () => openArticle(article)); card.append(open);
     return card;
   }
@@ -117,7 +128,7 @@
   }
   function renderMetrics(metrics = {}) {
     metrics = {...metrics, unresolvedGaps: gapCount(metrics)};
-    const fields = [["uniqueCandidates", "URLs encontradas"], ["articlesInserted", "Notícias novas"], ["articlesReused", "Notícias reutilizadas"], ["duplicates", "URLs repetidas"], ["mentionsInserted", "Associações novas"], ["bodyExtracted", "Textos disponíveis"], ["metadataOnly", "Somente metadados"], ["fetchPending", "Textos pendentes"], ["unknownDates", "Datas a revisar"], ["unresolvedGaps", "Consultas com pendências"]];
+    const fields = [["uniqueCandidates", "URLs encontradas"], ["articlesInserted", "Notícias novas"], ["articlesReused", "Notícias reutilizadas"], ["articlesEnriched", "Registros com texto recuperado"], ["duplicates", "URLs repetidas"], ["mentionsInserted", "Associações novas"], ["textAvailable", "Textos disponíveis"], ["partialText", "Textos parciais"], ["metadataOnly", "Somente metadados"], ["fetchPending", "Textos pendentes"], ["unknownDates", "Datas a revisar"], ["unresolvedGaps", "Consultas com pendências"]];
     $("metrics").replaceChildren();
     for (const [key, label] of fields) {const pair = document.createElement("div"); pair.append(text("dt", label), text("dd", Number(metrics[key] || 0).toLocaleString("pt-BR"))); $("metrics").append(pair);}
   }
@@ -144,21 +155,33 @@
       const totalGaps = gapCount(data.metrics || {});
       if (totalGaps > (data.gaps || []).length) table.append(text("caption", `Detalhes de ${(data.gaps || []).length} das ${totalGaps} consultas com pendências. Os totais por fonte incluem todas as consultas.`));
       $("coverage-list").replaceChildren(items.length ? table : text("p", "Nenhuma consulta a fontes registrada."));
+      if (data.hasMore) {
+        const more = text("button", "Ver mais pendências"); let cursor = data.nextCursor;
+        more.addEventListener("click", async () => {
+          more.disabled = true;
+          try {
+            const next = await api(`/api/political/coverage?job_id=${encodeURIComponent(data.jobId)}&cursor=${cursor}&page_size=50`);
+            for (const row of next.gaps || []) {const tr = document.createElement("tr"); [sourceName(row.source_key), `${formatDate(row.date_from)} – ${formatDate(row.date_to)}`, labels[row.status] || row.status, gapReason(row.error_type)].forEach(v => tr.append(text("td", v))); table.append(tr);}
+            cursor = next.nextCursor; more.hidden = !next.hasMore;
+          } catch (error) {message(error.message, true);} finally {more.disabled = false;}
+        }); $("coverage-list").append(more);
+      }
     } catch (error) {$("coverage-list").replaceChildren(text("p", error.message));}
   }
   async function startJob(kind) {
     if (!state.selected.size) {message("Selecione pelo menos um nome.", true); return;}
+    if (kind !== "review" && !selectedSources.size) {message("Selecione pelo menos uma fonte.", true); return;}
     if (!$("date-from").value || !$("date-to").value) {message("Informe as duas datas para iniciar a coleta ou revisão.", true); return;}
-    $("start").disabled = $("review").disabled = true;
+    $("start").disabled = $("review").disabled = $("recover").disabled = true;
     try {
-      const payload = {kind, target_keys: [...state.selected], date_from: $("date-from").value, date_to: $("date-to").value, request_key: crypto.randomUUID()};
+      const payload = {kind, source_keys: [...selectedSources], target_keys: [...state.selected], date_from: $("date-from").value, date_to: $("date-to").value, request_key: crypto.randomUUID()};
       if (kind === "collect" && $("discovery-mode").value === "new") {
         payload.discovery_target_keys = state.newDiscoveryTargets.filter(key => state.selected.has(key));
         if (!payload.discovery_target_keys.length) throw new Error("Selecione pelo menos um dos novos candidatos.");
       }
       await api("/api/political/jobs", {method: "POST", body: JSON.stringify(payload)});
-      message(kind === "review" ? "Revisão solicitada. Os registros e classificações existentes serão preservados." : "Coleta solicitada. Você pode fechar esta página e acompanhar o resultado depois."); await refreshStatus();
-    } catch (error) {message(error.message, true);} finally {$("start").disabled = $("review").disabled = !state.configured || !state.canRun;}
+      message(kind === "recover" ? "Recuperação das lacunas solicitada. Os textos salvos aparecerão na conta." : kind === "review" ? "Revisão solicitada. Os registros e classificações existentes serão preservados." : "Coleta solicitada. Você pode fechar esta página e acompanhar o resultado depois."); await refreshStatus();
+    } catch (error) {message(error.message, true);} finally {$("start").disabled = $("review").disabled = $("recover").disabled = !state.configured || !state.canRun;}
   }
   function populateClassification() {
     const record = state.classifications.find(c => (c.target_key || c.targetKey) === $("classification-target").value) || {};
@@ -199,6 +222,7 @@
     if (Number.isSafeInteger(id) && id > 0) setArticleLink(id);
     const results = await Promise.allSettled([api(`/api/political/articles/${id}/text`), api(`/api/political/articles/${id}/classifications`)]);
     if (state.article !== article) return;
+    if (article.restrictionEvidence?.length) $("article-message").append(text("p", "A publicação sinaliza conteúdo restrito. O texto abaixo é o que ficou disponível na captura; a íntegra não foi confirmada."));
     const body = results[0]; $("article-text").textContent = body.status === "fulfilled" ? body.value.text || "Texto indisponível. Consulte a publicação original pelo link da notícia." : body.reason.message;
     if (results[1].status === "fulfilled") {state.classifications = classificationRows(results[1].value); populateClassification();}
     else $("classification-message").textContent = results[1].reason.message;
@@ -217,6 +241,10 @@
   $("all-dates").addEventListener("click", () => {$("date-from").value = ""; $("date-to").value = ""; loadResults(true);});
   $("next").addEventListener("click", () => {state.previous.push(state.cursor); state.cursor = state.next; loadResults();});
   $("previous").addEventListener("click", () => {state.cursor = state.previous.pop() || ""; loadResults();});
+  $("recover").addEventListener("click", () => startJob("recover"));
+  $("sources-all").addEventListener("click", () => {state.sources.filter(s => s.enabled !== false).forEach(s => selectedSources.add(s.key)); renderSources();});
+  $("sources-none").addEventListener("click", () => {selectedSources.clear(); renderSources();});
+  $("sources-recovery").addEventListener("click", () => {selectedSources.clear(); ["exame","congresso_em_foco","nf_noticias","elizeu_pires","ultima_hora_online","estadao"].filter(k => state.sources.some(s => s.key === k)).forEach(k => selectedSources.add(k)); renderSources();});
   $("start").addEventListener("click", () => startJob("collect")); $("review").addEventListener("click", () => startJob("review"));
   for (const action of ["resume", "cancel"]) $(action).addEventListener("click", async () => {if (!state.job) return; try {await api(`/api/political/jobs/${state.job.id}/${action}`, {method: "POST", body: "{}"}); await refreshStatus();} catch (error) {message(error.message, true);}});
   $("refresh").addEventListener("click", async () => {await refreshStatus(); await loadResults(); if ($("coverage").open) await loadCoverage();});
@@ -250,8 +278,9 @@
       if (!state.selected.size) state.selected = new Set(state.targets.map(t => t.key));
       const parts = new Intl.DateTimeFormat("en-CA", {timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit"}).formatToParts(new Date());
       const part = name => parts.find(p => p.type === name).value; $("date-to").value = `${part("year")}-${part("month")}-${part("day")}`;
-      for (const source of sourceData.sources || []) {const option = text("option", source.name || source.key); option.value = source.key; $("source").append(option);}
-      renderGroups(); $("run-controls").hidden = !state.canRun; $("start").disabled = $("review").disabled = !state.configured;
+      state.sources.filter(s => s.enabled !== false).forEach(s => selectedSources.add(s.key)); renderSources();
+      for (const source of sourceData.publishers || sourceData.sources || []) {const option = text("option", source.name || source.key); option.value = source.key; $("source").append(option);}
+      renderGroups(); $("run-controls").hidden = !state.canRun; $("start").disabled = $("review").disabled = $("recover").disabled = !state.configured;
       $("select-all").textContent = `Todos os ${state.targets.length} nomes da lista`;
       $("account-label").textContent = meta.clientLabel || meta.clientProfile || "";
       $("psd-client-link").hidden = !meta.psdClientAvailable || Boolean(clientProfile);

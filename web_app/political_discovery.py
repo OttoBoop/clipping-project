@@ -49,8 +49,8 @@ class DiscoveryError(RuntimeError):
 
 
 def load_sources() -> list[dict[str, Any]]:
-    payload = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
-    return payload["sources"]
+    from .political_source_catalog import catalog_sources
+    return catalog_sources()
 
 
 def date_windows(date_from: str, date_to: str, days: int = 7) -> list[tuple[str, str]]:
@@ -128,7 +128,7 @@ def fallback_tasks(task: dict, target_snapshots: list[dict]) -> list[dict]:
     Stable task payloads let PostgreSQL deduplicate fallback requests caused by
     several failed direct mechanisms for the same source and time window.
     """
-    source = next((row for row in load_sources() if row["key"] == task["source_key"]), None)
+    source = task.get("source_snapshot") or next((row for row in load_sources() if row["key"] == task["source_key"]), None)
     if not source or source.get("google_policy") != "on_direct_gap" or task.get("strategy") == "google_news":
         return []
     start = task.get("day") or task["date_from"]
@@ -137,9 +137,9 @@ def fallback_tasks(task: dict, target_snapshots: list[dict]) -> list[dict]:
 
 
 def build_tasks(target_snapshots: list[dict[str, Any]], date_from: str, date_to: str,
-                source_keys: list[str] | None = None) -> list[dict[str, Any]]:
+                source_keys: list[str] | None = None, source_snapshots: list[dict] | None = None) -> list[dict[str, Any]]:
     windows = date_windows(date_from, date_to)
-    sources = load_sources()
+    sources = source_snapshots if source_snapshots is not None else [s for s in load_sources() if not s.get("allowed_profiles")]
     known = {source["key"] for source in sources}
     if source_keys is not None and set(source_keys) - known:
         raise ValueError("unknown political sources: " + ", ".join(sorted(set(source_keys) - known)))
@@ -190,8 +190,14 @@ def build_tasks(target_snapshots: list[dict[str, Any]], date_from: str, date_to:
             elif strategy in {"camara_archive", "vejario_archive"}:
                 for url in source.get("archive_urls", []):
                     tasks.append({**base, "strategy": strategy, "url": url, "cursor": {"page": 1}})
+            elif strategy == "expanded":
+                from .political_expanded_discovery import build_expanded_tasks
+                tasks.extend(build_expanded_tasks(source, date_from, date_to, target_snapshots))
             else:
                 raise ValueError("unsupported political discovery strategy: " + strategy)
+    if source_snapshots is not None:
+        by_key = {row["key"]: row for row in sources}
+        tasks = [{**task, "source_snapshot": by_key[task["source_key"]]} for task in tasks]
     return tasks
 
 
@@ -875,10 +881,13 @@ def _rc24h_archive(task, source, fetch):
 
 
 def discover(task: dict[str, Any], fetch: Callable) -> dict[str, Any]:
-    source = next((row for row in load_sources() if row["key"] == task["source_key"]), None)
+    source = task.get("source_snapshot") or next((row for row in load_sources() if row["key"] == task["source_key"]), None)
     if source is None:
         raise DiscoveryError("unknown source", retryable=False)
     strategy = task["strategy"]
+    if strategy.startswith("expanded_"):
+        from .political_expanded_discovery import discover_expanded
+        return discover_expanded(task, source, fetch)
     if strategy == "google_news":
         return _google(task, source, fetch)
     if strategy in {"sitemap", "daily_sitemap"}:
@@ -1098,7 +1107,12 @@ class _ArticleParser(HTMLParser):
             self.parts.append(data)
 
 
-def extract_article(raw_html: str) -> dict[str, str]:
+def extract_article(raw_html: str, url: str = "") -> dict[str, Any]:
+    if url:
+        from .political_editorial_extraction import extract_for_publisher
+        editorial = extract_for_publisher(raw_html, url)
+        if editorial is not None:
+            return editorial
     parser = _ArticleParser()
     parser.feed(raw_html or "")
     structured_bodies = []

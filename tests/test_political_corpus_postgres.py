@@ -45,7 +45,8 @@ def service():
     corpus.ensure_schema()
     with corpus._connect() as conn:
         conn.execute("""TRUNCATE political_jobs,political_articles,political_stories,political_source_leases,
-            political_domain_limits,political_workers,political_import_progress,political_legacy_ids,political_legacy_records RESTART IDENTITY CASCADE""")
+            political_domain_limits,political_workers,political_import_progress,political_legacy_ids,political_legacy_records,
+            political_resolved_urls RESTART IDENTITY CASCADE""")
     yield corpus
     corpus.close()
 

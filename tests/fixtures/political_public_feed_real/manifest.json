@@ -1,0 +1,40 @@
+{
+  "provenance": "Unmodified public RSS responses fetched read-only from the live Render worker on 2026-09-14. Diagnostic readbacks, not new archive articles.",
+  "responses": [
+    {
+      "kind": "advertised_feed",
+      "url": "https://diariodovale.com.br/feed/",
+      "checked_at": "2026-09-14T16:44:54.005533+00:00",
+      "sha256": "5ae8b31386f54f26537a8d47d3eeb92a482306d4436c7ff3228cba51f6f3c861",
+      "body_file": "5ae8b31386f54f26537a.gz"
+    },
+    {
+      "kind": "feed_page_two",
+      "url": "https://diariodovale.com.br/feed/?paged=2",
+      "checked_at": "2026-09-14T16:47:13.402344+00:00",
+      "sha256": "54516bb3156f362397ab364fbb5a4850cdd15e042abe339298df043473431b19",
+      "body_file": "54516bb3156f362397ab.gz"
+    },
+    {
+      "kind": "feed_date_archive",
+      "url": "https://diariodovale.com.br/feed/?m=20260809",
+      "checked_at": "2026-09-14T16:47:38.855692+00:00",
+      "sha256": "5ae8b31386f54f26537a8d47d3eeb92a482306d4436c7ff3228cba51f6f3c861",
+      "body_file": "5ae8b31386f54f26537a.gz"
+    },
+    {
+      "kind": "feed_history_page_80",
+      "url": "https://diariodovale.com.br/feed/?paged=80",
+      "checked_at": "2026-09-14T16:50:13.213709+00:00",
+      "sha256": "87eea7ee908777cda2119996fb717f14eed7b071ac5da30fe441d06690c79a22",
+      "body_file": "87eea7ee908777cda211.gz"
+    },
+    {
+      "kind": "feed_history_page_150",
+      "url": "https://diariodovale.com.br/feed/?paged=150",
+      "checked_at": "2026-09-14T16:50:17.125228+00:00",
+      "sha256": "7e17d5c6e4759308ed3fee67ebf73b88d869fbf8c0164da989a662138c703977",
+      "body_file": "7e17d5c6e4759308ed3f.gz"
+    }
+  ]
+}

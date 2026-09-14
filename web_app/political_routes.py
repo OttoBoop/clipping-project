@@ -151,10 +151,10 @@ def meta(request: Request):
 
 @router.get("/api/political/sources")
 def sources(request: Request):
-    access(request)
-    import json
-    with (ROOT / "data" / "political_sources_v1.json").open(encoding="utf-8") as f:
-        return json.load(f)
+    session, keys, _ = access(request)
+    profile = request.query_params.get("client") or str(session.get("profile") or "")
+    with service_errors():
+        return political_corpus.source_catalog(profile=profile, allowed_target_keys=keys)
 
 
 @router.get("/api/political/status")
@@ -188,6 +188,7 @@ async def start(request: Request):
     # Never trust client-supplied matching rules or hidden target snapshots.
     payload["target_snapshots"] = [active[k] for k in dict.fromkeys(selected)]
     payload["scope"] = SCOPE
+    payload["collection_profile"] = request.query_params.get("client") or str(session.get("profile") or "")
     payload.setdefault("date_from", "2026-06-01")
     with service_errors():
         return await run_in_threadpool(political_corpus.start_job, payload,
@@ -230,10 +231,10 @@ def article_text(request: Request, article_id: int):
 
 
 @router.get("/api/political/coverage")
-def coverage(request: Request, job_id: str = ""):
+def coverage(request: Request, job_id: str = "", cursor: int = 0, page_size: int = 50):
     _, keys, _ = access(request)
     with service_errors():
-        return political_corpus.coverage(job_id, allowed_target_keys=keys)
+        return political_corpus.coverage(job_id, allowed_target_keys=keys, cursor=cursor, page_size=page_size)
 
 
 @router.get("/api/political/articles/{article_id}/classifications")

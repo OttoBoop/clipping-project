@@ -1,0 +1,3826 @@
+{
+  "version": 1,
+  "scope": "politica_rj_2026",
+  "sources": [
+    {
+      "key": "estadao",
+      "name": "Estadão",
+      "domain": "estadao.com.br",
+      "domains": [
+        "estadao.com.br",
+        "www.estadao.com.br"
+      ],
+      "base_url": "https://www.estadao.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 1,
+      "legacy_source_keys": [
+        "publisher:estadao.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www.estadao.com.br/arc/outboundfeeds/sitemap-index-by-day/?outputType=xml",
+          "calendar_tail_days": 3,
+          "evidence_url": "https://www.estadao.com.br/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://estadao.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:40Z",
+          "basis": "Public workstation HTTP 200; evidence d544f74b6282aa48651d.gz; does not prove Render access."
+        },
+        {
+          "url": "https://estadao.com.br/",
+          "verified_at": "2026-09-14T16:37:42Z",
+          "basis": "Public workstation HTTP 200; evidence 64e6dff45a4035a27b7a.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.estadao.com.br/arc/outboundfeeds/sitemap-index-by-day/?outputType=xml",
+          "verified_at": "2026-09-14T16:39:10Z",
+          "basis": "Public workstation HTTP 200; evidence 18737811f39774dbef3f.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.estadao.com.br/sitemaps/custom/www.estadao",
+          "verified_at": "2026-09-14T16:39:12Z",
+          "basis": "Public workstation HTTP 200; evidence 7b6d72e56b5f7e0c478c.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "istoe",
+      "name": "IstoÉ",
+      "domain": "istoe.com.br",
+      "domains": [
+        "istoe.com.br"
+      ],
+      "base_url": "https://istoe.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:istoe.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://istoe.com.br/wp-sitemap.xml",
+          "evidence_url": "https://istoe.com.br/robots.txt",
+          "numbered_part_pattern": "https://istoe\\.com\\.br/wp-sitemap-posts-post-(?P<part>\\d+)\\.xml",
+          "minimum_numbered_part": 603
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text. Audited numbered sitemap partitions are prioritized in full; earlier partitions remain an explicit gap with domain fallback. Lastmod is never used as publication or to reject an article.",
+      "evidence": [
+        {
+          "url": "https://istoe.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:40Z",
+          "basis": "Public workstation HTTP 200; evidence 779d247af54bb49b3211.gz; does not prove Render access."
+        },
+        {
+          "url": "https://istoe.com.br/",
+          "verified_at": "2026-09-14T16:37:43Z",
+          "basis": "Public workstation HTTP 200; evidence 6a872f64f29a55597a8c.gz; does not prove Render access."
+        },
+        {
+          "url": "https://istoe.com.br/wp-sitemap.xml",
+          "verified_at": "2026-09-14T16:39:08Z",
+          "basis": "Public workstation HTTP 200; evidence 9977f0c63d77271811ac.gz; does not prove Render access."
+        },
+        {
+          "url": "https://istoe.com.br/wp-sitemap.xml",
+          "basis": "Complete publisher index and full numbered parts preserved in source-audit/istoe-investigation-tail-sitemaps-istoe.com.br.json; partitions chosen from discovery evidence, never benchmark URLs.",
+          "verified_at": "2026-09-14"
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "min_request_interval_seconds": 5,
+      "expected_initial_candidates": 3000
+    },
+    {
+      "key": "cnn_brasil",
+      "name": "CNN Brasil",
+      "domain": "cnnbrasil.com.br",
+      "domains": [
+        "cnnbrasil.com.br",
+        "www.cnnbrasil.com.br"
+      ],
+      "base_url": "https://www.cnnbrasil.com.br",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:cnnbrasil.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://admin.cnnbrasil.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://admin.cnnbrasil.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id,link,title,date,date_gmt,content"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://cnnbrasil.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:40Z",
+          "basis": "Public workstation HTTP 200; evidence 1fe82815c1c32c400bd4.gz; does not prove Render access."
+        },
+        {
+          "url": "https://cnnbrasil.com.br/",
+          "verified_at": "2026-09-14T16:37:42Z",
+          "basis": "Public workstation HTTP 200; evidence 01c4ec388fe3fc2eaba9.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.cnnbrasil.com.br/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:14Z",
+          "basis": "Public workstation HTTP 200; evidence d768946ce09eae48bd41.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.cnnbrasil.com.br/sitemap-news.xml",
+          "verified_at": "2026-09-14T16:39:15Z",
+          "basis": "Public workstation HTTP 200; evidence 245eee5fbb5d449a97cd.gz; does not prove Render access."
+        },
+        {
+          "url": "https://admin.cnnbrasil.com.br/wp-json/",
+          "verified_at": "2026-09-14",
+          "basis": "Official API index returns CNN Brasil identity and advertises /wp/v2/posts; date-window canary returned214posts for August9,2sampled with full rendered content; evidence cnn-verified-api.json."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "poder360",
+      "name": "Poder360",
+      "domain": "poder360.com.br",
+      "domains": [
+        "poder360.com.br",
+        "www.poder360.com.br"
+      ],
+      "base_url": "https://www.poder360.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:poder360.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://www.poder360.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://www.poder360.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://poder360.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:40Z",
+          "basis": "Public workstation HTTP 200; evidence 92eefdf253aaa156c1e4.gz; does not prove Render access."
+        },
+        {
+          "url": "https://poder360.com.br/",
+          "verified_at": "2026-09-14T16:37:42Z",
+          "basis": "Public workstation HTTP 200; evidence ba00937242715378f15c.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.poder360.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:00Z",
+          "basis": "Public workstation HTTP 200; evidence 644a22b512413d1f2488.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.poder360.com.br/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:02Z",
+          "basis": "Public workstation HTTP 200; evidence daeffe2b67f463280539.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "correio_da_manha",
+      "name": "Correio da Manhã",
+      "domain": "correiodamanha.com.br",
+      "domains": [
+        "correiodamanha.com.br",
+        "www.correiodamanha.com.br"
+      ],
+      "base_url": "https://www.correiodamanha.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:correiodamanha.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "archive",
+          "url": "https://www.correiodamanha.com.br/politica",
+          "evidence_url": "https://www.correiodamanha.com.br/"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://correiodamanha.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:40Z",
+          "basis": "Public workstation HTTP 200; evidence 2381917658b0d95c5cd7.gz; does not prove Render access."
+        },
+        {
+          "url": "https://correiodamanha.com.br/",
+          "verified_at": "2026-09-14T16:37:42Z",
+          "basis": "Public workstation HTTP 200; evidence 42a654dc68e3caec6ca7.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "terra",
+      "name": "Terra",
+      "domain": "terra.com.br",
+      "domains": [
+        "terra.com.br",
+        "www.terra.com.br"
+      ],
+      "base_url": "https://www.terra.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:terra.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "archive",
+          "url": "https://www.terra.com.br/noticias/eleicoes/",
+          "evidence_url": "https://www.terra.com.br/"
+        },
+        {
+          "kind": "archive",
+          "url": "https://www.terra.com.br/noticias/brasil/politica/",
+          "evidence_url": "https://www.terra.com.br/"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://terra.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:43Z",
+          "basis": "Public workstation HTTP 200; evidence c78631cb81037b2f2b39.gz; does not prove Render access."
+        },
+        {
+          "url": "https://terra.com.br/",
+          "verified_at": "2026-09-14T16:37:46Z",
+          "basis": "Public workstation HTTP 200; evidence cca35004734f260f8bed.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "brasil247",
+      "name": "Brasil247",
+      "domain": "brasil247.com",
+      "domains": [
+        "brasil247.com",
+        "www.brasil247.com"
+      ],
+      "base_url": "https://www.brasil247.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:brasil247.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://www.brasil247.com/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://www.brasil247.com/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://brasil247.com/robots.txt",
+          "verified_at": "2026-09-14T16:37:43Z",
+          "basis": "Public workstation HTTP 200; evidence 842b34303164ead41bcc.gz; does not prove Render access."
+        },
+        {
+          "url": "https://brasil247.com/",
+          "verified_at": "2026-09-14T16:37:44Z",
+          "basis": "Public workstation HTTP 200; evidence e8ea4975a409c641bd8b.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.brasil247.com/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:20Z",
+          "basis": "Public workstation HTTP 200; evidence 449d55b91f3acec41102.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "o_antagonista",
+      "name": "O Antagonista",
+      "domain": "oantagonista.com.br",
+      "domains": [
+        "oantagonista.com.br"
+      ],
+      "base_url": "https://oantagonista.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:oantagonista.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://oantagonista.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://oantagonista.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://oantagonista.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:44Z",
+          "basis": "Public workstation HTTP 200; evidence 669ee2bb6ef0f21a3bab.gz; does not prove Render access."
+        },
+        {
+          "url": "https://oantagonista.com.br/",
+          "verified_at": "2026-09-14T16:37:45Z",
+          "basis": "Public workstation HTTP 200; evidence ea249dac2af0f64912c6.gz; does not prove Render access."
+        },
+        {
+          "url": "https://oantagonista.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:13Z",
+          "basis": "Public workstation HTTP 200; evidence 2ec795f5d66026ce3155.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "sbt_news",
+      "name": "SBT News",
+      "domain": "sbtnews.sbt.com.br",
+      "domains": [
+        "sbtnews.sbt.com.br"
+      ],
+      "base_url": "https://sbtnews.sbt.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:sbtnews.sbt.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://sbtnews.sbt.com.br/sitemap.xml",
+          "evidence_url": "https://sbtnews.sbt.com.br/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://sbtnews.sbt.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:44Z",
+          "basis": "Public workstation HTTP 200; evidence 6e0d199d573171282381.gz; does not prove Render access."
+        },
+        {
+          "url": "https://sbtnews.sbt.com.br/",
+          "verified_at": "2026-09-14T16:37:45Z",
+          "basis": "Public workstation HTTP 200; evidence 5121bd151696ca0c6eb5.gz; does not prove Render access."
+        },
+        {
+          "url": "https://sbtnews.sbt.com.br/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:17Z",
+          "basis": "Public workstation HTTP 200; evidence 13bc86cf4b21b0c779ed.gz; does not prove Render access."
+        },
+        {
+          "url": "https://sbtnews.sbt.com.br/sitemap-news.xml",
+          "verified_at": "2026-09-14T16:39:19Z",
+          "basis": "Public workstation HTTP 200; evidence 7dfc64e28a487b9ab9db.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "r7",
+      "name": "R7 Notícias",
+      "domain": "noticias.r7.com",
+      "domains": [
+        "noticias.r7.com"
+      ],
+      "base_url": "https://noticias.r7.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:noticias.r7.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://noticias.r7.com/arc/outboundfeeds/sitemap-index-byday/",
+          "evidence_url": "https://noticias.r7.com/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://noticias.r7.com/robots.txt",
+          "verified_at": "2026-09-14T16:37:44Z",
+          "basis": "Public workstation HTTP 200; evidence b4a50e27bf08f8f84b6c.gz; does not prove Render access."
+        },
+        {
+          "url": "https://noticias.r7.com/",
+          "verified_at": "2026-09-14T16:37:46Z",
+          "basis": "Public workstation HTTP 200; evidence 48323e97cd73c841afe1.gz; does not prove Render access."
+        },
+        {
+          "url": "https://noticias.r7.com/arc/outboundfeeds/sitemap-news-index/",
+          "verified_at": "2026-09-14T16:39:23Z",
+          "basis": "Public workstation HTTP 200; evidence 7deca856e962ba502318.gz; does not prove Render access."
+        },
+        {
+          "url": "https://noticias.r7.com/arc/outboundfeeds/sitemap-section-index/",
+          "verified_at": "2026-09-14T16:39:24Z",
+          "basis": "Public workstation HTTP 200; evidence 11457c1a79a764a80229.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "veja",
+      "name": "Veja",
+      "domain": "veja.abril.com.br",
+      "domains": [
+        "veja.abril.com.br"
+      ],
+      "base_url": "https://veja.abril.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:veja.abril.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "daily_sitemap",
+          "url_template": "https://veja.abril.com.br/sitemap.xml?yyyy={yyyy}&mm={mm}&dd={dd}",
+          "pagination": "none",
+          "evidence_url": "https://veja.abril.com.br/sitemap.xml?yyyy=2026&mm=06&dd=24"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://veja.abril.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:45Z",
+          "basis": "Public workstation HTTP 200; evidence 24f6b0eb54a6e41216cf.gz; does not prove Render access."
+        },
+        {
+          "url": "https://veja.abril.com.br/",
+          "verified_at": "2026-09-14T16:37:46Z",
+          "basis": "Public workstation HTTP 200; evidence f1e6d6c9d23541e12f2a.gz; does not prove Render access."
+        },
+        {
+          "url": "https://veja.abril.com.br/news-sitemap.xml",
+          "verified_at": "2026-09-14T16:38:55Z",
+          "basis": "Public workstation HTTP 200; evidence 22f1bed931c94650ec65.gz; does not prove Render access."
+        },
+        {
+          "url": "https://veja.abril.com.br/sitemap.xml",
+          "verified_at": "2026-09-14T16:38:57Z",
+          "basis": "Public workstation HTTP 200; evidence bcf037b92e1654504f17.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "cartacapital",
+      "name": "CartaCapital",
+      "domain": "cartacapital.com.br",
+      "domains": [
+        "cartacapital.com.br",
+        "www.cartacapital.com.br"
+      ],
+      "base_url": "https://www.cartacapital.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:cartacapital.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://www.cartacapital.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://www.cartacapital.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://cartacapital.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:46Z",
+          "basis": "Public workstation HTTP 200; evidence 954ec6b5759dc61a3aaf.gz; does not prove Render access."
+        },
+        {
+          "url": "https://cartacapital.com.br/",
+          "verified_at": "2026-09-14T16:37:47Z",
+          "basis": "Public workstation HTTP 200; evidence ef38a2c693050010ba01.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.cartacapital.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:21Z",
+          "basis": "Public workstation HTTP 200; evidence fc395df5b4c655edd0d1.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "valor",
+      "name": "Valor Econômico",
+      "domain": "valor.globo.com",
+      "domains": [
+        "valor.globo.com"
+      ],
+      "base_url": "https://valor.globo.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:valor.globo.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "daily_sitemap",
+          "url_template": "https://valor.globo.com/sitemap/valor/{yyyy}/{mm}/{dd}_{page}.xml",
+          "pagination": "numbered",
+          "evidence_url": "https://valor.globo.com/sitemap/valor/sitemap.xml"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://valor.globo.com/robots.txt",
+          "verified_at": "2026-09-14T16:37:46Z",
+          "basis": "Public workstation HTTP 200; evidence b166dbb17b4f8c75fbe9.gz; does not prove Render access."
+        },
+        {
+          "url": "https://valor.globo.com/",
+          "verified_at": "2026-09-14T16:37:47Z",
+          "basis": "Public workstation HTTP 200; evidence 1b0ea992aa14b66d9007.gz; does not prove Render access."
+        },
+        {
+          "url": "https://valor.globo.com/sitemap/valor/sitemap.xml",
+          "verified_at": "2026-09-14T16:38:55Z",
+          "basis": "Public workstation HTTP 200; evidence 7ba3417b44e0d9f0d506.gz; does not prove Render access."
+        },
+        {
+          "url": "https://valor.globo.com/sitemap/valor/news.xml",
+          "verified_at": "2026-09-14T16:38:58Z",
+          "basis": "Public workstation HTTP 200; evidence 67fc47bdd91d93a243ba.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "folha",
+      "name": "Folha de S.Paulo",
+      "domain": "www1.folha.uol.com.br",
+      "domains": [
+        "www1.folha.uol.com.br",
+        "www.folha.uol.com.br"
+      ],
+      "base_url": "https://www.folha.uol.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:www1.folha.uol.com.br",
+        "publisher:folha.uol.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www1.folha.uol.com.br/sitemap.xml",
+          "evidence_url": "https://www1.folha.uol.com.br/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://www1.folha.uol.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:46Z",
+          "basis": "Public workstation HTTP 200; evidence 36f3e26b54ef979b5d64.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www1.folha.uol.com.br/",
+          "verified_at": "2026-09-14T16:37:47Z",
+          "basis": "Public workstation HTTP 200; evidence 3825d21ed940f8411588.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www1.folha.uol.com.br/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:11Z",
+          "basis": "Public workstation HTTP 200; evidence 811c21e4685a257a6b81.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "crusoe",
+      "name": "Crusoé",
+      "domain": "crusoe.com.br",
+      "domains": [
+        "crusoe.com.br"
+      ],
+      "base_url": "https://crusoe.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:crusoe.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://crusoe.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://crusoe.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://crusoe.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:47Z",
+          "basis": "Public workstation HTTP 200; evidence 71b2cda96144fa9a2477.gz; does not prove Render access."
+        },
+        {
+          "url": "https://crusoe.com.br/",
+          "verified_at": "2026-09-14T16:37:49Z",
+          "basis": "Public workstation HTTP 200; evidence 8d36e6658f15e732f567.gz; does not prove Render access."
+        },
+        {
+          "url": "https://crusoe.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:25Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        },
+        {
+          "url": "https://crusoe.com.br/sitemap-news.xml",
+          "verified_at": "2026-09-14T16:39:26Z",
+          "basis": "Public workstation HTTP 200; evidence c7c367b7e72097484b37.gz; does not prove Render access."
+        },
+        {
+          "url": "https://crusoe.com.br/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:28Z",
+          "basis": "Public workstation HTTP 200; evidence 2e27ef38b3c51696aed0.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "exame",
+      "name": "Exame",
+      "domain": "exame.com",
+      "domains": [
+        "exame.com"
+      ],
+      "base_url": "https://exame.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 1,
+      "legacy_source_keys": [
+        "publisher:exame.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://exame.com/sitemap.xml",
+          "evidence_url": "https://exame.com/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://exame.com/robots.txt",
+          "verified_at": "2026-09-14T16:37:48Z",
+          "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access."
+        },
+        {
+          "url": "https://exame.com/",
+          "verified_at": "2026-09-14T16:37:49Z",
+          "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access."
+        },
+        {
+          "url": "https://exame.com/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:02Z",
+          "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "congresso_em_foco",
+      "name": "Congresso em Foco",
+      "domain": "congressoemfoco.com.br",
+      "domains": [
+        "congressoemfoco.uol.com.br",
+        "www.congressoemfoco.com.br",
+        "congressoemfoco.com.br"
+      ],
+      "base_url": "https://www.congressoemfoco.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 1,
+      "legacy_source_keys": [
+        "publisher:congressoemfoco.uol.com.br",
+        "publisher:congressoemfoco.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www.congressoemfoco.com.br/sitemap.xml",
+          "evidence_url": "https://congressoemfoco.uol.com.br/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://congressoemfoco.uol.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:48Z",
+          "basis": "Public workstation HTTP 200; evidence ea423cedfcc9c8ec1b24.gz; does not prove Render access."
+        },
+        {
+          "url": "https://congressoemfoco.uol.com.br/",
+          "verified_at": "2026-09-14T16:37:50Z",
+          "basis": "Public workstation HTTP 200; evidence a50a3abefcbfa5a5aa32.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.congressoemfoco.com.br/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:01Z",
+          "basis": "Public workstation HTTP 200; evidence 85e3bf7bbc47cfabd6b2.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "nf_noticias",
+      "name": "NF Notícias",
+      "domain": "nfnoticias.com.br",
+      "domains": [
+        "nfnoticias.com.br",
+        "www.nfnoticias.com.br"
+      ],
+      "base_url": "https://www.nfnoticias.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 1,
+      "legacy_source_keys": [
+        "publisher:nfnoticias.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www.nfnoticias.com.br/sitemap.xml",
+          "history_complete": false,
+          "evidence_url": "https://www.nfnoticias.com.br/robots.txt"
+        },
+        {
+          "kind": "archive",
+          "url": "https://www.nfnoticias.com.br/editoria-2/politica",
+          "evidence_url": "https://www.nfnoticias.com.br/"
+        },
+        {
+          "kind": "feed",
+          "url": "https://www.nfnoticias.com.br/rss",
+          "pagination": "advertised_only",
+          "history_complete": false,
+          "evidence_url": "https://www.nfnoticias.com.br/"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://nfnoticias.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:49Z",
+          "basis": "Public workstation HTTP 200; evidence 4585303b5040a858f2ff.gz; does not prove Render access."
+        },
+        {
+          "url": "https://nfnoticias.com.br/",
+          "verified_at": "2026-09-14T16:37:51Z",
+          "basis": "Public workstation HTTP 200; evidence 9bbcdd38e53b4258edc6.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.nfnoticias.com.br/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:12Z",
+          "basis": "Public workstation HTTP 200; evidence ffd08ab669f3889541ea.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "elizeu_pires",
+      "name": "Elizeu Pires",
+      "domain": "elizeupires.com",
+      "domains": [
+        "elizeupires.com"
+      ],
+      "base_url": "https://elizeupires.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 1,
+      "legacy_source_keys": [
+        "publisher:elizeupires.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://elizeupires.com/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://elizeupires.com/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://elizeupires.com/robots.txt",
+          "verified_at": "2026-09-14T16:37:49Z",
+          "basis": "Public workstation HTTP 200; evidence 8f2b7b19c295b8a05355.gz; does not prove Render access."
+        },
+        {
+          "url": "https://elizeupires.com/",
+          "verified_at": "2026-09-14T16:37:51Z",
+          "basis": "Public workstation HTTP 200; evidence 6fbc453e43651b20dc7a.gz; does not prove Render access."
+        },
+        {
+          "url": "https://elizeupires.com/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:02Z",
+          "basis": "Public workstation HTTP 200; evidence 6071e7145b662cd7d5f5.gz; does not prove Render access."
+        },
+        {
+          "url": "https://elizeupires.com/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:04Z",
+          "basis": "Public workstation HTTP 200; evidence e50d5f8447b940423285.gz; does not prove Render access."
+        },
+        {
+          "url": "https://elizeupires.com/sitemap.rss",
+          "verified_at": "2026-09-14T16:39:06Z",
+          "basis": "Public workstation HTTP 200; evidence cc09fc8d7c882b24e8cb.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "ultima_hora_online",
+      "name": "Última Hora Online",
+      "domain": "ultimahoraonline.com.br",
+      "domains": [
+        "ultimahoraonline.com.br",
+        "www.ultimahoraonline.com.br"
+      ],
+      "base_url": "https://www.ultimahoraonline.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 1,
+      "legacy_source_keys": [
+        "publisher:ultimahoraonline.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "archive",
+          "url": "https://www.ultimahoraonline.com.br/noticias/politica",
+          "evidence_url": "https://www.ultimahoraonline.com.br/"
+        },
+        {
+          "kind": "archive",
+          "url": "https://www.ultimahoraonline.com.br/noticias/cidades",
+          "evidence_url": "https://www.ultimahoraonline.com.br/"
+        },
+        {
+          "kind": "archive",
+          "url": "https://www.ultimahoraonline.com.br/noticias/entrevistas/autoridades-e-politicos",
+          "evidence_url": "https://www.ultimahoraonline.com.br/"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://ultimahoraonline.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:49Z",
+          "basis": "Public workstation HTTP 200; evidence daee8788c7dba1b64032.gz; does not prove Render access."
+        },
+        {
+          "url": "https://ultimahoraonline.com.br/",
+          "verified_at": "2026-09-14T16:37:52Z",
+          "basis": "Public workstation HTTP 200; evidence 8a8f5a0ac33bfaf7dad2.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "band",
+      "name": "Band",
+      "domain": "band.com.br",
+      "domains": [
+        "band.com.br",
+        "www.band.com.br"
+      ],
+      "base_url": "https://www.band.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 1,
+      "legacy_source_keys": [
+        "publisher:band.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "archive",
+          "url": "https://www.band.com.br/politica/eleicoes",
+          "evidence_url": "https://www.band.com.br/"
+        },
+        {
+          "kind": "archive",
+          "url": "https://www.band.com.br/politica/",
+          "evidence_url": "https://www.band.com.br/"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://band.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:52Z",
+          "basis": "Public workstation HTTP 200; evidence e3b0c44298fc1c149afb.gz; does not prove Render access."
+        },
+        {
+          "url": "https://band.com.br/",
+          "verified_at": "2026-09-14T16:37:53Z",
+          "basis": "Public workstation HTTP 200; evidence a845a56b940a4d1e2e97.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "uol_noticias",
+      "name": "UOL Notícias",
+      "domain": "noticias.uol.com.br",
+      "domains": [
+        "noticias.uol.com.br"
+      ],
+      "base_url": "https://noticias.uol.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 1,
+      "legacy_source_keys": [
+        "publisher:noticias.uol.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://noticias.uol.com.br/sitemap/index.xml",
+          "evidence_url": "https://noticias.uol.com.br/robots.txt"
+        },
+        {
+          "kind": "sitemap",
+          "url": "https://noticias.uol.com.br/sitemap/v2/news-01.xml",
+          "evidence_url": "https://noticias.uol.com.br/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://noticias.uol.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:52Z",
+          "basis": "Public workstation HTTP 200; evidence 3645f82e046e3edd0233.gz; does not prove Render access."
+        },
+        {
+          "url": "https://noticias.uol.com.br/",
+          "verified_at": "2026-09-14T16:37:53Z",
+          "basis": "Public workstation HTTP 403; evidence 1e30df7c1a788421bd3f.gz; does not prove Render access."
+        },
+        {
+          "url": "https://noticias.uol.com.br/sitemap/index.xml",
+          "verified_at": "2026-09-14T16:39:15Z",
+          "basis": "Public workstation HTTP 200; evidence 51e5ceccc61d614d7614.gz; does not prove Render access."
+        },
+        {
+          "url": "https://noticias.uol.com.br/sitemap/v2/news-01.xml",
+          "verified_at": "2026-09-14T16:39:16Z",
+          "basis": "Public workstation HTTP 200; evidence 25270bdb0a0d34654d67.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "oeste",
+      "name": "Oeste",
+      "domain": "revistaoeste.com",
+      "domains": [
+        "revistaoeste.com"
+      ],
+      "base_url": "https://revistaoeste.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 1,
+      "legacy_source_keys": [
+        "publisher:revistaoeste.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://revistaoeste.com/sitemap.xml",
+          "evidence_url": "https://revistaoeste.com/robots.txt"
+        },
+        {
+          "kind": "sitemap",
+          "url": "https://revistaoeste.com/oestegeral/sitemap.xml",
+          "evidence_url": "https://revistaoeste.com/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://revistaoeste.com/robots.txt",
+          "verified_at": "2026-09-14T16:37:52Z",
+          "basis": "Public workstation HTTP 200; evidence 9a5e8d57da13bb67879f.gz; does not prove Render access."
+        },
+        {
+          "url": "https://revistaoeste.com/",
+          "verified_at": "2026-09-14T16:37:53Z",
+          "basis": "Public workstation HTTP 200; evidence 70b4ec877910cb8268c2.gz; does not prove Render access."
+        },
+        {
+          "url": "https://revistaoeste.com/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:18Z",
+          "basis": "Public workstation HTTP 200; evidence 0918548531a8681f5ddf.gz; does not prove Render access."
+        },
+        {
+          "url": "https://revistaoeste.com/sitemap-news.xml",
+          "verified_at": "2026-09-14T16:39:19Z",
+          "basis": "Public workstation HTTP 200; evidence 3ed0ca99ee5b07cd2191.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "clique_diario",
+      "name": "Clique Diário",
+      "domain": "cliquediario.com.br",
+      "domains": [
+        "cliquediario.com.br"
+      ],
+      "base_url": "https://cliquediario.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 1,
+      "legacy_source_keys": [
+        "publisher:cliquediario.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://cliquediario.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://cliquediario.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://cliquediario.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:53Z",
+          "basis": "Public workstation HTTP 200; evidence 520fb3206b83e143be8b.gz; does not prove Render access."
+        },
+        {
+          "url": "https://cliquediario.com.br/",
+          "verified_at": "2026-09-14T16:37:55Z",
+          "basis": "Public workstation HTTP 200; evidence c71d4bad60829a8b9c6c.gz; does not prove Render access."
+        },
+        {
+          "url": "https://cliquediario.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:25Z",
+          "basis": "Public workstation HTTP 200; evidence 4be9025f68cf2d0523ac.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "o_fluminense",
+      "name": "O Fluminense",
+      "domain": "ofluminense.com.br",
+      "domains": [
+        "ofluminense.com.br"
+      ],
+      "base_url": "https://ofluminense.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 1,
+      "legacy_source_keys": [
+        "publisher:ofluminense.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://ofluminense.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://ofluminense.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://ofluminense.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:53Z",
+          "basis": "Public workstation HTTP 200; evidence 96b781cd6bb51f186c64.gz; does not prove Render access."
+        },
+        {
+          "url": "https://ofluminense.com.br/",
+          "verified_at": "2026-09-14T16:37:55Z",
+          "basis": "Public workstation HTTP 200; evidence ec5e9cd8b38fc3cdcfab.gz; does not prove Render access."
+        },
+        {
+          "url": "https://ofluminense.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:04Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        },
+        {
+          "url": "https://ofluminense.com.br/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:06Z",
+          "basis": "Public workstation HTTP 200; evidence bf7f790760494a991633.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "diario_do_vale",
+      "name": "Diário do Vale",
+      "domain": "diariodovale.com.br",
+      "domains": [
+        "diariodovale.com.br"
+      ],
+      "base_url": "https://diariodovale.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 1,
+      "legacy_source_keys": [
+        "publisher:diariodovale.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "feed",
+          "url": "https://diariodovale.com.br/feed/",
+          "pagination": "wordpress_paged",
+          "public_body_batch": true,
+          "history_complete": false,
+          "evidence_url": "https://diariodovale.com.br/"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://diariodovale.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:54Z",
+          "basis": "Public workstation HTTP 200; evidence e0c68500039ab23de5a7.gz; does not prove Render access."
+        },
+        {
+          "url": "https://diariodovale.com.br/",
+          "verified_at": "2026-09-14T16:37:55Z",
+          "basis": "Public workstation HTTP 200; evidence 4e66677b5c8ede93698e.gz; does not prove Render access."
+        },
+        {
+          "url": "https://diariodovale.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:22Z",
+          "basis": "Public workstation HTTP 200; evidence 15f824f218b0fd2c9c4d.gz; does not prove Render access."
+        },
+        {
+          "url": "https://diariodovale.com.br/sitemaps.xml",
+          "verified_at": "2026-09-14T16:39:24Z",
+          "basis": "Public workstation HTTP 404; evidence ca833d6172dc798d2de5.gz; does not prove Render access."
+        },
+        {
+          "url": "https://diariodelas.diariodovale.com.br/sitemaps.xml",
+          "verified_at": "2026-09-14T16:39:28Z",
+          "basis": "Public workstation HTTP 404; evidence 56f9a187eddab3a66c04.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "jota",
+      "name": "Jota",
+      "domain": "jota.info",
+      "domains": [
+        "jota.info",
+        "www.jota.info"
+      ],
+      "base_url": "https://www.jota.info/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 2,
+      "legacy_source_keys": [
+        "publisher:jota.info"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://sitemap.jota.info/sitemap-index.xml",
+          "evidence_url": "https://jota.info/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://jota.info/robots.txt",
+          "verified_at": "2026-09-14T16:37:54Z",
+          "basis": "Public workstation HTTP 200; evidence ddbf9ff3414eed303cd2.gz; does not prove Render access."
+        },
+        {
+          "url": "https://jota.info/",
+          "verified_at": "2026-09-14T16:37:56Z",
+          "basis": "Public workstation HTTP 200; evidence 7f49132026d1dc657c74.gz; does not prove Render access."
+        },
+        {
+          "url": "https://sitemap.jota.info/sitemap-google-news.xml",
+          "verified_at": "2026-09-14T16:39:09Z",
+          "basis": "Public workstation HTTP 200; evidence 4a35baafa1ee98a9e1de.gz; does not prove Render access."
+        },
+        {
+          "url": "https://sitemap.jota.info/sitemap-index.xml",
+          "verified_at": "2026-09-14T16:39:11Z",
+          "basis": "Public workstation HTTP 200; evidence 92ea5f3ced9fc41be91a.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1
+    },
+    {
+      "key": "agencia_brasil",
+      "name": "Agência Brasil",
+      "domain": "agenciabrasil.ebc.com.br",
+      "domains": [
+        "agenciabrasil.ebc.com.br"
+      ],
+      "base_url": "https://agenciabrasil.ebc.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:agenciabrasil.ebc.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "archive",
+          "url": "https://agenciabrasil.ebc.com.br/ultimas",
+          "evidence_url": "https://agenciabrasil.ebc.com.br/"
+        },
+        {
+          "kind": "feed",
+          "url": "https://agenciabrasil.ebc.com.br/feed/",
+          "pagination": "advertised_only",
+          "history_complete": false,
+          "evidence_url": "https://rss.ebc.com.br/"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://agenciabrasil.ebc.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:56Z",
+          "basis": "Public workstation HTTP 200; evidence 278e83bcf567badfebcd.gz; does not prove Render access."
+        },
+        {
+          "url": "https://agenciabrasil.ebc.com.br/",
+          "verified_at": "2026-09-14T16:37:57Z",
+          "basis": "Public workstation HTTP 200; evidence 84caa7599aeeacd4920d.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "agência pública de notícias",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Matéria de junho encontrada na busca externa; duas outras URLs chegaram à fila e falharam por body_missing. Não são prova de ausência de tentativa. Consulta HTTP atual retornou 500; isso não explica retrospectivamente as falhas anteriores."
+    },
+    {
+      "key": "folha1_folha_da_manha",
+      "name": "Folha1 / Folha da Manhã",
+      "domain": "folha1.com.br",
+      "domains": [
+        "folha1.com.br",
+        "www.folha1.com.br"
+      ],
+      "base_url": "https://www.folha1.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:folha1.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "archive",
+          "url": "https://www.folha1.com.br/politica",
+          "evidence_url": "https://www.folha1.com.br/"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://folha1.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:56Z",
+          "basis": "Public workstation HTTP 403; evidence a824bc7739e226e1b40e.gz; does not prove Render access."
+        },
+        {
+          "url": "https://folha1.com.br/",
+          "verified_at": "2026-09-14T16:37:59Z",
+          "basis": "Public workstation HTTP 200; evidence d3938042c7fd7cee5c0a.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Norte — Campos",
+      "editorial_type": "jornalismo digital",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Página datada de 22/08 menciona Douglas Ruas, Paes, Jordy e Portinho. A página informa uso de assessoria; preservar proveniência."
+    },
+    {
+      "key": "agencia_publica",
+      "name": "Agência Pública",
+      "domain": "apublica.org",
+      "domains": [
+        "apublica.org"
+      ],
+      "base_url": "https://apublica.org/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:apublica.org"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://apublica.org/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://apublica.org/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://apublica.org/robots.txt",
+          "verified_at": "2026-09-14T16:37:57Z",
+          "basis": "Public workstation HTTP 200; evidence e3b0c44298fc1c149afb.gz; does not prove Render access."
+        },
+        {
+          "url": "https://apublica.org/",
+          "verified_at": "2026-09-14T16:37:58Z",
+          "basis": "Public workstation HTTP 200; evidence 8ba28cb14f57fb8e4a86.gz; does not prove Render access."
+        },
+        {
+          "url": "https://apublica.org/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:00Z",
+          "basis": "Public workstation HTTP 200; evidence 44b7b23fec4f0b83ac02.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Baixada",
+      "editorial_type": "reportagem investigativa",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Reportagem sobre letalidade policial na Baixada confirmada em página primária. Abertura web legível, sonda HTTP local 403; não inferir falha histórica no clipping."
+    },
+    {
+      "key": "intercept_brasil",
+      "name": "Intercept Brasil",
+      "domain": "intercept.com.br",
+      "domains": [
+        "intercept.com.br"
+      ],
+      "base_url": "https://intercept.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:intercept.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www.intercept.com.br/sitemap.xml",
+          "evidence_url": "https://intercept.com.br/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://intercept.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:57Z",
+          "basis": "Public workstation HTTP 200; evidence f7ebf32acb311812f26b.gz; does not prove Render access."
+        },
+        {
+          "url": "https://intercept.com.br/",
+          "verified_at": "2026-09-14T16:37:59Z",
+          "basis": "Public workstation HTTP 403; evidence 4220aba20f51ef06e4c2.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.intercept.com.br/news-sitemap.xml",
+          "verified_at": "2026-09-14T16:39:17Z",
+          "basis": "Public workstation HTTP 403; evidence 85b7eced2771d32745fa.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.intercept.com.br/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:18Z",
+          "basis": "Public workstation HTTP 403; evidence 0d8c4f422c18ac1bd5f0.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "investigação e análise",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Texto datado sobre inquéritos, alianças e corrupção no Rio. Relevância temática estabelecida; Flávio Bolsonaro não é um dos 35 nomes desta conta."
+    },
+    {
+      "key": "rioonwatch",
+      "name": "RioOnWatch",
+      "domain": "rioonwatch.org.br",
+      "domains": [
+        "rioonwatch.org.br"
+      ],
+      "base_url": "https://rioonwatch.org.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:rioonwatch.org.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://rioonwatch.org.br/index.php?rest_route=/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://rioonwatch.org.br/index.php?rest_route=/wp/v2/posts&after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://rioonwatch.org.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:57Z",
+          "basis": "Public workstation HTTP 200; evidence f19d6e2daf7f64e2b7b4.gz; does not prove Render access."
+        },
+        {
+          "url": "https://rioonwatch.org.br/",
+          "verified_at": "2026-09-14T16:37:59Z",
+          "basis": "Public workstation HTTP 200; evidence de7384b3d51f4a0a1960.gz; does not prove Render access."
+        },
+        {
+          "url": "https://rioonwatch.org.br/index.php?rest_route=/wp/v2/posts&after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:13Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        },
+        {
+          "url": "https://rioonwatch.org.br/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:15Z",
+          "basis": "Public workstation HTTP 200; evidence 85dde4d882aa5059bc26.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "numeric_permalink": true,
+      "region": "capital e região metropolitana",
+      "editorial_type": "jornalismo comunitário",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Artigo sobre infraestrutura de data centers, água, energia e participação pública; corpo lido. Outros conteúdos eleitorais de 12/09 separados por estarem fora da janela."
+    },
+    {
+      "key": "nexo_jornal",
+      "name": "Nexo Jornal",
+      "domain": "nexojornal.com.br",
+      "domains": [
+        "nexojornal.com.br"
+      ],
+      "base_url": "https://nexojornal.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:nexojornal.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www.nexojornal.com.br/sitemap_index.xml",
+          "evidence_url": "https://nexojornal.com.br/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://nexojornal.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:58Z",
+          "basis": "Public workstation HTTP 200; evidence 251715a6c5e7bfe8f54d.gz; does not prove Render access."
+        },
+        {
+          "url": "https://nexojornal.com.br/",
+          "verified_at": "2026-09-14T16:37:59Z",
+          "basis": "Public workstation HTTP 200; evidence c919558f4a92892e1214.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.nexojornal.com.br/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:12Z",
+          "basis": "Public workstation HTTP 200; evidence 121d6d0069b745c2ebab.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "jornal explicativo/gráfico",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Gráfico de 01/09 contém os cinco nomes do governo do Rio, sem observação identificada. Outra URL do Nexo foi descoberta e descartada como outside_window; a data usada não foi preservada e a decisão não pôde ser auditada. Ver live-prestige.json e prestige-audit.md."
+    },
+    {
+      "key": "piaui",
+      "name": "piauí",
+      "domain": "piaui.uol.com.br",
+      "domains": [
+        "piaui.uol.com.br"
+      ],
+      "base_url": "https://piaui.uol.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:piaui.uol.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://piaui.uol.com.br/sitemap.xml",
+          "evidence_url": "https://piaui.uol.com.br/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://piaui.uol.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:37:59Z",
+          "basis": "Public workstation HTTP 200; evidence 2bda409afb3cf89c456a.gz; does not prove Render access."
+        },
+        {
+          "url": "https://piaui.uol.com.br/",
+          "verified_at": "2026-09-14T16:38:00Z",
+          "basis": "Public workstation HTTP 200; evidence 5ef254d2985940f12832.gz; does not prove Render access."
+        },
+        {
+          "url": "https://piaui.uol.com.br/sitemap.xml",
+          "verified_at": "2026-09-14T16:38:57Z",
+          "basis": "Public workstation HTTP 200; evidence 89e037da4b99209f4684.gz; does not prove Render access."
+        },
+        {
+          "url": "https://piaui.uol.com.br/sitemapgooglenews.xml",
+          "verified_at": "2026-09-14T16:38:58Z",
+          "basis": "Public workstation HTTP 200; evidence 23a3bf2f42475963cd0f.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "revista/reportagem e transcrições",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Reportagem De templo em templo, de 02/06, entrevista Otoni; transcrição ft125, de 14/08, menciona os cinco nomes do governo. Referências confirmadas, sem observação identificada nas consultas de produção. Ver prestige-audit.md. Data reconfirmada nos metadados primários; reportagem sobre Otoni de Paula."
+    },
+    {
+      "key": "aos_fatos",
+      "name": "Aos Fatos",
+      "domain": "aosfatos.org",
+      "domains": [
+        "aosfatos.org",
+        "www.aosfatos.org"
+      ],
+      "base_url": "https://www.aosfatos.org/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:aosfatos.org"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www.aosfatos.org/sitemap.xml",
+          "evidence_url": "https://aosfatos.org/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://aosfatos.org/robots.txt",
+          "verified_at": "2026-09-14T16:37:59Z",
+          "basis": "Public workstation HTTP 200; evidence 5517cd6b6659c17a4a08.gz; does not prove Render access."
+        },
+        {
+          "url": "https://aosfatos.org/",
+          "verified_at": "2026-09-14T16:38:01Z",
+          "basis": "Public workstation HTTP 200; evidence 26820ca977f0ceae812f.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.aosfatos.org/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:04Z",
+          "basis": "Public workstation HTTP 200; evidence 648eeeea615230d73585.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "checagem",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Referência sobre discurso de Lula em evento de Paes. A ausência de registro não deve ser confundida com veículo nunca descoberto: há uma ocorrência no recorte do funil."
+    },
+    {
+      "key": "lupa",
+      "name": "Lupa",
+      "domain": "agencialupa.org",
+      "domains": [
+        "agencialupa.org",
+        "www.agencialupa.org"
+      ],
+      "base_url": "https://www.agencialupa.org/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:agencialupa.org"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www.agencialupa.org/wp-content/sitemaps/posts/page-sitemap-index.xml",
+          "evidence_url": "https://agencialupa.org/robots.txt"
+        },
+        {
+          "kind": "sitemap",
+          "url": "https://www.agencialupa.org/wp-content/sitemaps/posts/post-sitemap-index.xml",
+          "evidence_url": "https://agencialupa.org/robots.txt"
+        },
+        {
+          "kind": "sitemap",
+          "url": "https://www.agencialupa.org/wp-content/sitemaps/video-sitemap.xml",
+          "evidence_url": "https://agencialupa.org/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://agencialupa.org/robots.txt",
+          "verified_at": "2026-09-14T16:38:00Z",
+          "basis": "Public workstation HTTP 200; evidence b15aee0c1f99bdb1f755.gz; does not prove Render access."
+        },
+        {
+          "url": "https://agencialupa.org/",
+          "verified_at": "2026-09-14T16:38:01Z",
+          "basis": "Public workstation HTTP 200; evidence 7f9931a769e3781f7a7b.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.agencialupa.org/wp-content/sitemaps/news-sitemap.xml",
+          "verified_at": "2026-09-14T16:39:11Z",
+          "basis": "Public workstation HTTP 200; evidence 3599f0c5b3f19e370de5.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.agencialupa.org/wp-content/sitemaps/posts/page-sitemap-index.xml",
+          "verified_at": "2026-09-14T16:39:12Z",
+          "basis": "Public workstation HTTP 200; evidence 47b0df11bf0a49791324.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "checagem/explicação",
+      "audit_state": "ativo_sem_referencia_pertinente_confirmada",
+      "audit_note": "Anúncio institucional primário confirma cobertura planejada de debates do governo do Rio, mas não é reportagem perdida sobre os 35. Benchmark pertinente ainda não confirmado. Sonda local atual 403; abertura web acessível."
+    },
+    {
+      "key": "mare_de_noticias_redes_da_mare",
+      "name": "Maré de Notícias / Redes da Maré",
+      "domain": "maredenoticias.com",
+      "domains": [
+        "maredenoticias.com"
+      ],
+      "base_url": "https://maredenoticias.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:maredenoticias.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://maredenoticias.com/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://maredenoticias.com/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://maredenoticias.com/robots.txt",
+          "verified_at": "2026-09-14T16:38:00Z",
+          "basis": "Public workstation HTTP failed; evidence none; does not prove Render access."
+        },
+        {
+          "url": "https://maredenoticias.com/",
+          "verified_at": "2026-09-14T16:38:01Z",
+          "basis": "Public workstation HTTP 200; evidence b499c61f28a76aa1f15e.gz; does not prove Render access."
+        },
+        {
+          "url": "https://maredenoticias.com/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:38:55Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "capital — Maré",
+      "editorial_type": "comunitário/portal e impresso",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "DOMÍNIO ATUAL RESOLVIDO: Redes da Maré aponta oficialmente maredenoticias.com. Página e corpo confirmados. A edição #169 foi publicada no acervo em 20/07. mareonline.com.br não deve ser presumido como destino editorial atual."
+    },
+    {
+      "key": "correio_petropolitano",
+      "name": "Correio Petropolitano",
+      "domain": "correiopetropolitano.com.br",
+      "domains": [
+        "correiopetropolitano.com.br"
+      ],
+      "base_url": "https://correiopetropolitano.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:correiopetropolitano.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://correiopetropolitano.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://correiopetropolitano.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://correiopetropolitano.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:00Z",
+          "basis": "Public workstation HTTP 200; evidence 6c490afec4f49cbb4f9e.gz; does not prove Render access."
+        },
+        {
+          "url": "https://correiopetropolitano.com.br/",
+          "verified_at": "2026-09-14T16:38:03Z",
+          "basis": "Public workstation HTTP 200; evidence b5a6fa54be51efd60af8.gz; does not prove Render access."
+        },
+        {
+          "url": "https://correiopetropolitano.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:13Z",
+          "basis": "Public workstation HTTP 200; evidence ea51f0a2d2969d823b82.gz; does not prove Render access."
+        },
+        {
+          "url": "https://correiopetropolitano.com.br/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:15Z",
+          "basis": "Public workstation HTTP 200; evidence f404d2e090cf865a3e04.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Serrana — Petrópolis",
+      "editorial_type": "produto regional de grupo editorial",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Texto editorial menciona Eduardo Paes e propostas da Firjan para a Região Serrana. Produto regional do Grupo Correio da Manhã; domínio principal do grupo tem registros. Segunda referência elegível: https://correiopetropolitano.com.br/2026/06/16/prefeito-de-tres-rios-rj-busca-aliancas-politicas-para-desenvolvimento-do-municipio/ (16/06/2026, Paes)."
+    },
+    {
+      "key": "correio_sul_fluminense",
+      "name": "Correio Sul Fluminense",
+      "domain": "correiosulfluminense.com.br",
+      "domains": [
+        "correiosulfluminense.com.br"
+      ],
+      "base_url": "https://correiosulfluminense.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:correiosulfluminense.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://correiosulfluminense.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://correiosulfluminense.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://correiosulfluminense.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:01Z",
+          "basis": "Public workstation HTTP 200; evidence 95d48e46339df2f5db34.gz; does not prove Render access."
+        },
+        {
+          "url": "https://correiosulfluminense.com.br/",
+          "verified_at": "2026-09-14T16:38:03Z",
+          "basis": "Public workstation HTTP 200; evidence 79ae42700231c782c96d.gz; does not prove Render access."
+        },
+        {
+          "url": "https://correiosulfluminense.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:14Z",
+          "basis": "Public workstation HTTP 200; evidence b345c7ec63f971889456.gz; does not prove Render access."
+        },
+        {
+          "url": "https://correiosulfluminense.com.br/wp-sitemap.xml",
+          "verified_at": "2026-09-14T16:39:16Z",
+          "basis": "Public workstation HTTP 200; evidence 868761c9431eca340a64.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Sul Fluminense",
+      "editorial_type": "produto regional de grupo editorial",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Reportagem e entrevista com Eduardo Paes sobre apoios em Volta Redonda. Produto do Grupo Correio da Manhã, cuja marca principal já tem registros; não contar como redação independente sem confirmar estrutura editorial."
+    },
+    {
+      "key": "azmina",
+      "name": "AzMina",
+      "domain": "azmina.com.br",
+      "domains": [
+        "azmina.com.br"
+      ],
+      "base_url": "https://azmina.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:azmina.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://azmina.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://azmina.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://azmina.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:02Z",
+          "basis": "Public workstation HTTP 200; evidence 599050ea12dc8e0c0d28.gz; does not prove Render access."
+        },
+        {
+          "url": "https://azmina.com.br/",
+          "verified_at": "2026-09-14T16:38:03Z",
+          "basis": "Public workstation HTTP 200; evidence 35e582bc8e0f12d1fea2.gz; does not prove Render access."
+        },
+        {
+          "url": "https://azmina.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:03Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        },
+        {
+          "url": "https://azmina.com.br/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:04Z",
+          "basis": "Public workstation HTTP 200; evidence 8f1533c08feede89c276.gz; does not prove Render access."
+        },
+        {
+          "url": "https://azmina.com.br/news-sitemap.xml",
+          "verified_at": "2026-09-14T16:39:06Z",
+          "basis": "Public workstation HTTP 200; evidence ed66b1dc5e7d09b846f1.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "revista/direitos de mulheres",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Laura Carneiro (PSD/RJ) citada no corpo da reportagem sobre propostas de mudanças na Lei Maria da Penha. A menção no corpo basta para a referência de clipping. Artigo congressistas-contra-as-mulheres-buscam-voto-feminino-para-se-reeleger de 11/09 também cita Laura, mas está fora do período auditado, fechado em 10/09."
+    },
+    {
+      "key": "istoe_dinheiro_portal",
+      "name": "IstoÉ Dinheiro — portal",
+      "domain": "istoedinheiro.com.br",
+      "domains": [
+        "istoedinheiro.com.br"
+      ],
+      "base_url": "https://istoedinheiro.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:istoedinheiro.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://istoedinheiro.com.br/wp-sitemap.xml",
+          "evidence_url": "https://istoedinheiro.com.br/robots.txt",
+          "numbered_part_pattern": "https://istoedinheiro\\.com\\.br/wp-sitemap-posts-post-(?P<part>\\d+)\\.xml",
+          "minimum_numbered_part": 479
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text. Audited numbered sitemap partitions are prioritized in full; earlier partitions remain an explicit gap with domain fallback. Lastmod is never used as publication or to reject an article.",
+      "evidence": [
+        {
+          "url": "https://istoedinheiro.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:02Z",
+          "basis": "Public workstation HTTP 200; evidence 56c48990d60299452d92.gz; does not prove Render access."
+        },
+        {
+          "url": "https://istoedinheiro.com.br/",
+          "verified_at": "2026-09-14T16:38:04Z",
+          "basis": "Public workstation HTTP 200; evidence 43a09bb7c88375fc1803.gz; does not prove Render access."
+        },
+        {
+          "url": "https://istoedinheiro.com.br/wp-sitemap.xml",
+          "verified_at": "2026-09-14T16:39:05Z",
+          "basis": "Public workstation HTTP 200; evidence ccbb7797c7a707ff7cdc.gz; does not prove Render access."
+        },
+        {
+          "url": "https://istoedinheiro.com.br/wp-sitemap.xml",
+          "basis": "Complete publisher index and full numbered parts preserved in source-audit/istoe-investigation-tail-sitemaps-istoedinheiro.com.br.json; partitions chosen from discovery evidence, never benchmark URLs.",
+          "verified_at": "2026-09-14"
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "min_request_interval_seconds": 5,
+      "expected_initial_candidates": 5200,
+      "region": "nacional",
+      "editorial_type": "jornalismo digital",
+      "audit_state": "ativo_sem_referencia_pertinente_confirmada",
+      "audit_note": "Portal ativo com editorias Economia, Negócios, Finanças e ligação expressa para o produto Revista. Não confundir com IstoÉ portal nem com edições da revista. Rodapé do portal distingue sua empresa da Editora Três ligada à revista impressa; confirmar catálogo de cada produto."
+    },
+    {
+      "key": "epoca_negocios",
+      "name": "Época Negócios",
+      "domain": "epocanegocios.globo.com",
+      "domains": [
+        "epocanegocios.globo.com"
+      ],
+      "base_url": "https://epocanegocios.globo.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:epocanegocios.globo.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://epocanegocios.globo.com/sitemap/epocanegocios/sitemap.xml",
+          "evidence_url": "https://epocanegocios.globo.com/robots.txt"
+        },
+        {
+          "kind": "sitemap",
+          "url": "https://epocanegocios.globo.com/sitemap/epocanegocios/news.xml",
+          "evidence_url": "https://epocanegocios.globo.com/robots.txt"
+        },
+        {
+          "kind": "sitemap",
+          "url": "https://epocanegocios.globo.com/sitemap/home/epocanegocios/sitemap.xml",
+          "evidence_url": "https://epocanegocios.globo.com/robots.txt"
+        },
+        {
+          "kind": "sitemap",
+          "url": "https://epocanegocios.globo.com/sitemap/videos/epocanegocios/sitemap.xml",
+          "evidence_url": "https://epocanegocios.globo.com/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://epocanegocios.globo.com/robots.txt",
+          "verified_at": "2026-09-14T16:38:03Z",
+          "basis": "Public workstation HTTP 200; evidence 1d78cbc425eae1d76bf7.gz; does not prove Render access."
+        },
+        {
+          "url": "https://epocanegocios.globo.com/",
+          "verified_at": "2026-09-14T16:38:05Z",
+          "basis": "Public workstation HTTP 200; evidence 79d6e4f1e484dea1b562.gz; does not prove Render access."
+        },
+        {
+          "url": "https://epocanegocios.globo.com/sitemap/epocanegocios/sitemap.xml",
+          "verified_at": "2026-09-14T16:38:58Z",
+          "basis": "Public workstation HTTP 200; evidence ee8fa2e98e02993c235e.gz; does not prove Render access."
+        },
+        {
+          "url": "https://epocanegocios.globo.com/sitemap/epocanegocios/news.xml",
+          "verified_at": "2026-09-14T16:38:59Z",
+          "basis": "Public workstation HTTP 200; evidence 1df320db6fbb468ba964.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "jornalismo digital",
+      "audit_state": "ativo_sem_referencia_pertinente_confirmada",
+      "audit_note": "Página editorial primária acessível no índice; homepage bloqueada ao buscador usado na auditoria. Sem artigo elegível datado confirmado. Bloqueio OAI-SearchBot observado aqui não prova bloqueio do coletor em Render. Domínio próprio sob Globo não equivale a cobertura via O Globo/G1."
+    },
+    {
+      "key": "le_monde_diplomatique_brasil",
+      "name": "Le Monde Diplomatique Brasil",
+      "domain": "diplomatique.org.br",
+      "domains": [
+        "diplomatique.org.br"
+      ],
+      "base_url": "https://diplomatique.org.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:diplomatique.org.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://diplomatique.org.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://diplomatique.org.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://diplomatique.org.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:04Z",
+          "basis": "Public workstation HTTP 200; evidence 9311bab30d8b5d05f5fa.gz; does not prove Render access."
+        },
+        {
+          "url": "https://diplomatique.org.br/",
+          "verified_at": "2026-09-14T16:38:05Z",
+          "basis": "Public workstation HTTP 200; evidence 53e058f8e6013d9c9ef4.gz; does not prove Render access."
+        },
+        {
+          "url": "https://diplomatique.org.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:38:55Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "revista/edições e online",
+      "audit_state": "ativo_sem_referencia_pertinente_confirmada",
+      "audit_note": "Página oficial oferece edições de junho, julho, agosto e setembro de 2026 e seção Online separada. Não confundir com diplomaciabusiness.com (já tem um registro). Falta enumerar artigos das quatro edições e textos Online para medir menções aos 35. As buscas retornaram também páginas antigas com cabeçalho da edição junho/2026; esse cabeçalho NÃO valida a data do artigo. Sem benchmark pertinente novo confirmado."
+    },
+    {
+      "key": "reporter_brasil",
+      "name": "Repórter Brasil",
+      "domain": "reporterbrasil.org.br",
+      "domains": [
+        "reporterbrasil.org.br"
+      ],
+      "base_url": "https://reporterbrasil.org.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:reporterbrasil.org.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://reporterbrasil.org.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://reporterbrasil.org.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://reporterbrasil.org.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:05Z",
+          "basis": "Public workstation HTTP 200; evidence 1ac96608ab55ffc2a8a3.gz; does not prove Render access."
+        },
+        {
+          "url": "https://reporterbrasil.org.br/",
+          "verified_at": "2026-09-14T16:38:07Z",
+          "basis": "Public workstation HTTP 200; evidence c83cc1162c5e7d99eb55.gz; does not prove Render access."
+        },
+        {
+          "url": "https://reporterbrasil.org.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:27Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        },
+        {
+          "url": "https://reporterbrasil.org.br/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:29Z",
+          "basis": "Public workstation HTTP 200; evidence 4ecd9c0c20a754d691fa.gz; does not prove Render access."
+        },
+        {
+          "url": "https://reporterbrasil.org.br/sitemap-news.php",
+          "verified_at": "2026-09-14T16:39:30Z",
+          "basis": "Public workstation HTTP 200; evidence f622b9b0039eafe5b8ce.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "jornalismo digital",
+      "audit_state": "ativo_sem_referencia_pertinente_confirmada",
+      "audit_note": "Homepage atual possui cobertura eleitoral, direitos do trabalho e investigações socioambientais. Não confundir com telejornal Repórter Brasil da EBC nem contar stage.reporterbrasil.org.br como outro veículo. Referência datada elegível aos 35 ainda não confirmada."
+    },
+    {
+      "key": "alma_preta",
+      "name": "Alma Preta",
+      "domain": "almapreta.com.br",
+      "domains": [
+        "almapreta.com.br"
+      ],
+      "base_url": "https://almapreta.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:almapreta.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://almapreta.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://almapreta.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://almapreta.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:05Z",
+          "basis": "Public workstation HTTP 200; evidence fc0dcf89386997176ff4.gz; does not prove Render access."
+        },
+        {
+          "url": "https://almapreta.com.br/",
+          "verified_at": "2026-09-14T16:38:07Z",
+          "basis": "Public workstation HTTP 200; evidence 0e2d19cb5e7387c15301.gz; does not prove Render access."
+        },
+        {
+          "url": "https://almapreta.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:38:55Z",
+          "basis": "Public workstation HTTP 200; evidence 2936453609119e41db08.gz; does not prove Render access."
+        },
+        {
+          "url": "https://almapreta.com.br/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:38:58Z",
+          "basis": "Public workstation HTTP 200; evidence b14bf1046f887c072210.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "jornalismo racial",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Referência sobre letalidade policial em nove estados citada na Brasis de 02/07/2026 e aberta no publisher. Data individual não ficou visível na ferramenta; não tratar como benchmark diário totalmente validado. Exemplo Petrópolis de13/09 permanece fora da janela."
+    },
+    {
+      "key": "o_eco",
+      "name": "((o))eco",
+      "domain": "oeco.org.br",
+      "domains": [
+        "oeco.org.br"
+      ],
+      "base_url": "https://oeco.org.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:oeco.org.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://oeco.org.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://oeco.org.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://oeco.org.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:06Z",
+          "basis": "Public workstation HTTP 200; evidence c538e2221f05a9796d61.gz; does not prove Render access."
+        },
+        {
+          "url": "https://oeco.org.br/",
+          "verified_at": "2026-09-14T16:38:07Z",
+          "basis": "Public workstation HTTP 200; evidence 1c659005d4ad2a1858ee.gz; does not prove Render access."
+        },
+        {
+          "url": "https://oeco.org.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:28Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "capital/estado",
+      "editorial_type": "jornalismo ambiental",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Referência primária datada sobre decisão judicial e licenciamento da tirolesa no Pão de Açúcar; não depende de titular de cargo no título."
+    },
+    {
+      "key": "ponte_jornalismo",
+      "name": "Ponte Jornalismo",
+      "domain": "ponte.org",
+      "domains": [
+        "ponte.org"
+      ],
+      "base_url": "https://ponte.org/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:ponte.org"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://ponte.org/wp-sitemap.xml",
+          "evidence_url": "https://ponte.org/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://ponte.org/robots.txt",
+          "verified_at": "2026-09-14T16:38:07Z",
+          "basis": "Public workstation HTTP 200; evidence fe4e1d4647da5fab966c.gz; does not prove Render access."
+        },
+        {
+          "url": "https://ponte.org/",
+          "verified_at": "2026-09-14T16:38:09Z",
+          "basis": "Public workstation HTTP 200; evidence c10963e428a03828838e.gz; does not prove Render access."
+        },
+        {
+          "url": "https://ponte.org/wp-sitemap.xml",
+          "verified_at": "2026-09-14T16:39:23Z",
+          "basis": "Public workstation HTTP 200; evidence ef27792bc8812d1bd510.gz; does not prove Render access."
+        },
+        {
+          "url": "https://ponte.org/sitemap-news.xml",
+          "verified_at": "2026-09-14T16:39:25Z",
+          "basis": "Public workstation HTTP 200; evidence 59cf0860e771739f525c.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "segurança e direitos",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Página inicial confirma data e investigação sobre segurança nas eleições; abertura individual web falhou. Conteúdo republicado pelo Colabora evidencia rede editorial; conferir texto de origem antes de medir cobertura nominal."
+    },
+    {
+      "key": "agencia_de_noticias_das_favelas",
+      "name": "Agência de Notícias das Favelas",
+      "domain": "anf.org.br",
+      "domains": [
+        "anf.org.br",
+        "www.anf.org.br"
+      ],
+      "base_url": "https://www.anf.org.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:anf.org.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://www.anf.org.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://www.anf.org.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://anf.org.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:08Z",
+          "basis": "Public workstation HTTP 200; evidence 842b34303164ead41bcc.gz; does not prove Render access."
+        },
+        {
+          "url": "https://anf.org.br/",
+          "verified_at": "2026-09-14T16:38:10Z",
+          "basis": "Public workstation HTTP 200; evidence 3a59ad7af98757b00283.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.anf.org.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:23Z",
+          "basis": "Public workstation HTTP 200; evidence b8e0a2502426c083a937.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "capital — Zona Oeste",
+      "editorial_type": "agência comunitária",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Página primária datada descreve impactos dos tiroteios na escola, trabalho e mobilidade; web legível, sonda local406. ANF não é NF Notícias."
+    },
+    {
+      "key": "data_labe",
+      "name": "data_labe",
+      "domain": "datalabe.org",
+      "domains": [
+        "datalabe.org"
+      ],
+      "base_url": "https://datalabe.org/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:datalabe.org"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://datalabe.org/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://datalabe.org/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://datalabe.org/robots.txt",
+          "verified_at": "2026-09-14T16:38:08Z",
+          "basis": "Public workstation HTTP 200; evidence f7e0e8d1ea3124e2a1b8.gz; does not prove Render access."
+        },
+        {
+          "url": "https://datalabe.org/",
+          "verified_at": "2026-09-14T16:38:10Z",
+          "basis": "Public workstation HTTP 200; evidence 049dd0d862a3095526cf.gz; does not prove Render access."
+        },
+        {
+          "url": "https://datalabe.org/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:19Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        },
+        {
+          "url": "https://datalabe.org/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:21Z",
+          "basis": "Public workstation HTTP 200; evidence 7e74e0e4dd4517536236.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "capital — Maré",
+      "editorial_type": "dados/comunicação comunitária",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Publicação relata compromissos da concessionária Águas do Rio com moradores da Maré. Organização de dados/comunicação e pesquisa, não jornal diário; guardar tipo de publicação. Referência temática, não prova de menção aos 35. Referência reutilizada da auditoria anterior; sonda atual local406. Preservar distinção entre reportagem e publicação da organização."
+    },
+    {
+      "key": "genero_e_numero",
+      "name": "Gênero e Número",
+      "domain": "generonumero.media",
+      "domains": [
+        "generonumero.media",
+        "www.generonumero.media"
+      ],
+      "base_url": "https://www.generonumero.media/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:generonumero.media"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://www.generonumero.media/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://www.generonumero.media/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://generonumero.media/robots.txt",
+          "verified_at": "2026-09-14T16:38:08Z",
+          "basis": "Public workstation HTTP 200; evidence ccb84ec4c7459c9b02ca.gz; does not prove Render access."
+        },
+        {
+          "url": "https://generonumero.media/",
+          "verified_at": "2026-09-14T16:38:09Z",
+          "basis": "Public workstation HTTP 200; evidence 9d722ba3d75b918a8dfd.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.generonumero.media/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:23Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "jornalismo de dados e gênero",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Reportagem sobre representação feminina negra e eleições; portal mantém série Eleições 2026. Referência lida não menciona Benedita. Matéria creches-favelas-rio menciona Paes, mas é de 04/10/2024; não contar como lacuna de 2026. Página individual e data de23/07 reconferidas; texto sobre representação no Congresso."
+    },
+    {
+      "key": "fala_roca",
+      "name": "Fala Roça",
+      "domain": "falaroca.com",
+      "domains": [
+        "falaroca.com"
+      ],
+      "base_url": "https://falaroca.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:falaroca.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://falaroca.com/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://falaroca.com/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://falaroca.com/robots.txt",
+          "verified_at": "2026-09-14T16:38:09Z",
+          "basis": "Public workstation HTTP 200; evidence e3b0c44298fc1c149afb.gz; does not prove Render access."
+        },
+        {
+          "url": "https://falaroca.com/",
+          "verified_at": "2026-09-14T16:38:10Z",
+          "basis": "Public workstation HTTP 200; evidence f066fdd3b98a852987d6.gz; does not prove Render access."
+        },
+        {
+          "url": "https://falaroca.com/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:20Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "capital — Rocinha",
+      "editorial_type": "comunitário",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Arquivo primário confirma cancelamento de atividade cultural por ausência de patrocínio. Foco local não é substituído por cobertura estadual de campanha."
+    },
+    {
+      "key": "diario_do_porto",
+      "name": "Diário do Porto",
+      "domain": "diariodoporto.com.br",
+      "domains": [
+        "diariodoporto.com.br"
+      ],
+      "base_url": "https://diariodoporto.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:diariodoporto.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://diariodoporto.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://diariodoporto.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://diariodoporto.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:10Z",
+          "basis": "Public workstation HTTP 200; evidence 56be27ad3cc7dc7f7fc5.gz; does not prove Render access."
+        },
+        {
+          "url": "https://diariodoporto.com.br/",
+          "verified_at": "2026-09-14T16:38:11Z",
+          "basis": "Public workstation HTTP 200; evidence 6e66631c6d833b98423b.gz; does not prove Render access."
+        },
+        {
+          "url": "https://diariodoporto.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:29Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        },
+        {
+          "url": "https://diariodoporto.com.br/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:31Z",
+          "basis": "Public workstation HTTP 200; evidence 830ad1e38e8edcd5a1fe.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "capital — economia e infraestrutura",
+      "editorial_type": "economia regional",
+      "audit_state": "ativo_sem_referencia_pertinente_confirmada",
+      "audit_note": "Arquivo possui matérias sobre educação estadual, economia, crime organizado e infraestrutura fluminense no período. Página de arquivo mostra notícia sobre Paes/Parque do Porto, mas sua data não foi confirmada; não contar como referência elegível ainda. Nova sonda local520: indisponibilidade atual, sem dedução sobre falhas passadas. Referência histórica ainda apenas no arquivo, dia da matéria nominal não confirmado."
+    },
+    {
+      "key": "jornal_panorama",
+      "name": "Jornal Panorama",
+      "domain": "panoramarj.com.br",
+      "domains": [
+        "panoramarj.com.br"
+      ],
+      "base_url": "https://panoramarj.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:panoramarj.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://panoramarj.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://panoramarj.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://panoramarj.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:11Z",
+          "basis": "Public workstation HTTP 200; evidence 91c5bc8343b3f73f1200.gz; does not prove Render access."
+        },
+        {
+          "url": "https://panoramarj.com.br/",
+          "verified_at": "2026-09-14T16:38:13Z",
+          "basis": "Public workstation HTTP 200; evidence 9f29b03cab573d2f7eb3.gz; does not prove Render access."
+        },
+        {
+          "url": "https://panoramarj.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:18Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        },
+        {
+          "url": "https://panoramarj.com.br/wp-sitemap.xml",
+          "verified_at": "2026-09-14T16:39:21Z",
+          "basis": "Public workstation HTTP 200; evidence 6ca6bddcf7c667919b22.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Baixada",
+      "editorial_type": "portal/impresso PDF",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "NOVA referência primária datada sobre agenda de Paes em Japeri. Acervo oficial organiza PDFs por mês; o portal HTML não representa automaticamente o conteúdo das edições."
+    },
+    {
+      "key": "jornal_de_sabado",
+      "name": "Jornal de Sábado",
+      "domain": "jornaldesabado.net",
+      "domains": [
+        "jornaldesabado.net"
+      ],
+      "base_url": "https://jornaldesabado.net/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:jornaldesabado.net"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://jornaldesabado.net/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://jornaldesabado.net/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://jornaldesabado.net/robots.txt",
+          "verified_at": "2026-09-14T16:38:12Z",
+          "basis": "Public workstation HTTP 200; evidence 1b2f10205de0a0793034.gz; does not prove Render access."
+        },
+        {
+          "url": "https://jornaldesabado.net/",
+          "verified_at": "2026-09-14T16:38:13Z",
+          "basis": "Public workstation HTTP 200; evidence 94505275ad1f67ed93fd.gz; does not prove Render access."
+        },
+        {
+          "url": "https://jornaldesabado.net/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:17Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        },
+        {
+          "url": "https://jornaldesabado.net/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:19Z",
+          "basis": "Public workstation HTTP 200; evidence 995388da74da10d41665.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Lagos",
+      "editorial_type": "regional/coluna O Sombra",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Referência aberta e datada. Coluna O Sombra de26/06 também traz SUS municipal. Exemplo TCE/Araruama de11/09 excluído do histórico."
+    },
+    {
+      "key": "folha_do_interior",
+      "name": "Folha do Interior",
+      "domain": "folhadointerior.com.br",
+      "domains": [
+        "folhadointerior.com.br",
+        "www.folhadointerior.com.br"
+      ],
+      "base_url": "https://www.folhadointerior.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:folhadointerior.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://www.folhadointerior.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://www.folhadointerior.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://folhadointerior.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:12Z",
+          "basis": "Public workstation HTTP 200; evidence 09b98d31e4f1d1eb331f.gz; does not prove Render access."
+        },
+        {
+          "url": "https://folhadointerior.com.br/",
+          "verified_at": "2026-09-14T16:38:13Z",
+          "basis": "Public workstation HTTP 200; evidence 41944e4f81595ca2799e.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.folhadointerior.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:08Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.folhadointerior.com.br/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:09Z",
+          "basis": "Public workstation HTTP 200; evidence 988184b8fc3f23145653.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Sul Fluminense",
+      "editorial_type": "regional",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Mais referências datadas: Paes em evento sindical10/07 e caminhada em Barra do Piraí28/08. Site registra autor/editoria; sonda direta atual timed out, resultado web legível."
+    },
+    {
+      "key": "o_itaperunense",
+      "name": "O Itaperunense",
+      "domain": "oitaperunense.com.br",
+      "domains": [
+        "oitaperunense.com.br",
+        "www.oitaperunense.com.br"
+      ],
+      "base_url": "https://www.oitaperunense.com.br/site/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:oitaperunense.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://www.oitaperunense.com.br/site/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://www.oitaperunense.com.br/site/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://oitaperunense.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:12Z",
+          "basis": "Public workstation HTTP 200; evidence 4e1ec7995682befa1107.gz; does not prove Render access."
+        },
+        {
+          "url": "https://oitaperunense.com.br/",
+          "verified_at": "2026-09-14T16:38:13Z",
+          "basis": "Public workstation HTTP 200; evidence 1a5bcb4a60df91db3a9d.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.oitaperunense.com.br/site/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:09Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Noroeste — Itaperuna",
+      "editorial_type": "regional/impresso",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "HTTP200, metadado e texto reconferidos. A matéria credita Agenda do Poder: publicação regional é diferente de reportagem original independente."
+    },
+    {
+      "key": "jornal_daki",
+      "name": "Jornal Daki",
+      "domain": "jornaldaki.com.br",
+      "domains": [
+        "jornaldaki.com.br",
+        "www.jornaldaki.com.br"
+      ],
+      "base_url": "https://www.jornaldaki.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:jornaldaki.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://jornaldaki.com.br/sitemap.xml",
+          "evidence_url": "https://jornaldaki.com.br/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://jornaldaki.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:12Z",
+          "basis": "Public workstation HTTP 200; evidence 33ac2ec25af947ac2ba5.gz; does not prove Render access."
+        },
+        {
+          "url": "https://jornaldaki.com.br/",
+          "verified_at": "2026-09-14T16:38:14Z",
+          "basis": "Public workstation HTTP 200; evidence 2ffd4ab6836199740765.gz; does not prove Render access."
+        },
+        {
+          "url": "https://jornaldaki.com.br/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:03Z",
+          "basis": "Public workstation HTTP 200; evidence 8c0fe159d97a06426690.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Leste — São Gonçalo",
+      "editorial_type": "regional",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Corpo e article:published_time reconferidos por HTTP200. A matéria questiona atendimento pediátrico e ausência de resposta municipal; Nelson Ruas não é Douglas Ruas."
+    },
+    {
+      "key": "jornal_atlantico",
+      "name": "Jornal Atlântico",
+      "domain": "jornalatlanticomarica.com.br",
+      "domains": [
+        "jornalatlanticomarica.com.br"
+      ],
+      "base_url": "https://jornalatlanticomarica.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:jornalatlanticomarica.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "feed",
+          "url": "https://www.jornalatlanticomarica.com.br/feeds/posts/default",
+          "pagination": "advertised_only",
+          "history_complete": false,
+          "evidence_url": "https://www.jornalatlanticomarica.com.br/"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://jornalatlanticomarica.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:14Z",
+          "basis": "Public workstation HTTP 200; evidence 84f7242b69a0d079d88d.gz; does not prove Render access."
+        },
+        {
+          "url": "https://jornalatlanticomarica.com.br/",
+          "verified_at": "2026-09-14T16:38:16Z",
+          "basis": "Public workstation HTTP 200; evidence 6dc9c7fc93bb488bb052.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Leste — Maricá",
+      "editorial_type": "regional",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Arquivo primário registra matéria de saneamento. Corpo individual ainda não foi validado; separar evidência de publicação de sucesso de extração."
+    },
+    {
+      "key": "tv_zoom",
+      "name": "TV Zoom",
+      "domain": "tvzoom.com.br",
+      "domains": [
+        "tvzoom.com.br"
+      ],
+      "base_url": "https://tvzoom.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:tvzoom.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://tvzoom.com.br/sitemap_index.xml",
+          "evidence_url": "https://tvzoom.com.br/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://tvzoom.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:14Z",
+          "basis": "Public workstation HTTP 200; evidence 82359eb2eee30867688e.gz; does not prove Render access."
+        },
+        {
+          "url": "https://tvzoom.com.br/",
+          "verified_at": "2026-09-14T16:38:17Z",
+          "basis": "Public workstation HTTP 307; evidence 48694f0fe6920c7c189e.gz; does not prove Render access."
+        },
+        {
+          "url": "https://tvzoom.com.br/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:22Z",
+          "basis": "Public workstation HTTP 200; evidence cd16dfedd682502ac92b.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Serrana — Nova Friburgo",
+      "editorial_type": "TV/portal e entrevistas",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Referência independente de entrevista com texto disponível na abertura web. Domínio TEM1registro, mas nenhum texto na matriz. Ausência no recorte do funil não cancela esse registro."
+    },
+    {
+      "key": "parahybano",
+      "name": "Parahybano",
+      "domain": "parahybano.com.br",
+      "domains": [
+        "parahybano.com.br"
+      ],
+      "base_url": "https://parahybano.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:parahybano.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://parahybano.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://parahybano.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://parahybano.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:15Z",
+          "basis": "Public workstation HTTP 200; evidence 204ce3972867d8f788ad.gz; does not prove Render access."
+        },
+        {
+          "url": "https://parahybano.com.br/",
+          "verified_at": "2026-09-14T16:38:17Z",
+          "basis": "Public workstation HTTP 200; evidence ebcd3f3f79baa0126b18.gz; does not prove Render access."
+        },
+        {
+          "url": "https://parahybano.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:26Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        },
+        {
+          "url": "https://parahybano.com.br/sitemap_index.xml",
+          "verified_at": "2026-09-14T16:39:28Z",
+          "basis": "Public workstation HTTP 200; evidence fee96b665a60a7f22253.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Norte — São João da Barra",
+      "editorial_type": "regional",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Domínio TEM1metadado na matriz. Referência Garotinho de11/09 é posterior e não mede falha da coleta até10/09. Texto de31/08 é informação de educação/cidadania, não menção35."
+    },
+    {
+      "key": "colabora",
+      "name": "#Colabora",
+      "domain": "projetocolabora.com.br",
+      "domains": [
+        "projetocolabora.com.br"
+      ],
+      "base_url": "https://projetocolabora.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:projetocolabora.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "wordpress",
+          "url": "https://projetocolabora.com.br/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://projetocolabora.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://projetocolabora.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:16Z",
+          "basis": "Public workstation HTTP 200; evidence e1f21c9aa28d50ca112e.gz; does not prove Render access."
+        },
+        {
+          "url": "https://projetocolabora.com.br/",
+          "verified_at": "2026-09-14T16:38:18Z",
+          "basis": "Public workstation HTTP 200; evidence 16193a9f9da4f2e3d7bf.gz; does not prove Render access."
+        },
+        {
+          "url": "https://projetocolabora.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:38:59Z",
+          "basis": "Public workstation HTTP 200; evidence 4f53cda18c2baa0c0354.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "capital e nacional",
+      "editorial_type": "jornalismo de sustentabilidade",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Identificado no diretório Ajor. Referência de mobilidade inclui moradora da Mangueira. Outra sobre ambulantes e megaeventos de15/07. Há republicações da Ponte: guardar proveniência."
+    },
+    {
+      "key": "noticias_de_belford_roxo",
+      "name": "Notícias de Belford Roxo",
+      "domain": "noticiasdebelfordroxo.com",
+      "domains": [
+        "noticiasdebelfordroxo.com",
+        "www.noticiasdebelfordroxo.com"
+      ],
+      "base_url": "https://www.noticiasdebelfordroxo.com/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:noticiasdebelfordroxo.com"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://www.noticiasdebelfordroxo.com/sitemap.xml",
+          "evidence_url": "https://noticiasdebelfordroxo.com/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://noticiasdebelfordroxo.com/robots.txt",
+          "verified_at": "2026-09-14T16:38:17Z",
+          "basis": "Public workstation HTTP 200; evidence 5be6426824f2565334ef.gz; does not prove Render access."
+        },
+        {
+          "url": "https://noticiasdebelfordroxo.com/",
+          "verified_at": "2026-09-14T16:38:20Z",
+          "basis": "Public workstation HTTP 200; evidence 22c9710f273d05ef0e9c.gz; does not prove Render access."
+        },
+        {
+          "url": "https://www.noticiasdebelfordroxo.com/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:00Z",
+          "basis": "Public workstation HTTP 200; evidence 5ce37a747b25b90d3635.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Baixada — Belford Roxo",
+      "editorial_type": "portal local",
+      "audit_state": "ativo_sem_referencia_pertinente_confirmada",
+      "audit_note": "Fonte descoberta no Atlas; página primária menciona Waguinho, mas maio não comprova perda desdejunho. Interface inicial depende de carregamento de widgets. Atividade no intervalo não validada."
+    },
+    {
+      "key": "baixada_facil",
+      "name": "Baixada Fácil",
+      "domain": "baixadafacil.com.br",
+      "domains": [
+        "baixadafacil.com.br"
+      ],
+      "base_url": "https://baixadafacil.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:baixadafacil.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "archive",
+          "url": "https://baixadafacil.com.br/noticias",
+          "evidence_url": "https://baixadafacil.com.br/"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://baixadafacil.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:17Z",
+          "basis": "Public workstation HTTP 200; evidence 773fb8d35bb9a39d3533.gz; does not prove Render access."
+        },
+        {
+          "url": "https://baixadafacil.com.br/",
+          "verified_at": "2026-09-14T16:38:19Z",
+          "basis": "Public workstation HTTP 200; evidence 498c974afd202a853d4d.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "Baixada",
+      "editorial_type": "regional/serviço",
+      "audit_state": "ativo_sem_referencia_pertinente_confirmada",
+      "audit_note": "Atlas e página primária confirmam identidade, cobertura municipal e portal ativo. Não confundir data do cabeçalho com publicação individual; referências datadas abertas eram anteriores à janela."
+    },
+    {
+      "key": "canal_mynews",
+      "name": "Canal MyNews",
+      "domain": "canalmynews.com.br",
+      "domains": [
+        "canalmynews.com.br"
+      ],
+      "base_url": "https://canalmynews.com.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:canalmynews.com.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "archive",
+          "url": "https://canalmynews.com.br/category/politica/",
+          "evidence_url": "https://canalmynews.com.br/"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://canalmynews.com.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:18Z",
+          "basis": "Public workstation HTTP 404; evidence bde9c2949e64d059c18d.gz; does not prove Render access."
+        },
+        {
+          "url": "https://canalmynews.com.br/",
+          "verified_at": "2026-09-14T16:38:19Z",
+          "basis": "Public workstation HTTP 200; evidence bc3a61e24aef5eb86a59.gz; does not prove Render access."
+        },
+        {
+          "url": "https://canalmynews.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+          "verified_at": "2026-09-14T16:39:08Z",
+          "basis": "Public workstation HTTP 404; evidence bde9c2949e64d059c18d.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional com política Rio",
+      "editorial_type": "TV digital/portal",
+      "audit_state": "referencia_pertinente_localizada",
+      "audit_note": "Referência obtida via Brasis02/07 e página individual. Domínio TEM1metadado e1falha no funil; não ausente de descoberta. Não validar automaticamente precisão factual dos papéis mencionados."
+    },
+    {
+      "key": "nucleo_jornalismo",
+      "name": "Núcleo Jornalismo",
+      "domain": "nucleo.jor.br",
+      "domains": [
+        "nucleo.jor.br"
+      ],
+      "base_url": "https://nucleo.jor.br/",
+      "enabled": true,
+      "allowed_profiles": [
+        "psd_rj_2026"
+      ],
+      "strategies": [
+        "expanded",
+        "google_news"
+      ],
+      "google_policy": "on_direct_gap",
+      "discovery_priority_batch": 3,
+      "legacy_source_keys": [
+        "publisher:nucleo.jor.br"
+      ],
+      "mechanisms": [
+        {
+          "kind": "sitemap",
+          "url": "https://nucleo.jor.br/sitemap.xml",
+          "evidence_url": "https://nucleo.jor.br/robots.txt"
+        }
+      ],
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "evidence": [
+        {
+          "url": "https://nucleo.jor.br/robots.txt",
+          "verified_at": "2026-09-14T16:38:19Z",
+          "basis": "Public workstation HTTP 200; evidence f81eb8c6d20fcde97589.gz; does not prove Render access."
+        },
+        {
+          "url": "https://nucleo.jor.br/",
+          "verified_at": "2026-09-14T16:38:20Z",
+          "basis": "Public workstation HTTP 200; evidence 5bc5c223a2d9462692da.gz; does not prove Render access."
+        },
+        {
+          "url": "https://nucleo.jor.br/sitemap.xml",
+          "verified_at": "2026-09-14T16:39:08Z",
+          "basis": "Public workstation HTTP 200; evidence 56c2c0f039338309a07d.gz; does not prove Render access."
+        }
+      ],
+      "verified_at": "2026-09-14",
+      "catalog_version": 1,
+      "region": "nacional",
+      "editorial_type": "tecnologia e poder",
+      "audit_state": "ativo_sem_referencia_pertinente_confirmada",
+      "audit_note": "Diretórios e crédito de republicação da Pública identificam produto. O buscador bloqueou acesso por robots; benchmark nominal/noRio no período não confirmado."
+    }
+  ],
+  "not_enabled_pending_verification": [
+    {
+      "veiculo_produto": "Portal Multiplix",
+      "dominio": "portalmultiplix.com",
+      "regiao": "Serrana e Lagos",
+      "tipo_editorial": "portal e TV/acervo",
+      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
+      "escopo_referencia": "a confirmar",
+      "url_referencia": "https://www.portalmultiplix.com/",
+      "data_publicacao": "",
+      "origem_identificacao": "lista anterior revisitada; probe-05.json",
+      "registros_na_matriz": "0",
+      "textos_na_matriz": "0",
+      "ocorrencias_no_recorte_funil": "0",
+      "nota": "REVISÃO DO DIAGNÓSTICO: homepage oficial informa encerramento da produção regular jornalística e audiovisual em 28/05/2026; mantém acervo. Não apresentar zero no período posterior como prova de falha. Estado específico: acervo ativo, produção regular encerrada antes da janela.",
+      "verificado_em": "2026-09-14",
+      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
+    },
+    {
+      "veiculo_produto": "Folha dos Lagos",
+      "dominio": "folhadoslagos.com",
+      "regiao": "Lagos",
+      "tipo_editorial": "jornalismo digital",
+      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
+      "escopo_referencia": "a confirmar",
+      "url_referencia": "https://www.folhadoslagos.com/",
+      "data_publicacao": "",
+      "origem_identificacao": "lista anterior revisitada; probe-11.json",
+      "registros_na_matriz": "0",
+      "textos_na_matriz": "0",
+      "ocorrencias_no_recorte_funil": "0",
+      "nota": "Domínio sem registros; abertura externa falhou. Identidade, disponibilidade atual e matéria datada precisam de confirmação. Identidade encontrada também no Atlas, mas sonda atual web403 e local não validou corpo editorial. Atividade no período continua incerta.",
+      "verificado_em": "2026-09-14",
+      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
+    },
+    {
+      "veiculo_produto": "IstoÉ — site da revista",
+      "dominio": "revista.istoe.com.br",
+      "regiao": "nacional",
+      "tipo_editorial": "jornalismo digital",
+      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
+      "escopo_referencia": "a confirmar",
+      "url_referencia": "https://revista.istoe.com.br/",
+      "data_publicacao": "",
+      "origem_identificacao": "lista anterior revisitada; probe-12.json",
+      "registros_na_matriz": "0",
+      "textos_na_matriz": "0",
+      "ocorrencias_no_recorte_funil": "0",
+      "nota": "Zero registros nesse subdomínio; um registro do portal não demonstra cobertura da edição. Sem reportagem elegível adicional confirmada.",
+      "verificado_em": "2026-09-14",
+      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
+    },
+    {
+      "veiculo_produto": "Financial Times",
+      "dominio": "ft.com",
+      "regiao": "nacional",
+      "tipo_editorial": "jornalismo digital",
+      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
+      "escopo_referencia": "a confirmar",
+      "url_referencia": "https://www.ft.com/",
+      "data_publicacao": "",
+      "origem_identificacao": "lista anterior revisitada; probe-13.json",
+      "registros_na_matriz": "0",
+      "textos_na_matriz": "0",
+      "ocorrencias_no_recorte_funil": "0",
+      "nota": "Zero registros identificados; nenhuma referência primária datada sobre os 35 nomes, no período, foi confirmada nesta investigação. Não atribuir falha técnica ou volume perdido.",
+      "verificado_em": "2026-09-14",
+      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
+    },
+    {
+      "veiculo_produto": "The Economist",
+      "dominio": "economist.com",
+      "regiao": "nacional",
+      "tipo_editorial": "jornalismo digital",
+      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
+      "escopo_referencia": "a confirmar",
+      "url_referencia": "https://www.economist.com/",
+      "data_publicacao": "",
+      "origem_identificacao": "lista anterior revisitada; probe-14.json",
+      "registros_na_matriz": "0",
+      "textos_na_matriz": "0",
+      "ocorrencias_no_recorte_funil": "0",
+      "nota": "Zero registros identificados; nenhuma referência primária datada sobre os 35 nomes, no período, foi confirmada nesta investigação. Não atribuir falha técnica ou volume perdido.",
+      "verificado_em": "2026-09-14",
+      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
+    },
+    {
+      "veiculo_produto": "IstoÉ Dinheiro — revista/acervo",
+      "dominio": "revista.istoedinheiro.com.br",
+      "regiao": "nacional",
+      "tipo_editorial": "jornalismo digital",
+      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
+      "escopo_referencia": "a confirmar",
+      "url_referencia": "https://revista.istoedinheiro.com.br/",
+      "data_publicacao": "",
+      "origem_identificacao": "lista anterior revisitada; probe-19.json",
+      "registros_na_matriz": "0",
+      "textos_na_matriz": "0",
+      "ocorrencias_no_recorte_funil": "0",
+      "nota": "Página consultada exibiu edição 31 de 08/05/2026 e acervo paginado. Nenhuma edição de junho–setembro confirmada neste acesso; não inferir que continuou ou cessou publicação. Edições PDF constituem formato distinto do portal HTML.",
+      "verificado_em": "2026-09-14",
+      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
+    },
+    {
+      "veiculo_produto": "Agência Lume",
+      "dominio": "agencialume.com",
+      "regiao": "capital — Rio das Pedras",
+      "tipo_editorial": "comunitário",
+      "estado_investigacao": "identidade_ou_atividade_no_periodo_incerta",
+      "escopo_referencia": "a confirmar",
+      "url_referencia": "https://www.agencialume.com/",
+      "data_publicacao": "",
+      "origem_identificacao": "lista anterior revisitada; probe-32.json",
+      "registros_na_matriz": "0",
+      "textos_na_matriz": "0",
+      "ocorrencias_no_recorte_funil": "0",
+      "nota": "Página primária confirma identidade e atuação em Rio das Pedras, Anil e Freguesia; exibe manutenção. Publicação noticiosa regular no período não confirmada.",
+      "verificado_em": "2026-09-14",
+      "limite_contagem": "Matriz da conta e recorte de cinco trabalhos; não equivalem a ausência universal em todas as bases ou a todos os jobs."
+    }
+  ]
+}

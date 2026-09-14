@@ -60,6 +60,10 @@ CREATE INDEX IF NOT EXISTS political_articles_source ON political_articles(sourc
 CREATE TABLE IF NOT EXISTS political_url_aliases (
  url TEXT PRIMARY KEY, article_id BIGINT NOT NULL REFERENCES political_articles(id) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS political_resolved_urls (
+ original_url TEXT PRIMARY KEY,resolved_url TEXT NOT NULL,
+ resolved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),verified_by TEXT NOT NULL DEFAULT 'publisher_resolution'
+);
 CREATE TABLE IF NOT EXISTS political_mentions (
  article_id BIGINT NOT NULL REFERENCES political_articles(id) ON DELETE CASCADE,
  target_key TEXT NOT NULL, target_name TEXT NOT NULL, keyword_matched TEXT NOT NULL,

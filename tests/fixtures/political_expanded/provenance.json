@@ -1,0 +1,67 @@
+[
+  {
+    "name": "istoe_index",
+    "url": "https://istoe.com.br/wp-sitemap.xml",
+    "checked_at": "2026-09-14T16:39:08Z",
+    "sha256": "9977f0c63d77271811acdad169b437cca13fc52cdc1e8d88fb5007b15b38b95f",
+    "headers": {
+      "Content-Type": "application/xml; charset=UTF-8"
+    }
+  },
+  {
+    "name": "cnn_index",
+    "url": "https://www.cnnbrasil.com.br/sitemap_index.xml",
+    "checked_at": "2026-09-14T16:39:14Z",
+    "sha256": "d768946ce09eae48bd41661a434e9d70c69514f5a7d3de5ed42d675ded4e1781",
+    "headers": {
+      "Content-Type": "application/xml"
+    }
+  },
+  {
+    "name": "elizeu_api",
+    "url": "https://elizeupires.com/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+    "checked_at": "2026-09-14T16:39:02Z",
+    "sha256": "6071e7145b662cd7d5f5cc04d6398d75bdab2bf39fe78fd8af3d37326b5443f6",
+    "headers": {
+      "Content-Type": "application/json; charset=UTF-8",
+      "Link": "<https://elizeupires.com/wp-json/>; rel=\"https://api.w.org/\"",
+      "X-WP-Total": "2",
+      "X-WP-TotalPages": "1"
+    }
+  },
+  {
+    "name": "carta_api",
+    "url": "https://www.cartacapital.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent",
+    "checked_at": "2026-09-14T16:39:21Z",
+    "sha256": "fc395df5b4c655edd0d17eabb8de51814550835c453811d1d861a2004ecae9c7",
+    "headers": {
+      "Content-Type": "application/json; charset=UTF-8",
+      "Link": "<https://www.cartacapital.com.br/wp-json/wp/v2/posts?after=2026-08-09T00%3A00%3A00&before=2026-08-10T00%3A00%3A00&per_page=2&_fields=id%2Clink%2Ctitle%2Cdate%2Cdate_gmt%2Ccontent&page=2>; rel=\"next\"",
+      "X-WP-Total": "26",
+      "X-WP-TotalPages": "13"
+    }
+  },
+  {
+    "name": "exame_index",
+    "url": "https://exame.com/sitemap.xml",
+    "checked_at": "2026-09-14T16:39:02Z",
+    "sha256": "1d0bd856a8efa718350eaabedfc11621619f9c51293ca78a0416a145bf799026",
+    "headers": {
+      "Content-Type": "text/xml"
+    }
+  },
+  {
+    "name": "istoe_603",
+    "url": "https://istoe.com.br/wp-sitemap-posts-post-603.xml",
+    "checked_at": "2026-09-14",
+    "sha256": "1562ae18dc6f842fc7c401875dfc18de1718d1198d0789471b4832fec914255f",
+    "headers": {}
+  },
+  {
+    "name": "veja_day",
+    "url": "https://veja.abril.com.br/sitemap.xml?yyyy=2026&mm=06&dd=24",
+    "checked_at": "2026-09-14",
+    "sha256": "c7ee2c5152632600a3e3fa6894e99e6e4575221ac00b464189f7f8f91a900233",
+    "headers": {}
+  }
+]

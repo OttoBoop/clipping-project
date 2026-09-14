@@ -110,7 +110,11 @@ class FakePoliticalCorpus:
         self.classified[(article_id, key)] = deepcopy(content)
         return self.classifications(article_id, allowed_target_keys=allowed_target_keys)
 
-    def coverage(self, job_id="", *, allowed_target_keys):
+    def source_catalog(self, *, profile, allowed_target_keys):
+        from web_app.political_source_catalog import allowed_sources
+        return {"sources": allowed_sources(profile)}
+
+    def coverage(self, job_id="", *, allowed_target_keys, cursor=0, page_size=50):
         self.record("coverage", job_id=job_id, allowed_target_keys=allowed_target_keys)
         return {"items": [{"sourceKey": "fixture_rj", "sourceName": "Fonte simulada RJ",
                            "dateFrom": "2026-06-01", "dateTo": "2026-09-09", "status": "gap",
