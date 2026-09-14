@@ -1775,3 +1775,49 @@ def test_calendar_exclusion_is_committed_in_task_result(service, monkeypatch):
         assert row['result']['calendarPartitionExcluded']['from']=='1999-12-28'
         assert row['result']['calendarPartitionExcluded']['http_requested'] is False and row['raw_count']==0
         assert c.execute("SELECT count(*) AS n FROM political_tasks WHERE kind='fetch'").fetchone()['n']==0
+
+
+def test_calendar_sibling_pruning_is_bounded_and_keeps_requested_year(service,monkeypatch):
+    import gzip,json
+    from pathlib import Path
+    from web_app.political_expanded_discovery import load_expanded_sources
+    from web_app import political_discovery as core
+    s=next(s for s in load_expanded_sources() if s['key']=='jota')
+    root=core._xml(type('Response',(),{'content':gzip.decompress((Path(__file__).parent/'fixtures/political_expanded/jota_calendar_index.gz').read_bytes())})())
+    urls=[core._child_text(n,'loc') for n in root]
+    tasks=[{'source_key':'jota','source_snapshot':s,'strategy':'expanded_sitemap','url':url,
+        'date_from':'2026-08-09','date_to':'2026-08-09','depth':1,'mechanism':s['mechanisms'][0]} for url in urls]
+    job=start(service,monkeypatch,tasks=tasks)
+    monkeypatch.setattr(service,'fetch',lambda *a,**kw:pytest.fail('old calendar tasks must not request a page'))
+    t=service.claim_task('discovery',worker_id='calendar-batch')
+    assert service.process_task(t)['status']=='complete'
+    with service._connect() as c:
+        rows=c.execute('SELECT status,attempts,payload,result FROM political_tasks WHERE job_id=%s ORDER BY id',(job['id'],)).fetchall()
+        complete=[r for r in rows if r['status']=='complete']
+        assert len(complete)==101
+        assert sum(r['attempts']==0 for r in complete)==100
+        assert all(r['result']['calendarPartitionExcluded']['http_requested'] is False for r in complete)
+        current=[r for r in rows if '/posts/2026/' in r['payload']['url']]
+        assert len(current)==9 and all(r['status']=='queued' for r in current)
+        assert c.execute("SELECT count(*) AS n FROM political_tasks WHERE kind='fetch'").fetchone()['n']==0
+
+
+def test_calendar_sibling_pruning_preserves_active_retry_and_other_sources(service,monkeypatch):
+    from web_app.political_expanded_discovery import load_expanded_sources
+    s=next(s for s in load_expanded_sources() if s['key']=='estadao')
+    base={'source_key':'estadao','source_snapshot':s,'strategy':'expanded_sitemap',
+          'date_from':'2026-08-09','date_to':'2026-08-09','depth':1,'mechanism':s['mechanisms'][0]}
+    paths=['1999-12-28','1999-12-27','1999-12-26','1999-12-25']
+    job=start(service,monkeypatch,tasks=[{**base,'url':'https://www.estadao.com.br/arc/outboundfeeds/sitemap/'+p+'/?outputType=xml'} for p in paths])
+    t=service.claim_task('discovery',worker_id='calendar-protected')
+    with service._connect() as c:
+        ids=[r['id'] for r in c.execute('SELECT id FROM political_tasks WHERE id<>%s ORDER BY id',(t['id'],)).fetchall()]
+        c.execute("UPDATE political_tasks SET status='running',attempts=1,lease_owner='other',leased_until=NOW()+INTERVAL '1 minute' WHERE id=%s",(ids[0],))
+        c.execute("UPDATE political_tasks SET status='retryable',attempts=1 WHERE id=%s",(ids[1],))
+        c.execute("UPDATE political_tasks SET source_key='other-publisher' WHERE id=%s",(ids[2],))
+    monkeypatch.setattr(service,'fetch',lambda *a,**kw:pytest.fail('no HTTP'))
+    assert service.process_task(t)['status']=='complete'
+    with service._connect() as c:
+        rows=c.execute('SELECT status,result FROM political_tasks WHERE id=ANY(%s) ORDER BY id',(ids,)).fetchall()
+        assert [r['status'] for r in rows]==['running','retryable','queued']
+        assert all(not r['result'] for r in rows)

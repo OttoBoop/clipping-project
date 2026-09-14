@@ -149,6 +149,19 @@ def _skip_branch(url):
     return bool(re.search(r'(?:sitemap[-_/](?:taxonomy|taxonomies|users|authors?|autor|tag|category)|/(?:autor|authors?|tags)/sitemap)', url, re.I))
 
 
+def calendar_exclusion(task, source):
+    """Prove an advertised child calendar is outside this frozen task window."""
+    url = task.get('url', '')
+    if task.get('strategy') != 'expanded_sitemap' or int(task.get('depth', 0)) <= 0 or not _allowed(url, source):
+        return None
+    partition = _partition(url)
+    end = date.fromisoformat(task['date_to']) + timedelta(days=int((task.get('mechanism') or {}).get('calendar_tail_days', 0)))
+    if partition and (partition[1] < date.fromisoformat(task['date_from']) or partition[0] > end):
+        return {'url': url, 'from': partition[0].isoformat(), 'to': partition[1].isoformat(),
+                'basis': 'publisher_sitemap_calendar_path', 'http_requested': False}
+    return None
+
+
 def _sitemap(task, source, fetch):
     core = _core()
     mechanism = task.get('mechanism') or {}
@@ -165,12 +178,9 @@ def _sitemap(task, source, fetch):
     # Recheck already queued children as well as newly traversed indexes.
     # Older workers did not recognize pre-2000 days or Jota's annual paths.
     # Preserve an explicit task result without requesting an irrelevant leaf.
-    partition = _partition(url) if int(task.get('depth', 0)) > 0 else None
-    end = date.fromisoformat(task['date_to']) + timedelta(days=int(mechanism.get('calendar_tail_days', 0)))
-    if partition and (partition[1] < date.fromisoformat(task['date_from']) or partition[0] > end):
-        return _result(calendar_partition_excluded={
-            'url': url, 'from': partition[0].isoformat(), 'to': partition[1].isoformat(),
-            'basis': 'publisher_sitemap_calendar_path', 'http_requested': False})
+    excluded = calendar_exclusion(task, source)
+    if excluded:
+        return _result(calendar_partition_excluded=excluded)
     response = core._get(fetch, url)
     root = core._xml(response)
     kind = core._local(root.tag)

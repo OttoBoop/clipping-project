@@ -1,0 +1,135 @@
+{
+  "environment": "production_worker",
+  "archiveWrites": 0,
+  "cases": [
+    {
+      "discoveredCanonicalUrl": "https://ponte.org/entregador-morto-por-pm-com-tiro-no-pescoco-sonhava-ter-uma-moto-que-ele-ainda-pagava",
+      "variants": [
+        {
+          "requestedUrl": "https://ponte.org/entregador-morto-por-pm-com-tiro-no-pescoco-sonhava-ter-uma-moto-que-ele-ainda-pagava",
+          "finalUrl": "https://ponte.org/entregador-morto-por-pm-com-tiro-no-pescoco-sonhava-ter-uma-moto-que-ele-ainda-pagava/",
+          "status": 200,
+          "calls": [
+            {
+              "url": "https://ponte.org/entregador-morto-por-pm-com-tiro-no-pescoco-sonhava-ter-uma-moto-que-ele-ainda-pagava",
+              "status": 301,
+              "location": "https://ponte.org/entregador-morto-por-pm-com-tiro-no-pescoco-sonhava-ter-uma-moto-que-ele-ainda-pagava/",
+              "headerMs": 170.21
+            },
+            {
+              "url": "https://ponte.org/entregador-morto-por-pm-com-tiro-no-pescoco-sonhava-ter-uma-moto-que-ele-ainda-pagava/",
+              "status": 200,
+              "location": "",
+              "headerMs": 24.28
+            }
+          ],
+          "ms": 1180.44,
+          "textChars": 5222,
+          "textHash": "ee9f7a7c9a5591a82a8434c308b86e219b7f0e3dd0ca92085bf5eda8a6291f70"
+        },
+        {
+          "requestedUrl": "https://ponte.org/entregador-morto-por-pm-com-tiro-no-pescoco-sonhava-ter-uma-moto-que-ele-ainda-pagava/",
+          "finalUrl": "https://ponte.org/entregador-morto-por-pm-com-tiro-no-pescoco-sonhava-ter-uma-moto-que-ele-ainda-pagava/",
+          "status": 200,
+          "calls": [
+            {
+              "url": "https://ponte.org/entregador-morto-por-pm-com-tiro-no-pescoco-sonhava-ter-uma-moto-que-ele-ainda-pagava/",
+              "status": 200,
+              "location": "",
+              "headerMs": 75.64
+            }
+          ],
+          "ms": 1037.62,
+          "textChars": 5222,
+          "textHash": "ee9f7a7c9a5591a82a8434c308b86e219b7f0e3dd0ca92085bf5eda8a6291f70"
+        }
+      ]
+    },
+    {
+      "discoveredCanonicalUrl": "https://ponte.org/tenho-certeza-que-foi-a-policia-diz-mae-de-lucas-um-ano-apos-sua-morte",
+      "variants": [
+        {
+          "requestedUrl": "https://ponte.org/tenho-certeza-que-foi-a-policia-diz-mae-de-lucas-um-ano-apos-sua-morte",
+          "finalUrl": "https://ponte.org/tenho-certeza-que-foi-a-policia-diz-mae-de-lucas-um-ano-apos-sua-morte/",
+          "status": 200,
+          "calls": [
+            {
+              "url": "https://ponte.org/tenho-certeza-que-foi-a-policia-diz-mae-de-lucas-um-ano-apos-sua-morte",
+              "status": 301,
+              "location": "https://ponte.org/tenho-certeza-que-foi-a-policia-diz-mae-de-lucas-um-ano-apos-sua-morte/",
+              "headerMs": 636.94
+            },
+            {
+              "url": "https://ponte.org/tenho-certeza-que-foi-a-policia-diz-mae-de-lucas-um-ano-apos-sua-morte/",
+              "status": 200,
+              "location": "",
+              "headerMs": 165.25
+            }
+          ],
+          "ms": 2102.43,
+          "textChars": 10056,
+          "textHash": "f5ae0611abcec055a9e0c6b4657fb85d38a21862f7cb4ba8ebb45239a191eac5"
+        },
+        {
+          "requestedUrl": "https://ponte.org/tenho-certeza-que-foi-a-policia-diz-mae-de-lucas-um-ano-apos-sua-morte/",
+          "finalUrl": "https://ponte.org/tenho-certeza-que-foi-a-policia-diz-mae-de-lucas-um-ano-apos-sua-morte/",
+          "status": 200,
+          "calls": [
+            {
+              "url": "https://ponte.org/tenho-certeza-que-foi-a-policia-diz-mae-de-lucas-um-ano-apos-sua-morte/",
+              "status": 200,
+              "location": "",
+              "headerMs": 128.5
+            }
+          ],
+          "ms": 959.13,
+          "textChars": 10056,
+          "textHash": "f5ae0611abcec055a9e0c6b4657fb85d38a21862f7cb4ba8ebb45239a191eac5"
+        }
+      ]
+    },
+    {
+      "discoveredCanonicalUrl": "https://ponte.org/sob-covas-uso-de-balas-de-borracha-pela-gcm-na-luz-sp-cresce-475-em-dois-anos",
+      "variants": [
+        {
+          "requestedUrl": "https://ponte.org/sob-covas-uso-de-balas-de-borracha-pela-gcm-na-luz-sp-cresce-475-em-dois-anos",
+          "finalUrl": "https://ponte.org/sob-covas-uso-de-balas-de-borracha-pela-gcm-na-luz-sp-cresce-475-em-dois-anos/",
+          "status": 200,
+          "calls": [
+            {
+              "url": "https://ponte.org/sob-covas-uso-de-balas-de-borracha-pela-gcm-na-luz-sp-cresce-475-em-dois-anos",
+              "status": 301,
+              "location": "https://ponte.org/sob-covas-uso-de-balas-de-borracha-pela-gcm-na-luz-sp-cresce-475-em-dois-anos/",
+              "headerMs": 657.82
+            },
+            {
+              "url": "https://ponte.org/sob-covas-uso-de-balas-de-borracha-pela-gcm-na-luz-sp-cresce-475-em-dois-anos/",
+              "status": 200,
+              "location": "",
+              "headerMs": 188.48
+            }
+          ],
+          "ms": 2084.61,
+          "textChars": 17903,
+          "textHash": "5aab6a10afd46f1bff1d074cd7836e2d687bb9b72b06a418c681e72f26d9f777"
+        },
+        {
+          "requestedUrl": "https://ponte.org/sob-covas-uso-de-balas-de-borracha-pela-gcm-na-luz-sp-cresce-475-em-dois-anos/",
+          "finalUrl": "https://ponte.org/sob-covas-uso-de-balas-de-borracha-pela-gcm-na-luz-sp-cresce-475-em-dois-anos/",
+          "status": 200,
+          "calls": [
+            {
+              "url": "https://ponte.org/sob-covas-uso-de-balas-de-borracha-pela-gcm-na-luz-sp-cresce-475-em-dois-anos/",
+              "status": 200,
+              "location": "",
+              "headerMs": 106.12
+            }
+          ],
+          "ms": 894.81,
+          "textChars": 17903,
+          "textHash": "5aab6a10afd46f1bff1d074cd7836e2d687bb9b72b06a418c681e72f26d9f777"
+        }
+      ]
+    }
+  ]
+}

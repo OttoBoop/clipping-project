@@ -1364,11 +1364,30 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     **({"source_snapshot": payload["source_snapshot"]} if payload.get("source_snapshot") else {})})
             if outcome == "gap":
                 self._enqueue_discovery_fallback(conn, task)
+            calendar_pruned = []
+            if result.get("calendar_partition_excluded"):
+                # Old workers queued entire obsolete calendar years. Finish
+                # at most 100 never-started siblings under the same job lock,
+                # retaining a separate proof on every task. Do not touch live
+                # leases, retries, other sources/jobs or already scanned pages.
+                from .political_expanded_discovery import calendar_exclusion
+                siblings = conn.execute("""SELECT id,payload FROM political_tasks
+                    WHERE job_id=%s AND source_key=%s AND kind='discovery'
+                    AND status='queued' AND attempts=0 AND payload->>'strategy'='expanded_sitemap'
+                    ORDER BY id LIMIT 100 FOR UPDATE SKIP LOCKED""", (task["job_id"],task["source_key"])).fetchall()
+                for sibling in siblings:
+                    proof = calendar_exclusion(sibling["payload"], source_for_task(sibling["payload"]))
+                    if proof:
+                        conn.execute("""UPDATE political_tasks SET status='complete',updated_at=NOW(),
+                            result=result || %s::jsonb WHERE id=%s""",
+                            (_json({"calendarPartitionExcluded":proof,"calendarPrunedByTask":task["id"]}),sibling["id"]))
+                        calendar_pruned.append(sibling["id"])
             self._finish(conn, task, "queued" if outcome == "continue" else outcome,
                          cursor=result.get("next_cursor") or task["cursor"], raw_count=int(result.get("raw_count") or 0),
                          error_type=str(result.get("gap_reason") or ""),
                          result={"bodyBatchRecords": len(batch_refs), "bodyBatchFallback": batch_fallback,
                                  "datesReusedBeforeFetch": dates_reused,
+                                 "calendarSiblingsPruned": calendar_pruned,
                                  "calendarPartitionExcluded": result.get("calendar_partition_excluded")})
         return {"taskId": task["id"], "status": outcome, "candidates": len(candidates),
                 "datesReusedBeforeFetch": dates_reused}

@@ -57,6 +57,11 @@ def publisher_article_request_url(url: str) -> str:
     # extra HTTP request and shared-domain wait without changing DB URL keys.
     if parsed.netloc == "www.diariodorio.com":
         return urlunsplit(parsed._replace(netloc="diariodorio.com"))
+    # Three real Ponte pages compared on the production worker, 2026-09-14:
+    # slashless -> 301 -> slash, with equal extracted-text hashes. The stored
+    # identity remains slashless; only the confirmed editorial request changes.
+    if parsed.netloc == "ponte.org" and not parsed.query and re.fullmatch(r"/[^/.]+-[^/.]+", parsed.path):
+        return urlunsplit(parsed._replace(path=parsed.path + "/"))
     if parsed.netloc == "vejario.abril.com.br" and parsed.path and not parsed.path.endswith("/"):
         segments = parsed.path.strip("/").split("/")
         if len(segments) >= 2 and "." not in segments[-1] and segments[0] != "wp-json":

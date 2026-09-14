@@ -120,3 +120,27 @@ def test_verified_request_forms_preserve_path_query_and_fragment(url, expected):
 ])
 def test_unverified_hosts_forms_and_non_article_urls_remain_unchanged(url):
     assert publisher_article_request_url(url) == url
+
+
+def test_real_ponte_worker_comparison_uses_direct_request_and_preserves_identity():
+    import json
+    from pipeline.http_utils import canonicalize_url
+    proof=json.loads((Path(__file__).parent/'fixtures/ponte-worker-redirects-20260914.json').read_text())
+    assert proof['environment']=='production_worker' and proof['archiveWrites']==0
+    for case in proof['cases']:
+        old,new=case['variants']
+        assert [c['status'] for c in old['calls']]==[301,200]
+        assert [c['status'] for c in new['calls']]==[200]
+        assert old['textHash']==new['textHash'] and old['textChars']>5000
+        assert publisher_article_request_url(old['requestedUrl'])==new['requestedUrl']
+        assert canonicalize_url(new['requestedUrl'])==old['requestedUrl']
+
+
+@pytest.mark.parametrize('url',[
+    'https://ponte.org/wp-json/wp/v2/posts','https://ponte.org/wp-sitemap.xml',
+    'https://ponte.org/story-with-query?feed=rss','https://ponte.org/category/politica',
+    'https://ponte.org.evil.example/story-title','https://user@ponte.org/story-title',
+    'http://ponte.org/story-title','https://ponte.org/story-title/',
+])
+def test_ponte_request_change_is_limited_to_verified_shape(url):
+    assert publisher_article_request_url(url)==url
