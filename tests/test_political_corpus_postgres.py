@@ -1608,3 +1608,53 @@ def test_real_atom_discovery_saves_body_only_mention_from_immutable_batch(servic
         assert conn.execute("SELECT COUNT(*) AS n FROM political_mentions WHERE target_key='douglas_ruas'").fetchone()['n']==2
     for row in rows:
         assert 'Douglas Ruas' in service._read_text(row['text_object_key'],row['content_hash'])
+
+
+@pytest.mark.parametrize('pending,slots',[(3800,2),(3801,1),(3900,1),(3901,0)])
+def test_bounded_atom_shares_small_page_capacity_with_google(service,monkeypatch,pending,slots):
+    job=start(service,monkeypatch,tasks=[
+        {'source_key':'large','strategy':'expanded_sitemap','cursor':{}},
+        {'source_key':'noticias_de_belford_roxo','strategy':'expanded_blogger_feed','cursor':{}},
+        {'source_key':'google_news','strategy':'google_news','query':'"Eduardo Paes"','cursor':{}},
+    ])
+    with service._connect() as conn:
+        _queue_pending_fetches(conn,job['id'],'busy-publisher',pending)
+    claimed=[service.claim_task('discovery',worker_id='bounded-'+str(i)) for i in range(3)]
+    claimed=[t for t in claimed if t]
+    assert len(claimed)==slots
+    assert all(t['payload']['strategy'] in {'expanded_blogger_feed','google_news'} for t in claimed)
+    assert pending+100*len(claimed)<=4000
+    if claimed:assert claimed[0]['payload']['strategy']=='expanded_blogger_feed'
+
+
+def test_bounded_atom_precedes_older_sitemap_without_ignoring_source_backpressure(service,monkeypatch):
+    job=start(service,monkeypatch,tasks=[
+        {'source_key':'noticias_de_belford_roxo','strategy':'expanded_sitemap','cursor':{}},
+        {'source_key':'noticias_de_belford_roxo','strategy':'expanded_blogger_feed','cursor':{}},
+    ])
+    with service._connect() as conn:
+        _queue_pending_fetches(conn,job['id'],'busy-publisher',3700)
+        _queue_pending_fetches(conn,job['id'],'noticias_de_belford_roxo',100)
+    assert service.claim_task('discovery',worker_id='blocked') is None
+    with service._connect() as conn:
+        conn.execute("DELETE FROM political_tasks WHERE id=(SELECT MIN(id) FROM political_tasks WHERE kind='fetch' AND source_key='noticias_de_belford_roxo')")
+    claimed=service.claim_task('discovery',worker_id='ready')
+    assert claimed['payload']['strategy']=='expanded_blogger_feed'
+    # The other discovery slot cannot concurrently claim this publisher.
+    assert service.claim_task('discovery',worker_id='same-source') is None
+
+
+def test_atom_response_cannot_exceed_reserved_capacity(service,monkeypatch):
+    from tests.test_political_blogger_feed import response,SOURCE
+    from web_app import political_blogger_feed,political_discovery
+    result=political_blogger_feed.parse_atom_page(response(201).content,response(201).url,SOURCE)
+    candidate=result['candidates'][0]
+    start(service,monkeypatch,tasks=[{'source_key':SOURCE['key'],'strategy':'expanded_blogger_feed','cursor':{}}])
+    # Repeat a real candidate solely to exercise the over-budget adapter guard.
+    # No candidate or article should reach even the disposable database.
+    monkeypatch.setattr(political_discovery,'discover',lambda *a:{'candidates':[candidate]*101,'outcome':'complete'})
+    task=service.claim_task('discovery',worker_id='bounded-guard')
+    with pytest.raises(FetchProblem,match='atom_discovery_page_too_large'):service._discover(task)
+    with service._connect() as conn:
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE kind='fetch'").fetchone()['n']==0
+        assert conn.execute('SELECT COUNT(*) AS n FROM political_articles').fetchone()['n']==0

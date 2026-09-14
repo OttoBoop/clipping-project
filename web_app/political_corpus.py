@@ -823,7 +823,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
 
         Below 2000 active fetches every source may discover. From 2000 to
         3999, admit only sources with fewer than 100 active fetches. Reserve
-        each running page's maximum (100 for recovery or Google, 500 for other discovery,
+        each running page's maximum (100 for recovery, bounded Atom or Google, 500 for other discovery,
         zero for already identified sitemap indexes) before admission, so
         concurrent results fit the 4000-fetch budget.
         """
@@ -833,7 +833,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             GROUP BY t.source_key""", (list(ACTIVE),)).fetchall()
         total = sum(int(row["n"]) for row in rows)
         running = conn.execute("""SELECT COALESCE(SUM(CASE WHEN """ + SITEMAP_INDEX_TASK_SQL + """ THEN 0
-            WHEN t.payload->>'strategy'='recover' OR (t.payload->>'strategy'='google_news'
+            WHEN t.payload->>'strategy' IN ('recover','expanded_blogger_feed') OR (t.payload->>'strategy'='google_news'
                 AND t.cursor->>'google_batch_capacity'='100') THEN 100 ELSE 500 END),0) AS n FROM political_tasks t
             JOIN political_jobs j ON j.id=t.job_id WHERE t.kind='discovery'
             AND t.status='running' AND t.leased_until>NOW() AND j.status IN ('queued','running')""").fetchone()["n"]
@@ -873,7 +873,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 LEFT JOIN political_domain_limits cooling ON cooling.domain=""" + TASK_DOMAIN_FALLBACK_SQL + """
                 WHERE t.kind=ANY(%s) AND j.status IN ('queued','running')
                 AND (t.kind='fetch' OR """ + SITEMAP_INDEX_TASK_SQL + """ OR NOT (t.source_key=ANY(%s)))
-                AND (NOT %s OR t.payload->>'strategy' IN ('recover','google_news') OR """ + SITEMAP_INDEX_TASK_SQL + """)
+                AND (NOT %s OR t.payload->>'strategy' IN ('recover','google_news','expanded_blogger_feed') OR """ + SITEMAP_INDEX_TASK_SQL + """)
                 AND (NOT %s OR """ + SITEMAP_INDEX_TASK_SQL + """)
                 AND (cooling.cooldown_until IS NULL OR cooling.cooldown_until<=NOW())
                 AND (t.status IN ('queued','retryable') OR (t.status='running' AND t.leased_until<NOW()))
@@ -893,6 +893,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     CASE WHEN t.kind='discovery' AND t.payload->>'strategy'='recover' THEN 0 ELSE 1 END,
                     CASE WHEN t.kind='fetch' THEN scheduling.fetch_claimed_at
                               ELSE scheduling.discovery_claimed_at END ASC NULLS FIRST,
+                    CASE WHEN t.kind='discovery' AND t.payload->>'strategy'='expanded_blogger_feed' THEN 0 ELSE 1 END,
                     t.priority DESC,
                     CASE WHEN t.kind='fetch' AND COALESCE(t.payload->>'published_at','')<>'' THEN 0 ELSE 1 END,
                     t.id LIMIT 1""", (_json(source_domains), kinds, blocked_sources, small_page_only, index_only,
@@ -1296,6 +1297,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             raise FetchProblem("sitemap_index_emitted_article_candidates", retryable=False)
         if len(candidates) > 500:
             raise FetchProblem("discovery_page_too_large", retryable=False)
+        if payload.get("strategy") == "expanded_blogger_feed" and len(candidates) > 100:
+            raise FetchProblem("atom_discovery_page_too_large", retryable=False)
         if payload.get("strategy") == "google_news":
             result = _page_google_result(result)
             candidates = result.get("candidates") or []
