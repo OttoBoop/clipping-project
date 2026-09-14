@@ -897,6 +897,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     CASE WHEN t.kind='fetch' THEN scheduling.fetch_claimed_at
                               ELSE scheduling.discovery_claimed_at END ASC NULLS FIRST,
                     CASE WHEN t.kind='discovery' AND t.payload->>'strategy'='expanded_blogger_feed' THEN 0 ELSE 1 END,
+                    CASE WHEN t.kind='discovery' AND t.payload->'partition_hint'->>0 IS NOT NULL THEN 0 ELSE 1 END,
                     t.priority DESC,
                     CASE WHEN t.kind='fetch' AND COALESCE(t.payload->>'published_at','')<>'' THEN 0 ELSE 1 END,
                     t.id LIMIT 1""", (_json(source_domains), kinds, blocked_sources, small_page_only, index_only,
@@ -1367,7 +1368,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                          cursor=result.get("next_cursor") or task["cursor"], raw_count=int(result.get("raw_count") or 0),
                          error_type=str(result.get("gap_reason") or ""),
                          result={"bodyBatchRecords": len(batch_refs), "bodyBatchFallback": batch_fallback,
-                                 "datesReusedBeforeFetch": dates_reused})
+                                 "datesReusedBeforeFetch": dates_reused,
+                                 "calendarPartitionExcluded": result.get("calendar_partition_excluded")})
         return {"taskId": task["id"], "status": outcome, "candidates": len(candidates),
                 "datesReusedBeforeFetch": dates_reused}
 

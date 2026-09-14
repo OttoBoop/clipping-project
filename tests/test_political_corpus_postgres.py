@@ -1744,3 +1744,34 @@ def test_discovery_does_not_override_existing_reported_date_with_old_observation
     with service._connect() as c:c.execute("UPDATE political_jobs SET date_from='2026-06-02',date_to='2026-06-02' WHERE id=%s",(job['id'],))
     enqueue(service,monkeypatch,candidate)
     assert service.claim_task('fetch',worker_id='conflicting-evidence') is not None
+
+
+def test_calendar_discovery_priority_retains_undated_source_routes(service, monkeypatch):
+    dated = {'source_key':'exame','strategy':'expanded_sitemap','url':'https://exame.com/artigos/2026-08/09/sitemap.xml',
+             'partition_hint':['2026-08-09','2026-08-09']}
+    undated = {'source_key':'exame','strategy':'expanded_sitemap','url':'https://exame.com/categorias/blog/sitemap.xml','partition_hint':[]}
+    job = start(service,monkeypatch,tasks=[undated,dated])
+    first=service.claim_task('discovery',worker_id='dated-first')
+    assert first['payload']['url']==dated['url']
+    with service._connect() as c:
+        service._finish(c,first,'complete')
+    second=service.claim_task('discovery',worker_id='undated-retained')
+    assert second['payload']['url']==undated['url']
+
+
+def test_calendar_exclusion_is_committed_in_task_result(service, monkeypatch):
+    from web_app.political_expanded_discovery import load_expanded_sources
+    source=next(s for s in load_expanded_sources() if s['key']=='estadao')
+    job=start(service,monkeypatch,tasks=[{
+        'source_key':'estadao','source_snapshot':source,'strategy':'expanded_sitemap',
+        'date_from':'2026-08-09','date_to':'2026-08-09','depth':1,
+        'url':'https://www.estadao.com.br/arc/outboundfeeds/sitemap/1999-12-28/?outputType=xml',
+        'mechanism':source['mechanisms'][0], 'partition_hint':[]}])
+    monkeypatch.setattr(service,'fetch',lambda *a,**k:pytest.fail('calendar exclusion requires no HTTP'))
+    t=service.claim_task('discovery',worker_id='calendar')
+    assert service.process_task(t)['status']=='complete'
+    with service._connect() as c:
+        row=c.execute('SELECT result,raw_count FROM political_tasks WHERE id=%s',(t['id'],)).fetchone()
+        assert row['result']['calendarPartitionExcluded']['from']=='1999-12-28'
+        assert row['result']['calendarPartitionExcluded']['http_requested'] is False and row['raw_count']==0
+        assert c.execute("SELECT count(*) AS n FROM political_tasks WHERE kind='fetch'").fetchone()['n']==0

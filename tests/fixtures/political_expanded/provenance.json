@@ -239,5 +239,59 @@
     "retrieved_at": "2026-09-09T16:06:09.287973+00:00",
     "evaluation_role": "development_only",
     "original_artifact": "/home/otavio/Documents/vscode/clipping-live-operations/2026-09-09/google-alias-or-audit/eduardo_cavaliere-fullperiod-0.xml"
+  },
+  {
+    "requested_url": "https://www.estadao.com.br/arc/outboundfeeds/sitemap-index-by-day/?outputType=xml",
+    "checked_at": "2026-09-14T16:39:10Z",
+    "environment": "workstation",
+    "user_agent": "ClippingProject/1.0 (+political-news-monitor)",
+    "status": 200,
+    "url": "https://www.estadao.com.br/arc/outboundfeeds/sitemap-index-by-day/?outputType=xml",
+    "headers": {
+      "Content-Type": "application/xml; charset=utf-8"
+    },
+    "bytes": 1081286,
+    "sha256": "18737811f39774dbef3f38473c31e4872a71771757511cd99dde7062d9362458",
+    "evidence": "18737811f39774dbef3f.gz",
+    "sitemaps": [],
+    "links": [],
+    "kind": "sitemap_probe",
+    "xml_kind": "sitemapindex",
+    "entry_count": 9919,
+    "sample_entries": [
+      "<ns0:sitemap xmlns:ns0=\"http://www.sitemaps.org/schemas/sitemap/0.9\"><ns0:loc>https://www.estadao.com.br/arc/outboundfeeds/sitemap/latest/?outputType=xml</ns0:loc></ns0:sitemap>",
+      "<ns0:sitemap xmlns:ns0=\"http://www.sitemaps.org/schemas/sitemap/0.9\"><ns0:loc>https://www.estadao.com.br/arc/outboundfeeds/sitemap/2026-09-13/?outputType=xml</ns0:loc></ns0:sitemap>",
+      "<ns0:sitemap xmlns:ns0=\"http://www.sitemaps.org/schemas/sitemap/0.9\"><ns0:loc>https://www.estadao.com.br/arc/outboundfeeds/sitemap/1999-07-21/?outputType=xml</ns0:loc></ns0:sitemap>",
+      "<ns0:sitemap xmlns:ns0=\"http://www.sitemaps.org/schemas/sitemap/0.9\"><ns0:loc>https://www.estadao.com.br/arc/outboundfeeds/sitemap/1999-07-20/?outputType=xml</ns0:loc></ns0:sitemap>"
+    ],
+    "name": "estadao_calendar_index",
+    "purpose": "development: reproduce production calendar backlog; not article recall reference"
+  },
+  {
+    "requested_url": "https://sitemap.jota.info/sitemap-index.xml",
+    "checked_at": "2026-09-14T16:39:11Z",
+    "environment": "workstation",
+    "user_agent": "ClippingProject/1.0 (+political-news-monitor)",
+    "status": 200,
+    "url": "https://sitemap.jota.info/sitemap-index.xml",
+    "headers": {
+      "Content-Type": "text/xml"
+    },
+    "bytes": 21908,
+    "sha256": "92ea5f3ced9fc41be91a1e823089fff7be62c0b457addc18d95acfeaebf6878f",
+    "evidence": "92ea5f3ced9fc41be91a.gz",
+    "sitemaps": [],
+    "links": [],
+    "kind": "sitemap_probe",
+    "xml_kind": "sitemapindex",
+    "entry_count": 145,
+    "sample_entries": [
+      "<ns0:sitemap xmlns:ns0=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n    <ns0:loc>https://sitemap.jota.info/posts/2014/sitemap-post-10-2014.xml</ns0:loc>\n    <ns0:lastmod>2025-06-17T14:44:31-03:00</ns0:lastmod>\n  </ns0:sitemap>\n  ",
+      "<ns0:sitemap xmlns:ns0=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n    <ns0:loc>https://sitemap.jota.info/posts/2014/sitemap-post-11-2014.xml</ns0:loc>\n    <ns0:lastmod>2025-06-17T14:44:42-03:00</ns0:lastmod>\n  </ns0:sitemap>\n  ",
+      "<ns0:sitemap xmlns:ns0=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n    <ns0:loc>https://sitemap.jota.info/posts/2026/sitemap-post-8-2026.xml</ns0:loc>\n    <ns0:lastmod>2026-08-31T03:00:24-03:00</ns0:lastmod>\n  </ns0:sitemap>\n  ",
+      "<ns0:sitemap xmlns:ns0=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n    <ns0:loc>https://sitemap.jota.info/posts/2026/sitemap-post-9-2026.xml</ns0:loc>\n    <ns0:lastmod>2026-09-14T03:00:22-03:00</ns0:lastmod>\n  </ns0:sitemap>\n"
+    ],
+    "name": "jota_calendar_index",
+    "purpose": "development: reproduce production calendar backlog; not article recall reference"
   }
 ]

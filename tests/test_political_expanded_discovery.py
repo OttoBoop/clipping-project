@@ -402,3 +402,53 @@ def test_real_exame_editorial_webstories_branch_and_months_remain_discoverable()
     assert result['raw_count']==40
     assert not result['candidates']
     assert expanded._skip_branch('https://exame.com/authors/sitemap.xml')
+
+
+def test_real_estadao_index_keeps_requested_day_and_three_following_days_only():
+    run, s = task('estadao'), source('estadao')
+    children, scanned = [], 0
+    while True:
+        result = expanded.discover_expanded(run, s, lambda u: response('estadao_calendar_index'))
+        children.extend(result['child_tasks']); scanned += result['raw_count']
+        if not result['next_cursor']:
+            break
+        run['cursor'] = result['next_cursor']
+    assert scanned == 9919
+    assert len(children) == 5  # four calendar days plus the undated latest feed
+    assert {c['partition_hint'][0] for c in children if c['partition_hint']} == {
+        '2026-08-09', '2026-08-10', '2026-08-11', '2026-08-12'}
+    assert any('/latest/' in c['url'] for c in children)
+
+
+def test_real_jota_index_keeps_all_requested_year_leaves_without_using_lastmod():
+    result = expanded.discover_expanded(task('jota'), source('jota'), lambda u: response('jota_calendar_index'))
+    assert result['raw_count'] == 145 and result['next_cursor'] is None
+    children = result['child_tasks']
+    assert len(children) == 9
+    assert all('/posts/2026/' in c['url'] for c in children)
+    assert all(c['partition_hint'] == ['2026-01-01', '2026-12-31'] for c in children)
+    assert any('sitemap-post-1-2026' in c['url'] for c in children)
+
+
+@pytest.mark.parametrize('key,url,period',[
+    ('estadao','https://www.estadao.com.br/arc/outboundfeeds/sitemap/1999-12-28/?outputType=xml', ['1999-12-28','1999-12-28']),
+    ('jota','https://sitemap.jota.info/posts/2015/sitemap-post-9-2015.xml',['2015-01-01','2015-12-31']),
+])
+def test_preexisting_real_calendar_children_finish_with_explicit_exclusion_without_http(key,url,period):
+    run = {**task(key), 'url':url, 'depth':1, 'partition_hint':[]}
+    result = expanded.discover_expanded(run, source(key), lambda u: pytest.fail('out-of-window calendar leaf must not be fetched'))
+    assert result['outcome'] == 'complete' and result['raw_count'] == 0
+    assert not result['candidates'] and not result['child_tasks']
+    proof = result['calendar_partition_excluded']
+    assert [proof['from'],proof['to']] == period and proof['http_requested'] is False
+
+
+def test_calendar_guard_retains_late_estadao_leaf_and_unknown_jota_paths():
+    run = {**task('estadao'), 'url':'https://www.estadao.com.br/arc/outboundfeeds/sitemap/2026-08-12/?outputType=xml', 'depth':1}
+    calls=[]
+    # The actual Record leaf is used solely as a valid XML response; it emits
+    # no cross-publisher candidates and proves the tail day reaches transport.
+    expanded.discover_expanded(run, source('estadao'), lambda u:(calls.append(u) or response('record_aug9_sitemap')))
+    assert calls == [run['url']]
+    assert expanded._partition('https://sitemap.jota.info/posts/2015/sitemap-post-9-2026.xml') is None
+    assert expanded._partition('https://sitemap.jota.info/sitemap-post-9.xml') is None

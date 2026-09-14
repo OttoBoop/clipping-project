@@ -113,13 +113,21 @@ def _partition(url):
         except ValueError:
             return None
     path = urlparse(url).path
-    match = re.search(r'(?<!\d)(20\d{2})[-/](\d{2})[-/](\d{2})(?!\d)', path)
+    match = re.search(r'(?<!\d)((?:19|20)\d{2})[-/](\d{2})[-/](\d{2})(?!\d)', path)
     if match:
         try:
             d = date(*map(int, match.groups()))
             return d, d
         except ValueError:
             return None
+    # Jota advertises annual directories with month-numbered leaves. Retain
+    # the entire requested year conservatively; the numeric leaf is not used
+    # as an article date or assumed to prove the contents of a whole month.
+    if urlparse(url).hostname == 'sitemap.jota.info':
+        match = re.fullmatch(r'/posts/((?:19|20)\d{2})/sitemap-post-\d+-\1\.xml', path)
+        if match:
+            year = int(match[1])
+            return date(year, 1, 1), date(year, 12, 31)
     match = re.search(r'(?<!\d)((?:19|20)\d{2})[-/.]?(\d{1,2})(?:\.xml|/|$)', path)
     if match:
         try:
@@ -154,6 +162,15 @@ def _sitemap(task, source, fetch):
         url = task['url']
     if not _allowed(url, source):
         raise core.DiscoveryError('expanded sitemap outside publisher domains', retryable=False)
+    # Recheck already queued children as well as newly traversed indexes.
+    # Older workers did not recognize pre-2000 days or Jota's annual paths.
+    # Preserve an explicit task result without requesting an irrelevant leaf.
+    partition = _partition(url) if int(task.get('depth', 0)) > 0 else None
+    end = date.fromisoformat(task['date_to']) + timedelta(days=int(mechanism.get('calendar_tail_days', 0)))
+    if partition and (partition[1] < date.fromisoformat(task['date_from']) or partition[0] > end):
+        return _result(calendar_partition_excluded={
+            'url': url, 'from': partition[0].isoformat(), 'to': partition[1].isoformat(),
+            'basis': 'publisher_sitemap_calendar_path', 'http_requested': False})
     response = core._get(fetch, url)
     root = core._xml(response)
     kind = core._local(root.tag)
