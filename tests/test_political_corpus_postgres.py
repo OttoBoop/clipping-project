@@ -1500,3 +1500,74 @@ def test_calendar_partition_priority_retains_undated_candidates(service, monkeyp
             'metadata':{'partition_status':'requested_calendar_partition'}})
     assert service.claim_task('fetch',worker_id='one')['payload']['url'].endswith('/historical-story')
     assert service.claim_task('fetch',worker_id='two')['payload']['url'].endswith('/current-story')
+
+
+@pytest.mark.parametrize('pending,slots',[(3800,2),(3900,1),(3901,0)])
+def test_google_reserves_100_slots_while_large_discovery_stays_blocked(service,monkeypatch,pending,slots):
+    job=start(service,monkeypatch,tasks=[
+        {'source_key':'g1','strategy':'daily_sitemap','cursor':{}},
+        {'source_key':'r7','strategy':'google_news','query':'"Eduardo Paes"','cursor':{}},
+        {'source_key':'folha','strategy':'google_news','query':'"Pedro Paulo"','cursor':{}},
+    ])
+    with service._connect() as conn:
+        _queue_pending_fetches(conn,job['id'],'busy-publisher',pending)
+    claimed=[service.claim_task('discovery',worker_id='google-budget-'+str(i)) for i in range(3)]
+    claimed=[t for t in claimed if t]
+    assert len(claimed)==slots
+    assert all(t['payload']['strategy']=='google_news' for t in claimed)
+    assert pending+100*len(claimed)<=4000
+
+
+def test_real_google_feed_drains_committed_cursor_and_preserves_split_without_refetch(service,monkeypatch):
+    from pathlib import Path
+    import gzip,json,hashlib
+    from web_app import political_discovery,political_corpus
+    directory=Path(__file__).parent/'fixtures/political_expanded'
+    proof=next(r for r in json.loads((directory/'provenance.json').read_text()) if r['name']=='google_cavaliere_real_100')
+    raw=gzip.decompress((directory/'google_cavaliere_real_100.gz').read_bytes())
+    assert hashlib.sha256(raw).hexdigest()==proof['sha256']
+    response=requests.Response();response.status_code=200;response.url=proof['url'];response._content=raw
+    payload={'source_key':'google_news','strategy':'google_news','query':proof['query'],
+        'date_from':proof['dateFrom'],'date_to':proof['dateTo'],'target_ids':['paes'],'cursor':{}}
+    # A smaller local batch exercises the same spill/resume path using 100 real
+    # feed entries. It creates no synthetic article bodies or production records.
+    pager=political_corpus._page_google_result
+    monkeypatch.setattr(political_corpus,'_page_google_result',lambda r:pager(r,limit=40))
+    job=start(service,monkeypatch,tasks=[payload]);calls=[]
+    monkeypatch.setattr(service,'fetch',lambda url:(calls.append(url),response)[1])
+    task=service.claim_task('discovery',worker_id='google-page-1');original_id=task['id']
+    service.process_task(task)
+    with service._connect() as conn:
+        first=conn.execute('SELECT * FROM political_tasks WHERE id=%s',(original_id,)).fetchone()
+        assert first['status']=='queued' and first['raw_count']==100
+        assert len(first['cursor']['google_pending_result']['candidates'])==60
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE kind='fetch'").fetchone()['n']==40
+    # Every resume reloads its state from PostgreSQL, not the prior Python task.
+    for n in [2,3]:
+        task=service.claim_task('discovery',worker_id='google-page-'+str(n))
+        assert task['id']==original_id
+        service.process_task(task)
+    assert len(calls)==1
+    with service._connect() as conn:
+        done=conn.execute('SELECT status,raw_count FROM political_tasks WHERE id=%s',(original_id,)).fetchone()
+        assert done['status']=='split' and done['raw_count']==100
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE kind='fetch'").fetchone()['n']==100
+        assert conn.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE kind='discovery' AND status='queued'").fetchone()['n']==2
+        assert conn.execute('SELECT COUNT(*) AS n FROM political_articles').fetchone()['n']==0
+
+
+def test_rolling_old_google_lease_retains_500_reservation(service,monkeypatch):
+    job=start(service,monkeypatch,tasks=[
+        {'source_key':'r7','strategy':'google_news','cursor':{}},
+        {'source_key':'folha','strategy':'google_news','cursor':{}},
+    ])
+    with service._connect() as conn:
+        _queue_pending_fetches(conn,job['id'],'busy-publisher',3401)
+    old=service.claim_task('discovery',worker_id='old-worker')
+    with service._connect() as conn:
+        conn.execute("UPDATE political_tasks SET cursor=cursor-'google_batch_capacity' WHERE id=%s",(old['id'],))
+    assert service.claim_task('discovery',worker_id='new-worker') is None
+    with service._connect() as conn:
+        conn.execute("UPDATE political_tasks SET cursor=cursor || '{\"google_batch_capacity\":100}'::jsonb WHERE id=%s",(old['id'],))
+    new=service.claim_task('discovery',worker_id='new-worker')
+    assert new and new['cursor']['google_batch_capacity']==100

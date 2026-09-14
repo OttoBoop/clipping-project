@@ -225,5 +225,19 @@
     "retrieved_at": "2026-09-14T21:27:44.166643+00:00",
     "environment": "workstation_current_probe",
     "evaluation_role": "development_only"
+  },
+  {
+    "name": "google_cavaliere_real_100",
+    "url": "https://news.google.com/rss/search",
+    "query": "\"Eduardo Cavaliere\"",
+    "dateFrom": "2026-06-01",
+    "dateTo": "2026-09-09",
+    "sha256": "ccee0f16c7c7d59feea4a751888129523701a7820455fc0f5bd03f6ed3ce508c",
+    "headers": {
+      "Content-Type": "application/rss+xml"
+    },
+    "retrieved_at": "2026-09-09T16:06:09.287973+00:00",
+    "evaluation_role": "development_only",
+    "original_artifact": "/home/otavio/Documents/vscode/clipping-live-operations/2026-09-09/google-alias-or-audit/eduardo_cavaliere-fullperiod-0.xml"
   }
 ]

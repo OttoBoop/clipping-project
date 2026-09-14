@@ -71,6 +71,22 @@ def _known_sitemap_index(payload: dict, cursor: dict) -> bool:
             and "invalid_children" in cursor and bool(cursor.get("document_fingerprint")))
 
 
+def _page_google_result(result: dict, *, limit: int = 100) -> dict:
+    """Persist any excess RSS candidates before admitting a smaller fetch batch.
+
+    Normal Google feeds fit in 100 entries. Larger responses retain all parsed
+    candidates and the final split/gap decision in the task's durable cursor;
+    subsequent batches never repeat the HTTP request. Raw entries count once.
+    """
+    candidates = result.get("candidates") or []
+    if len(candidates) <= limit:
+        return result
+    pending = {**result, "candidates": candidates[limit:], "raw_count": 0}
+    return {"candidates": candidates[:limit], "outcome": "continue",
+            "raw_count": result.get("raw_count", 0), "child_tasks": [],
+            "next_cursor": {"google_pending_result": pending}}
+
+
 def _publisher_host(hostname: str) -> str:
     hostname = str(hostname).strip().lower().rstrip(".")
     return hostname[4:] if hostname.startswith("www.") else hostname
@@ -807,7 +823,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
 
         Below 2000 active fetches every source may discover. From 2000 to
         3999, admit only sources with fewer than 100 active fetches. Reserve
-        each running page's maximum (100 for recovery, 500 for article discovery,
+        each running page's maximum (100 for recovery or Google, 500 for other discovery,
         zero for already identified sitemap indexes) before admission, so
         concurrent results fit the 4000-fetch budget.
         """
@@ -817,7 +833,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             GROUP BY t.source_key""", (list(ACTIVE),)).fetchall()
         total = sum(int(row["n"]) for row in rows)
         running = conn.execute("""SELECT COALESCE(SUM(CASE WHEN """ + SITEMAP_INDEX_TASK_SQL + """ THEN 0
-            WHEN t.payload->>'strategy'='recover' THEN 100 ELSE 500 END),0) AS n FROM political_tasks t
+            WHEN t.payload->>'strategy'='recover' OR (t.payload->>'strategy'='google_news'
+                AND t.cursor->>'google_batch_capacity'='100') THEN 100 ELSE 500 END),0) AS n FROM political_tasks t
             JOIN political_jobs j ON j.id=t.job_id WHERE t.kind='discovery'
             AND t.status='running' AND t.leased_until>NOW() AND j.status IN ('queued','running')""").fetchone()["n"]
         reservation = int(running) + (next_capacity if reserve_next else 0)
@@ -832,16 +849,16 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         with self._connect() as conn:
             conn.execute("SELECT pg_advisory_xact_lock(%s)", (734892102 if kind == "discovery" else 734892103,))
             blocked_sources = []
-            recovery_only = False
+            small_page_only = False
             index_only = False
             if kind == "discovery":
                 stop_discovery, blocked_sources = self._discovery_backpressure(conn, reserve_next=True)
                 if stop_discovery:
-                    stop_recovery, blocked_sources = self._discovery_backpressure(conn, reserve_next=True, next_capacity=100)
-                    recovery_only = True
+                    stop_small_page, blocked_sources = self._discovery_backpressure(conn, reserve_next=True, next_capacity=100)
+                    small_page_only = True
                     # Known indexes emit bounded discovery children, never
                     # article-fetch tasks; no fetch capacity is reserved for them.
-                    index_only = stop_recovery
+                    index_only = stop_small_page
             count = conn.execute("""SELECT COUNT(*) AS n FROM political_tasks WHERE kind=ANY(%s)
                 AND status='running' AND leased_until>NOW()""", (kinds,)).fetchone()["n"]
             if count >= maximum:
@@ -856,7 +873,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 LEFT JOIN political_domain_limits cooling ON cooling.domain=""" + TASK_DOMAIN_FALLBACK_SQL + """
                 WHERE t.kind=ANY(%s) AND j.status IN ('queued','running')
                 AND (t.kind='fetch' OR """ + SITEMAP_INDEX_TASK_SQL + """ OR NOT (t.source_key=ANY(%s)))
-                AND (NOT %s OR t.payload->>'strategy'='recover' OR """ + SITEMAP_INDEX_TASK_SQL + """)
+                AND (NOT %s OR t.payload->>'strategy' IN ('recover','google_news') OR """ + SITEMAP_INDEX_TASK_SQL + """)
                 AND (NOT %s OR """ + SITEMAP_INDEX_TASK_SQL + """)
                 AND (cooling.cooldown_until IS NULL OR cooling.cooldown_until<=NOW())
                 AND (t.status IN ('queued','retryable') OR (t.status='running' AND t.leased_until<NOW()))
@@ -878,7 +895,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                               ELSE scheduling.discovery_claimed_at END ASC NULLS FIRST,
                     t.priority DESC,
                     CASE WHEN t.kind='fetch' AND COALESCE(t.payload->>'published_at','')<>'' THEN 0 ELSE 1 END,
-                    t.id LIMIT 1""", (_json(source_domains), kinds, blocked_sources, recovery_only, index_only,
+                    t.id LIMIT 1""", (_json(source_domains), kinds, blocked_sources, small_page_only, index_only,
                         os.environ.get("POLITICAL_HEAVY_PAUSED", "").lower() in {"1", "true", "yes"})).fetchone()
             if not row:
                 return None
@@ -902,6 +919,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             token = uuid.uuid4().hex
             row = conn.execute("""UPDATE political_tasks SET status='running',attempts=attempts+1,
                 lease_owner=%s,lease_token=%s,leased_until=NOW()+(%s*INTERVAL '1 second'),
+                cursor=CASE WHEN kind='discovery' AND payload->>'strategy'='google_news'
+                    THEN cursor || '{"google_batch_capacity":100}'::jsonb ELSE cursor END,
                 request_domain=COALESCE(request_domain,%s),updated_at=NOW()
                 WHERE id=%s RETURNING *""", (worker_id, token, lease_seconds,
                     task_request_domain(row["kind"], row["payload"], source_domains), row["id"])).fetchone()
@@ -1266,7 +1285,10 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             from .political_sitemap_cache import PaginatedSitemapCache
             sitemap_cache = PaginatedSitemapCache(self.fetch, task["cursor"])
             discovery_fetch = sitemap_cache.fetch
-        result = self._recover_discovery(task, source_for_task(payload)) if payload.get("strategy") == "recover" else discover(payload, discovery_fetch)
+        if payload.get("strategy") == "google_news" and task["cursor"].get("google_pending_result"):
+            result = task["cursor"]["google_pending_result"]
+        else:
+            result = self._recover_discovery(task, source_for_task(payload)) if payload.get("strategy") == "recover" else discover(payload, discovery_fetch)
         if sitemap_cache and result.get("next_cursor"):
             result["next_cursor"] = sitemap_cache.checkpoint(result["next_cursor"])
         candidates = result.get("candidates") or []
@@ -1274,6 +1296,9 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             raise FetchProblem("sitemap_index_emitted_article_candidates", retryable=False)
         if len(candidates) > 500:
             raise FetchProblem("discovery_page_too_large", retryable=False)
+        if payload.get("strategy") == "google_news":
+            result = _page_google_result(result)
+            candidates = result.get("candidates") or []
         outcome = str(result.get("outcome") or "gap")
         if outcome not in {"complete", "continue", "split", "gap"}:
             raise ValueError("invalid_discovery_outcome")
