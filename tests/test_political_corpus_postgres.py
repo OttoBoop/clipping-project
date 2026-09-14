@@ -1821,3 +1821,33 @@ def test_calendar_sibling_pruning_preserves_active_retry_and_other_sources(servi
         rows=c.execute('SELECT status,result FROM political_tasks WHERE id=ANY(%s) ORDER BY id',(ids,)).fetchall()
         assert [r['status'] for r in rows]==['running','retryable','queued']
         assert all(not r['result'] for r in rows)
+
+
+def test_jota_old_jsonld_date_is_rechecked_and_corrected_fact_reused(service,monkeypatch):
+    import gzip,json
+    from pathlib import Path
+    from web_app.political_jota_extraction import original_date_trusted
+    root=Path(__file__).parent/'fixtures/political_jota_special'
+    proof=json.loads((root/'provenance.json').read_text())[0]
+    candidate={'url':proof['url'],'source_key':'jota','title':'Dilemas do afeto','metadata':{}}
+    job=start(service,monkeypatch);enqueue(service,monkeypatch,candidate)
+    with service._connect() as c:
+        c.execute("UPDATE political_observations SET metadata=%s::jsonb WHERE job_id=%s",(json.dumps({
+            'verified_publication_at':proof['extraction']['published_at'],'publication_date_status':'page_verified'}),job['id']))
+    calls=[]
+    def fetch(url,**kwargs):
+        calls.append(url);r=requests.Response();r.status_code=200;r.url=url;r.encoding='utf-8';r._content=gzip.decompress((root/'0.html.gz').read_bytes());return r
+    monkeypatch.setattr(service,'fetch',fetch)
+    assert service.process_task(service.claim_task('fetch',worker_id='jota-real-date'))['status']=='outside_window'
+    assert calls==[candidate['url']]
+    with service._connect() as c:
+        metadata=c.execute('SELECT metadata FROM political_observations WHERE job_id=%s',(job['id'],)).fetchone()['metadata']
+        assert metadata['verified_publication_at'].startswith('2015-12-31')
+        assert original_date_trusted(candidate['url'],metadata)
+    for _ in range(2):
+        later=start(service,monkeypatch);enqueue(service,monkeypatch,candidate)
+        with service._connect() as c:
+            assert c.execute("SELECT count(*) AS n FROM political_tasks WHERE job_id=%s AND kind='fetch'",(later['id'],)).fetchone()['n']==0
+            metadata=c.execute('SELECT metadata FROM political_observations WHERE job_id=%s',(later['id'],)).fetchone()['metadata']
+            assert metadata['date_reused_in_discovery'] and original_date_trusted(candidate['url'],metadata)
+    assert len(calls)==1

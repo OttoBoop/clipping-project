@@ -213,6 +213,9 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
     falling back to a larger unrelated story or subscription/navigation text.
     """
     host = (urlparse(url).hostname or "").lower().removeprefix("www.")
+    if host in {"jota.info", "portal.jota.info"}:
+        from .political_jota_extraction import extract_jota_special
+        return extract_jota_special(raw_html, url)
     if host == "www1.folha.uol.com.br" and urlparse(url).path.startswith("/webstories/"):
         from .political_webstory_extraction import extract_folha_story
         return extract_folha_story(raw_html, url)

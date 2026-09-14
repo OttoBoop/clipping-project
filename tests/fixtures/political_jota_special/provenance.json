@@ -1,0 +1,76 @@
+[
+  {
+    "requestedUrl": "https://www.jota.info/especiais/dilemas-do-afeto",
+    "url": "https://www.jota.info/especiais/dilemas-do-afeto",
+    "status": 200,
+    "at": "2026-09-14T23:46:10.299388+00:00",
+    "sha256": "0fc33d11353fd4ba6578ec2e390662b512845ceb0e3fd552bea4fb300bbb86c7",
+    "extraction": {
+      "title": "Dilemas do afeto",
+      "published_at": "2026-09-13T23:24:51.371000+00:00",
+      "canonical_url": "https://www.jota.info/especiais/dilemas-do-afeto",
+      "extraction_state": "metadata_only"
+    },
+    "evidence": "0.html.gz",
+    "title": "Dilemas do afeto",
+    "dateMetas": [
+      {
+        "property": "og:updated_time"
+      },
+      {
+        "property": "og:published_time"
+      },
+      {
+        "property": "article:published_time"
+      },
+      {
+        "property": "article:modified_time"
+      }
+    ],
+    "timeTags": [],
+    "jsonLd": [
+      "{\"@context\":\"https://schema.org\",\"@type\":\"NewsMediaOrganization\",\"@id\":\"https://www.jota.info/#organization\",\"name\":\"JOTA Jornalismo\",\"alternateName\":[\"JOTA\",\"JOTA Info\"],\"url\":\"https://www.jota.info\",\"logo\":{\"@type\":\"ImageObject\",\"@id\":\"https://www.jota.info/#logo\",\"url\":\"https://images.jota.info/wp-content/uploads/2025/05/jota-thumb-imageog.png\",\"contentUrl\":\"https://images.jota.info/wp-content/uploads/2025/05/jota-thumb-imageog.png\",\"width\":1024,\"height\":385,\"caption\":\"JOTA\"},\"sameAs\":[\"https://www.facebook.com/jotajustica/\",\"https://www.instagram.com/jotaflash/\",\"https://www.linkedin.com/company/jotainfo\",\"https://www.youtube.com/jotalive\",\"https://twitter.com/jotainfo\"]}",
+      "{\"@context\":\"https://schema.org\",\"@type\":\"NewsArticle\",\"@id\":\"https://www.jota.info/especiais/dilemas-do-afeto\",\"headline\":\"Dilemas do afeto\",\"description\":\"JOTA - Conteúdo especial: Dilemas do afeto\",\"image\":[\"https://images.jota.info/wp-content/uploads/2015/12/casamento_homoafetivo00112082013-e1451565101200-50x50.jpg\"],\"datePublished\":\"2026-09-13T23:24:51.371Z\",\"dateModified\":\"2026-09-13T23:24:51.371Z\",\"url\":\"https://www.jota.info/especiais/dilemas-do-afeto\",\"mainEntityOfPage\":\"https://www.jota.info/especiais/dilemas-do-afeto\",\"inLanguage\":\"pt-BR\",\"isAccessibleForFree\":true,\"author\":[{\"@context\":\"https://schema.org\",\"@type\":\"Person\",\"description\":\"Professor Titular de Direito Civil e ex-diretor da Faculdade de Direito da Universidade do Estado do Rio de Janeiro - UERJ. Advogado.\",\"url\":\"https://www.jota.info/autor/gustavo-tepedino\",\"name\":\"Gustavo Tepedino, Autor no JOTA\",\"image\":\"https://images.jota.info/wp-content/uploads/2020/06/gustavo-tepedino-150x150.jpeg\"}],\"publisher\":{\"@id\":\"https://www.jota.info/#organization\",\"name\":\"JOTA Jornalismo\"},\"isPartOf\":{\"@type\":\"CreativeWork\",\"name\":\"JOTA Jornalismo\"}}",
+      "{\"@context\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"@id\":\"https://www.jota.info/especiais/dilemas-do-afeto/#breadcrumb\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"name\":\"Início\",\"item\":\"https://www.jota.info/\"},{\"@type\":\"ListItem\",\"position\":2,\"name\":\"Especiais\",\"item\":\"https://www.jota.info/especiais\"}]}"
+    ],
+    "extractedTextChars": 0,
+    "extractedTextFirst500": ""
+  },
+  {
+    "requestedUrl": "https://www.jota.info/especiais/valeu-a-pena-2",
+    "url": "https://www.jota.info/especiais/valeu-a-pena-2",
+    "status": 200,
+    "at": "2026-09-14T23:46:11.065964+00:00",
+    "sha256": "93920444c2494977baaa4ddad7c47470f4913c360bc4af4554a488a7b71420b3",
+    "extraction": {
+      "title": "Valeu a pena?",
+      "published_at": "2026-09-14T03:07:08.522000+00:00",
+      "canonical_url": "https://www.jota.info/especiais/valeu-a-pena-2",
+      "extraction_state": "metadata_only"
+    },
+    "evidence": "1.html.gz",
+    "title": "Valeu a pena?",
+    "dateMetas": [
+      {
+        "property": "og:updated_time"
+      },
+      {
+        "property": "og:published_time"
+      },
+      {
+        "property": "article:published_time"
+      },
+      {
+        "property": "article:modified_time"
+      }
+    ],
+    "timeTags": [],
+    "jsonLd": [
+      "{\"@context\":\"https://schema.org\",\"@type\":\"NewsMediaOrganization\",\"@id\":\"https://www.jota.info/#organization\",\"name\":\"JOTA Jornalismo\",\"alternateName\":[\"JOTA\",\"JOTA Info\"],\"url\":\"https://www.jota.info\",\"logo\":{\"@type\":\"ImageObject\",\"@id\":\"https://www.jota.info/#logo\",\"url\":\"https://images.jota.info/wp-content/uploads/2025/05/jota-thumb-imageog.png\",\"contentUrl\":\"https://images.jota.info/wp-content/uploads/2025/05/jota-thumb-imageog.png\",\"width\":1024,\"height\":385,\"caption\":\"JOTA\"},\"sameAs\":[\"https://www.facebook.com/jotajustica/\",\"https://www.instagram.com/jotaflash/\",\"https://www.linkedin.com/company/jotainfo\",\"https://www.youtube.com/jotalive\",\"https://twitter.com/jotainfo\"]}",
+      "{\"@context\":\"https://schema.org\",\"@type\":\"NewsArticle\",\"@id\":\"https://www.jota.info/especiais/valeu-a-pena-2\",\"headline\":\"Valeu a pena?\",\"description\":\"JOTA - Conteúdo especial: Valeu a pena?\",\"image\":[\"https://images.jota.info/wp-content/uploads/2015/06/Foto-Luiz-Silveira-Ag%C3%AAncia-CNJ-2-50x50.jpg\"],\"datePublished\":\"2026-09-14T03:07:08.522Z\",\"dateModified\":\"2026-09-14T03:07:08.522Z\",\"url\":\"https://www.jota.info/especiais/valeu-a-pena-2\",\"mainEntityOfPage\":\"https://www.jota.info/especiais/valeu-a-pena-2\",\"inLanguage\":\"pt-BR\",\"isAccessibleForFree\":true,\"author\":[{\"@context\":\"https://schema.org\",\"@type\":\"Person\",\"description\":\"\",\"url\":\"https://www.jota.info/autor/nagashi-furukawa\",\"name\":\"Nagashi Furukawa, Autor no JOTA\",\"image\":\"https://secure.gravatar.com/avatar/caa135969d1808a77e41e0315d7a7a42?s=96&d=mm&r=g\"}],\"publisher\":{\"@id\":\"https://www.jota.info/#organization\",\"name\":\"JOTA Jornalismo\"},\"isPartOf\":{\"@type\":\"CreativeWork\",\"name\":\"JOTA Jornalismo\"}}",
+      "{\"@context\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"@id\":\"https://www.jota.info/especiais/valeu-a-pena-2/#breadcrumb\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"name\":\"Início\",\"item\":\"https://www.jota.info/\"},{\"@type\":\"ListItem\",\"position\":2,\"name\":\"Especiais\",\"item\":\"https://www.jota.info/especiais\"}]}"
+    ],
+    "extractedTextChars": 0,
+    "extractedTextFirst500": ""
+  }
+]

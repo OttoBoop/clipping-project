@@ -1401,6 +1401,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         Google wrappers still resolve through their normal fetch path.
         """
         from .political_discovery import is_google_intermediary
+        from .political_jota_extraction import original_date_trusted
         variants_to_urls: dict[str, set[str]] = {}
         candidate_urls: set[str] = set()
         for candidate in candidates:
@@ -1415,7 +1416,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         if not candidate_urls:
             return {}
         variants = list(variants_to_urls)
-        rows = conn.execute("""SELECT a.id,a.canonical_url,a.published_at,a.date_status,
+        rows = conn.execute("""SELECT a.id,a.canonical_url,a.published_at,a.date_status,a.metadata,
             ARRAY(SELECT u.url FROM political_url_aliases u WHERE u.article_id=a.id AND u.url=ANY(%s)) AS matched_aliases
             FROM political_articles a WHERE a.canonical_url=ANY(%s) OR EXISTS (
                 SELECT 1 FROM political_url_aliases u WHERE u.article_id=a.id AND u.url=ANY(%s))
@@ -1427,8 +1428,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 urls.update(variants_to_urls[alias])
             for url in urls - existing:
                 existing.add(url)
-                if row["date_status"] in {"page_verified", "api_verified"}:
-                    known[url] = (row["published_at"], row["date_status"])
+                if row["date_status"] in {"page_verified", "api_verified"} and original_date_trusted(url,row["metadata"]):
+                    known[url] = (row["published_at"], row["date_status"], row["metadata"].get("publication_date_evidence"))
         unresolved = list(candidate_urls - existing)
         if unresolved:
             facts = conn.execute("""SELECT DISTINCT ON (observed_url) observed_url,metadata
@@ -1436,15 +1437,16 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 AND metadata ? 'verified_publication_at' ORDER BY observed_url,id DESC""", (unresolved,)).fetchall()
             for row in facts:
                 metadata = row["metadata"]
-                if metadata.get("publication_date_status") in {"page_verified", "api_verified"}:
-                    known[row["observed_url"]] = (parse_date(metadata["verified_publication_at"]), metadata["publication_date_status"])
+                if metadata.get("publication_date_status") in {"page_verified", "api_verified"} and original_date_trusted(row["observed_url"],metadata):
+                    known[row["observed_url"]] = (parse_date(metadata["verified_publication_at"]), metadata["publication_date_status"], metadata.get("publication_date_evidence"))
         return known
 
     @staticmethod
-    def _publication_fact(published, date_status: str) -> dict:
+    def _publication_fact(published, date_status: str, date_evidence=None) -> dict:
         if not published or date_status not in {"page_verified", "api_verified"}:
             return {}
-        return {"verified_publication_at": published.isoformat(), "publication_date_status": date_status}
+        return {"verified_publication_at": published.isoformat(), "publication_date_status": date_status,
+                **({"publication_date_evidence":date_evidence} if date_evidence else {})}
 
     def _finish_fetch_outside_window(self, task: dict, *, published=None, date_status="", reused_date=False) -> dict:
         with self._connect() as conn:
@@ -1465,8 +1467,10 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                                  (previous["id"], _json(dict(previous))))
                     conn.execute("UPDATE political_articles SET published_at=%s,date_status=%s,metadata=metadata || %s::jsonb WHERE id=%s",
                                  (published,date_status,_json(task.get("_date_probe_evidence") or {}),previous["id"]))
+            date_evidence = ((task.get("_verified_candidate") or {}).get("metadata") or {}).get("publication_date_evidence") or task.get("_known_date_evidence")
             conn.execute("UPDATE political_observations SET disposition='outside_window',article_id=NULL,metadata=metadata || %s::jsonb WHERE job_id=%s AND observed_url=%s",
-                         (_json(self._publication_fact(published, date_status)), task["job_id"], task["payload"]["url"]))
+                         (_json({**self._publication_fact(published, date_status),
+                                 **({"publication_date_evidence":date_evidence} if date_evidence else {})}), task["job_id"], task["payload"]["url"]))
             self._finish(conn, task, "complete", result={"disposition": "outside_window", "dateReused": reused_date})
         return {"taskId": task["id"], "status": "outside_window"}
 
@@ -1530,6 +1534,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
 
     def _fetch_article(self, task: dict) -> dict:
         from .political_discovery import extract_article, is_google_intermediary
+        from .political_jota_extraction import original_date_trusted
         candidate = task["payload"]
         fetch_url = task["cursor"].get("resolved_url") or candidate["url"]
         if is_google_intermediary(fetch_url):
@@ -1546,6 +1551,9 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         with self._connect() as conn:
             job = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (task["job_id"],)).fetchone()
             existing = self._find_article(conn, fetch_url)
+            if existing and not original_date_trusted(fetch_url,existing.get("metadata")):
+                force_refresh = True
+                task["_undated_existing_article_id"] = existing["id"]
             if (existing and existing["published_at"] is None and existing["legacy_id"] is None
                     and not existing["source_key"].startswith(("manual", "legacy"))):
                 task["_undated_existing_article_id"] = existing["id"]
@@ -1560,14 +1568,16 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                         (recovery_article, job["target_keys"])).fetchone()
             known_date = None
             if not force_refresh:
-                if existing and existing["date_status"] in {"page_verified", "api_verified"}:
+                if existing and existing["date_status"] in {"page_verified", "api_verified"} and original_date_trusted(fetch_url,existing.get("metadata")):
                     known_date = (existing["published_at"], existing["date_status"])
+                    task["_known_date_evidence"] = existing["metadata"].get("publication_date_evidence")
                 elif not existing:
                     fact = conn.execute("""SELECT metadata FROM political_observations
                         WHERE observed_url=%s AND metadata ? 'verified_publication_at'
                         ORDER BY id DESC LIMIT 1""", (candidate["url"],)).fetchone()
-                    if fact and fact["metadata"].get("publication_date_status") in {"page_verified", "api_verified"}:
+                    if fact and fact["metadata"].get("publication_date_status") in {"page_verified", "api_verified"} and original_date_trusted(fetch_url,fact["metadata"]):
                         known_date = (parse_date(fact["metadata"]["verified_publication_at"]), fact["metadata"]["publication_date_status"])
+                        task["_known_date_evidence"] = fact["metadata"].get("publication_date_evidence")
         # Reuse only verified publication dates to reject a different period.
         # A prior no_match result is never evidence against newly selected people.
         if known_date and known_date[0] and not job["date_from"] <= known_date[0].astimezone(ZONE).date() <= job["date_to"]:
@@ -1715,12 +1725,15 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             body = str(extracted.get("full_text") or "")
             title = str(extracted.get("title") or title)
             page_date = parse_date(extracted.get("published_at"))
+            if (extracted.get("publication_date_evidence") or {}).get("method") == "missing_original_post_date":
+                published, date_status = None, "unknown"
             if page_date:
                 published, date_status = page_date, "page_verified"
                 if task.get("_undated_existing_article_id"):
                     if not html_key:
                         html_hash, html_key = self._store_html(response.text)
                     task["_date_probe_evidence"] = {"publication_date_evidence": {
+                        **(extracted.get("publication_date_evidence") or {}),
                         "url": response.url, "published_at": published.isoformat(),
                         "html_hash": html_hash, "html_object_key": html_key,
                         "at": datetime.now(timezone.utc).isoformat()}}
@@ -1731,7 +1744,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 return self._finish_fetch_not_news(task, final_url)
             candidate = _confirmed_publisher(candidate, final_url)
             candidate["metadata"].update({key: extracted[key] for key in
-                ("extraction_method", "extraction_version", "text_extent", "restriction_evidence", "content_format") if key in extracted})
+                ("extraction_method", "extraction_version", "text_extent", "restriction_evidence", "content_format",
+                 "publication_date_evidence") if key in extracted})
             candidate["metadata"]["body_origin"] = body_origin
             candidate["metadata"].update(task.get("_date_probe_evidence") or {})
             # Preserve confirmed metadata if immutable-object storage fails after
