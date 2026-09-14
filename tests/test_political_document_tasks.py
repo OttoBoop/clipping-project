@@ -127,7 +127,7 @@ def service(tmp_path, monkeypatch):
     with service._connect() as conn:
         for statement in DOCUMENT_SCHEMA_SQL.split(';'):
             if statement.strip(): conn.execute(statement)
-        conn.execute('TRUNCATE political_jobs,political_documents,political_source_leases,political_domain_limits RESTART IDENTITY CASCADE')
+        conn.execute('TRUNCATE political_jobs,political_documents,political_articles,political_stories,political_source_leases,political_domain_limits RESTART IDENTITY CASCADE')
     monkeypatch.setenv('POLITICAL_PDF_CACHE', str(tmp_path / 'pdf-cache'))
     yield service
     service.close()
