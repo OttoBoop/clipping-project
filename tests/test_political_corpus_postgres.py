@@ -1851,3 +1851,26 @@ def test_jota_old_jsonld_date_is_rechecked_and_corrected_fact_reused(service,mon
             metadata=c.execute('SELECT metadata FROM political_observations WHERE job_id=%s',(later['id'],)).fetchone()['metadata']
             assert metadata['date_reused_in_discovery'] and original_date_trusted(candidate['url'],metadata)
     assert len(calls)==1
+
+
+def test_jota_date_provenance_survives_when_article_has_no_target_match(service,monkeypatch):
+    import gzip,json
+    from pathlib import Path
+    from web_app.political_jota_extraction import original_date_trusted
+    root=Path(__file__).parent/'fixtures/political_jota_special'
+    proof=json.loads((root/'provenance.json').read_text())[0]
+    candidate={'url':proof['url'],'source_key':'jota','title':'Dilemas do afeto','metadata':{}}
+    job=start(service,monkeypatch);enqueue(service,monkeypatch,candidate)
+    with service._connect() as c:
+        c.execute("UPDATE political_jobs SET date_from='2015-12-31',date_to='2015-12-31' WHERE id=%s",(job['id'],))
+    def fetch(url,**kwargs):
+        r=requests.Response();r.status_code=200;r.url=url;r.encoding='utf-8';r._content=gzip.decompress((root/'0.html.gz').read_bytes());return r
+    monkeypatch.setattr(service,'fetch',fetch)
+    assert service.process_task(service.claim_task('fetch',worker_id='jota-no-match'))['status']=='no_match'
+    with service._connect() as c:
+        metadata=c.execute('SELECT metadata FROM political_observations WHERE job_id=%s',(job['id'],)).fetchone()['metadata']
+        assert original_date_trusted(candidate['url'],metadata)
+        assert c.execute('SELECT count(*) AS n FROM political_articles').fetchone()['n']==0
+    later=start(service,monkeypatch);enqueue(service,monkeypatch,candidate)
+    with service._connect() as c:
+        assert c.execute("SELECT count(*) AS n FROM political_tasks WHERE job_id=%s AND kind='fetch'",(later['id'],)).fetchone()['n']==0

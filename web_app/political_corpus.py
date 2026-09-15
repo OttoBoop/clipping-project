@@ -1823,7 +1823,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 conn.execute("INSERT INTO political_url_aliases(url,article_id) VALUES (%s,%s) ON CONFLICT DO NOTHING", (candidate["url"], article_id))
                 disposition = "saved" if write_result["inserted"] else "duplicate"
             conn.execute("UPDATE political_observations SET article_id=%s,disposition=%s,metadata=metadata || %s::jsonb WHERE job_id=%s AND observed_url=%s",
-                         (article_id, disposition, _json(self._publication_fact(published, date_status)), task["job_id"], candidate["url"]))
+                         (article_id, disposition, _json(self._publication_fact(published, date_status,
+                            (candidate.get("metadata") or {}).get("publication_date_evidence"))), task["job_id"], candidate["url"]))
             partial_remaining = bool(recover_partial and article_id and (candidate.get("metadata") or {}).get("text_extent") == "partial")
             next_cursor = dict(task["cursor"])
             enriched = bool(write_result.get("enriched", False) or next_cursor.get("partial_body_enriched"))
