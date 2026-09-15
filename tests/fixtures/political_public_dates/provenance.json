@@ -1,0 +1,520 @@
+{
+  "purpose": "Real worker public API response and same-URL page-date comparison; development evidence, not recall reference or saved news.",
+  "archiveWrites": 0,
+  "rows": [
+    {
+      "source": "ponte_jornalismo",
+      "requestedUrl": "https://ponte.org/wp-json/wp/v2/posts?slug=1-200-pedras-de-crack-achadas-em-um-dos-batalhoes-mais-mortais-da-pm-de-sp%2C1-em-cada-4-assassinatos-em-sp-foi-cometido-pela-policia-sob-tarcisio-e-derrite%2C10-anos-sem-renatinho-ato-em-sp-marca-uma-decada-de-luta-por-justica%2C114-entidades-pedem-afastamento-do-diretor-geral-das-penitenciarias-de-goias%2C120-familias-de-comunidade-na-zona-norte-de-sp-sao-despejadas-na-semana-do-natal%2C15-estados-e-distrito-federal-se-recusam-a-contabilizar-violencia-contra-lgbts%2C1500-deveria-ser-data-de-marco-temporal-para-os-brancos-no-brasil-diz-neidinha-surui%2C18-anos-depois-justica-de-sp-ainda-nao-julgou-gcms-que-mataram-lider-comunitario%2C20-anos-crimes-de-maio-maes-de-maio%2C20-vezes-em-que-a-policia-atacou-e-prendeu-manifestantes-por-nada%2C200-doentes-6-mortos-e-nenhuma-resposta-em-prisao-no-piaui%2C29-anos-depois-e-ainda-em-julgamento-defesa-quer-levar-massacre-do-carandiru-ao-stf%2C4-pms-sao-presos-por-matar-jovem-no-rn-mas-para-associacao-de-oficiais-o-problema-sao-os-desenhos%2C41-dos-brasileiros-acham-que-a-policia-trata-pior-as-mulheres-revela-pesquisa%2C45-dos-egressos-do-sistema-penal-em-sp-relatam-dificuldades-para-ter-acesso-a-trabalho%2C5-anos-apos-massacre-de-paraisopolis-pm-de-sp-continua-dispersando-bailes-funk-com-violencia%2C5-anos-sem-marielle-e-anderson-federalizar-e-a-solucao%2C5-mitos-sobre-pessoas-trans-nos-esportes%2C5a-edicao-do-fala-discute-jornalismo-dos-povos-originarios-e-desafios-da-cop-30-na-amazonia%2C69-dos-moradores-de-favelas-do-rio-viram-ou-souberam-de-acoes-policiais-em-suas-areas-durante-a-pandemia&per_page=100&_fields=id%2Clink%2Cslug%2Cdate%2Cdate_gmt%2Cmodified_gmt",
+      "url": "https://ponte.org/wp-json/wp/v2/posts?slug=1-200-pedras-de-crack-achadas-em-um-dos-batalhoes-mais-mortais-da-pm-de-sp%2C1-em-cada-4-assassinatos-em-sp-foi-cometido-pela-policia-sob-tarcisio-e-derrite%2C10-anos-sem-renatinho-ato-em-sp-marca-uma-decada-de-luta-por-justica%2C114-entidades-pedem-afastamento-do-diretor-geral-das-penitenciarias-de-goias%2C120-familias-de-comunidade-na-zona-norte-de-sp-sao-despejadas-na-semana-do-natal%2C15-estados-e-distrito-federal-se-recusam-a-contabilizar-violencia-contra-lgbts%2C1500-deveria-ser-data-de-marco-temporal-para-os-brancos-no-brasil-diz-neidinha-surui%2C18-anos-depois-justica-de-sp-ainda-nao-julgou-gcms-que-mataram-lider-comunitario%2C20-anos-crimes-de-maio-maes-de-maio%2C20-vezes-em-que-a-policia-atacou-e-prendeu-manifestantes-por-nada%2C200-doentes-6-mortos-e-nenhuma-resposta-em-prisao-no-piaui%2C29-anos-depois-e-ainda-em-julgamento-defesa-quer-levar-massacre-do-carandiru-ao-stf%2C4-pms-sao-presos-por-matar-jovem-no-rn-mas-para-associacao-de-oficiais-o-problema-sao-os-desenhos%2C41-dos-brasileiros-acham-que-a-policia-trata-pior-as-mulheres-revela-pesquisa%2C45-dos-egressos-do-sistema-penal-em-sp-relatam-dificuldades-para-ter-acesso-a-trabalho%2C5-anos-apos-massacre-de-paraisopolis-pm-de-sp-continua-dispersando-bailes-funk-com-violencia%2C5-anos-sem-marielle-e-anderson-federalizar-e-a-solucao%2C5-mitos-sobre-pessoas-trans-nos-esportes%2C5a-edicao-do-fala-discute-jornalismo-dos-povos-originarios-e-desafios-da-cop-30-na-amazonia%2C69-dos-moradores-de-favelas-do-rio-viram-ou-souberam-de-acoes-policiais-em-suas-areas-durante-a-pandemia&per_page=100&_fields=id%2Clink%2Cslug%2Cdate%2Cdate_gmt%2Cmodified_gmt",
+      "status": 200,
+      "at": "2026-09-15T01:04:26.892535+00:00",
+      "sha256": "60b8a2f2159ffb46dad7176f93706f47642c546f7c5a096b9718a5e4642fd2fa",
+      "references": [
+        {
+          "observed_url": "https://ponte.org/10-anos-sem-renatinho-ato-em-sp-marca-uma-decada-de-luta-por-justica",
+          "verified_at": "2025-03-23T20:23:02+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/114-entidades-pedem-afastamento-do-diretor-geral-das-penitenciarias-de-goias",
+          "verified_at": "2022-01-17T20:02:04+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/1-200-pedras-de-crack-achadas-em-um-dos-batalhoes-mais-mortais-da-pm-de-sp",
+          "verified_at": "2021-08-10T23:34:28+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/120-familias-de-comunidade-na-zona-norte-de-sp-sao-despejadas-na-semana-do-natal",
+          "verified_at": "2020-12-24T22:49:01+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/1500-deveria-ser-data-de-marco-temporal-para-os-brancos-no-brasil-diz-neidinha-surui",
+          "verified_at": "2023-09-18T21:49:47+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/15-estados-e-distrito-federal-se-recusam-a-contabilizar-violencia-contra-lgbts",
+          "verified_at": "2020-10-19T19:15:30+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/18-anos-depois-justica-de-sp-ainda-nao-julgou-gcms-que-mataram-lider-comunitario",
+          "verified_at": "2022-03-21T19:57:09+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/1-em-cada-4-assassinatos-em-sp-foi-cometido-pela-policia-sob-tarcisio-e-derrite",
+          "verified_at": "2024-12-02T21:04:40+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/200-doentes-6-mortos-e-nenhuma-resposta-em-prisao-no-piaui",
+          "verified_at": "2020-07-09T17:53:24+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/20-anos-crimes-de-maio-maes-de-maio",
+          "verified_at": "2026-05-11T15:13:01+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/20-vezes-em-que-a-policia-atacou-e-prendeu-manifestantes-por-nada",
+          "verified_at": "2022-12-13T17:28:35+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/29-anos-depois-e-ainda-em-julgamento-defesa-quer-levar-massacre-do-carandiru-ao-stf",
+          "verified_at": "2021-10-02T12:21:24+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/41-dos-brasileiros-acham-que-a-policia-trata-pior-as-mulheres-revela-pesquisa",
+          "verified_at": "2022-03-28T22:55:11+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/45-dos-egressos-do-sistema-penal-em-sp-relatam-dificuldades-para-ter-acesso-a-trabalho",
+          "verified_at": "2021-09-23T22:12:54+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/4-pms-sao-presos-por-matar-jovem-no-rn-mas-para-associacao-de-oficiais-o-problema-sao-os-desenhos",
+          "verified_at": "2020-09-21T00:39:29+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/5a-edicao-do-fala-discute-jornalismo-dos-povos-originarios-e-desafios-da-cop-30-na-amazonia",
+          "verified_at": "2024-08-27T12:51:06+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/5-anos-apos-massacre-de-paraisopolis-pm-de-sp-continua-dispersando-bailes-funk-com-violencia",
+          "verified_at": "2024-05-08T22:13:16+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/5-anos-sem-marielle-e-anderson-federalizar-e-a-solucao",
+          "verified_at": "2023-03-14T13:59:02+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/5-mitos-sobre-pessoas-trans-nos-esportes",
+          "verified_at": "2022-05-31T18:22:31+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://ponte.org/69-dos-moradores-de-favelas-do-rio-viram-ou-souberam-de-acoes-policiais-em-suas-areas-durante-a-pandemia",
+          "verified_at": "2021-09-27T14:52:13+00:00",
+          "status": "page_verified"
+        }
+      ],
+      "total": "20",
+      "pages": "1",
+      "evidence": "ponte_jornalismo.json.gz",
+      "bytes": 6119,
+      "responseType": "list",
+      "comparisons": [
+        {
+          "url": "https://ponte.org/10-anos-sem-renatinho-ato-em-sp-marca-uma-decada-de-luta-por-justica",
+          "pageDate": "2025-03-23T20:23:02+00:00",
+          "apiDateGMT": "2025-03-23T20:23:02",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/114-entidades-pedem-afastamento-do-diretor-geral-das-penitenciarias-de-goias",
+          "pageDate": "2022-01-17T20:02:04+00:00",
+          "apiDateGMT": "2022-01-17T20:02:04",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/1-200-pedras-de-crack-achadas-em-um-dos-batalhoes-mais-mortais-da-pm-de-sp",
+          "pageDate": "2021-08-10T23:34:28+00:00",
+          "apiDateGMT": "2021-08-10T23:34:28",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/120-familias-de-comunidade-na-zona-norte-de-sp-sao-despejadas-na-semana-do-natal",
+          "pageDate": "2020-12-24T22:49:01+00:00",
+          "apiDateGMT": "2020-12-24T22:49:01",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/1500-deveria-ser-data-de-marco-temporal-para-os-brancos-no-brasil-diz-neidinha-surui",
+          "pageDate": "2023-09-18T21:49:47+00:00",
+          "apiDateGMT": "2023-09-18T21:49:47",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/15-estados-e-distrito-federal-se-recusam-a-contabilizar-violencia-contra-lgbts",
+          "pageDate": "2020-10-19T19:15:30+00:00",
+          "apiDateGMT": "2020-10-19T19:15:30",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/18-anos-depois-justica-de-sp-ainda-nao-julgou-gcms-que-mataram-lider-comunitario",
+          "pageDate": "2022-03-21T19:57:09+00:00",
+          "apiDateGMT": "2022-03-21T19:57:09",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/1-em-cada-4-assassinatos-em-sp-foi-cometido-pela-policia-sob-tarcisio-e-derrite",
+          "pageDate": "2024-12-02T21:04:40+00:00",
+          "apiDateGMT": "2024-12-02T21:04:40",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/200-doentes-6-mortos-e-nenhuma-resposta-em-prisao-no-piaui",
+          "pageDate": "2020-07-09T17:53:24+00:00",
+          "apiDateGMT": "2020-07-09T17:53:24",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/20-anos-crimes-de-maio-maes-de-maio",
+          "pageDate": "2026-05-11T15:13:01+00:00",
+          "apiDateGMT": "2026-05-11T15:13:01",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/20-vezes-em-que-a-policia-atacou-e-prendeu-manifestantes-por-nada",
+          "pageDate": "2022-12-13T17:28:35+00:00",
+          "apiDateGMT": "2022-12-13T17:28:35",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/29-anos-depois-e-ainda-em-julgamento-defesa-quer-levar-massacre-do-carandiru-ao-stf",
+          "pageDate": "2021-10-02T12:21:24+00:00",
+          "apiDateGMT": "2021-10-02T12:21:24",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/41-dos-brasileiros-acham-que-a-policia-trata-pior-as-mulheres-revela-pesquisa",
+          "pageDate": "2022-03-28T22:55:11+00:00",
+          "apiDateGMT": "2022-03-28T22:55:11",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/45-dos-egressos-do-sistema-penal-em-sp-relatam-dificuldades-para-ter-acesso-a-trabalho",
+          "pageDate": "2021-09-23T22:12:54+00:00",
+          "apiDateGMT": "2021-09-23T22:12:54",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/4-pms-sao-presos-por-matar-jovem-no-rn-mas-para-associacao-de-oficiais-o-problema-sao-os-desenhos",
+          "pageDate": "2020-09-21T00:39:29+00:00",
+          "apiDateGMT": "2020-09-21T00:39:29",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/5a-edicao-do-fala-discute-jornalismo-dos-povos-originarios-e-desafios-da-cop-30-na-amazonia",
+          "pageDate": "2024-08-27T12:51:06+00:00",
+          "apiDateGMT": "2024-08-27T12:51:06",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/5-anos-apos-massacre-de-paraisopolis-pm-de-sp-continua-dispersando-bailes-funk-com-violencia",
+          "pageDate": "2024-05-08T22:13:16+00:00",
+          "apiDateGMT": "2024-05-08T22:13:16",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/5-anos-sem-marielle-e-anderson-federalizar-e-a-solucao",
+          "pageDate": "2023-03-14T13:59:02+00:00",
+          "apiDateGMT": "2023-03-14T13:59:02",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/5-mitos-sobre-pessoas-trans-nos-esportes",
+          "pageDate": "2022-05-31T18:22:31+00:00",
+          "apiDateGMT": "2022-05-31T18:22:31",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://ponte.org/69-dos-moradores-de-favelas-do-rio-viram-ou-souberam-de-acoes-policiais-em-suas-areas-durante-a-pandemia",
+          "pageDate": "2021-09-27T14:52:13+00:00",
+          "apiDateGMT": "2021-09-27T14:52:13",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        }
+      ]
+    },
+    {
+      "source": "lupa",
+      "requestedUrl": "https://www.agencialupa.org/wp-json/wp/v2/posts?slug=agencia-lupa-firma-parceria-com-grupo-bandeirantes-para-combate-a-desinformacao-nas-eleicoes-de-2026%2Cao-vivo-checagem-da-entrevista-de-lula-ao-jornal-nacional%2Cao-vivo-checagem-da-entrevista-de-renan-santos-ao-g1-e-globonews%2Cao-vivo-checagem-da-entrevista-de-renan-santos-ao-jornal-nacional%2Cao-vivo-checagem-da-entrevista-de-romeu-zema-ao-g1-e-globonews%2Cao-vivo-checagem-da-entrevista-de-romeu-zema-ao-jornal-nacional%2Cao-vivo-checagem-da-entrevista-de-ronaldo-caiado-ao-jornal-nacional%2Ccomo-fazemos-nossas-checagens%2Cdiabetes-entenda-a-diferenca-entre-os-tipos-e-conheca-causas-e-tratamentos%2Ceconomia-educacao-e-8-de-janeiro-checamos-entrevistas-de-renan-santos%2Cem-balanco-do-ano-lula-faz-afirmacoes-imprecisas-sobre-pib%2Cerros-e-acertos-dos-pre-candidatos-a-presidencia%2Cin-a-new-expansion-lupa-launches-observatory-for-research-and-intelligence-on-disinformation%2Clula-exagera-ao-falar-de-empregos-e-erra-sobre-preco-de-combustiveis-no-brasil%2Clupa-jusbrasil-e-oabs-lancam-acao-conjunta-contra-golpes-digitais%2Clupa-no-feed%2Cmaduro-drogas-e-petroleo-o-que-e-fato-no-discurso-de-trump%2Cno-flow-flavio-bolsonaro-erra-sobre-pix-pl-antifaccao-e-urnas%2Cpara-desmistificar-e-ampliar-acesso-a-inteligencia-artificial-lupa-lanca-o-curso-online-ia-descomplicada%2Czema-seguranca-salario-informalidade&per_page=100&_fields=id%2Clink%2Cslug%2Cdate%2Cdate_gmt%2Cmodified_gmt",
+      "url": "https://www.agencialupa.org/wp-json/wp/v2/posts?slug=agencia-lupa-firma-parceria-com-grupo-bandeirantes-para-combate-a-desinformacao-nas-eleicoes-de-2026%2Cao-vivo-checagem-da-entrevista-de-lula-ao-jornal-nacional%2Cao-vivo-checagem-da-entrevista-de-renan-santos-ao-g1-e-globonews%2Cao-vivo-checagem-da-entrevista-de-renan-santos-ao-jornal-nacional%2Cao-vivo-checagem-da-entrevista-de-romeu-zema-ao-g1-e-globonews%2Cao-vivo-checagem-da-entrevista-de-romeu-zema-ao-jornal-nacional%2Cao-vivo-checagem-da-entrevista-de-ronaldo-caiado-ao-jornal-nacional%2Ccomo-fazemos-nossas-checagens%2Cdiabetes-entenda-a-diferenca-entre-os-tipos-e-conheca-causas-e-tratamentos%2Ceconomia-educacao-e-8-de-janeiro-checamos-entrevistas-de-renan-santos%2Cem-balanco-do-ano-lula-faz-afirmacoes-imprecisas-sobre-pib%2Cerros-e-acertos-dos-pre-candidatos-a-presidencia%2Cin-a-new-expansion-lupa-launches-observatory-for-research-and-intelligence-on-disinformation%2Clula-exagera-ao-falar-de-empregos-e-erra-sobre-preco-de-combustiveis-no-brasil%2Clupa-jusbrasil-e-oabs-lancam-acao-conjunta-contra-golpes-digitais%2Clupa-no-feed%2Cmaduro-drogas-e-petroleo-o-que-e-fato-no-discurso-de-trump%2Cno-flow-flavio-bolsonaro-erra-sobre-pix-pl-antifaccao-e-urnas%2Cpara-desmistificar-e-ampliar-acesso-a-inteligencia-artificial-lupa-lanca-o-curso-online-ia-descomplicada%2Czema-seguranca-salario-informalidade&per_page=100&_fields=id%2Clink%2Cslug%2Cdate%2Cdate_gmt%2Cmodified_gmt",
+      "status": 200,
+      "at": "2026-09-15T01:04:29.384652+00:00",
+      "sha256": "7253de948bb48a5c70234edf78b1959ac67bc664f30d05d6240becd302c7645e",
+      "references": [
+        {
+          "observed_url": "https://www.agencialupa.org/academia-lupa/2026/04/02/lupa-no-feed",
+          "verified_at": "2026-04-02T19:04:46+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/academia-lupa/2026/08/12/para-desmistificar-e-ampliar-acesso-a-inteligencia-artificial-lupa-lanca-o-curso-online-ia-descomplicada",
+          "verified_at": "2026-08-12T12:48:18+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/acontecendo-na-lupa/2015/10/15/como-fazemos-nossas-checagens",
+          "verified_at": "2015-10-15T11:02:14+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/acontecendo-na-lupa/2024/01/17/diabetes-entenda-a-diferenca-entre-os-tipos-e-conheca-causas-e-tratamentos",
+          "verified_at": "2024-01-17T14:29:00+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/acontecendo-na-lupa/2025/10/06/in-a-new-expansion-lupa-launches-observatory-for-research-and-intelligence-on-disinformation",
+          "verified_at": "2025-10-06T17:58:21+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/acontecendo-na-lupa/2025/11/24/lupa-jusbrasil-e-oabs-lancam-acao-conjunta-contra-golpes-digitais",
+          "verified_at": "2025-11-24T20:03:43+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/acontecendo-na-lupa/2026/05/29/agencia-lupa-firma-parceria-com-grupo-bandeirantes-para-combate-a-desinformacao-nas-eleicoes-de-2026",
+          "verified_at": "2026-05-30T00:30:00+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2025/12/02/no-flow-flavio-bolsonaro-erra-sobre-pix-pl-antifaccao-e-urnas",
+          "verified_at": "2025-12-02T21:09:32+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2025/12/18/em-balanco-do-ano-lula-faz-afirmacoes-imprecisas-sobre-pib",
+          "verified_at": "2025-12-18T20:05:00+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/01/02/erros-e-acertos-dos-pre-candidatos-a-presidencia",
+          "verified_at": "2026-01-02T11:00:00+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/01/06/maduro-drogas-e-petroleo-o-que-e-fato-no-discurso-de-trump",
+          "verified_at": "2026-01-06T17:48:21+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/04/14/lula-exagera-ao-falar-de-empregos-e-erra-sobre-preco-de-combustiveis-no-brasil",
+          "verified_at": "2026-04-14T20:45:00+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/05/08/zema-seguranca-salario-informalidade",
+          "verified_at": "2026-05-08T20:30:00+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/07/01/economia-educacao-e-8-de-janeiro-checamos-entrevistas-de-renan-santos",
+          "verified_at": "2026-07-01T14:00:00+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/05/ao-vivo-checagem-da-entrevista-de-renan-santos-ao-g1-e-globonews",
+          "verified_at": "2026-08-05T17:25:06+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/06/ao-vivo-checagem-da-entrevista-de-romeu-zema-ao-g1-e-globonews",
+          "verified_at": "2026-08-06T17:30:44+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/24/ao-vivo-checagem-da-entrevista-de-romeu-zema-ao-jornal-nacional",
+          "verified_at": "2026-08-25T00:14:30+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/25/ao-vivo-checagem-da-entrevista-de-ronaldo-caiado-ao-jornal-nacional",
+          "verified_at": "2026-08-26T00:08:07+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/26/ao-vivo-checagem-da-entrevista-de-renan-santos-ao-jornal-nacional",
+          "verified_at": "2026-08-26T23:45:16+00:00",
+          "status": "page_verified"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/27/ao-vivo-checagem-da-entrevista-de-lula-ao-jornal-nacional",
+          "verified_at": "2026-08-28T00:19:31+00:00",
+          "status": "page_verified"
+        }
+      ],
+      "total": "20",
+      "pages": "1",
+      "evidence": "lupa.json.gz",
+      "bytes": 6388,
+      "responseType": "list",
+      "comparisons": [
+        {
+          "url": "https://www.agencialupa.org/academia-lupa/2026/04/02/lupa-no-feed",
+          "pageDate": "2026-04-02T19:04:46+00:00",
+          "apiDateGMT": "2026-04-02T19:04:46",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/academia-lupa/2026/08/12/para-desmistificar-e-ampliar-acesso-a-inteligencia-artificial-lupa-lanca-o-curso-online-ia-descomplicada",
+          "pageDate": "2026-08-12T12:48:18+00:00",
+          "apiDateGMT": "2026-08-12T12:48:18",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/acontecendo-na-lupa/2015/10/15/como-fazemos-nossas-checagens",
+          "pageDate": "2015-10-15T11:02:14+00:00",
+          "apiDateGMT": "2015-10-15T11:02:14",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/acontecendo-na-lupa/2024/01/17/diabetes-entenda-a-diferenca-entre-os-tipos-e-conheca-causas-e-tratamentos",
+          "pageDate": "2024-01-17T14:29:00+00:00",
+          "apiDateGMT": "2024-01-17T14:29:00",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/acontecendo-na-lupa/2025/10/06/in-a-new-expansion-lupa-launches-observatory-for-research-and-intelligence-on-disinformation",
+          "pageDate": "2025-10-06T17:58:21+00:00",
+          "apiDateGMT": "2025-10-06T17:58:21",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/acontecendo-na-lupa/2025/11/24/lupa-jusbrasil-e-oabs-lancam-acao-conjunta-contra-golpes-digitais",
+          "pageDate": "2025-11-24T20:03:43+00:00",
+          "apiDateGMT": "2025-11-24T20:03:43",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/acontecendo-na-lupa/2026/05/29/agencia-lupa-firma-parceria-com-grupo-bandeirantes-para-combate-a-desinformacao-nas-eleicoes-de-2026",
+          "pageDate": "2026-05-30T00:30:00+00:00",
+          "apiDateGMT": "2026-05-30T00:30:00",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2025/12/02/no-flow-flavio-bolsonaro-erra-sobre-pix-pl-antifaccao-e-urnas",
+          "pageDate": "2025-12-02T21:09:32+00:00",
+          "apiDateGMT": "2025-12-02T21:09:32",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2025/12/18/em-balanco-do-ano-lula-faz-afirmacoes-imprecisas-sobre-pib",
+          "pageDate": "2025-12-18T20:05:00+00:00",
+          "apiDateGMT": "2025-12-18T20:05:00",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2026/01/02/erros-e-acertos-dos-pre-candidatos-a-presidencia",
+          "pageDate": "2026-01-02T11:00:00+00:00",
+          "apiDateGMT": "2026-01-02T11:00:00",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2026/01/06/maduro-drogas-e-petroleo-o-que-e-fato-no-discurso-de-trump",
+          "pageDate": "2026-01-06T17:48:21+00:00",
+          "apiDateGMT": "2026-01-06T17:48:21",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2026/04/14/lula-exagera-ao-falar-de-empregos-e-erra-sobre-preco-de-combustiveis-no-brasil",
+          "pageDate": "2026-04-14T20:45:00+00:00",
+          "apiDateGMT": "2026-04-14T20:45:00",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2026/05/08/zema-seguranca-salario-informalidade",
+          "pageDate": "2026-05-08T20:30:00+00:00",
+          "apiDateGMT": "2026-05-08T20:30:00",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2026/07/01/economia-educacao-e-8-de-janeiro-checamos-entrevistas-de-renan-santos",
+          "pageDate": "2026-07-01T14:00:00+00:00",
+          "apiDateGMT": "2026-07-01T14:00:00",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2026/08/05/ao-vivo-checagem-da-entrevista-de-renan-santos-ao-g1-e-globonews",
+          "pageDate": "2026-08-05T17:25:06+00:00",
+          "apiDateGMT": "2026-08-05T17:25:06",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2026/08/06/ao-vivo-checagem-da-entrevista-de-romeu-zema-ao-g1-e-globonews",
+          "pageDate": "2026-08-06T17:30:44+00:00",
+          "apiDateGMT": "2026-08-06T17:30:44",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2026/08/24/ao-vivo-checagem-da-entrevista-de-romeu-zema-ao-jornal-nacional",
+          "pageDate": "2026-08-25T00:14:30+00:00",
+          "apiDateGMT": "2026-08-25T00:14:30",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2026/08/25/ao-vivo-checagem-da-entrevista-de-ronaldo-caiado-ao-jornal-nacional",
+          "pageDate": "2026-08-26T00:08:07+00:00",
+          "apiDateGMT": "2026-08-26T00:08:07",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2026/08/26/ao-vivo-checagem-da-entrevista-de-renan-santos-ao-jornal-nacional",
+          "pageDate": "2026-08-26T23:45:16+00:00",
+          "apiDateGMT": "2026-08-26T23:45:16",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        },
+        {
+          "url": "https://www.agencialupa.org/checagem/2026/08/27/ao-vivo-checagem-da-entrevista-de-lula-ao-jornal-nacional",
+          "pageDate": "2026-08-28T00:19:31+00:00",
+          "apiDateGMT": "2026-08-28T00:19:31",
+          "exactURLMatched": true,
+          "dateAgrees": true
+        }
+      ]
+    }
+  ]
+}

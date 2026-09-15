@@ -1674,6 +1674,7 @@ def test_discovery_reuses_real_page_date_before_creating_fetch_task(service,monk
     calls=[];monkeypatch.setattr(service,'fetch',lambda url,**kw:calls.append(url) or response)
     assert service.process_task(service.claim_task('fetch',worker_id='first'))['status']=='outside_window'
     assert len(calls)==1
+
     job=start(service,monkeypatch,targets=('paes',));enqueue(service,monkeypatch,candidate)
     assert service.claim_task('fetch',worker_id='redundant') is None
     with service._connect() as c:
@@ -1689,6 +1690,96 @@ def test_discovery_reuses_real_page_date_before_creating_fetch_task(service,monk
     enqueue(service,monkeypatch,candidate)
     assert service.claim_task('fetch',worker_id='in-window') is not None
     assert len(calls)==1
+
+
+def _real_public_date_batch(monkeypatch, source='ponte_jornalismo'):
+    import gzip,hashlib,json
+    from pathlib import Path
+    from pipeline.normalization import canonicalize_url
+    from web_app import political_discovery
+    from web_app.political_expanded_discovery import load_expanded_sources
+    root=Path(__file__).parent/'fixtures/political_public_dates'
+    ref=next(r for r in json.loads((root/'provenance.json').read_text())['rows'] if r['source']==source)
+    raw=gzip.decompress((root/ref['evidence']).read_bytes())
+    assert hashlib.sha256(raw).hexdigest()==ref['sha256']
+    response=requests.Response();response.status_code=200;response.url=ref['url'];response._content=raw
+    candidates=[{'url':canonicalize_url(r['observed_url']),'title':'','source_key':source,'metadata':{}} for r in ref['references']]
+    monkeypatch.setattr(political_discovery,'discover',lambda task,fetch:{'candidates':candidates,
+        'outcome':'complete','raw_count':len(candidates),'next_cursor':None,'child_tasks':[],'gap_reason':''})
+    config=next(s for s in load_expanded_sources() if s['key']==source)
+    tasks=[{'source_key':source,'source_snapshot':config,'strategy':'expanded_sitemap','cursor':{}}]
+    return ref,response,candidates,tasks
+
+
+def test_public_api_dates_skip_old_real_urls_and_reuse_evidence_in_next_job(service,monkeypatch):
+    import gzip,hashlib
+    ref,response,candidates,tasks=_real_public_date_batch(monkeypatch)
+    calls=[];monkeypatch.setattr(service,'fetch',lambda url,**kw:calls.append(url) or response)
+    job=start(service,monkeypatch,targets=('private',),tasks=tasks)
+    result=service.process_task(service.claim_task('discovery',worker_id='api-date-first'))
+    assert result['publicAPIDatesBeforeFetch']==20 and result['datesReusedBeforeFetch']==0
+    assert len(calls)==1 and service.claim_task('fetch',worker_id='no-old-page-fetch') is None
+    with service._connect() as c:
+        rows=c.execute('SELECT * FROM political_observations WHERE job_id=%s',(job['id'],)).fetchall()
+        assert len(rows)==20 and all(r['disposition']=='outside_window' for r in rows)
+        evidence=rows[0]['metadata']['publication_date_evidence']
+        raw=gzip.decompress(service.store.objects[evidence['response_object_key']])
+        assert hashlib.sha256(raw).hexdigest()==evidence['response_hash']==ref['sha256']
+        assert c.execute('SELECT COUNT(*) AS n FROM political_articles').fetchone()['n']==0
+    second=start(service,monkeypatch,targets=('paes',),tasks=tasks)
+    result=service.process_task(service.claim_task('discovery',worker_id='api-date-next-job'))
+    assert result['datesReusedBeforeFetch']==20 and result['publicAPIDatesBeforeFetch']==0
+    assert len(calls)==1
+
+
+def test_date_batch_storage_failure_falls_back_to_all_normal_fetches(service,monkeypatch):
+    _,response,candidates,tasks=_real_public_date_batch(monkeypatch)
+    monkeypatch.setattr(service,'fetch',lambda url,**kw:response)
+    monkeypatch.setattr(service.store,'upload_bytes',lambda *a:False)
+    job=start(service,monkeypatch,tasks=tasks)
+    result=service.process_task(service.claim_task('discovery',worker_id='api-storage-failure'))
+    assert result['publicAPIDatesBeforeFetch']==0
+    with service._connect() as c:
+        assert c.execute("SELECT COUNT(*) AS n FROM political_tasks WHERE job_id=%s AND kind='fetch'",(job['id'],)).fetchone()['n']==20
+        rows=c.execute('SELECT metadata FROM political_observations WHERE job_id=%s',(job['id'],)).fetchall()
+        assert all('verified_publication_at' not in r['metadata'] for r in rows)
+
+
+def test_real_api_date_after_utc_midnight_keeps_sp_previous_day_fetch(service,monkeypatch):
+    ref,response,candidates,tasks=_real_public_date_batch(monkeypatch,'lupa')
+    from zoneinfo import ZoneInfo
+    expected={c['url'] for c,r in zip(candidates,ref['references'])
+              if datetime.fromisoformat(r['verified_at']).astimezone(ZoneInfo('America/Sao_Paulo')).date().isoformat()=='2026-08-27'}
+    assert len(expected)==1
+    monkeypatch.setattr(service,'fetch',lambda url,**kw:response)
+    job=start(service,monkeypatch,tasks=tasks)
+    with service._connect() as c:
+        c.execute("UPDATE political_jobs SET date_from='2026-08-27',date_to='2026-08-27' WHERE id=%s",(job['id'],))
+    result=service.process_task(service.claim_task('discovery',worker_id='api-sp-boundary'))
+    assert result['publicAPIDatesBeforeFetch']==19
+    with service._connect() as c:
+        payloads=[r['payload'] for r in c.execute("SELECT payload FROM political_tasks WHERE job_id=%s AND kind='fetch'",(job['id'],)).fetchall()]
+        assert {r['url'] for r in payloads}==expected
+        assert payloads[0]['published_at']=='2026-08-28T00:19:31+00:00'
+        assert payloads[0]['metadata']['publication_date_status']=='api_verified'
+        assert payloads[0]['metadata']['wordpress_id']>0
+
+
+def test_date_lookup_preserves_existing_metadata_and_human_classification(service,monkeypatch):
+    _,response,candidates,tasks=_real_public_date_batch(monkeypatch)
+    with service._connect() as c:
+        original=c.execute("""INSERT INTO political_articles(canonical_url,title,source_key,source_name,date_status)
+            VALUES(%s,'','ponte_jornalismo','Ponte Jornalismo','manual') RETURNING *""",(candidates[0]['url'],)).fetchone()
+        c.execute("INSERT INTO political_mentions(article_id,target_key,target_name,keyword_matched) VALUES(%s,'paes','Eduardo Paes','editor record')",(original['id'],))
+        c.execute("INSERT INTO political_classifications(article_id,target_key,payload,updated_by) VALUES(%s,'paes','{\"human\":true}'::jsonb,'editor')",(original['id'],))
+    calls=[];monkeypatch.setattr(service,'fetch',lambda url,**kw:calls.append(url) or response)
+    job=start(service,monkeypatch,tasks=tasks)
+    service.process_task(service.claim_task('discovery',worker_id='existing-protected'))
+    with service._connect() as c:
+        assert c.execute('SELECT * FROM political_articles WHERE id=%s',(original['id'],)).fetchone()==original
+        assert c.execute('SELECT payload FROM political_classifications').fetchone()['payload']=={'human':True}
+        fetches=c.execute("SELECT payload FROM political_tasks WHERE job_id=%s AND kind='fetch'",(job['id'],)).fetchall()
+        assert len(fetches)==1 and fetches[0]['payload']['url']==candidates[0]['url']
 
 
 @pytest.mark.parametrize('date_status,published,expected_skip',[

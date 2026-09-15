@@ -1167,6 +1167,16 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 raise FetchProblem("html_storage_failed")
         return digest, key
 
+    def _store_date_response(self, raw: bytes) -> tuple[str, str]:
+        if len(raw) > 512 * 1024:
+            raise FetchProblem("date_evidence_too_large", retryable=False)
+        digest = hashlib.sha256(raw).hexdigest()
+        key = f"{self.store.prefix}/political/objects/{digest[:2]}/{digest}.dates.json.gz"
+        with timed_operation("object_upload"):
+            if not self.store.enabled or not self.store.upload_bytes(gzip.compress(raw, mtime=0), key, "application/gzip"):
+                raise FetchProblem("date_evidence_storage_failed")
+        return digest, key
+
     def _record_access_failure(self, task: dict, response) -> None:
         """Keep bounded access evidence without letting its storage stop the job."""
         evidence = {"status": response.status_code, "url": response.url,
@@ -1321,10 +1331,29 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 # or prevent healthy sources from continuing after storage trouble.
                 batch_fallback = str(exc)
                 record_timing("body_batch_fallback", 0, outcome="error")
+        date_api_facts, date_api_stats = {}, {}
+        if payload.get("strategy") == "expanded_sitemap" and candidates:
+            from .political_public_date_batches import ENDPOINTS, lookup
+            if task["source_key"] in ENDPOINTS:
+                with self._connect() as conn:
+                    prior_dates, prior_articles = self._discovery_publication_state(conn, candidates)
+                # Never supersede saved articles, human date corrections, or
+                # already verified facts. Look up only newly encountered URLs.
+                unresolved = [{**c, "url": canonicalize_url(c.get("url", ""))} for c in candidates if canonicalize_url(c.get("url", "")) not in prior_dates
+                              and canonicalize_url(c.get("url", "")) not in prior_articles]
+                def fetch_date_metadata(url):
+                    with timed_operation("publication_date_batch_http") as measurement:
+                        response = self.fetch(url)
+                        measurement.status_code = response.status_code
+                        measurement.outcome = "error" if response.status_code >= 400 else "ok"
+                        return response
+                date_api_facts, date_api_stats = lookup(task["source_key"], unresolved, fetch_date_metadata, self._store_date_response)
+                record_timing("publication_date_batch", date_api_stats["durationMs"] / 1000,
+                              outcome="fallback" if date_api_stats["fallback"] else "ok")
         with self._connect() as conn:
             job = self._lock_task(conn, task)
-            known_dates = self._discovery_verified_dates(conn, candidates) if job["kind"] == "collect" else {}
-            dates_reused = 0
+            known_dates, current_articles = self._discovery_publication_state(conn, candidates) if job["kind"] == "collect" else ({}, set())
+            dates_reused = dates_from_api = 0
             for candidate in candidates:
                 url = canonicalize_url(str(candidate.get("url") or ""))
                 if not url or urlparse(url).scheme not in {"http", "https"}:
@@ -1340,11 +1369,18 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     candidate["body_batch_ref"] = reference
                 elif batch_fallback:
                     candidate["metadata"] = {**(candidate.get("metadata") or {}), "body_batch_fallback": batch_fallback}
+                api_date = (date_api_facts.get(url) if url not in known_dates and url not in current_articles else None)
+                if api_date:
+                    candidate["published_at"] = api_date[0].isoformat()
+                    candidate["metadata"] = {**(candidate.get("metadata") or {}),
+                        **self._publication_fact(*api_date),
+                        "wordpress_id": api_date[2]["publisher_post_id"],
+                        "public_date_batch_evidence": api_date[2]}
                 conn.execute("""INSERT INTO political_observations(job_id,source_task_id,observed_url,source_key,title,snippet,metadata)
                     VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb) ON CONFLICT(job_id,observed_url) DO NOTHING""",
                              (task["job_id"], task["id"], url, task["source_key"], str(candidate.get("title") or "")[:1000],
                               str(candidate.get("snippet") or "")[:2000], _json(candidate.get("metadata") or {})))
-                known_date = known_dates.get(url)
+                known_date = known_dates.get(url) or api_date
                 if (not candidate.get("force_refresh") and known_date and known_date[0] and not job["date_from"] <=
                         known_date[0].astimezone(ZONE).date() <= job["date_to"]):
                     # Retain discovery evidence, but avoid creating a fetch task
@@ -1354,9 +1390,13 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     changed = conn.execute("""UPDATE political_observations
                         SET disposition='outside_window',metadata=metadata || %s::jsonb
                         WHERE job_id=%s AND observed_url=%s AND disposition='pending' AND article_id IS NULL""",
-                        (_json({**self._publication_fact(*known_date), "date_reused_in_discovery": True}),
+                        (_json({**self._publication_fact(*known_date),
+                                **({"date_verified_in_public_api_batch": True} if api_date else {"date_reused_in_discovery": True})}),
                          task["job_id"], url))
-                    dates_reused += changed.rowcount
+                    if api_date:
+                        dates_from_api += changed.rowcount
+                    else:
+                        dates_reused += changed.rowcount
                     continue
                 self._insert_task(conn, task["job_id"], "fetch", candidate)
             for child in result.get("child_tasks") or []:
@@ -1387,13 +1427,18 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                          error_type=str(result.get("gap_reason") or ""),
                          result={"bodyBatchRecords": len(batch_refs), "bodyBatchFallback": batch_fallback,
                                  "datesReusedBeforeFetch": dates_reused,
+                                 "publicDateBatch": {**date_api_stats, "excludedBeforeFetch": dates_from_api} if date_api_stats else {},
                                  "calendarSiblingsPruned": calendar_pruned,
                                  "calendarPartitionExcluded": result.get("calendar_partition_excluded")})
         return {"taskId": task["id"], "status": outcome, "candidates": len(candidates),
-                "datesReusedBeforeFetch": dates_reused}
+                "datesReusedBeforeFetch": dates_reused, "publicAPIDatesBeforeFetch": dates_from_api}
 
     @staticmethod
     def _discovery_verified_dates(conn, candidates: list[dict]) -> dict:
+        return PoliticalCorpusService._discovery_publication_state(conn, candidates)[0]
+
+    @staticmethod
+    def _discovery_publication_state(conn, candidates: list[dict]) -> tuple[dict, set]:
         """Batch the same conservative date evidence used by article fetching.
 
         At most 500 current candidates are inspected. This does not scan or
@@ -1414,7 +1459,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             for variant in publisher_article_identity_urls(url):
                 variants_to_urls.setdefault(variant, set()).add(url)
         if not candidate_urls:
-            return {}
+            return {}, set()
         variants = list(variants_to_urls)
         rows = conn.execute("""SELECT a.id,a.canonical_url,a.published_at,a.date_status,a.metadata,
             ARRAY(SELECT u.url FROM political_url_aliases u WHERE u.article_id=a.id AND u.url=ANY(%s)) AS matched_aliases
@@ -1439,7 +1484,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 metadata = row["metadata"]
                 if metadata.get("publication_date_status") in {"page_verified", "api_verified"} and original_date_trusted(row["observed_url"],metadata):
                     known[row["observed_url"]] = (parse_date(metadata["verified_publication_at"]), metadata["publication_date_status"], metadata.get("publication_date_evidence"))
-        return known
+        return known, existing
 
     @staticmethod
     def _publication_fact(published, date_status: str, date_evidence=None) -> dict:
