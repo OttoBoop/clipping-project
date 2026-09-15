@@ -1,7 +1,46 @@
 """HTML archives advertised as children of Exame's sitemap index."""
 from urllib.parse import urljoin, urlparse
+from html.parser import HTMLParser
 
-from bs4 import BeautifulSoup
+
+class _EditorialCards(HTMLParser):
+    """Use the worker's standard library, including for sparse archive HTML."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.main = False
+        self.found_main = False
+        self.heading = False
+        self.current = None
+        self.rows = []
+        self.next_href = ''
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == 'main':
+            self.main = self.found_main = True
+        if not self.main:
+            return
+        if tag in {'h2', 'h3'}:
+            self.heading = True
+        if tag == 'a' and attrs.get('href'):
+            if 'next' in (attrs.get('rel') or '').split() and not self.next_href:
+                self.next_href = attrs['href']
+            if self.heading:
+                self.current = [attrs['href'], []]
+
+    def handle_data(self, data):
+        if self.current is not None:
+            self.current[1].append(data)
+
+    def handle_endtag(self, tag):
+        if tag == 'a' and self.current is not None:
+            self.rows.append((self.current[0], ' '.join(' '.join(self.current[1]).split())))
+            self.current = None
+        if tag in {'h2', 'h3'}:
+            self.heading = False
+        if tag == 'main':
+            self.main = self.heading = False
+            self.current = None
 
 
 def is_advertised_archive(task, source):
@@ -27,16 +66,16 @@ def discover(task, source, fetch, response=None):
     final_url = getattr(response, 'url', '') or url
     if not expanded._allowed(final_url, source):
         raise core.DiscoveryError('Exame archive redirected outside publisher domains', retryable=False)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    main = soup.find('main')
-    if main is None:
+    parser = _EditorialCards()
+    parser.feed(response.text)
+    if not parser.found_main:
         return expanded._result(outcome='gap', gap_reason='exame_html_archive_not_recognized')
     # These are the actual editorial cards; header/footer links are not news.
     rows = {}
-    for anchor in main.select('h2 a[href], h3 a[href]'):
-        link = urljoin(final_url, anchor['href'])
+    for href, title in parser.rows:
+        link = urljoin(final_url, href)
         if expanded._allowed(link, source, article=True):
-            rows.setdefault(link, anchor.get_text(' ', strip=True))
+            rows.setdefault(link, title)
     fingerprint = expanded._fingerprint(rows)
     seen = cursor.get('page_fingerprints', [])
     if rows and fingerprint in seen:
@@ -54,8 +93,7 @@ def discover(task, source, fetch, response=None):
     if offset + cap < len(rows):
         return expanded._result(candidates, raw_count=len(selected), next_cursor={
             **base, 'offset': offset + cap, 'document_fingerprint': fingerprint})
-    next_anchor = main.select_one('a[rel~=next][href]')
-    next_url = urljoin(final_url, next_anchor['href']) if next_anchor else ''
+    next_url = urljoin(final_url, parser.next_href) if parser.next_href else ''
     page = int(cursor.get('page', 1))
     if next_url:
         if not expanded._allowed(next_url, source) or next_url == final_url:
