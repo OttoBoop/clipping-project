@@ -146,7 +146,25 @@ def _skip_branch(url):
     # Taxonomy/author indexes are structural, not editorial text. Columns are
     # deliberately retained (unlike author landing-page taxonomies). Published
     # Web Stories are editorial HTML and must also reach body/date extraction.
-    return bool(re.search(r'(?:sitemap[-_/](?:taxonomy|taxonomies|users|authors?|autor|tag|category)|/(?:autor|authors?|tags)/sitemap)', url, re.I))
+    return _exame_topic_index(url) or bool(re.search(r'(?:sitemap[-_/](?:taxonomy|taxonomies|users|authors?|autor|tag|category)|/(?:autor|authors?|tags)/sitemap)', url, re.I))
+
+
+def _exame_topic_index(url):
+    try:
+        parsed = urlparse(url)
+    except ValueError:
+        return False
+    return (parsed.hostname in {'exame.com', 'www.exame.com'}
+            and bool(re.fullmatch(r'/noticias-sobre/(?:\d+/)?sitemap\.xml', parsed.path)))
+
+
+def structural_exclusion(task, source):
+    """Recognize the publisher's taxonomy indexes, including already queued ones."""
+    if (source.get('key') == 'exame' and task.get('strategy') == 'expanded_sitemap'
+            and int(task.get('depth', 0)) > 0 and _exame_topic_index(task.get('url', ''))):
+        return {'url': task['url'], 'basis': 'publisher_topic_collection_sitemap',
+                'http_requested': False, 'articles_modified': False}
+    return None
 
 
 def calendar_exclusion(task, source):
@@ -179,6 +197,9 @@ def _sitemap(task, source, fetch):
         url = task['url']
     if not _allowed(url, source):
         raise core.DiscoveryError('expanded sitemap outside publisher domains', retryable=False)
+    structural = structural_exclusion(task, source)
+    if structural:
+        return _result(structural_index_excluded=structural)
     # Recheck already queued children as well as newly traversed indexes.
     # Older workers did not recognize pre-2000 days or Jota's annual paths.
     # Preserve an explicit task result without requesting an irrelevant leaf.

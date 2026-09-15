@@ -1,0 +1,41 @@
+{
+  "archiveWrites": 0,
+  "environment": "production_worker",
+  "rows": [
+    {
+      "requestedURL": "https://exame.com/noticias-sobre/3/sitemap.xml",
+      "error": "ReadTimeout",
+      "detail": "HTTPSConnectionPool(host='exame.com', port=443): Read timed out. (read timeout=20)"
+    },
+    {
+      "url": "https://exame.com/noticias-sobre/4/sitemap.xml",
+      "requestedURL": "https://exame.com/noticias-sobre/4/sitemap.xml",
+      "status": 200,
+      "at": "2026-09-15T02:04:06.583036+00:00",
+      "sha256": "576511765d8574c4680fc3f5c1f264df67e5fa0d89e0ef8255512f0fa03c0441",
+      "locCount": 1000,
+      "topicPathCount": 1000,
+      "first": [
+        "https://exame.com/noticias-sobre/hip-financas-one-day-edition/",
+        "https://exame.com/noticias-sobre/hip-hop/",
+        "https://exame.com/noticias-sobre/hip-ia-one-day-edition/"
+      ],
+      "last": [
+        "https://exame.com/noticias-sobre/mini-cooper/",
+        "https://exame.com/noticias-sobre/mini-coupe/",
+        "https://exame.com/noticias-sobre/ideias/"
+      ],
+      "evidence": "1.response.gz",
+      "bytes": 122810
+    },
+    {
+      "url": "https://exame.com/noticias-sobre/hip-financas-one-day-edition/",
+      "requestedURL": "https://exame.com/noticias-sobre/hip-financas-one-day-edition/",
+      "status": 200,
+      "at": "2026-09-15T02:04:07.972886+00:00",
+      "sha256": "369889ae75d6b81d50e93be7516f7c7ed968ea2b12308429b3e54c2ec6e8996b",
+      "evidence": "2.response.gz",
+      "bytes": 142718
+    }
+  ]
+}
