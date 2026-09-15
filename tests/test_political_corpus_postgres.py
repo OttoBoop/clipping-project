@@ -1765,6 +1765,37 @@ def test_real_api_date_after_utc_midnight_keeps_sp_previous_day_fetch(service,mo
         assert payloads[0]['metadata']['wordpress_id']>0
 
 
+def test_real_sitemap_cursor_keeps_immutable_object_across_local_cache_loss(service,monkeypatch,tmp_path):
+    import gzip,json
+    from pathlib import Path
+    from web_app import political_expanded_discovery as expanded
+    from web_app.political_sitemap_cache import PaginatedSitemapCache
+    root=Path(__file__).parent/'fixtures/political_expanded'
+    evidence=next(r for r in json.loads((root/'provenance.json').read_text()) if r['name']=='istoe_603')
+    raw=gzip.decompress((root/'istoe_603.gz').read_bytes())
+    source=next(s for s in expanded.load_expanded_sources() if s['key']=='istoe')
+    payload=expanded.build_expanded_tasks(source,'2026-08-09','2026-08-09',[{'key':'paes'}])[0]
+    payload.update(url=evidence['url'],depth=1,source_snapshot=source)
+    response=requests.Response();response.status_code=200;response.url=evidence['url'];response._content=raw
+    monkeypatch.setenv('POLITICAL_PAGED_SITEMAP_CACHE_DIR',str(tmp_path))
+    monkeypatch.setattr(service,'fetch',lambda *a,**k:response)
+    job=start(service,monkeypatch,tasks=[payload])
+    assert service.process_task(service.claim_task('discovery',worker_id='snapshot-first'))['status']=='continue'
+    with service._connect() as c:
+        cursor=c.execute("SELECT cursor FROM political_tasks WHERE job_id=%s AND kind='discovery'",(job['id'],)).fetchone()['cursor']
+    ref=cursor['response_cache']
+    assert ref['object_key'].endswith('.discovery.gz')
+    assert service._read_discovery_response(ref['object_key'],ref['sha256'])==raw
+    next(tmp_path.glob('*.xml')).unlink()
+    def forbidden(*args):
+        pytest.fail('resumption must use the immutable object')
+    cache=PaginatedSitemapCache(forbidden,cursor,tmp_path,read_object=service._read_discovery_response)
+    result=expanded.discover_expanded({**payload,'cursor':cursor},source,cache.fetch)
+    assert result['next_cursor']['offset']==1000
+    with pytest.raises(FetchProblem,match='discovery_object_key_mismatch'):
+        service._read_discovery_response('another-prefix/current/config.json',ref['sha256'])
+
+
 def test_date_lookup_preserves_existing_metadata_and_human_classification(service,monkeypatch):
     _,response,candidates,tasks=_real_public_date_batch(monkeypatch)
     with service._connect() as c:

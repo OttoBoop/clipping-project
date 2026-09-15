@@ -131,3 +131,79 @@ def test_disk_cache_retains_only_bounded_xml_documents(tmp_path, monkeypatch):
         cache.fetch(response.url);cache.checkpoint({'offset': 100})
     assert len(list(tmp_path.glob('*.xml'))) == 1
     assert next(tmp_path.glob('*.xml')).name == hashlib.sha256(real_response('istoe_index').content).hexdigest() + '.xml'
+
+
+def test_immutable_object_resumes_real_xml_after_worker_loss_and_publisher_change(tmp_path):
+    source, task = source_task()
+    objects, writes, reads, requests_made = {}, [], [], []
+    def save(raw):
+        digest = hashlib.sha256(raw).hexdigest(); key = digest + '.discovery.gz'
+        objects[key] = gzip.compress(raw, mtime=0); writes.append(key)
+        return digest, key
+    def read(key, digest):
+        reads.append(key)
+        return gzip.decompress(objects[key])
+    def fetch(url):
+        requests_made.append(url)
+        return real_response() if len(requests_made) == 1 else real_response('istoe_index')
+    first = PaginatedSitemapCache(fetch, {}, tmp_path, save_object=save, read_object=read)
+    result = expanded.discover_expanded(task, source, first.fetch)
+    task['cursor'] = json.loads(json.dumps(first.checkpoint(result['next_cursor'])))
+    next(tmp_path.glob('*.xml')).unlink()
+    cache = PaginatedSitemapCache(fetch, task['cursor'], tmp_path, save_object=save, read_object=read)
+    resumed = expanded.discover_expanded(task, source, cache.fetch)
+    expected = expanded.discover_expanded(task, source, lambda _: real_response())
+    assert resumed['candidates'] == expected['candidates']
+    assert resumed['next_cursor']['offset'] == 1000
+    cache.checkpoint(resumed['next_cursor'])
+    assert len(requests_made) == len(writes) == len(reads) == 1
+    assert next(tmp_path.glob('*.xml')).read_bytes() == real_response().content
+
+
+@pytest.mark.parametrize('failure', ['missing', 'corrupt'])
+def test_unavailable_or_corrupt_remote_snapshot_keeps_existing_changed_page_gap(tmp_path, failure):
+    source, task = source_task()
+    original = real_response()
+    digest = hashlib.sha256(original.content).hexdigest()
+    first = PaginatedSitemapCache(lambda _: original, {}, tmp_path,
+        save_object=lambda raw: (digest, 'snapshot.discovery.gz'))
+    result = expanded.discover_expanded(task, source, first.fetch)
+    task['cursor'] = first.checkpoint(result['next_cursor'])
+    next(tmp_path.glob('*.xml')).unlink()
+    def read(*args):
+        if failure == 'missing':
+            raise OSError('storage unavailable')
+        return real_response('istoe_index').content
+    cache = PaginatedSitemapCache(lambda _: real_response('istoe_index'), task['cursor'], tmp_path, read_object=read)
+    result = expanded.discover_expanded(task, source, cache.fetch)
+    assert result['outcome'] == 'gap'
+    assert result['gap_reason'] == 'expanded_sitemap_changed_during_resume'
+
+
+def test_remote_snapshot_survives_unwritable_local_cache(tmp_path):
+    source, task = source_task()
+    original = real_response()
+    digest = hashlib.sha256(original.content).hexdigest()
+    directory = tmp_path / 'occupied'; directory.write_text('existing file')
+    cache = PaginatedSitemapCache(lambda _: original, {}, directory,
+        save_object=lambda raw: (digest, 'snapshot.discovery.gz'))
+    result = expanded.discover_expanded(task, source, cache.fetch)
+    task['cursor'] = cache.checkpoint(result['next_cursor'])
+    assert task['cursor']['response_cache']['object_key'] == 'snapshot.discovery.gz'
+    def no_fetch(*args):
+        pytest.fail('must restore immutable snapshot')
+    cache = PaginatedSitemapCache(no_fetch, task['cursor'], directory, read_object=lambda *args: original.content)
+    result = expanded.discover_expanded(task, source, cache.fetch)
+    assert result['next_cursor']['offset'] == 1000
+
+
+def test_failed_object_upload_still_uses_local_snapshot(tmp_path):
+    source, task = source_task()
+    def failed(*args):
+        raise OSError('object storage unavailable')
+    cache = PaginatedSitemapCache(lambda _: real_response(), {}, tmp_path, save_object=failed)
+    result = expanded.discover_expanded(task, source, cache.fetch)
+    task['cursor'] = cache.checkpoint(result['next_cursor'])
+    assert 'object_key' not in task['cursor']['response_cache']
+    cache = PaginatedSitemapCache(lambda _: pytest.fail('local cache remains usable'), task['cursor'], tmp_path)
+    assert expanded.discover_expanded(task, source, cache.fetch)['next_cursor']['offset'] == 1000

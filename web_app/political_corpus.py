@@ -692,8 +692,11 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 "nextCursor": encode_cursor(rows[-1]["last_article"], rows[-1]["id"]) if more else ""}
 
     def _read_text(self, key: str, digest: str) -> str:
+        return self._read_object_bytes(key, digest).decode("utf-8")
+
+    def _read_object_bytes(self, key: str, digest: str) -> bytes:
         if not key:
-            return ""
+            return b""
         if hasattr(self.store, "read_political_object"):
             payload = self.store.read_political_object(key)
         else:
@@ -716,7 +719,15 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             raw = zipped.read(MAX_RESPONSE_BYTES + 1)
         if len(raw) > MAX_RESPONSE_BYTES or hashlib.sha256(raw).hexdigest() != digest:
             raise FetchProblem("text_object_integrity_error", retryable=False)
-        return raw.decode("utf-8")
+        return raw
+
+    def _read_discovery_response(self, key: str, digest: str) -> bytes:
+        if not re.fullmatch(r"[0-9a-f]{64}", str(digest)):
+            raise FetchProblem("discovery_object_key_mismatch", retryable=False)
+        expected = f"{self.store.prefix}/political/objects/{digest[:2]}/{digest}.discovery.gz"
+        if key != expected:
+            raise FetchProblem("discovery_object_key_mismatch", retryable=False)
+        return self._read_object_bytes(key, digest)
 
     def article_text(self, article_id: int, *, allowed_target_keys: list[str]) -> dict:
         allowed = _scope(allowed_target_keys)
@@ -1177,6 +1188,16 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 raise FetchProblem("date_evidence_storage_failed")
         return digest, key
 
+    def _store_discovery_response(self, raw: bytes) -> tuple[str, str]:
+        if len(raw) > MAX_RESPONSE_BYTES:
+            raise FetchProblem("discovery_evidence_too_large", retryable=False)
+        digest = hashlib.sha256(raw).hexdigest()
+        key = f"{self.store.prefix}/political/objects/{digest[:2]}/{digest}.discovery.gz"
+        with timed_operation("object_upload"):
+            if not self.store.enabled or not self.store.upload_bytes(gzip.compress(raw, mtime=0), key, "application/gzip"):
+                raise FetchProblem("discovery_evidence_storage_failed")
+        return digest, key
+
     def _record_access_failure(self, task: dict, response) -> None:
         """Keep bounded access evidence without letting its storage stop the job."""
         evidence = {"status": response.status_code, "url": response.url,
@@ -1298,7 +1319,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         discovery_fetch = self.fetch
         if payload.get("strategy") in {"expanded_sitemap", "expanded_daily_sitemap"}:
             from .political_sitemap_cache import PaginatedSitemapCache
-            sitemap_cache = PaginatedSitemapCache(self.fetch, task["cursor"])
+            sitemap_cache = PaginatedSitemapCache(self.fetch, task["cursor"],
+                save_object=self._store_discovery_response, read_object=self._read_discovery_response)
             discovery_fetch = sitemap_cache.fetch
         if payload.get("strategy") == "google_news" and task["cursor"].get("google_pending_result"):
             result = task["cursor"]["google_pending_result"]

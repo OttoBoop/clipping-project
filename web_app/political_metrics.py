@@ -16,6 +16,7 @@ import time
 OPERATIONS = frozenset({"task", "http", "http_body", "throttle_wait", "google_resolution", "extraction", "object_upload",
                        "body_batch_upload", "body_batch_read", "body_batch_cache_hit",
                        "body_batch_use", "body_batch_fallback", "sitemap_cache", "sitemap_cache_store",
+                       "sitemap_object_read", "sitemap_object_write",
                        "publication_date_probe", "publication_date_batch", "publication_date_batch_http"})
 OUTCOMES = frozenset({"ok", "error", "saved", "duplicate", "no_match", "not_news", "outside_window", "complete",
                       "continue", "split", "gap", "backpressure", "lease_lost", "retryable", "metadata_only", "failed",

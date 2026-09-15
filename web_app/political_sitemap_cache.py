@@ -1,9 +1,10 @@
 """Bounded, reconstructible XML cache for one discovery task's pagination.
 
-The durable cursor retains the URL/hash; a lost or corrupt local file simply
-requires the publisher again. The adapter still checks its document fingerprint
-before using an existing offset. A new job or calendar page starts with a fresh
-request. Nothing here caches article text or changes source configuration.
+The durable cursor retains the URL/hash and optional immutable storage object.
+After local cache loss, resume the same bytes before requesting the publisher.
+The adapter still checks its document fingerprint before using an existing
+offset. A new job or calendar page starts with a fresh request. Nothing here
+caches article text or changes source configuration.
 """
 from __future__ import annotations
 
@@ -25,13 +26,26 @@ _LOCK = threading.Lock()
 
 
 class PaginatedSitemapCache:
-    def __init__(self, fetch, cursor, directory=None):
+    def __init__(self, fetch, cursor, directory=None, *, save_object=None, read_object=None):
         self.transport = fetch
         self.reference = (cursor or {}).get("response_cache") or {}
         self.directory = Path(directory or os.environ.get("POLITICAL_PAGED_SITEMAP_CACHE_DIR")
                               or Path(tempfile.gettempdir()) / "clipping-paged-sitemaps")
         self.response = None
         self.request_url = ""
+        self.save_object = save_object
+        self.read_object = read_object
+        self.object_failed = False
+
+    def _response(self, content, url):
+        response = requests.Response()
+        response.status_code = 200
+        response.url = self.reference.get("response_url") or url
+        response._content = content
+        response._content_consumed = True
+        response.headers["Content-Type"] = self.reference.get("content_type") or "application/xml"
+        self.response = response
+        return response
 
     def fetch(self, url, **kwargs):
         self.request_url = url
@@ -49,17 +63,22 @@ class PaginatedSitemapCache:
                         path.unlink(missing_ok=True)
                         raise ValueError("cache_hash_mismatch")
                     path.touch()
-                response = requests.Response()
-                response.status_code = 200
-                response.url = self.reference.get("response_url") or url
-                response._content = content
-                response._content_consumed = True
-                response.headers["Content-Type"] = "application/xml"
-                self.response = response
                 record_timing("sitemap_cache", time.monotonic() - started, outcome="hit")
-                return response
+                return self._response(content, url)
             except (OSError, ValueError):
                 record_timing("sitemap_cache", time.monotonic() - started, outcome="miss")
+            if self.read_object and self.reference.get("object_key"):
+                started = time.monotonic()
+                try:
+                    content = self.read_object(self.reference["object_key"], digest)
+                    if (not isinstance(content, bytes) or len(content) > MAX_DOCUMENT_BYTES
+                            or hashlib.sha256(content).hexdigest() != digest):
+                        raise ValueError("discovery_object_integrity_error")
+                    record_timing("sitemap_object_read", time.monotonic() - started, outcome="hit")
+                    return self._response(content, url)
+                except Exception:
+                    self.object_failed = True
+                    record_timing("sitemap_object_read", time.monotonic() - started, outcome="error")
         self.response = self.transport(url, **kwargs)
         return self.response
 
@@ -71,7 +90,10 @@ class PaginatedSitemapCache:
         if not isinstance(content, bytes) or len(content) > MAX_DOCUMENT_BYTES:
             return cursor
         digest = hashlib.sha256(content).hexdigest()
+        reference = {"url": self.request_url, "response_url": self.response.url, "sha256": digest,
+                     "content_type": self.response.headers.get("Content-Type", "application/xml")}
         temporary = None
+        local_saved = False
         started = time.monotonic()
         try:
             with _LOCK:
@@ -93,16 +115,28 @@ class PaginatedSitemapCache:
                     if size > MAX_CACHE_BYTES or count > MAX_CACHE_FILES:
                         item.unlink(missing_ok=True)
             record_timing("sitemap_cache_store", time.monotonic() - started, outcome="ok")
-            return {**cursor, "response_cache": {"url": self.request_url,
-                "response_url": self.response.url, "sha256": digest}}
+            local_saved = True
         except OSError:
             # A reconstructible optimization cannot turn healthy discovery into
             # a storage failure. Its absence is observable in worker telemetry.
             record_timing("sitemap_cache_store", time.monotonic() - started, outcome="error")
-            return cursor
         finally:
             if temporary:
                 try:
                     Path(temporary).unlink(missing_ok=True)
                 except OSError:
                     pass
+        if (self.reference.get("sha256") == digest and self.reference.get("object_key")
+                and not self.object_failed):
+            reference["object_key"] = self.reference["object_key"]
+        elif self.save_object:
+            started = time.monotonic()
+            try:
+                stored_hash, key = self.save_object(content)
+                if stored_hash != digest or not key:
+                    raise ValueError("discovery_object_save_mismatch")
+                reference["object_key"] = key
+                record_timing("sitemap_object_write", time.monotonic() - started, outcome="ok")
+            except Exception:
+                record_timing("sitemap_object_write", time.monotonic() - started, outcome="error")
+        return {**cursor, "response_cache": reference} if local_saved or reference.get("object_key") else cursor
