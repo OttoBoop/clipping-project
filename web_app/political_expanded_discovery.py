@@ -166,6 +166,10 @@ def _sitemap(task, source, fetch):
     core = _core()
     mechanism = task.get('mechanism') or {}
     cursor = dict(task.get('cursor') or {})
+    from . import political_exame_archive
+    exame_archive = political_exame_archive.is_advertised_archive(task, source)
+    if exame_archive and cursor.get('response_format') == 'exame_editorial_html':
+        return political_exame_archive.discover(task, source, fetch)
     page, offset = int(cursor.get('page', 1)), int(cursor.get('offset', 0))
     daily = task['strategy'] == 'expanded_daily_sitemap'
     if daily:
@@ -182,6 +186,10 @@ def _sitemap(task, source, fetch):
     if excluded:
         return _result(calendar_partition_excluded=excluded)
     response = core._get(fetch, url)
+    if exame_archive and response.text.lstrip().lower().startswith(('<!doctype html', '<html')):
+        if offset or cursor.get('document_fingerprint'):
+            return _result(outcome='gap', gap_reason='expanded_sitemap_kind_changed_during_resume')
+        return political_exame_archive.discover(task, source, fetch, response=response)
     root = core._xml(response)
     kind = core._local(root.tag)
     nodes = list(root)

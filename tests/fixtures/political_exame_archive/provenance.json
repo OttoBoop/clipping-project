@@ -1,0 +1,49 @@
+{
+  "environment": "production_worker",
+  "purpose": "development-only real HTML; not collection totals or independent recall references",
+  "archiveWrites": 0,
+  "responses": [
+    {
+      "requestedUrl": "https://exame.com/colunistas/adriano-lima/ultimas-noticias/",
+      "url": "https://exame.com/colunistas/adriano-lima/ultimas-noticias/",
+      "status": 200,
+      "at": "2026-09-15T00:28:42.379628+00:00",
+      "contentType": "text/html; charset=utf-8",
+      "sha256": "806586c7d83848fb343f136743dbafbd8ceae2ae60cdc39b49221bb64c76694d",
+      "evidence": "first-0.response.gz",
+      "bytes": 263687,
+      "title": "Coluna de Adriano Lima | Exame",
+      "first500": "<!DOCTYPE html><html lang=\"pt-br\" class=\"__variable_d30e88 __variable_98075e\"><head><meta charSet=\"utf-8\"/><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"image\" href=\"https://classic.exame.com/wp-content/uploads/2025/10/EX1280_GESTAO_ABRE-1-1.jpg\"/><link rel=\"stylesheet\" href=\"/_next/static/css/b06b35ef82dab327.css\" data-precedence=\"next\"/><link rel=\"stylesh",
+      "linkCount": 116,
+      "xmlLocCount": 0
+    },
+    {
+      "requestedUrl": "https://exame.com/videos/revista-exame/",
+      "url": "https://exame.com/videos/revista-exame/",
+      "status": 200,
+      "at": "2026-09-15T00:28:42.795513+00:00",
+      "contentType": "text/html; charset=utf-8",
+      "sha256": "74143cd8c8780c663e14bbeaf525d4fa1f10e48becdfdfc5838c4721e61e1345",
+      "evidence": "first-1.response.gz",
+      "bytes": 264681,
+      "title": "Vídeos | Exame",
+      "first500": "<!DOCTYPE html><html lang=\"pt-br\" class=\"__variable_d30e88 __variable_98075e\"><head><meta charSet=\"utf-8\"/><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/><link rel=\"preload\" as=\"image\" href=\"https://classic.exame.com/wp-content/uploads/2020/09/teaser-katya-hemelrijk-insights-para-um-novo-mundo.jpg\"/><link rel=\"stylesheet\" href=\"/_next/static/css/b06b35ef82dab327.css\" data-precedenc",
+      "linkCount": 109,
+      "xmlLocCount": 0
+    },
+    {
+      "requestedUrl": "https://exame.com/colunistas/adriano-lima/ultimas-noticias/2/",
+      "url": "https://exame.com/colunistas/adriano-lima/ultimas-noticias/2/",
+      "status": 200,
+      "at": "2026-09-15T00:29:42.459642+00:00",
+      "contentType": "text/html; charset=utf-8",
+      "sha256": "488b4d572f566d5207bc851c92a5ba65aaf851ef6d18a31460de1ac40e32a2f1",
+      "evidence": "next-0.response.gz",
+      "bytes": 166740,
+      "title": "Coluna de Adriano Lima | Exame",
+      "first500": "<!DOCTYPE html><html lang=\"pt-br\" class=\"__variable_d30e88 __variable_98075e\"><head><meta charSet=\"utf-8\"/><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"image\" href=\"https://classic.exame.com/wp-content/uploads/2025/03/EX1273_SXSW_.jpg\"/><link rel=\"stylesheet\" href=\"/_next/static/css/b06b35ef82dab327.css\" data-precedence=\"next\"/><link rel=\"stylesheet\" href=",
+      "linkCount": 98,
+      "xmlLocCount": 0
+    }
+  ]
+}
