@@ -1,0 +1,860 @@
+{
+  "at": "2026-09-15T01:54:23.211540+00:00",
+  "environment": "production_worker",
+  "developmentComparison": true,
+  "archiveWrites": 0,
+  "rows": [
+    {
+      "source": "ponte_jornalismo",
+      "references": [
+        {
+          "observed_url": "https://ponte.org/10-anos-sem-renatinho-ato-em-sp-marca-uma-decada-de-luta-por-justica",
+          "verified_at": "2025-03-23T20:23:02+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/114-entidades-pedem-afastamento-do-diretor-geral-das-penitenciarias-de-goias",
+          "verified_at": "2022-01-17T20:02:04+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/1-200-pedras-de-crack-achadas-em-um-dos-batalhoes-mais-mortais-da-pm-de-sp",
+          "verified_at": "2021-08-10T23:34:28+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/120-familias-de-comunidade-na-zona-norte-de-sp-sao-despejadas-na-semana-do-natal",
+          "verified_at": "2020-12-24T22:49:01+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/1500-deveria-ser-data-de-marco-temporal-para-os-brancos-no-brasil-diz-neidinha-surui",
+          "verified_at": "2023-09-18T21:49:47+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/15-estados-e-distrito-federal-se-recusam-a-contabilizar-violencia-contra-lgbts",
+          "verified_at": "2020-10-19T19:15:30+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/18-anos-depois-justica-de-sp-ainda-nao-julgou-gcms-que-mataram-lider-comunitario",
+          "verified_at": "2022-03-21T19:57:09+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/1-em-cada-4-assassinatos-em-sp-foi-cometido-pela-policia-sob-tarcisio-e-derrite",
+          "verified_at": "2024-12-02T21:04:40+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/200-doentes-6-mortos-e-nenhuma-resposta-em-prisao-no-piaui",
+          "verified_at": "2020-07-09T17:53:24+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/20-anos-crimes-de-maio-maes-de-maio",
+          "verified_at": "2026-05-11T15:13:01+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/20-vezes-em-que-a-policia-atacou-e-prendeu-manifestantes-por-nada",
+          "verified_at": "2022-12-13T17:28:35+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/29-anos-depois-e-ainda-em-julgamento-defesa-quer-levar-massacre-do-carandiru-ao-stf",
+          "verified_at": "2021-10-02T12:21:24+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/41-dos-brasileiros-acham-que-a-policia-trata-pior-as-mulheres-revela-pesquisa",
+          "verified_at": "2022-03-28T22:55:11+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/45-dos-egressos-do-sistema-penal-em-sp-relatam-dificuldades-para-ter-acesso-a-trabalho",
+          "verified_at": "2021-09-23T22:12:54+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/4-pms-sao-presos-por-matar-jovem-no-rn-mas-para-associacao-de-oficiais-o-problema-sao-os-desenhos",
+          "verified_at": "2020-09-21T00:39:29+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/5a-edicao-do-fala-discute-jornalismo-dos-povos-originarios-e-desafios-da-cop-30-na-amazonia",
+          "verified_at": "2024-08-27T12:51:06+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/5-anos-apos-massacre-de-paraisopolis-pm-de-sp-continua-dispersando-bailes-funk-com-violencia",
+          "verified_at": "2024-05-08T22:13:16+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/5-anos-sem-marielle-e-anderson-federalizar-e-a-solucao",
+          "verified_at": "2023-03-14T13:59:02+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/5-mitos-sobre-pessoas-trans-nos-esportes",
+          "verified_at": "2022-05-31T18:22:31+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/69-dos-moradores-de-favelas-do-rio-viram-ou-souberam-de-acoes-policiais-em-suas-areas-durante-a-pandemia",
+          "verified_at": "2021-09-27T14:52:13+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/70-das-prisoes-de-sp-tem-racionamento-de-agua-revelam-inspecoes-da-defensoria",
+          "verified_at": "2022-04-01T13:18:10+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/7-anos-depois-janot-pede-federalizacao-de-chacina-dos-crimes-de-maio",
+          "verified_at": "2016-05-11T18:25:14+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/7-de-setembro-em-sp-tera-plantao-da-ouvidoria-das-policias-e-oab-policiais-da-ativa-que-se-manifestarem-serao-investigados",
+          "verified_at": "2021-09-04T18:02:57+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/80-dos-crimes-virtuais-investigados-no-rs-estao-ligados-a-pedofilia",
+          "verified_at": "2019-07-14T21:49:40+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/80-tiros-em-nos-ato-em-sp-cobra-justica-por-evaldo-rosa-dos-santos",
+          "verified_at": "2019-04-15T01:55:41+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/80-tiros-e-o-fim-de-um-sonho-tem-sido-muito-dificil-ter-que-seguir-sem-ele-diz-viuva-de-musico-fuzilado-pelo-exercito",
+          "verified_at": "2021-07-10T15:11:54+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/81-das-vitimas-de-feminicidio-nunca-haviam-registrado-denuncia-contra-seus-agressores",
+          "verified_at": "2024-07-24T13:52:13+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/85-dos-policiais-apoiam-afastamento-temporario-de-policiais-que-matam-aponta-pesquisa",
+          "verified_at": "2021-11-11T16:37:02+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/86-policiais-cometeram-homicidio-seguido-de-suicidio-em-6-anos-maioria-matou-as-companheiras",
+          "verified_at": "2024-08-15T19:55:40+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/90-das-vitimas-removidas-pela-pm-na-operacao-escudo-ja-chegaram-mortas-ao-hospital",
+          "verified_at": "2024-09-19T23:01:24+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/a-abordagem-policial-e-uma-violencia-que-precede-o-sumico-ou-assassinato-declara-ativista",
+          "verified_at": "2020-01-28T12:24:32+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/a-arte-e-mais-forte-na-favela-mesmo-com-a-situacao-social",
+          "verified_at": "2020-01-23T14:25:15+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/aartigo-saquear-expulsar-prender-qual-o-papel-da-prisao-no-ecocidio-de-belo-monte",
+          "verified_at": "2021-07-02T23:05:51+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/abjeta-era-a-marinha-que-permitia-a-chibata-diz-autora-de-livro-sobre-joao-candido",
+          "verified_at": "2024-05-03T21:35:57+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/abolicionismo-penal-e-tema-de-nova-coluna-da-ponte",
+          "verified_at": "2021-05-10T17:01:04+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/abordagens-policiais-baseadas-na-cor-da-pele-configuram-crime-apontam-ministros-do-stf",
+          "verified_at": "2023-03-03T00:10:40+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/absurda-injustica-a-dor-de-ver-irmao-chicoteado-dentro-de-um-supermercado",
+          "verified_at": "2019-09-03T21:07:02+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acabou-a-esperanca-de-achar-ele-vivo-diz-pai-de-cadu-desaparecido-ha-mais-de-2-meses",
+          "verified_at": "2020-03-04T19:40:46+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/a-cada-100-pessoas-trans-assassinadas-no-brasil-96-sao-mulheres-trans-e-travestis",
+          "verified_at": "2022-01-28T22:24:27+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/a-cada-cinco-homicidios-em-sp-um-foi-cometido-pela-policia",
+          "verified_at": "2021-05-02T18:52:36+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/a-cada-minuto-cerca-de-oito-mulheres-foram-agredidas-no-brasil-no-ultimo-ano",
+          "verified_at": "2021-06-08T15:08:55+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acampamento-terra-livre-ocupa-brasilia-para-debater-direitos-indigenas",
+          "verified_at": "2025-04-08T19:36:56+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-busca-lembrar-vitimas-do-coronavirus-e-alerta-para-subnotificacao",
+          "verified_at": "2020-05-03T20:11:23+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-da-gcm-atinge-teatro-de-conteiner-alvo-de-tentativa-de-despejo-pela-prefeitura-de-sp",
+          "verified_at": "2025-08-19T21:52:06+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-da-pm-deixa-13-mortos-em-favela-para-apreender-8-fuzis",
+          "verified_at": "2020-05-16T01:31:29+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-da-pm-em-bailes-funk-e-ineficaz-a-margem-da-lei-e-nao-reduz-criminalidade-diz-estudo",
+          "verified_at": "2025-12-02T17:53:11+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-da-pm-em-favela-do-rj-destroi-casas-e-revolta-moradores",
+          "verified_at": "2019-09-03T16:13:58+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-da-pm-no-baile-funk-da-favela-paraisopolis-deixa-9-mortos-pisoteados",
+          "verified_at": "2019-12-01T18:29:37+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-da-promotoria-apura-morte-de-homem-negro-e-gay-que-ficou-4-dias-sem-identificacao-no-iml",
+          "verified_at": "2021-01-15T22:55:06+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-de-criminosos-na-morte-de-delegado-ruy-sugere-treinamento-militar-dizem-especialistas",
+          "verified_at": "2025-09-17T14:18:02+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-judicial-em-israel-tenta-impedir-doria-de-comprar-metralhadoras-para-a-rota",
+          "verified_at": "2020-09-25T23:38:12+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-pede-indenizacao-de-r-1-mi-e-que-google-remova-videos-em-que-policiais-confessam-crimes",
+          "verified_at": "2024-04-30T23:21:17+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-policial-em-bairro-rico-de-sp-termina-com-uma-pessoa-morta",
+          "verified_at": "2019-07-27T17:32:03+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-policial-termina-com-4-mortos-em-guararema-sp",
+          "verified_at": "2020-04-08T00:05:04+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-policial-termina-com-um-morto-na-zona-leste-de-sp",
+          "verified_at": "2020-01-06T00:17:19+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-por-tortura-no-carandiru-nao-prescreve-decide-justica-de-sp",
+          "verified_at": "2026-04-29T15:09:59+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acao-troca-nome-de-rua-de-medico-eugenista-da-usp-por-nome-de-mulher-negra-mumificada-por-ele",
+          "verified_at": "2021-08-11T21:43:58+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/a-cara-da-dura-homens-trans-do-rj-enfrentam-o-preconceito-na-hora-do-enquadro-policial",
+          "verified_at": "2023-10-11T21:04:50+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/a-casinha-educadora-transformou-a-moradia-em-espaco-de-arte-e-afeto",
+          "verified_at": "2021-09-09T21:25:17+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/aceitem-nossos-curriculos-pedem-ativistas-de-marcha-trans",
+          "verified_at": "2019-02-02T23:20:53+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acervo-de-imagens-revela-horror-das-prisoes-do-rio-de-janeiro",
+          "verified_at": "2023-11-26T17:40:40+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acesso-as-armas-foi-banalizado-avalia-especialista-um-ano-apos-decreto-que-ampliou-posse",
+          "verified_at": "2020-01-16T20:42:58+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acho-que-te-estuprei",
+          "verified_at": "2019-06-12T13:04:09+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acoes-coordenadas-do-pcc-contra-policiais-da-rota-geram-promessas-de-vinganca",
+          "verified_at": "2019-05-04T20:37:47+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acoes-policiais-no-ms-tem-baixas-apreensoes-de-drogas-e-pouca-eficiencia-diz-estudo",
+          "verified_at": "2025-09-23T19:00:53+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acre-tem-maior-taxa-de-feminicidio-entre-20-estados",
+          "verified_at": "2020-06-18T17:49:40+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/a-criminalizacao-discutida-no-stf-e-a-solucao-ideal-para-a-lgbtifobia",
+          "verified_at": "2019-03-05T20:22:20+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/a-crise-de-seguranca-publica-no-brasil-e-um-projeto-que-deu-muito-certo-diz-professor",
+          "verified_at": "2024-03-26T22:19:14+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acusada-de-racismo-prefeitura-do-abc-avanca-com-despejo-de-projeto-social-para-criancas-de-rua",
+          "verified_at": "2023-07-18T16:36:24+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acusado-de-assassinar-lideres-do-pcc-no-ceara-e-preso-pela-pf",
+          "verified_at": "2019-04-07T19:20:05+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acusado-de-matar-trans-na-zona-sul-de-sao-paulo-vai-responder-por-feminicidio",
+          "verified_at": "2019-05-15T14:52:22+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acusado-de-queimar-morador-de-rua-em-sp-e-inocente-segundo-testemunhas",
+          "verified_at": "2020-01-15T00:41:00+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/acusado-de-transfobia-chefe-da-guarda-de-jaboatao-pe-e-exonerado-servidora-foi-realocada",
+          "verified_at": "2022-02-14T17:08:10+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/aderbal-ashogun-o-saber-preto-para-combater-as-mudancas-climaticas",
+          "verified_at": "2022-10-18T19:09:26+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/a-desastrosa-operacao-do-exercito-que-levou-a-morte-de-evaldo-rosa",
+          "verified_at": "2020-04-30T18:22:51+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adiar-enem-foi-uma-vitoria-manter-a-prova-explicitaria-a-violencia-e-a-desigualdade",
+          "verified_at": "2020-05-20T21:45:21+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/a-diferenca-que-a-ponte-fez-no-ano-que-passou-e-o-que-podemos-fazer-com-sua-ajuda-em-2023",
+          "verified_at": "2023-01-05T19:03:05+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/a-ditadura-nao-acabou-so-os-alvos-mudaram-em-sp-cordao-da-mentira-lembra-60-anos-de-golpe",
+          "verified_at": "2024-04-02T19:27:28+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-de-17-anos-morre-durante-operacao-policial-no-complexo-da-mare",
+          "verified_at": "2021-03-01T21:39:56+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-e-atropelada-por-viatura-da-pm-em-baile-funk-em-sp",
+          "verified_at": "2020-01-07T01:11:49+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-e-baleado-na-cabeca-mas-pm-registra-caso-como-acidente-de-transito",
+          "verified_at": "2022-10-27T22:13:18+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-e-baleado-pelas-costas-por-guardas-civis-de-santo-andre-sp",
+          "verified_at": "2019-12-27T01:20:06+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-e-morto-pela-pm-e-comunidade-faz-protesto-em-curitiba-pr",
+          "verified_at": "2021-11-08T20:39:01+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-e-morto-por-pm-com-tiro-nas-costas-em-sp",
+          "verified_at": "2020-01-21T23:05:33+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-estuprada-exposta",
+          "verified_at": "2016-05-31T13:20:36+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-negro-de-16-anos-afirma-ter-sido-espancado-por-segurancas-de-estacao-de-trem-em-sp",
+          "verified_at": "2019-10-28T19:50:15+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-negro-e-encontrado-morto-apos-ser-sequestrado-e-familia-suspeita-de-pms",
+          "verified_at": "2020-06-16T01:54:59+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-negro-e-morto-com-tiro-na-nuca-2-meses-apos-ameaca-de-pm",
+          "verified_at": "2020-04-05T01:39:41+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-negro-e-morto-durante-passeio-de-moto-em-sp-e-familia-acredita-que-foi-a-policia",
+          "verified_at": "2023-12-04T19:41:35+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-negro-morre-mais-que-branco",
+          "verified_at": "2019-09-05T19:45:15+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescente-que-levou-tiro-da-pm-em-baile-funk-e-ficou-cega-enfrenta-depressao",
+          "verified_at": "2019-12-04T19:49:44+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescentes-sao-torturados-a-noite-na-fundacao-casa-da-vila-maria-denuncia-funcionario",
+          "verified_at": "2020-09-24T15:03:52+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adolescentes-sao-vitimas-de-racismo-no-carrefour-e-policia-se-nega-a-registrar-o-caso",
+          "verified_at": "2022-09-15T22:05:22+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/adpf-das-favelas-tem-reviravolta-e-stf-diz-que-seguranca-do-rio-saiu-de-estado-inconstitucional",
+          "verified_at": "2025-04-03T21:19:05+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/advogada-diz-ter-sido-agredida-por-pms-por-questionar-abordagem-a-mulher-negra",
+          "verified_at": "2023-02-23T21:01:43+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/advogada-negra-denuncia-racismo-de-colega-no-assai-e-e-demitida",
+          "verified_at": "2024-12-18T17:37:46+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/advogada-que-postou-sobre-reuniao-da-cucuzcla-nao-sera-indenizada-por-criticas",
+          "verified_at": "2023-09-21T22:24:22+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/advogado-armamentista-e-baleado-pela-propria-arma-durante-exame-de-ressonancia",
+          "verified_at": "2023-01-18T20:57:38+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/advogado-de-barbara-querino-os-novos-escravocratas-estao-no-judiciario",
+          "verified_at": "2020-05-15T01:36:56+00:00"
+        },
+        {
+          "observed_url": "https://ponte.org/advogado-e-ex-policial-da-rota-vira-reu-por-lgbtfobia-durante-julgamento",
+          "verified_at": "2021-01-14T19:20:02+00:00"
+        }
+      ],
+      "responses": [
+        {
+          "sha256": "64408d4693e3c3418070bcc32f841deab00e22c6ab5ccc0e2e016b89427d2805",
+          "key": "clipping-project/political/objects/64/64408d4693e3c3418070bcc32f841deab00e22c6ab5ccc0e2e016b89427d2805.dates.json.gz",
+          "evidence": "64408d4693e3c3418070bcc32f841deab00e22c6ab5ccc0e2e016b89427d2805.json.gz"
+        },
+        {
+          "sha256": "b30550e9f16cc3374507b586f293a769f841bcdfd308f8a07312ebec2bce0491",
+          "key": "clipping-project/political/objects/b3/b30550e9f16cc3374507b586f293a769f841bcdfd308f8a07312ebec2bce0491.dates.json.gz",
+          "evidence": "b30550e9f16cc3374507b586f293a769f841bcdfd308f8a07312ebec2bce0491.json.gz"
+        }
+      ],
+      "stats": {
+        "version": "public-wordpress-slug-dates-1",
+        "requests": 2,
+        "matchedURLs": 100,
+        "responseBytes": 30535,
+        "fallback": "",
+        "durationMs": 4432.64,
+        "unqueriedBatches": 0
+      }
+    },
+    {
+      "source": "lupa",
+      "references": [
+        {
+          "observed_url": "https://www.agencialupa.org/academia-lupa/2026/04/02/lupa-no-feed",
+          "verified_at": "2026-04-02T19:04:46+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/academia-lupa/2026/08/12/para-desmistificar-e-ampliar-acesso-a-inteligencia-artificial-lupa-lanca-o-curso-online-ia-descomplicada",
+          "verified_at": "2026-08-12T12:48:18+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/acontecendo-na-lupa/2015/10/15/como-fazemos-nossas-checagens",
+          "verified_at": "2015-10-15T11:02:14+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/acontecendo-na-lupa/2024/01/17/diabetes-entenda-a-diferenca-entre-os-tipos-e-conheca-causas-e-tratamentos",
+          "verified_at": "2024-01-17T14:29:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/acontecendo-na-lupa/2025/10/06/in-a-new-expansion-lupa-launches-observatory-for-research-and-intelligence-on-disinformation",
+          "verified_at": "2025-10-06T17:58:21+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/acontecendo-na-lupa/2025/11/24/lupa-jusbrasil-e-oabs-lancam-acao-conjunta-contra-golpes-digitais",
+          "verified_at": "2025-11-24T20:03:43+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/acontecendo-na-lupa/2026/05/29/agencia-lupa-firma-parceria-com-grupo-bandeirantes-para-combate-a-desinformacao-nas-eleicoes-de-2026",
+          "verified_at": "2026-05-30T00:30:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2025/12/02/no-flow-flavio-bolsonaro-erra-sobre-pix-pl-antifaccao-e-urnas",
+          "verified_at": "2025-12-02T21:09:32+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2025/12/18/em-balanco-do-ano-lula-faz-afirmacoes-imprecisas-sobre-pib",
+          "verified_at": "2025-12-18T20:05:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/01/02/erros-e-acertos-dos-pre-candidatos-a-presidencia",
+          "verified_at": "2026-01-02T11:00:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/01/06/maduro-drogas-e-petroleo-o-que-e-fato-no-discurso-de-trump",
+          "verified_at": "2026-01-06T17:48:21+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/04/14/lula-exagera-ao-falar-de-empregos-e-erra-sobre-preco-de-combustiveis-no-brasil",
+          "verified_at": "2026-04-14T20:45:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/05/08/zema-seguranca-salario-informalidade",
+          "verified_at": "2026-05-08T20:30:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/07/01/economia-educacao-e-8-de-janeiro-checamos-entrevistas-de-renan-santos",
+          "verified_at": "2026-07-01T14:00:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/05/ao-vivo-checagem-da-entrevista-de-renan-santos-ao-g1-e-globonews",
+          "verified_at": "2026-08-05T17:25:06+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/06/ao-vivo-checagem-da-entrevista-de-romeu-zema-ao-g1-e-globonews",
+          "verified_at": "2026-08-06T17:30:44+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/24/ao-vivo-checagem-da-entrevista-de-romeu-zema-ao-jornal-nacional",
+          "verified_at": "2026-08-25T00:14:30+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/25/ao-vivo-checagem-da-entrevista-de-ronaldo-caiado-ao-jornal-nacional",
+          "verified_at": "2026-08-26T00:08:07+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/26/ao-vivo-checagem-da-entrevista-de-renan-santos-ao-jornal-nacional",
+          "verified_at": "2026-08-26T23:45:16+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/27/ao-vivo-checagem-da-entrevista-de-lula-ao-jornal-nacional",
+          "verified_at": "2026-08-28T00:19:31+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/28/ao-vivo-checagem-da-entrevista-de-flavio-bolsonaro-ao-jornal-nacional",
+          "verified_at": "2026-08-29T00:37:53+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/08/29/ao-vivo-checagem-da-entrevista-de-augusto-cury-ao-jornal-nacional",
+          "verified_at": "2026-08-30T00:24:58+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/09/01/no-roda-viva-haddad-erra-sobre-bets-e-generaliza-dado-sobre-crimes-em-sp",
+          "verified_at": "2026-09-01T20:00:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/09/02/ao-vivo-checagem-da-entrevista-de-renan-santos-ao-flow",
+          "verified_at": "2026-09-02T22:27:12+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/checagem/2026/09/11/em-sabatina-ruas-e-paes-omitem-processos-e-tiram-de-contexto-dados-sobre-o-rio",
+          "verified_at": "2026-09-11T21:00:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/educacao/2025/10/21/conheca-o-lupeiros-linha-de-material-pedagogico-da-lupa-om-foco-em-educacao-midiatica-para-sala-de-aula",
+          "verified_at": "2025-10-21T20:21:03+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/educacao/2025/11/13/enem-aborda-educacao-midiatica-veja-dicas-da-lupa",
+          "verified_at": "2025-11-13T20:54:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/educacao/2026/01/16/o-que-mais-confunde-os-estudantes-na-nota-do-enem-a-lupa-responde-as-duvidas",
+          "verified_at": "2026-01-16T20:09:03+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/educacao/2026/04/02/pl-da-educacao-midiatica-completa-um-ano-sem-avanco-no-senado",
+          "verified_at": "2026-04-02T11:00:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/educacao/2026/05/29/o-que-caso-do-fisiculturista-ganley-ensina-sobre-a-internet",
+          "verified_at": "2026-05-29T19:00:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/educacao-midiatica/2022/06/10/educacao-midiatica-fake-news-reflexoes-preliminares-observatorio-etica-jornalistica-objethos",
+          "verified_at": "2022-06-10T19:09:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/educacao-midiatica/2022/06/10/fake-news-na-eleicao-presidencial-de-2018-no-brasil",
+          "verified_at": "2022-06-10T19:08:59+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/educacao-midiatica/2025/11/07/lupa-lanca-iniciativas-inovadoras-de-educacao-midiatica-para-todas-as-idades",
+          "verified_at": "2025-11-07T11:00:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/educacao-midiatica/2026/03/10/academia-lupa-lanca-cursos-de-osint-para-formar-investigadores-digitais",
+          "verified_at": "2026-03-10T12:30:51+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/eleicoes/2026/08/27/reportagem-da-globo-nao-liga-flavio-bolsonaro-a-desvio-de-verbas-da-saude",
+          "verified_at": "2026-08-27T23:40:10+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/eleicoes/2026/08/31/hackers-nao-invadiram-urnas-eletronicas-35-vezes-durante-teste-do-tse",
+          "verified_at": "2026-08-31T19:26:23+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/eleicoes/2026/09/01/tiktok-estimula-criadores-a-produzir-videos-sobre-augusto-cury",
+          "verified_at": "2026-09-01T15:58:02+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/eleicoes/2026/09/04/publicacoes-tiram-de-contexto-fala-de-lula-sobre-garis",
+          "verified_at": "2026-09-04T18:23:13+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/eleicoes/2026/09/11/vigia-64-dos-conteudos-eleitorais-feitos-com-ia-nao-seguem-regra-de-transparencia",
+          "verified_at": "2026-09-11T19:01:37+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/explicador/2026/01/13/o-agente-secreto-nao-usou-lei-rouanet-nem-verba-da-saude",
+          "verified_at": "2026-01-13T21:50:31+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/explicador/2026/01/14/governo-vai-monitorar-pix-entenda-nova-regra-da-receita-federal",
+          "verified_at": "2026-01-14T20:24:14+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/explicador/2026/03/03/entenda-os-ataques-de-estados-unidos-e-israel-ao-ira",
+          "verified_at": "2026-03-03T19:18:56+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/explicador/2026/04/08/fakes-sobre-artemis-ii-misturam-ia-e-velhas-teorias-conspiratorias-sobre-a-lua",
+          "verified_at": "2026-04-08T18:45:15+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/explicador/2026/05/12/explicador-hantavirus",
+          "verified_at": "2026-05-12T18:46:05+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/explicador/2026/07/09/falsa-pesquisa-eleitoral-deepfakes-usam-jornalistas-e-politicos-para-enganar-eleitores",
+          "verified_at": "2026-07-09T12:42:36+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/institucional/2025/06/18/observatorio-lupa",
+          "verified_at": "2025-06-18T19:02:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/institucional/2025/11/06/lupa-10-anos-de-agencia-de-noticias-a-agente-de-mudanca",
+          "verified_at": "2025-11-06T10:00:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/institucional/2026/07/21/aqui-nao-tem-propaganda-de-bets",
+          "verified_at": "2026-07-21T10:00:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/institucional/2026/07/28/a-maior-cobertura-eleitoral-da-historia-da-lupa-comeca-agora",
+          "verified_at": "2026-07-28T14:13:39+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/institucional/2026/07/31/deputometro-conheca-o-painel-de-monitoramento-da-lupa",
+          "verified_at": "2026-07-31T21:35:39+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2015/11/25/violencia-contra-a-mulher-promessa-x-realidade",
+          "verified_at": "2015-11-25T11:16:03+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2015/11/26/a-casa-da-mulher-brasileira-em-marcha-lenta",
+          "verified_at": "2015-11-26T11:35:24+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2015/11/30/desmatamento-na-amazonia",
+          "verified_at": "2015-11-30T16:02:52+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2015/12/01/tragedia-de-mariana-a-culpa-compartilhada",
+          "verified_at": "2015-12-01T19:29:10+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2015/12/04/zika-o-que-acontece-com-quem-procura-ajuda",
+          "verified_at": "2015-12-04T17:34:57+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2015/12/07/zika-teste-de-fogo-para-unidades-basicas-de-saude",
+          "verified_at": "2015-12-07T17:22:03+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2015/12/08/agenda-da-vice-presidencia-desdiz-carta-de-temer",
+          "verified_at": "2015-12-08T14:49:30+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2015/12/14/ranking-carioca-do-reajuste-escolar-2016",
+          "verified_at": "2015-12-14T18:47:42+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2015/12/15/ranking-paulista-do-reajuste-escolar-2016",
+          "verified_at": "2015-12-15T18:26:36+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/01/06/meta-de-pezao-para-trens-nao-foi-alcancada",
+          "verified_at": "2016-01-06T10:54:04+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/01/07/menos-homicidios-mais-crimes-contra-o-patrimonio",
+          "verified_at": "2016-01-07T10:44:07+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/01/08/programa-de-transferencia-de-renda-de-alckmin-tem-corte-de-10-2",
+          "verified_at": "2016-01-08T11:39:23+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/01/11/sc-registra-alta-em-homicidios-e-latrocinios",
+          "verified_at": "2016-01-11T13:17:39+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/01/12/ao-defender-gasto-olimpico-paes-exagera-dados-de-saude-e-educacao",
+          "verified_at": "2016-01-12T11:07:40+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/01/18/na-patria-educadora-826-mil-matriculas-a-menos-no-ensino-basico-em-2015",
+          "verified_at": "2016-01-18T20:04:52+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/01/27/dilma-erra-ao-falar-de-aedes-aegypti",
+          "verified_at": "2016-01-27T16:12:46+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/02/01/vale-cultura-desacelera-e-minc-ja-reve-meta",
+          "verified_at": "2016-02-01T11:53:18+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/02/02/no-congresso-dilma-erra-ao-falar-sobre-zika",
+          "verified_at": "2016-02-02T19:51:48+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/02/16/ministro-da-saude-tem-mais-certeza-que-oms-sobre-zika",
+          "verified_at": "2016-02-16T19:31:10+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/02/17/para-jogos-governo-quis-22-cts-mas-so-vai-fazer-10",
+          "verified_at": "2016-02-17T10:31:39+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/02/18/governo-nao-gastou-metade-do-que-previu-para-atletas",
+          "verified_at": "2016-02-18T10:53:50+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/02/23/pt-exagera-em-dado-sobre-criacao-de-emprego",
+          "verified_at": "2016-02-23T10:11:37+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/02/24/pmdb-exagera-aumento-no-precos-de-alimentos",
+          "verified_at": "2016-02-24T20:50:52+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/02/25/prefeitura-anunciou-331-novas-escolas-do-amanha-paes-entregara-110",
+          "verified_at": "2016-02-25T15:59:26+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/02/26/aecio-erra-ao-criticar-perda-do-grau-de-investimento",
+          "verified_at": "2016-02-26T21:20:43+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/02/29/microcefalia-estados-e-ministerio-da-saude-possuem-dados-diferentes",
+          "verified_at": "2016-02-29T18:55:32+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/03/02/nota-lupa-reafirma-que-dados-do-governo-e-dos-estados-divergem-sobre-casos-confirmados-de-microcefalia",
+          "verified_at": "2016-03-03T00:22:36+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/03/02/rio-2016-meta-de-onibus-com-biodiesel-para-jogos-vai-de-100-para-20",
+          "verified_at": "2016-03-02T19:57:59+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/03/07/apos-tres-anos-so-duas-das-27-casas-da-mulher-prestam-atendimento",
+          "verified_at": "2016-03-07T19:58:40+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/03/08/no-rj-38-respondem-por-feminicidio-em-sp-sobe-o-total-de-medidas-protetivas",
+          "verified_at": "2016-03-08T17:28:57+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/03/09/toffoli-acerta-mulheres-ocupam-so-10-das-cadeiras-do-congresso",
+          "verified_at": "2016-03-09T12:59:36+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/03/16/delcidio-dilma-trocou-presidente-de-furnas-ligado-ao-pmdb-e-a-cunha",
+          "verified_at": "2016-03-16T14:50:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/03/17/comissao-do-impeachment-tem-36-parlamentares-com-pendencias-judiciais",
+          "verified_at": "2016-03-17T23:25:39+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/03/18/pacote-anticorrupcao-em-um-ano-so-duas-das-sete-medidas-sairam-do-papel",
+          "verified_at": "2016-03-18T23:03:24+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/03/21/upp-da-mare-da-promessa-de-oito-unidades-ao-adiamento-indefinido",
+          "verified_at": "2016-03-21T21:21:27+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/03/22/no-rj-quatro-das-seis-prisoes-para-mulheres-estao-superlotadas",
+          "verified_at": "2016-03-22T13:08:07+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/03/29/mec-promete-330-mil-vagas-para-professores-mas-nao-oferece-metade",
+          "verified_at": "2016-03-29T14:35:09+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/03/31/checando-a-historia-ditadura-reconheceu-morte-de-rubens-paiva-em-1977",
+          "verified_at": "2016-03-31T11:16:49+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/04/04/a-agu-defendeu-o-presidente-fernando-collor-no-impeachment-de-1992",
+          "verified_at": "2016-04-04T21:16:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/04/04/foro-privilegiado-57-parlamentares-sao-reus-no-supremo-tribunal-federal",
+          "verified_at": "2016-04-04T10:40:24+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/04/06/maluf-faltou-a-cpi-do-impeachment-e-tambem-a-sessao-no-plenario",
+          "verified_at": "2016-04-06T22:20:40+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/04/08/investigacoes-do-swissleaks-em-marcha-lentissima",
+          "verified_at": "2016-04-08T09:26:47+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/04/11/marina-silva-muda-de-posicao-sobre-impeachment",
+          "verified_at": "2016-04-11T20:36:42+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/04/12/pendencias-judiciais-dos-que-votaram-sobre-o-impeachment-na-camara",
+          "verified_at": "2016-04-12T19:11:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/04/15/voce-sabia-que-5-da-camara-de-hoje-votou-sobre-o-impeachment-em-1992",
+          "verified_at": "2016-04-15T14:17:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/04/16/mas-existe-essa-tal-de-maldicao-do-impeachment",
+          "verified_at": "2016-04-16T16:35:58+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/04/17/votacao-do-impeachment-no-plenario-da-camara",
+          "verified_at": "2016-04-17T11:55:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/04/18/impeachment-proporcao-de-deputados-com-registros-judiciais-se-equilibra-entre-o-sim-e-o-nao",
+          "verified_at": "2016-04-18T20:30:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/04/26/falta-troco-checamos-a-circulacao-de-dinheiro",
+          "verified_at": "2016-04-26T18:31:00+00:00"
+        },
+        {
+          "observed_url": "https://www.agencialupa.org/jornalismo/2016/04/27/o-brasil-real-x-o-brasil-apresentado-ao-coi",
+          "verified_at": "2016-04-27T19:11:00+00:00"
+        }
+      ],
+      "responses": [
+        {
+          "sha256": "dbca3a0fa991c15afdaf7189e65f0b8fc302c7c3fdb9bcf5e6f9058a4fef6e74",
+          "key": "clipping-project/political/objects/db/dbca3a0fa991c15afdaf7189e65f0b8fc302c7c3fdb9bcf5e6f9058a4fef6e74.dates.json.gz",
+          "evidence": "dbca3a0fa991c15afdaf7189e65f0b8fc302c7c3fdb9bcf5e6f9058a4fef6e74.json.gz"
+        },
+        {
+          "sha256": "fc6b17c86ecf2b9d2848ae49f0f92e611b1be96f6636b02f2703d65118dc9977",
+          "key": "clipping-project/political/objects/fc/fc6b17c86ecf2b9d2848ae49f0f92e611b1be96f6636b02f2703d65118dc9977.dates.json.gz",
+          "evidence": "fc6b17c86ecf2b9d2848ae49f0f92e611b1be96f6636b02f2703d65118dc9977.json.gz"
+        }
+      ],
+      "stats": {
+        "version": "public-wordpress-slug-dates-1",
+        "requests": 2,
+        "matchedURLs": 100,
+        "responseBytes": 31020,
+        "fallback": "",
+        "durationMs": 5379.78,
+        "unqueriedBatches": 0
+      }
+    }
+  ]
+}

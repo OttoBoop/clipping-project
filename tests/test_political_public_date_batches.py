@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import sys
 from types import SimpleNamespace
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
@@ -77,6 +78,32 @@ def test_lookup_is_scoped_and_forced_refresh_is_not_optimized():
     assert not facts
     facts, _ = lookup('ponte_jornalismo', [{'url': r['observed_url'], 'force_refresh': True} for r in row['references']], forbidden, forbidden)
     assert not facts
+
+
+@pytest.mark.parametrize('source', ['ponte_jornalismo', 'lupa'])
+def test_larger_batches_preserve_one_hundred_real_dates_with_bounded_request_urls(source):
+    root = FIXTURES / 'large_batches'
+    row = next(r for r in json.loads((root / 'provenance.json').read_text())['rows'] if r['source'] == source)
+    responses = []
+    for evidence in row['responses']:
+        raw = gzip.decompress((root / evidence['evidence']).read_bytes())
+        assert hashlib.sha256(raw).hexdigest() == evidence['sha256']
+        responses.append(raw)
+    calls = []
+    def fetch(url):
+        raw = responses[len(calls)]
+        slugs = parse_qs(urlsplit(url).query)['slug'][0].split(',')
+        assert len(url.encode()) <= 4096 and len(slugs) <= 100
+        assert set(slugs) == {p['slug'] for p in json.loads(raw)}
+        calls.append(url)
+        return SimpleNamespace(content=raw, status_code=200, url=url)
+    facts, stats = lookup(source, [{'url': r['observed_url']} for r in row['references']], fetch,
+                          lambda raw: (hashlib.sha256(raw).hexdigest(), 'immutable-real-api-response'))
+    assert len(calls) == stats['requests'] == 2
+    assert stats['matchedURLs'] == 100 and not stats['fallback']
+    assert max(len(parse_qs(urlsplit(u).query)['slug'][0].split(',')) for u in calls) > 20
+    for ref in row['references']:
+        assert facts[ref['observed_url']][0] == datetime.fromisoformat(ref['verified_at'])
 
 
 def test_new_publisher_parsers_import_without_optional_local_packages():

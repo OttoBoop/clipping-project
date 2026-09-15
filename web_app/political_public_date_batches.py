@@ -14,9 +14,11 @@ ENDPOINTS = {
     'ponte_jornalismo': ('ponte.org', 'https://ponte.org/wp-json/wp/v2/posts'),
     'lupa': ('agencialupa.org', 'https://www.agencialupa.org/wp-json/wp/v2/posts'),
 }
-VERSION = 'public-wordpress-slug-dates-1'
+VERSION = 'public-wordpress-slug-dates-2'
 MAX_URLS = 500
-MAX_SLUGS = 20
+# Both publisher APIs advertise up to 100 posts. The independent 4 KiB URL
+# budget usually splits long real editorial slugs before reaching this cap.
+MAX_SLUGS = 100
 MAX_REQUEST_BYTES = 4096
 MAX_RESPONSE_BYTES = 512 * 1024
 
