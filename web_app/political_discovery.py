@@ -99,6 +99,8 @@ def _target_queries(snapshot: dict[str, Any]) -> list[str]:
 
 
 def _google_tasks(snapshots: list[dict], source: dict, date_from: str, date_to: str) -> list[dict]:
+    if source.get("key") == "istoe":
+        return []
     queries = {}
     for person_rank, row in enumerate(snapshots):
         target_id = str(row.get("key") or row.get("id") or "")
@@ -128,6 +130,8 @@ def fallback_tasks(task: dict, target_snapshots: list[dict]) -> list[dict]:
     Stable task payloads let PostgreSQL deduplicate fallback requests caused by
     several failed direct mechanisms for the same source and time window.
     """
+    if task.get("source_key") == "istoe":
+        return []
     source = task.get("source_snapshot") or next((row for row in load_sources() if row["key"] == task["source_key"]), None)
     if not source or source.get("google_policy") != "on_direct_gap" or task.get("strategy") == "google_news":
         return []
@@ -190,6 +194,9 @@ def build_tasks(target_snapshots: list[dict[str, Any]], date_from: str, date_to:
             elif strategy in {"camara_archive", "vejario_archive"}:
                 for url in source.get("archive_urls", []):
                     tasks.append({**base, "strategy": strategy, "url": url, "cursor": {"page": 1}})
+            elif strategy == "istoe_direct_v1":
+                from .political_istoe_discovery import build_task
+                tasks.append(build_task(base, source))
             elif strategy == "expanded":
                 from .political_expanded_discovery import build_expanded_tasks
                 tasks.extend(build_expanded_tasks(source, date_from, date_to, target_snapshots))
@@ -885,6 +892,11 @@ def discover(task: dict[str, Any], fetch: Callable) -> dict[str, Any]:
     if source is None:
         raise DiscoveryError("unknown source", retryable=False)
     strategy = task["strategy"]
+    if task.get("source_key") == "istoe" and strategy == "google_news":
+        raise DiscoveryError("istoe_google_disabled", retryable=False)
+    if strategy == "istoe_direct_v1":
+        from .political_istoe_discovery import discover as discover_istoe
+        return discover_istoe(task, source, fetch)
     if strategy.startswith("expanded_"):
         from .political_expanded_discovery import discover_expanded
         return discover_expanded(task, source, fetch)

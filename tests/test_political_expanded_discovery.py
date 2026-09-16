@@ -39,7 +39,12 @@ def response(name):
 
 
 def source(key):
-    return next(s for s in expanded.load_expanded_sources() if s['key'] == key)
+    result = next(s for s in expanded.load_expanded_sources() if s['key'] == key)
+    if key == 'istoe':
+        # Frozen pre-direct configuration: generic adapter compatibility suite.
+        result = {**result, 'mechanisms':[{'kind':'sitemap','url':'https://istoe.com.br/wp-sitemap.xml',
+            'numbered_part_pattern':r'https://istoe\.com\.br/wp-sitemap-posts-post-(?P<part>\d+)\.xml','minimum_numbered_part':603}]}
+    return result
 
 
 def task(key, start='2026-08-09', end='2026-08-09'):
@@ -50,8 +55,8 @@ def test_all_38_active_inventory_products_and_audited_nationals_have_scoped_rout
     rows = expanded.load_expanded_sources()
     assert len(rows) == 70 and len({r['key'] for r in rows}) == 70
     assert sum('audit_state' in r for r in rows) == 42
-    assert all(r['allowed_profiles'] == ['psd_rj_2026'] and r['google_policy'] == 'on_direct_gap' for r in rows)
-    assert all(r['evidence'] and r['mechanisms'] and r['legacy_source_keys'] for r in rows)
+    assert all(r['allowed_profiles'] == ['psd_rj_2026'] and r['google_policy'] == ('never' if r['key']=='istoe' else 'on_direct_gap') for r in rows)
+    assert all(r['evidence'] and (r['mechanisms'] or r['strategies']==['istoe_direct_v1']) and r['legacy_source_keys'] for r in rows)
     assert {'exame', 'congresso_em_foco', 'nf_noticias', 'elizeu_pires', 'ultima_hora_online', 'estadao', 'istoe', 'crusoe'} <= {r['key'] for r in rows}
     assert 'publisher:congressoemfoco.uol.com.br' in source('congresso_em_foco')['legacy_source_keys']
 

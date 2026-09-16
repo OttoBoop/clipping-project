@@ -1774,6 +1774,7 @@ def test_real_sitemap_cursor_keeps_immutable_object_across_local_cache_loss(serv
     evidence=next(r for r in json.loads((root/'provenance.json').read_text()) if r['name']=='istoe_603')
     raw=gzip.decompress((root/'istoe_603.gz').read_bytes())
     source=next(s for s in expanded.load_expanded_sources() if s['key']=='istoe')
+    source={**source,'mechanisms':[{'kind':'sitemap','url':'https://istoe.com.br/wp-sitemap.xml'}]}
     payload=expanded.build_expanded_tasks(source,'2026-08-09','2026-08-09',[{'key':'paes'}])[0]
     payload.update(url=evidence['url'],depth=1,source_snapshot=source)
     response=requests.Response();response.status_code=200;response.url=evidence['url'];response._content=raw

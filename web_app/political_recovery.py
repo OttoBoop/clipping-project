@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from .political_source_catalog import source_aliases
 
-RECOVERY_FAILURES = {"body_missing", "http_401", "http_403", "http_404", "http_429",
+RECOVERY_FAILURES = {"http_400", "istoe_deferred_dates","body_missing", "http_401", "http_403", "http_404", "http_429",
                      "google_url_unresolved", "google_access_challenge", "publisher_access_challenge", "storage",
                      "metadata_only", "network", "partial_text"}
 
@@ -24,6 +24,24 @@ class PoliticalRecoveryMixin:
             failures = meta["recovery_gap_types"]
             aliases = source_aliases(source["key"], meta["source_snapshots"])
             domains = list({d.removeprefix("www.") for d in [source.get("domain", ""), *source.get("domains", [])] if d})
+        if failures == ["istoe_deferred_dates"]:
+            if source["key"] != "istoe":
+                raise ValueError("istoe_recovery_source_required")
+            after = int(cursor.get("after_id", 0))
+            with self._connect() as conn:
+                rows = conn.execute("""SELECT o.id,o.observed_url,o.title,o.metadata FROM political_observations o
+                    JOIN political_jobs j ON j.id=o.job_id
+                    WHERE o.id>%s AND o.id<=%s AND o.source_key='istoe' AND o.disposition='deferred_date'
+                    AND j.target_keys <@ %s AND j.date_from<=%s AND j.date_to>=%s
+                    ORDER BY o.id LIMIT 101""", (after,meta['recovery_max_observation_id'],job['target_keys'],job['date_to'],job['date_from'])).fetchall()
+            more, rows = len(rows)>100,rows[:100]
+            admitted = int(cursor.get('admitted',0))+len(rows)
+            capped = more and admitted % 500 == 0
+            return {'candidates':[{'url':r['observed_url'],'title':r['title'],'source_key':'istoe',
+                    'source_name':source['name'],'metadata':{**r['metadata'],'body_deferred':False,'recovery_observation_id':r['id']}} for r in rows],
+                    'raw_count':len(rows),'child_tasks':[], 'outcome':'gap' if capped else 'continue' if more else 'complete',
+                    'gap_reason':'istoe_date_recovery_batch_limit' if capped else '',
+                    'next_cursor':{'after_id':rows[-1]['id'] if rows else after,'admitted':admitted}}
         # Selection is read-only and bounded by the frozen observation ceiling.
         # Release the job/lease row locks before scanning historical failures so
         # fetch commits and lease renewal can proceed. _discover fences the

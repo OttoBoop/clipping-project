@@ -263,6 +263,12 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                         conn.execute(statement)
                 for statement in SCHEMA_UPGRADES:
                     conn.execute(statement)
+                from .political_istoe_inventory import SCHEMA as ISTOE_SCHEMA
+                from .political_istoe_monitor import SCHEMA as ISTOE_MONITOR_SCHEMA
+                ISTOE_SCHEMA += ISTOE_MONITOR_SCHEMA
+                for statement in ISTOE_SCHEMA.split(";"):
+                    if statement.strip():
+                        conn.execute(statement)
                 for statement in DOCUMENT_SCHEMA_SQL.split(";"):
                     if statement.strip():
                         conn.execute(statement)
@@ -312,6 +318,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                          "discovery_target_keys": discovery_keys}
         if kind == "recover":
             configuration["recovery_gap_types"] = recovery_filters(payload)
+            if 'istoe_deferred_dates' in configuration['recovery_gap_types'] and (configuration['source_keys'] != ['istoe'] or configuration['recovery_gap_types'] != ['istoe_deferred_dates']):
+                raise ValueError('istoe_recovery_source_required')
         if not self.store.enabled:
             raise PoliticalCorpusNotConfigured("political_body_storage_not_configured")
         self.ensure_schema()
@@ -457,7 +465,18 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             COALESCE(SUM((result->>'editionAssociationsNew')::int),0) AS mentions_new,
             COALESCE(SUM((result->>'editionTextAvailable')::int),0) AS texts
             FROM political_tasks WHERE job_id=%s AND payload->>'document_task' IS NOT NULL""", (job_id,)).fetchone()
-        return {"uniqueCandidates": int(observed["unique_candidates"]), "articlesSaved": int(observed["articles_saved"]),
+        istoe = conn.execute("""SELECT COUNT(*) FILTER(WHERE result ? 'istoeInventory' AND result->'istoeInventory' IS NOT NULL AND payload->>'inventory_part' IS NOT NULL AND status IN ('complete','gap')) AS parts_read,
+            MAX((result->'istoeInventory'->>'partsTotal')::int) AS parts_total,
+            MAX((result->'istoeInventory'->>'partsRemaining')::int) AS parts_remaining,
+            COUNT(*) FILTER(WHERE result->>'istoeSnapshotReused'='true') AS snapshots_reused
+            FROM political_tasks WHERE job_id=%s AND source_key='istoe'""",(job_id,)).fetchone()
+        deferred_dates = conn.execute("SELECT COUNT(*) AS n FROM political_observations WHERE job_id=%s AND disposition='deferred_date'",(job_id,)).fetchone()['n']
+        sample = conn.execute("SELECT sampled_at,payload FROM political_istoe_samples WHERE job_id=%s ORDER BY id DESC LIMIT 1",(job_id,)).fetchone()
+        return {"istoeWorkerSample": {"sampledAt": sample["sampled_at"].isoformat(), **sample["payload"]} if sample else None,
+                "istoePartsRead": int(istoe['parts_read'] or 0), "istoePartsTotal": int(istoe['parts_total'] or 0),
+                "istoePartsRemaining": int(istoe['parts_remaining'] or 0), "istoeSnapshotsReused": int(istoe['snapshots_reused'] or 0),
+                "istoeDeferredDates": int(deferred_dates),
+                "uniqueCandidates": int(observed["unique_candidates"]), "articlesSaved": int(observed["articles_saved"]),
                 "documentsNew": int(document_results["documents_new"]), "editionPagesNew": int(document_results["pages_new"]),
                 "editionPagesReused": int(document_results["pages_reused"]), "editionAssociationsNew": int(document_results["mentions_new"]),
                 "editionTextAvailable": int(document_results["texts"]),
@@ -1055,6 +1074,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             # reset a shared cooldown indefinitely, or try to bypass it.
             if is_google_access_challenge(current):
                 raise FetchProblem("google_access_challenge", retryable=False)
+            if kwargs.get("allowed_hosts") and urlparse(current).hostname not in kwargs["allowed_hosts"]:
+                raise FetchProblem("istoe_redirect_outside_portal", retryable=False)
             self._public_url(current)
             domain = normalize_domain(urlparse(current).hostname)
             wait = self.reserve_domain(domain)
@@ -1316,7 +1337,12 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 return {"taskId": task["id"], "status": "backpressure"}
         payload = {**task["payload"], "cursor": task["cursor"]}
         sitemap_cache = None
+        istoe_inventory = None
         discovery_fetch = self.fetch
+        if payload.get("strategy") == "istoe_direct_v1":
+            from .political_istoe_inventory import InventoryTransport
+            istoe_inventory = InventoryTransport(self, task)
+            discovery_fetch = istoe_inventory.fetch
         if payload.get("strategy") in {"expanded_sitemap", "expanded_daily_sitemap"}:
             from .political_sitemap_cache import PaginatedSitemapCache
             sitemap_cache = PaginatedSitemapCache(self.fetch, task["cursor"],
@@ -1328,6 +1354,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             result = self._recover_discovery(task, source_for_task(payload)) if payload.get("strategy") == "recover" else discover(payload, discovery_fetch)
         if sitemap_cache and result.get("next_cursor"):
             result["next_cursor"] = sitemap_cache.checkpoint(result["next_cursor"])
+        if istoe_inventory:
+            result["next_cursor"] = istoe_inventory.checkpoint(result.get("next_cursor"))
         candidates = result.get("candidates") or []
         if known_index and candidates:
             raise FetchProblem("sitemap_index_emitted_article_candidates", retryable=False)
@@ -1374,6 +1402,9 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                               outcome="fallback" if date_api_stats["fallback"] else "ok")
         with self._connect() as conn:
             job = self._lock_task(conn, task)
+            if istoe_inventory:
+                from .political_istoe_inventory import record_urls
+                record_urls(conn, candidates)
             known_dates, current_articles = self._discovery_publication_state(conn, candidates) if job["kind"] == "collect" else ({}, set())
             dates_reused = dates_from_api = 0
             for candidate in candidates:
@@ -1420,7 +1451,16 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     else:
                         dates_reused += changed.rowcount
                     continue
+                if candidate.get("istoe_defer_body") and url not in current_articles and not known_date:
+                    conn.execute("""UPDATE political_observations SET disposition='deferred_date'
+                        WHERE job_id=%s AND observed_url=%s AND disposition='pending'""", (task["job_id"],url))
+                    continue
                 self._insert_task(conn, task["job_id"], "fetch", candidate)
+            if istoe_inventory and outcome == "gap" and result.get("gap_reason") == "istoe_unverified_older_urls":
+                unresolved = conn.execute("SELECT COUNT(*) AS n FROM political_observations WHERE source_task_id=%s AND disposition='deferred_date'", (task['id'],)).fetchone()['n']
+                if not unresolved:
+                    outcome = "complete"
+                    result['gap_reason'] = ""
             for child in result.get("child_tasks") or []:
                 self._insert_task(conn, task["job_id"], "discovery", {**child,
                     **({"source_snapshot": payload["source_snapshot"]} if payload.get("source_snapshot") else {})})
@@ -1447,7 +1487,9 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             self._finish(conn, task, "queued" if outcome == "continue" else outcome,
                          cursor=result.get("next_cursor") or task["cursor"], raw_count=int(result.get("raw_count") or 0),
                          error_type=str(result.get("gap_reason") or ""),
-                         result={"bodyBatchRecords": len(batch_refs), "bodyBatchFallback": batch_fallback,
+                         result={"istoeInventory": result.get("istoe_inventory"),
+                                 "istoeSnapshotReused": bool(istoe_inventory and istoe_inventory.reused),
+                                 "bodyBatchRecords": len(batch_refs), "bodyBatchFallback": batch_fallback,
                                  "datesReusedBeforeFetch": dates_reused,
                                  "publicDateBatch": {**date_api_stats, "excludedBeforeFetch": dates_from_api} if date_api_stats else {},
                                  "calendarSiblingsPruned": calendar_pruned,
@@ -1604,6 +1646,10 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         from .political_discovery import extract_article, is_google_intermediary
         from .political_jota_extraction import original_date_trusted
         candidate = task["payload"]
+        def article_fetch(url, **kwargs):
+            if task["source_key"] == "istoe":
+                kwargs["allowed_hosts"] = ("istoe.com.br", "www.istoe.com.br")
+            return self.fetch(url, **kwargs)
         fetch_url = task["cursor"].get("resolved_url") or candidate["url"]
         if is_google_intermediary(fetch_url):
             with self._connect() as conn:
@@ -1613,6 +1659,10 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 fetch_url = resolved["resolved_url"]
         if not is_google_intermediary(fetch_url):
             set_publisher_source(_confirmed_publisher(candidate, fetch_url)["source_key"])
+        if task['source_key'] == 'istoe':
+            from .political_istoe_discovery import allowed
+            if not allowed(fetch_url):
+                raise FetchProblem('istoe_direct_url_required', retryable=False)
         force_refresh = bool(candidate.get("force_refresh"))
         if non_news_reason(candidate["url"], candidate.get("title", "")):
             return self._finish_fetch_not_news(task, candidate["url"])
@@ -1719,10 +1769,10 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                         candidate = {**candidate, "html_hash": html_hash, "html_object_key": html_key}
                     except (FetchProblem, requests.RequestException, OSError, KeyError):
                         self._checkpoint_fetch(task, {"recovery_html_used": True})
-                        response = self.fetch(publisher_article_request_url(final_url))
+                        response = article_fetch(publisher_article_request_url(final_url))
                         historical = None
                 else:
-                    response = self.fetch(publisher_article_request_url(final_url))
+                    response = article_fetch(publisher_article_request_url(final_url))
             except DomainCooldown:
                 domain_deferred = True
                 raise
@@ -1732,6 +1782,10 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     with self._connect() as conn:
                         self._lock_task(conn, task)
                         conn.execute("UPDATE political_jobs SET fetch_attempted=fetch_attempted+1 WHERE id=%s", (task["job_id"],))
+            if task['source_key'] == 'istoe':
+                from .political_istoe_discovery import allowed
+                if not allowed(response.url):
+                    raise FetchProblem('istoe_redirect_outside_portal', retryable=False)
             if non_news_reason(response.url):
                 return self._finish_fetch_not_news(task, response.url)
             if is_google_intermediary(candidate["url"]) and not is_google_intermediary(response.url):
@@ -1761,7 +1815,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                         # Resolution can reveal an already stored publisher URL.
                         # Re-enter with its committed cursor to reuse that text.
                         return self._fetch_article(task)
-                    response = self.fetch(publisher_article_request_url(resolved))
+                    response = article_fetch(publisher_article_request_url(resolved))
                     if non_news_reason(response.url):
                         return self._finish_fetch_not_news(task, response.url)
                     if is_google_intermediary(response.url):

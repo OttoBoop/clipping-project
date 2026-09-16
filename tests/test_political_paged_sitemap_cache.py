@@ -28,6 +28,8 @@ def real_response(name='istoe_603'):
 
 def source_task():
     source = next(s for s in expanded.load_expanded_sources() if s['key'] == 'istoe')
+    # This suite validates historical generic tasks, not the new direct adapter.
+    source = {**source, 'mechanisms':[{'kind':'sitemap','url':'https://istoe.com.br/wp-sitemap.xml'}]}
     task = expanded.build_expanded_tasks(source, '2026-08-09', '2026-08-09', [{'key': 'eduardo_paes'}])[0]
     return source, {**task, 'url': real_response().url, 'depth': 1}
 

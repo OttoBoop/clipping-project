@@ -82,6 +82,10 @@ def main() -> int:
     metrics_reporter = threading.Thread(target=reporting_loop, args=(metrics_stop,), daemon=True,
                                         name="political-metrics")
     metrics_reporter.start()
+    from web_app.political_istoe_monitor import reporting_loop as istoe_reporting_loop
+    istoe_reporter = threading.Thread(target=istoe_reporting_loop, args=(political_corpus, metrics_stop), daemon=True, name="istoe-monitor")
+    if not args.once:
+        istoe_reporter.start()
     identity = f"{socket.gethostname()}:{os.getpid()}"
     failed = threading.Event()
 

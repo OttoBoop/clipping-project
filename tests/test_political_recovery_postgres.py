@@ -137,6 +137,7 @@ def test_real_sitemap_cache_cursor_survives_service_restart_without_repeated_dow
     raw = gzip.decompress((fixtures / 'istoe_603.gz').read_bytes())
     assert hashlib.sha256(raw).hexdigest() == evidence['sha256']
     source = next(s for s in expanded.load_expanded_sources() if s['key'] == 'istoe')
+    source = {**source, 'mechanisms':[{'kind':'sitemap','url':'https://istoe.com.br/wp-sitemap.xml'}]}
     leaf = expanded.build_expanded_tasks(source, '2026-08-09', '2026-08-09', TARGETS)[0]
     leaf.update(url=evidence['url'], depth=1)
     monkeypatch.setattr(political_discovery, 'build_tasks', lambda *a, **kw: [leaf])

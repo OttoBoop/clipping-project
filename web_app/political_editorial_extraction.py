@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from html.parser import HTMLParser
+import hashlib
 import json
 import re
 from urllib.parse import urljoin, urlparse
@@ -17,6 +18,7 @@ from zoneinfo import ZoneInfo
 EXTRACTION_VERSION = "editorial-2026-09-14.6"
 _SAO_PAULO = ZoneInfo("America/Sao_Paulo")
 _SELECTORS = {
+    "istoe.com.br": ".post-content-wrap",
     "exame.com": "#news-body",
     "congressoemfoco.com.br": ".asset__content .html-content",
     "nfnoticias.com.br": ".wrap__article-detail-content",
@@ -135,6 +137,8 @@ class _EditorialParser(HTMLParser):
             skip = skip or (direct_child and bool(classes & {"hero", "author", "box", "list", "link", "dot"}))
         skip = skip or "hidden" in attrs or attrs.get("aria-hidden", "").lower() == "true"
         skip = skip or bool(re.search(r"display\s*:\s*none", attrs.get("style", ""), re.I))
+        if self.host == "istoe.com.br":
+            skip = skip or any(c.startswith("code-block") for c in classes)
         blocked = parent_blocked or skip
         if body and ("paywall-offer" in classes or "data-paywall-truncated" in attrs):
             self.restrictions.append("editorial_body:explicit_subscription_gate")
@@ -159,6 +163,8 @@ class _EditorialParser(HTMLParser):
             field = tag
             if tag == "time" and attrs.get("datetime"):
                 self.fields.setdefault("time", []).append(attrs["datetime"])
+        elif self.host == "istoe.com.br" and "post-date" in classes:
+            field = "publication_visible"
         elif self.host == "ultimahoraonline.com.br" and "post-detalhe-data" in classes:
             field = "publication_visible"
         elif self.host == "nfnoticias.com.br" and tag == "span" and {"text-dark", "ml-1"} <= classes:
@@ -227,7 +233,7 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
     parser = _EditorialParser(host)
     parser.feed(raw_html or "")
     parser.close()
-    if not parser.found_body:
+    if not parser.found_body and host != "istoe.com.br":
         return None
     canonical = urljoin(url, parser.canonical) if parser.canonical else ""
     title = parser.metadata.get("og:title", "")
@@ -286,11 +292,28 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
         explicit_gate = True
         parser.restrictions.append("editorial_body:complete_story_in_print_edition")
     extent = "absent" if not body else "partial" if explicit_gate else "unknown" if restricted else "available"
-    return {
+    evidence = {}
+    if host == "istoe.com.br":
+        visible = " ".join(parser.fields.get("publication_visible", []))
+        stamp = re.search(r"(\d{2})/(\d{2})/(\d{2,4})\s*-\s*(\d{1,2})h(\d{2})", visible)
+        visible_date = ""
+        if stamp:
+            day, month, year, hour, minute = stamp.groups()
+            year = "20" + year if len(year) == 2 else year
+            visible_date = _date(f"{day}/{month}/{year} {hour}:{minute}")
+        conflict = bool(published and visible_date and published[:16] != visible_date[:16])
+        published = "" if conflict else published or visible_date
+        evidence = {"publication_date_evidence": {
+            "method": "missing_original_post_date" if conflict or not published else "istoe_editorial_fields",
+            "conflict": conflict, "visible": visible, "visible_parsed": visible_date,
+            "metadata_published": parser.metadata.get("article:published_time", ""),
+            "metadata_modified": parser.metadata.get("article:modified_time", ""),
+            "html_sha256": hashlib.sha256(raw_html.encode()).hexdigest()}}
+    return {**evidence,
         "full_text": body, "title": title.strip(), "published_at": published,
         "canonical_url": canonical,
         "extraction_state": "full_text" if len(body.split()) >= 40 else "metadata_only",
         "extraction_method": "publisher_selector:" + _SELECTORS[host],
-        "extraction_version": EXTRACTION_VERSION, "text_extent": extent,
+        "extraction_version": "istoe-editorial-1" if host == "istoe.com.br" else EXTRACTION_VERSION, "text_extent": extent,
         "restriction_evidence": list(dict.fromkeys(parser.restrictions)),
     }

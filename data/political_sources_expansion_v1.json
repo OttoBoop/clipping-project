@@ -71,24 +71,15 @@
         "psd_rj_2026"
       ],
       "strategies": [
-        "expanded",
-        "google_news"
+        "istoe_direct_v1"
       ],
-      "google_policy": "on_direct_gap",
+      "google_policy": "never",
       "discovery_priority_batch": 2,
       "legacy_source_keys": [
         "publisher:istoe.com.br"
       ],
-      "mechanisms": [
-        {
-          "kind": "sitemap",
-          "url": "https://istoe.com.br/wp-sitemap.xml",
-          "evidence_url": "https://istoe.com.br/robots.txt",
-          "numbered_part_pattern": "https://istoe\\.com\\.br/wp-sitemap-posts-post-(?P<part>\\d+)\\.xml",
-          "minimum_numbered_part": 603
-        }
-      ],
-      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text. Audited numbered sitemap partitions are prioritized in full; earlier partitions remain an explicit gap with domain fallback. Lastmod is never used as publication or to reject an article.",
+      "mechanisms": [],
+      "known_constraint": "Coleta direta, sem Google. Inventário em lotes de 32 partes; retomar amplia o inventário. URLs antigas sem publicação comprovada permanecem como lacunas de data, recuperáveis separadamente. Lastmod não é publicação.",
       "evidence": [
         {
           "url": "https://istoe.com.br/robots.txt",
@@ -112,9 +103,10 @@
         }
       ],
       "verified_at": "2026-09-14",
-      "catalog_version": 1,
+      "catalog_version": 2,
       "min_request_interval_seconds": 5,
-      "expected_initial_candidates": 3000
+      "expected_initial_candidates": 3000,
+      "inventory_part_budget": 32
     },
     {
       "key": "cnn_brasil",

@@ -23,6 +23,11 @@
   }
   const gapCount = metrics => (metrics.tasks || []).filter(t => ["gap", "failed", "retryable"].includes(t.status)).reduce((n, t) => n + Number(t.count || 0), 0);
   function gapReason(code = "") {
+    if (code === "istoe_inventory_batch_limit") return "O lote de inventário da IstoÉ terminou. Há partes anteriores ainda não examinadas; retomar amplia o inventário, sem Google.";
+    if (code === "istoe_unverified_older_urls") return "URLs com indicação de atualização antiga foram inventariadas, mas sua publicação ainda não foi conferida. São lacunas de data, não notícias descartadas.";
+    if (code.startsWith("istoe_snapshot")) return "O snapshot da IstoÉ não pôde ser recuperado com integridade. A posição foi preservada.";
+    if (code.startsWith("istoe_")) return "A coleta direta da IstoÉ tem uma pendência identificada: " + code;
+
     if (code === "google_access_challenge") return "O Google bloqueou o acesso automatizado. A consulta ou a resolução da notícia ficou incompleta.";
     if (/429/.test(code)) return "A fonte limitou os acessos; nova tentativa necessária.";
     if (/403|401|blocked/.test(code)) return "A fonte não permitiu o acesso público.";
@@ -163,6 +168,7 @@
   function renderMetrics(metrics = {}) {
     metrics = {...metrics, unresolvedGaps: gapCount(metrics)};
     const fields = [["uniqueCandidates", "URLs encontradas"], ["articlesInserted", "Notícias novas"], ["articlesReused", "Notícias reutilizadas"], ["articlesEnriched", "Registros com texto recuperado"], ["duplicates", "URLs repetidas"], ["mentionsInserted", "Associações novas"], ["textAvailable", "Textos disponíveis"], ["partialText", "Textos parciais"], ["metadataOnly", "Somente metadados"], ["fetchPending", "Textos pendentes"], ["unknownDates", "Datas a revisar"], ["unresolvedGaps", "Consultas com pendências"]];
+    if (metrics.istoePartsTotal) fields.push(["istoePartsTotal", "IstoÉ: partes no índice"], ["istoePartsRead", "IstoÉ: partes examinadas"], ["istoePartsRemaining", "IstoÉ: partes ainda não examinadas"], ["istoeDeferredDates", "IstoÉ: URLs antigas com publicação não verificada"], ["istoeSnapshotsReused", "IstoÉ: snapshots reutilizados"]);
     $("metrics").replaceChildren();
     for (const [key, label] of fields) {const pair = document.createElement("div"); pair.append(text("dt", label), text("dd", Number(metrics[key] || 0).toLocaleString("pt-BR"))); $("metrics").append(pair);}
     for (const [key, label] of [["editionPagesNew", "Páginas de edição novas"], ["editionPagesReused", "Páginas de edição reutilizadas"], ["editionAssociationsNew", "Associações em páginas de edição"], ["editionTextAvailable", "Textos de páginas de edição"]]) {
@@ -176,6 +182,11 @@
       const job = state.job;
       $("job-state").textContent = job ? `${labels[job.status] || job.status} · ${formatDate(job.dateFrom)} a ${formatDate(job.dateTo)}` : "Nenhuma coleta iniciada.";
       renderMetrics(job?.metrics || data.metrics || {});
+      const sample = job?.metrics?.istoeWorkerSample;
+      if (sample) {
+        const stale = Date.now() - new Date(sample.sampledAt).getTime() > 180000;
+        $("job-state").textContent += ` · Memória ${sample.memoryPercent ?? "indisponível"}% · ${sample.fetchConcurrency} buscas simultâneas${stale ? " · Amostra de recursos desatualizada" : ""}`;
+      }
       $("cancel").hidden = !state.canRun || !job || !activeStates.has(job.status);
       $("resume").hidden = !state.canRun || !job || !["failed", "interrupted", "cancelled", "completed_with_gaps"].includes(job.status);
       if (job?.status === "queued" && !(data.workers || []).some(w => w.healthy)) $("job-state").textContent += " · Aguardando o coletor ficar disponível.";
@@ -205,27 +216,35 @@
       }
     } catch (error) {$("coverage-list").replaceChildren(text("p", error.message));}
   }
+  let pendingSubmission = null;
   async function startJob(kind) {
     if (!state.selected.size) {message("Selecione pelo menos um nome.", true); return;}
     if (kind !== "review" && !selectedSources.size) {message("Selecione pelo menos uma fonte.", true); return;}
     if (!$("date-from").value || !$("date-to").value) {message("Informe as duas datas para iniciar a coleta ou revisão.", true); return;}
     $("start").disabled = $("review").disabled = $("recover").disabled = true;
     try {
-      const payload = {kind, source_keys: [...selectedSources], target_keys: [...state.selected], date_from: $("date-from").value, date_to: $("date-to").value, request_key: crypto.randomUUID()};
+      const payload = {kind, source_keys: [...selectedSources], target_keys: [...state.selected], date_from: $("date-from").value, date_to: $("date-to").value, request_key: ""};
       if (kind === "recover") {
         const recoveryTypes = {
           missing: ["body_missing", "metadata_only"],
           partial: ["partial_text"],
-          access: ["http_401", "http_403", "http_404", "http_429", "network", "google_url_unresolved", "google_access_challenge", "publisher_access_challenge"],
+          access: ["http_400", "http_401", "http_403", "http_404", "http_429", "network", "google_url_unresolved", "google_access_challenge", "publisher_access_challenge"],
           storage: ["storage"]
         };
-        payload.recovery_gap_types = $("recovery-types").value === "all" ? [...new Set(Object.values(recoveryTypes).flat())] : recoveryTypes[$("recovery-types").value];
+        if ($("recovery-types").value === "istoe_dates") {
+          if (selectedSources.size !== 1 || !selectedSources.has("istoe")) throw new Error("Selecione somente IstoÉ para conferir essas datas.");
+          payload.recovery_gap_types = ["istoe_deferred_dates"];
+        } else payload.recovery_gap_types = $("recovery-types").value === "all" ? [...new Set(Object.values(recoveryTypes).flat())] : recoveryTypes[$("recovery-types").value];
       }
       if (kind === "collect" && $("discovery-mode").value === "new") {
         payload.discovery_target_keys = state.newDiscoveryTargets.filter(key => state.selected.has(key));
         if (!payload.discovery_target_keys.length) throw new Error("Selecione pelo menos um dos novos candidatos.");
       }
+      const signature = JSON.stringify(payload);
+      if (!pendingSubmission || pendingSubmission.signature !== signature) pendingSubmission = {signature, key: crypto.randomUUID()};
+      payload.request_key = pendingSubmission.key;
       await api("/api/political/jobs", {method: "POST", body: JSON.stringify(payload)});
+      pendingSubmission = null;
       message(kind === "recover" ? "Recuperação das lacunas solicitada. Os textos salvos aparecerão na conta." : kind === "review" ? "Revisão solicitada. Os registros e classificações existentes serão preservados." : "Coleta solicitada. Você pode fechar esta página e acompanhar o resultado depois."); await refreshStatus();
     } catch (error) {message(error.message, true);} finally {$("start").disabled = $("review").disabled = $("recover").disabled = !state.configured || !state.canRun;}
   }
@@ -302,6 +321,7 @@
   $("previous").addEventListener("click", () => {state.cursor = state.previous.pop() || ""; loadResults();});
   $("recover").addEventListener("click", () => startJob("recover"));
   $("sources-all").addEventListener("click", () => {state.sources.filter(s => s.enabled !== false).forEach(s => selectedSources.add(s.key)); renderSources();});
+  $("sources-istoe").addEventListener("click", () => {selectedSources.clear(); selectedSources.add("istoe"); renderSources(); message("IstoÉ: descoberta direta, sem Google. URLs antigas sem publicação comprovada ficam identificadas como pendências.");});
   $("sources-none").addEventListener("click", () => {selectedSources.clear(); renderSources();});
   $("sources-recovery").addEventListener("click", () => {selectedSources.clear(); ["exame","congresso_em_foco","nf_noticias","elizeu_pires","ultima_hora_online","estadao"].filter(k => state.sources.some(s => s.key === k)).forEach(k => selectedSources.add(k)); renderSources();});
   $("start").addEventListener("click", () => startJob("collect")); $("review").addEventListener("click", () => startJob("review"));
@@ -321,7 +341,7 @@
   async function init() {
     try {
       const [meta, token, sourceData] = await Promise.all([api("/api/political/meta"), api("/api/csrf"), api("/api/political/sources")]);
-      state.csrf = token.csrf; state.targets = meta.targets || []; state.sources = sourceData.sources || []; state.configured = Boolean(meta.configured); state.canRun = Boolean(meta.canRun) && !simulation;
+      state.csrf = token.csrf; state.targets = meta.targets || []; state.sources = sourceData.sources || []; $("sources-istoe").hidden = !state.sources.some(s => s.key === "istoe"); state.configured = Boolean(meta.configured); state.canRun = Boolean(meta.canRun) && !simulation;
       state.defaultTargets = (meta.defaultTargets || []).filter(key => state.targets.some(t => t.key === key));
       if (!state.defaultTargets.length) state.defaultTargets = state.targets.map(t => t.key);
       state.selected = new Set(state.defaultTargets);
