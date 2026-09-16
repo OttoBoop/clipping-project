@@ -1,5 +1,6 @@
 """Immutable discovery snapshots reusable across IstoÉ jobs, with strict resume."""
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import hashlib
 import json
 import requests
@@ -33,11 +34,18 @@ class InventoryTransport:
             raise DiscoveryError("istoe_snapshot_url_mismatch", retryable=False)
         if not row:
             with service._connect() as conn:
-                # A new job sees recent documents only. A resumed task always
-                # reads its frozen object regardless of cache freshness.
+                # Closed historical windows can reuse recent documents. A
+                # window including the snapshot's day needs a fresh request,
+                # because that sitemap may have gained URLs since capture.
+                # A resumed task always keeps its already frozen document.
                 row = conn.execute("""SELECT url,sha256,object_key,fetched_at FROM political_istoe_documents
                     WHERE url=%s AND fetched_at>NOW()-INTERVAL '6 hours'
                     ORDER BY fetched_at DESC LIMIT 1""", (url,)).fetchone()
+            if row:
+                end = str((self.task.get('payload') or {}).get('date_to') or '')
+                captured_day = row['fetched_at'].astimezone(ZoneInfo('America/Sao_Paulo')).date().isoformat()
+                if not end or end >= captured_day:
+                    row = None
         if row:
             try:
                 content = service._read_discovery_response(row["object_key"], row["sha256"])

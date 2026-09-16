@@ -35,17 +35,39 @@ def test_snapshot_durable_reuse_and_missing_object_does_not_refetch_changed_page
     def fetch(url,**kwargs):
         calls.append(url);return response(url,'index.xml.gz')
     monkeypatch.setattr(service,'fetch',fetch)
-    first=InventoryTransport(service,{'cursor':{}})
+    historical={'cursor':{},'payload':{'date_to':'2000-01-01'}}
+    first=InventoryTransport(service,historical)
     r=first.fetch('https://istoe.com.br/wp-sitemap.xml');cursor=first.checkpoint({'offset':32})
     assert len(calls)==1
     resumed=InventoryTransport(service,{'cursor':cursor})
     assert resumed.fetch(r.url).content==r.content and len(calls)==1
-    fresh_job=InventoryTransport(service,{'cursor':{}})
+    fresh_job=InventoryTransport(service,historical)
     assert fresh_job.fetch(r.url).content==r.content and len(calls)==1
     service.store.objects.clear()
     with pytest.raises(Exception,match='istoe_snapshot_unavailable'):
         InventoryTransport(service,{'cursor':cursor}).fetch(r.url)
     assert len(calls)==1
+
+
+def test_current_day_refreshes_sitemap_but_resume_keeps_its_snapshot(service,monkeypatch):
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    calls=[]
+    def fetch(url,**kwargs):
+        calls.append(url)
+        return response(url,'index.xml.gz')
+    monkeypatch.setattr(service,'fetch',fetch)
+    first=InventoryTransport(service,{'cursor':{},'payload':{'date_to':'2000-01-01'}})
+    url='https://istoe.com.br/wp-sitemap.xml'
+    original=first.fetch(url).content
+    cursor=first.checkpoint({'offset':32})
+    captured=datetime.fromisoformat(first.reference['fetched_at']).astimezone(ZoneInfo('America/Sao_Paulo')).date().isoformat()
+    current={'cursor':{},'payload':{'date_to':captured}}
+    assert InventoryTransport(service,current).fetch(url).content==original
+    assert len(calls)==2, 'a new same-day job must check for newly published URLs'
+    resumed=InventoryTransport(service,{**current,'cursor':cursor})
+    assert resumed.fetch(url).content==original
+    assert len(calls)==2, 'resume must remain tied to its immutable snapshot'
 
 
 def test_discovery_commits_inventory_cursor_and_no_google_tasks(service,monkeypatch):
