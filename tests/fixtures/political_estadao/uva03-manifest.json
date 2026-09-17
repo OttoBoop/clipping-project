@@ -1,0 +1,9 @@
+{
+  "url": "https://www.estadao.com.br/economia/paineis-digitais-paulista-propaganda-bets-60-segundos",
+  "htmlHash": "8a07b30db5a8cb048426791a0b80b022e64da52446bb8a43f48c43ffdf74addc",
+  "apiURL": "https://arte.estadao.com.br/public/pages/1nAbYg7nbcFnzgkFcqKa-X_lPEjRESs6HDV7xIWAmtXY/page.json",
+  "apiHash": "9bbb067160fcdaedc7b65b82176d0b421c31371f632963062befcec2dbe1a5f2",
+  "origin": "Real failed collector response and subsequent public API diagnostic; no manual discovery insertion.",
+  "scriptURL": "https://arte.estadao.com.br/arc/scripts/uva-render-03.js",
+  "scriptHash": "974d423c9d46a0e536b3c69fe0751a0651d7a5691b5f3db8d6ce9ddee3877a4a"
+}

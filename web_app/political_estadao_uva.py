@@ -4,12 +4,15 @@ import re,json
 from urllib.parse import urlparse,urljoin
 from pipeline.http_utils import html_to_text
 
-VERSION='estadao-public-uva-1'
+VERSION='estadao-public-uva-2'
 class _Embeds(HTMLParser):
     def __init__(self):super().__init__();self.ids=[]
     def handle_starttag(self,tag,pairs):
         a=dict(pairs)
-        if tag=='script' and a.get('src')=='https://arte.estadao.com.br/arc/scripts/uva-render-02.js':
+        if tag=='script' and a.get('src') in {
+            'https://arte.estadao.com.br/arc/scripts/uva-render-02.js',
+            'https://arte.estadao.com.br/arc/scripts/uva-render-03.js',
+        }:
             value=a.get('data-uva-id','')
             if not re.fullmatch(r'[A-Za-z0-9_-]{12,100}',value):raise ValueError('estadao_uva_invalid_id')
             self.ids.append(value)
@@ -47,13 +50,23 @@ def editorial(data):
     for row in rows:
         kind=row.get('type');value=row.get('value')
         if kind in {'text','rodapé'}:add(value)
+        elif kind=='frase' and isinstance(value,dict):
+            for field in ['texto','nome','descrição']:add(value.get(field))
+        elif kind=='html' and isinstance(value,dict):
+            # Public editorial lists and explanatory boxes, not iframe contents.
+            for item in value.get('conteúdo') or []:
+                if item.get('type')=='text':
+                    raw=item.get('value') or ''
+                    if re.search(r'<\s*(?:iframe|object|embed)\b',raw,re.I):unknown.add('html_external_embed')
+                    add(raw)
+                else:unknown.add('html:'+str(item.get('type')))
         elif kind=='quiz' and isinstance(value,dict):
             for section in ['perguntas','respostas']:
                 for item in value.get(section) or []:
                     if item.get('type') in {'pergunta','resposta'}:add(item.get('value'))
                     elif item.get('type')=='alternativas':
                         for option in item.get('value') or []:add(option)
-        elif kind not in {'customização','imagem'}:unknown.add(str(kind))
+        elif kind not in {'customização','imagem','leiaMais'}:unknown.add(str(kind))
     return {'full_text':'\n\n'.join(parts),'extraction_method':'publisher_public_uva_data',
         'extraction_version':VERSION,'text_extent':'unknown' if unknown else 'available',
         'content_format':'interactive_article','uva_provenance':{'unhandled_element_types':sorted(unknown),'elements':len(rows)}}
