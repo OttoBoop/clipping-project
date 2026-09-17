@@ -125,3 +125,13 @@ def test_429_and_invalid_payload_do_not_complete_archive():
     response.content = b'<html>temporarily unavailable</html>'
     with pytest.raises(DiscoveryError, match='state_missing'):
         run(task, source, response)
+
+
+def test_archive_parser_runs_without_optional_site_packages():
+    import subprocess
+    import sys
+    result = subprocess.run([sys.executable, '-S', '-c',
+        'import gzip; from pathlib import Path; from web_app.political_congresso_archive import _state; '
+        'assert len(_state(gzip.decompress(Path("tests/fixtures/political_congresso_archive/noticia-2.html.gz").read_bytes()))) > 2'],
+        capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr

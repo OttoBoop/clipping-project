@@ -7,15 +7,45 @@ from datetime import date, datetime, timedelta
 import hashlib
 import json
 import re
+from html.parser import HTMLParser
 from urllib.parse import urlencode, urlparse
 
-from bs4 import BeautifulSoup
-
-VERSION = 'congresso-editorial-archive-1'
+VERSION = 'congresso-editorial-archive-2'
 PRODUCTS = {'noticia': 'NOTICIAS_LISTA', 'artigo': 'ARTIGOS_LISTA',
             'coluna': 'COLUNAS_LISTA', 'informativo': 'INFORMATIVO_LISTA'}
 BASE = 'https://www.congressoemfoco.com.br/'
 MAX_ROWS = 100
+
+
+class _StateScript(HTMLParser):
+    """Read only the SSR JSON using the standard-library production runtime."""
+    def __init__(self):
+        super().__init__(convert_charrefs=False)
+        self.inside = False
+        self.count = 0
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'script' and dict(attrs).get('id') == 'ng-state':
+            self.inside = True
+            self.count += 1
+
+    def handle_endtag(self, tag):
+        if tag == 'script':
+            self.inside = False
+
+    def handle_data(self, data):
+        if self.inside:
+            self.parts.append(data)
+
+
+def _state(raw):
+    parser = _StateScript()
+    parser.feed(raw.decode('utf-8'))
+    parser.close()
+    if parser.count != 1:
+        raise ValueError('single SSR state required')
+    return json.loads(''.join(parser.parts))
 
 
 def build_tasks(route):
@@ -78,10 +108,8 @@ def discover(task, source, fetch):
     final = urlparse(getattr(response, 'url', '') or url)
     if final.hostname != 'www.congressoemfoco.com.br' or final.path.rstrip('/') != '/' + product:
         raise core.DiscoveryError('congresso_archive_redirected', retryable=False)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    state_tag = soup.find('script', id='ng-state')
     try:
-        state = json.loads(state_tag.get_text() if state_tag else '')
+        state = _state(response.content)
     except (ValueError, TypeError) as exc:
         raise core.DiscoveryError('congresso_archive_state_missing', retryable=False) from exc
     if not isinstance(state, dict):
