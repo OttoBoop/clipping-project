@@ -2173,3 +2173,21 @@ def test_estadao_public_resolution_is_committed_before_original_timeout(service,
     assert len(calls)==2
     retry=service.claim_task('fetch',worker_id='estadao-resume');service.process_task(retry)
     assert len(calls)==3 and calls[-1]==row['cursor']['resolved_url']
+
+
+def test_estadao_historical_snack_is_not_reused_as_the_original_article(service,monkeypatch):
+    import gzip,json
+    from pathlib import Path
+    f=Path(__file__).parent/'fixtures/political_estadao';m=json.loads((f/'manifest.json').read_text());raw=gzip.decompress((f/'real-snack.html.gz').read_bytes()).decode()
+    digest,key=service._store_html(raw)
+    start(service,monkeypatch,tasks=[{'source_key':'estadao','strategy':'expanded_sitemap','date_from':'2026-06-01','date_to':'2026-06-02','cursor':{}}])
+    enqueue(service,monkeypatch,{'url':m['url'],'source_key':'estadao','source_name':'Estadão','metadata':{},'recovery_html':{'url':m['url'],'hash':digest,'key':key}})
+    calls=[]
+    def fetch(url,**kwargs):
+        calls.append(url);assert '/em-alta/' not in url
+        raise requests.ReadTimeout('Original page request reached')
+    monkeypatch.setattr(service,'fetch',fetch)
+    task=service.claim_task('fetch',worker_id='historical-estadao');service.process_task(task)
+    with service._connect() as c:row=c.execute('SELECT * FROM political_tasks WHERE id=%s',(task['id'],)).fetchone()
+    assert len(calls)==1 and row['status']=='retryable'
+    assert row['cursor']['recovery_html_used'] is True and row['error_type']!='body_missing'

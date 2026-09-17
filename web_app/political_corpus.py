@@ -1856,6 +1856,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 if original:
                     original_hash, original_key = self._store_html(response.text)
                     self._checkpoint_fetch(task, {"resolved_url": canonicalize_url(original["url"]),
+                        "recovery_html_used": True,
                         "estadao_public_original": {**original, "html_hash": original_hash, "html_object_key": original_key}})
                     # Re-enter through saved-object lookup; retries and storage
                     # failures preserve the public resolution in the lease cursor.
