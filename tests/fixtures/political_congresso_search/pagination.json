@@ -1,0 +1,230 @@
+{
+  "archiveWrites": 0,
+  "rows": [
+    {
+      "at": "2026-09-15T02:35:00.154856+00:00",
+      "url": "https://front.congressoemfoco.com.br/Search/Query",
+      "status": 200,
+      "requestedPage": 1,
+      "requestUsedSearchKey": false,
+      "sha256": "2360f1e2a8aee99d77e2e8779edf0cde6111df1ea0a8dcaa9b69823fbbb11b96",
+      "code": 0,
+      "metrics": {
+        "qty": 11,
+        "more": false,
+        "page": 1,
+        "pageqty": 1,
+        "searcherroroccured": false
+      },
+      "results": [
+        {
+          "articleKey": 121341,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121341/rio-de-janeiro-tem-16-candidatos-em-disputa-por-vagas-no-senado",
+          "date": "2026-08-21T07:00:00"
+        },
+        {
+          "articleKey": 121444,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121444/de-revanche-a-racha-veja-as-disputas-pelos-governos-estaduais-e-do-df",
+          "date": "2026-08-20T07:21:55.69"
+        },
+        {
+          "articleKey": 121446,
+          "URL": "https://www.congressoemfoco.com.br/informativo/23158/congresso-em-foco-n-158--ano-23",
+          "date": "2026-08-20T07:55:00.217"
+        },
+        {
+          "articleKey": 121339,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121339/com-paes-e-garotinho-rio-de-janeiro-tem-nove-candidatos-ao-governo",
+          "date": "2026-08-20T07:00:00"
+        },
+        {
+          "articleKey": 121315,
+          "URL": "https://www.congressoemfoco.com.br/informativo/23155/congresso-em-foco-n-155--ano-23",
+          "date": "2026-08-17T08:12:01.22"
+        },
+        {
+          "articleKey": 121304,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121304/romario-deixa-pl-e-anuncia-apoio-a-eduardo-paes-ao-governo-do-rio",
+          "date": "2026-08-15T10:02:06.843"
+        },
+        {
+          "articleKey": 121158,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121158/justica-manda-garotinho-cumprir-pena-que-suspende-direitos-politicos",
+          "date": "2026-08-11T07:39:52.65"
+        },
+        {
+          "articleKey": 120853,
+          "URL": "https://www.congressoemfoco.com.br/noticia/120853/lula-tem-palanque-em-26-unidades-federativas-flavio-ainda-busca-oito",
+          "date": "2026-07-29T13:10:00"
+        },
+        {
+          "articleKey": 120783,
+          "URL": "https://www.congressoemfoco.com.br/noticia/120783/partidos-ja-oficializaram-51-candidatos-a-governador-veja-a-lista",
+          "date": "2026-07-27T14:00:38.273"
+        },
+        {
+          "articleKey": 119569,
+          "URL": "https://www.congressoemfoco.com.br/noticia/119569/familia-bolsonaro-deveria-pedir-perdao-ao-rio-afirma-otoni-de-paula",
+          "date": "2026-06-11T17:28:08.66"
+        },
+        {
+          "articleKey": 119515,
+          "URL": "https://www.congressoemfoco.com.br/noticia/119515/flavio-bolsonaro-tem-mais-palanques-indefinidos-que-lula-nos-estados",
+          "date": "2026-06-09T11:27:50.6"
+        }
+      ],
+      "evidence": "page-1.response.gz",
+      "bytes": 18682
+    },
+    {
+      "at": "2026-09-15T02:35:00.641159+00:00",
+      "url": "https://front.congressoemfoco.com.br/Search/Query",
+      "status": 200,
+      "requestedPage": 2,
+      "requestUsedSearchKey": true,
+      "sha256": "9e625e8fd4625f095c0c271932ad347a7a76021bc3ba7fcc93b289eea8354ba9",
+      "code": 0,
+      "metrics": {
+        "qty": 11,
+        "more": false,
+        "page": 1,
+        "pageqty": 1,
+        "searcherroroccured": false
+      },
+      "results": [
+        {
+          "articleKey": 121341,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121341/rio-de-janeiro-tem-16-candidatos-em-disputa-por-vagas-no-senado",
+          "date": "2026-08-21T07:00:00"
+        },
+        {
+          "articleKey": 121444,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121444/de-revanche-a-racha-veja-as-disputas-pelos-governos-estaduais-e-do-df",
+          "date": "2026-08-20T07:21:55.69"
+        },
+        {
+          "articleKey": 121446,
+          "URL": "https://www.congressoemfoco.com.br/informativo/23158/congresso-em-foco-n-158--ano-23",
+          "date": "2026-08-20T07:55:00.217"
+        },
+        {
+          "articleKey": 121339,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121339/com-paes-e-garotinho-rio-de-janeiro-tem-nove-candidatos-ao-governo",
+          "date": "2026-08-20T07:00:00"
+        },
+        {
+          "articleKey": 121315,
+          "URL": "https://www.congressoemfoco.com.br/informativo/23155/congresso-em-foco-n-155--ano-23",
+          "date": "2026-08-17T08:12:01.22"
+        },
+        {
+          "articleKey": 121304,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121304/romario-deixa-pl-e-anuncia-apoio-a-eduardo-paes-ao-governo-do-rio",
+          "date": "2026-08-15T10:02:06.843"
+        },
+        {
+          "articleKey": 121158,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121158/justica-manda-garotinho-cumprir-pena-que-suspende-direitos-politicos",
+          "date": "2026-08-11T07:39:52.65"
+        },
+        {
+          "articleKey": 120853,
+          "URL": "https://www.congressoemfoco.com.br/noticia/120853/lula-tem-palanque-em-26-unidades-federativas-flavio-ainda-busca-oito",
+          "date": "2026-07-29T13:10:00"
+        },
+        {
+          "articleKey": 120783,
+          "URL": "https://www.congressoemfoco.com.br/noticia/120783/partidos-ja-oficializaram-51-candidatos-a-governador-veja-a-lista",
+          "date": "2026-07-27T14:00:38.273"
+        },
+        {
+          "articleKey": 119569,
+          "URL": "https://www.congressoemfoco.com.br/noticia/119569/familia-bolsonaro-deveria-pedir-perdao-ao-rio-afirma-otoni-de-paula",
+          "date": "2026-06-11T17:28:08.66"
+        },
+        {
+          "articleKey": 119515,
+          "URL": "https://www.congressoemfoco.com.br/noticia/119515/flavio-bolsonaro-tem-mais-palanques-indefinidos-que-lula-nos-estados",
+          "date": "2026-06-09T11:27:50.6"
+        }
+      ],
+      "evidence": "page-2.response.gz",
+      "bytes": 18682
+    },
+    {
+      "at": "2026-09-15T02:35:01.643023+00:00",
+      "url": "https://front.congressoemfoco.com.br/Search/Query",
+      "status": 200,
+      "requestedPage": 3,
+      "requestUsedSearchKey": true,
+      "sha256": "74f0563f74b603dc4f2859e40f8b0593455870c342ab3d857a1d44548ecbcfc7",
+      "code": 0,
+      "metrics": {
+        "qty": 11,
+        "more": false,
+        "page": 1,
+        "pageqty": 1,
+        "searcherroroccured": false
+      },
+      "results": [
+        {
+          "articleKey": 121341,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121341/rio-de-janeiro-tem-16-candidatos-em-disputa-por-vagas-no-senado",
+          "date": "2026-08-21T07:00:00"
+        },
+        {
+          "articleKey": 121444,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121444/de-revanche-a-racha-veja-as-disputas-pelos-governos-estaduais-e-do-df",
+          "date": "2026-08-20T07:21:55.69"
+        },
+        {
+          "articleKey": 121446,
+          "URL": "https://www.congressoemfoco.com.br/informativo/23158/congresso-em-foco-n-158--ano-23",
+          "date": "2026-08-20T07:55:00.217"
+        },
+        {
+          "articleKey": 121339,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121339/com-paes-e-garotinho-rio-de-janeiro-tem-nove-candidatos-ao-governo",
+          "date": "2026-08-20T07:00:00"
+        },
+        {
+          "articleKey": 121315,
+          "URL": "https://www.congressoemfoco.com.br/informativo/23155/congresso-em-foco-n-155--ano-23",
+          "date": "2026-08-17T08:12:01.22"
+        },
+        {
+          "articleKey": 121304,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121304/romario-deixa-pl-e-anuncia-apoio-a-eduardo-paes-ao-governo-do-rio",
+          "date": "2026-08-15T10:02:06.843"
+        },
+        {
+          "articleKey": 121158,
+          "URL": "https://www.congressoemfoco.com.br/noticia/121158/justica-manda-garotinho-cumprir-pena-que-suspende-direitos-politicos",
+          "date": "2026-08-11T07:39:52.65"
+        },
+        {
+          "articleKey": 120853,
+          "URL": "https://www.congressoemfoco.com.br/noticia/120853/lula-tem-palanque-em-26-unidades-federativas-flavio-ainda-busca-oito",
+          "date": "2026-07-29T13:10:00"
+        },
+        {
+          "articleKey": 120783,
+          "URL": "https://www.congressoemfoco.com.br/noticia/120783/partidos-ja-oficializaram-51-candidatos-a-governador-veja-a-lista",
+          "date": "2026-07-27T14:00:38.273"
+        },
+        {
+          "articleKey": 119569,
+          "URL": "https://www.congressoemfoco.com.br/noticia/119569/familia-bolsonaro-deveria-pedir-perdao-ao-rio-afirma-otoni-de-paula",
+          "date": "2026-06-11T17:28:08.66"
+        },
+        {
+          "articleKey": 119515,
+          "URL": "https://www.congressoemfoco.com.br/noticia/119515/flavio-bolsonaro-tem-mais-palanques-indefinidos-que-lula-nos-estados",
+          "date": "2026-06-09T11:27:50.6"
+        }
+      ],
+      "evidence": "page-3.response.gz",
+      "bytes": 18682
+    }
+  ]
+}

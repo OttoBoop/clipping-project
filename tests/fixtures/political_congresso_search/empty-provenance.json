@@ -1,0 +1,18 @@
+{
+  "at": "2026-09-17T02:54:58.372243+00:00",
+  "url": "https://front.congressoemfoco.com.br/Search/Query",
+  "method": "POST",
+  "status": 200,
+  "bytes": 285,
+  "sha256": "c58f73cdba6c389c2d8652f197e3e68dbbc49f616dc2f410ed7930f3294f3709",
+  "query_payload": {
+    "query": "Flávio Valle",
+    "searchcode": "DEFNEW",
+    "usertoken": null,
+    "page": 1,
+    "pagesize": 500,
+    "datefrom": "2026-08-09T00:00:00-03:00",
+    "dateto": "2026-08-09T23:59:59.999999-03:00"
+  },
+  "seconds": 0.5037
+}

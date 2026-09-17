@@ -1797,6 +1797,41 @@ def test_real_sitemap_cursor_keeps_immutable_object_across_local_cache_loss(serv
         service._read_discovery_response('another-prefix/current/config.json',ref['sha256'])
 
 
+def test_public_congresso_search_commits_candidates_before_resumed_article_fetch(service, monkeypatch):
+    import gzip
+    from pathlib import Path
+    from web_app import political_discovery, political_expanded_discovery as expanded
+    root = Path(__file__).parent / 'fixtures/political_congresso_search'
+    source = next(s for s in expanded.load_expanded_sources() if s['key'] == 'congresso_em_foco')
+    task = next(t for t in expanded.build_expanded_tasks(source, '2026-06-01', '2026-09-10', TARGETS[:1])
+                if t['strategy'] == 'expanded_congresso_search')
+    task['source_snapshot'] = source
+    monkeypatch.setattr(political_discovery, 'build_tasks', lambda *a, **k: [task])
+    job = service.start_job({'target_keys':['paes'], 'target_snapshots':TARGETS[:1],
+        'date_from':'2026-06-01', 'date_to':'2026-09-10'}, started_by='test', allowed_target_keys=['paes'])
+    response = requests.Response();response.status_code=200;response.url=task['url']
+    response._content=gzip.decompress((root/'public-date-query.response.gz').read_bytes())
+    monkeypatch.setattr(service,'fetch',lambda *a,**k:response)
+    assert service.process_task(service.claim_task('discovery',worker_id='public-search'))['status']=='complete'
+    with service._connect() as c:
+        assert c.execute("SELECT count(*) AS n FROM political_observations WHERE job_id=%s",(job['id'],)).fetchone()['n']==11
+        assert c.execute("SELECT count(*) AS n FROM political_tasks WHERE job_id=%s AND kind='fetch'",(job['id'],)).fetchone()['n']==11
+        assert c.execute("SELECT count(*) AS n FROM political_articles").fetchone()['n']==0
+        proof=c.execute("SELECT result->'publisherSearch' AS proof FROM political_tasks WHERE job_id=%s AND kind='discovery'",(job['id'],)).fetchone()['proof']
+        assert proof['returnedResults']==11 and not proof['bodyTextProvided']
+    resumed=PoliticalCorpusService(store=service.store,database_url=DATABASE_URL)
+    try:
+        fetch_task=resumed.claim_task('fetch',worker_id='resumed-public-search')
+        article_response=requests.Response();article_response.status_code=200;article_response.url=fetch_task['payload']['url']
+        article_response._content=gzip.decompress((root/'date-check-0.html.gz').read_bytes());article_response.encoding='utf-8'
+        monkeypatch.setattr(resumed,'fetch',lambda *a,**k:article_response)
+        outcome=resumed.process_task(fetch_task)
+        text=resumed.article_text(outcome['articleId'],allowed_target_keys=['paes'])
+        assert 'eduardo paes' in text['text'].lower() and len(text['text'])>1500
+    finally:
+        resumed.close()
+
+
 def test_date_lookup_preserves_existing_metadata_and_human_classification(service,monkeypatch):
     _,response,candidates,tasks=_real_public_date_batch(monkeypatch)
     with service._connect() as c:

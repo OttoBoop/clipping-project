@@ -99,7 +99,7 @@ def _target_queries(snapshot: dict[str, Any]) -> list[str]:
 
 
 def _google_tasks(snapshots: list[dict], source: dict, date_from: str, date_to: str) -> list[dict]:
-    if source.get("key") == "istoe":
+    if source.get("key") in {"istoe", "congresso_em_foco"}:
         return []
     queries = {}
     for person_rank, row in enumerate(snapshots):
@@ -130,7 +130,7 @@ def fallback_tasks(task: dict, target_snapshots: list[dict]) -> list[dict]:
     Stable task payloads let PostgreSQL deduplicate fallback requests caused by
     several failed direct mechanisms for the same source and time window.
     """
-    if task.get("source_key") == "istoe":
+    if task.get("source_key") in {"istoe", "congresso_em_foco"}:
         return []
     source = task.get("source_snapshot") or next((row for row in load_sources() if row["key"] == task["source_key"]), None)
     if not source or source.get("google_policy") != "on_direct_gap" or task.get("strategy") == "google_news":
@@ -892,8 +892,8 @@ def discover(task: dict[str, Any], fetch: Callable) -> dict[str, Any]:
     if source is None:
         raise DiscoveryError("unknown source", retryable=False)
     strategy = task["strategy"]
-    if task.get("source_key") == "istoe" and strategy == "google_news":
-        raise DiscoveryError("istoe_google_disabled", retryable=False)
+    if task.get("source_key") in {"istoe", "congresso_em_foco"} and strategy == "google_news":
+        raise DiscoveryError(task["source_key"] + "_google_disabled", retryable=False)
     if strategy == "istoe_direct_v1":
         from .political_istoe_discovery import discover as discover_istoe
         return discover_istoe(task, source, fetch)

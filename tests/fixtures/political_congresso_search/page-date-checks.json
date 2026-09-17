@@ -1,0 +1,65 @@
+{
+  "archiveWrites": 0,
+  "rows": [
+    {
+      "url": "https://www.congressoemfoco.com.br/noticia/121341/rio-de-janeiro-tem-16-candidatos-em-disputa-por-vagas-no-senado",
+      "status": 200,
+      "searchDate": "2026-08-21T07:00:00",
+      "searchDateUTC": "2026-08-21T10:00:00+00:00",
+      "extracted": {
+        "title": "Rio de Janeiro tem 16 candidatos em disputa por vagas no Senado",
+        "published_at": "2026-08-21T10:00:00+00:00",
+        "canonical_url": "https://www.congressoemfoco.com.br/noticia/121341/rio-de-janeiro-tem-16-candidatos-em-disputa-por-vagas-no-senado",
+        "extraction_state": "full_text",
+        "extraction_method": "publisher_selector:.asset__content .html-content",
+        "extraction_version": "editorial-2026-09-14.6",
+        "text_extent": "available",
+        "restriction_evidence": []
+      },
+      "bodyChars": 1764,
+      "bodyMentionsPaes": true,
+      "sha256": "74446d593cd1c9e91e1aaf52e32b78e61b1927881105e69081b13196f3d4d8f1",
+      "evidence": "date-check-0.html.gz"
+    },
+    {
+      "url": "https://www.congressoemfoco.com.br/noticia/121444/de-revanche-a-racha-veja-as-disputas-pelos-governos-estaduais-e-do-df",
+      "status": 200,
+      "searchDate": "2026-08-20T07:21:55.69",
+      "searchDateUTC": "2026-08-20T10:21:55.690000+00:00",
+      "extracted": {
+        "title": "De revanche a racha: Veja as disputas pelos governos estaduais e do DF",
+        "published_at": "2026-08-20T10:21:55+00:00",
+        "canonical_url": "https://www.congressoemfoco.com.br/noticia/121444/de-revanche-a-racha-veja-as-disputas-pelos-governos-estaduais-e-do-df",
+        "extraction_state": "full_text",
+        "extraction_method": "publisher_selector:.asset__content .html-content",
+        "extraction_version": "editorial-2026-09-14.6",
+        "text_extent": "available",
+        "restriction_evidence": []
+      },
+      "bodyChars": 5635,
+      "bodyMentionsPaes": true,
+      "sha256": "f738375f78e3ff4187d3b4cee098a56a4c5817e3ccc865e5c1cbf89c1a85166c",
+      "evidence": "date-check-1.html.gz"
+    },
+    {
+      "url": "https://www.congressoemfoco.com.br/noticia/119515/flavio-bolsonaro-tem-mais-palanques-indefinidos-que-lula-nos-estados",
+      "status": 200,
+      "searchDate": "2026-06-09T11:27:50.6",
+      "searchDateUTC": "2026-06-09T14:27:50.600000+00:00",
+      "extracted": {
+        "title": "Flávio Bolsonaro tem mais palanques indefinidos que Lula nos Estados",
+        "published_at": "2026-06-09T14:27:50+00:00",
+        "canonical_url": "https://www.congressoemfoco.com.br/noticia/119515/flavio-bolsonaro-tem-mais-palanques-indefinidos-que-lula-nos-estados",
+        "extraction_state": "full_text",
+        "extraction_method": "publisher_selector:.asset__content .html-content",
+        "extraction_version": "editorial-2026-09-14.6",
+        "text_extent": "available",
+        "restriction_evidence": []
+      },
+      "bodyChars": 11459,
+      "bodyMentionsPaes": true,
+      "sha256": "81ed53c753fcc219bf560ad4a9881befbd71bff71a5749d235387d9153fb7b92",
+      "evidence": "date-check-2.html.gz"
+    }
+  ]
+}

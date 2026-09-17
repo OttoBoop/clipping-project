@@ -1,0 +1,72 @@
+{
+  "at": "2026-09-15T02:29:21.281249+00:00",
+  "url": "https://front.congressoemfoco.com.br/Search/Query",
+  "status": 200,
+  "request": {
+    "query": "Eduardo Paes",
+    "searchcode": "DEFNEW",
+    "usertoken": null,
+    "page": 1,
+    "pagesize": 100,
+    "datefrom": "2026-06-01T00:00:00-03:00",
+    "dateto": "2026-09-11T00:00:00-03:00"
+  },
+  "sha256": "573b866acb33fb1f2d7214c1554e00048a4b44449965d9c62674bb1bd2f1d953",
+  "bytes": 18671,
+  "code": 0,
+  "message": null,
+  "resultKeys": [
+    "searchkey",
+    "qty",
+    "more",
+    "page",
+    "pageqty",
+    "results",
+    "filters",
+    "promotions",
+    "title",
+    "resultprocessing",
+    "searcherroroccured"
+  ],
+  "metrics": {
+    "qty": 11,
+    "more": false,
+    "page": 1,
+    "pageqty": 1,
+    "searcherroroccured": false
+  },
+  "results": [
+    {
+      "articleKey": 121341,
+      "URL": "https://www.congressoemfoco.com.br/noticia/121341/rio-de-janeiro-tem-16-candidatos-em-disputa-por-vagas-no-senado",
+      "title": "Rio de Janeiro tem 16 candidatos em disputa por vagas no Senado",
+      "date": "2026-08-21T07:00:00"
+    },
+    {
+      "articleKey": 121444,
+      "URL": "https://www.congressoemfoco.com.br/noticia/121444/de-revanche-a-racha-veja-as-disputas-pelos-governos-estaduais-e-do-df",
+      "title": "De revanche a racha: Veja as disputas pelos governos estaduais e do DF",
+      "date": "2026-08-20T07:21:55.69"
+    },
+    {
+      "articleKey": 121446,
+      "URL": "https://www.congressoemfoco.com.br/informativo/23158/congresso-em-foco-n-158--ano-23",
+      "title": "CONGRESSO em FOCO nº 158 - Ano 23",
+      "date": "2026-08-20T07:55:00.217"
+    },
+    {
+      "articleKey": 121339,
+      "URL": "https://www.congressoemfoco.com.br/noticia/121339/com-paes-e-garotinho-rio-de-janeiro-tem-nove-candidatos-ao-governo",
+      "title": "Com Paes e Garotinho, Rio de Janeiro tem nove candidatos ao governo",
+      "date": "2026-08-20T07:00:00"
+    },
+    {
+      "articleKey": 121315,
+      "URL": "https://www.congressoemfoco.com.br/informativo/23155/congresso-em-foco-n-155--ano-23",
+      "title": "CONGRESSO em FOCO nº 155 - Ano 23",
+      "date": "2026-08-17T08:12:01.22"
+    }
+  ],
+  "returnedResults": 11,
+  "archiveWrites": 0
+}

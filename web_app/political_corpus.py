@@ -1494,6 +1494,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                                  "publicDateBatch": {**date_api_stats, "excludedBeforeFetch": dates_from_api} if date_api_stats else {},
                                  "calendarSiblingsPruned": calendar_pruned,
                                  "structuralIndexExcluded": result.get("structural_index_excluded"),
+                                 "publisherSearch": result.get("publisher_search"),
                                  "calendarPartitionExcluded": result.get("calendar_partition_excluded")})
         return {"taskId": task["id"], "status": outcome, "candidates": len(candidates),
                 "datesReusedBeforeFetch": dates_reused, "publicAPIDatesBeforeFetch": dates_from_api}
