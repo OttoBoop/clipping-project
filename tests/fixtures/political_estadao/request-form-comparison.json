@@ -1,0 +1,112 @@
+{
+  "at": "2026-09-17T20:05:06.118002+00:00",
+  "environment": "local collector shared domain limiter",
+  "articleWrites": 0,
+  "cases": [
+    {
+      "canonical": "https://www.estadao.com.br/politica/stf-mantem-anulacao-condenacao-anthony-garotinho-pre-candidato-governo-rio-nprp",
+      "variants": [
+        {
+          "requestedUrl": "https://www.estadao.com.br/politica/stf-mantem-anulacao-condenacao-anthony-garotinho-pre-candidato-governo-rio-nprp",
+          "calls": [
+            {
+              "url": "https://www.estadao.com.br/politica/stf-mantem-anulacao-condenacao-anthony-garotinho-pre-candidato-governo-rio-nprp",
+              "status": 301
+            },
+            {
+              "url": "https://www.estadao.com.br/politica/stf-mantem-anulacao-condenacao-anthony-garotinho-pre-candidato-governo-rio-nprp/",
+              "status": 200
+            }
+          ],
+          "seconds": 9.614057906001108,
+          "textHash": "f2402c2d7e04ab92941ac23323482d8ed0fdf0cd0b1cfc4bc5b7beaace464819",
+          "bodyChars": 2265,
+          "published": "2026-06-12T20:14:09+00:00"
+        },
+        {
+          "requestedUrl": "https://www.estadao.com.br/politica/stf-mantem-anulacao-condenacao-anthony-garotinho-pre-candidato-governo-rio-nprp/",
+          "calls": [
+            {
+              "url": "https://www.estadao.com.br/politica/stf-mantem-anulacao-condenacao-anthony-garotinho-pre-candidato-governo-rio-nprp/",
+              "status": 200
+            }
+          ],
+          "seconds": 4.361218776990427,
+          "textHash": "f2402c2d7e04ab92941ac23323482d8ed0fdf0cd0b1cfc4bc5b7beaace464819",
+          "bodyChars": 2265,
+          "published": "2026-06-12T20:14:09+00:00"
+        }
+      ]
+    },
+    {
+      "canonical": "https://www.estadao.com.br/politica/flavio-anuncia-carlos-portinho-como-candidato-ao-senado-no-rj-apos-operacoes-contra-castro-e-canella",
+      "variants": [
+        {
+          "requestedUrl": "https://www.estadao.com.br/politica/flavio-anuncia-carlos-portinho-como-candidato-ao-senado-no-rj-apos-operacoes-contra-castro-e-canella",
+          "calls": [
+            {
+              "url": "https://www.estadao.com.br/politica/flavio-anuncia-carlos-portinho-como-candidato-ao-senado-no-rj-apos-operacoes-contra-castro-e-canella",
+              "status": 301
+            },
+            {
+              "url": "https://www.estadao.com.br/politica/flavio-anuncia-carlos-portinho-como-candidato-ao-senado-no-rj-apos-operacoes-contra-castro-e-canella/",
+              "status": 200
+            }
+          ],
+          "seconds": 9.900985672997194,
+          "textHash": "c4ee12e24923735b2b0bb30000b45aadf0e2740bd329764daf0719a5e72fc557",
+          "bodyChars": 2887,
+          "published": "2026-07-14T23:48:36+00:00"
+        },
+        {
+          "requestedUrl": "https://www.estadao.com.br/politica/flavio-anuncia-carlos-portinho-como-candidato-ao-senado-no-rj-apos-operacoes-contra-castro-e-canella/",
+          "calls": [
+            {
+              "url": "https://www.estadao.com.br/politica/flavio-anuncia-carlos-portinho-como-candidato-ao-senado-no-rj-apos-operacoes-contra-castro-e-canella/",
+              "status": 200
+            }
+          ],
+          "seconds": 3.1142216799926246,
+          "textHash": "c4ee12e24923735b2b0bb30000b45aadf0e2740bd329764daf0719a5e72fc557",
+          "bodyChars": 2887,
+          "published": "2026-07-14T23:48:36+00:00"
+        }
+      ]
+    },
+    {
+      "canonical": "https://www.estadao.com.br/politica/wilson-witzel-desiste-de-candidatura-ao-governo-do-rio-para-apoiar-garotinho-npr",
+      "variants": [
+        {
+          "requestedUrl": "https://www.estadao.com.br/politica/wilson-witzel-desiste-de-candidatura-ao-governo-do-rio-para-apoiar-garotinho-npr",
+          "calls": [
+            {
+              "url": "https://www.estadao.com.br/politica/wilson-witzel-desiste-de-candidatura-ao-governo-do-rio-para-apoiar-garotinho-npr",
+              "status": 301
+            },
+            {
+              "url": "https://www.estadao.com.br/politica/wilson-witzel-desiste-de-candidatura-ao-governo-do-rio-para-apoiar-garotinho-npr/",
+              "status": 200
+            }
+          ],
+          "seconds": 11.015431163992616,
+          "textHash": "c8e09c2ec4f12248b50c36ba4ded0c2b745d76470866b0d3dc22e34229f51483",
+          "bodyChars": 2191,
+          "published": "2026-08-02T10:24:47+00:00"
+        },
+        {
+          "requestedUrl": "https://www.estadao.com.br/politica/wilson-witzel-desiste-de-candidatura-ao-governo-do-rio-para-apoiar-garotinho-npr/",
+          "calls": [
+            {
+              "url": "https://www.estadao.com.br/politica/wilson-witzel-desiste-de-candidatura-ao-governo-do-rio-para-apoiar-garotinho-npr/",
+              "status": 200
+            }
+          ],
+          "seconds": 3.015127372011193,
+          "textHash": "c8e09c2ec4f12248b50c36ba4ded0c2b745d76470866b0d3dc22e34229f51483",
+          "bodyChars": 2191,
+          "published": "2026-08-02T10:24:47+00:00"
+        }
+      ]
+    }
+  ]
+}

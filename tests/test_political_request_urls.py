@@ -144,3 +144,28 @@ def test_real_ponte_worker_comparison_uses_direct_request_and_preserves_identity
 ])
 def test_ponte_request_change_is_limited_to_verified_shape(url):
     assert publisher_article_request_url(url)==url
+
+
+def test_estadao_real_request_comparison_avoids_redirect_preserving_text_and_date():
+    import json
+    from pipeline.http_utils import canonicalize_url
+    proof=json.loads((Path(__file__).parent/'fixtures/political_estadao/request-form-comparison.json').read_text())
+    for case in proof['cases']:
+        old,new=case['variants']
+        assert [r['status'] for r in old['calls']]==[301,200]
+        assert [r['status'] for r in new['calls']]==[200]
+        assert old['textHash']==new['textHash'] and old['published']==new['published']
+        assert publisher_article_request_url(old['requestedUrl'])==new['requestedUrl']
+        assert canonicalize_url(new['requestedUrl'])==case['canonical']
+
+
+@pytest.mark.parametrize('url',[
+    'https://www.estadao.com.br/arc/outboundfeeds/sitemap/2026-08-09?outputType=xml',
+    'https://www.estadao.com.br/pf/dist/components/foo-bar',
+    'https://www.estadao.com.br/noticia.pdf',
+    'https://www.estadao.com.br/politica','https://www.estadao.com.br/',
+    'https://www.estadao.com.br.evil.example/politica/real-story',
+    'https://user@www.estadao.com.br/politica/real-story',
+])
+def test_estadao_request_normalization_excludes_non_article_or_other_hosts(url):
+    assert publisher_article_request_url(url)==url

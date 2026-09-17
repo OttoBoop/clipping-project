@@ -57,6 +57,12 @@ def publisher_article_request_url(url: str) -> str:
     # extra HTTP request and shared-domain wait without changing DB URL keys.
     if parsed.netloc == "www.diariodorio.com":
         return urlunsplit(parsed._replace(netloc="diariodorio.com"))
+    # Three real Estadão stories compared on 2026-09-17: slashless -> 301
+    # -> slash, with identical extracted text/date. Keep DB identities intact.
+    if (parsed.netloc == "www.estadao.com.br" and not parsed.query
+            and not parsed.path.startswith(("/arc/", "/pf/"))
+            and re.fullmatch(r"/(?:[^/.]+/)+[^/.]+-[^/.]+", parsed.path)):
+        return urlunsplit(parsed._replace(path=parsed.path + "/"))
     # Three real Ponte pages compared on the production worker, 2026-09-14:
     # slashless -> 301 -> slash, with equal extracted-text hashes. The stored
     # identity remains slashless; only the confirmed editorial request changes.
