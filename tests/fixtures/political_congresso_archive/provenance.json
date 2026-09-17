@@ -54,5 +54,19 @@
     "sha256": "54365286232038239099b071fbb483855519dcd19fd4c0c27020c873b191df3e",
     "queried": "2026-09-17T18:08:58.737172+00:00",
     "purpose": "real production-discovered HTTP404/public-AMP recovery case; development, not held-out evaluation"
+  },
+  {
+    "file": "real-empty-primary-121668.html.gz",
+    "url": "https://www.congressoemfoco.com.br/noticia/121668/erika-hilton-e-premiada-entre-melhores-deputados-por-juri-tecnico",
+    "sha256": "d2a4f09782d9fbf7e0b23e87602894bc6cf1d1d80f33aafde07f5f52f744b305",
+    "queried": "2026-09-17",
+    "purpose": "real empty primary/public-AMP production-discovered development case; not held-out recall"
+  },
+  {
+    "file": "real-amp-121668.html.gz",
+    "url": "https://www.congressoemfoco.com.br/amp/noticia/121668/erika-hilton-e-premiada-entre-melhores-deputados-por-juri-tecnico",
+    "sha256": "516bd702c605e852a6929f383df073cb66667bb8a8c2c08831968051ee126961",
+    "queried": "2026-09-17",
+    "purpose": "real empty primary/public-AMP production-discovered development case; not held-out recall"
   }
 ]

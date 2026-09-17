@@ -2084,7 +2084,8 @@ def test_jota_date_provenance_survives_when_article_has_no_target_match(service,
         assert c.execute("SELECT count(*) AS n FROM political_tasks WHERE job_id=%s AND kind='fetch'",(later['id'],)).fetchone()['n']==0
 
 
-def test_real_congresso_public_amp_reuses_checkpoint_after_timeout(service, monkeypatch):
+@pytest.mark.parametrize('mode', ['404_timeout', 'empty_primary', 'two_empty'])
+def test_real_congresso_public_amp_reuses_checkpoint_and_bounds_empty_responses(service, monkeypatch, mode):
     import gzip
     import json
     from pathlib import Path
@@ -2095,7 +2096,8 @@ def test_real_congresso_public_amp_reuses_checkpoint_after_timeout(service, monk
     monkeypatch.setattr(political_discovery, 'build_tasks', lambda *a, **k: [payload])
     job = service.start_job({'target_keys':['paes'], 'target_snapshots':TARGETS[:1], 'date_from':'2026-06-01', 'date_to':'2026-09-10'}, started_by='test', allowed_target_keys=['paes'])
     root = Path(__file__).parent/'fixtures/political_congresso_archive'
-    proof = next(r for r in json.loads((root/'provenance.json').read_text()) if r['file'] == 'real-amp-120758.html.gz')
+    filename = 'real-amp-120758.html.gz' if mode == '404_timeout' else 'real-amp-121668.html.gz'
+    proof = next(r for r in json.loads((root/'provenance.json').read_text()) if r['file'] == filename)
     amp = proof['url'];original = amp.replace('/amp/', '/')
     enqueue(service, monkeypatch, {'url':original, 'source_key':'congresso_em_foco', 'source_name':'Congresso em Foco', 'metadata':{}})
     calls = []
@@ -2103,13 +2105,20 @@ def test_real_congresso_public_amp_reuses_checkpoint_after_timeout(service, monk
         calls.append(url)
         r = requests.Response();r.url=url;r.encoding='utf-8'
         if url == original:
-            r.status_code=404;r._content=b'';return r
+            r.status_code=404 if mode == '404_timeout' else 200
+            r._content=b'' if mode == '404_timeout' else gzip.decompress((root/'real-empty-primary-121668.html.gz').read_bytes())
+            return r
         assert url == amp
         with service._connect() as c:
             cursor=c.execute("SELECT cursor FROM political_tasks WHERE job_id=%s AND kind='fetch'",(job['id'],)).fetchone()['cursor']
             assert cursor['publisher_alternative_url'] == amp
-        if calls == [original,amp]:raise requests.ReadTimeout('controlled transport failure; no fabricated article')
-        r.status_code=200;r._content=gzip.decompress((root/proof['file']).read_bytes());return r
+        if mode == '404_timeout' and calls == [original,amp]:raise requests.ReadTimeout('controlled transport failure; no fabricated article')
+        r.status_code=200;r._content=gzip.decompress((root/proof['file']).read_bytes())
+        if mode == 'two_empty':
+            from bs4 import BeautifulSoup
+            page=BeautifulSoup(r._content,'html.parser');page.select_one('#article-content').clear()
+            r._content=str(page).encode()
+        return r
     monkeypatch.setattr(service,'fetch',fetch)
     task=service.claim_task('fetch',worker_id='amp-first')
     assert service.process_task(task)['status']=='retryable'
@@ -2118,12 +2127,24 @@ def test_real_congresso_public_amp_reuses_checkpoint_after_timeout(service, monk
     try:
         monkeypatch.setattr(resumed,'fetch',fetch)
         result=resumed.process_task(resumed.claim_task('fetch',worker_id='amp-resumed'))
-        assert calls == [original,amp,amp]
+        assert calls == ([original,amp,amp] if mode == '404_timeout' else [original,amp])
+        if mode == 'two_empty':
+            assert result['status']=='gap' and result['errorType']=='body_missing'
+            with resumed._connect() as c:
+                cursor=c.execute('SELECT cursor FROM political_tasks WHERE id=%s',(task['id'],)).fetchone()['cursor']
+                assert cursor['empty_body_responses']==2
+            return
         assert result['status']=='no_match' and result['bodyOrigin']=='publisher_public_amp'
         with resumed._connect() as c:
             assert c.execute('SELECT count(*) n FROM political_articles').fetchone()['n']==0
             observation=c.execute('SELECT disposition,metadata FROM political_observations WHERE job_id=%s',(job['id'],)).fetchone()
             assert observation['disposition']=='no_match'
-            assert observation['metadata']['access_failure']['status']==404
-            assert observation['metadata']['publication_date_evidence']['precision']=='day'
+            if mode == '404_timeout':
+                assert observation['metadata']['access_failure']['status']==404
+                assert observation['metadata']['publication_date_evidence']['precision']=='day'
+            else:
+                evidence=observation['metadata']['publication_date_evidence']
+                assert evidence['method']=='congresso_primary_metadata_with_amp_body'
+                assert evidence['precision']=='timestamp'
+                assert evidence['primary_date'].startswith('2026-08-26T18:22:29')
     finally:resumed.close()

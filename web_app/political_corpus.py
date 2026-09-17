@@ -1666,6 +1666,27 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 kwargs["allowed_hosts"] = ("istoe.com.br", "www.istoe.com.br")
             return self.fetch(url, **kwargs)
         fetch_url = (task["cursor"].get("publisher_alternative_url") if task["source_key"] == "congresso_em_foco" else None) or task["cursor"].get("resolved_url") or candidate["url"]
+        if (task["source_key"] == "congresso_em_foco" and task["cursor"].get("empty_body_responses")
+                and not task["cursor"].get("publisher_alternative_url")
+                and urlparse(fetch_url).hostname == "www.congressoemfoco.com.br"
+                and re.fullmatch(r"/(?:noticia|artigo|coluna|informativo)/\d+/[^/?]+", urlparse(fetch_url).path)):
+            # Use the next permitted attempt on the public alternate edition,
+            # instead of requesting the same empty primary page again.
+            changes = {"publisher_alternative_url": "https://www.congressoemfoco.com.br/amp" + urlparse(fetch_url).path,
+                "publisher_alternative_original_url": canonicalize_url(fetch_url),
+                "publisher_alternative_reason": "primary_empty_editorial_body"}
+            with self._connect() as conn:
+                observation = conn.execute("SELECT metadata FROM political_observations WHERE job_id=%s AND observed_url=%s",
+                    (task["job_id"], candidate["url"])).fetchone()
+            metadata = (observation or {}).get("metadata") or {}
+            if metadata.get("html_object_key") and metadata.get("html_hash"):
+                previous = extract_article(self._read_text(metadata["html_object_key"], metadata["html_hash"]), fetch_url)
+                if (previous.get("published_at") and canonicalize_url(previous.get("canonical_url") or "") == canonicalize_url(fetch_url)):
+                    changes.update(publisher_alternative_primary_date=previous["published_at"],
+                        publisher_alternative_primary_html_key=metadata["html_object_key"],
+                        publisher_alternative_primary_html_hash=metadata["html_hash"])
+            self._checkpoint_fetch(task, changes)
+            fetch_url = changes["publisher_alternative_url"]
         if is_google_intermediary(fetch_url):
             with self._connect() as conn:
                 resolved = conn.execute("SELECT resolved_url FROM political_resolved_urls WHERE original_url=%s", (fetch_url,)).fetchone()
@@ -1877,7 +1898,19 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 body_origin = "publisher_public_amp"
                 candidate = {**candidate, "metadata": {**(candidate.get("metadata") or {}),
                     "publisher_access_alternative": {"url": task["cursor"]["publisher_alternative_url"],
-                        "original_url": task["cursor"]["publisher_alternative_original_url"], "reason": "primary_http_404"}}}
+                        "original_url": task["cursor"]["publisher_alternative_original_url"],
+                        "reason": task["cursor"].get("publisher_alternative_reason")}}}
+                primary_date = parse_date(task["cursor"].get("publisher_alternative_primary_date"))
+                amp_date = parse_date(extracted.get("published_at"))
+                if primary_date:
+                    if amp_date and primary_date.astimezone(ZONE).date() != amp_date.astimezone(ZONE).date():
+                        raise FetchProblem("congresso_amp_publication_date_conflict", retryable=False)
+                    extracted["published_at"] = primary_date.isoformat()
+                    extracted["publication_date_evidence"] = {
+                        "method": "congresso_primary_metadata_with_amp_body", "precision": "timestamp",
+                        "primary_date": primary_date.isoformat(), "amp_date": str(amp_date or ""),
+                        "primary_html_key": task["cursor"].get("publisher_alternative_primary_html_key"),
+                        "primary_html_hash": task["cursor"].get("publisher_alternative_primary_html_hash")}
             body = str(extracted.get("full_text") or "")
             title = str(extracted.get("title") or title)
             page_date = parse_date(extracted.get("published_at"))
