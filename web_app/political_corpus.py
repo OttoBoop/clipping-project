@@ -1796,7 +1796,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             with self._connect() as conn:
                 self._lock_task(conn, task)
             domain_deferred = False
-            historical = candidate.get("recovery_html") if not task["cursor"].get("recovery_html_used") else None
+            historical = task["cursor"].get("estadao_liveblog_html") or (candidate.get("recovery_html") if not task["cursor"].get("recovery_html_used") else None)
             try:
                 if historical:
                     try:
@@ -1907,6 +1907,45 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 raise problem
             with timed_operation("extraction"):
                 extracted = extract_article(response.text, final_url)
+            if task["source_key"] == "estadao":
+                from . import political_estadao_liveblog as liveblog
+                try:
+                    live_state = liveblog.initial(response.text, final_url)
+                    if live_state:
+                        first_date = parse_date(live_state["published_at"])
+                        if first_date and not job["date_from"] <= first_date.astimezone(ZONE).date() <= job["date_to"]:
+                            return self._finish_fetch_outside_window(task, published=first_date, date_status="page_verified")
+                        checkpoint = task["cursor"].get("estadao_liveblog_state")
+                        if checkpoint:
+                            saved_state = json.loads(self._read_discovery_response(checkpoint["key"], checkpoint["hash"]))
+                            if saved_state["article_id"] != live_state["article_id"]:
+                                raise ValueError("estadao_liveblog_checkpoint_identity_changed")
+                            live_state = saved_state
+                            if live_state["offset"] < live_state["total"]:
+                                page_url = liveblog.next_url(live_state)
+                                page = article_fetch(page_url)
+                                if page.status_code >= 400:
+                                    retry_at = retry_after_deadline(page.headers.get("Retry-After"))
+                                    raise FetchProblem(f"http_{page.status_code}", retryable=page.status_code in {408,425,429} or page.status_code>=500,
+                                        status_code=page.status_code,retry_after=remaining_seconds(retry_at) if retry_at else 0)
+                                live_state = liveblog.append(live_state, page.json())
+                                page_hash,page_key = self._store_discovery_response(page.content)
+                                live_state["receipts"] = live_state["receipts"] + [{"url":page_url,"hash":page_hash,"key":page_key}]
+                        if not task["cursor"].get("estadao_liveblog_html"):
+                            initial_hash,initial_key = self._store_html(response.text)
+                            self._checkpoint_fetch(task,{"estadao_liveblog_html":{"hash":initial_hash,"key":initial_key,"url":final_url}})
+                        state_hash,state_key = self._store_discovery_response(_json(live_state).encode())
+                        self._checkpoint_fetch(task,{"estadao_liveblog_state":{"hash":state_hash,"key":state_key}})
+                        if live_state["offset"] < live_state["total"]:
+                            with self._connect() as conn:
+                                self._finish(conn,task,"queued",result={"liveblogUpdates":live_state["offset"],"liveblogTotal":live_state["total"]})
+                                # Successful pagination is progress, not a failed attempt.
+                                conn.execute("UPDATE political_tasks SET attempts=0 WHERE id=%s",(task["id"],))
+                            return {"taskId":task["id"],"status":"continue"}
+                        extracted = liveblog.article(live_state)
+                        body_origin = "publisher_public_liveblog"
+                except ValueError as exc:
+                    raise FetchProblem(str(exc),retryable=False) from exc
             if task["source_key"] == "congresso_em_foco" and task["cursor"].get("publisher_alternative_url"):
                 if canonicalize_url(str(extracted.get("canonical_url") or "")) != task["cursor"]["publisher_alternative_original_url"]:
                     raise FetchProblem("congresso_amp_unverified_identity", retryable=False)
@@ -1949,7 +1988,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             candidate = _confirmed_publisher(candidate, final_url)
             candidate["metadata"].update({key: extracted[key] for key in
                 ("extraction_method", "extraction_version", "text_extent", "restriction_evidence", "content_format",
-                 "publication_date_evidence") if key in extracted})
+                 "publication_date_evidence", "liveblog_provenance") if key in extracted})
             candidate["metadata"]["body_origin"] = body_origin
             if task["cursor"].get("estadao_public_original"):
                 candidate["metadata"]["publisher_resolution"] = task["cursor"]["estadao_public_original"]

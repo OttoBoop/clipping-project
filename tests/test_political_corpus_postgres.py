@@ -2172,7 +2172,7 @@ def test_estadao_public_resolution_is_committed_before_original_timeout(service,
         c.execute("UPDATE political_tasks SET next_attempt_at=NOW() WHERE id=%s",(task['id'],))
     assert len(calls)==2
     retry=service.claim_task('fetch',worker_id='estadao-resume');service.process_task(retry)
-    assert len(calls)==3 and calls[-1]==row['cursor']['resolved_url']
+    assert len(calls)==3 and calls[-1].rstrip('/')==row['cursor']['resolved_url']
 
 
 def test_estadao_historical_snack_is_not_reused_as_the_original_article(service,monkeypatch):
@@ -2191,3 +2191,29 @@ def test_estadao_historical_snack_is_not_reused_as_the_original_article(service,
     with service._connect() as c:row=c.execute('SELECT * FROM political_tasks WHERE id=%s',(task['id'],)).fetchone()
     assert len(calls)==1 and row['status']=='retryable'
     assert row['cursor']['recovery_html_used'] is True and row['error_type']!='body_missing'
+
+
+def test_estadao_liveblog_resumes_pages_and_does_not_advance_on_storage_failure(service,monkeypatch):
+    import gzip,json
+    from pathlib import Path
+    from web_app import political_discovery
+    f=Path(__file__).parent/'fixtures/political_estadao';m=json.loads((f/'liveblog-manifest.json').read_text());raw=gzip.decompress((f/'real-liveblog.html.gz').read_bytes());page2=gzip.decompress((f/'real-liveblog-page2.json.gz').read_bytes())
+    monkeypatch.setattr(political_discovery,'build_tasks',lambda *a,**k:[{'source_key':'estadao','strategy':'expanded_sitemap','date_from':'2026-08-09','date_to':'2026-08-09','cursor':{}}])
+    job=service.start_job({'target_keys':['paes'],'target_snapshots':TARGETS,'source_keys':['estadao'],'collection_profile':'psd_rj_2026','date_from':'2026-08-09','date_to':'2026-08-09'},started_by='test',allowed_target_keys=['paes'])
+    enqueue(service,monkeypatch,{'url':m['url'],'source_key':'estadao','source_name':'Estadão','metadata':{}})
+    calls=[]
+    def fetch(url,**kw):
+        calls.append(url);r=requests.Response();r.url=url;r.status_code=200;r.encoding='utf-8';r._content=page2 if '/pf/api/' in url else raw;return r
+    monkeypatch.setattr(service,'fetch',fetch)
+    t=service.claim_task('fetch',worker_id='liveblog');assert service.process_task(t)['status']=='continue'
+    with service._connect() as c:first=c.execute('SELECT cursor FROM political_tasks WHERE id=%s',(t['id'],)).fetchone()['cursor']
+    upload=service.store.upload_bytes;monkeypatch.setattr(service.store,'upload_bytes',lambda *a,**k:False)
+    t=service.claim_task('fetch',worker_id='liveblog');assert service.process_task(t)['status']=='retryable'
+    with service._connect() as c:
+        row=c.execute('SELECT cursor FROM political_tasks WHERE id=%s',(t['id'],)).fetchone()['cursor'];assert row['estadao_liveblog_state']==first['estadao_liveblog_state']
+        c.execute('UPDATE political_tasks SET next_attempt_at=NOW() WHERE id=%s',(t['id'],))
+    monkeypatch.setattr(service.store,'upload_bytes',upload)
+    t=service.claim_task('fetch',worker_id='liveblog-resumed');assert service.process_task(t)['status']=='continue'
+    with service._connect() as c:ref=c.execute('SELECT cursor FROM political_tasks WHERE id=%s',(t['id'],)).fetchone()['cursor']['estadao_liveblog_state']
+    state=json.loads(service._read_discovery_response(ref['key'],ref['hash']));assert state['offset']==20
+    assert len(calls)==3 and calls[1:]==[m['page2']['url']]*2
