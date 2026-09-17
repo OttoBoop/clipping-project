@@ -24,3 +24,16 @@ def test_real_estadao_formats_preserve_editorial_paragraphs(row):
  normalize=lambda s:' '.join(s.split())
  assert all(normalize(p) in normalize(body) for p in paragraphs)
  assert 'Copyright' not in body and 'PUBLICIDADE' not in body
+
+
+def test_real_non_amp_webstory_uses_its_own_public_state():
+ from web_app.political_estadao_webstory import extract
+ import re
+ m=json.loads((ROOT/'state-webstory-manifest.json').read_text());raw=gzip.decompress((ROOT/'real-state-webstory.html.gz').read_bytes()).decode()
+ assert hashlib.sha256(raw.encode()).hexdigest()==m['htmlHash']
+ a=extract_for_publisher(raw,m['url']);assert a['published_at']==m['date'] and a['content_format']=='web_story'
+ match=re.search(r'Fusion.globalContent\s*=\s*',raw);data=json.JSONDecoder().raw_decode(raw[match.end():])[0]
+ paragraphs=[x['content'] for x in data['content_elements'] if x.get('type')=='text' and x.get('content') and len(x['content'])>100 and '<a' not in x['content']]
+ assert len(paragraphs)==5 and all(x in a['full_text'] for x in paragraphs)
+ assert 'Leia Mais' not in a['full_text'] and 'PF detectou pagamento' not in a['full_text']
+ assert extract(raw,m['url']+'-another-page') is None
