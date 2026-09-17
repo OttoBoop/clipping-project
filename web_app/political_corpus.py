@@ -377,6 +377,10 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         priority = 0 if kind == "discovery" and payload.get("strategy") == "google_news" else 10
         if kind == "fetch" and source_key == "g1" and re.match(r"^/(?:rj|politica|eleicoes)(?:/|$)", urlparse(str(payload.get("url") or "")).path):
             priority = 20
+        if kind == "fetch" and source_key == "estadao" and re.match(r"^/(?:politica|opiniao)(?:/|$)", urlparse(str(payload.get("url") or "")).path):
+            # Prioritize useful editorial sections without filtering out any
+            # other section or requiring a name in a headline/URL.
+            priority = 20
         if kind == "fetch" and (payload.get("metadata") or {}).get("partition_status") == "requested_calendar_partition":
             priority = 20
         conn.execute("""INSERT INTO political_tasks(job_id,kind,source_key,dedupe_key,payload,cursor,request_domain,priority)
@@ -1846,6 +1850,16 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 self._save_metadata_attempt(task, job, task.get("_verified_candidate") or candidate, problem)
                 raise problem
             final_url = canonicalize_url(response.url)
+            if task["source_key"] == "estadao" and not task["cursor"].get("estadao_public_original"):
+                from .political_estadao import public_original
+                original = public_original(response.text, final_url)
+                if original:
+                    original_hash, original_key = self._store_html(response.text)
+                    self._checkpoint_fetch(task, {"resolved_url": canonicalize_url(original["url"]),
+                        "estadao_public_original": {**original, "html_hash": original_hash, "html_object_key": original_key}})
+                    # Re-enter through saved-object lookup; retries and storage
+                    # failures preserve the public resolution in the lease cursor.
+                    return self._fetch_article(task)
             if is_google_intermediary(final_url):
                 from . import political_discovery
                 resolver = getattr(political_discovery, "resolve_google_redirect", None)
@@ -1936,6 +1950,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 ("extraction_method", "extraction_version", "text_extent", "restriction_evidence", "content_format",
                  "publication_date_evidence") if key in extracted})
             candidate["metadata"]["body_origin"] = body_origin
+            if task["cursor"].get("estadao_public_original"):
+                candidate["metadata"]["publisher_resolution"] = task["cursor"]["estadao_public_original"]
             candidate["metadata"].update(task.get("_date_probe_evidence") or {})
             # Preserve confirmed metadata if immutable-object storage fails after
             # extraction; the generic retry handler must not revert to RSS dates.

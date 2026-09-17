@@ -2148,3 +2148,28 @@ def test_real_congresso_public_amp_reuses_checkpoint_and_bounds_empty_responses(
                 assert evidence['precision']=='timestamp'
                 assert evidence['primary_date'].startswith('2026-08-26T18:22:29')
     finally:resumed.close()
+
+
+def test_estadao_public_resolution_is_committed_before_original_timeout(service,monkeypatch):
+    import gzip,json
+    from pathlib import Path
+    f=Path(__file__).parent/'fixtures/political_estadao';m=json.loads((f/'manifest.json').read_text());raw=gzip.decompress((f/'real-snack.html.gz').read_bytes())
+    start(service,monkeypatch,tasks=[{'source_key':'estadao','strategy':'expanded_sitemap','date_from':'2026-06-01','date_to':'2026-06-02','cursor':{}}])
+    candidate={'url':m['url'],'title':'STF mantém anulação de condenação de Anthony Garotinho','source_key':'estadao','source_name':'Estadão','metadata':{}}
+    enqueue(service,monkeypatch,candidate)
+    calls=[]
+    def fetch(url,**kwargs):
+        calls.append(url)
+        if '/em-alta/' in url:
+            r=requests.Response();r.status_code=200;r.url=url;r._content=raw;r.encoding='utf-8';return r
+        raise requests.ReadTimeout('Controlled interruption after actual public resolution')
+    monkeypatch.setattr(service,'fetch',fetch)
+    task=service.claim_task('fetch',worker_id='estadao-resolve');service.process_task(task)
+    with service._connect() as c:
+        row=c.execute('SELECT * FROM political_tasks WHERE id=%s',(task['id'],)).fetchone()
+        assert row['status']=='retryable' and '/em-alta/' not in row['cursor']['resolved_url']
+        proof=row['cursor']['estadao_public_original'];assert service._read_text(proof['html_object_key'],proof['html_hash'])==raw.decode()
+        c.execute("UPDATE political_tasks SET next_attempt_at=NOW() WHERE id=%s",(task['id'],))
+    assert len(calls)==2
+    retry=service.claim_task('fetch',worker_id='estadao-resume');service.process_task(retry)
+    assert len(calls)==3 and calls[-1]==row['cursor']['resolved_url']

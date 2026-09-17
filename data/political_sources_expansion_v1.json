@@ -16,10 +16,9 @@
         "psd_rj_2026"
       ],
       "strategies": [
-        "expanded",
-        "google_news"
+        "expanded"
       ],
-      "google_policy": "on_direct_gap",
+      "google_policy": "never",
       "discovery_priority_batch": 1,
       "legacy_source_keys": [
         "publisher:estadao.com.br"
@@ -32,7 +31,7 @@
           "evidence_url": "https://www.estadao.com.br/robots.txt"
         }
       ],
-      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text. Google is disabled for the authorized direct-only collector. Daily partitions include three tail days; all sections reach body matching and the article publication date is authoritative.",
       "evidence": [
         {
           "url": "https://estadao.com.br/robots.txt",
@@ -56,7 +55,7 @@
         }
       ],
       "verified_at": "2026-09-14",
-      "catalog_version": 1
+      "catalog_version": 2
     },
     {
       "key": "istoe",

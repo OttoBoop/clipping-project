@@ -55,7 +55,7 @@ def test_all_38_active_inventory_products_and_audited_nationals_have_scoped_rout
     rows = expanded.load_expanded_sources()
     assert len(rows) == 70 and len({r['key'] for r in rows}) == 70
     assert sum('audit_state' in r for r in rows) == 42
-    assert all(r['allowed_profiles'] == ['psd_rj_2026'] and r['google_policy'] == ('never' if r['key'] in {'istoe', 'congresso_em_foco'} else 'on_direct_gap') for r in rows)
+    assert all(r['allowed_profiles'] == ['psd_rj_2026'] and r['google_policy'] == ('never' if r['key'] in {'istoe', 'congresso_em_foco', 'estadao'} else 'on_direct_gap') for r in rows)
     assert all(r['evidence'] and (r['mechanisms'] or r['strategies']==['istoe_direct_v1']) and r['legacy_source_keys'] for r in rows)
     assert {'exame', 'congresso_em_foco', 'nf_noticias', 'elizeu_pires', 'ultima_hora_online', 'estadao', 'istoe', 'crusoe'} <= {r['key'] for r in rows}
     assert 'publisher:congressoemfoco.uol.com.br' in source('congresso_em_foco')['legacy_source_keys']
@@ -457,3 +457,12 @@ def test_calendar_guard_retains_late_estadao_leaf_and_unknown_jota_paths():
     assert calls == [run['url']]
     assert expanded._partition('https://sitemap.jota.info/posts/2015/sitemap-post-9-2026.xml') is None
     assert expanded._partition('https://sitemap.jota.info/sitemap-post-9.xml') is None
+
+
+def test_estadao_direct_only_has_no_google_initial_or_failure_fallback():
+    snapshots=[{'key':str(i),'display_name':'Person '+str(i)} for i in range(35)]
+    s=source('estadao')
+    tasks=core.build_tasks(snapshots,'2026-06-01','2026-09-14',source_keys=['estadao'],source_snapshots=[s])
+    assert len(tasks)==1 and tasks[0]['strategy']=='expanded_sitemap'
+    assert s['google_policy']=='never'
+    assert core.fallback_tasks({**tasks[0],'source_snapshot':s},snapshots)==[]
