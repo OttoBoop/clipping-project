@@ -2217,3 +2217,29 @@ def test_estadao_liveblog_resumes_pages_and_does_not_advance_on_storage_failure(
     with service._connect() as c:ref=c.execute('SELECT cursor FROM political_tasks WHERE id=%s',(t['id'],)).fetchone()['cursor']['estadao_liveblog_state']
     state=json.loads(service._read_discovery_response(ref['key'],ref['hash']));assert state['offset']==20
     assert len(calls)==3 and calls[1:]==[m['page2']['url']]*2
+
+
+def test_estadao_public_uva_keeps_html_checkpoint_on_api_timeout(service,monkeypatch):
+    import gzip,json
+    from pathlib import Path
+    from web_app import political_discovery
+    f=Path(__file__).parent/'fixtures/political_estadao';m=json.loads((f/'uva-manifest.json').read_text());raw=gzip.decompress((f/'real-uva.html.gz').read_bytes());data=gzip.decompress((f/'real-uva-data.json.gz').read_bytes())
+    monkeypatch.setattr(political_discovery,'build_tasks',lambda *a,**k:[{'source_key':'estadao','strategy':'expanded_sitemap','date_from':'2026-08-09','date_to':'2026-08-09','cursor':{}}])
+    job=service.start_job({'target_keys':['paes'],'target_snapshots':TARGETS,'source_keys':['estadao'],'collection_profile':'psd_rj_2026','date_from':'2026-08-09','date_to':'2026-08-09'},started_by='test',allowed_target_keys=['paes'])
+    enqueue(service,monkeypatch,{'url':m['url'],'source_key':'estadao','source_name':'Estadão','metadata':{}})
+    calls=[]
+    def fetch(url,**kw):
+        calls.append(url)
+        if len(calls)==2:raise requests.Timeout('actual API transport failure case')
+        r=requests.Response();r.url=url;r.status_code=200;r.encoding='utf-8';r._content=data if '/public/pages/' in url else raw;return r
+    monkeypatch.setattr(service,'fetch',fetch)
+    t=service.claim_task('fetch',worker_id='uva');assert service.process_task(t)['status']=='retryable'
+    with service._connect() as c:
+        checkpoint=c.execute('SELECT cursor FROM political_tasks WHERE id=%s',(t['id'],)).fetchone()['cursor'];assert checkpoint['estadao_uva_html']['hash']==m['htmlHash']
+        c.execute('UPDATE political_tasks SET next_attempt_at=NOW() WHERE id=%s',(t['id'],))
+    t=service.claim_task('fetch',worker_id='uva-resumed');result=service.process_task(t)
+    with service._connect() as c:
+        row=c.execute('SELECT status,result,cursor FROM political_tasks WHERE id=%s',(t['id'],)).fetchone()
+        assert row['status']=='complete' and row['result']['disposition']=='no_match'
+        ref=row['cursor']['estadao_uva_data'];assert service._read_discovery_response(ref['key'],ref['hash'])==data
+    assert len(calls)==3 and calls[1:]==[m['apiURL']]*2

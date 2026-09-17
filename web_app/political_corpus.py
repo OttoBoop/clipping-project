@@ -1796,7 +1796,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             with self._connect() as conn:
                 self._lock_task(conn, task)
             domain_deferred = False
-            historical = task["cursor"].get("estadao_liveblog_html") or (candidate.get("recovery_html") if not task["cursor"].get("recovery_html_used") else None)
+            historical = task["cursor"].get("estadao_liveblog_html") or task["cursor"].get("estadao_uva_html") or (candidate.get("recovery_html") if not task["cursor"].get("recovery_html_used") else None)
             try:
                 if historical:
                     try:
@@ -1909,7 +1909,32 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 extracted = extract_article(response.text, final_url)
             if task["source_key"] == "estadao":
                 from . import political_estadao_liveblog as liveblog
+                from . import political_estadao_uva as uva
                 try:
+                    uva_url = uva.announced_url(response.text, final_url)
+                    if uva_url:
+                        if not task["cursor"].get("estadao_uva_html"):
+                            initial_hash,initial_key = self._store_html(response.text)
+                            self._checkpoint_fetch(task,{"estadao_uva_html":{"hash":initial_hash,"key":initial_key,"url":final_url}})
+                        checkpoint = task["cursor"].get("estadao_uva_data")
+                        if checkpoint:
+                            if checkpoint["url"] != uva_url:
+                                raise ValueError("estadao_uva_checkpoint_identity_changed")
+                            uva_data = json.loads(self._read_discovery_response(checkpoint["key"],checkpoint["hash"]))
+                        else:
+                            page = article_fetch(uva_url)
+                            if page.status_code >= 400:
+                                retry_at = retry_after_deadline(page.headers.get("Retry-After"))
+                                raise FetchProblem(f"http_{page.status_code}",retryable=page.status_code in {408,425,429} or page.status_code>=500,
+                                    status_code=page.status_code,retry_after=remaining_seconds(retry_at) if retry_at else 0)
+                            uva_data = page.json()
+                            uva.editorial(uva_data)
+                            page_hash,page_key = self._store_discovery_response(page.content)
+                            checkpoint = {"url":uva_url,"hash":page_hash,"key":page_key}
+                            self._checkpoint_fetch(task,{"estadao_uva_data":checkpoint})
+                        extracted = {**extracted,**uva.editorial(uva_data)}
+                        extracted["uva_provenance"]["response"] = checkpoint
+                        body_origin = "publisher_public_uva"
                     live_state = liveblog.initial(response.text, final_url)
                     if live_state:
                         first_date = parse_date(live_state["published_at"])
@@ -1988,7 +2013,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             candidate = _confirmed_publisher(candidate, final_url)
             candidate["metadata"].update({key: extracted[key] for key in
                 ("extraction_method", "extraction_version", "text_extent", "restriction_evidence", "content_format",
-                 "publication_date_evidence", "liveblog_provenance") if key in extracted})
+                 "publication_date_evidence", "liveblog_provenance", "uva_provenance", "format_provenance") if key in extracted})
             candidate["metadata"]["body_origin"] = body_origin
             if task["cursor"].get("estadao_public_original"):
                 candidate["metadata"]["publisher_resolution"] = task["cursor"]["estadao_public_original"]
