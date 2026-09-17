@@ -1,0 +1,5 @@
+{
+  "responseURL": "https://www.estadao.com.br/pf/api/v3/content/fetch/context?query=%7B%22requestUri%22%3A%22%2Fesportes%2Ffutebol%2Fao-vivo-acompanhe-sorteio-quartas-de-final-copa-do-brasil-2026%2F%22%2C%22params%22%3A%22%7B%5C%22offset%5C%22%3A10%2C%5C%22size%5C%22%3A10%7D%22%7D&_website=estadao",
+  "responseHash": "b467aca45c82fe62004c4dd4e7a62388b59029546dd75694a038a41c0bfc005c",
+  "rawEvidence": "/home/otavio/Documents/vscode/clipping-live-operations/2026-09-17-estadao-direct/evidence/b467aca45c82fe62004c4dd4e7a62388b59029546dd75694a038a41c0bfc005c.gz"
+}

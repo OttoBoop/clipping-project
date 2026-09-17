@@ -1,10 +1,16 @@
 """Public, identity-checked liveblog pagination; one ten-update page per lease."""
-import json,re
+import json,re,hashlib
 from urllib.parse import urlparse,urljoin,urlencode
 from pipeline.http_utils import html_to_text
 from .political_editorial_extraction import _date
 
-VERSION='estadao-liveblog-public-1'
+VERSION='estadao-liveblog-public-2'
+
+def _update_identity(row):
+    # The publisher's millisecond IDs collide on distinct real updates.
+    # These fields also exist in v1 checkpoints, so resumption stays compatible.
+    fields={key:row.get(key) for key in ['id','time','date','hour','content_elements']}
+    return hashlib.sha256(json.dumps(fields,ensure_ascii=False,sort_keys=True).encode()).hexdigest()
 
 def _identity(url):
     p=urlparse(url)
@@ -29,11 +35,11 @@ def append(state,data):
         raise ValueError('estadao_liveblog_page_identity_or_total_changed')
     rows=data.get('live_content_elements')
     if not isinstance(rows,list) or len(rows)>10:raise ValueError('estadao_liveblog_invalid_batch')
-    ids=[str(r.get('id') or '') for r in rows];seen={str(r['id']) for r in state['updates']}
-    if any(not x or x in seen for x in ids) or len(set(ids))!=len(ids):raise ValueError('estadao_liveblog_repeated_update')
+    ids=[_update_identity(r) for r in rows];seen={_update_identity(r) for r in state['updates']}
+    if any(not r.get('id') for r in rows) or any(x in seen for x in ids) or len(set(ids))!=len(ids):raise ValueError('estadao_liveblog_repeated_update')
     if not rows and state['offset']<state['total']:raise ValueError('estadao_liveblog_premature_end')
     if state['total']>5000:raise ValueError('estadao_liveblog_update_limit')
-    state={**state,'updates':state['updates']+[{'id':r['id'],'time':r.get('time'),'date':r.get('date'),'hour':r.get('hour'),'content_elements':r.get('content_elements') or []} for r in rows], 'offset':state['offset']+len(rows)}
+    state={**state,'updates':state['updates']+[{'id':r['id'],'time':r.get('time'),'date':r.get('date'),'hour':r.get('hour'),'share_url':r.get('share_url'),'content_elements':r.get('content_elements') or []} for r in rows], 'offset':state['offset']+len(rows)}
     if state['offset']>state['total']:raise ValueError('estadao_liveblog_total_exceeded')
     return state
 
@@ -64,4 +70,4 @@ def article(state):
         'text_extent':'partial' if not complete else 'available' if free and not unhandled else 'unknown',
         'restriction_evidence':[] if free else ['public_liveblog:content_code='+state['restriction']],
         'content_format':'liveblog','publication_date_evidence':{'method':'public_first_publish_date','precision':'timestamp'},
-        'liveblog_provenance':{'updates_retained':state['offset'],'reported_total':state['total'],'unhandled_element_types':sorted(unhandled),'receipts':state['receipts']}}
+        'liveblog_provenance':{'updates_retained':state['offset'],'reported_total':state['total'],'identity_method':'public_update_content_hash','unhandled_element_types':sorted(unhandled),'receipts':state['receipts']}}

@@ -18,3 +18,10 @@ def test_real_liveblog_requires_own_identity_and_historical_count():
  with pytest.raises(ValueError):live.append(state,{**second,'_id':'different'})
  with pytest.raises(ValueError):live.append(state,{**second,'total':70})
  with pytest.raises(ValueError):live.append(state,{**second,'live_content_elements':[]})
+
+
+def test_real_updates_with_same_millisecond_id_are_not_the_same_update():
+ data=json.loads(gzip.decompress((P/'real-liveblog-id-collision.json.gz').read_bytes()));state=data['state'];page=data['page'];ids=[r['id'] for r in page['live_content_elements']];assert len(ids)==10 and len(set(ids))==9
+ final=live.append(state,page);assert final['offset']==20 and len(final['updates'])==20
+ body=live.article(final)['full_text'];assert 'Vai começar!' in body and 'Tecnologia como novidade' in body
+ with pytest.raises(ValueError):live.append(state,{**page,'live_content_elements':[page['live_content_elements'][0]]*10})
