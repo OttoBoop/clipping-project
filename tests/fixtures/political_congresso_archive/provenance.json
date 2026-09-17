@@ -47,5 +47,12 @@
     "sha256": "8c7f4c4d20f0c53f13ad00dcd4552b73189ded0fb4b57402153ffc66e9c2150a",
     "queried": "2026-09-17",
     "purpose": "real development fixtures; not evaluation references"
+  },
+  {
+    "file": "real-amp-120758.html.gz",
+    "url": "https://www.congressoemfoco.com.br/amp/noticia/120758/pl-lanca-candidatura-de-flavio-bolsonaro-em-convencao-neste-sabado",
+    "sha256": "54365286232038239099b071fbb483855519dcd19fd4c0c27020c873b191df3e",
+    "queried": "2026-09-17T18:08:58.737172+00:00",
+    "purpose": "real production-discovered HTTP404/public-AMP recovery case; development, not held-out evaluation"
   }
 ]

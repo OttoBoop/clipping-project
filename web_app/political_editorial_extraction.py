@@ -97,6 +97,7 @@ class _EditorialParser(HTMLParser):
         self.fields: dict[str, list[str]] = {}
         self.json_ld: list[str] = []
         self.restrictions: list[str] = []
+        self.congresso_amp = False
 
     def _body_start(self, attrs: dict) -> bool:
         classes = set(attrs.get("class", "").split())
@@ -108,6 +109,9 @@ class _EditorialParser(HTMLParser):
             return ("grid_8" in classes and bool(self.stack)
                     and "conteudoNoticia" in self.stack[-1][1].get("class", "").split())
         if self.host == "congressoemfoco.com.br":
+            if attrs.get("id") == "article-content" and any("article-container" in item[1].get("class", "").split() for item in self.stack):
+                self.congresso_amp = True
+                return True
             return "html-content" in classes and any("asset__content" in item[1].get("class", "").split() for item in self.stack)
         if self.host == "generonumero.media":
             return ("content" in classes and bool(self.stack)
@@ -139,6 +143,8 @@ class _EditorialParser(HTMLParser):
         skip = skip or bool(re.search(r"display\s*:\s*none", attrs.get("style", ""), re.I))
         if self.host == "istoe.com.br":
             skip = skip or any(c.startswith("code-block") for c in classes)
+        if self.host == "congressoemfoco.com.br" and self.congresso_amp:
+            skip = skip or bool(classes & {"top-ad", "bottom-ad", "inner-item", "label-ad"}) or tag in {"amp-ad", "amp-iframe"}
         blocked = parent_blocked or skip
         if body and ("paywall-offer" in classes or "data-paywall-truncated" in attrs):
             self.restrictions.append("editorial_body:explicit_subscription_gate")
@@ -164,6 +170,8 @@ class _EditorialParser(HTMLParser):
             if tag == "time" and attrs.get("datetime"):
                 self.fields.setdefault("time", []).append(attrs["datetime"])
         elif self.host == "istoe.com.br" and "post-date" in classes:
+            field = "publication_visible"
+        elif self.host == "congressoemfoco.com.br" and "publication-date" in classes and any(item[1].get("id") == "article-header" for item in self.stack):
             field = "publication_visible"
         elif self.host == "ultimahoraonline.com.br" and "post-detalhe-data" in classes:
             field = "publication_visible"
@@ -293,6 +301,14 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
         parser.restrictions.append("editorial_body:complete_story_in_print_edition")
     extent = "absent" if not body else "partial" if explicit_gate else "unknown" if restricted else "available"
     evidence = {}
+    if host == "congressoemfoco.com.br" and parser.congresso_amp:
+        visible = " ".join(parser.fields.get("publication_visible", []))
+        stamp = re.fullmatch(r"\s*(\d{1,2})/(\d{1,2})/(\d{4})\s*", visible)
+        if not published and stamp:
+            day, month, year = stamp.groups()
+            published = _date(f"{int(day):02d}/{int(month):02d}/{year}")
+        evidence = {"publication_date_evidence": {"method": "congresso_amp_header" if published else "missing_original_post_date",
+                    "precision": "day", "visible": visible, "selector": "#article-header .publication-date"}}
     if host == "istoe.com.br":
         visible = " ".join(parser.fields.get("publication_visible", []))
         stamp = re.search(r"(\d{2})/(\d{2})/(\d{2,4})\s*-\s*(\d{1,2})h(\d{2})", visible)
@@ -313,7 +329,7 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
         "full_text": body, "title": title.strip(), "published_at": published,
         "canonical_url": canonical,
         "extraction_state": "full_text" if len(body.split()) >= 40 else "metadata_only",
-        "extraction_method": "publisher_selector:" + _SELECTORS[host],
-        "extraction_version": "istoe-editorial-1" if host == "istoe.com.br" else EXTRACTION_VERSION, "text_extent": extent,
+        "extraction_method": "publisher_selector:" + ("#article-content" if parser.congresso_amp else _SELECTORS[host]),
+        "extraction_version": "congresso-editorial-amp-1" if parser.congresso_amp else "istoe-editorial-1" if host == "istoe.com.br" else EXTRACTION_VERSION, "text_extent": extent,
         "restriction_evidence": list(dict.fromkeys(parser.restrictions)),
     }

@@ -1665,7 +1665,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             if task["source_key"] == "istoe":
                 kwargs["allowed_hosts"] = ("istoe.com.br", "www.istoe.com.br")
             return self.fetch(url, **kwargs)
-        fetch_url = task["cursor"].get("resolved_url") or candidate["url"]
+        fetch_url = (task["cursor"].get("publisher_alternative_url") if task["source_key"] == "congresso_em_foco" else None) or task["cursor"].get("resolved_url") or candidate["url"]
         if is_google_intermediary(fetch_url):
             with self._connect() as conn:
                 resolved = conn.execute("SELECT resolved_url FROM political_resolved_urls WHERE original_url=%s", (fetch_url,)).fetchone()
@@ -1805,6 +1805,18 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 return self._finish_fetch_not_news(task, response.url)
             if is_google_intermediary(candidate["url"]) and not is_google_intermediary(response.url):
                 self._checkpoint_fetch(task, {"resolved_url": canonicalize_url(response.url)})
+            if (task["source_key"] == "congresso_em_foco" and response.status_code == 404
+                    and not task["cursor"].get("publisher_alternative_url")
+                    and urlparse(response.url).hostname == "www.congressoemfoco.com.br"
+                    and re.fullmatch(r"/(?:noticia|artigo|coluna|informativo)/\d+/[^/?]+", urlparse(response.url).path)):
+                # The publisher's public AMP edition can survive a broken main
+                # route. Persist the choice before fetching so retries reuse it.
+                self._record_access_failure(task, response)
+                alternative = "https://www.congressoemfoco.com.br/amp" + urlparse(response.url).path
+                self._checkpoint_fetch(task, {"publisher_alternative_url": alternative,
+                    "publisher_alternative_original_url": canonicalize_url(response.url),
+                    "publisher_alternative_reason": "primary_http_404"})
+                response = article_fetch(alternative)
             if response.status_code >= 400:
                 self._record_access_failure(task, response)
                 retry_at = retry_after_deadline(response.headers.get("Retry-After"))
@@ -1859,6 +1871,13 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 raise problem
             with timed_operation("extraction"):
                 extracted = extract_article(response.text, final_url)
+            if task["source_key"] == "congresso_em_foco" and task["cursor"].get("publisher_alternative_url"):
+                if canonicalize_url(str(extracted.get("canonical_url") or "")) != task["cursor"]["publisher_alternative_original_url"]:
+                    raise FetchProblem("congresso_amp_unverified_identity", retryable=False)
+                body_origin = "publisher_public_amp"
+                candidate = {**candidate, "metadata": {**(candidate.get("metadata") or {}),
+                    "publisher_access_alternative": {"url": task["cursor"]["publisher_alternative_url"],
+                        "original_url": task["cursor"]["publisher_alternative_original_url"], "reason": "primary_http_404"}}}
             body = str(extracted.get("full_text") or "")
             title = str(extracted.get("title") or title)
             page_date = parse_date(extracted.get("published_at"))

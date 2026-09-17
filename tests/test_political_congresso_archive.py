@@ -135,3 +135,22 @@ def test_archive_parser_runs_without_optional_site_packages():
         'assert len(_state(gzip.decompress(Path("tests/fixtures/political_congresso_archive/noticia-2.html.gz").read_bytes()))) > 2'],
         capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
+
+
+def test_real_public_amp_keeps_editorial_body_and_its_own_day():
+    from web_app.political_discovery import extract_article
+    proof = next(r for r in json.loads((ROOT/'provenance.json').read_text()) if r['file'] == 'real-amp-120758.html.gz')
+    raw = gzip.decompress((ROOT/proof['file']).read_bytes())
+    assert hashlib.sha256(raw).hexdigest() == proof['sha256']
+    article = extract_article(raw.decode(), proof['url'])
+    assert article['published_at'] == '2026-07-25T03:00:00+00:00'
+    assert article['publication_date_evidence']['precision'] == 'day'
+    assert article['extraction_method'] == 'publisher_selector:#article-content'
+    assert 'O Partido Liberal (PL) realiza neste sábado' in article['full_text']
+    assert 'A reaproximação é vista como estratégica' in article['full_text']
+    assert 'Publicidade' not in article['full_text']
+    assert 'Cotada para vice de Flávio, Zanatta' not in article['full_text']
+    absent = raw.decode().replace('class="publication-date"', 'class="missing-publication"')
+    undated = extract_article(absent, proof['url'])
+    assert not undated['published_at']
+    assert undated['publication_date_evidence']['method'] == 'missing_original_post_date'

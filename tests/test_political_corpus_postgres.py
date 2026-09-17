@@ -2082,3 +2082,48 @@ def test_jota_date_provenance_survives_when_article_has_no_target_match(service,
     later=start(service,monkeypatch);enqueue(service,monkeypatch,candidate)
     with service._connect() as c:
         assert c.execute("SELECT count(*) AS n FROM political_tasks WHERE job_id=%s AND kind='fetch'",(later['id'],)).fetchone()['n']==0
+
+
+def test_real_congresso_public_amp_reuses_checkpoint_after_timeout(service, monkeypatch):
+    import gzip
+    import json
+    from pathlib import Path
+    from web_app import political_discovery, political_expanded_discovery as expanded
+    source = next(s for s in expanded.load_expanded_sources() if s['key'] == 'congresso_em_foco')
+    payload = next(t for t in expanded.build_expanded_tasks(source, '2026-06-01', '2026-09-10', TARGETS[:1]) if t['strategy'] == 'expanded_congresso_search')
+    payload['source_snapshot'] = source
+    monkeypatch.setattr(political_discovery, 'build_tasks', lambda *a, **k: [payload])
+    job = service.start_job({'target_keys':['paes'], 'target_snapshots':TARGETS[:1], 'date_from':'2026-06-01', 'date_to':'2026-09-10'}, started_by='test', allowed_target_keys=['paes'])
+    root = Path(__file__).parent/'fixtures/political_congresso_archive'
+    proof = next(r for r in json.loads((root/'provenance.json').read_text()) if r['file'] == 'real-amp-120758.html.gz')
+    amp = proof['url'];original = amp.replace('/amp/', '/')
+    enqueue(service, monkeypatch, {'url':original, 'source_key':'congresso_em_foco', 'source_name':'Congresso em Foco', 'metadata':{}})
+    calls = []
+    def fetch(url):
+        calls.append(url)
+        r = requests.Response();r.url=url;r.encoding='utf-8'
+        if url == original:
+            r.status_code=404;r._content=b'';return r
+        assert url == amp
+        with service._connect() as c:
+            cursor=c.execute("SELECT cursor FROM political_tasks WHERE job_id=%s AND kind='fetch'",(job['id'],)).fetchone()['cursor']
+            assert cursor['publisher_alternative_url'] == amp
+        if calls == [original,amp]:raise requests.ReadTimeout('controlled transport failure; no fabricated article')
+        r.status_code=200;r._content=gzip.decompress((root/proof['file']).read_bytes());return r
+    monkeypatch.setattr(service,'fetch',fetch)
+    task=service.claim_task('fetch',worker_id='amp-first')
+    assert service.process_task(task)['status']=='retryable'
+    with service._connect() as c:c.execute('UPDATE political_tasks SET next_attempt_at=NOW() WHERE id=%s',(task['id'],))
+    resumed=PoliticalCorpusService(store=service.store,database_url=DATABASE_URL)
+    try:
+        monkeypatch.setattr(resumed,'fetch',fetch)
+        result=resumed.process_task(resumed.claim_task('fetch',worker_id='amp-resumed'))
+        assert calls == [original,amp,amp]
+        assert result['status']=='no_match' and result['bodyOrigin']=='publisher_public_amp'
+        with resumed._connect() as c:
+            assert c.execute('SELECT count(*) n FROM political_articles').fetchone()['n']==0
+            observation=c.execute('SELECT disposition,metadata FROM political_observations WHERE job_id=%s',(job['id'],)).fetchone()
+            assert observation['disposition']=='no_match'
+            assert observation['metadata']['access_failure']['status']==404
+            assert observation['metadata']['publication_date_evidence']['precision']=='day'
+    finally:resumed.close()
