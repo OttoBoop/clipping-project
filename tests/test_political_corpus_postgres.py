@@ -1832,6 +1832,56 @@ def test_public_congresso_search_commits_candidates_before_resumed_article_fetch
         resumed.close()
 
 
+def test_real_congresso_archive_preserves_receipts_and_atomic_cursor_on_storage_failure(service, monkeypatch):
+    import gzip
+    from pathlib import Path
+    from web_app import political_discovery, political_expanded_discovery as expanded
+    source = next(s for s in expanded.load_expanded_sources() if s['key'] == 'congresso_em_foco')
+    payload = next(t for t in expanded.build_expanded_tasks(source, '2026-06-01', '2026-09-17', [])
+                   if t['strategy'] == 'expanded_congresso_archive' and t['mechanism']['product'] == 'noticia')
+    payload['source_snapshot'] = source
+    monkeypatch.setattr(political_discovery, 'build_tasks', lambda *a, **k: [payload])
+    job = service.start_job({'target_keys': ['paes'], 'target_snapshots': TARGETS[:1],
+        'date_from': '2026-06-01', 'date_to': '2026-09-17'}, started_by='test', allowed_target_keys=['paes'])
+    root = Path(__file__).parent / 'fixtures/political_congresso_archive'
+    def fetch(url):
+        page = int(url.rsplit('=', 1)[1])
+        r = requests.Response();r.status_code = 200;r.url = url
+        r._content = gzip.decompress((root/f'noticia-{page}.html.gz').read_bytes())
+        return r
+    monkeypatch.setattr(service, 'fetch', fetch)
+    task = service.claim_task('discovery', worker_id='archive-first')
+    assert service.process_task(task)['status'] == 'continue'
+    with service._connect() as c:
+        row = c.execute('SELECT cursor,result FROM political_tasks WHERE id=%s', (task['id'],)).fetchone()
+        assert row['cursor']['page'] == 2
+        receipt = row['result']['publisherArchive']['receipts'][0]
+        assert service._read_discovery_response(receipt['objectKey'], receipt['responseHash']) == fetch(payload['url']+'?pagina=1').content
+        assert c.execute('SELECT count(*) n FROM political_observations WHERE job_id=%s', (job['id'],)).fetchone()['n'] == 21
+    resumed = PoliticalCorpusService(store=service.store, database_url=DATABASE_URL)
+    try:
+        monkeypatch.setattr(resumed, 'fetch', fetch)
+        upload = service.store.upload_bytes
+        monkeypatch.setattr(service.store, 'upload_bytes', lambda *a: False)
+        claimed = resumed.claim_task('discovery', worker_id='archive-resume')
+        assert claimed['cursor']['page'] == 2
+        resumed.process_task(claimed)
+        with resumed._connect() as c:
+            row = c.execute('SELECT cursor,error_type FROM political_tasks WHERE id=%s', (task['id'],)).fetchone()
+            assert row['cursor']['page'] == 2 and row['error_type'] == 'discovery_evidence_storage_failed'
+            assert c.execute('SELECT count(*) n FROM political_observations WHERE job_id=%s', (job['id'],)).fetchone()['n'] == 21
+            c.execute("UPDATE political_tasks SET next_attempt_at=NOW() WHERE id=%s", (task['id'],))
+        monkeypatch.setattr(service.store, 'upload_bytes', upload)
+        assert resumed.process_task(resumed.claim_task('discovery', worker_id='archive-retry'))['status'] == 'continue'
+        with resumed._connect() as c:
+            row = c.execute('SELECT cursor,result FROM political_tasks WHERE id=%s', (task['id'],)).fetchone()
+            assert row['cursor']['page'] == 3
+            assert len(row['result']['publisherArchive']['receipts']) == 2
+            assert c.execute('SELECT count(*) n FROM political_observations WHERE job_id=%s', (job['id'],)).fetchone()['n'] == 41
+    finally:
+        resumed.close()
+
+
 def test_date_lookup_preserves_existing_metadata_and_human_classification(service,monkeypatch):
     _,response,candidates,tasks=_real_public_date_batch(monkeypatch)
     with service._connect() as c:

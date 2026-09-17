@@ -892,9 +892,37 @@
           "searchcode": "DEFNEW",
           "result_limit": 500,
           "evidence_url": "https://www.congressoemfoco.com.br/busca?q=Eduardo%20Paes"
+        },
+        {
+          "kind": "congresso_archive",
+          "product": "noticia",
+          "url": "https://www.congressoemfoco.com.br/noticia",
+          "max_pages": 400,
+          "evidence_url": "https://www.congressoemfoco.com.br/noticia"
+        },
+        {
+          "kind": "congresso_archive",
+          "product": "artigo",
+          "url": "https://www.congressoemfoco.com.br/artigo",
+          "max_pages": 400,
+          "evidence_url": "https://www.congressoemfoco.com.br/artigo"
+        },
+        {
+          "kind": "congresso_archive",
+          "product": "coluna",
+          "url": "https://www.congressoemfoco.com.br/coluna",
+          "max_pages": 400,
+          "evidence_url": "https://www.congressoemfoco.com.br/coluna"
+        },
+        {
+          "kind": "congresso_archive",
+          "product": "informativo",
+          "url": "https://www.congressoemfoco.com.br/informativo",
+          "max_pages": 400,
+          "evidence_url": "https://www.congressoemfoco.com.br/informativo"
         }
       ],
-      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text. Public search ignores pagination and is capped at 500 results; capped windows split to single days with explicit residual gaps. Search results are metadata, not article text. Google is disabled. Undated sitemap traversal is deferred; native search index completeness is unverified.",
+      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text. Public search returns at most 500 results per response; continuation uses searchkey and multi-page completeness is unverified; capped windows split to single days with explicit residual gaps. Search results are metadata, not article text. Google is disabled. Undated sitemap traversal is deferred; native search index completeness is unverified. Dated editorial archives complement nominal search for news, opinion, columns and monthly newsletters. Pagination stops at two dated older pages; publication is rechecked on each article. Collection is bounded with explicit repetition, parsing and page-cap gaps.",
       "evidence": [
         {
           "url": "https://congressoemfoco.uol.com.br/robots.txt",
@@ -918,7 +946,7 @@
         }
       ],
       "verified_at": "2026-09-14",
-      "catalog_version": 3,
+      "catalog_version": 4,
       "deferred_mechanisms": [
         {
           "kind": "sitemap",

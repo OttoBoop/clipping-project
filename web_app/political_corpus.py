@@ -906,7 +906,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 LEFT JOIN political_domain_limits cooling ON cooling.domain=""" + TASK_DOMAIN_FALLBACK_SQL + """
                 WHERE t.kind=ANY(%s) AND j.status IN ('queued','running')
                 AND (t.kind='fetch' OR """ + SITEMAP_INDEX_TASK_SQL + """ OR NOT (t.source_key=ANY(%s)))
-                AND (NOT %s OR t.payload->>'strategy' IN ('recover','google_news','expanded_blogger_feed') OR """ + SITEMAP_INDEX_TASK_SQL + """)
+                AND (NOT %s OR t.payload->>'strategy' IN ('recover','google_news','expanded_blogger_feed','expanded_congresso_archive') OR """ + SITEMAP_INDEX_TASK_SQL + """)
                 AND (NOT %s OR """ + SITEMAP_INDEX_TASK_SQL + """)
                 AND (cooling.cooldown_until IS NULL OR cooling.cooldown_until<=NOW())
                 AND (t.status IN ('queued','retryable') OR (t.status='running' AND t.leased_until<NOW()))
@@ -1356,6 +1356,19 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             result["next_cursor"] = sitemap_cache.checkpoint(result["next_cursor"])
         if istoe_inventory:
             result["next_cursor"] = istoe_inventory.checkpoint(result.get("next_cursor"))
+        if payload.get("strategy") == "expanded_congresso_archive":
+            # Preserve real listing evidence before committing candidates/cursor.
+            # A failed upload leaves the task resumable at the same page.
+            raw = result.pop("archive_response")
+            digest, object_key = self._store_discovery_response(raw)
+            proof = result["publisher_archive"]
+            if digest != proof["responseHash"]:
+                raise FetchProblem("archive_evidence_hash_mismatch", retryable=False)
+            receipts = list(task["cursor"].get("archive_receipts") or [])
+            receipts.append({**proof, "objectKey": object_key})
+            result["publisher_archive"] = {**proof, "receipts": receipts}
+            if result.get("next_cursor"):
+                result["next_cursor"]["archive_receipts"] = receipts
         candidates = result.get("candidates") or []
         if known_index and candidates:
             raise FetchProblem("sitemap_index_emitted_article_candidates", retryable=False)
@@ -1495,6 +1508,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                                  "calendarSiblingsPruned": calendar_pruned,
                                  "structuralIndexExcluded": result.get("structural_index_excluded"),
                                  "publisherSearch": result.get("publisher_search"),
+                                 "publisherArchive": result.get("publisher_archive"),
                                  "calendarPartitionExcluded": result.get("calendar_partition_excluded")})
         return {"taskId": task["id"], "status": outcome, "candidates": len(candidates),
                 "datesReusedBeforeFetch": dates_reused, "publicAPIDatesBeforeFetch": dates_from_api}

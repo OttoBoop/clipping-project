@@ -1,7 +1,8 @@
 """Publisher-advertised public search; no login, snippets never become body text.
 
-The current API ignores page size/page offsets. A response of 500 results is
-therefore treated as capped, with durable date-window splitting down to a day.
+The public client uses a search key for continuation. Multi-page completeness
+is unverified; responses of 500 results conservatively split durable date
+windows down to a day rather than assuming that a page number is sufficient.
 """
 from datetime import date, datetime, time, timedelta
 import hashlib

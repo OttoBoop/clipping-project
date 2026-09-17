@@ -96,6 +96,9 @@ def build_expanded_tasks(source, date_from, date_to, target_snapshots):
             # Limit one response to 50 full bodies and each task to seven days.
             for first, last in _core().date_windows(date_from, date_to):
                 tasks.append({**route, 'date_from': first, 'date_to': last})
+        elif kind == 'congresso_archive':
+            from .political_congresso_archive import build_tasks
+            tasks.extend(build_tasks(route))
         elif kind == 'congresso_search':
             from .political_congresso_search import build_tasks
             tasks.extend(build_tasks(route, target_snapshots))
@@ -508,6 +511,9 @@ def _capability(task, source, fetch):
 
 def discover_expanded(task, source, fetch):
     strategy = task['strategy']
+    if strategy == 'expanded_congresso_archive':
+        from .political_congresso_archive import discover
+        return discover(task, source, fetch)
     if strategy == 'expanded_congresso_search':
         from .political_congresso_search import discover
         return discover(task, source, fetch)

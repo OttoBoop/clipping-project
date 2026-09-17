@@ -1,0 +1,51 @@
+[
+  {
+    "file": "noticia-1.html.gz",
+    "url": "https://www.congressoemfoco.com.br/noticia?pagina=1",
+    "sha256": "247d41248cb2a5e83d251780c30c6c7fbf4792529cce8278319847a9a8af10f5",
+    "queried": "2026-09-17",
+    "purpose": "real development fixtures; not evaluation references"
+  },
+  {
+    "file": "noticia-2.html.gz",
+    "url": "https://www.congressoemfoco.com.br/noticia?pagina=2",
+    "sha256": "e9328131eb0b0cd231dd6c740909b0e017b2b0738c37ba9833cfe17a0c5a6569",
+    "queried": "2026-09-17",
+    "purpose": "real development fixtures; not evaluation references"
+  },
+  {
+    "file": "noticia-30.html.gz",
+    "url": "https://www.congressoemfoco.com.br/noticia?pagina=30",
+    "sha256": "8f98edfd1054c5bb3931ac67deaec9777008a9cd34d91f56e2e95d8990ada8f2",
+    "queried": "2026-09-17",
+    "purpose": "real development fixtures; not evaluation references"
+  },
+  {
+    "file": "artigo-2.html.gz",
+    "url": "https://www.congressoemfoco.com.br/artigo?pagina=2",
+    "sha256": "7588d7b6508d0b6ee0226cee41a18d1eae9451008e9b7566d8b282b4c597f3d8",
+    "queried": "2026-09-17",
+    "purpose": "real development fixtures; not evaluation references"
+  },
+  {
+    "file": "coluna-2.html.gz",
+    "url": "https://www.congressoemfoco.com.br/coluna?pagina=2",
+    "sha256": "7165d4274b8ce7709fb65ec1e9309d4bd5003880a84487a69965557c9271af71",
+    "queried": "2026-09-17",
+    "purpose": "real development fixtures; not evaluation references"
+  },
+  {
+    "file": "noticia-120.html.gz",
+    "url": "https://www.congressoemfoco.com.br/noticia?pagina=120",
+    "sha256": "eb4c11022e6abc98a78d3a99edfcc32d102e702ea21cdadc254247e09f9058bd",
+    "queried": "2026-09-17",
+    "purpose": "real development fixtures; not evaluation references"
+  },
+  {
+    "file": "jun-newsletters.html.gz",
+    "url": "https://www.congressoemfoco.com.br/informativo?month=6&year=2026",
+    "sha256": "8c7f4c4d20f0c53f13ad00dcd4552b73189ded0fb4b57402153ffc66e9c2150a",
+    "queried": "2026-09-17",
+    "purpose": "real development fixtures; not evaluation references"
+  }
+]

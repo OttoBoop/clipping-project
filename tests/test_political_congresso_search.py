@@ -60,7 +60,7 @@ def test_primary_names_are_individual_and_unbounded_sitemap_is_deferred():
     assert source['deferred_mechanisms'][0]['kind'] == 'sitemap'
 
 
-def test_real_capped_search_splits_date_windows_instead_of_trusting_broken_pagination():
+def test_real_capped_search_splits_date_windows_without_assuming_complete_pagination():
     task, source, response = setup(capped=True)
     result = expanded.discover_expanded(task, source, lambda *a, **k: response)
     assert result['outcome'] == 'split' and result['raw_count'] == 500
@@ -70,7 +70,8 @@ def test_real_capped_search_splits_date_windows_instead_of_trusting_broken_pagin
     assert date.fromisoformat(left['date_to']) + timedelta(days=1) == date.fromisoformat(right['date_from'])
     assert left['query'] == right['query'] == task['query']
     assert not result['publisher_search']['paginationUsed']
-    # The actual API ignored pagesize=2 and page=2 and returned the same page.
+    # The historical probe omitted searchkey and repeated page one. It proves
+    # that page alone is insufficient, not that publisher continuation is broken.
     pages = json.loads((ROOT / 'pagination.json').read_text())['rows']
     assert pages[0]['results'] == pages[1]['results']
     assert pages[1]['metrics']['page'] == 1
@@ -110,7 +111,9 @@ def test_google_disabled_for_new_jobs_fallback_and_legacy_tasks():
     people = [{'key': 'paes', 'display_name': 'Eduardo Paes'}]
     tasks = core.build_tasks(people, '2026-06-01', '2026-09-10',
                              ['congresso_em_foco'], [source])
-    assert len(tasks) == 1 and tasks[0]['strategy'] == 'expanded_congresso_search'
+    assert len([t for t in tasks if t['strategy'] == 'expanded_congresso_search']) == 1
+    assert len([t for t in tasks if t['strategy'] == 'expanded_congresso_archive']) == 7
+    assert not any(t['strategy'] == 'google_news' for t in tasks)
     assert core.fallback_tasks({**task, 'source_snapshot': source}, people) == []
     legacy = {**task, 'strategy': 'google_news', 'source_snapshot': source}
     def forbidden(*a, **k):
