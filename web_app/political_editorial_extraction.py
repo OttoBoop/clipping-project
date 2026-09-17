@@ -98,6 +98,10 @@ class _EditorialParser(HTMLParser):
         self.json_ld: list[str] = []
         self.restrictions: list[str] = []
         self.congresso_amp = False
+        self.estadao_format = ""
+        self.story_page_start = None
+        self.story_page_links = []
+        self.story_pages_removed = 0
 
     def _body_start(self, attrs: dict) -> bool:
         classes = set(attrs.get("class", "").split())
@@ -120,6 +124,9 @@ class _EditorialParser(HTMLParser):
         if self.host == "estadao.com.br":
             # The candidate directory wraps its footer in [data-paywall-wrapper]
             # too; only the publisher's editorial news-body is a body selector.
+            if {"content-wrapper-sponsored", "content-left-sponsored"} <= classes:
+                self.estadao_format = "sponsored_article"
+                return True
             return "news-body" in classes and "data-paywall-wrapper" in attrs
         return _SELECTORS[self.host][1:] in classes
 
@@ -128,11 +135,21 @@ class _EditorialParser(HTMLParser):
         classes = set(attrs.get("class", "").split())
         parent_body = self.stack[-1][2] if self.stack else False
         parent_blocked = self.stack[-1][3] if self.stack else False
-        new_body = not self.found_body and not parent_blocked and self._body_start(attrs)
+        web_story = self.host == "estadao.com.br" and tag == "amp-story" and bool(attrs.get("data-story-id"))
+        if web_story:
+            self.estadao_format = "web_story"
+        if self.estadao_format == "web_story" and tag == "amp-story-page":
+            self.story_page_start = len(self.parts)
+            self.story_page_links = []
+        if self.story_page_start is not None and tag == "a" and attrs.get("href"):
+            self.story_page_links.append(attrs["href"])
+        new_body = not self.found_body and not parent_blocked and (web_story or self._body_start(attrs))
         if new_body:
             self.found_body = True
         body = parent_body or new_body
         skip = tag in _SKIP_TAGS or bool(classes & _SKIP_CLASSES)
+        if self.host == "estadao.com.br" and self.estadao_format:
+            skip = skip or bool(classes & {"credits", "credit", "chapeu"}) or tag in {"amp-analytics", "amp-story-auto-ads", "amp-story-page-outlink", "amp-story-bookend"}
         if self.host == "generonumero.media" and parent_body and self.stack:
             # These siblings are the article hero, author/taxonomy, contents
             # list and standalone related/newsletter links. Inline citations
@@ -196,6 +213,15 @@ class _EditorialParser(HTMLParser):
             self.handle_endtag(tag)
 
     def handle_endtag(self, tag):
+        if tag == "amp-story-page" and self.story_page_start is not None:
+            text = _normalize("".join(self.parts[self.story_page_start:]))
+            header = text.split("\n\n")[0].strip().lower()
+            promotional = any(urlparse(link).path.startswith("/assine/") for link in self.story_page_links)
+            related = bool(self.story_page_links) and (header.startswith(("veja também:", "veja mais:")) or header == "produção")
+            if promotional or related:
+                del self.parts[self.story_page_start:]
+                self.story_pages_removed += 1
+            self.story_page_start = None
         for index in range(len(self.stack) - 1, -1, -1):
             if self.stack[index][0] != tag:
                 continue
@@ -295,12 +321,17 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
                 break
     title = title or next(iter(parser.fields.get("h1", [])), "") or next(iter(parser.fields.get("title", [])), "")
     body = _normalize("".join(parser.parts))
+    if host == "estadao.com.br" and parser.estadao_format == "sponsored_article":
+        body = "\n\n".join(p for p in body.split("\n\n") if p.lower() != "publicidade")
     explicit_gate = "editorial_body:explicit_subscription_gate" in parser.restrictions
     if host == "folhadoslagos.com" and re.search(r"reportagem completa na edi[çc][aã]o", body, re.I):
         explicit_gate = True
         parser.restrictions.append("editorial_body:complete_story_in_print_edition")
     extent = "absent" if not body else "partial" if explicit_gate else "unknown" if restricted else "available"
     evidence = {}
+    if host == "estadao.com.br" and parser.estadao_format:
+        evidence["content_format"] = parser.estadao_format
+        evidence["format_provenance"] = {"promotional_or_related_pages_removed": parser.story_pages_removed}
     if host == "congressoemfoco.com.br" and parser.congresso_amp:
         visible = " ".join(parser.fields.get("publication_visible", []))
         stamp = re.fullmatch(r"\s*(\d{1,2})/(\d{1,2})/(\d{4})\s*", visible)
@@ -329,7 +360,7 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
         "full_text": body, "title": title.strip(), "published_at": published,
         "canonical_url": canonical,
         "extraction_state": "full_text" if len(body.split()) >= 40 else "metadata_only",
-        "extraction_method": "publisher_selector:" + ("#article-content" if parser.congresso_amp else _SELECTORS[host]),
-        "extraction_version": "congresso-editorial-amp-1" if parser.congresso_amp else "istoe-editorial-1" if host == "istoe.com.br" else EXTRACTION_VERSION, "text_extent": extent,
+        "extraction_method": "publisher_selector:" + ("amp-story[data-story-id]" if parser.estadao_format == "web_story" else ".content-wrapper-sponsored.content-left-sponsored" if parser.estadao_format == "sponsored_article" else "#article-content" if parser.congresso_amp else _SELECTORS[host]),
+        "extraction_version": "estadao-formats-1" if parser.estadao_format else "congresso-editorial-amp-1" if parser.congresso_amp else "istoe-editorial-1" if host == "istoe.com.br" else EXTRACTION_VERSION, "text_extent": extent,
         "restriction_evidence": list(dict.fromkeys(parser.restrictions)),
     }

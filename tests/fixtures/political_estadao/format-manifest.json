@@ -1,0 +1,26 @@
+[
+  {
+    "fixture": "real-format-1088.html.gz",
+    "url": "https://www.estadao.com.br/educacao/fundacao-dom-cabral-50-anos-transformando-pessoas-organizacoes-e-o-futuro",
+    "html_sha256": "20fccfb1156be0ce34372c0b4d362497120c2510d3a90521488566a0162453f1",
+    "chars": 4387,
+    "date": "2026-08-09T11:00:00+00:00",
+    "format": "sponsored_article"
+  },
+  {
+    "fixture": "real-format-1092.html.gz",
+    "url": "https://www.estadao.com.br/web-stories/paladar/radar/receita-de-pave-de-chocolate-classico-na-travessa",
+    "html_sha256": "dd8c5860c73eee640ff5fc53d4e1fc651d9bac6e338728faf6e697f281ee3201",
+    "chars": 1198,
+    "date": "2026-08-09T10:00:00+00:00",
+    "format": "web_story"
+  },
+  {
+    "fixture": "real-format-1094.html.gz",
+    "url": "https://www.estadao.com.br/web-stories/paladar/radar/descubra-onde-comer-em-sp-no-dia-dos-pais-gastando-ate-r-100",
+    "html_sha256": "6b9de7e59e65ae6749c5481e3a79b1a0648fdf173657978214e7aceecef49040",
+    "chars": 1975,
+    "date": "2026-08-09T09:00:00+00:00",
+    "format": "web_story"
+  }
+]
