@@ -4,12 +4,13 @@ import re,json
 from urllib.parse import urlparse,urljoin
 from pipeline.http_utils import html_to_text
 
-VERSION='estadao-public-uva-2'
+VERSION='estadao-public-uva-3'
 class _Embeds(HTMLParser):
     def __init__(self):super().__init__();self.ids=[]
     def handle_starttag(self,tag,pairs):
         a=dict(pairs)
         if tag=='script' and a.get('src') in {
+            'https://arte.estadao.com.br/arc/scripts/uva-render-01.js',
             'https://arte.estadao.com.br/arc/scripts/uva-render-02.js',
             'https://arte.estadao.com.br/arc/scripts/uva-render-03.js',
         }:
@@ -66,6 +67,7 @@ def editorial(data):
                     if item.get('type') in {'pergunta','resposta'}:add(item.get('value'))
                     elif item.get('type')=='alternativas':
                         for option in item.get('value') or []:add(option)
+        elif kind=='separador' and not value:pass
         elif kind not in {'customização','imagem','leiaMais'}:unknown.add(str(kind))
     return {'full_text':'\n\n'.join(parts),'extraction_method':'publisher_public_uva_data',
         'extraction_version':VERSION,'text_extent':'unknown' if unknown else 'available',

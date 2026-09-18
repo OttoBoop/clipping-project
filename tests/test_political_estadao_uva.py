@@ -3,6 +3,21 @@ from pathlib import Path
 from pipeline.http_utils import html_to_text
 from web_app.political_estadao_uva import announced_url,editorial
 ROOT=Path(__file__).parent/'fixtures/political_estadao'
+def test_real_uva01_resolves_long_id_and_preserves_public_text():
+ m=json.loads((ROOT/'uva01-manifest.json').read_text())
+ raw=gzip.decompress((ROOT/'real-uva01.html.gz').read_bytes())
+ api=gzip.decompress((ROOT/'real-uva01-data.json.gz').read_bytes())
+ assert hashlib.sha256(raw).hexdigest()==m['htmlHash']
+ assert hashlib.sha256(api).hexdigest()==m['apiHash']
+ assert announced_url(raw.decode(),m['url'])==m['apiURL']
+ data=json.loads(api);a=editorial(data)
+ for row in data['conteúdo']:
+  if row['type']=='text':assert html_to_text(row['value']).strip() in a['full_text']
+ assert 'possível alteração da Lei das Apostas Esportivas' in a['full_text']
+ assert a['uva_provenance']['unhandled_element_types']==[]
+ assert a['text_extent']=='available'
+ assert announced_url(raw.decode(),m['url']+'-unrelated') is None
+
 def test_real_public_infographic_and_text_blocks():
  m=json.loads((ROOT/'uva-manifest.json').read_text());raw=gzip.decompress((ROOT/'real-uva.html.gz').read_bytes());api=gzip.decompress((ROOT/'real-uva-data.json.gz').read_bytes());data=json.loads(api)
  assert hashlib.sha256(raw).hexdigest()==m['htmlHash']
