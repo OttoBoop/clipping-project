@@ -254,6 +254,10 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
     """
     host = (urlparse(url).hostname or "").lower().removeprefix("www.")
     if host == "estadao.com.br":
+        from .political_estadao_eldorado import extract as extract_eldorado_episode
+        episode = extract_eldorado_episode(raw_html, url)
+        if episode is not None:
+            return episode
         from .political_estadao_webstory import extract as extract_estadao_story
         story = extract_estadao_story(raw_html, url)
         if story is not None:
@@ -326,6 +330,11 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
                 break
     title = title or next(iter(parser.fields.get("h1", [])), "") or next(iter(parser.fields.get("title", [])), "")
     body = _normalize("".join(parser.parts))
+    if host == "estadao.com.br" and not body:
+        from .political_estadao_lazy_body import extract as extract_lazy_body
+        lazy_body = extract_lazy_body(raw_html, url)
+        if lazy_body is not None:
+            return lazy_body
     if host == "estadao.com.br" and parser.estadao_format == "sponsored_article":
         body = "\n\n".join(p for p in body.split("\n\n") if p.lower() != "publicidade")
     explicit_gate = "editorial_body:explicit_subscription_gate" in parser.restrictions

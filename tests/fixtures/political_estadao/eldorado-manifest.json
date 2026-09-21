@@ -1,0 +1,16 @@
+[
+  {
+    "taskId": 21063,
+    "url": "https://www.estadao.com.br/eldorado/programas/jornal-eldorado/tv-30-muda-a-logica-da-tv-aberta-e-aproxima-experiencia-do-streaming-avalia-jose-armando-vannucci",
+    "fixture": "real-eldorado-21063.html.gz",
+    "htmlHash": "0aff5a2ddd148537af9c71291f4411f1b9371bc79734625a75cf76463579d6d0",
+    "source": "Preserved real collection response, 2026-09-21 diagnosis; no generated article data."
+  },
+  {
+    "taskId": 5481,
+    "url": "https://www.estadao.com.br/eldorado/programas/edicao-limitada/edicao-limitada-08042026",
+    "fixture": "real-eldorado-5481.html.gz",
+    "htmlHash": "a3709b9f77697e0d28dc4e0d3197659425e55694f13fc63cfa37834bce8265f4",
+    "source": "Preserved real collection response, 2026-09-21 diagnosis; no generated article data."
+  }
+]
