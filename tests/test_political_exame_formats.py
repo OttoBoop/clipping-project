@@ -48,3 +48,16 @@ def test_real_btg_broken_links_resolve_to_independently_discovered_daily_urls():
   alternative=find_alternative(task['payload'],rows['alternatives'])
   assert alternative and alternative['url']!=task['payload']['url']
   assert alternative['basis']=='same_job_publisher_daily_inventory_exact_title_slug_and_publication'
+
+
+def test_real_api_first_discovery_resolves_same_publisher_aliases():
+ from web_app.political_exame_routes import find_alternative
+ broken=json.loads(gzip.decompress((P/'btg-routes.json.gz').read_bytes()))['broken']
+ alternatives=json.loads(gzip.decompress((P/'btg-api-routes.json.gz').read_bytes()))['alternatives']
+ for task in broken:
+  route=find_alternative(task['payload'],alternatives)
+  assert route and route['basis']=='same_job_publisher_public_api_exact_title_slug_and_publication'
+  assert route['publisher_api_url'].startswith('https://classic.exame.com/wp-json/')
+ # Removing the verified API date evidence must not authorize a guessed route.
+ unverified=[{**t,'payload':{**t['payload'],'metadata':{}}} for t in alternatives]
+ assert find_alternative(broken[0]['payload'],unverified) is None
