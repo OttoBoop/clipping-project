@@ -38,3 +38,13 @@ def test_real_gallery_named_captions_do_not_mix_related_products():
  raw=gzip.decompress((P/row['file']).read_bytes()).decode();body=extract_article(raw,row['url'])['full_text']
  assert 'Cristiane Giansante' in body and 'Diretora de Pessoas' in body
  assert 'Pandora' not in body and 'Presentes Dia dos Pais' not in body
+
+
+def test_real_btg_broken_links_resolve_to_independently_discovered_daily_urls():
+ from web_app.political_exame_routes import find_alternative
+ rows=json.loads(gzip.decompress((P/'btg-routes.json.gz').read_bytes()))
+ assert len(rows['broken'])==171
+ for task in rows['broken']:
+  alternative=find_alternative(task['payload'],rows['alternatives'])
+  assert alternative and alternative['url']!=task['payload']['url']
+  assert alternative['basis']=='same_job_publisher_daily_inventory_exact_title_slug_and_publication'

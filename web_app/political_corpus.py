@@ -1452,7 +1452,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 from .political_istoe_inventory import record_urls
                 record_urls(conn, candidates)
             if task['source_key'] == 'exame' and (payload.get('source_snapshot') or {}).get('archive_date_adapter'):
-                from .political_exame_routes import resolve
+                from .political_exame_routes import resolve, BROKEN_CATEGORY_SITEMAPS
                 alternatives = resolve(conn, task['job_id'], candidates)
                 for candidate in candidates:
                     original = candidate['url']
@@ -1474,7 +1474,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     candidate['metadata'] = {**candidate.get('metadata', {}), 'publisher_route': proof}
                 if alternatives:
                     result.setdefault('publisher_archive', {})['reused_routes'] = alternatives
-                if payload.get('url') == 'https://exame.com/categorias/invest/academy/sitemap.xml':
+                if payload.get('url') in BROKEN_CATEGORY_SITEMAPS:
                     total = conn.execute("""SELECT count(*) n FROM political_observations
                         WHERE job_id=%s AND source_task_id=%s AND metadata ? 'publisher_route'""",
                         (task['job_id'], task['id'])).fetchone()['n']
