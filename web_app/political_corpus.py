@@ -958,6 +958,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     CASE WHEN t.kind='fetch' THEN scheduling.fetch_claimed_at
                               ELSE scheduling.discovery_claimed_at END ASC NULLS FIRST,
                     CASE WHEN t.kind='discovery' AND t.payload->>'strategy'='expanded_blogger_feed' THEN 0 ELSE 1 END,
+                    CASE WHEN t.kind='discovery' AND t.source_key='exame'
+                        AND t.payload->>'strategy'='expanded_wordpress' THEN 0 ELSE 1 END,
                     CASE WHEN t.kind='discovery' AND t.payload->'partition_hint'->>0 IS NOT NULL THEN 0 ELSE 1 END,
                     t.priority DESC,
                     CASE WHEN t.kind='fetch' AND COALESCE(t.payload->>'published_at','')<>'' THEN 0 ELSE 1 END,
