@@ -26,5 +26,12 @@
     "status": 200,
     "type": null,
     "at": null
+  },
+  {
+    "url": "https://exame.com/categorias/brasil/sitemap.xml",
+    "sha256": "c9c38b34462aaa3ce716b96efb21c0e4d1d4c66f20330588dea31d210939a013",
+    "status": 200,
+    "type": "text/xml",
+    "at": "2026-09-22T13:58:48.770530+00:00"
   }
 ]

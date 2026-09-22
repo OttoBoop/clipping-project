@@ -278,8 +278,14 @@ def _sitemap(task, source, fetch):
     if page > 1 and offset == 0 and fingerprint in cursor.get('page_fingerprints', []):
         return _result(outcome='gap', raw_count=len(nodes), gap_reason='expanded_repeated_sitemap_page')
     candidates = []
+    structural_entries = []
     for node in nodes[offset:offset + cap]:
         article_url = core._child_text(node, 'loc')
+        if source.get('key') == 'exame' and source.get('archive_date_adapter'):
+            basis = political_exame_archive.structural_listing(article_url, url)
+            if basis:
+                structural_entries.append({'url': article_url, 'basis': basis})
+                continue
         if not _allowed(article_url, source, article=True):
             continue
         published = core._child_text(node, 'publication_date')
@@ -291,14 +297,15 @@ def _sitemap(task, source, fetch):
             metadata={'sitemap_url': url, 'sitemap_lastmod_hint': core._child_text(node, 'lastmod'),
                       'partition_hint': task.get('partition_hint', []), 'discovery_day': task.get('day', '')}))
     if offset + cap < len(nodes):
-        return _result(candidates, next_cursor={**cursor, 'offset': offset + cap, 'document_fingerprint': fingerprint}, raw_count=len(nodes[offset:offset + cap]))
+        return _result(candidates, next_cursor={**cursor, 'offset': offset + cap, 'document_fingerprint': fingerprint}, raw_count=len(nodes[offset:offset + cap]), structural_entries=structural_entries)
     if daily and mechanism.get('pagination') == 'numbered' and nodes:
         if page >= int(mechanism.get('max_pages', MAX_PAGES)):
             return _result(candidates, outcome='gap', raw_count=len(nodes[offset:]), gap_reason='expanded_sitemap_page_cap')
         return _result(candidates, next_cursor={'page': page + 1, 'page_fingerprints': (cursor.get('page_fingerprints', []) + [fingerprint])[-32:]}, raw_count=len(nodes[offset:]))
     recent = mechanism.get('history_complete') is False or ('news' in urlparse(url).path.rsplit('/', 1)[-1])
     return _result(candidates, raw_count=len(nodes[offset:]), outcome='gap' if recent else None,
-                   gap_reason='expanded_recent_sitemap_not_historical_inventory' if recent else '')
+                   gap_reason='expanded_recent_sitemap_not_historical_inventory' if recent else '',
+                   structural_entries=structural_entries)
 
 
 def _wordpress(task, source, fetch):

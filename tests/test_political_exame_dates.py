@@ -47,3 +47,21 @@ def test_real_exame_requests_remove_only_verified_redundant_redirect():
   assert publisher_article_request_url(old['requested'])==new['requested']
   assert publisher_article_request_url(new['requested'])==new['requested']
  assert publisher_article_request_url('https://exame.com/artigos/2026-08/09/sitemap.xml')=='https://exame.com/artigos/2026-08/09/sitemap.xml'
+
+def test_real_insight_body_and_visible_publication_preserve_metadata_conflict():
+ from web_app.political_discovery import extract_article
+ raw=gzip.decompress((FIX/'insight-vibra.html.gz').read_bytes())
+ assert hashlib.sha256(raw).hexdigest()=='b5616532f6a19859b96538b38b2915bc7fa76a050811b9f35b88593b2757ed78'
+ a=extract_article(raw.decode(),'https://exame.com/exame-in/alem-do-combustivel-a-aposta-da-vibra-em-dados-ia-e-marketing-de-assertividade')
+ assert a['extraction_method']=='publisher_selector:main .news-content-container'
+ assert 'Responsável por uma das operações mais complexas' in a['full_text']
+ assert 'Transformando frentistas em consultores' in a['full_text']
+ assert 'Li e concordo' not in a['full_text']
+ assert 'LinkedIn Top Voices' not in a['full_text']
+ assert a['published_at']=='2026-08-09T12:00:00+00:00'
+ assert a['publication_date_evidence']['conflict']
+ assert a['publication_date_evidence']['metadata_published']=='2026-08-09T09:00:31+00:00'
+
+def test_real_category_sitemap_does_not_fetch_its_own_landing_page_as_article():
+ r=run('categorias/brasil');assert r['structural_entries']==[{'url':'https://exame.com/brasil/','basis':'publisher_category_self_entry'}]
+ assert r['candidates'];assert all(c['url']!='https://exame.com/brasil' for c in r['candidates'])

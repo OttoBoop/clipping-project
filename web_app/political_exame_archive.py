@@ -6,6 +6,31 @@ import json
 import re
 
 
+def structural_listing(url, sitemap_url):
+    """Publisher directory entries are not individual editorial articles.
+
+    This does not reject undated article slugs. It recognizes the exact section
+    root advertised in category indexes and the observed directories/products.
+    Their linked reporting remains discoverable through dated article families;
+    this exclusion does not certify those families' completeness.
+    """
+    parsed, origin = urlparse(url), urlparse(sitemap_url)
+    if parsed.hostname not in {'exame.com', 'www.exame.com'} or origin.hostname not in {'exame.com', 'www.exame.com'}:
+        return ''
+    path = parsed.path.rstrip('/')
+    if origin.path == '/static/sitemap.xml':
+        return 'publisher_static_directory'
+    if path.startswith(('/edicoes/', '/canais-especiais/', '/pagina-especial/')):
+        return 'publisher_edition_or_product_listing'
+    if origin.path == '/eventos-especiais/sitemap.xml' and path.startswith('/especiais/'):
+        return 'publisher_event_listing'
+    if origin.path.startswith('/categorias/') and origin.path.endswith('/sitemap.xml'):
+        section = origin.path.removeprefix('/categorias').removesuffix('/sitemap.xml')
+        if path == section:
+            return 'publisher_category_self_entry'
+    return ''
+
+
 class _EditorialCards(HTMLParser):
     """Use the worker's standard library, including for sparse archive HTML."""
     def __init__(self):

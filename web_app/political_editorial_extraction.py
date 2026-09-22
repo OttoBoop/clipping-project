@@ -98,6 +98,7 @@ class _EditorialParser(HTMLParser):
         self.json_ld: list[str] = []
         self.restrictions: list[str] = []
         self.congresso_amp = False
+        self.exame_insight = False
         self.estadao_format = ""
         self.story_page_start = None
         self.story_page_links = []
@@ -106,6 +107,9 @@ class _EditorialParser(HTMLParser):
     def _body_start(self, attrs: dict) -> bool:
         classes = set(attrs.get("class", "").split())
         if self.host == "exame.com":
+            if "news-content-container" in classes and any(item[0] == "main" for item in self.stack):
+                self.exame_insight = True
+                return True
             return attrs.get("id") == "news-body"
         if self.host == "aosfatos.org":
             return attrs.get("id") == "entry-content"
@@ -148,6 +152,8 @@ class _EditorialParser(HTMLParser):
             self.found_body = True
         body = parent_body or new_body
         skip = tag in _SKIP_TAGS or bool(classes & _SKIP_CLASSES)
+        if self.host == "exame.com" and tag == "a":
+            skip = skip or (urlparse(attrs.get("href", "")).hostname or "").endswith("doubleclick.net")
         if self.host == "estadao.com.br" and self.estadao_format:
             skip = skip or bool(classes & {"credits", "credit", "chapeu"}) or tag in {"amp-analytics", "amp-story-auto-ads", "amp-story-page-outlink", "amp-story-bookend"}
         if self.host == "generonumero.media" and parent_body and self.stack:
@@ -188,6 +194,8 @@ class _EditorialParser(HTMLParser):
                 self.fields.setdefault("time", []).append(attrs["datetime"])
         elif self.host == "istoe.com.br" and "post-date" in classes:
             field = "publication_visible"
+        elif self.host == "exame.com" and tag == "p" and not body:
+            field = "exame_header_paragraph"
         elif self.host == "congressoemfoco.com.br" and "publication-date" in classes and any(item[1].get("id") == "article-header" for item in self.stack):
             field = "publication_visible"
         elif self.host == "ultimahoraonline.com.br" and "post-detalhe-data" in classes:
@@ -343,6 +351,18 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
         parser.restrictions.append("editorial_body:complete_story_in_print_edition")
     extent = "absent" if not body else "partial" if explicit_gate else "unknown" if restricted else "available"
     evidence = {}
+    if host == "exame.com" and parser.exame_insight:
+        visible = next((x for x in parser.fields.get("exame_header_paragraph", [])
+                        if x.strip().startswith("Publicado em ")), "")
+        visible_date = _date(visible)
+        evidence = {"content_format": "exame_insight", "publication_date_evidence": {
+            "method": "exame_visible_publication_header" if visible_date else "article_metadata",
+            "visible": visible, "visible_parsed": visible_date, "metadata_published": published,
+            "conflict": bool(visible_date and published and visible_date[:16] != published[:16]),
+            "precision": "minute" if visible_date else "metadata"}}
+        # The actual Insight response labels local wall time as Z in JSON-LD.
+        # Prefer its explicit published header in São Paulo; keep both values.
+        published = visible_date or published
     if host == "estadao.com.br" and parser.estadao_format:
         evidence["content_format"] = parser.estadao_format
         evidence["format_provenance"] = {"promotional_or_related_pages_removed": parser.story_pages_removed}
@@ -374,7 +394,7 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
         "full_text": body, "title": title.strip(), "published_at": published,
         "canonical_url": canonical,
         "extraction_state": "full_text" if len(body.split()) >= 40 else "metadata_only",
-        "extraction_method": "publisher_selector:" + ("amp-story[data-story-id]" if parser.estadao_format == "web_story" else ".content-wrapper-sponsored.content-left-sponsored" if parser.estadao_format == "sponsored_article" else "#article-content" if parser.congresso_amp else _SELECTORS[host]),
-        "extraction_version": "estadao-formats-1" if parser.estadao_format else "congresso-editorial-amp-1" if parser.congresso_amp else "istoe-editorial-1" if host == "istoe.com.br" else EXTRACTION_VERSION, "text_extent": extent,
+        "extraction_method": "publisher_selector:" + ("amp-story[data-story-id]" if parser.estadao_format == "web_story" else ".content-wrapper-sponsored.content-left-sponsored" if parser.estadao_format == "sponsored_article" else "#article-content" if parser.congresso_amp else "main .news-content-container" if parser.exame_insight else _SELECTORS[host]),
+        "extraction_version": "estadao-formats-1" if parser.estadao_format else "congresso-editorial-amp-1" if parser.congresso_amp else "exame-insight-1" if parser.exame_insight else "istoe-editorial-1" if host == "istoe.com.br" else EXTRACTION_VERSION, "text_extent": extent,
         "restriction_evidence": list(dict.fromkeys(parser.restrictions)),
     }
