@@ -15,6 +15,10 @@ def normalize_domain(hostname: str) -> str:
     host = str(hostname or "").strip().lower().rstrip(".")
     if host.startswith("www."):
         host = host[4:]
+    # The public WordPress API is advertised by Exame's article HTML. Keep
+    # its requests on the same publisher budget as ordinary article pages.
+    if host == "classic.exame.com":
+        host = "exame.com"
     try:
         return host.encode("idna").decode("ascii")
     except UnicodeError:

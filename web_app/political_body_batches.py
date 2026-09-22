@@ -244,17 +244,26 @@ class WordPressBodyBatches:
             continuation = re.search(r"<!--\s*(?:nextpage|more)\b|\bpage-links\b", fragment, re.I)
             shortcode = re.search(r"\[/?(?:gallery|caption|embed|audio|video|playlist|et_pb_[a-z_]+|vc_[a-z_]+)(?:\s|\])",
                                   html_to_text(fragment), re.I)
+        elif source == 'exame':
+            # A real public Exame fragment contains CSS attribute selectors
+            # such as [data-writing-block]. They are not visible shortcodes.
+            # Retain the continuation guard for actual rendered text.
+            from pipeline.http_utils import html_to_text
+            continuation = re.search(r"<!--\s*(?:nextpage|more)\b|\bpage-links\b", fragment, re.I)
+            shortcode = re.search(r"\[(?:/?[a-z][a-z0-9_-]*)(?:\s|\])", html_to_text(fragment), re.I)
         else:
             continuation = re.search(r"<!--\s*(?:nextpage|more)\b|\bpage-links\b|\[(?:/?[a-z][a-z0-9_-]*)(?:\s|\])", fragment, re.I)
             shortcode = False
         if continuation or shortcode:
             _fail("batch_continuation_unverified")
         from .political_discovery import extract_article
+        body_tag = '<div id="news-body">' if source == 'exame' else '<article>'
+        body_end = '</div>' if source == 'exame' else '</article>'
         wrapper = ('<html><head><link rel="canonical" href="' + html.escape(record["url"], quote=True)
-                   + '"></head><body><article>' + fragment + '</article></body></html>')
+                   + '"></head><body>' + body_tag + fragment + body_end + '</body></html>')
         try:
             with timed_operation("extraction"):
-                extracted = extract_article(wrapper)
+                extracted = extract_article(wrapper, url=record['url']) if source == 'exame' else extract_article(wrapper)
         except Exception:
             _fail("batch_extraction_failed")
         body = extracted.get("full_text") or ""
@@ -265,6 +274,10 @@ class WordPressBodyBatches:
         rss = record.get("body_origin") in {"publisher_rss", "publisher_atom"}
         provenance = {"method": "publisher_atom_batch" if atom else "publisher_rss_batch" if rss else "wordpress_api_batch",
                       "version": VERSION, "batch": reference}
+        if source == 'exame':
+            provenance['editorial_extraction'] = {
+                'method': extracted.get('extraction_method'),
+                'version': extracted.get('extraction_version')}
         if rss:
             provenance.update(feed_url=record["feed_url"], feed_sha256=record["feed_sha256"],
                               text_extent="unknown")

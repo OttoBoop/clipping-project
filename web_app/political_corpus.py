@@ -297,7 +297,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             raise ValueError("unknown_political_target")
         return [by_key[key] for key in selected]
 
-    def start_job(self, payload: dict, *, started_by: str, allowed_target_keys: list[str]) -> dict:
+    def start_job(self, payload: dict, *, started_by: str, allowed_target_keys: list[str],
+                  mechanism_kinds: dict[str, list[str]] | None = None) -> dict:
         selected = _scope(allowed_target_keys, payload.get("target_keys") or payload.get("targetKeys"))
         start, end = _date_window(payload)
         snapshots = self._snapshots(payload, selected)
@@ -314,8 +315,26 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         profile = str(payload.get("collection_profile") or "")
         requested_sources = payload.get("source_keys", payload.get("sourceKeys"))
         sources = select_sources(requested_sources, profile)
+        # Private operational supplements can narrow already-authorized routes.
+        # This is not read from request JSON and cannot add a source or URL.
+        if mechanism_kinds is not None:
+            if not isinstance(mechanism_kinds, dict) or set(mechanism_kinds) - {s['key'] for s in sources}:
+                raise ValueError('invalid_mechanism_selection')
+            selected_sources = []
+            for source in sources:
+                kinds = mechanism_kinds.get(source['key'])
+                if kinds is None:
+                    selected_sources.append(source)
+                    continue
+                available = {m['kind'] for m in source.get('mechanisms', [])}
+                if not isinstance(kinds, list) or not kinds or any(not isinstance(k, str) or k not in available for k in kinds):
+                    raise ValueError('invalid_mechanism_selection')
+                selected_sources.append({**source, 'mechanisms': [m for m in source['mechanisms'] if m['kind'] in kinds]})
+            sources = selected_sources
         configuration = {**source_snapshot(sources), "collection_profile": profile,
                          "discovery_target_keys": discovery_keys}
+        if mechanism_kinds is not None:
+            configuration['operational_mechanism_kinds'] = mechanism_kinds
         if kind == "recover":
             configuration["recovery_gap_types"] = recovery_filters(payload)
             if 'istoe_deferred_dates' in configuration['recovery_gap_types'] and (configuration['source_keys'] != ['istoe'] or configuration['recovery_gap_types'] != ['istoe_deferred_dates']):
@@ -348,7 +367,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     if (existing.get("metadata") or {}).get("discovery_target_keys", existing["target_keys"]) != discovery_keys:
                         raise ValueError("request_key_conflict")
                     old_meta = existing.get("metadata") or {}
-                    for key in ("source_keys", "collection_profile", "recovery_gap_types"):
+                    for key in ("source_keys", "collection_profile", "recovery_gap_types", "operational_mechanism_kinds"):
                         if old_meta.get(key) != configuration.get(key):
                             raise ValueError("request_key_conflict")
                     return self._job_dto(existing)
@@ -375,6 +394,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         # Source rotation still comes first when claiming. Within each source,
         # finish its direct publisher discovery before optional Google queries.
         priority = 0 if kind == "discovery" and payload.get("strategy") == "google_news" else 10
+        if kind == 'discovery' and source_key == 'exame' and payload.get('strategy') == 'expanded_wordpress':
+            priority = 30
         if kind == "fetch" and source_key == "g1" and re.match(r"^/(?:rj|politica|eleicoes)(?:/|$)", urlparse(str(payload.get("url") or "")).path):
             priority = 20
         if kind == "fetch" and source_key == "estadao" and re.match(r"^/(?:politica|opiniao)(?:/|$)", urlparse(str(payload.get("url") or "")).path):
@@ -387,6 +408,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             priority = 20
         if kind == "fetch" and (payload.get("metadata") or {}).get("partition_status") == "requested_calendar_partition":
             priority = 20
+        if kind == 'fetch' and source_key == 'exame' and payload.get('body_batch_ref'):
+            priority = 30
         conn.execute("""INSERT INTO political_tasks(job_id,kind,source_key,dedupe_key,payload,cursor,request_domain,priority)
                         VALUES (%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s) ON CONFLICT(job_id,kind,dedupe_key) DO NOTHING""",
                      (job_id, kind, source_key, dedupe, _json(payload), _json(payload.get("cursor") or {}),
@@ -1469,6 +1492,14 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                 reference = batch_refs.get((candidate.get("metadata") or {}).get("publisher_post_id", (candidate.get("metadata") or {}).get("wordpress_id")))
                 if reference:
                     candidate["body_batch_ref"] = reference
+                    if candidate.get('source_key') == 'exame':
+                        from .political_exame_api import cache_candidate
+                        cached = cache_candidate(candidate)
+                        if cached:
+                            conn.execute('''INSERT INTO political_public_body_cache(source_key,url,candidate)
+                                VALUES (%s,%s,%s::jsonb) ON CONFLICT(source_key,url)
+                                DO UPDATE SET candidate=EXCLUDED.candidate,stored_at=NOW()''',
+                                ('exame', url, _json(cached)))
                 elif batch_fallback:
                     candidate["metadata"] = {**(candidate.get("metadata") or {}), "body_batch_fallback": batch_fallback}
                 api_date = (date_api_facts.get(url) if url not in known_dates and url not in current_articles else None)
@@ -1774,6 +1805,18 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             return self._finish_fetch_outside_window(task, published=known_date[0], date_status=known_date[1], reused_date=True)
         if existing and non_news_reason(existing["canonical_url"], existing["title"]):
             return self._finish_fetch_not_news(task, existing["canonical_url"], title=existing["title"])
+        if (candidate.get('source_key') == 'exame' and not candidate.get('body_batch_ref')
+                and not force_refresh and not (existing and existing['text_object_key'])):
+            # Read the public body again with THIS job's name rules. A cached
+            # no-match outcome is never reused. Older-than-job caches are not
+            # accepted as evidence of a current publisher response.
+            with self._connect() as conn:
+                cached = conn.execute('''SELECT candidate FROM political_public_body_cache
+                    WHERE source_key='exame' AND url=%s AND stored_at >= %s''',
+                    (candidate['url'], job['created_at'])).fetchone()
+            if cached:
+                from .political_exame_api import reuse_candidate
+                candidate = reuse_candidate(candidate, cached['candidate'])
         body, final_url, title = "", fetch_url, str(candidate.get("title") or "")
         published = parse_date(candidate.get("published_at"))
         date_status = ("api_verified" if (candidate.get("metadata") or {}).get("wordpress_id") is not None else "source_reported") if published else "unknown"
@@ -1801,6 +1844,10 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             body = self._read_text(existing["text_object_key"], existing["content_hash"])
             final_url, title = existing["canonical_url"], existing["title"]
             published, date_status = existing["published_at"], existing["date_status"]
+            if candidate.get('source_key') == 'exame' and existing['metadata'].get('publication_date_evidence'):
+                candidate['metadata'] = {**(candidate.get('metadata') or {}),
+                    'discovery_publication_date_evidence': (candidate.get('metadata') or {}).get('publication_date_evidence'),
+                    'publication_date_evidence': existing['metadata']['publication_date_evidence']}
             digest, key = existing["content_hash"], existing["text_object_key"]
             body_origin = "saved_object"
             if not published and task.get("_undated_existing_article_id"):

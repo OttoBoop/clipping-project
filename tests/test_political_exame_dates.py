@@ -10,7 +10,7 @@ def load(fragment):
  raw=gzip.decompress((FIX/(row['sha256']+'.gz')).read_bytes());assert hashlib.sha256(raw).hexdigest()==row['sha256']
  return SimpleNamespace(url=row['url'],text=raw.decode(),content=raw,status_code=200,headers={})
 def run(fragment,first='2026-06-01',last='2026-09-14',cursor=None,budget=500):
- r=load(fragment);s=next(x for x in expanded.load_expanded_sources() if x['key']=='exame');t=expanded.build_expanded_tasks(s,first,last,[{'key':'eduardo_paes'}])[0];t.update(url=r.url,depth=1,cursor=cursor or {},candidate_budget=budget)
+ r=load(fragment);s=next(x for x in expanded.load_expanded_sources() if x['key']=='exame');t=next(t for t in expanded.build_expanded_tasks(s,first,last,[{'key':'eduardo_paes'}]) if t['strategy']=='expanded_sitemap');t.update(url=r.url,depth=1,cursor=cursor or {},candidate_budget=budget)
  return expanded.discover_expanded(t,s,lambda url:r)
 def test_real_archive_dates_avoid_fetching_outside_period_cards():
  result=run('colunistas/adriano');assert result['candidates'];assert len(result['candidates'])<25

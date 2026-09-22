@@ -837,6 +837,16 @@
           "kind": "sitemap",
           "url": "https://exame.com/sitemap.xml",
           "evidence_url": "https://exame.com/robots.txt"
+        },
+        {
+          "kind": "wordpress",
+          "url": "https://classic.exame.com/wp-json/",
+          "rest_base": "posts",
+          "page_size": 50,
+          "date_scan_verified": true,
+          "evidence_url": "https://classic.exame.com/wp-json/wp/v2/categories/772988",
+          "verified_at": "2026-09-22",
+          "basis": "Public category API advertised in actual article hydration links lists wp:post_type posts; dated 2026-08-09 response has 67 posts, matching daily sitemap; five public bodies and 73 paragraphs checked against article pages."
         }
       ],
       "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",

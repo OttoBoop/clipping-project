@@ -13,7 +13,8 @@ def original_date_trusted(url, metadata):
         # only URLs encountered again; never use those cached dates to discard
         # a newly discovered candidate near a São Paulo day boundary.
         evidence = (metadata or {}).get('publication_date_evidence') or {}
-        return isinstance(evidence, dict) and evidence.get('method') == 'exame_visible_publication_header'
+        return isinstance(evidence, dict) and evidence.get('method') in {
+            'exame_visible_publication_header', 'exame_public_wordpress_api'}
     if parsed.hostname not in {'www.jota.info', 'jota.info', 'portal.jota.info'} or not parsed.path.startswith('/especiais/'):
         return True
     evidence = (metadata or {}).get('publication_date_evidence') or {}

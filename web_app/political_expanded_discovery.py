@@ -341,6 +341,8 @@ def _wordpress(task, source, fetch):
               'after': (datetime.fromisoformat(task['date_from']) - timedelta(seconds=1)).isoformat(),
               'before': (date.fromisoformat(task['date_to']) + timedelta(days=1)).isoformat() + 'T00:00:00',
               '_fields': 'id,link,title,excerpt,date,date_gmt,content,modified_gmt'}
+    if source['key'] == 'exame':
+        params['before'] = task['date_to'] + 'T23:59:59'
     root = mechanism['url']
     rest_base = mechanism.get('rest_base', 'posts')
     if not re.fullmatch('[a-z][a-z0-9_-]{0,63}', rest_base):
@@ -368,7 +370,11 @@ def _wordpress(task, source, fetch):
         if not isinstance(row, dict):
             continue
         published = core.parse_publication_date(row.get('date_gmt') or row.get('date', ''), naive_zone=timezone.utc if row.get('date_gmt') else core.SAO_PAULO)
-        if not core.in_window(published, task['date_from'], task['date_to']):
+        api_evidence = None
+        if source['key'] == 'exame':
+            from .political_exame_api import publication
+            published, api_evidence = publication(row, hashlib.sha256(response.content).hexdigest(), endpoint)
+        if not core.in_window(published, task['date_from'], task['date_to']) and not (source['key'] == 'exame' and not published):
             outside += 1
             continue
         url = str(row.get('link') or '')
@@ -376,6 +382,8 @@ def _wordpress(task, source, fetch):
             continue
         rendered = lambda value: value.get('rendered', '') if isinstance(value, dict) else str(value or '')
         metadata = {'wordpress_id': row.get('id'), 'wordpress_rest_base': rest_base, 'collection_mode': 'date_scan'}
+        if api_evidence:
+            metadata['publication_date_evidence'] = api_evidence
         if source.get('numeric_permalink') and parse_qs(urlparse(url).query).get('p'):
             metadata['wordpress_numeric_permalink_verified'] = True
         candidate = _candidate(source, url, rendered(row.get('title')), published, rendered(row.get('excerpt')), metadata)
