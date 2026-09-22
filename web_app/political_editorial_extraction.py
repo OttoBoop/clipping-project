@@ -99,6 +99,8 @@ class _EditorialParser(HTMLParser):
         self.restrictions: list[str] = []
         self.congresso_amp = False
         self.exame_insight = False
+        self.exame_story = False
+        self.story_page_related = False
         self.estadao_format = ""
         self.story_page_start = None
         self.story_page_links = []
@@ -139,10 +141,14 @@ class _EditorialParser(HTMLParser):
         classes = set(attrs.get("class", "").split())
         parent_body = self.stack[-1][2] if self.stack else False
         parent_blocked = self.stack[-1][3] if self.stack else False
-        web_story = self.host == "estadao.com.br" and tag == "amp-story" and bool(attrs.get("data-story-id"))
+        web_story = tag == "amp-story" and (self.host == "exame.com" or (self.host == "estadao.com.br" and bool(attrs.get("data-story-id"))))
         if web_story:
-            self.estadao_format = "web_story"
-        if self.estadao_format == "web_story" and tag == "amp-story-page":
+            if self.host == "exame.com":
+                self.exame_story = True
+            else:
+                self.estadao_format = "web_story"
+        if (self.estadao_format == "web_story" or self.exame_story) and tag == "amp-story-page":
+            self.story_page_related = False
             self.story_page_start = len(self.parts)
             self.story_page_links = []
         if self.story_page_start is not None and tag == "a" and attrs.get("href"):
@@ -154,7 +160,13 @@ class _EditorialParser(HTMLParser):
         skip = tag in _SKIP_TAGS or bool(classes & _SKIP_CLASSES)
         if self.host == "exame.com" and tag == "a":
             skip = skip or (urlparse(attrs.get("href", "")).hostname or "").endswith("doubleclick.net")
-        if self.host == "estadao.com.br" and self.estadao_format:
+        if self.exame_story:
+            skip = skip or (tag == "amp-story-page" and attrs.get("id") == "cover")
+            skip = skip or bool(classes & {"logo", "box-keep-up", "box-articles"})
+            skip = skip or (tag == "span" and self.stack and self.stack[-1][0] == "amp-story-grid-layer" and "card" in self.stack[-1][1].get("class", "").split())
+            if classes & {"box-keep-up", "box-articles"}:
+                self.story_page_related = True
+        if (self.host == "estadao.com.br" and self.estadao_format) or self.exame_story:
             skip = skip or bool(classes & {"credits", "credit", "chapeu"}) or tag in {"amp-analytics", "amp-story-auto-ads", "amp-story-page-outlink", "amp-story-bookend"}
         if self.host == "generonumero.media" and parent_body and self.stack:
             # These siblings are the article hero, author/taxonomy, contents
@@ -194,6 +206,8 @@ class _EditorialParser(HTMLParser):
                 self.fields.setdefault("time", []).append(attrs["datetime"])
         elif self.host == "istoe.com.br" and "post-date" in classes:
             field = "publication_visible"
+        elif self.exame_story and tag == "p" and "date" in classes and any(item[1].get("id") == "cover" for item in self.stack):
+            field = "exame_story_date"
         elif self.host == "exame.com" and tag == "p" and not body:
             field = "exame_header_paragraph"
         elif self.host == "congressoemfoco.com.br" and "publication-date" in classes and any(item[1].get("id") == "article-header" for item in self.stack):
@@ -226,7 +240,7 @@ class _EditorialParser(HTMLParser):
             header = text.split("\n\n")[0].strip().lower()
             promotional = any(urlparse(link).path.startswith("/assine/") for link in self.story_page_links)
             related = bool(self.story_page_links) and (header.startswith(("veja também:", "veja mais:")) or header == "produção")
-            if promotional or related:
+            if promotional or related or self.story_page_related:
                 del self.parts[self.story_page_start:]
                 self.story_pages_removed += 1
             self.story_page_start = None
@@ -261,6 +275,9 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
     falling back to a larger unrelated story or subscription/navigation text.
     """
     host = (urlparse(url).hostname or "").lower().removeprefix("www.")
+    if host == "exame.com" and urlparse(url).path.startswith("/galeria/"):
+        from .political_exame_gallery import extract as extract_gallery
+        return extract_gallery(raw_html, url)
     if host == "estadao.com.br":
         from .political_estadao_eldorado import extract as extract_eldorado_episode
         episode = extract_eldorado_episode(raw_html, url)
@@ -354,8 +371,10 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
     if host == "exame.com":
         visible = next((x for x in parser.fields.get("exame_header_paragraph", [])
                         if x.strip().startswith("Publicado em ")), "")
+        if parser.exame_story:
+            visible = next(iter(parser.fields.get("exame_story_date", [])), "")
         visible_date = _date(visible)
-        evidence = {"content_format": "exame_insight" if parser.exame_insight else "exame_article", "publication_date_evidence": {
+        evidence = {"content_format": "web_story" if parser.exame_story else "exame_insight" if parser.exame_insight else "exame_article", "publication_date_evidence": {
             "method": "exame_visible_publication_header" if visible_date else "article_metadata",
             "visible": visible, "visible_parsed": visible_date, "metadata_published": published,
             "conflict": bool(visible_date and published and visible_date[:16] != published[:16]),
@@ -363,6 +382,8 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
         # Actual Insight and Invest responses label local wall time as Z in JSON-LD.
         # Prefer its explicit published header in São Paulo; keep both values.
         published = visible_date or published
+        if parser.exame_story:
+            evidence["format_provenance"] = {"promotional_or_related_pages_removed": parser.story_pages_removed}
     if host == "estadao.com.br" and parser.estadao_format:
         evidence["content_format"] = parser.estadao_format
         evidence["format_provenance"] = {"promotional_or_related_pages_removed": parser.story_pages_removed}
@@ -394,7 +415,7 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
         "full_text": body, "title": title.strip(), "published_at": published,
         "canonical_url": canonical,
         "extraction_state": "full_text" if len(body.split()) >= 40 else "metadata_only",
-        "extraction_method": "publisher_selector:" + ("amp-story[data-story-id]" if parser.estadao_format == "web_story" else ".content-wrapper-sponsored.content-left-sponsored" if parser.estadao_format == "sponsored_article" else "#article-content" if parser.congresso_amp else "main .news-content-container" if parser.exame_insight else _SELECTORS[host]),
-        "extraction_version": "estadao-formats-1" if parser.estadao_format else "congresso-editorial-amp-1" if parser.congresso_amp else "exame-insight-1" if parser.exame_insight else "istoe-editorial-1" if host == "istoe.com.br" else EXTRACTION_VERSION, "text_extent": extent,
+        "extraction_method": "publisher_selector:" + ("amp-story" if parser.exame_story else "amp-story[data-story-id]" if parser.estadao_format == "web_story" else ".content-wrapper-sponsored.content-left-sponsored" if parser.estadao_format == "sponsored_article" else "#article-content" if parser.congresso_amp else "main .news-content-container" if parser.exame_insight else _SELECTORS[host]),
+        "extraction_version": "exame-webstory-1" if parser.exame_story else "estadao-formats-1" if parser.estadao_format else "congresso-editorial-amp-1" if parser.congresso_amp else "exame-insight-1" if parser.exame_insight else "istoe-editorial-1" if host == "istoe.com.br" else EXTRACTION_VERSION, "text_extent": extent,
         "restriction_evidence": list(dict.fromkeys(parser.restrictions)),
     }

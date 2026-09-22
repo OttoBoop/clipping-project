@@ -1,0 +1,74 @@
+[
+  {
+    "taskId": 25246,
+    "file": "25246.html.gz",
+    "url": "https://exame.com/galeria/clube-chro-julho-2026",
+    "sha256": "0b0f6609279e25e0d0a431edaeb300c447cac26db647fdbd9bae391f4e08496e"
+  },
+  {
+    "taskId": 25247,
+    "file": "25247.html.gz",
+    "url": "https://exame.com/galeria/presentes-dia-dos-pais-2026",
+    "sha256": "a69743aa73b1d55e199ce17d502843483432c47ed0d4a00034ede556563198fe"
+  },
+  {
+    "taskId": 25248,
+    "file": "25248.html.gz",
+    "url": "https://exame.com/galeria/o-quadrado-magico-de-paraty-do-sandi-hotel",
+    "sha256": "1e2c891387968cbcf28286fba0cb9c545230531724c5afb39e57baacdb45e462"
+  },
+  {
+    "taskId": 25249,
+    "file": "25249.html.gz",
+    "url": "https://exame.com/galeria/novas-escolas-bilingues-cultura-inglesa",
+    "sha256": "9f86f2dfeb73769bf99ba04bb73b835353693fd5be83d215c44adf32c5b7b420"
+  },
+  {
+    "taskId": 25250,
+    "file": "25250.html.gz",
+    "url": "https://exame.com/galeria/clube-chro-sao-paulo-junho-2026",
+    "sha256": "c9418b4e596a81b530875e1b42bf9e5952ff7e31de097db29d9aa57c15b8cf82"
+  },
+  {
+    "taskId": 25251,
+    "file": "25251.html.gz",
+    "url": "https://exame.com/galeria/edificio-piscina-do-copacabana-palace-a-maior-reforma-de-um-hotel-belmond",
+    "sha256": "f7ef45219a18e58839394e28a847074fd962776086d84cb995585e002a126784"
+  },
+  {
+    "taskId": 25252,
+    "file": "25252.html.gz",
+    "url": "https://exame.com/galeria/lider-consciente-eua",
+    "sha256": "f0b70ce300327bdd7cabe652588e98a0089fc9f287f42421e8d43aab658a92e2"
+  },
+  {
+    "taskId": 25253,
+    "file": "25253.html.gz",
+    "url": "https://exame.com/galeria/festa-midia-2026",
+    "sha256": "226a1f1fe9ea95464d41879e2a7c3d86f5c0df22d0a0f10f42c332fa187bb53c"
+  },
+  {
+    "taskId": 25254,
+    "file": "25254.html.gz",
+    "url": "https://exame.com/galeria/presentes-dia-dos-namorados-2026",
+    "sha256": "24450a98e91a789f9247351517261ee122571ed6af1ffc7cbe11c3ba08f0a8d2"
+  },
+  {
+    "taskId": 25296,
+    "file": "25296.html.gz",
+    "url": "https://exame.com/webstories/esg/natura-gera-r-86-bilhoes-em-impacto-positivo-e-antecipa-meta-em-5-anos",
+    "sha256": "f32c3c8e15606c7f4969cab61997b1acd18adcab355240ee04cad28e98b0df35"
+  },
+  {
+    "taskId": 25297,
+    "file": "25297.html.gz",
+    "url": "https://exame.com/webstories/esg/zurich-transforma-520-toneladas-entre-carros-e-celular-quebrados-em-materia-prima",
+    "sha256": "a96bf212f3f99d96c39bd44d3f96629abd40448317831399de3646acc0e2b807"
+  },
+  {
+    "taskId": 25298,
+    "file": "25298.html.gz",
+    "url": "https://exame.com/webstories/esg/pele-impressa-e-maquinas-batizadas-de-divas-pop-conheca-o-laboratorio-do-boticario",
+    "sha256": "439480187118f0078c912837ce2c95bee4c770dc9c778aaee58cb665b0a7abe6"
+  }
+]
