@@ -1422,7 +1422,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             if istoe_inventory:
                 from .political_istoe_inventory import record_urls
                 record_urls(conn, candidates)
-            if task['source_key'] == 'exame' and payload.get('source_snapshot', {}).get('archive_date_adapter'):
+            if task['source_key'] == 'exame' and (payload.get('source_snapshot') or {}).get('archive_date_adapter'):
                 from .political_exame_routes import resolve
                 alternatives = resolve(conn, task['job_id'], candidates)
                 for candidate in candidates:
@@ -1434,13 +1434,22 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     conn.execute("""INSERT INTO political_observations
                         (job_id,source_task_id,observed_url,source_key,title,metadata,disposition)
                         VALUES (%s,%s,%s,'exame',%s,%s::jsonb,'publisher_route_reused')
-                        ON CONFLICT(job_id,observed_url) DO NOTHING""",
+                        ON CONFLICT(job_id,observed_url) DO UPDATE SET
+                            metadata=political_observations.metadata || EXCLUDED.metadata,
+                            disposition=CASE WHEN political_observations.disposition='pending'
+                                AND political_observations.article_id IS NULL THEN 'publisher_route_reused'
+                                ELSE political_observations.disposition END""",
                         (task['job_id'],task['id'],original,candidate['title'],
                          _json({**candidate.get('metadata', {}), 'publisher_route': proof})))
                     candidate['url'] = alternative['url']
                     candidate['metadata'] = {**candidate.get('metadata', {}), 'publisher_route': proof}
                 if alternatives:
                     result.setdefault('publisher_archive', {})['reused_routes'] = alternatives
+                if payload.get('url') == 'https://exame.com/categorias/invest/academy/sitemap.xml':
+                    total = conn.execute("""SELECT count(*) n FROM political_observations
+                        WHERE job_id=%s AND source_task_id=%s AND metadata ? 'publisher_route'""",
+                        (task['job_id'], task['id'])).fetchone()['n']
+                    result.setdefault('publisher_archive', {})['reused_route_count'] = total
             known_dates, current_articles = self._discovery_publication_state(conn, candidates) if job["kind"] == "collect" else ({}, set())
             dates_reused = dates_from_api = 0
             for candidate in candidates:
