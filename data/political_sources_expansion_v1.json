@@ -825,10 +825,9 @@
         "psd_rj_2026"
       ],
       "strategies": [
-        "expanded",
-        "google_news"
+        "expanded"
       ],
-      "google_policy": "on_direct_gap",
+      "google_policy": "never",
       "discovery_priority_batch": 1,
       "legacy_source_keys": [
         "publisher:exame.com"
@@ -858,8 +857,9 @@
           "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access."
         }
       ],
-      "verified_at": "2026-09-14",
-      "catalog_version": 1
+      "verified_at": "2026-09-22",
+      "catalog_version": 1,
+      "archive_date_adapter": "exame-public-archive-dates-1"
     },
     {
       "key": "congresso_em_foco",

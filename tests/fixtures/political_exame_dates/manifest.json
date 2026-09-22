@@ -1,0 +1,30 @@
+[
+  {
+    "url": "https://exame.com/colunistas/adriano-lima/ultimas-noticias/",
+    "sha256": "5aefbe952bf8c4c4f5875a239615863f595fb558ef33d08d80d3adc5021921af",
+    "status": 200,
+    "type": "text/html; charset=utf-8",
+    "at": "2026-09-22T13:58:53.910582+00:00"
+  },
+  {
+    "url": "https://exame.com/videos/revista-exame/",
+    "sha256": "0dd0bdd231ee5e4bcdc7f415ca9f7038e87e5efdef9805a0ba485f400be35cb8",
+    "status": 200,
+    "type": "text/html; charset=utf-8",
+    "at": "2026-09-22T13:58:55.854174+00:00"
+  },
+  {
+    "url": "https://exame.com/edicoes/1290/",
+    "sha256": "e9a4c5c3383b4e616dc9b3bcdd4d104e1682259481512b989bc494bb37a40658",
+    "status": 200,
+    "type": "text/html; charset=utf-8",
+    "at": "2026-09-22T13:58:57.311683+00:00"
+  },
+  {
+    "url": "https://exame.com/artigos/2026-08/09/sitemap.xml",
+    "sha256": "b887adf5fbf887d534fdce91b99ce004ac11cd3c73c92b599d2ea7b098b2bf04",
+    "status": 200,
+    "type": null,
+    "at": null
+  }
+]

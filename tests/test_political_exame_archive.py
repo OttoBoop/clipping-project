@@ -22,6 +22,7 @@ def response(name):
 def setup(name='first-0.response.gz'):
     r = response(name)
     source = next(s for s in expanded.load_expanded_sources() if s['key'] == 'exame')
+    source.pop('archive_date_adapter', None)  # Frozen jobs retain legacy semantics.
     task = expanded.build_expanded_tasks(source, '2026-08-09', '2026-08-09', [{'key': 'eduardo_paes'}])[0]
     task.update(url=r.url, depth=1, ancestors=['https://exame.com/sitemap.xml'])
     return task, source, r

@@ -213,7 +213,8 @@ def _sitemap(task, source, fetch):
     if excluded:
         return _result(calendar_partition_excluded=excluded)
     response = core._get(fetch, url)
-    if exame_archive and response.text.lstrip().lower().startswith(('<!doctype html', '<html')):
+    if (exame_archive or (source.get('key') == 'exame' and source.get('archive_date_adapter')
+                         and int(task.get('depth', 0)) > 0)) and response.text.lstrip().lower().startswith(('<!doctype html', '<html')):
         if offset or cursor.get('document_fingerprint'):
             return _result(outcome='gap', gap_reason='expanded_sitemap_kind_changed_during_resume')
         return political_exame_archive.discover(task, source, fetch, response=response)
