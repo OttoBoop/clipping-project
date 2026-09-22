@@ -49,7 +49,7 @@ def test_real_api_date_scan_carries_full_bodies_in_bounded_objects():
     assert result['candidates'][0]['published_at']=='2026-08-10T00:50:06+00:00'
     params=parse_qs(urlparse(urls[0]).query)
     assert params['after']==['2026-08-08T23:59:59']
-    assert params['before']==['2026-08-09T23:59:59']
+    assert params['before']==['2026-08-10T00:00:00']
     assert result['next_cursor']['page']==2
     repeated,_=discovered(result['next_cursor'])
     assert repeated['gap_reason']=='expanded_repeated_api_page'

@@ -341,8 +341,6 @@ def _wordpress(task, source, fetch):
               'after': (datetime.fromisoformat(task['date_from']) - timedelta(seconds=1)).isoformat(),
               'before': (date.fromisoformat(task['date_to']) + timedelta(days=1)).isoformat() + 'T00:00:00',
               '_fields': 'id,link,title,excerpt,date,date_gmt,content,modified_gmt'}
-    if source['key'] == 'exame':
-        params['before'] = task['date_to'] + 'T23:59:59'
     root = mechanism['url']
     rest_base = mechanism.get('rest_base', 'posts')
     if not re.fullmatch('[a-z][a-z0-9_-]{0,63}', rest_base):
