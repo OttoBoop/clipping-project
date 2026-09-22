@@ -381,6 +381,10 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             # Prioritize useful editorial sections without filtering out any
             # other section or requiring a name in a headline/URL.
             priority = 20
+        if kind == "fetch" and source_key == "exame" and re.match(r"^/(?:brasil|eleicoes)/", urlparse(str(payload.get("url") or "")).path):
+            # Measured Exame yield is concentrated in Brasil. Change order
+            # only: every other discovered body remains eligible and queued.
+            priority = 20
         if kind == "fetch" and (payload.get("metadata") or {}).get("partition_status") == "requested_calendar_partition":
             priority = 20
         conn.execute("""INSERT INTO political_tasks(job_id,kind,source_key,dedupe_key,payload,cursor,request_domain,priority)
