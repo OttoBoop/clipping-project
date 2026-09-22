@@ -3,6 +3,7 @@ from urllib.parse import urljoin, urlparse
 from html.parser import HTMLParser
 from datetime import datetime
 import json
+import hashlib
 import re
 
 
@@ -126,7 +127,8 @@ def public_archive_dates(parser, rows, core):
             tail = value[match.end() + end:match.end() + end + 1000]
             total = re.search(r'"totalPages"\s*:\s*(\d+)', tail)
             pages = re.findall(r'"page"\s*:\s*(\d+)', value[max(0, match.start()-500):match.start()])
-            return {'dates': dict(zip(links, dates)), 'ordered': all(a >= b for a,b in zip(dates, dates[1:])),
+            by_identity = dict(zip(links, dates))
+            return {'dates': {u.rstrip('/'): by_identity[normalize(u)] for u in rows}, 'ordered': all(a >= b for a,b in zip(dates, dates[1:])),
                     'page': int(pages[-1]) if pages else None,
                     'total_pages': int(total[1]) if total else None}
     return None
@@ -155,26 +157,37 @@ def discover(task, source, fetch, response=None):
     final_url = getattr(response, 'url', '') or url
     if not expanded._allowed(final_url, source):
         raise core.DiscoveryError('Exame archive redirected outside publisher domains', retryable=False)
+    def finish(*args, **kwargs):
+        proof = {'adapter': 'exame-public-archive-dates-1', 'url': final_url,
+                 'response_sha256': hashlib.sha256(response.content).hexdigest(),
+                 'boundary': kwargs.get('archive_boundary'), 'terminal': kwargs.get('archive_terminal')}
+        kwargs['publisher_archive'] = proof
+        return expanded._result(*args, **kwargs)
+
     parser = _EditorialCards()
     parser.feed(response.text)
     if parser.canonical and urlparse(parser.canonical).path in ('', '/') and urlparse(url).path not in ('', '/'):
-        return expanded._result(outcome='gap', gap_reason='exame_archive_returns_homepage')
+        return finish(outcome='gap', gap_reason='exame_archive_returns_homepage')
     if not parser.found_main:
-        return expanded._result(outcome='gap', gap_reason='exame_html_archive_not_recognized')
+        return finish(outcome='gap', gap_reason='exame_html_archive_not_recognized')
     # These are the actual editorial cards; header/footer links are not news.
-    rows = {}
+    visible_rows = {}
     for href, title in parser.rows:
         link = urljoin(final_url, href)
-        if expanded._allowed(link, source, article=True):
-            rows.setdefault(link, title)
-    dated = public_archive_dates(parser, rows, core) if source.get('archive_date_adapter') else None
+        if expanded._allowed(link, source):
+            visible_rows.setdefault(link, title)
+    dated = public_archive_dates(parser, visible_rows, core) if source.get('archive_date_adapter') else None
+    # The publisher's exact post list proves even short slugs are article
+    # candidates. Applying the generic length heuristic first breaks identity
+    # checks for the whole page (observed /car-and-fun/dois-em-um/).
+    rows = visible_rows if dated else {u:t for u,t in visible_rows.items() if expanded._allowed(u, source, article=True)}
     fingerprint = expanded._fingerprint(rows)
     seen = cursor.get('page_fingerprints', [])
     if rows and fingerprint in seen:
-        return expanded._result(outcome='gap', raw_count=len(rows), gap_reason='expanded_repeated_archive_page')
+        return finish(outcome='gap', raw_count=len(rows), gap_reason='expanded_repeated_archive_page')
     offset = int(cursor.get('offset', 0))
     if offset and cursor.get('document_fingerprint') != fingerprint:
-        return expanded._result(outcome='gap', raw_count=len(rows), gap_reason='expanded_archive_changed_during_resume')
+        return finish(outcome='gap', raw_count=len(rows), gap_reason='expanded_archive_changed_during_resume')
     cap = min(expanded.MAX_BATCH, max(1, int(task.get('candidate_budget') or expanded.MAX_BATCH)))
     selected = list(rows.items())[offset:offset + cap]
     candidates = [expanded._candidate(source, link, title,
@@ -186,31 +199,31 @@ def discover(task, source, fetch, response=None):
         if not dated or core.in_window(dated['dates'][link.rstrip('/')], task['date_from'], task['date_to'])]
     base = {**cursor, 'response_format': 'exame_editorial_html', 'url': url}
     if offset + cap < len(rows):
-        return expanded._result(candidates, raw_count=len(selected), next_cursor={
+        return finish(candidates, raw_count=len(selected), next_cursor={
             **base, 'offset': offset + cap, 'document_fingerprint': fingerprint})
     next_url = urljoin(final_url, parser.next_href) if parser.next_href else ''
     page = int(cursor.get('page', 1))
     if dated and dated['page'] not in (None, page):
-        return expanded._result(outcome='gap', raw_count=len(rows), gap_reason='exame_archive_page_identity_mismatch')
+        return finish(outcome='gap', raw_count=len(rows), gap_reason='exame_archive_page_identity_mismatch')
     # Publication order is checked on the complete visible page, not a filtered
     # set of name/title matches. Retain this boundary as explicit evidence.
     if dated and dated['ordered'] and all(datetime.fromisoformat(d).astimezone(core.SAO_PAULO).date().isoformat() < task['date_from'] for d in dated['dates'].values()):
-        return expanded._result(candidates, raw_count=len(selected), archive_boundary={
+        return finish(candidates, raw_count=len(selected), archive_boundary={
             'basis': 'publisher_card_publication_dates_descending', 'page': page,
             'newest_publication': max(dated['dates'].values()),
             'oldest_publication': min(dated['dates'].values()),
             'remaining_pages': max(0, (dated['total_pages'] or page)-page)})
     if next_url:
         if not expanded._allowed(next_url, source) or next_url == final_url:
-            return expanded._result(candidates, raw_count=len(selected), outcome='gap', gap_reason='exame_html_archive_invalid_next_page')
+            return finish(candidates, raw_count=len(selected), outcome='gap', gap_reason='exame_html_archive_invalid_next_page')
         if page >= expanded.MAX_PAGES:
-            return expanded._result(candidates, raw_count=len(selected), outcome='gap', gap_reason='expanded_archive_page_cap')
-        return expanded._result(candidates, raw_count=len(selected), next_cursor={
+            return finish(candidates, raw_count=len(selected), outcome='gap', gap_reason='expanded_archive_page_cap')
+        return finish(candidates, raw_count=len(selected), next_cursor={
             'response_format': 'exame_editorial_html', 'url': next_url, 'page': page + 1,
             'page_fingerprints': (seen + [fingerprint])[-32:]})
     # A terminal HTML page does not prove the publisher's historical inventory.
     if dated and dated['total_pages'] == page:
-        return expanded._result(candidates, raw_count=len(selected), archive_terminal={
+        return finish(candidates, raw_count=len(selected), archive_terminal={
             'basis': 'publisher_totalPages_and_card_identity', 'page': page})
-    return expanded._result(candidates, raw_count=len(selected), outcome='gap',
+    return finish(candidates, raw_count=len(selected), outcome='gap',
                             gap_reason='expanded_archive_history_not_proven')

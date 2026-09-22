@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import xml.etree.ElementTree as ET
 from datetime import date, datetime, timedelta, timezone
 from html.parser import HTMLParser
 from pathlib import Path
@@ -218,7 +219,24 @@ def _sitemap(task, source, fetch):
         if offset or cursor.get('document_fingerprint'):
             return _result(outcome='gap', gap_reason='expanded_sitemap_kind_changed_during_resume')
         return political_exame_archive.discover(task, source, fetch, response=response)
-    root = core._xml(response)
+    xml_repairs = 0
+    if source.get('key') == 'exame' and source.get('archive_date_adapter'):
+        # Real /categorias/negocios/ returns literal Tok&Stok; in news:title.
+        # Preserve those literal characters without inventing entity meanings;
+        # valid XML entities and CDATA remain unchanged.
+        parts = re.split(r'(<!\[CDATA\[.*?\]\]>)', response.text, flags=re.S)
+        for i in range(0, len(parts), 2):
+            parts[i], count = re.subn(r'&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9A-Fa-f]+;)', '&amp;', parts[i])
+            xml_repairs += count
+        if xml_repairs:
+            try:
+                root = ET.fromstring(''.join(parts))
+            except ET.ParseError as exc:
+                raise core.DiscoveryError('malformed Exame sitemap after literal ampersand repair') from exc
+        else:
+            root = core._xml(response)
+    else:
+        root = core._xml(response)
     kind = core._local(root.tag)
     nodes = list(root)
     if kind not in {'sitemapindex', 'urlset'}:
@@ -279,6 +297,13 @@ def _sitemap(task, source, fetch):
         return _result(outcome='gap', raw_count=len(nodes), gap_reason='expanded_repeated_sitemap_page')
     candidates = []
     structural_entries = []
+    def leaf_result(*args, **kwargs):
+        kwargs['structural_entries'] = structural_entries
+        if source.get('key') == 'exame' and source.get('archive_date_adapter'):
+            kwargs['publisher_archive'] = {'adapter': source['archive_date_adapter'], 'url': url,
+                'response_sha256': hashlib.sha256(response.content).hexdigest(),
+                'literal_ampersands_escaped': xml_repairs, 'structural_entries': structural_entries}
+        return _result(*args, **kwargs)
     for node in nodes[offset:offset + cap]:
         article_url = core._child_text(node, 'loc')
         if source.get('key') == 'exame' and source.get('archive_date_adapter'):
@@ -297,15 +322,14 @@ def _sitemap(task, source, fetch):
             metadata={'sitemap_url': url, 'sitemap_lastmod_hint': core._child_text(node, 'lastmod'),
                       'partition_hint': task.get('partition_hint', []), 'discovery_day': task.get('day', '')}))
     if offset + cap < len(nodes):
-        return _result(candidates, next_cursor={**cursor, 'offset': offset + cap, 'document_fingerprint': fingerprint}, raw_count=len(nodes[offset:offset + cap]), structural_entries=structural_entries)
+        return leaf_result(candidates, next_cursor={**cursor, 'offset': offset + cap, 'document_fingerprint': fingerprint}, raw_count=len(nodes[offset:offset + cap]))
     if daily and mechanism.get('pagination') == 'numbered' and nodes:
         if page >= int(mechanism.get('max_pages', MAX_PAGES)):
             return _result(candidates, outcome='gap', raw_count=len(nodes[offset:]), gap_reason='expanded_sitemap_page_cap')
         return _result(candidates, next_cursor={'page': page + 1, 'page_fingerprints': (cursor.get('page_fingerprints', []) + [fingerprint])[-32:]}, raw_count=len(nodes[offset:]))
     recent = mechanism.get('history_complete') is False or ('news' in urlparse(url).path.rsplit('/', 1)[-1])
-    return _result(candidates, raw_count=len(nodes[offset:]), outcome='gap' if recent else None,
-                   gap_reason='expanded_recent_sitemap_not_historical_inventory' if recent else '',
-                   structural_entries=structural_entries)
+    return leaf_result(candidates, raw_count=len(nodes[offset:]), outcome='gap' if recent else None,
+                   gap_reason='expanded_recent_sitemap_not_historical_inventory' if recent else '')
 
 
 def _wordpress(task, source, fetch):

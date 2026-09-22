@@ -33,5 +33,18 @@
     "status": 200,
     "type": "text/xml",
     "at": "2026-09-22T13:58:48.770530+00:00"
+  },
+  {
+    "url": "https://exame.com/colunistas/car-and-fun/ultimas-noticias/",
+    "sha256": "99dbb6ed662f50d41b332646a540306878083c059e7eaeb5c87b5b3ca55ccc52",
+    "status": 200,
+    "at": "2026-09-22T14:25:24.774049+00:00"
+  },
+  {
+    "url": "https://exame.com/categorias/negocios/sitemap.xml",
+    "sha256": "1e08608b101251d7c701e551c173880d6a34f4b0d0c20ef214ea7672f468ed08",
+    "status": 200,
+    "at": "2026-09-22T14:24:08.776338+00:00",
+    "origin": "real_worker_failed_XML_response"
   }
 ]

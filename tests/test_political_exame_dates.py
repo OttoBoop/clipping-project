@@ -65,3 +65,17 @@ def test_real_insight_body_and_visible_publication_preserve_metadata_conflict():
 def test_real_category_sitemap_does_not_fetch_its_own_landing_page_as_article():
  r=run('categorias/brasil');assert r['structural_entries']==[{'url':'https://exame.com/brasil/','basis':'publisher_category_self_entry'}]
  assert r['candidates'];assert all(c['url']!='https://exame.com/brasil' for c in r['candidates'])
+
+def test_real_short_publisher_slug_does_not_invalidate_all_archive_dates():
+ r=run('car-and-fun');assert r['outcome']=='complete';assert not r['candidates'];assert r['archive_boundary']['newest_publication'].startswith('2020-12-18')
+ old=run('car-and-fun','2020-02-12','2020-02-12');assert any(x['url'].endswith('/dois-em-um') for x in old['candidates'])
+
+def test_real_malformed_publisher_title_is_literal_not_an_unknown_xml_entity():
+ r=run('categorias/negocios','2026-06-01','2026-09-14')
+ assert r['publisher_archive']['literal_ampersands_escaped']==1
+ assert r['candidates']
+ assert r['publisher_archive']['response_sha256']=='1e08608b101251d7c701e551c173880d6a34f4b0d0c20ef214ea7672f468ed08'
+
+def test_archive_boundary_has_durable_publisher_provenance():
+ r=run('videos/revista');assert r['publisher_archive']['boundary']==r['archive_boundary']
+ assert r['publisher_archive']['response_sha256']==hashlib.sha256(load('videos/revista').content).hexdigest()
