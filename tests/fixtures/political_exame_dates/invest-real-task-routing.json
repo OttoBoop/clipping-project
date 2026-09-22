@@ -1,0 +1,1987 @@
+{
+  "origin": "real publisher candidates persisted by local worker 2026-09-22; no invented news",
+  "broken": [
+    {
+      "id": 444,
+      "payload": {
+        "url": "https://exame.com/invest/resultado-da-mega-sena-hoje-concurso-3042-sorteia-r-1649-milhoes",
+        "title": "Resultado da Mega-Sena hoje: concurso 3042 sorteia R$ 164,9 milhões",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/categorias/invest/academy/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-09T11:31:03-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-09T14:31:03+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 445,
+      "payload": {
+        "url": "https://exame.com/invest/spacex-recupera-us-327-bi-em-valor-de-mercado-e-se-aproxima-do-preco-do-ipo",
+        "title": "SpaceX recupera US$ 327 bi em valor de mercado e se aproxima do preço do IPO",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/categorias/invest/academy/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-09T11:18:55-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-09T14:18:55+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 446,
+      "payload": {
+        "url": "https://exame.com/invest/canetas-emagrecedoras-impulsionam-vendas-mas-pressionam-margens-de-farmacias",
+        "title": "Canetas emagrecedoras impulsionam vendas, mas pressionam margens de farmácias",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/categorias/invest/academy/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-09T10:03:31-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-09T13:03:31+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 447,
+      "payload": {
+        "url": "https://exame.com/invest/eu-nao-idolatro-meu-pai-eu-o-admiro-as-licoes-de-louise-barsi",
+        "title": "‘Eu não idolatro meu pai, eu o admiro’: as lições de Louise Barsi",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/categorias/invest/academy/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-09T08:00:54-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-09T11:00:54+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1806,
+      "payload": {
+        "url": "https://exame.com/invest/us-17-bilhoes-em-acoes-do-google-o-que-buffett-esta-comprando-na-bolsa-em-2026",
+        "title": "US$ 17 bilhões em ações do Google: o que Buffett está comprando na bolsa em 2026",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/categorias/invest/academy/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T17:20:56-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T20:20:56+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1807,
+      "payload": {
+        "url": "https://exame.com/invest/quanto-eu-teria-tivesse-investido-r-10-mil-em-acoes-do-banco-do-brasil-ha-20-anos",
+        "title": "Quanto eu teria tivesse investido R$ 10 mil em ações do Banco do Brasil há 20 anos",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/categorias/invest/academy/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T16:58:04-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T19:58:04+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1808,
+      "payload": {
+        "url": "https://exame.com/invest/quanto-eu-teria-hoje-se-tivesse-investido-r-10-mil-em-acoes-do-mercado-livre-ha-5-anos",
+        "title": "Quanto eu teria hoje se tivesse investido R$ 10 mil em ações do Mercado Livre há 5 anos",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/categorias/invest/academy/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T16:03:15-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T19:03:15+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1809,
+      "payload": {
+        "url": "https://exame.com/invest/13o-salario-do-inss-quem-ainda-recebe-e-quem-nao-tera-novo-pagamento-em-2026",
+        "title": "13º salário do INSS: quem ainda recebe e quem não terá novo pagamento em 2026",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/categorias/invest/academy/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T14:44:19-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T17:44:19+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1810,
+      "payload": {
+        "url": "https://exame.com/invest/paramount-diz-que-recebeu-aprovacao-dos-reguladores-para-fusao-com-warner",
+        "title": "Paramount diz que recebeu aprovação dos reguladores para fusão com Warner",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/categorias/invest/academy/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T14:29:34-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T17:29:34+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1811,
+      "payload": {
+        "url": "https://exame.com/invest/nvidia-revela-fatia-de-us-21-bi-na-spacex-e-us-30-bi-na-intel",
+        "title": "Nvidia revela fatia de US$ 21 bi na SpaceX e US$ 30 bi na Intel",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/categorias/invest/academy/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T14:12:40-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T17:12:40+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1812,
+      "payload": {
+        "url": "https://exame.com/invest/quanto-eu-teria-hoje-se-tivesse-investido-r-10-mil-em-acoes-da-localiza-ha-20-anos",
+        "title": "Quanto eu teria hoje se tivesse investido R$ 10 mil em ações da Localiza há 20 anos?",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/categorias/invest/academy/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T08:01:44-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T11:01:44+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1813,
+      "payload": {
+        "url": "https://exame.com/invest/eleicoes-levam-dolar-ao-maior-valor-em-4-meses-mas-alta-nao-deve-ser-linear-dizem-analistas",
+        "title": "Eleições levam dólar ao maior valor em 4 meses, mas alta não deve ser linear, dizem analistas",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/categorias/invest/academy/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T07:00:18-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T10:00:18+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    }
+  ],
+  "alternatives": [
+    {
+      "id": 41,
+      "payload": {
+        "url": "https://exame.com/invest/minhas-financas/resultado-da-mega-sena-hoje-concurso-3042-sorteia-r-1649-milhoes",
+        "title": "Resultado da Mega-Sena hoje: concurso 3042 sorteia R$ 164,9 milhões",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/09/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-09",
+            "2026-08-09"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-09T11:31:03-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-09T14:31:03+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 42,
+      "payload": {
+        "url": "https://exame.com/invest/mercados/spacex-recupera-us-327-bi-em-valor-de-mercado-e-se-aproxima-do-preco-do-ipo",
+        "title": "SpaceX recupera US$ 327 bi em valor de mercado e se aproxima do preço do IPO",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/09/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-09",
+            "2026-08-09"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-07T19:33:35-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-09T14:18:55+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 47,
+      "payload": {
+        "url": "https://exame.com/invest/mercados/canetas-emagrecedoras-impulsionam-vendas-mas-pressionam-margens-de-farmacias",
+        "title": "Canetas emagrecedoras impulsionam vendas, mas pressionam margens de farmácias",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/09/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-09",
+            "2026-08-09"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-07T19:06:36-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-09T13:03:31+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 69,
+      "payload": {
+        "url": "https://exame.com/invest/mercados/eu-nao-idolatro-meu-pai-eu-o-admiro-as-licoes-de-louise-barsi",
+        "title": "‘Eu não idolatro meu pai, eu o admiro’: as lições de Louise Barsi",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/09/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-09",
+            "2026-08-09"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-08T16:20:16-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-09T11:00:54+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 676,
+      "payload": {
+        "url": "https://exame.com/invest/minhas-financas/resultado-da-mega-sena-hoje-concurso-3042-sorteia-r-1649-milhoes",
+        "title": "Resultado da Mega-Sena hoje: concurso 3042 sorteia R$ 164,9 milhões",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/09/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-09",
+            "2026-08-09"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-09T11:31:03-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-09T14:31:03+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 677,
+      "payload": {
+        "url": "https://exame.com/invest/mercados/spacex-recupera-us-327-bi-em-valor-de-mercado-e-se-aproxima-do-preco-do-ipo",
+        "title": "SpaceX recupera US$ 327 bi em valor de mercado e se aproxima do preço do IPO",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/09/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-09",
+            "2026-08-09"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-07T19:33:35-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-09T14:18:55+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 682,
+      "payload": {
+        "url": "https://exame.com/invest/mercados/canetas-emagrecedoras-impulsionam-vendas-mas-pressionam-margens-de-farmacias",
+        "title": "Canetas emagrecedoras impulsionam vendas, mas pressionam margens de farmácias",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/09/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-09",
+            "2026-08-09"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-07T19:06:36-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-09T13:03:31+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 704,
+      "payload": {
+        "url": "https://exame.com/invest/mercados/eu-nao-idolatro-meu-pai-eu-o-admiro-as-licoes-de-louise-barsi",
+        "title": "‘Eu não idolatro meu pai, eu o admiro’: as lições de Louise Barsi",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/09/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-09",
+            "2026-08-09"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-08T16:20:16-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-09T11:00:54+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1438,
+      "payload": {
+        "url": "https://exame.com/invest/mercados/us-17-bilhoes-em-acoes-do-google-o-que-buffett-esta-comprando-na-bolsa-em-2026",
+        "title": "US$ 17 bilhões em ações do Google: o que Buffett está comprando na bolsa em 2026",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/15/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-15",
+            "2026-08-15"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T17:20:56-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T20:20:56+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1439,
+      "payload": {
+        "url": "https://exame.com/invest/onde-investir/quanto-eu-teria-tivesse-investido-r-10-mil-em-acoes-do-banco-do-brasil-ha-20-anos",
+        "title": "Quanto eu teria tivesse investido R$ 10 mil em ações do Banco do Brasil há 20 anos",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/15/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-15",
+            "2026-08-15"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T17:50:16-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T19:58:04+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1443,
+      "payload": {
+        "url": "https://exame.com/invest/mercados/quanto-eu-teria-hoje-se-tivesse-investido-r-10-mil-em-acoes-do-mercado-livre-ha-5-anos",
+        "title": "Quanto eu teria hoje se tivesse investido R$ 10 mil em ações do Mercado Livre há 5 anos",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/15/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-15",
+            "2026-08-15"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T17:51:27-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T19:03:15+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1449,
+      "payload": {
+        "url": "https://exame.com/invest/minhas-financas/13o-salario-do-inss-quem-ainda-recebe-e-quem-nao-tera-novo-pagamento-em-2026",
+        "title": "13º salário do INSS: quem ainda recebe e quem não terá novo pagamento em 2026",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/15/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-15",
+            "2026-08-15"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T14:44:19-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T17:44:19+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1451,
+      "payload": {
+        "url": "https://exame.com/invest/mercados/paramount-diz-que-recebeu-aprovacao-dos-reguladores-para-fusao-com-warner",
+        "title": "Paramount diz que recebeu aprovação dos reguladores para fusão com Warner",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/15/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-15",
+            "2026-08-15"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T14:30:28-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T17:29:34+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1453,
+      "payload": {
+        "url": "https://exame.com/invest/mercados/nvidia-revela-fatia-de-us-21-bi-na-spacex-e-us-30-bi-na-intel",
+        "title": "Nvidia revela fatia de US$ 21 bi na SpaceX e US$ 30 bi na Intel",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/15/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-15",
+            "2026-08-15"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-15T14:14:00-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T17:12:40+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1495,
+      "payload": {
+        "url": "https://exame.com/invest/onde-investir/quanto-eu-teria-hoje-se-tivesse-investido-r-10-mil-em-acoes-da-localiza-ha-20-anos",
+        "title": "Quanto eu teria hoje se tivesse investido R$ 10 mil em ações da Localiza há 20 anos?",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/15/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-15",
+            "2026-08-15"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-14T15:20:57-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T11:01:44+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    },
+    {
+      "id": 1512,
+      "payload": {
+        "url": "https://exame.com/invest/mercados/eleicoes-levam-dolar-ao-maior-valor-em-4-meses-mas-alta-nao-deve-ser-linear-dizem-analistas",
+        "title": "Eleições levam dólar ao maior valor em 4 meses, mas alta não deve ser linear, dizem analistas",
+        "snippet": "",
+        "metadata": {
+          "sitemap_url": "https://exame.com/artigos/2026-08/15/sitemap.xml",
+          "discovery_day": "",
+          "partition_hint": [
+            "2026-08-15",
+            "2026-08-15"
+          ],
+          "discovery_adapter": "expanded-public-1",
+          "needs_date_review": false,
+          "sitemap_lastmod_hint": "2026-08-14T18:10:19-03:00"
+        },
+        "source_key": "exame",
+        "source_name": "Exame",
+        "source_type": "political_discovery",
+        "published_at": "2026-08-15T10:00:18+00:00",
+        "source_snapshot": {
+          "key": "exame",
+          "name": "Exame",
+          "domain": "exame.com",
+          "domains": [
+            "exame.com"
+          ],
+          "enabled": true,
+          "base_url": "https://exame.com/",
+          "evidence": [
+            {
+              "url": "https://exame.com/robots.txt",
+              "basis": "Public workstation HTTP 200; evidence 2be901502faff000506c.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:48Z"
+            },
+            {
+              "url": "https://exame.com/",
+              "basis": "Public workstation HTTP 200; evidence 4f3739a30cca3940e625.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:37:49Z"
+            },
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "basis": "Public workstation HTTP 200; evidence 1d0bd856a8efa718350e.gz; does not prove Render access.",
+              "verified_at": "2026-09-14T16:39:02Z"
+            }
+          ],
+          "mechanisms": [
+            {
+              "url": "https://exame.com/sitemap.xml",
+              "kind": "sitemap",
+              "evidence_url": "https://exame.com/robots.txt"
+            }
+          ],
+          "strategies": [
+            "expanded"
+          ],
+          "verified_at": "2026-09-22",
+          "google_policy": "never",
+          "catalog_version": 1,
+          "allowed_profiles": [
+            "psd_rj_2026"
+          ],
+          "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+          "legacy_source_keys": [
+            "publisher:exame.com"
+          ],
+          "archive_date_adapter": "exame-public-archive-dates-1",
+          "discovery_priority_batch": 1
+        }
+      }
+    }
+  ]
+}

@@ -8,6 +8,12 @@ from urllib.parse import urljoin, urlparse
 
 def original_date_trusted(url, metadata):
     parsed = urlparse(url)
+    if parsed.hostname in {'exame.com', 'www.exame.com'}:
+        # Earlier Exame JSON-LD mislabeled local wall time as UTC. Recheck
+        # only URLs encountered again; never use those cached dates to discard
+        # a newly discovered candidate near a São Paulo day boundary.
+        evidence = (metadata or {}).get('publication_date_evidence') or {}
+        return isinstance(evidence, dict) and evidence.get('method') == 'exame_visible_publication_header'
     if parsed.hostname not in {'www.jota.info', 'jota.info', 'portal.jota.info'} or not parsed.path.startswith('/especiais/'):
         return True
     evidence = (metadata or {}).get('publication_date_evidence') or {}

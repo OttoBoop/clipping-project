@@ -351,16 +351,16 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
         parser.restrictions.append("editorial_body:complete_story_in_print_edition")
     extent = "absent" if not body else "partial" if explicit_gate else "unknown" if restricted else "available"
     evidence = {}
-    if host == "exame.com" and parser.exame_insight:
+    if host == "exame.com":
         visible = next((x for x in parser.fields.get("exame_header_paragraph", [])
                         if x.strip().startswith("Publicado em ")), "")
         visible_date = _date(visible)
-        evidence = {"content_format": "exame_insight", "publication_date_evidence": {
+        evidence = {"content_format": "exame_insight" if parser.exame_insight else "exame_article", "publication_date_evidence": {
             "method": "exame_visible_publication_header" if visible_date else "article_metadata",
             "visible": visible, "visible_parsed": visible_date, "metadata_published": published,
             "conflict": bool(visible_date and published and visible_date[:16] != published[:16]),
             "precision": "minute" if visible_date else "metadata"}}
-        # The actual Insight response labels local wall time as Z in JSON-LD.
+        # Actual Insight and Invest responses label local wall time as Z in JSON-LD.
         # Prefer its explicit published header in São Paulo; keep both values.
         published = visible_date or published
     if host == "estadao.com.br" and parser.estadao_format:

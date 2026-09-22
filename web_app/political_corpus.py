@@ -1422,6 +1422,25 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             if istoe_inventory:
                 from .political_istoe_inventory import record_urls
                 record_urls(conn, candidates)
+            if task['source_key'] == 'exame' and payload.get('source_snapshot', {}).get('archive_date_adapter'):
+                from .political_exame_routes import resolve
+                alternatives = resolve(conn, task['job_id'], candidates)
+                for candidate in candidates:
+                    original = candidate['url']
+                    alternative = alternatives.get(original)
+                    if not alternative:
+                        continue
+                    proof = {**alternative, 'original_url': original}
+                    conn.execute("""INSERT INTO political_observations
+                        (job_id,source_task_id,observed_url,source_key,title,metadata,disposition)
+                        VALUES (%s,%s,%s,'exame',%s,%s::jsonb,'publisher_route_reused')
+                        ON CONFLICT(job_id,observed_url) DO NOTHING""",
+                        (task['job_id'],task['id'],original,candidate['title'],
+                         _json({**candidate.get('metadata', {}), 'publisher_route': proof})))
+                    candidate['url'] = alternative['url']
+                    candidate['metadata'] = {**candidate.get('metadata', {}), 'publisher_route': proof}
+                if alternatives:
+                    result.setdefault('publisher_archive', {})['reused_routes'] = alternatives
             known_dates, current_articles = self._discovery_publication_state(conn, candidates) if job["kind"] == "collect" else ({}, set())
             dates_reused = dates_from_api = 0
             for candidate in candidates:
@@ -1709,7 +1728,7 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
         with self._connect() as conn:
             job = conn.execute("SELECT * FROM political_jobs WHERE id=%s", (task["job_id"],)).fetchone()
             existing = self._find_article(conn, fetch_url)
-            if existing and not original_date_trusted(fetch_url,existing.get("metadata")):
+            if existing and existing['date_status'] != 'manual' and not original_date_trusted(fetch_url,existing.get("metadata")):
                 force_refresh = True
                 task["_undated_existing_article_id"] = existing["id"]
             if (existing and existing["published_at"] is None and existing["legacy_id"] is None

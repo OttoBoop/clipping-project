@@ -79,3 +79,30 @@ def test_real_malformed_publisher_title_is_literal_not_an_unknown_xml_entity():
 def test_archive_boundary_has_durable_publisher_provenance():
  r=run('videos/revista');assert r['publisher_archive']['boundary']==r['archive_boundary']
  assert r['publisher_archive']['response_sha256']==hashlib.sha256(load('videos/revista').content).hexdigest()
+
+def test_real_invest_visible_date_corrects_mislabeled_utc_metadata():
+ from web_app.political_discovery import extract_article
+ raw=gzip.decompress((FIX/'invest-date.html.gz').read_bytes())
+ assert hashlib.sha256(raw).hexdigest()=='b515d435fcd1f6e2c860c3b266b1f37a3ae4bdec23fab54fdeba33ac2e1c1590'
+ a=extract_article(raw.decode(),'https://exame.com/invest/mercados/us-17-bilhoes-em-acoes-do-google-o-que-buffett-esta-comprando-na-bolsa-em-2026/')
+ assert a['published_at']=='2026-08-15T20:20:00+00:00'
+ assert a['publication_date_evidence']['metadata_published']=='2026-08-15T17:20:56+00:00'
+ assert a['publication_date_evidence']['conflict']
+
+def test_real_invest_routes_reuse_only_independently_advertised_daily_candidates():
+ from web_app.political_exame_routes import find_alternative
+ rows=json.loads((FIX/'invest-real-task-routing.json').read_text())
+ for task in rows['broken']:
+  alternative=find_alternative(task['payload'],rows['alternatives'])
+  assert alternative and alternative['url']!=task['payload']['url']
+  assert alternative['sitemap_url'].startswith('https://exame.com/artigos/')
+  assert find_alternative({**task['payload'],'published_at':'2020-01-01T12:00:00+00:00'},rows['alternatives']) is None
+  assert find_alternative({**task['payload'],'title':'different'},rows['alternatives']) is None
+ assert find_alternative(rows['broken'][0]['payload'],[]) is None
+
+def test_old_exame_metadata_dates_cannot_prune_rediscovered_day_boundaries():
+ from web_app.political_jota_extraction import original_date_trusted
+ url='https://exame.com/invest/mercados/us-17-bilhoes-em-acoes-do-google-o-que-buffett-esta-comprando-na-bolsa-em-2026/'
+ assert not original_date_trusted(url,{})
+ assert not original_date_trusted(url,{'publication_date_evidence':{'method':'article_metadata'}})
+ assert original_date_trusted(url,{'publication_date_evidence':{'method':'exame_visible_publication_header'}})
