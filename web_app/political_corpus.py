@@ -1476,8 +1476,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
                     result.setdefault('publisher_archive', {})['reused_routes'] = alternatives
                 if payload.get('url') in BROKEN_CATEGORY_SITEMAPS:
                     total = conn.execute("""SELECT count(*) n FROM political_observations
-                        WHERE job_id=%s AND source_task_id=%s AND metadata ? 'publisher_route'""",
-                        (task['job_id'], task['id'])).fetchone()['n']
+                        WHERE job_id=%s AND metadata->>'sitemap_url'=%s AND metadata ? 'publisher_route'""",
+                        (task['job_id'], payload['url'])).fetchone()['n']
                     result.setdefault('publisher_archive', {})['reused_route_count'] = total
             known_dates, current_articles = self._discovery_publication_state(conn, candidates) if job["kind"] == "collect" else ({}, set())
             dates_reused = dates_from_api = 0
