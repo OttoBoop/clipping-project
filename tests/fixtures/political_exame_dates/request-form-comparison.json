@@ -1,0 +1,83 @@
+[
+  {
+    "url": "https://exame.com/brasil/parana-pesquisas-eduardo-paes-lidera-com-35-pontos-de-vantagem-no-1o-turno",
+    "at": "2026-09-22T14:14:52.183256+00:00",
+    "forms": [
+      {
+        "requested": "https://exame.com/brasil/parana-pesquisas-eduardo-paes-lidera-com-35-pontos-de-vantagem-no-1o-turno",
+        "status": 200,
+        "history": [
+          308
+        ],
+        "responseHash": "d3df53d4567ed91f6faa701d92f2b5cf5db7c3dabb1d88410e9a1d0a705c69c0",
+        "textHash": "04b0eb0d9d47069576eccbb4c8225b7770932dd18b346c18bc4dc8c3951f7828",
+        "date": "2026-06-04T09:39:06+00:00",
+        "seconds": 0.6506366159956087
+      },
+      {
+        "requested": "https://exame.com/brasil/parana-pesquisas-eduardo-paes-lidera-com-35-pontos-de-vantagem-no-1o-turno/",
+        "status": 200,
+        "history": [],
+        "responseHash": "d3df53d4567ed91f6faa701d92f2b5cf5db7c3dabb1d88410e9a1d0a705c69c0",
+        "textHash": "04b0eb0d9d47069576eccbb4c8225b7770932dd18b346c18bc4dc8c3951f7828",
+        "date": "2026-06-04T09:39:06+00:00",
+        "seconds": 0.17006033500365447
+      }
+    ],
+    "sameTextAndDate": true
+  },
+  {
+    "url": "https://exame.com/brasil/disputa-por-prefeitos-acirra-corrida-ao-governo-do-rio-entre-paes-e-douglas-ruas",
+    "at": "2026-09-22T14:14:55.004475+00:00",
+    "forms": [
+      {
+        "requested": "https://exame.com/brasil/disputa-por-prefeitos-acirra-corrida-ao-governo-do-rio-entre-paes-e-douglas-ruas",
+        "status": 200,
+        "history": [
+          308
+        ],
+        "responseHash": "ce64bc5d6a76d0c8152360544689e75be426bbb39a23348b74a82cf330d1979f",
+        "textHash": "1302d51259c09ba8c662afa10a7ee7ad92f3f0b5bd5d0b60632bb622a7740478",
+        "date": "2026-07-13T11:17:59+00:00",
+        "seconds": 2.846025364000525
+      },
+      {
+        "requested": "https://exame.com/brasil/disputa-por-prefeitos-acirra-corrida-ao-governo-do-rio-entre-paes-e-douglas-ruas/",
+        "status": 200,
+        "history": [],
+        "responseHash": "8f4c43ec9befd2406fd4e105b4a478bafb2180cb274ee33adfd0cee120575a62",
+        "textHash": "1302d51259c09ba8c662afa10a7ee7ad92f3f0b5bd5d0b60632bb622a7740478",
+        "date": "2026-07-13T11:17:59+00:00",
+        "seconds": 2.647283594000328
+      }
+    ],
+    "sameTextAndDate": true
+  },
+  {
+    "url": "https://exame.com/brasil/parana-pesquisas-benedita-lidera-disputa-ao-senado-no-rio-com-307-crivella-tem-205",
+    "at": "2026-09-22T14:15:02.498281+00:00",
+    "forms": [
+      {
+        "requested": "https://exame.com/brasil/parana-pesquisas-benedita-lidera-disputa-ao-senado-no-rio-com-307-crivella-tem-205",
+        "status": 200,
+        "history": [
+          308
+        ],
+        "responseHash": "fee82d16e112d9d9fa52635212347b4c82e3944a15ee3140c1f5b101fa17eac0",
+        "textHash": "224e86d1e32ed604698adbf0c3ff1d56225f3eaafc7647d3181a6134751aac60",
+        "date": "2026-09-08T07:00:07+00:00",
+        "seconds": 2.123251277997042
+      },
+      {
+        "requested": "https://exame.com/brasil/parana-pesquisas-benedita-lidera-disputa-ao-senado-no-rio-com-307-crivella-tem-205/",
+        "status": 200,
+        "history": [],
+        "responseHash": "fee82d16e112d9d9fa52635212347b4c82e3944a15ee3140c1f5b101fa17eac0",
+        "textHash": "224e86d1e32ed604698adbf0c3ff1d56225f3eaafc7647d3181a6134751aac60",
+        "date": "2026-09-08T07:00:07+00:00",
+        "seconds": 0.25119936999544734
+      }
+    ],
+    "sameTextAndDate": true
+  }
+]

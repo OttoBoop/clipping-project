@@ -38,3 +38,12 @@ def test_real_daily_sitemap_handles_image_loc_without_losing_article_url():
  assert all(c['url'].startswith('https://exame.com/') and c['published_at'] for c in r['candidates'])
 def test_new_source_configuration_never_schedules_google():
  s=next(x for x in expanded.load_expanded_sources() if x['key']=='exame');assert s['google_policy']=='never';assert s['strategies']==['expanded']
+
+def test_real_exame_requests_remove_only_verified_redundant_redirect():
+ from web_app.political_request_urls import publisher_article_request_url
+ for row in json.loads((FIX/'request-form-comparison.json').read_text()):
+  old,new=row['forms'];assert old['history']==[308] and new['history']==[]
+  assert old['textHash']==new['textHash'] and old['date']==new['date']
+  assert publisher_article_request_url(old['requested'])==new['requested']
+  assert publisher_article_request_url(new['requested'])==new['requested']
+ assert publisher_article_request_url('https://exame.com/artigos/2026-08/09/sitemap.xml')=='https://exame.com/artigos/2026-08/09/sitemap.xml'
