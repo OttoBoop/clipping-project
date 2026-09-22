@@ -1,6 +1,6 @@
 """Reuse URLs independently advertised in Exame's dated article inventory.
 
-The Academy and BTG Insights category sitemaps advertise broken /invest/<slug> links. Never
+Observed Academy, BTG Insights and Guia category sitemaps advertise broken /invest/<slug> links. Never
 guess the missing section: require one other URL with the exact publisher
 title, slug and publication timestamp, already discovered in this same job.
 Verified public API posts also provide this independent publisher identity.
@@ -10,14 +10,17 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 ACADEMY = 'https://exame.com/categorias/invest/academy/sitemap.xml'
-BROKEN_CATEGORY_SITEMAPS = {ACADEMY, 'https://exame.com/categorias/invest/btg-insights/sitemap.xml'}
+def category_sitemap(url):
+    parsed = urlparse(url or '')
+    return (parsed.hostname == 'exame.com' and parsed.path.startswith('/categorias/invest/')
+            and parsed.path.endswith('/sitemap.xml'))
 
 
 def eligible(candidate):
     parsed = urlparse(candidate.get('url', ''))
     parts = parsed.path.strip('/').split('/')
     return (parsed.hostname == 'exame.com' and len(parts) == 2 and parts[0] == 'invest'
-            and candidate.get('metadata', {}).get('sitemap_url') in BROKEN_CATEGORY_SITEMAPS
+            and category_sitemap(candidate.get('metadata', {}).get('sitemap_url'))
             and bool(candidate.get('title')) and bool(candidate.get('published_at')))
 
 

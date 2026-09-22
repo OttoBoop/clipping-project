@@ -61,3 +61,11 @@ def test_real_api_first_discovery_resolves_same_publisher_aliases():
  # Removing the verified API date evidence must not authorize a guessed route.
  unverified=[{**t,'payload':{**t['payload'],'metadata':{}}} for t in alternatives]
  assert find_alternative(broken[0]['payload'],unverified) is None
+
+
+def test_real_guide_family_aliases_use_verified_api_bodies():
+ from web_app.political_exame_routes import find_alternative
+ rows=json.loads(gzip.decompress((P/'guide-routes.json.gz').read_bytes()))
+ assert len(rows['broken'])==256
+ for task in rows['broken']:
+  assert find_alternative(task['payload'],rows['alternatives']) is not None
