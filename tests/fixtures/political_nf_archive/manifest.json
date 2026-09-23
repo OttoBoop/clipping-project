@@ -48,5 +48,12 @@
     "name": "event_article",
     "url": "https://www.nfnoticias.com.br/evento-472/festival-de-petiscos-de-farol-retorna-nesta-sexta-com-gastronomia-m?sica-e-atra?es",
     "sha256": "d045bd9b3f492084b57afe66af64b3f7f14d9b9eef8e0f1c9eea2524266bf293"
+  },
+  {
+    "name": "worker_challenge",
+    "url": "https://www.nfnoticias.com.br/noticias",
+    "sha256": "8303bc752def581593b0cf8d189094eb70d8cae7f78dab93f7a3266dc5f10e48",
+    "environment": "Render worker",
+    "observed_at": "2026-09-23T18:58:24.505354+00:00"
   }
 ]

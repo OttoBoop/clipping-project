@@ -39,13 +39,18 @@ def is_google_block_response(url: str, status_code: int, body: bytes) -> bool:
 
 
 def is_publisher_access_challenge(url: str, raw_html: str) -> bool:
-    """TV Zoom's preserved HTTP 200 is a Sucuri challenge, not editorial HTML."""
-    if (urlsplit(url).hostname or "").removeprefix("www.") != "tvzoom.com.br":
-        return False
+    """Recognize preserved HTTP 200 access checks independently of extraction."""
+    host = (urlsplit(url).hostname or "").removeprefix("www.")
     text = raw_html[:65536].lower()
-    return ("<title>you are being redirected...</title>" in text
-            and "sucuri_cloudproxy_js" in text
-            and "javascript is required" in text)
+    if host == "nfnoticias.com.br":
+        return (bool(re.search(r"<title>\s*one moment, please\.\.\.\s*</title>", text))
+                and "wsidchk" in text and "failedchecks" in text
+                and "wrap__article-detail-content" not in text)
+    if host == "tvzoom.com.br":
+        return ("<title>you are being redirected...</title>" in text
+                and "sucuri_cloudproxy_js" in text
+                and "javascript is required" in text)
+    return False
 
 
 def publisher_article_request_url(url: str) -> str:

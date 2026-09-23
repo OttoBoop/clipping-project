@@ -4,7 +4,7 @@ from html.parser import HTMLParser
 from urllib.parse import urljoin,urlparse,parse_qs
 import hashlib,re
 
-VERSION='nf-public-archives-3'
+VERSION='nf-public-archives-4'
 BASE='https://www.nfnoticias.com.br/'
 VOID={'area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr'}
 MONTHS={'janeiro':1,'fevereiro':2,'março':3,'abril':4,'maio':5,'junho':6,'julho':7,'agosto':8,'setembro':9,'outubro':10,'novembro':11,'dezembro':12}
@@ -118,6 +118,12 @@ def discover(task,source,fetch):
     response=core._get(fetch,url)
     if urlparse(getattr(response,'url',url)).path!=parsed.path:
         raise core.DiscoveryError('nf_archive_redirected',retryable=False)
+    from .political_request_urls import is_publisher_access_challenge
+    if is_publisher_access_challenge(url,response.content.decode('utf8','replace')):
+        return expanded._result(outcome='gap',gap_reason='publisher_access_challenge',
+            publisher_archive={'adapter':VERSION,'url':url,'kind':kind,'httpStatus':response.status_code,
+                'responseHash':hashlib.sha256(response.content).hexdigest(),'access':'publisher_automatic_verification'},
+            archive_response=response.content)
     rows,info=parse_page(response.content.decode('utf8','replace'),url,kind)
     proof={'adapter':VERSION,'url':url,'kind':kind,'responseHash':hashlib.sha256(response.content).hexdigest(),**info}
     if kind=='columns_index':

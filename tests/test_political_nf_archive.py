@@ -81,3 +81,16 @@ def test_event_listing_keeps_public_articles_but_reports_historical_gap():
  assert not any('/noticia-' in x['url'] for x in result['candidates'])
  a=extract_article(response('event_article').text,response('event_article').url)
  assert a['published_at'].startswith('2026-09-11T03:00') and len(a['full_text'])>2000
+
+
+def test_real_worker_access_check_is_not_empty_article_or_empty_archive():
+ from web_app.political_request_urls import is_publisher_access_challenge
+ r=response('worker_challenge');assert is_publisher_access_challenge(r.url,r.text)
+ assert not is_publisher_access_challenge(response('article').url,response('article').text)
+ assert not is_publisher_access_challenge('https://other.example/',r.text)
+ for product in ['news','columns_index','events']:
+  task,src=setup(product);r.url=task['url']
+  result=nf.discover(task,src,lambda u:r)
+  assert result['gap_reason']=='publisher_access_challenge'
+  assert not result['candidates'] and not result['child_tasks']
+  assert result['archive_response']==r.content
