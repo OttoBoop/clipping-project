@@ -4,7 +4,7 @@ from html.parser import HTMLParser
 from urllib.parse import urljoin,urlparse,parse_qs
 import hashlib,re
 
-VERSION='nf-public-archives-1'
+VERSION='nf-public-archives-2'
 BASE='https://www.nfnoticias.com.br/'
 VOID={'area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr'}
 MONTHS={'janeiro':1,'fevereiro':2,'março':3,'abril':4,'maio':5,'junho':6,'julho':7,'agosto':8,'setembro':9,'outubro':10,'novembro':11,'dezembro':12}
@@ -89,10 +89,10 @@ def parse_page(html,url,kind):
             cells=tr.find('td');links=tr.find('a')
             if len(cells)<2 or not links:continue
             u=article_url(links[0].attrs.get('href',''),'column')
-            if not u or urlparse(u).path.split('/')[3]!=author:invalid+=1;continue
+            invalid_identity=not u or urlparse(u).path.split('/')[3]!=author
             try:day=date(int(stamp[2]),MONTHS[stamp[1]],int(cells[0].text())).isoformat()
-            except ValueError:day='';invalid+=1
-            rows.append({'url':u,'title':links[0].text(),'date':day})
+            except ValueError:day=''
+            rows.append({'url':u,'title':links[0].text(),'date':day,'invalid_identity':invalid_identity})
     return rows,{'calendar_months':valid_months,'invalid_rows':invalid,'current_article_found':bool(current)}
 
 
@@ -116,18 +116,23 @@ def discover(task,source,fetch):
     if kind=='columns_index':
         children=[{**task,'strategy':'expanded_nf_archive','url':u,'cursor':{},'mechanism':{**mechanism,'product':'column','url':u}} for u in info['authors'].values()]
         return expanded._result(child_tasks=children,raw_count=len(children),outcome='complete' if children else 'gap',gap_reason='' if children else 'nf_author_index_missing',publisher_archive=proof,archive_response=response.content)
-    start,end=date.fromisoformat(task['date_from']),date.fromisoformat(task['date_to']);dates=[];candidates=[];unknown=0
+    start,end=date.fromisoformat(task['date_from']),date.fromisoformat(task['date_to']);dates=[];candidates=[];unknown=0;invalid_identity=0;invalid_outside_window=0
     for row in rows:
         published=core.parse_publication_date(row['date']);day=None
         if published:
             from datetime import datetime
             day=datetime.fromisoformat(published).astimezone(core.SAO_PAULO).date();dates.append(day)
         else:unknown+=1
-        if day and not start<=day<=end:continue
+        if day and not start<=day<=end:
+            invalid_outside_window+=int(bool(row.get('invalid_identity')))
+            continue
+        if row.get('invalid_identity'):
+            invalid_identity+=1
+            continue
         candidates.append(expanded._candidate(source,row['url'],row['title'],published,metadata={'discovery_format':VERSION,'archive_url':url,'archive_reported_date':row['date'],'archive_response_hash':proof['responseHash'],'record_product':'opinion' if kind=='column' else 'news'}))
-    proof.update(raw_rows=len(rows),candidate_count=len(candidates),unknown_dates=unknown,oldest=min(dates).isoformat() if dates else None,newest=max(dates).isoformat() if dates else None)
+    proof.update(raw_rows=len(rows),candidate_count=len(candidates),unknown_dates=unknown,invalid_identity_in_window=invalid_identity,invalid_identity_outside_window=invalid_outside_window,oldest=min(dates).isoformat() if dates else None,newest=max(dates).isoformat() if dates else None)
     if kind=='column':
-        gap='nf_column_calendar_unrecognized' if not info['calendar_months'] else 'nf_column_invalid_dates' if unknown or info['invalid_rows'] else ''
+        gap='nf_column_calendar_unrecognized' if not info['calendar_months'] else 'nf_column_invalid_dates' if unknown else 'nf_column_invalid_identity' if invalid_identity else ''
         return expanded._result(candidates,raw_count=len(rows),outcome='gap' if gap else 'complete',gap_reason=gap,publisher_archive=proof,archive_response=response.content)
     fingerprint=hashlib.sha256('\n'.join(r['url'] for r in rows).encode()).hexdigest();seen=cursor.get('fingerprints',[])
     expected=int(cursor.get('page',1))

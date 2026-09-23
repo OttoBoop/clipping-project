@@ -28,5 +28,15 @@
     "name": "page100",
     "url": "https://www.nfnoticias.com.br/noticias.php?_pagi_pg=100",
     "sha256": "2f3daf04af43a8098544150e4dace56eac7f61f14861cf4f48c4bf9bfe2a1ff3"
+  },
+  {
+    "name": "older_mixed_author1",
+    "url": "https://www.nfnoticias.com.br/post/692/opiniaodosjornalistas/o-jogo-de-empurra-na-saude-de-campos;-enquanto-discutem-a-populacao-sofre",
+    "sha256": "8ae1e0cdb762bc0890fe423d2b6387c7e92c4e249e7a0b4a19e0fb7500d35a4a"
+  },
+  {
+    "name": "older_mixed_author2",
+    "url": "https://www.nfnoticias.com.br/post/572/sergioalexandresa/os-desafios-da-maternidade-no-combate-ao-abuso-sexual-infantil",
+    "sha256": "8c815876ddc1579d9c531bb96dfa8749802217ae1b3d32fe69e3f9871c6ef661"
   }
 ]

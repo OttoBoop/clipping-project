@@ -61,3 +61,14 @@ def test_existing_extractor_keeps_real_body_mention_and_publication():
  assert 'Eduardo Paes' not in a['title'] and 'Eduardo Paes' in a['full_text']
  assert a['published_at'].startswith('2026-07-29T18:11')
  assert 'TRE-RJ inicia preparação' not in a['full_text']
+
+
+def test_invalid_author_links_before_requested_period_are_explicitly_outside():
+ for name in ['older_mixed_author1','older_mixed_author2']:
+  task,src=setup();r=response(name);task.update(url=r.url,mechanism={'kind':'nf_archive','product':'column','url':r.url})
+  result=nf.discover(task,src,lambda u:r)
+  assert result['outcome']=='complete' and not result['candidates']
+  assert result['publisher_archive']['invalid_identity_outside_window']>0
+  task['date_from']='2017-01-01'
+  result=nf.discover(task,src,lambda u:r)
+  assert result['gap_reason']=='nf_column_invalid_identity'
