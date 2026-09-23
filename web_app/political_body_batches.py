@@ -257,13 +257,14 @@ class WordPressBodyBatches:
         if continuation or shortcode:
             _fail("batch_continuation_unverified")
         from .political_discovery import extract_article
-        body_tag = '<div id="news-body">' if source == 'exame' else '<article>'
-        body_end = '</div>' if source == 'exame' else '</article>'
+        body_tag = ('<div id="news-body">' if source == 'exame' else
+                    '<div class="conteudo-post">' if source == 'elizeu_pires' else '<article>')
+        body_end = '</div>' if source in {'exame', 'elizeu_pires'} else '</article>'
         wrapper = ('<html><head><link rel="canonical" href="' + html.escape(record["url"], quote=True)
                    + '"></head><body>' + body_tag + fragment + body_end + '</body></html>')
         try:
             with timed_operation("extraction"):
-                extracted = extract_article(wrapper, url=record['url']) if source == 'exame' else extract_article(wrapper)
+                extracted = extract_article(wrapper, url=record['url']) if source in {'exame', 'elizeu_pires'} else extract_article(wrapper)
         except Exception:
             _fail("batch_extraction_failed")
         body = extracted.get("full_text") or ""
@@ -274,7 +275,7 @@ class WordPressBodyBatches:
         rss = record.get("body_origin") in {"publisher_rss", "publisher_atom"}
         provenance = {"method": "publisher_atom_batch" if atom else "publisher_rss_batch" if rss else "wordpress_api_batch",
                       "version": VERSION, "batch": reference}
-        if source == 'exame':
+        if source in {'exame', 'elizeu_pires'}:
             provenance['editorial_extraction'] = {
                 'method': extracted.get('extraction_method'),
                 'version': extracted.get('extraction_version')}

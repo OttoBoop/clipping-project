@@ -372,7 +372,7 @@ def _wordpress(task, source, fetch):
         if source['key'] == 'exame':
             from .political_exame_api import publication
             published, api_evidence = publication(row, hashlib.sha256(response.content).hexdigest(), endpoint)
-        if not core.in_window(published, task['date_from'], task['date_to']) and not (source['key'] == 'exame' and not published):
+        if not core.in_window(published, task['date_from'], task['date_to']) and not (source['key'] in {'exame', 'elizeu_pires'} and not published):
             outside += 1
             continue
         url = str(row.get('link') or '')
@@ -561,6 +561,9 @@ def discover_expanded(task, source, fetch):
     if strategy in {'expanded_sitemap', 'expanded_daily_sitemap'}:
         return _sitemap(task, source, fetch)
     if strategy == 'expanded_wordpress':
+        if source['key'] == 'elizeu_pires':
+            from .political_elizeu_inventory import discover
+            return discover(task, source, fetch, _wordpress)
         return _wordpress(task, source, fetch)
     if strategy == 'expanded_blogger_feed':
         from .political_blogger_feed import discover_blogger_feed

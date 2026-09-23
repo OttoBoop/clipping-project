@@ -1389,7 +1389,8 @@ class PoliticalCorpusService(PoliticalRecoveryMixin, PoliticalDocumentMixin):
             result["next_cursor"] = sitemap_cache.checkpoint(result["next_cursor"])
         if istoe_inventory:
             result["next_cursor"] = istoe_inventory.checkpoint(result.get("next_cursor"))
-        if payload.get("strategy") in {"expanded_congresso_archive", "expanded_nf_archive", "expanded_nf_events"}:
+        if (payload.get("strategy") in {"expanded_congresso_archive", "expanded_nf_archive", "expanded_nf_events"}
+                or (task["source_key"] == "elizeu_pires" and "archive_response" in result)):
             # Preserve real listing evidence before committing candidates/cursor.
             # A failed upload leaves the task resumable at the same page.
             raw = result.pop("archive_response")

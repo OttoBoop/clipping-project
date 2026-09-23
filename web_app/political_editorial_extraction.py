@@ -15,7 +15,7 @@ import re
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
-EXTRACTION_VERSION = "editorial-2026-09-14.6"
+EXTRACTION_VERSION = "editorial-2026-09-23.1"
 _SAO_PAULO = ZoneInfo("America/Sao_Paulo")
 _SELECTORS = {
     "istoe.com.br": ".post-content-wrap",
@@ -105,6 +105,10 @@ class _EditorialParser(HTMLParser):
         self.story_page_start = None
         self.story_page_links = []
         self.story_pages_removed = 0
+        self.elizeu_block = None
+        self.elizeu_links = []
+        self.elizeu_related = False
+        self.elizeu_removed = 0
 
     def _body_start(self, attrs: dict) -> bool:
         classes = set(attrs.get("class", "").split())
@@ -157,6 +161,9 @@ class _EditorialParser(HTMLParser):
         if new_body:
             self.found_body = True
         body = parent_body or new_body
+        if self.host == "elizeupires.com" and body and tag in {"p", "h2", "h3"}:
+            self.elizeu_block = (tag, len(self.parts))
+            self.elizeu_links = []
         skip = tag in _SKIP_TAGS or bool(classes & _SKIP_CLASSES)
         if self.host == "exame.com" and tag == "a":
             skip = skip or (urlparse(attrs.get("href", "")).hostname or "").endswith("doubleclick.net")
@@ -238,6 +245,19 @@ class _EditorialParser(HTMLParser):
             self.handle_endtag(tag)
 
     def handle_endtag(self, tag):
+        if self.elizeu_block and self.elizeu_block[0] == tag:
+            _, start = self.elizeu_block
+            text = " ".join("".join(self.parts[start:]).split())
+            linked = " ".join("".join(self.elizeu_links).split())
+            heading = bool(re.fullmatch(r"mat[eé]rias relacionadas\s*:?", text, re.I))
+            if heading or (self.elizeu_related and text and text == linked):
+                del self.parts[start:]
+                self.elizeu_related = True
+                self.elizeu_removed += 1
+            elif text:
+                # A paragraph with inline citations is still editorial content.
+                self.elizeu_related = False
+            self.elizeu_block = None
         if tag == "amp-story-page" and self.story_page_start is not None:
             text = _normalize("".join(self.parts[self.story_page_start:]))
             header = text.split("\n\n")[0].strip().lower()
@@ -269,6 +289,8 @@ class _EditorialParser(HTMLParser):
             parts.append(data)
         if self.stack and self.stack[-1][2] and not self.stack[-1][3]:
             self.parts.append(data)
+            if self.elizeu_block and any(item[0] == "a" for item in self.stack):
+                self.elizeu_links.append(data)
 
 
 def extract_for_publisher(raw_html: str, url: str) -> dict | None:
@@ -371,6 +393,8 @@ def extract_for_publisher(raw_html: str, url: str) -> dict | None:
         parser.restrictions.append("editorial_body:complete_story_in_print_edition")
     extent = "absent" if not body else "partial" if explicit_gate else "unknown" if restricted else "available"
     evidence = {}
+    if host == "elizeupires.com":
+        evidence["format_provenance"] = {"related_blocks_removed": parser.elizeu_removed}
     if host == "exame.com":
         visible = next((x for x in parser.fields.get("exame_header_paragraph", [])
                         if x.strip().startswith("Publicado em ")), "")

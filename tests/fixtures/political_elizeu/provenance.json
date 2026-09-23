@@ -1,0 +1,19 @@
+[
+  {
+    "name": "related",
+    "url": "https://elizeupires.com/artigos/politica/107687-tem-canela-no-doce-de-eduardo-paes/",
+    "sha256": "d8476d37197975af16ca89a1b14819d72f1b40c4135622070df0893da4ce142c",
+    "headers": {},
+    "developmentOnly": true
+  },
+  {
+    "name": "api_late",
+    "url": "https://elizeupires.com/wp-json/wp/v2/posts?after=2026-06-01T00:00:00&before=2026-09-15T00:00:00&per_page=2&_fields=id,link,title,date,date_gmt,content",
+    "sha256": "42c054f0a714047c7ceff9dac29efe20481dfcb138b790af64858bd76cc5e2af",
+    "headers": {
+      "X-WP-Total": "534",
+      "X-WP-TotalPages": "267"
+    },
+    "developmentOnly": true
+  }
+]
