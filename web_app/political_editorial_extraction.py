@@ -214,6 +214,9 @@ class _EditorialParser(HTMLParser):
             field = "publication_visible"
         elif self.host == "ultimahoraonline.com.br" and "post-detalhe-data" in classes:
             field = "publication_visible"
+        elif (self.host == "nfnoticias.com.br" and tag == "div" and {"bg-primary", "text-white", "px-2", "py-1"} <= classes
+              and any("wrap__article-detail-info" in item[1].get("class", "").split() for item in self.stack)):
+            field = "publication_visible"
         elif self.host == "nfnoticias.com.br" and tag == "span" and {"text-dark", "ml-1"} <= classes:
             field = "publication_visible"
         elif (self.host == "aosfatos.org" and tag == "aside"

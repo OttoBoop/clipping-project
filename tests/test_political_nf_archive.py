@@ -72,3 +72,12 @@ def test_invalid_author_links_before_requested_period_are_explicitly_outside():
   task['date_from']='2017-01-01'
   result=nf.discover(task,src,lambda u:r)
   assert result['gap_reason']=='nf_column_invalid_identity'
+
+
+def test_event_listing_keeps_public_articles_but_reports_historical_gap():
+ task,src=setup('events');r=response('events');result=nf.discover(task,src,lambda u:r)
+ assert len(result['candidates'])==10 and result['gap_reason']=='nf_events_history_not_proven'
+ assert all('/evento-' in x['url'] and x['published_at'] for x in result['candidates'])
+ assert not any('/noticia-' in x['url'] for x in result['candidates'])
+ a=extract_article(response('event_article').text,response('event_article').url)
+ assert a['published_at'].startswith('2026-09-11T03:00') and len(a['full_text'])>2000

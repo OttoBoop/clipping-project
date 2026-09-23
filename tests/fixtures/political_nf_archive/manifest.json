@@ -38,5 +38,15 @@
     "name": "older_mixed_author2",
     "url": "https://www.nfnoticias.com.br/post/572/sergioalexandresa/os-desafios-da-maternidade-no-combate-ao-abuso-sexual-infantil",
     "sha256": "8c815876ddc1579d9c531bb96dfa8749802217ae1b3d32fe69e3f9871c6ef661"
+  },
+  {
+    "name": "events",
+    "url": "https://www.nfnoticias.com.br/eventos",
+    "sha256": "fc90a95b37aab10126bb3220b24fdf531eb4fdc59d4380408533663eca0b186c"
+  },
+  {
+    "name": "event_article",
+    "url": "https://www.nfnoticias.com.br/evento-472/festival-de-petiscos-de-farol-retorna-nesta-sexta-com-gastronomia-m?sica-e-atra?es",
+    "sha256": "d045bd9b3f492084b57afe66af64b3f7f14d9b9eef8e0f1c9eea2524266bf293"
   }
 ]

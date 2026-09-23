@@ -999,9 +999,16 @@
           "product": "columns_index",
           "url": "https://www.nfnoticias.com.br/",
           "evidence_url": "https://www.nfnoticias.com.br/"
+        },
+        {
+          "kind": "nf_events",
+          "product": "events",
+          "url": "https://www.nfnoticias.com.br/eventos",
+          "evidence_url": "https://www.nfnoticias.com.br/",
+          "history_complete": false
         }
       ],
-      "known_constraint": "Direct dated news pagination and author month calendars; all candidate bodies checked. Sitemap/RSS are recent-only and not historical coverage. Two ordered pages older than the window bound news traversal; repeated/unrecognized pages, unknown dates and caps remain explicit gaps. No Google fallback.",
+      "known_constraint": "Direct dated news pagination and author month calendars; all candidate bodies checked. Sitemap/RSS are recent-only and not historical coverage. Two ordered pages older than the window bound news traversal; repeated/unrecognized pages, unknown dates and caps remain explicit gaps. No Google fallback. Events has a separate dated public listing without an advertised historical next page; its historical completeness remains an explicit gap.",
       "evidence": [
         {
           "url": "https://nfnoticias.com.br/robots.txt",

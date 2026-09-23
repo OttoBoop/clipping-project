@@ -103,7 +103,7 @@ def build_expanded_tasks(source, date_from, date_to, target_snapshots):
         elif kind == 'congresso_search':
             from .political_congresso_search import build_tasks
             tasks.extend(build_tasks(route, target_snapshots))
-        elif kind in {'nf_archive', 'sitemap', 'feed', 'blogger_feed', 'archive', 'capability', 'edition_archive', 'metropoles_archive'}:
+        elif kind in {'nf_archive', 'nf_events', 'sitemap', 'feed', 'blogger_feed', 'archive', 'capability', 'edition_archive', 'metropoles_archive'}:
             tasks.append({**route, 'url': mechanism.get('url', ''), 'section': mechanism.get('section', ''), 'depth': 0, 'ancestors': []})
         else:
             raise ValueError('Unsupported expanded mechanism: ' + kind)
@@ -549,7 +549,7 @@ def _capability(task, source, fetch):
 
 def discover_expanded(task, source, fetch):
     strategy = task['strategy']
-    if strategy == 'expanded_nf_archive':
+    if strategy in {'expanded_nf_archive', 'expanded_nf_events'}:
         from .political_nf_archive import discover
         return discover(task, source, fetch)
     if strategy == 'expanded_congresso_archive':

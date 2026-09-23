@@ -4,7 +4,7 @@ from html.parser import HTMLParser
 from urllib.parse import urljoin,urlparse,parse_qs
 import hashlib,re
 
-VERSION='nf-public-archives-2'
+VERSION='nf-public-archives-3'
 BASE='https://www.nfnoticias.com.br/'
 VOID={'area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr'}
 MONTHS={'janeiro':1,'fevereiro':2,'março':3,'abril':4,'maio':5,'junho':6,'julho':7,'agosto':8,'setembro':9,'outubro':10,'novembro':11,'dezembro':12}
@@ -43,22 +43,28 @@ class Document(HTMLParser):
 def article_url(value,kind=None):
     url=urljoin(BASE,value);p=urlparse(url)
     if p.hostname not in {'www.nfnoticias.com.br','nfnoticias.com.br'} or p.scheme!='https':return ''
-    pattern=r'/noticia-\d+/[^/]+' if kind=='news' else r'/post/\d+/[^/]+/.+' if kind=='column' else r'/(?:noticia-\d+/[^/]+|post/\d+/[^/]+/.+)'
+    pattern=r'/evento-\d+/[^/]+' if kind=='events' else r'/noticia-\d+/[^/]+' if kind=='news' else r'/post/\d+/[^/]+/.+' if kind=='column' else r'/(?:noticia-\d+/[^/]+|post/\d+/[^/]+/.+)'
     return url if re.fullmatch(pattern,p.path) else ''
 
 
 def parse_page(html,url,kind):
     root=Document(html).root;rows=[];next_url='';page=1
-    if kind=='news':
+    if kind in {'news','events'}:
         for card in root.find(cls='card__post__content'):
             headings=card.find(cls='card__post__title');dates=card.find(cls='card__post__author-info')
             if not headings:continue
-            anchors=headings[0].find('a');a=next((a for a in anchors if article_url(a.attrs.get('href',''),'news')),None)
+            anchors=headings[0].find('a');a=next((a for a in anchors if article_url(a.attrs.get('href',''),kind)),None)
             if not a:continue
             stamp=re.search(r'\b(\d{2})/(\d{2})/(\d{4})\b',dates[0].text() if dates else '')
             try:day=date(int(stamp[3]),int(stamp[2]),int(stamp[1])).isoformat() if stamp else ''
             except ValueError:day=''
-            rows.append({'url':article_url(a.attrs['href'],'news'),'title':a.text(),'date':day})
+            if kind=='events':
+                category=card.find(cls='card__post__category')
+                label=category[0].text().lower() if category else ''
+                stamp=re.fullmatch(r'(\d{1,2}) de ([\wç]+) de (\d{4})',label)
+                try:day=date(int(stamp[3]),MONTHS[stamp[2]],int(stamp[1])).isoformat() if stamp else ''
+                except (ValueError,KeyError):day=''
+            rows.append({'url':article_url(a.attrs['href'],kind),'title':a.text(),'date':day})
         pagination=root.find(cls='pagination-area')
         if pagination:
             active=pagination[0].find(cls='active')
@@ -99,12 +105,13 @@ def parse_page(html,url,kind):
 def discover(task,source,fetch):
     from . import political_expanded_discovery as expanded
     core=expanded._core();mechanism=task['mechanism'];kind=mechanism.get('product')
-    if source['key']!='nf_noticias' or kind not in {'news','columns_index','column'}:
+    if source['key']!='nf_noticias' or kind not in {'news','events','columns_index','column'}:
         raise core.DiscoveryError('nf_archive_invalid_route',retryable=False)
     cursor=task.get('cursor') or {};url=cursor.get('url') or task.get('url') or mechanism.get('url')
     parsed=urlparse(url)
     valid=(parsed.hostname=='www.nfnoticias.com.br' and parsed.scheme=='https' and
            ((kind=='news' and parsed.path in {'/noticias','/noticias.php'} and set(parse_qs(parsed.query))<={'_pagi_pg'})
+            or (kind=='events' and parsed.path=='/eventos' and not parsed.query)
             or (kind=='columns_index' and parsed.path=='/' and not parsed.query)
             or (kind=='column' and article_url(url,'column'))))
     if not valid:raise core.DiscoveryError('nf_archive_invalid_url',retryable=False)
@@ -129,8 +136,10 @@ def discover(task,source,fetch):
         if row.get('invalid_identity'):
             invalid_identity+=1
             continue
-        candidates.append(expanded._candidate(source,row['url'],row['title'],published,metadata={'discovery_format':VERSION,'archive_url':url,'archive_reported_date':row['date'],'archive_response_hash':proof['responseHash'],'record_product':'opinion' if kind=='column' else 'news'}))
+        candidates.append(expanded._candidate(source,row['url'],row['title'],published,metadata={'discovery_format':VERSION,'archive_url':url,'archive_reported_date':row['date'],'archive_response_hash':proof['responseHash'],'record_product':'opinion' if kind=='column' else 'event_article' if kind=='events' else 'news'}))
     proof.update(raw_rows=len(rows),candidate_count=len(candidates),unknown_dates=unknown,invalid_identity_in_window=invalid_identity,invalid_identity_outside_window=invalid_outside_window,oldest=min(dates).isoformat() if dates else None,newest=max(dates).isoformat() if dates else None)
+    if kind=='events':
+        return expanded._result(candidates,raw_count=len(rows),outcome='gap',gap_reason='nf_events_history_not_proven',publisher_archive=proof,archive_response=response.content)
     if kind=='column':
         gap='nf_column_calendar_unrecognized' if not info['calendar_months'] else 'nf_column_invalid_dates' if unknown else 'nf_column_invalid_identity' if invalid_identity else ''
         return expanded._result(candidates,raw_count=len(rows),outcome='gap' if gap else 'complete',gap_reason=gap,publisher_archive=proof,archive_response=response.content)
