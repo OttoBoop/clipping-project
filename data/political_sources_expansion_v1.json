@@ -979,35 +979,29 @@
         "psd_rj_2026"
       ],
       "strategies": [
-        "expanded",
-        "google_news"
+        "expanded"
       ],
-      "google_policy": "on_direct_gap",
+      "google_policy": "disabled",
       "discovery_priority_batch": 1,
       "legacy_source_keys": [
         "publisher:nfnoticias.com.br"
       ],
       "mechanisms": [
         {
-          "kind": "sitemap",
-          "url": "https://www.nfnoticias.com.br/sitemap.xml",
-          "history_complete": false,
-          "evidence_url": "https://www.nfnoticias.com.br/robots.txt"
+          "kind": "nf_archive",
+          "product": "news",
+          "url": "https://www.nfnoticias.com.br/noticias",
+          "evidence_url": "https://www.nfnoticias.com.br/sitemap.xml",
+          "max_pages": 2000
         },
         {
-          "kind": "archive",
-          "url": "https://www.nfnoticias.com.br/editoria-2/politica",
-          "evidence_url": "https://www.nfnoticias.com.br/"
-        },
-        {
-          "kind": "feed",
-          "url": "https://www.nfnoticias.com.br/rss",
-          "pagination": "advertised_only",
-          "history_complete": false,
+          "kind": "nf_archive",
+          "product": "columns_index",
+          "url": "https://www.nfnoticias.com.br/",
           "evidence_url": "https://www.nfnoticias.com.br/"
         }
       ],
-      "known_constraint": "Direct mechanisms are publisher-advertised and checkpointed; production access and historical completeness require live verification. Missing dates require article extraction. Feed-only and unrecognized archives remain explicit historical gaps. Public text only; restriction does not imply complete text.",
+      "known_constraint": "Direct dated news pagination and author month calendars; all candidate bodies checked. Sitemap/RSS are recent-only and not historical coverage. Two ordered pages older than the window bound news traversal; repeated/unrecognized pages, unknown dates and caps remain explicit gaps. No Google fallback.",
       "evidence": [
         {
           "url": "https://nfnoticias.com.br/robots.txt",
@@ -1025,7 +1019,7 @@
           "basis": "Public workstation HTTP 200; evidence ffd08ab669f3889541ea.gz; does not prove Render access."
         }
       ],
-      "verified_at": "2026-09-14",
+      "verified_at": "2026-09-23",
       "catalog_version": 1
     },
     {

@@ -1,0 +1,32 @@
+[
+  {
+    "name": "home",
+    "url": "https://www.nfnoticias.com.br/",
+    "sha256": "2e4cfa1891d89202ba06d267af5b7c2ae695a0320eece8285f702fe6b6e766fa"
+  },
+  {
+    "name": "news",
+    "url": "https://www.nfnoticias.com.br/noticias",
+    "sha256": "b0083d078c3b4e9e07e8aa7f079e45b8c69460c17101982a732ab16ce62d219d"
+  },
+  {
+    "name": "column",
+    "url": "https://www.nfnoticias.com.br/post/876/cleytonlacerda/entre-a-palavra-e-o-peso-do-partido",
+    "sha256": "f9d2dd1e14d9a1a5e4c40a47af53a2740008821b9efb497bfa916a0f52c314d2"
+  },
+  {
+    "name": "article",
+    "url": "https://www.nfnoticias.com.br/noticia-55913/renan-ferreirinha-cumpre-agenda-em-campos-e-defende-proibicao-de-redes-sociais-para-menores-de-16-anos",
+    "sha256": "c665fc39be57bbf27ada4185b536dbc378a05c35ed567260e05a1ef3902ce817"
+  },
+  {
+    "name": "page2",
+    "url": "https://www.nfnoticias.com.br/noticias.php?_pagi_pg=2",
+    "sha256": "cb0a8617a34f88d1d0b80c56918d34af049af0afedb27cc64720a8b9f277e628"
+  },
+  {
+    "name": "page100",
+    "url": "https://www.nfnoticias.com.br/noticias.php?_pagi_pg=100",
+    "sha256": "2f3daf04af43a8098544150e4dace56eac7f61f14861cf4f48c4bf9bfe2a1ff3"
+  }
+]
