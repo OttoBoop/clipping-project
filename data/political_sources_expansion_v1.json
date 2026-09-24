@@ -1122,9 +1122,15 @@
           "url": "https://www.ultimahoraonline.com.br/noticias",
           "evidence_url": "https://www.ultimahoraonline.com.br/noticias/politica",
           "max_pages": 2000
+        },
+        {
+          "kind": "ultima_columns",
+          "url": "https://www.ultimahoraonline.com.br/colunistas",
+          "evidence_url": "https://www.ultimahoraonline.com.br/",
+          "max_pages": 2000
         }
       ],
-      "known_constraint": "Dated all-section archive with separately fetched undated hero cards, checked pagination, immutable response receipts and two older boundary pages. Public archive reach is measured, not assumed exhaustive. No Google.",
+      "known_constraint": "Dated all-section archive with separately fetched undated hero cards, checked pagination, immutable response receipts and two older boundary pages. Public archive reach is measured, not assumed exhaustive. No Google. Author index is traversed separately: columns are not fully present in the general archive. Short author lists without pagination retain a visible history limit.",
       "evidence": [
         {
           "url": "https://ultimahoraonline.com.br/robots.txt",

@@ -16,5 +16,11 @@
     "url": "https://www.ultimahoraonline.com.br/noticias?p=100",
     "sha256": "ff5da78af4e94f8c189a4518adb90324b8e8cfe276ae13f6c7e9b8712c577331",
     "status": 200
+  },
+  {
+    "name": "authors",
+    "url": "https://www.ultimahoraonline.com.br/colunistas",
+    "status": 200,
+    "sha256": "d5abd1f8efc207eb3fcb522676dabf589b891125b72f82ad0811f1d1acff9f8a"
   }
 ]

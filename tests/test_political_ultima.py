@@ -57,3 +57,14 @@ def test_missing_next_cannot_hide_a_publisher_announced_later_page():
  r.content=r.content.replace(b'aria-label="Next"',b'aria-label="Unavailable"').replace(b"aria-label='Next'",b"aria-label='Unavailable'")
  out=discover_expanded(t,s,lambda u:r)
  assert out['gap_reason']=='ultima_archive_next_missing' and out['publisher_archive']['last_page']>1
+
+
+def test_real_author_index_discovers_all_routes_without_name_or_manual_urls():
+ from web_app.political_ultima_archive import discover_columns
+ s,_=config();tasks=build_expanded_tasks(s,'2026-08-09','2026-08-09',[{'key':str(i)} for i in range(35)])
+ assert len(tasks)==2
+ t=next(t for t in tasks if t['strategy']=='expanded_ultima_columns')
+ r=discover_expanded(t,s,lambda url:response('authors'))
+ assert len(r['child_tasks'])==51 and r['outcome']=='complete'
+ assert all('/colunista-noticias/' in c['url'] and c['strategy']=='expanded_ultima_archive' for c in r['child_tasks'])
+ assert r['archive_response']==response('authors').content

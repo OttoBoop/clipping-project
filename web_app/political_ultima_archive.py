@@ -6,7 +6,7 @@ import re
 
 from .political_nf_archive import Document, MONTHS
 
-VERSION = 'ultima-public-archive-1'
+VERSION = 'ultima-public-archive-2'
 BASE = 'https://www.ultimahoraonline.com.br'
 
 
@@ -51,6 +51,25 @@ def parse_page(html, url):
                     pass
     return rows, info
 
+
+
+def discover_columns(task, source, fetch):
+    from . import political_expanded_discovery as expanded
+    url = task['mechanism'].get('url')
+    if source['key'] != 'ultima_hora_online' or url != BASE + '/colunistas':
+        raise expanded._core().DiscoveryError('ultima_columns_invalid_index', retryable=False)
+    response = expanded._core()._get(fetch, url)
+    raw = response.content
+    root = Document(raw.decode('utf8', 'replace')).root
+    urls = sorted({urljoin(BASE, a.attrs.get('href', '')) for a in root.find('a')
+        if re.fullmatch(re.escape(BASE) + r'/colunista-noticias/\d+', urljoin(BASE, a.attrs.get('href', '')))})
+    proof = {'adapter': VERSION, 'url': url, 'responseHash': hashlib.sha256(raw).hexdigest(), 'authorCount': len(urls)}
+    if not urls or len(urls) > 500:
+        return expanded._result(outcome='gap', gap_reason='ultima_columns_index_unrecognized_or_capped',
+            publisher_archive=proof, archive_response=raw)
+    children = [{**task, 'strategy': 'expanded_ultima_archive', 'url': u, 'cursor': {},
+        'mechanism': {'kind': 'ultima_archive', 'url': u, 'max_pages': task['mechanism'].get('max_pages', 2000)}} for u in urls]
+    return expanded._result(child_tasks=children, raw_count=len(urls), publisher_archive=proof, archive_response=raw)
 
 def valid_route(url, path):
     p = urlparse(url)
