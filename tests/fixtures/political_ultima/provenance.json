@@ -1,0 +1,20 @@
+[
+  {
+    "name": "archive1",
+    "url": "https://www.ultimahoraonline.com.br/noticias",
+    "sha256": "c4f44a7f61d7c0d69dcdc8a9e806402b9da410084db3f4712beb79d4f2a28376",
+    "status": 200
+  },
+  {
+    "name": "archive2",
+    "url": "https://www.ultimahoraonline.com.br/noticias?p=2",
+    "sha256": "90bcd65e5f23ba85d572d408b6f3d2e9054c64c7609eb0a412a61c3c677af9e3",
+    "status": 200
+  },
+  {
+    "name": "archive100",
+    "url": "https://www.ultimahoraonline.com.br/noticias?p=100",
+    "sha256": "ff5da78af4e94f8c189a4518adb90324b8e8cfe276ae13f6c7e9b8712c577331",
+    "status": 200
+  }
+]
