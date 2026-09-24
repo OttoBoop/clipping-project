@@ -50,3 +50,10 @@ def test_missing_date_on_ordinary_card_is_fetched_and_stays_explicit():
  out=discover_expanded(t,s,lambda u:r)
  assert len(out['candidates'])>1 and out['publisher_archive']['unknown_dates']>0
  assert out['next_cursor'] and out['next_cursor']['unknown_dates']>0
+
+
+def test_missing_next_cannot_hide_a_publisher_announced_later_page():
+ s,t=config();r=response('archive1')
+ r.content=r.content.replace(b'aria-label="Next"',b'aria-label="Unavailable"').replace(b"aria-label='Next'",b"aria-label='Unavailable'")
+ out=discover_expanded(t,s,lambda u:r)
+ assert out['gap_reason']=='ultima_archive_next_missing' and out['publisher_archive']['last_page']>1

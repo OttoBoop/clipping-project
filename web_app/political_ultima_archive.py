@@ -112,7 +112,8 @@ def discover(task, source, fetch):
     elif older_pages >= 2 and not unordered:
         gap = 'ultima_archive_unknown_dates' if unknown_total else ''
     elif not info['next_url']:
-        gap = '' if info['pagination_found'] else 'ultima_archive_pagination_missing'
+        gap = ('ultima_archive_next_missing' if info['last_page'] and info['last_page'] > expected
+               else '' if info['pagination_found'] else 'ultima_archive_pagination_missing')
     elif not valid_route(info['next_url'], path) or parse_qs(urlparse(info['next_url']).query).get('p') != [str(expected+1)]:
         gap = 'ultima_archive_next_invalid'
     elif expected >= int(mechanism.get('max_pages', 2000)):
