@@ -68,3 +68,13 @@ def test_real_author_index_discovers_all_routes_without_name_or_manual_urls():
  assert len(r['child_tasks'])==51 and r['outcome']=='complete'
  assert all('/colunista-noticias/' in c['url'] and c['strategy']=='expanded_ultima_archive' for c in r['child_tasks'])
  assert r['archive_response']==response('authors').content
+
+
+def test_real_short_author_archive_verifies_empty_next_page_identity():
+ s,t=config();t['mechanism']={'kind':'ultima_archive','url':response('author-short').url}
+ first=discover_expanded(t,s,lambda u:response('author-short'))
+ assert first['next_cursor']['end_probe'] and first['next_cursor']['page']==2
+ t['cursor']=first['next_cursor'];out=discover_expanded(t,s,lambda u:response('author-empty-next'))
+ assert out['outcome']=='complete' and out['publisher_archive']['empty_author_page_verified']
+ r=response('author-empty-next');r.content=r.content.replace(b'/uploads/img/colunistas/125/',b'/uploads/img/colunistas/999/')
+ assert discover_expanded(t,s,lambda u:r)['gap_reason']=='ultima_author_end_probe_unverified'

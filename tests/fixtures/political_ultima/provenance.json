@@ -22,5 +22,17 @@
     "url": "https://www.ultimahoraonline.com.br/colunistas",
     "status": 200,
     "sha256": "d5abd1f8efc207eb3fcb522676dabf589b891125b72f82ad0811f1d1acff9f8a"
+  },
+  {
+    "name": "author-short",
+    "url": "https://www.ultimahoraonline.com.br/colunista-noticias/125",
+    "status": 200,
+    "sha256": "a9fc0d844c474f96b393a8ac8618f2cdf0f7108d2979b36d3de0222c1ab8a254"
+  },
+  {
+    "name": "author-empty-next",
+    "url": "https://www.ultimahoraonline.com.br/colunista-noticias/125?p=2",
+    "status": 200,
+    "sha256": "102599cd8be57d5fa4b6f612de3d17d6ce38d142321b032527d7006f2a77ff2e"
   }
 ]

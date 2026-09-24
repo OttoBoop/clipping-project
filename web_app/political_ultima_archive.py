@@ -6,7 +6,7 @@ import re
 
 from .political_nf_archive import Document, MONTHS
 
-VERSION = 'ultima-public-archive-2'
+VERSION = 'ultima-public-archive-3'
 BASE = 'https://www.ultimahoraonline.com.br'
 
 
@@ -34,7 +34,13 @@ def parse_page(html, url):
                      'undated_highlight': card.has('bloco-noticias-dest') and not dates})
     nav = root.find(cls='pagination')
     info = {'page': 1, 'last_page': None, 'next_url': '', 'pagination_found': bool(nav),
-            'empty_message': 'Não há registros a serem exibidos.' in root.text()}
+            'empty_message': 'Não há registros a serem exibidos.' in root.text(),
+            'article_list_found': bool(root.find(cls='noticias-lista')), 'author_id': ''}
+    authors = root.find(cls='bloco-colunistas')
+    for author in authors:
+        for image in author.find('img'):
+            match = re.search(r'/uploads/img/colunistas/(\d+)/', image.attrs.get('src', ''))
+            if match: info['author_id'] = match[1]
     if nav:
         active = nav[0].find(cls='active')
         match = re.match(r'(\d+)', active[0].text()) if active else None
@@ -99,7 +105,7 @@ def discover(task, source, fetch):
     def finish(candidates=(), **kwargs):
         return expanded._result(candidates, raw_count=len(rows), publisher_archive=proof, archive_response=raw, **kwargs)
     expected = int(cursor.get('page', 1))
-    if info['page'] != expected:
+    if info['page'] != expected and not cursor.get('end_probe'):
         return finish(outcome='gap', gap_reason='ultima_archive_wrong_page')
     fingerprint = hashlib.sha256('\n'.join(r['url'] for r in rows).encode()).hexdigest()
     seen = cursor.get('fingerprints', [])
@@ -126,6 +132,20 @@ def discover(task, source, fetch):
                  undated_highlights=sum(r['undated_highlight'] for r in rows), unknown_dates=unknown,
                  boundary_basis='two_older_dated_pages_with_separately_fetched_undated_heroes')
     gap = ''
+    if cursor.get('end_probe'):
+        author_id = path.rsplit('/', 1)[-1]
+        confirmed = not rows and info['article_list_found'] and info['author_id'] == author_id and not info['next_url']
+        proof['empty_author_page_verified'] = confirmed
+        return finish(candidates, outcome='complete' if confirmed else 'gap',
+                      gap_reason='' if confirmed else 'ultima_author_end_probe_unverified')
+    if (path.startswith('/colunista-noticias/') and not info['pagination_found']
+            and not info['next_url'] and len(rows) <= 29 and info['article_list_found']
+            and info['author_id'] == path.rsplit('/', 1)[-1]):
+        # The same publisher's pagination parameter is verified on preserved
+        # author pages. A matching author template with an empty NEXT list
+        # proves the observed end; a generic 200/404 shell never does.
+        return finish(candidates, next_cursor={'url': BASE + path + '?p=' + str(expected+1),
+            'page': expected+1, 'end_probe': True, 'fingerprints': (seen+[fingerprint])[-32:]})
     if not rows:
         gap = '' if info['empty_message'] and expected == 1 and path != '/noticias' else 'ultima_archive_empty_unproven'
     elif older_pages >= 2 and not unordered:
